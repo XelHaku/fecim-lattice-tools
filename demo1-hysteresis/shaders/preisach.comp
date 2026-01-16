@@ -1,0 +1,87 @@
+#version 450
+
+// Compute shader for Preisach hysteresis model
+// Processes multiple ferroelectric cells in parallel
+
+layout(local_size_x = 256) in;
+
+// Cell data structure
+struct Cell {
+    float polarization;    // Current polarization state
+    float lastField;       // Last applied field
+    float increasing;      // Direction flag (1.0 or 0.0)
+    float padding;         // Alignment
+};
+
+// Material parameters (uniform buffer)
+layout(std140, binding = 0) uniform MaterialParams {
+    float Ps;              // Saturation polarization
+    float Ec;              // Coercive field
+    float EcSigma;         // Distribution width
+    float dt;              // Time step
+};
+
+// Simulation parameters
+layout(std140, binding = 1) uniform SimParams {
+    float appliedVoltage;  // Input voltage
+    float thickness;       // Film thickness
+    float time;            // Current time
+    float reserved;
+};
+
+// Cell storage buffer
+layout(std430, binding = 2) buffer CellBuffer {
+    Cell cells[];
+};
+
+// Output for visualization
+layout(std430, binding = 3) buffer OutputBuffer {
+    float normalizedPol[]; // Normalized polarization for display
+};
+
+// Hyperbolic tangent switching function
+float preisachSwitch(float E, float Ec_eff, float delta, bool ascending) {
+    if (ascending) {
+        return Ps * tanh((E - Ec_eff) / delta);
+    } else {
+        return Ps * tanh((E + Ec_eff) / delta);
+    }
+}
+
+void main() {
+    uint idx = gl_GlobalInvocationID.x;
+
+    // Bounds check
+    if (idx >= cells.length()) {
+        return;
+    }
+
+    // Get current cell state
+    Cell cell = cells[idx];
+
+    // Calculate electric field from voltage
+    float E = appliedVoltage / thickness;
+
+    // Determine direction
+    bool increasing = E > cell.lastField;
+
+    // Calculate effective coercive field
+    float Ec_eff = Ec;
+
+    // Transition width
+    float delta = EcSigma * 2.0;
+
+    // Calculate new polarization
+    float P = preisachSwitch(E, Ec_eff, delta, increasing);
+
+    // Clamp to saturation
+    P = clamp(P, -Ps, Ps);
+
+    // Update cell state
+    cells[idx].polarization = P;
+    cells[idx].lastField = E;
+    cells[idx].increasing = increasing ? 1.0 : 0.0;
+
+    // Output normalized polarization for visualization
+    normalizedPol[idx] = P / Ps;
+}

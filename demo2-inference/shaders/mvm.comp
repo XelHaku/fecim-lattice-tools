@@ -1,0 +1,90 @@
+#version 450
+
+// Compute shader for Matrix-Vector Multiplication on crossbar array
+// Implements y = W * x where W is stored in the crossbar conductance matrix
+
+layout(local_size_x = 256) in;
+
+// Crossbar configuration
+layout(std140, binding = 0) uniform CrossbarParams {
+    int rows;           // Number of rows (output size)
+    int cols;           // Number of columns (input size)
+    float noiseLevel;   // Device noise level
+    int adcBits;        // ADC resolution
+    int dacBits;        // DAC resolution
+    float time;         // For noise variation
+    vec2 padding;
+};
+
+// Weight matrix (conductance values)
+layout(std430, binding = 1) buffer WeightBuffer {
+    float weights[];    // Flattened row-major matrix
+};
+
+// Input vector
+layout(std430, binding = 2) buffer InputBuffer {
+    float inputs[];
+};
+
+// Output vector
+layout(std430, binding = 3) buffer OutputBuffer {
+    float outputs[];
+};
+
+// Per-cell noise factors (computed once during programming)
+layout(std430, binding = 4) buffer NoiseBuffer {
+    float noiseFactors[];
+};
+
+// Hash function for pseudo-random noise
+float hash(float n) {
+    return fract(sin(n) * 43758.5453123);
+}
+
+// DAC quantization
+float quantizeDAC(float value, int bits) {
+    float levels = float(1 << bits) - 1.0;
+    value = clamp(value, 0.0, 1.0);
+    return round(value * levels) / levels;
+}
+
+// ADC quantization
+float quantizeADC(float value, int bits) {
+    float levels = float(1 << bits) - 1.0;
+    value = clamp(value, 0.0, 1.0);
+    return round(value * levels) / levels;
+}
+
+void main() {
+    uint rowIdx = gl_GlobalInvocationID.x;
+
+    // Bounds check
+    if (rowIdx >= rows) {
+        return;
+    }
+
+    // Compute dot product for this row
+    float sum = 0.0;
+
+    for (int j = 0; j < cols; j++) {
+        // Get weight index (row-major)
+        uint weightIdx = rowIdx * cols + j;
+
+        // Quantize input through DAC
+        float quantizedInput = quantizeDAC(inputs[j], dacBits);
+
+        // Get conductance with device noise
+        float conductance = weights[weightIdx];
+        float noiseFactor = noiseFactors[weightIdx];
+
+        // Add temporal noise
+        float temporalNoise = 1.0 + noiseLevel * 0.1 * (hash(float(weightIdx) + time) * 2.0 - 1.0);
+
+        // Apply Ohm's law: I = G * V
+        sum += conductance * noiseFactor * temporalNoise * quantizedInput;
+    }
+
+    // Normalize and quantize through ADC
+    float normalizedOutput = sum / float(cols);
+    outputs[rowIdx] = quantizeADC(normalizedOutput, adcBits);
+}

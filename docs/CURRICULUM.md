@@ -235,11 +235,92 @@ Using Vulkan's graphics pipeline, these simulations are rendered in real time. T
 
 ---
 
-## AREA 8: MANUFACTURING AND COMMERCIALIZATION
+## AREA 8: PRACTICAL APPLICATIONS
+
+The ultimate test of any technology is its real-world utility. IronLattice targets multiple high-value application domains.
+
+### 8.1 Edge AI Inference
+
+The primary near-term market for ferroelectric CIM:
+
+**Target Applications:**
+- Image classification (CNNs for object detection)
+- Natural language processing (Transformer attention layers)
+- Anomaly detection (industrial sensors, healthcare monitoring)
+
+**Key Advantages:**
+- **Ultra-low power:** <1W for inference vs 100W+ for GPU
+- **Low latency:** In-memory compute eliminates data transfer delays
+- **Small footprint:** No external DRAM required
+- **Always-on:** Non-volatile weights enable instant wake-up
+
+### 8.2 Neuromorphic Computing
+
+Spiking Neural Networks (SNNs) represent the next frontier:
+
+**Biological Advantages:**
+- Event-driven processing (compute only when spikes occur)
+- Temporal coding (information in spike timing)
+- Massive parallelism (like biological brains)
+
+**IronLattice Fit:**
+- FeFET polarization dynamics naturally mimic membrane potential
+- STDP learning rules implementable in hardware
+- Energy per spike: ~2 fJ (approaching biological efficiency)
+
+**Applications:**
+- Sensory processing (vision, audio)
+- Robotics control (real-time adaptation)
+- Brain-machine interfaces
+
+### 8.3 Autonomous Systems
+
+Self-driving vehicles and drones require:
+- Real-time object detection
+- Sensor fusion (LIDAR, camera, radar)
+- Low power consumption
+- Radiation tolerance
+
+**FeFET Benefits:**
+- Parallel processing in crossbar
+- Instant-on (non-volatile)
+- Robust to temperature extremes
+
+### 8.4 IoT and Wearables
+
+Edge computing with severe constraints:
+- Battery life critical (weeks to years)
+- Form factor limited
+- Always-on processing required
+
+**Solutions:**
+- Near-zero standby power
+- Wake-on-pattern detection
+- On-device learning without cloud connectivity
+
+### 8.5 Data Center Acceleration
+
+While power-constrained, data centers benefit from:
+- Reduced data movement (processing near storage)
+- Accelerated specific workloads (inference, recommendation systems)
+- Lower cooling requirements
+
+### 8.6 Security Applications
+
+FeFET PUF (Physical Unclonable Functions):
+- **Hardware fingerprinting:** Unique device signatures from intrinsic variation
+- **Secure key generation:** Non-clonable cryptographic keys
+- **Anti-counterfeiting:** Authenticate genuine chips
+
+The same cycle-to-cycle variation that challenges precision computing becomes an asset for security.
+
+---
+
+## AREA 9: MANUFACTURING AND COMMERCIALIZATION
 
 Theory must materialize into a product. The path from university laboratory to market is known as the "Valley of Death."
 
-### 8.1 Manufacturing Processes and Metrology
+### 9.1 Manufacturing Processes and Metrology
 
 IronLattice manufacturing is based on standard industry tools, reducing adoption risk.
 
@@ -247,7 +328,7 @@ IronLattice manufacturing is based on standard industry tools, reducing adoption
 - **Rapid Thermal Annealing (RTA):** The thermal treatment to crystallize the Pca2₁ phase must be compatible with the BEOL thermal budget (<450°C) to not damage the underlying copper transistors. Superlattice use helps reduce this required crystallization temperature.
 - **Characterization:** Techniques such as Grazing Incidence X-Ray Diffraction (GIXRD) are used to confirm the crystalline phase and Transmission Electron Microscopy (TEM) to inspect superlattice interface quality.
 
-### 8.2 Commercial Strategy and Intellectual Property
+### 9.2 Commercial Strategy and Intellectual Property
 
 IronLattice, as a spin-off from external research group and Jaeho Shin's laboratory, possesses a strategic advantage: intellectual property (IP) over the specific superlattice architecture for neuromorphic applications.
 
@@ -258,7 +339,7 @@ IronLattice, as a spin-off from external research group and Jaeho Shin's laborat
 
 ## CONCLUSION: MASTERING IRONLATTICE
 
-This curriculum spans from the movement of an oxygen atom in a crystal lattice to the execution of massive language models on a chip. Mastering these eight areas not only provides the knowledge to build IronLattice but grants a comprehensive vision of the future of computing.
+This curriculum spans from the movement of an oxygen atom in a crystal lattice to the execution of massive language models on a chip. Mastering these nine areas not only provides the knowledge to build IronLattice but grants a comprehensive vision of the future of computing.
 
 Ferroelectric superlattice technology represents a rare convergence of new physics, manufacturing compatibility, and urgent market need. By replacing data movement with materials physics, IronLattice has the potential to redefine computational efficiency for the age of artificial intelligence. Armed with this deep knowledge, you are positioned not only to observe this revolution but to lead it.
 

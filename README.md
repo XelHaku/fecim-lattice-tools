@@ -2,13 +2,17 @@
 
 **GPU-Accelerated Ferroelectric Compute-in-Memory Visualization**
 
+[![Go](https://img.shields.io/badge/Go-1.21+-00ADD8?logo=go)](https://go.dev)
+[![Vulkan](https://img.shields.io/badge/Vulkan-1.3-AC162C?logo=vulkan)](https://www.vulkan.org)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 ---
 
-## About
+## Overview
 
-This repository contains my exploration and visualization of **ferroelectric compute-in-memory (CIM)** technology, inspired by the work of **Dr. external research group** and **Dr. Jaeho Shin** at external research institution.
+This repository contains GPU-accelerated visualizations of **ferroelectric compute-in-memory (CIM)** technology, inspired by the groundbreaking work of **Dr. external research group** and **Dr. Jaeho Shin** at external research institution.
 
-IronLattice is a new hardware architecture that performs computation directly in memory using a proprietary ferroelectric superlattice. This eliminates the "Von Neumann bottleneck" — the constant busing of data between logic and memory that consumes most of the energy in traditional computing.
+IronLattice represents a paradigm shift in computing: performing computation directly in memory using ferroelectric superlattices, eliminating the Von Neumann bottleneck that wastes 90%+ of energy in traditional AI hardware.
 
 > *"This could lower the requirements in a data center by 80 to 90% of the energy requirements."*
 > — Dr. external research group
@@ -17,44 +21,43 @@ IronLattice is a new hardware architecture that performs computation directly in
 
 ## The Technology
 
-### What It Is
+### Core Innovation
 
-- **Compute-in-Memory (CIM):** The same device does memory AND computation
-- **Ferroelectric Superlattice:** Proprietary HfO₂-ZrO₂ layer structure
-- **CMOS Compatible:** Works on standard fabrication lines, no exotic materials
-- **Capital Light:** No special tools required
+| Aspect | Description |
+|--------|-------------|
+| **Compute-in-Memory** | Same device performs memory AND computation |
+| **Ferroelectric Superlattice** | Atomically precise HfO₂/ZrO₂ layered structure |
+| **CMOS Compatible** | Works on standard fabrication lines |
+| **Analog Computing** | 30+ discrete states, not just 0/1 |
 
-### Performance Claims
+### Performance vs. Existing Technologies
 
 | Metric | vs NAND Flash | vs DRAM |
 |--------|---------------|---------|
 | Read/Write Energy | **10,000,000× lower** | **1,000× lower** |
-| Speed | **1,000,000× faster** | — |
-| Voltage | **90% reduction** | — |
-| Refresh Cycles | — | **Zero** (non-volatile) |
+| Speed | **1,000,000× faster** | Comparable |
+| Voltage | **90% reduction** | Lower |
+| Data Retention | Non-volatile | **Zero refresh** |
 
-### Current Status
+### Current Status (TRL 4)
 
 | Metric | Value |
 |--------|-------|
-| TRL (Technology Readiness Level) | **4** (lab validation) |
-| Discrete States | **30** (not just 0/1) |
-| MNIST Accuracy | **87%** (theoretical max: 88%) |
+| Technology Readiness Level | **4** (lab validation) |
+| Discrete Analog States | **30** levels |
+| MNIST Accuracy | **87%** (near theoretical max) |
 | Endurance Target | **10¹² cycles** |
 
 ---
 
-## Go-to-Market Strategy
+## Project Goals
 
-IronLattice plans a staged market entry:
+This visualization project aims to:
 
-```
-Phase 1: Replace NAND Flash    →  Drop-in replacement, no software changes
-Phase 2: Replace DRAM          →  Non-volatile, lower energy
-Phase 3: Full Compute-in-Memory →  Neural network inference on-chip
-```
-
-This applies to both data centers and consumer devices (smartphones).
+1. **Simulate** ferroelectric physics (Landau-Khalatnikov, Preisach models)
+2. **Visualize** domain switching and hysteresis in real-time
+3. **Demonstrate** crossbar array matrix-vector multiplication
+4. **Educate** on compute-in-memory principles
 
 ---
 
@@ -62,27 +65,27 @@ This applies to both data centers and consumer devices (smartphones).
 
 ```
 ironlattice-vis/
-│
 ├── docs/
-│   ├── PHYSICS.md              # Ferroelectric physics deep dive
-│   ├── CURRICULUM.md           # Learning path
-│   └── DEMO-SPECS.md           # Demo specifications
+│   ├── CURRICULUM.md           # Comprehensive learning path (8 areas)
+│   └── IRONLATTICE_PARADIGM.md # Technology deep-dive
+│
+├── papers/                     # Scientific papers collection
+│   └── DOWNLOAD_PLAN.md        # Paper acquisition roadmap
 │
 ├── demo1-hysteresis/           # Single cell P-E curve visualizer
-│   ├── cmd/
+│   ├── cmd/                    # Application entry point
 │   ├── pkg/
-│   │   ├── ferroelectric/      # Physics models (Preisach, Landau)
+│   │   ├── ferroelectric/      # Physics models
 │   │   ├── simulation/         # Simulation engine
 │   │   └── vulkan/             # GPU rendering
-│   └── shaders/
+│   └── shaders/                # GLSL compute/graphics shaders
 │
-├── demo2-crossbar/             # Crossbar array MVM (planned)
+├── demo2-crossbar/             # Crossbar array MVM [Planned]
 │
-├── demo3-mnist/                # Neural network on CIM (planned)
+├── demo3-mnist/                # Neural network on CIM [Planned]
 │
 ├── shared/                     # Common utilities
-├── assets/                     # Images, fonts
-└── README.md
+└── assets/                     # Images, fonts
 ```
 
 ---
@@ -91,24 +94,26 @@ ironlattice-vis/
 
 ### Demo 1: Ferroelectric Hysteresis Visualizer
 
-Interactive visualization of a single ferroelectric memory cell showing:
-
-- **P-E Hysteresis Curve** — The characteristic ferroelectric response
-- **Polarization Switching** — Watch domains flip in real-time
-- **30 Discrete States** — Not just 0/1, but analog levels
+Interactive visualization of a single ferroelectric memory cell:
 
 ```
 ┌────────────────┐      ┌──────────────────────┐
 │                │      │         P            │
-│     CELL       │      │         ↑    +Pr     │
+│     CELL       │      │         ↑    +Pᵣ     │
 │  (Color = P)   │      │         ┌────╮       │
 │                │      │    ─────┼────┼──→ E  │
 │                │      │         ╰────┘       │
-│                │      │              -Pr     │
+│                │      │              -Pᵣ     │
 └────────────────┘      └──────────────────────┘
 ```
 
-### Demo 2: Crossbar Array (Planned)
+**Features:**
+- Real-time P-E hysteresis curve tracing
+- Domain nucleation and growth visualization
+- 30 discrete analog state demonstration
+- Interactive voltage control
+
+### Demo 2: Crossbar Array MVM [Planned]
 
 Visualize Matrix-Vector Multiplication in memory:
 
@@ -117,40 +122,53 @@ V₁ ──→ [G₁₁][G₁₂][G₁₃] ──→ I₁ = Σ(Vⱼ × Gⱼ₁)
 V₂ ──→ [G₂₁][G₂₂][G₂₃] ──→ I₂ = Σ(Vⱼ × Gⱼ₂)
 V₃ ──→ [G₃₁][G₃₂][G₃₃] ──→ I₃ = Σ(Vⱼ × Gⱼ₃)
 
-Ohm's Law: I = V × G
-Kirchhoff's Law: I_total = ΣI
+Ohm's Law:      I = V × G  (multiplication)
+Kirchhoff's Law: Iₜₒₜₐₗ = ΣI (summation)
 ```
 
-### Demo 3: MNIST on CIM (Planned)
+### Demo 3: MNIST on CIM [Planned]
 
-Handwritten digit recognition running on simulated IronLattice hardware, matching their 87% accuracy benchmark.
+Handwritten digit recognition on simulated IronLattice hardware, targeting 87% accuracy benchmark.
 
 ---
 
 ## Tech Stack
 
-| Component | Technology |
-|-----------|------------|
-| Language | Go |
-| Graphics | Vulkan |
-| Shaders | GLSL (SPIR-V) |
-| Physics | Preisach model, Landau-Khalatnikov |
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| Language | Go | Performance + simplicity |
+| Graphics API | Vulkan | Cross-platform GPU access |
+| Shaders | GLSL → SPIR-V | Compute + rendering |
+| Physics | Preisach, Landau-Khalatnikov | Ferroelectric modeling |
+| Simulation | TDGL (Time-Dependent Ginzburg-Landau) | Domain dynamics |
 
 ---
 
 ## Getting Started
 
+### Prerequisites
+
+- Go 1.21+
+- Vulkan SDK 1.3+
+- GLSL compiler (glslc)
+
+### Installation
+
 ```bash
-# Clone
+# Clone repository
 git clone https://github.com/yourusername/ironlattice-vis.git
 cd ironlattice-vis
 
-# Dependencies (Ubuntu)
+# Install dependencies (Ubuntu/Debian)
 sudo apt install vulkan-tools libvulkan-dev glslc
 
-# Build
+# Download Go dependencies
 go mod download
+
+# Compile shaders
 cd demo1-hysteresis/shaders && ./compile.sh && cd ../..
+
+# Build
 go build -o bin/hysteresis ./demo1-hysteresis/cmd/hysteresis
 
 # Run
@@ -159,53 +177,86 @@ go build -o bin/hysteresis ./demo1-hysteresis/cmd/hysteresis
 
 ---
 
+## Learning Resources
+
+### Documentation
+
+| Document | Description |
+|----------|-------------|
+| [CURRICULUM.md](docs/CURRICULUM.md) | 8-area doctoral-level curriculum |
+| [IRONLATTICE_PARADIGM.md](docs/IRONLATTICE_PARADIGM.md) | Technology paradigm analysis |
+| [papers/](papers/) | Scientific paper collection |
+
+### Key Concepts Covered
+
+1. **Solid-State Physics** — HfO₂ crystallography, phase stabilization
+2. **Ferroelectric Devices** — FeFET, FeRAM, domain dynamics
+3. **Compute-in-Memory** — Crossbar arrays, Kirchhoff's laws
+4. **Neural Networks** — Weight mapping, noise-aware training
+5. **Simulation** — TDGL, Preisach, phase-field models
+6. **GPU Programming** — Vulkan compute shaders
+7. **Scientific Visualization** — Real-time domain rendering
+8. **Commercialization** — Manufacturing, IP strategy
+
+---
+
 ## The Team Behind IronLattice
 
-From Dr. Tour's November 2024 talk:
-
-- **Dr. Jaeho Shin** — Device engineer, inventor of the superlattice architecture
-- **Tawfik Jarjour** — Former Accenture (13 years), leading commercialization
-- **Advisors** — IBM patent veteran, semiconductor foundry experts
+| Person | Role |
+|--------|------|
+| **Dr. external research group** | Principal Investigator, external research institution |
+| **Dr. Jaeho Shin** | Device Engineer, Superlattice Inventor |
+| **Tawfik Jarjour** | Commercialization Lead |
 
 > *"We haven't raised a penny to date. We've taken no money because we really want to move with the best strategy."*
 
-They are currently in restricted access discussions with major companies and talking to foundries about scaling down from university lab to commercial production.
+---
+
+## Market Context
+
+### Go-to-Market Strategy
+
+```
+Phase 1: Replace NAND Flash    →  Drop-in replacement
+Phase 2: Replace DRAM          →  Non-volatile, lower energy
+Phase 3: Full Compute-in-Memory →  Neural network inference on-chip
+```
+
+### George Gilder's Prediction
+
+In response to *"The Microchip Era is About to End"* (WSJ, Nov 2024), IronLattice addresses:
+
+1. Memory bottleneck → **Eliminated**
+2. Energy constraints → **90% reduction**
+3. CMOS compatibility → **Native integration**
 
 ---
 
-## Context: George Gilder's Prediction
+## External Resources
 
-In response to Gilder's Wall Street Journal article (*"The Microchip Era is About to End"*, Nov 3, 2024), Dr. Tour argues that IronLattice could actually **enable** the next era of wafer-scale integrated circuits by solving:
+### Primary Sources
+- [Dr. Tour's IronLattice Talk (Nov 2024)](https://www.youtube.com/watch?v=...)
+- [external research institution News](https://news.rice.edu/news/2025/rice-innovation-awards-fourth-cycle-one-small-step-grants)
 
-1. Memory bottleneck
-2. Energy constraints
-3. CMOS compatibility
-
----
-
-## Why I Built This
-
-I'm a computational physicist interested in the hardware that will power the next generation of AI. When I learned about IronLattice, I wanted to:
-
-1. **Understand** the physics deeply
-2. **Visualize** it so others can understand
-3. **Learn** GPU programming through a meaningful project
-
-This is an educational project. I have no affiliation with external research institution or IronLattice.
-
----
-
-## Resources
-
-### Primary Source
-- [Dr. Tour's IronLattice Talk (November 2024)](https://www.youtube.com/watch?v=...) — First public presentation
+### Technical Papers
+- Böscke, T.S., et al. "Ferroelectricity in hafnium oxide thin films." APL (2011)
+- Park, M.H., et al. "Ferroelectricity in Doped HfO₂." Advanced Materials (2015)
+- Shin, J., et al. "BEOL-Compatible Superlattice FEFET Analog Synapse" IEEE (2022)
 
 ### Dr. Tour's Ministry
 - [Jesus and Science Foundation](https://jesusandscience.org)
 
-### Technical Background
-- Böscke, T.S., et al. "Ferroelectricity in hafnium oxide thin films." APL (2011)
-- Park, M.H., et al. "Ferroelectricity in Doped HfO₂." Advanced Materials (2015)
+---
+
+## Contributing
+
+Contributions welcome! Areas of interest:
+
+- [ ] Preisach model implementation
+- [ ] Landau-Khalatnikov solver
+- [ ] Phase-field simulation
+- [ ] Crossbar array visualization
+- [ ] MNIST inference demo
 
 ---
 
@@ -213,7 +264,7 @@ This is an educational project. I have no affiliation with external research ins
 
 MIT License
 
-IronLattice is a trademark of its respective owners at external research institution. This is an independent educational project.
+IronLattice is a trademark of its respective owners at external research institution. This is an independent educational project with no affiliation.
 
 ---
 
@@ -221,7 +272,7 @@ IronLattice is a trademark of its respective owners at external research institu
 
 **Dr. external research group** — For pioneering this technology and being a bold witness for Christ in the scientific community.
 
-**Dr. Jaeho Shin** — For the engineering innovation.
+**Dr. Jaeho Shin** — For the engineering innovation that makes this possible.
 
 > *"If you do not believe in the physical resurrection of Jesus Christ, send me an email... and we will get together and I will share with you about why I embrace the resurrection of Jesus."*
 > — Dr. external research group
