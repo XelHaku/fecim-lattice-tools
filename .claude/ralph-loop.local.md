@@ -1,9 +1,9 @@
 ---
 active: true
-iteration: 2
+iteration: 1
 max_iterations: 512
 completion_promise: "COMPLETE"
-started_at: "2026-01-17T21:11:50Z"
+started_at: "2026-01-17T21:21:27Z"
 ---
 
 You are the Lead Engineer for IronLattice. Your goal is to advance Demos 1, 2, and 3 from 'Planned' to 'Functional'.
