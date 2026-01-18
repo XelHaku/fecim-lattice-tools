@@ -1,4 +1,17 @@
 // Package physics provides TDGL phase-field physics models for ferroelectrics.
+//
+// The Time-Dependent Ginzburg-Landau (TDGL) equation governs domain evolution:
+//
+//   ∂P/∂t = -L · δF/δP
+//
+// where F is the Landau-Ginzburg free energy functional:
+//
+//   F = ∫[α·P² + β·P⁴ + γ·P⁶ + κ|∇P|² - E·P] dV
+//
+// This is the continuum limit of the Landau-Khalatnikov equation (Eq. 3):
+//   E = (∂U/∂P)_S + ρ(dP/dt)
+//
+// Reference: Sivasubramanian & Widom, arXiv:cond-mat/0108189v1 (2001)
 package physics
 
 import (
@@ -145,6 +158,16 @@ func (s *TDGLSolver) InitializeDomainPattern(Ps float64) {
 }
 
 // Step advances the simulation by one time step using forward Euler.
+//
+// Implements the TDGL equation:
+//   P_new = P - dt·L·(dF/dP)
+//
+// where dF/dP = 2αP + 4βP³ + 6γP⁵ - κ∇²P - E_ext
+//
+// This is the discrete form of Eq. (18) from Sivasubramanian & Widom (2001):
+//   dy/dθ + ηy(y² - 1) = z·cos(θ)
+//
+// The 6-point Laplacian stencil provides O(dx²) accuracy.
 func (s *TDGLSolver) Step() {
 	g := s.grid
 	m := s.material

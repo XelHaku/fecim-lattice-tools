@@ -703,12 +703,324 @@ PAPERS = [
         category="neuromorphic",
         notes="Variation-aware design for reliable FeFET computing"
     ),
+
+    # =========== NEW PAPERS - Iteration 8 (Massive Expansion) ===========
+
+    # Neuromorphic Spintronics
+    Paper(
+        title="Neuromorphic Spintronics Review",
+        filename="neuromorphic_spintronics_review_2024",
+        arxiv_id="2409.10290",
+        year=2024,
+        source="arxiv",
+        category="neuromorphic",
+        notes="Comprehensive MRAM neuromorphic overview"
+    ),
+    Paper(
+        title="2D Spintronics Neuromorphic Computing",
+        filename="2d_spintronics_neuromorphic_2024",
+        arxiv_id="2407.08469",
+        year=2024,
+        source="arxiv",
+        category="neuromorphic",
+        notes="MTJ skyrmion 2D spintronic devices"
+    ),
+
+    # Optical/Photonic Computing
+    Paper(
+        title="Optical Computing DNN Acceleration Survey",
+        filename="optical_computing_dnn_survey_2024",
+        arxiv_id="2407.21184",
+        year=2024,
+        source="arxiv",
+        category="neuromorphic",
+        notes="Comprehensive photonic AI accelerator review"
+    ),
+    Paper(
+        title="Photonic-Electronic Integrated AI Accelerators",
+        filename="photonic_electronic_ai_accelerators_2024",
+        arxiv_id="2403.14806",
+        year=2024,
+        source="arxiv",
+        category="neuromorphic",
+        notes="Hybrid photonic-electronic accelerator review"
+    ),
+    Paper(
+        title="Architecture-Level Photonic DNN Modeling",
+        filename="photonic_dnn_architecture_modeling_2024",
+        arxiv_id="2405.14806",
+        year=2024,
+        source="arxiv",
+        category="crossbar",
+        notes="CiM tools for photonic system modeling"
+    ),
+    Paper(
+        title="Photonic Neuromorphic CNN Accelerator",
+        filename="photonic_neuromorphic_cnn_2024",
+        arxiv_id="2405.08182",
+        year=2024,
+        source="arxiv",
+        category="neuromorphic",
+        notes="Silicon photonic mesh, 98.6% MNIST accuracy"
+    ),
+    Paper(
+        title="Mirage RNS Photonic DNN Training",
+        filename="mirage_rns_photonic_training_2024",
+        arxiv_id="2311.17323",
+        year=2024,
+        source="arxiv",
+        category="neuromorphic",
+        notes="Residue Number System photonic training"
+    ),
+
+    # Transformer Hardware Accelerators
+    Paper(
+        title="Xpikeformer Hybrid Spiking Transformer",
+        filename="xpikeformer_spiking_transformer_2024",
+        arxiv_id="2407.xxxxx",  # Need exact ID
+        year=2024,
+        source="arxiv",
+        category="neuromorphic",
+        notes="Analog-digital spiking transformer accelerator"
+    ),
+    Paper(
+        title="AHWA-LoRA Analog Transformer Adaptation",
+        filename="ahwa_lora_analog_transformer_2024",
+        arxiv_id="2406.xxxxx",  # Need exact ID  
+        year=2024,
+        source="arxiv",
+        category="neuromorphic",
+        notes="Hardware-aware LoRA for AIMC transformers"
+    ),
+    Paper(
+        title="Analog Attention Accelerator Charge CIM",
+        filename="analog_attention_charge_cim_2024",
+        arxiv_id="2405.xxxxx",  # Need exact ID
+        year=2024,
+        source="arxiv",
+        category="crossbar",
+        notes="Hybrid analog-digital attention with token pruning"
+    ),
+    Paper(
+        title="AIMC Attention for Energy-Efficient LLMs",
+        filename="aimc_attention_llm_2024",
+        arxiv_id="2406.xxxxx",  # Need exact ID
+        year=2024,
+        source="arxiv",
+        category="neuromorphic",
+        notes="Gain cell memory for LLM attention"
+    ),
+
+    # Analog Training Papers
+    Paper(
+        title="Exact Gradient Training on Analog Tiki-Taka",
+        filename="tiki_taka_analog_training_2024",
+        arxiv_id="2406.12774",
+        year=2024,
+        source="arxiv",
+        category="neuromorphic",
+        notes="Theoretical foundation for analog gradient descent"
+    ),
+    Paper(
+        title="Physical Neural Networks Analog Training",
+        filename="physical_neural_networks_training_2024",
+        arxiv_id="2412.xxxxx",  # Dec 2024
+        year=2024,
+        source="arxiv",
+        category="neuromorphic",
+        notes="DSTD differentiable spike-time discretization"
+    ),
+
+    # ReRAM/RRAM Papers
+    Paper(
+        title="ReRAM Neural Field Reconstruction",
+        filename="reram_neural_field_reconstruction_2024",
+        arxiv_id="2407.xxxxx",  # Need exact ID
+        year=2024,
+        source="arxiv",
+        category="neuromorphic",
+        notes="40nm 256Kb ReRAM, 3D CT reconstruction"
+    ),
+    Paper(
+        title="ReRAM Differential Equation Solver Diffusion",
+        filename="reram_differential_diffusion_2024",
+        arxiv_id="2406.xxxxx",  # Need exact ID
+        year=2024,
+        source="arxiv",
+        category="neuromorphic",
+        notes="Analog diffusion model acceleration"
+    ),
+    Paper(
+        title="ARAS Adaptive ReRAM DNN Accelerator",
+        filename="aras_reram_dnn_accelerator_2024",
+        arxiv_id="2403.xxxxx",  # Need exact ID
+        year=2024,
+        source="arxiv",
+        category="crossbar",
+        notes="Low-cost adaptive ReRAM accelerator"
+    ),
+    Paper(
+        title="Cryogenic Analog 1T-ReRAM Cold NN",
+        filename="cryogenic_reram_cold_nn_2024",
+        arxiv_id="2401.xxxxx",  # Need exact ID
+        year=2024,
+        source="arxiv",
+        category="neuromorphic",
+        notes="77K operation, quantum computing compatible"
+    ),
+    Paper(
+        title="ReRAM CIM SNN Reliability Survey",
+        filename="reram_cim_snn_reliability_2024",
+        arxiv_id="2403.xxxxx",  # Need exact ID
+        year=2024,
+        source="arxiv",
+        category="neuromorphic",
+        notes="Device-level variation analysis for SNNs"
+    ),
+
+    # Ferroelectric Tunnel Junction (FTJ)
+    Paper(
+        title="Ferroelectric Materials Synaptic Transistors Review",
+        filename="ferroelectric_synaptic_transistors_review_2024",
+        arxiv_id="2406.13946",
+        year=2024,
+        source="arxiv",
+        category="neuromorphic",
+        notes="FTJ and FeFET synapse review"
+    ),
+    Paper(
+        title="HfZrO FTJ Polarization Uniformity",
+        filename="hfzro_ftj_polarization_2024",
+        arxiv_id="2412.11288",
+        year=2024,
+        source="arxiv",
+        category="neuromorphic",
+        notes="BEOL thermal budget FTJ optimization"
+    ),
+
+    # SNN Hardware
+    Paper(
+        title="SpikeExplorer FPGA SNN Hardware DSE",
+        filename="spikeexplorer_fpga_snn_2024",
+        arxiv_id="2403.xxxxx",  # Need exact ID
+        year=2024,
+        source="arxiv",
+        category="neuromorphic",
+        notes="Python tool for SNN FPGA exploration"
+    ),
+    Paper(
+        title="HASNAS Hardware-Aware SNN CIM Design",
+        filename="hasnas_snn_cim_2024",
+        arxiv_id="2403.xxxxx",  # Need exact ID
+        year=2024,
+        source="arxiv",
+        category="neuromorphic",
+        notes="SNN architecture search for CIM constraints"
+    ),
+    Paper(
+        title="Intel Loihi RNN Adaptive Spiking",
+        filename="loihi_rnn_adaptive_spiking_2024",
+        arxiv_id="2401.xxxxx",  # Need exact ID
+        year=2024,
+        source="arxiv",
+        category="neuromorphic",
+        notes="3-bit weights, audio benchmark SOTA"
+    ),
+
+    # 3D Memory Accelerators
+    Paper(
+        title="Memory Neural Accelerators 3D",
+        filename="memory_neural_accelerators_3d_2024",
+        arxiv_id="2401.05363",
+        year=2024,
+        source="arxiv",
+        category="crossbar",
+        notes="3D memory neural network acceleration"
+    ),
+    Paper(
+        title="HBM Thermal Power Delivery LLM",
+        filename="hbm_thermal_power_llm_2024",
+        arxiv_id="2410.07524",
+        year=2024,
+        source="arxiv",
+        category="crossbar",
+        notes="3D stacked HBM thermal optimization"
+    ),
+    Paper(
+        title="CIM LLM Inference Overview",
+        filename="cim_llm_inference_overview_2024",
+        arxiv_id="2406.xxxxx",  # Need exact ID
+        year=2024,
+        source="arxiv",
+        category="crossbar",
+        notes="Compute-in-memory for LLM acceleration"
+    ),
+    Paper(
+        title="3D Stacked Memory Side Acceleration",
+        filename="3d_memory_side_acceleration_2024",
+        arxiv_id="2403.04539",
+        year=2024,
+        source="arxiv",
+        category="crossbar",
+        notes="Processing-in-memory 3D design space"
+    ),
+
+    # HfO2 Switching and NCFET
+    Paper(
+        title="Interstitial Defects HfO2 Switching",
+        filename="interstitial_defects_hfo2_switching_2024",
+        arxiv_id="2407.xxxxx",  # July 2024
+        year=2024,
+        source="arxiv",
+        category="core_ferroelectric",
+        notes="Subnanosecond switching via defects"
+    ),
+    Paper(
+        title="Neuromorphic Roadmap Emerging Technologies",
+        filename="neuromorphic_roadmap_2024",
+        arxiv_id="2407.xxxxx",  # July 2024 roadmap
+        year=2024,
+        source="arxiv",
+        category="neuromorphic",
+        notes="PCM, MRAM, ReRAM neuromorphic roadmap"
+    ),
+
+    # Edge AI
+    Paper(
+        title="Spiking Transformer Edge 467x Energy",
+        filename="spiking_transformer_edge_2024",
+        arxiv_id="2403.xxxxx",  # Need exact ID
+        year=2024,
+        source="arxiv",
+        category="neuromorphic",
+        notes="467x energy reduction vs edge GPU"
+    ),
+
+    # MRAM Neuromorphic
+    Paper(
+        title="Tokyo MRAM Binary Neural Network CIM",
+        filename="mram_bnn_cim_tokyo_2024",
+        arxiv_id="2411.xxxxx",  # Nov 2024
+        year=2024,
+        source="arxiv",
+        category="neuromorphic",
+        notes="Spintronic BNN training algorithm"
+    ),
+
+    # Domain Wall Dynamics (corrected)
+    Paper(
+        title="Conducting Ferroelectric Domain Wall Dynamics",
+        filename="conducting_fe_domain_wall_2025",
+        arxiv_id="2504.xxxxx",  # April 2025
+        year=2025,
+        source="arxiv",
+        category="simulation",
+        notes="TDGL + transport for domain wall dynamics"
+    ),
 ]
 
 
-# ============================================================================
-# Download Functions
-# ============================================================================
+
 
 def make_request(url: str, timeout: int = 30) -> Optional[bytes]:
     """Make HTTP request with proper headers."""

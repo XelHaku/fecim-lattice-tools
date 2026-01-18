@@ -2,6 +2,15 @@
 // hysteresis in HfO2-ZrO2 superlattice materials.
 //
 // This is Demo 1 of the IronLattice Visualizer project.
+//
+// Lab Bench Controls:
+//   E/D   - Increase/Decrease Electric Field
+//   T/G   - Increase/Decrease Temperature
+//   F/V   - Increase/Decrease Frequency
+//   W     - Cycle Waveform (Sine/Triangle/Square)
+//   Space - Pause/Resume
+//   R     - Reset
+//   Q     - Quit
 package main
 
 import (
@@ -10,7 +19,10 @@ import (
 	"log"
 	"os"
 
+	"github.com/go-gl/glfw/v3.3/glfw"
+
 	"ironlattice-vis/demo1-hysteresis/pkg/ferroelectric"
+	"ironlattice-vis/demo1-hysteresis/pkg/gui"
 	"ironlattice-vis/demo1-hysteresis/pkg/render"
 	"ironlattice-vis/demo1-hysteresis/pkg/simulation"
 )
@@ -97,7 +109,13 @@ func runHeadless(engine *simulation.Engine) {
 
 func runGraphical(engine *simulation.Engine) {
 	fmt.Println("Starting Vulkan-based graphical interface...")
-	fmt.Println("Press ESC or close window to exit.")
+	fmt.Println()
+
+	// Create Lab Bench for interactive control
+	labBench := gui.NewLabBench()
+
+	// Print controls
+	fmt.Println(labBench.ControlsHelp())
 	fmt.Println()
 
 	// Create Vulkan renderer
@@ -111,10 +129,73 @@ func runGraphical(engine *simulation.Engine) {
 	plot := render.NewHysteresisPlot(Emax, Pmax)
 	renderer.SetHysteresisPlot(plot)
 
+	// Connect Lab Bench callbacks to simulation engine
+	labBench.OnEFieldChange = func(E float64) {
+		// Convert E-field to voltage for the waveform amplitude
+		voltage := E * material.Thickness
+		engine.SetAmplitude(voltage)
+		fmt.Printf("  Electric Field: %.2f MV/cm (V = %.2f V)\n", E/1e8, voltage)
+	}
+
+	labBench.OnTemperatureChange = func(T float64) {
+		// Temperature affects Landau coefficients
+		// For now, print the effect (full implementation would modify material)
+		effects := gui.ComputeTemperatureEffects(T)
+		phase := "Ferroelectric"
+		if !effects.IsFerro {
+			phase = "Paraelectric"
+		}
+		fmt.Printf("  Temperature: %.0f K → α(T) = %+.2e (%s)\n", T, effects.AlphaT, phase)
+	}
+
+	labBench.OnFrequencyChange = func(f float64) {
+		engine.SetFrequency(f)
+		fmt.Printf("  Frequency: %s\n", formatFreq(f))
+	}
+
+	labBench.OnWaveformChange = func(idx int) {
+		engine.SetWaveform(simulation.WaveformType(idx))
+		fmt.Printf("  Waveform: %s\n", labBench.WaveformNames[idx])
+	}
+
+	labBench.OnPauseToggle = func(paused bool) {
+		engine.Pause()
+		if paused {
+			fmt.Println("  [PAUSED]")
+		} else {
+			fmt.Println("  [RESUMED]")
+		}
+	}
+
+	labBench.OnReset = func() {
+		engine.Reset()
+		plot.Clear()
+		fmt.Println("  [RESET]")
+	}
+
+	labBench.OnQuit = func() {
+		renderer.Stop()
+	}
+
+	// Set up keyboard callback
+	renderer.SetKeyCallback(func(key glfw.Key, action glfw.Action) {
+		// Handle H for help toggle
+		if key == glfw.KeyH && action == glfw.Press {
+			fmt.Println(labBench.ControlsHelp())
+			return
+		}
+		labBench.HandleKeyPress(key, action)
+	})
+
 	// Set up update callback
 	frameCount := 0
 	engine.Start()
 	renderer.SetUpdateCallback(func() {
+		// Skip update if Lab Bench quit
+		if !labBench.Running {
+			return
+		}
+
 		// Step simulation
 		engine.Step()
 		state := engine.State()
@@ -139,10 +220,32 @@ func runGraphical(engine *simulation.Engine) {
 	}
 	defer renderer.Cleanup()
 
+	fmt.Println("\nLab Bench ready. Use keyboard controls to manipulate the simulation.")
+	fmt.Printf("Initial: E = %.2f MV/cm, T = %.0f K, f = %s\n",
+		labBench.ElectricFieldAmplitude/1e8,
+		labBench.Temperature,
+		formatFreq(labBench.Frequency),
+	)
+	fmt.Println()
+
 	// Run render loop
 	if err := renderer.Run(); err != nil {
 		log.Fatalf("Renderer error: %v", err)
 	}
 
 	fmt.Printf("\nSimulation completed. Rendered %d frames.\n", frameCount)
+}
+
+// formatFreq converts Hz to human-readable format.
+func formatFreq(f float64) string {
+	switch {
+	case f >= 1e9:
+		return fmt.Sprintf("%.1f GHz", f/1e9)
+	case f >= 1e6:
+		return fmt.Sprintf("%.1f MHz", f/1e6)
+	case f >= 1e3:
+		return fmt.Sprintf("%.1f kHz", f/1e3)
+	default:
+		return fmt.Sprintf("%.0f Hz", f)
+	}
 }

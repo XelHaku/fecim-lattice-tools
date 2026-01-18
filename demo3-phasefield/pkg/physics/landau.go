@@ -1,4 +1,8 @@
 // Package physics provides TDGL phase-field physics models for ferroelectrics.
+//
+// Physics references:
+// - Landau-Khalatnikov: Sivasubramanian & Widom, arXiv:cond-mat/0108189v1 (2001)
+// - Preisach model: Urbanavičiūtė et al., Nature Communications 9:4409 (2018)
 package physics
 
 import (
@@ -6,7 +10,15 @@ import (
 )
 
 // LandauPotential computes the Landau free energy density f(P).
-// f = α·P² + β·P⁴ + γ·P⁶
+//
+// The 2-4-6 Landau expansion:
+//   f(P) = α·P² + β·P⁴ + γ·P⁶
+//
+// This is Eq. (14) from Sivasubramanian & Widom (2001) in generalized form:
+//   U(Q) = (Qs²/8C)[1 - (Q/Qs)²]²
+//
+// For ferroelectrics with first-order transitions (like HZO), β < 0 and γ > 0
+// creates the characteristic double-well potential with minima at ±Ps.
 type LandauPotential struct {
 	Alpha float64 // Quadratic coefficient
 	Beta  float64 // Quartic coefficient
@@ -40,8 +52,14 @@ func (lp *LandauPotential) Energy(P float64) float64 {
 	return lp.Alpha*P2 + lp.Beta*P4 + lp.Gamma*P6
 }
 
-// Derivative computes df/dP.
+// Derivative computes df/dP, the thermodynamic electric field.
+//
 // df/dP = 2α·P + 4β·P³ + 6γ·P⁵
+//
+// This appears in the Landau-Khalatnikov equation (Eq. 3 from Sivasubramanian & Widom):
+//   E = (∂U/∂P)_S + ρ(dP/dt)
+//
+// At equilibrium (dP/dt = 0), E = df/dP.
 func (lp *LandauPotential) Derivative(P float64) float64 {
 	P2 := P * P
 	P3 := P2 * P
@@ -174,7 +192,14 @@ func (lp *LandauPotential) EnergyLandscape(Pmax float64, nPoints int) ([]float64
 }
 
 // CoerciveField estimates the coercive field from Landau theory.
-// E_c ≈ |dF/dP|_max along the switching path
+//
+// From Urbanavičiūtė et al. (2018), Eq. (2):
+//   E_c ≈ w_b/P_r - k_B·T·ln(ν₀·t·ln(2)⁻¹)/(P_r·V*)
+//
+// For pure Landau theory without thermal activation:
+//   E_c ≈ |dF/dP|_max along the switching path
+//
+// The inflection point P ≈ Ps/√3 gives the maximum barrier.
 func (lp *LandauPotential) CoerciveField() float64 {
 	Ps := lp.SpontaneousPolarization()
 	if Ps == 0 {

@@ -1,90 +1,202 @@
 #version 450
 
 // Compute shader for Matrix-Vector Multiplication on crossbar array
-// Implements y = W * x where W is stored in the crossbar conductance matrix
+// Implements Kirchhoff's Current Law: I_j = Sum_i(V_i * G_ij)
+//
+// This shader models the physics of analog in-memory computing:
+// - Voltage is applied to rows (word lines)
+// - Current is sensed from columns (bit lines)
+// - Each crosspoint has a programmable conductance G_ij
+//
+// Non-idealities modeled:
+// 1. DAC quantization (input voltage levels)
+// 2. ADC quantization (output current sensing)
+// 3. Conductance drift (temporal variation)
+// 4. Read noise (thermal + shot noise)
+// 5. IR drop along interconnects
+// 6. Device-to-device variation
 
 layout(local_size_x = 256) in;
 
 // Crossbar configuration
 layout(std140, binding = 0) uniform CrossbarParams {
-    int rows;           // Number of rows (output size)
-    int cols;           // Number of columns (input size)
-    float noiseLevel;   // Device noise level
-    int adcBits;        // ADC resolution
-    int dacBits;        // DAC resolution
-    float time;         // For noise variation
-    vec2 padding;
+    int rows;           // Number of rows (input vector size)
+    int cols;           // Number of columns (output vector size)
+    float noiseLevel;   // Device noise level (sigma)
+    int adcBits;        // ADC resolution (bits)
+    int dacBits;        // DAC resolution (bits)
+    float time;         // Simulation time (for drift model)
+    float wireResistance;  // Line resistance (normalized)
+    float driftCoeff;      // Conductance drift coefficient
 };
 
-// Weight matrix (conductance values)
-layout(std430, binding = 1) buffer WeightBuffer {
-    float weights[];    // Flattened row-major matrix
+// Conductance matrix G[i,j] (row-major: G[row * cols + col])
+layout(std430, binding = 1) buffer ConductanceBuffer {
+    float G[];          // Conductance values (Siemens, normalized)
 };
 
-// Input vector
-layout(std430, binding = 2) buffer InputBuffer {
-    float inputs[];
+// Input voltage vector V[i]
+layout(std430, binding = 2) buffer InputVoltageBuffer {
+    float V_in[];       // Applied voltages (normalized to [0,1])
 };
 
-// Output vector
-layout(std430, binding = 3) buffer OutputBuffer {
-    float outputs[];
+// Output current vector I[j]
+layout(std430, binding = 3) buffer OutputCurrentBuffer {
+    float I_out[];      // Sensed currents (normalized)
 };
 
-// Per-cell noise factors (computed once during programming)
-layout(std430, binding = 4) buffer NoiseBuffer {
-    float noiseFactors[];
+// Device-to-device variation factors (set during programming)
+layout(std430, binding = 4) buffer VariationBuffer {
+    float d2d_variation[];  // Multiplicative variation per device
 };
 
-// Hash function for pseudo-random noise
+// ============================================================================
+// NOISE AND RANDOMNESS
+// ============================================================================
+
+// High-quality hash function for pseudo-random noise
 float hash(float n) {
-    return fract(sin(n) * 43758.5453123);
+    return fract(sin(n * 12.9898) * 43758.5453123);
 }
 
-// DAC quantization
+// Box-Muller transform for Gaussian noise
+float gaussianNoise(float seed1, float seed2) {
+    float u1 = max(hash(seed1), 1e-6);  // Avoid log(0)
+    float u2 = hash(seed2);
+    return sqrt(-2.0 * log(u1)) * cos(6.28318530718 * u2);
+}
+
+// ============================================================================
+// CONDUCTANCE DRIFT MODEL
+// ============================================================================
+
+// Models temporal drift in resistive memory devices
+// Based on: G(t) = G_0 * (t/t_0)^(-nu)
+// where nu is the drift coefficient (~0.05 for PCM, ~0.01 for RRAM)
+float applyDrift(float G0, float t, float nu) {
+    if (t <= 0.0 || nu <= 0.0) return G0;
+
+    float t0 = 1.0;  // Reference time
+    float driftFactor = pow(max(t / t0, 1.0), -nu);
+    return G0 * driftFactor;
+}
+
+// ============================================================================
+// DAC/ADC QUANTIZATION
+// ============================================================================
+
+// Digital-to-Analog Converter quantization (input side)
 float quantizeDAC(float value, int bits) {
+    if (bits <= 0) return value;
     float levels = float(1 << bits) - 1.0;
     value = clamp(value, 0.0, 1.0);
     return round(value * levels) / levels;
 }
 
-// ADC quantization
-float quantizeADC(float value, int bits) {
+// Analog-to-Digital Converter quantization (output side)
+float quantizeADC(float value, int bits, float fullScale) {
+    if (bits <= 0) return value;
     float levels = float(1 << bits) - 1.0;
-    value = clamp(value, 0.0, 1.0);
-    return round(value * levels) / levels;
+    float normalized = clamp(value / fullScale, 0.0, 1.0);
+    return round(normalized * levels) / levels * fullScale;
 }
+
+// ============================================================================
+// IR DROP MODEL
+// ============================================================================
+
+// Simplified IR drop model for crossbar arrays
+// Accounts for voltage drop along word lines and bit lines
+// Reference: "Sneak Path" literature
+float computeIRDrop(uint row, uint col, float R_line, int totalRows, int totalCols) {
+    // Distance from voltage source (assume applied at row=0, col=0)
+    float rowDistance = float(row) / float(totalRows);
+    float colDistance = float(col) / float(totalCols);
+
+    // Total effective resistance seen by this cell
+    float effectiveR = R_line * (rowDistance + colDistance);
+
+    // Voltage drop factor (1 = no drop, <1 = voltage reduced)
+    return 1.0 / (1.0 + effectiveR);
+}
+
+// ============================================================================
+// KIRCHHOFF'S CURRENT LAW IMPLEMENTATION
+// ============================================================================
+//
+// For a crossbar array with voltages V_i applied to rows:
+//
+//   I_j = Sum_i (V_i * G_ij)
+//
+// This is Kirchhoff's Current Law: currents sum at each column node
+//
+// With non-idealities:
+//   I_j = Sum_i (V_i,eff * G_ij,eff) + noise
+//
+// where:
+//   V_i,eff = V_i * DAC_quant * IR_drop_factor
+//   G_ij,eff = G_ij * drift_factor * d2d_variation
 
 void main() {
-    uint rowIdx = gl_GlobalInvocationID.x;
+    uint colIdx = gl_GlobalInvocationID.x;
 
-    // Bounds check
-    if (rowIdx >= rows) {
+    // Bounds check - each thread computes one output (column current)
+    if (colIdx >= cols) {
         return;
     }
 
-    // Compute dot product for this row
-    float sum = 0.0;
+    // ========================================================================
+    // KIRCHHOFF'S CURRENT LAW: I_j = Sum_i(V_i * G_ij)
+    // ========================================================================
 
-    for (int j = 0; j < cols; j++) {
-        // Get weight index (row-major)
-        uint weightIdx = rowIdx * cols + j;
+    float I_sum = 0.0;
+    float noiseSeed = float(colIdx) * 1000.0 + time;
 
-        // Quantize input through DAC
-        float quantizedInput = quantizeDAC(inputs[j], dacBits);
+    // Sum currents from all rows into this column
+    for (int rowIdx = 0; rowIdx < rows; rowIdx++) {
+        // Linear index into conductance matrix (row-major)
+        uint cellIdx = rowIdx * cols + colIdx;
 
-        // Get conductance with device noise
-        float conductance = weights[weightIdx];
-        float noiseFactor = noiseFactors[weightIdx];
+        // 1. Get input voltage and apply DAC quantization
+        float V_applied = V_in[rowIdx];
+        float V_quantized = quantizeDAC(V_applied, dacBits);
 
-        // Add temporal noise
-        float temporalNoise = 1.0 + noiseLevel * 0.1 * (hash(float(weightIdx) + time) * 2.0 - 1.0);
+        // 2. Get conductance value
+        float G_nominal = G[cellIdx];
 
-        // Apply Ohm's law: I = G * V
-        sum += conductance * noiseFactor * temporalNoise * quantizedInput;
+        // 3. Apply conductance drift (temporal degradation)
+        float G_drifted = applyDrift(G_nominal, time, driftCoeff);
+
+        // 4. Apply device-to-device variation
+        float G_varied = G_drifted * d2d_variation[cellIdx];
+
+        // 5. Compute IR drop at this cell
+        float irDropFactor = computeIRDrop(rowIdx, colIdx, wireResistance, rows, cols);
+        float V_effective = V_quantized * irDropFactor;
+
+        // 6. Compute current through this cell: I = G * V (Ohm's Law)
+        float I_cell = G_varied * V_effective;
+
+        // 7. Add read noise (thermal + shot noise)
+        float thermalNoise = noiseLevel * gaussianNoise(noiseSeed + float(rowIdx), noiseSeed + float(rowIdx) + 0.5);
+        float shotNoise = noiseLevel * 0.1 * sqrt(abs(I_cell)) * gaussianNoise(noiseSeed + float(rowIdx) + 1.0, noiseSeed + float(rowIdx) + 1.5);
+        I_cell += thermalNoise + shotNoise;
+
+        // Accumulate (Kirchhoff's Current Law)
+        I_sum += I_cell;
     }
 
-    // Normalize and quantize through ADC
-    float normalizedOutput = sum / float(cols);
-    outputs[rowIdx] = quantizeADC(normalizedOutput, adcBits);
+    // ========================================================================
+    // OUTPUT PROCESSING
+    // ========================================================================
+
+    // Estimate full-scale current for ADC normalization
+    // Assumes all inputs at max (1.0) and average conductance
+    float estimatedFullScale = float(rows) * 0.5;  // Approximate
+
+    // Apply ADC quantization
+    float I_quantized = quantizeADC(I_sum, adcBits, estimatedFullScale);
+
+    // Store result
+    I_out[colIdx] = I_quantized;
 }

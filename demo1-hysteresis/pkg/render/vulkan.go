@@ -50,6 +50,7 @@ type VulkanRenderer struct {
 
 	// Callbacks
 	onUpdate func()
+	onKey    func(key glfw.Key, action glfw.Action)
 
 	// Queue family indices
 	graphicsFamily uint32
@@ -72,6 +73,11 @@ func (r *VulkanRenderer) SetHysteresisPlot(plot *HysteresisPlot) {
 // SetUpdateCallback sets a function to be called each frame.
 func (r *VulkanRenderer) SetUpdateCallback(fn func()) {
 	r.onUpdate = fn
+}
+
+// SetKeyCallback sets a function to be called on key events.
+func (r *VulkanRenderer) SetKeyCallback(fn func(key glfw.Key, action glfw.Action)) {
+	r.onKey = fn
 }
 
 // UpdatePolarization updates the cell polarization display.
@@ -106,6 +112,13 @@ func (r *VulkanRenderer) Initialize() error {
 	if err != nil {
 		return fmt.Errorf("failed to create window: %w", err)
 	}
+
+	// Set up key callback
+	r.window.SetKeyCallback(func(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
+		if r.onKey != nil {
+			r.onKey(key, action)
+		}
+	})
 
 	// Create Vulkan instance
 	if err := r.createInstance(); err != nil {

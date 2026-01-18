@@ -1,0 +1,290 @@
+#version 450
+
+// Volumetric Raymarching Shader for Phase-Field Visualization
+// Renders ferroelectric domain structure as a 3D heatmap cloud
+//
+// Adapted from ComplexChaos/fractals/mandelbulb raymarcher
+// Instead of SDF distance estimation, we sample the order parameter (P) density grid
+//
+// Color mapping: Blue = -P (negative domains), Red = +P (positive domains)
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+// Output image
+layout(binding = 0, rgba8) uniform writeonly image2D outputImage;
+
+// 3D polarization field texture
+layout(binding = 1) uniform sampler3D polarizationField;
+
+// Push constants for camera and rendering parameters
+layout(push_constant) uniform PushConstants {
+    mat4 viewMatrix;        // Camera view matrix (64 bytes)
+    vec4 gridParams;        // x=Nx, y=Ny, z=Nz, w=dx (grid spacing in nm)
+    vec4 renderParams;      // x=stepSize, y=maxSteps, z=densityScale, w=opacity
+    vec4 colorParams;       // x=minP, y=maxP, z=temperature, w=time
+    vec4 lightDir;          // xyz=normalized light direction, w=ambient
+} pc;
+
+// Constants
+const float PI = 3.14159265359;
+const float MAX_DIST = 100.0;
+
+// ============================================================================
+// COLOR PALETTES FOR DOMAIN VISUALIZATION
+// ============================================================================
+
+// Ferroelectric domain colormap: Blue (-P) to White (0) to Red (+P)
+vec3 domainColor(float P, float minP, float maxP) {
+    // Normalize P to [-1, 1] range
+    float Pnorm = clamp(2.0 * (P - minP) / (maxP - minP) - 1.0, -1.0, 1.0);
+
+    // Blue-White-Red diverging colormap
+    vec3 blue = vec3(0.1, 0.3, 0.9);   // Negative polarization
+    vec3 white = vec3(1.0, 1.0, 1.0);  // Domain wall / zero
+    vec3 red = vec3(0.9, 0.2, 0.1);    // Positive polarization
+
+    if (Pnorm < 0.0) {
+        return mix(white, blue, -Pnorm);
+    } else {
+        return mix(white, red, Pnorm);
+    }
+}
+
+// Scientific colormap (viridis-like) for energy density
+vec3 energyColor(float energy, float maxEnergy) {
+    float t = clamp(energy / maxEnergy, 0.0, 1.0);
+
+    // Viridis approximation
+    vec3 c0 = vec3(0.267, 0.004, 0.329);  // Dark purple
+    vec3 c1 = vec3(0.282, 0.140, 0.458);  // Purple
+    vec3 c2 = vec3(0.127, 0.566, 0.551);  // Teal
+    vec3 c3 = vec3(0.993, 0.906, 0.144);  // Yellow
+
+    if (t < 0.33) {
+        return mix(c0, c1, t * 3.0);
+    } else if (t < 0.67) {
+        return mix(c1, c2, (t - 0.33) * 3.0);
+    } else {
+        return mix(c2, c3, (t - 0.67) * 3.0);
+    }
+}
+
+// ============================================================================
+// GRID SAMPLING WITH TRILINEAR INTERPOLATION
+// ============================================================================
+
+// Sample polarization from 3D texture with boundary handling
+float samplePolarization(vec3 worldPos) {
+    // Convert world position to texture coordinates [0, 1]
+    vec3 gridSize = vec3(pc.gridParams.x, pc.gridParams.y, pc.gridParams.z);
+    float dx = pc.gridParams.w;
+
+    // Grid spans from 0 to (N-1)*dx in each dimension
+    vec3 texCoord = worldPos / (gridSize * dx);
+
+    // Clamp to valid range (or use periodic BC)
+    texCoord = fract(texCoord);  // Periodic boundary conditions
+
+    return texture(polarizationField, texCoord).r;
+}
+
+// Compute gradient of P for normal estimation
+vec3 computeGradient(vec3 pos, float eps) {
+    float dx = eps;
+    float Pxp = samplePolarization(pos + vec3(dx, 0, 0));
+    float Pxm = samplePolarization(pos - vec3(dx, 0, 0));
+    float Pyp = samplePolarization(pos + vec3(0, dx, 0));
+    float Pym = samplePolarization(pos - vec3(0, dx, 0));
+    float Pzp = samplePolarization(pos + vec3(0, 0, dx));
+    float Pzm = samplePolarization(pos - vec3(0, 0, dx));
+
+    return vec3(Pxp - Pxm, Pyp - Pym, Pzp - Pzm) / (2.0 * dx);
+}
+
+// ============================================================================
+// VOLUME RENDERING (RAY MARCHING)
+// ============================================================================
+
+// Check if point is inside the simulation volume
+bool insideVolume(vec3 pos) {
+    vec3 gridSize = vec3(pc.gridParams.x, pc.gridParams.y, pc.gridParams.z);
+    float dx = pc.gridParams.w;
+    vec3 maxBound = gridSize * dx;
+
+    return all(greaterThanEqual(pos, vec3(0.0))) && all(lessThan(pos, maxBound));
+}
+
+// Ray-box intersection for volume bounds
+bool intersectBox(vec3 ro, vec3 rd, out float tNear, out float tFar) {
+    vec3 gridSize = vec3(pc.gridParams.x, pc.gridParams.y, pc.gridParams.z);
+    float dx = pc.gridParams.w;
+    vec3 boxMin = vec3(0.0);
+    vec3 boxMax = gridSize * dx;
+
+    vec3 invDir = 1.0 / rd;
+    vec3 t1 = (boxMin - ro) * invDir;
+    vec3 t2 = (boxMax - ro) * invDir;
+
+    vec3 tMin = min(t1, t2);
+    vec3 tMax = max(t1, t2);
+
+    tNear = max(max(tMin.x, tMin.y), tMin.z);
+    tFar = min(min(tMax.x, tMax.y), tMax.z);
+
+    return tNear < tFar && tFar > 0.0;
+}
+
+// Volume raymarching with emission-absorption model
+vec4 raymarchVolume(vec3 ro, vec3 rd) {
+    float tNear, tFar;
+    if (!intersectBox(ro, rd, tNear, tFar)) {
+        return vec4(0.0);  // No intersection with volume
+    }
+
+    // Start from entry point (or camera if inside)
+    float t = max(tNear, 0.0);
+
+    float stepSize = pc.renderParams.x;
+    int maxSteps = int(pc.renderParams.y);
+    float densityScale = pc.renderParams.z;
+    float baseOpacity = pc.renderParams.w;
+
+    float minP = pc.colorParams.x;
+    float maxP = pc.colorParams.y;
+
+    // Accumulated color and transparency
+    vec3 accumulatedColor = vec3(0.0);
+    float accumulatedAlpha = 0.0;
+
+    // Light parameters
+    vec3 lightDir = normalize(pc.lightDir.xyz);
+    float ambient = pc.lightDir.w;
+
+    for (int i = 0; i < maxSteps; i++) {
+        if (t > tFar || accumulatedAlpha > 0.99) break;
+
+        vec3 pos = ro + rd * t;
+
+        // Sample polarization at this point
+        float P = samplePolarization(pos);
+
+        // Compute density from |P| - domain walls have low |P|
+        float absP = abs(P);
+        float density = absP * densityScale;
+
+        // Skip if density is too low (domain wall regions)
+        if (density > 0.01) {
+            // Get domain color based on sign of P
+            vec3 color = domainColor(P, minP, maxP);
+
+            // Simple lighting using gradient as normal
+            vec3 gradient = computeGradient(pos, stepSize);
+            float gradLen = length(gradient);
+            if (gradLen > 0.001) {
+                vec3 normal = gradient / gradLen;
+                float diffuse = max(dot(normal, lightDir), 0.0);
+                color = color * (ambient + (1.0 - ambient) * diffuse);
+            }
+
+            // Emission-absorption integration
+            float alpha = density * baseOpacity * stepSize;
+            alpha = clamp(alpha, 0.0, 1.0);
+
+            // Front-to-back compositing
+            accumulatedColor += (1.0 - accumulatedAlpha) * alpha * color;
+            accumulatedAlpha += (1.0 - accumulatedAlpha) * alpha;
+        }
+
+        t += stepSize;
+    }
+
+    return vec4(accumulatedColor, accumulatedAlpha);
+}
+
+// ============================================================================
+// ISOSURFACE RENDERING (Alternative to volume rendering)
+// ============================================================================
+
+// Find domain wall isosurface (where P crosses threshold)
+float domainWallSDF(vec3 pos, float threshold) {
+    float P = samplePolarization(pos);
+    return abs(P) - threshold;
+}
+
+// Raymarch to find domain wall surface
+bool findDomainWall(vec3 ro, vec3 rd, float threshold, out vec3 hitPos, out float hitDist) {
+    float tNear, tFar;
+    if (!intersectBox(ro, rd, tNear, tFar)) {
+        return false;
+    }
+
+    float t = max(tNear, 0.0);
+    float stepSize = pc.renderParams.x * 0.5;  // Smaller steps for surface finding
+
+    float prevSign = sign(domainWallSDF(ro + rd * t, threshold));
+
+    for (int i = 0; i < 256; i++) {
+        if (t > tFar) break;
+
+        vec3 pos = ro + rd * t;
+        float d = domainWallSDF(pos, threshold);
+        float currSign = sign(d);
+
+        // Sign change indicates crossing
+        if (currSign != prevSign && abs(d) < 0.1) {
+            hitPos = pos;
+            hitDist = t;
+            return true;
+        }
+
+        prevSign = currSign;
+        t += stepSize;
+    }
+
+    return false;
+}
+
+// ============================================================================
+// MAIN ENTRY POINT
+// ============================================================================
+
+void main() {
+    ivec2 pixelCoord = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 dim = imageSize(outputImage);
+
+    if (pixelCoord.x >= dim.x || pixelCoord.y >= dim.y) {
+        return;
+    }
+
+    vec2 resolution = vec2(dim);
+    vec2 uv = (vec2(pixelCoord) + 0.5) / resolution;
+    uv = uv * 2.0 - 1.0;
+    uv.x *= resolution.x / resolution.y;
+
+    // Camera setup from view matrix
+    vec3 ro = vec3(pc.viewMatrix[3]);  // Camera position
+
+    // Extract camera basis vectors
+    vec3 forward = -normalize(vec3(pc.viewMatrix[2]));
+    vec3 right = normalize(vec3(pc.viewMatrix[0]));
+    vec3 up = normalize(vec3(pc.viewMatrix[1]));
+
+    // Construct ray direction
+    float fov = 1.5;  // ~85 degrees
+    vec3 rd = normalize(forward * fov + right * uv.x + up * uv.y);
+
+    // Render volume
+    vec4 volumeColor = raymarchVolume(ro, rd);
+
+    // Background color (dark gradient)
+    float bgGrad = 0.5 + 0.5 * uv.y;
+    vec3 bgColor = mix(vec3(0.05, 0.05, 0.1), vec3(0.1, 0.1, 0.15), bgGrad);
+
+    // Composite volume over background
+    vec3 finalColor = volumeColor.rgb + (1.0 - volumeColor.a) * bgColor;
+
+    // Gamma correction
+    finalColor = pow(clamp(finalColor, 0.0, 1.0), vec3(1.0 / 2.2));
+
+    imageStore(outputImage, pixelCoord, vec4(finalColor, 1.0));
+}

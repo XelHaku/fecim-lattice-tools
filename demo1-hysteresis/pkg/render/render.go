@@ -129,6 +129,13 @@ func (hp *HysteresisPlot) AddPoint(E, P float64) {
 	}
 }
 
+// Clear removes all data points from the plot.
+func (hp *HysteresisPlot) Clear() {
+	hp.Points = hp.Points[:0]
+	hp.CurrentE = 0
+	hp.CurrentP = 0
+}
+
 // NormalizeToScreen converts data coordinates to screen coordinates (0-1 range).
 func (hp *HysteresisPlot) NormalizeToScreen(E, P float64) (float64, float64) {
 	x := (E - hp.EMin) / (hp.EMax - hp.EMin)
