@@ -65,13 +65,21 @@ This visualization project aims to:
 
 | Demo | Physics | Graphics | Overall |
 |------|---------|----------|---------|
-| **Demo 1: Hysteresis** | Complete | In Progress | Headless working |
-| **Demo 2: Crossbar MVM** | Partial | Not Started | Infrastructure only |
-| **Demo 3: Phase-Field** | Designed | Not Started | Specification only |
+| **Demo 1: Hysteresis** | Complete | Complete | **Vulkan visualization working** |
+| **Demo 2: Crossbar MVM** | Complete | Complete | **Terminal visualization working** |
+| **Demo 3: MNIST** | Complete | Complete | **Interactive classification working** |
 
-**What works today:**
+**All demos run independently!**
+
 ```bash
-go run demo1-hysteresis/cmd/hysteresis/main.go --headless
+# Demo 1: Vulkan P-E hysteresis visualization
+cd demo1-hysteresis && go build -o hysteresis ./cmd/hysteresis && ./hysteresis
+
+# Demo 2: Terminal crossbar MVM visualization
+cd demo2-crossbar && go build -o inference ./cmd/inference && ./inference --show-mvm
+
+# Demo 3: Interactive MNIST digit classification
+cd demo3-mnist && go build -o mnist ./cmd/mnist && ./mnist --interactive
 ```
 
 ---
@@ -116,9 +124,12 @@ ironlattice-vis/
 │   ├── PHYSICS.md               # Physics documentation
 │   └── README.md                # Demo-specific docs
 │
-├── demo3-phasefield/            # GPU phase-field domain simulator
-│   ├── PHYSICS.md               # TDGL equations documentation
-│   └── README.md                # Specifications
+├── demo3-mnist/                 # MNIST neural network classifier
+│   ├── cmd/mnist/               # Application entry point
+│   ├── pkg/
+│   │   ├── mnist/               # MNIST data loading
+│   │   └── training/            # Neural network on crossbar
+│   └── data/                    # Pretrained weights
 │
 └── go.mod                       # Go module definition
 ```
@@ -129,71 +140,128 @@ ironlattice-vis/
 
 ### Demo 1: Ferroelectric Hysteresis Visualizer
 
-**Status:** Physics complete, graphics in progress
+**Status:** Complete with Vulkan visualization
 
-Interactive visualization of a single ferroelectric memory cell:
+Interactive visualization of a single ferroelectric memory cell with real-time P-E hysteresis curve:
 
 ```
-┌────────────────┐      ┌──────────────────────┐
-│                │      │         P            │
-│     CELL       │      │         ↑    +Pᵣ     │
-│  (Color = P)   │      │         ┌────╮       │
-│                │      │    ─────┼────┼──→ E  │
-│                │      │         ╰────┘       │
-│                │      │              -Pᵣ     │
-└────────────────┘      └──────────────────────┘
+┌────────────────┐      ┌──────────────────────┐      ┌───────────┐
+│                │      │         P            │      │ ████ 30   │
+│     CELL       │      │         ↑    +Pᵣ     │      │ ████ 29   │
+│  (Color = P)   │      │         ┌────╮       │      │ ▓▓▓▓ ...  │
+│                │      │    ─────┼────┼──→ E  │      │ ░░░░ 1    │
+│                │      │         ╰────┘       │      │      0    │
+│                │      │              -Pᵣ     │      │ 30 LEVELS │
+└────────────────┘      └──────────────────────┘      └───────────┘
 ```
 
-**Implemented:**
+**Features:**
 - Preisach hysteresis model with history tracking
 - HZO material parameters from literature
-- Time-stepping simulation engine
-- 30 discrete analog state generation
+- Real-time Vulkan GPU rendering
+- 30 discrete analog state visualization
+- Keyboard controls for E-field (UP/DOWN arrows)
 - Multiple waveforms (sine, triangle, square)
-- Headless mode for data output
 
-**In Progress:**
-- Vulkan graphics pipeline
-- Real-time visualization
-- Interactive voltage control
-
-**Run headless mode:**
+**Build and Run:**
 ```bash
-go run demo1-hysteresis/cmd/hysteresis/main.go --headless
+cd demo1-hysteresis
+./shaders/compile.sh   # Compile SPIR-V shaders
+go build -o hysteresis ./cmd/hysteresis
+./hysteresis           # Vulkan window opens
 ```
+
+**Controls:**
+- **UP/DOWN arrows** - Adjust electric field
+- **ESC** - Exit
 
 ### Demo 2: Crossbar Array MVM
 
-**Status:** Infrastructure complete, computation in progress
+**Status:** Complete with terminal visualization
 
-Visualize Matrix-Vector Multiplication in memory:
+Visualize Matrix-Vector Multiplication in memory using colorful terminal display:
 
 ```
-V₁ ──→ [G₁₁][G₁₂][G₁₃] ──→ I₁ = Σ(Vⱼ × Gⱼ₁)
-V₂ ──→ [G₂₁][G₂₂][G₂₃] ──→ I₂ = Σ(Vⱼ × Gⱼ₂)
-V₃ ──→ [G₃₁][G₃₂][G₃₃] ──→ I₃ = Σ(Vⱼ × Gⱼ₃)
+    Input Vector (Voltages)
+    ↓   ↓   ↓   ↓   ↓
+V₁ ──→ [G₁₁][G₁₂][G₁₃] ──→ I₁ = Σ(Vⱼ × Gⱼ₁)    Output
+V₂ ──→ [G₂₁][G₂₂][G₂₃] ──→ I₂ = Σ(Vⱼ × Gⱼ₂)    Currents
+V₃ ──→ [G₃₁][G₃₂][G₃₃] ──→ I₃ = Σ(Vⱼ × Gⱼ₃)    (Outputs)
 
 Ohm's Law:      I = V × G  (multiplication)
 Kirchhoff's Law: Iₜₒₜₐₗ = ΣI (summation)
 ```
 
-**Implemented:**
-- Crossbar array data structures
-- Cell conductance modeling with noise
-- Weight programming interface
-- ADC/DAC quantization support
-- Network layer scaffolding
+**Features:**
+- Crossbar array with conductance visualization (block characters)
+- Real-time MVM computation display
+- Input/output vector visualization
+- 30-level conductance states
+- DAC/ADC quantization modeling
+- Device noise simulation
 
-**In Progress:**
-- MVM compute shader execution
-- MNIST inference pipeline
-- Non-ideality modeling (IR drop, sneak paths)
+**Build and Run:**
+```bash
+cd demo2-crossbar
+go build -o inference ./cmd/inference
+./inference --show-mvm      # Show MVM operation
+./inference --show-array    # Show full crossbar state
+```
 
-### Demo 3: GPU Phase-Field Domain Simulator
+**Options:**
+- `--show-array` - Display crossbar conductance matrix
+- `--show-mvm` - Visualize matrix-vector multiplication
+- `--no-color` - Disable colored output
 
-**Status:** Design complete, implementation not started
+### Demo 3: MNIST Neural Network Classifier
 
-GPU-accelerated Time-Dependent Ginzburg-Landau (TDGL) simulation for ferroelectric domain dynamics. Will visualize domain nucleation, growth, and switching at the nanoscale.
+**Status:** Complete with interactive mode
+
+Neural network digit classification running on ferroelectric crossbar arrays:
+
+```
+    ┌─────────────────────────────────────────────┐
+    │  Input: 28x28 = 784 pixels                  │
+    │         ↓                                   │
+    │  Layer 1: 784 → 128 (Crossbar Array #1)     │
+    │         ↓ ReLU                              │
+    │  Layer 2: 128 → 10 (Crossbar Array #2)      │
+    │         ↓ Softmax                           │
+    │  Output: 10 classes (digits 0-9)            │
+    │  Target: 87% accuracy (IronLattice spec)    │
+    └─────────────────────────────────────────────┘
+```
+
+**Features:**
+- Interactive digit drawing (ASCII art input)
+- Sample digit generation for testing
+- Full softmax probability visualization
+- Training mode with MNIST or synthetic data
+- Weight quantization to 30 discrete levels
+- Weight save/load for pretrained models
+
+**Build and Run:**
+```bash
+cd demo3-mnist
+go build -o mnist ./cmd/mnist
+./mnist --interactive          # Interactive mode (default)
+./mnist --train --epochs 10    # Training mode
+./mnist --evaluate             # Evaluation mode
+```
+
+**Interactive Commands:**
+- `sample N` - Classify sample digit N (0-9)
+- `draw` - Enter custom digit drawing mode
+- `test` - Run on random test samples
+- `quit` - Exit
+
+**Training Options:**
+- `--train` - Train the network
+- `--epochs N` - Number of training epochs
+- `--hidden N` - Hidden layer size (default: 128)
+- `--noise F` - Device noise level 0-1 (default: 0.02)
+- `--save FILE` - Save trained weights
+- `--load FILE` - Load pretrained weights
 
 ---
 
@@ -201,19 +269,18 @@ GPU-accelerated Time-Dependent Ginzburg-Landau (TDGL) simulation for ferroelectr
 
 | Component | Technology | Purpose | Status |
 |-----------|------------|---------|--------|
-| Language | Go 1.21+ | Performance + simplicity | Ready |
-| Graphics API | Vulkan 1.3 | Cross-platform GPU access | Planned |
-| Shaders | GLSL → SPIR-V | Compute + rendering | Defined |
-| Physics | Preisach model | Ferroelectric hysteresis | Implemented |
+| Language | Go 1.21+ | Performance + simplicity | **Ready** |
+| Graphics API | Vulkan 1.3 | Cross-platform GPU access | **Working** |
+| Shaders | GLSL → SPIR-V | Compute + rendering | **Working** |
+| Physics | Preisach model | Ferroelectric hysteresis | **Complete** |
+| Neural Network | Crossbar MVM | MNIST classification | **Complete** |
 | Simulation | TDGL | Domain dynamics | Planned |
 
-### Planned Dependencies
+### Dependencies
 
 ```go
-// Currently in go.mod as comments, to be added:
 github.com/bbredesen/go-vk  // Vulkan bindings
 github.com/go-gl/glfw       // Window management
-gonum.org/v1/gonum          // Math operations
 ```
 
 ---
@@ -223,42 +290,59 @@ gonum.org/v1/gonum          // Math operations
 ### Prerequisites
 
 - Go 1.21+
-- Vulkan SDK 1.3+ (for graphics demos)
+- Vulkan SDK 1.3+ (for Demo 1 graphics)
 - GLSL compiler `glslc` (for shader compilation)
 
-### Quick Start (Headless Physics)
-
-The physics simulation runs without any external dependencies:
+### Quick Start
 
 ```bash
 # Clone repository
 git clone https://github.com/yourusername/ironlattice-vis.git
 cd ironlattice-vis
 
-# Run demo 1 in headless mode (no graphics required)
-go run demo1-hysteresis/cmd/hysteresis/main.go --headless
+# Install Go dependencies
+go mod tidy
 ```
 
-### Full Installation (Graphics)
+### Full Installation (Ubuntu/Debian)
 
 ```bash
-# Install system dependencies (Ubuntu/Debian)
+# Install system dependencies
 sudo apt install vulkan-tools libvulkan-dev glslc
 
-# Install Go dependencies (when implemented)
-go mod tidy
-
-# Compile shaders
+# Compile shaders for Demo 1
 cd demo1-hysteresis/shaders && ./compile.sh && cd ../..
-
-# Build
-go build -o bin/hysteresis ./demo1-hysteresis/cmd/hysteresis
-
-# Run
-./bin/hysteresis
 ```
 
-> **Note:** Graphics mode is currently in development. Use `--headless` flag for working physics output.
+### Running the Demos
+
+**Demo 1: Hysteresis Visualization (Vulkan)**
+```bash
+cd demo1-hysteresis
+go build -o hysteresis ./cmd/hysteresis
+./hysteresis
+```
+
+**Demo 2: Crossbar MVM (Terminal)**
+```bash
+cd demo2-crossbar
+go build -o inference ./cmd/inference
+./inference --show-mvm
+```
+
+**Demo 3: MNIST Classifier (Interactive)**
+```bash
+cd demo3-mnist
+go build -o mnist ./cmd/mnist
+./mnist --interactive
+```
+
+### Headless Mode (No Graphics)
+
+For systems without Vulkan, Demo 1 supports headless mode:
+```bash
+go run demo1-hysteresis/cmd/hysteresis/main.go --headless
+```
 
 ---
 
@@ -342,11 +426,15 @@ In response to *"The Microchip Era is About to End"* (WSJ, Nov 2024), IronLattic
 Contributions welcome! Current priorities:
 
 - [x] Preisach model implementation
-- [ ] Vulkan graphics pipeline for demo 1
+- [x] Vulkan graphics pipeline for demo 1
+- [x] 30-level discrete state visualization
+- [x] MVM crossbar array simulation (demo 2)
+- [x] Terminal visualization for crossbar
+- [x] MNIST neural network on crossbar (demo 3)
+- [x] Interactive digit classification
 - [ ] Landau-Khalatnikov solver
-- [ ] MVM compute shader execution (demo 2)
-- [ ] Phase-field simulation (demo 3)
-- [ ] MNIST inference on crossbar array
+- [ ] Phase-field simulation
+- [ ] GPU-accelerated training
 
 ---
 

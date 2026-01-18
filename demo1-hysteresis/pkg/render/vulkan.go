@@ -2,11 +2,23 @@
 package render
 
 import (
+	"encoding/binary"
 	"fmt"
+	"math"
+	"os"
+	"path/filepath"
+	"runtime"
+	"unsafe"
 
 	"github.com/go-gl/glfw/v3.3/glfw"
 	vk "github.com/vulkan-go/vulkan"
 )
+
+// Vertex represents a vertex with position and color for GPU rendering.
+type Vertex struct {
+	Position [2]float32
+	Color    [4]float32
+}
 
 // VulkanRenderer implements Vulkan-based rendering for the hysteresis visualizer.
 type VulkanRenderer struct {
@@ -37,7 +49,18 @@ type VulkanRenderer struct {
 	renderPass     vk.RenderPass
 	pipelineLayout vk.PipelineLayout
 	pipeline       vk.Pipeline
+	linePipeline   vk.Pipeline // Pipeline for line rendering
 	framebuffers   []vk.Framebuffer
+
+	// Shaders
+	vertShaderModule vk.ShaderModule
+	fragShaderModule vk.ShaderModule
+
+	// Vertex buffer
+	vertexBuffer       vk.Buffer
+	vertexBufferMemory vk.DeviceMemory
+	vertexCount        uint32
+	maxVertices        uint32
 
 	// Commands
 	commandPool    vk.CommandPool
@@ -54,13 +77,41 @@ type VulkanRenderer struct {
 	// Queue family indices
 	graphicsFamily uint32
 	presentFamily  uint32
+
+	// Memory type indices
+	memoryProperties vk.PhysicalDeviceMemoryProperties
+
+	// Shader path
+	shaderDir string
+
+	// Current level display (0-29)
+	currentLevel int
 }
 
 // NewVulkanRenderer creates a new Vulkan-based renderer.
 func NewVulkanRenderer(config *Config) *VulkanRenderer {
+	// Find shader directory - try multiple locations
+	shaderDir := "demo1-hysteresis/shaders"
+	if _, err := os.Stat(shaderDir); os.IsNotExist(err) {
+		// Try relative to executable
+		exe, _ := os.Executable()
+		exeDir := filepath.Dir(exe)
+		shaderDir = filepath.Join(exeDir, "demo1-hysteresis", "shaders")
+		if _, err := os.Stat(shaderDir); os.IsNotExist(err) {
+			// Try runtime.Caller fallback
+			_, filename, _, ok := runtime.Caller(0)
+			if ok {
+				pkgDir := filepath.Dir(filename)
+				shaderDir = filepath.Join(pkgDir, "..", "..", "shaders")
+			}
+		}
+	}
+
 	return &VulkanRenderer{
-		config: config,
-		cell:   NewCellDisplay(),
+		config:      config,
+		cell:        NewCellDisplay(),
+		maxVertices: 50000, // Support lots of curve points
+		shaderDir:   shaderDir,
 	}
 }
 
@@ -165,6 +216,11 @@ func (r *VulkanRenderer) Initialize() error {
 	// Create sync objects
 	if err := r.createSyncObjects(); err != nil {
 		return fmt.Errorf("failed to create sync objects: %w", err)
+	}
+
+	// Create vertex buffer
+	if err := r.createVertexBuffer(); err != nil {
+		return fmt.Errorf("failed to create vertex buffer: %w", err)
 	}
 
 	return nil
@@ -317,6 +373,10 @@ func (r *VulkanRenderer) createLogicalDevice() error {
 	vk.GetDeviceQueue(r.device, r.presentFamily, 0, &presentQueue)
 	r.graphicsQueue = graphicsQueue
 	r.presentQueue = presentQueue
+
+	// Get memory properties for buffer allocation
+	vk.GetPhysicalDeviceMemoryProperties(r.physicalDevice, &r.memoryProperties)
+	r.memoryProperties.Deref()
 
 	return nil
 }
@@ -475,9 +535,147 @@ func (r *VulkanRenderer) createRenderPass() error {
 }
 
 func (r *VulkanRenderer) createGraphicsPipeline() error {
-	// For now, create a minimal pipeline layout without actual shaders
-	// Real implementation would load compiled SPIR-V shaders
+	// Load shader modules
+	vertPath := filepath.Join(r.shaderDir, "simple.vert.spv")
+	fragPath := filepath.Join(r.shaderDir, "simple.frag.spv")
 
+	vertCode, err := os.ReadFile(vertPath)
+	if err != nil {
+		return fmt.Errorf("failed to read vertex shader: %w", err)
+	}
+
+	fragCode, err := os.ReadFile(fragPath)
+	if err != nil {
+		return fmt.Errorf("failed to read fragment shader: %w", err)
+	}
+
+	// Create shader modules
+	r.vertShaderModule, err = r.createShaderModule(vertCode)
+	if err != nil {
+		return fmt.Errorf("failed to create vertex shader module: %w", err)
+	}
+
+	r.fragShaderModule, err = r.createShaderModule(fragCode)
+	if err != nil {
+		return fmt.Errorf("failed to create fragment shader module: %w", err)
+	}
+
+	// Shader stage info
+	vertShaderStageInfo := vk.PipelineShaderStageCreateInfo{
+		SType:  vk.StructureTypePipelineShaderStageCreateInfo,
+		Stage:  vk.ShaderStageVertexBit,
+		Module: r.vertShaderModule,
+		PName:  safeString("main"),
+	}
+
+	fragShaderStageInfo := vk.PipelineShaderStageCreateInfo{
+		SType:  vk.StructureTypePipelineShaderStageCreateInfo,
+		Stage:  vk.ShaderStageFragmentBit,
+		Module: r.fragShaderModule,
+		PName:  safeString("main"),
+	}
+
+	shaderStages := []vk.PipelineShaderStageCreateInfo{vertShaderStageInfo, fragShaderStageInfo}
+
+	// Vertex input - position (vec2) + color (vec4)
+	bindingDescription := vk.VertexInputBindingDescription{
+		Binding:   0,
+		Stride:    uint32(unsafe.Sizeof(Vertex{})),
+		InputRate: vk.VertexInputRateVertex,
+	}
+
+	attributeDescriptions := []vk.VertexInputAttributeDescription{
+		{
+			Binding:  0,
+			Location: 0,
+			Format:   vk.FormatR32g32Sfloat, // vec2 position
+			Offset:   0,
+		},
+		{
+			Binding:  0,
+			Location: 1,
+			Format:   vk.FormatR32g32b32a32Sfloat, // vec4 color
+			Offset:   uint32(unsafe.Offsetof(Vertex{}.Color)),
+		},
+	}
+
+	vertexInputInfo := vk.PipelineVertexInputStateCreateInfo{
+		SType:                           vk.StructureTypePipelineVertexInputStateCreateInfo,
+		VertexBindingDescriptionCount:   1,
+		PVertexBindingDescriptions:      []vk.VertexInputBindingDescription{bindingDescription},
+		VertexAttributeDescriptionCount: uint32(len(attributeDescriptions)),
+		PVertexAttributeDescriptions:    attributeDescriptions,
+	}
+
+	// Input assembly - triangles for fills, lines for curves
+	inputAssembly := vk.PipelineInputAssemblyStateCreateInfo{
+		SType:                  vk.StructureTypePipelineInputAssemblyStateCreateInfo,
+		Topology:               vk.PrimitiveTopologyTriangleList,
+		PrimitiveRestartEnable: vk.False,
+	}
+
+	// Viewport and scissor
+	viewport := vk.Viewport{
+		X:        0.0,
+		Y:        0.0,
+		Width:    float32(r.swapchainExtent.Width),
+		Height:   float32(r.swapchainExtent.Height),
+		MinDepth: 0.0,
+		MaxDepth: 1.0,
+	}
+
+	scissor := vk.Rect2D{
+		Offset: vk.Offset2D{X: 0, Y: 0},
+		Extent: r.swapchainExtent,
+	}
+
+	viewportState := vk.PipelineViewportStateCreateInfo{
+		SType:         vk.StructureTypePipelineViewportStateCreateInfo,
+		ViewportCount: 1,
+		PViewports:    []vk.Viewport{viewport},
+		ScissorCount:  1,
+		PScissors:     []vk.Rect2D{scissor},
+	}
+
+	// Rasterizer
+	rasterizer := vk.PipelineRasterizationStateCreateInfo{
+		SType:                   vk.StructureTypePipelineRasterizationStateCreateInfo,
+		DepthClampEnable:        vk.False,
+		RasterizerDiscardEnable: vk.False,
+		PolygonMode:             vk.PolygonModeFill,
+		LineWidth:               1.0,
+		CullMode:                vk.CullModeFlags(vk.CullModeNone),
+		FrontFace:               vk.FrontFaceCounterClockwise,
+		DepthBiasEnable:         vk.False,
+	}
+
+	// Multisampling
+	multisampling := vk.PipelineMultisampleStateCreateInfo{
+		SType:                vk.StructureTypePipelineMultisampleStateCreateInfo,
+		SampleShadingEnable:  vk.False,
+		RasterizationSamples: vk.SampleCount1Bit,
+	}
+
+	// Color blending with alpha support
+	colorBlendAttachment := vk.PipelineColorBlendAttachmentState{
+		ColorWriteMask:      vk.ColorComponentFlags(vk.ColorComponentRBit | vk.ColorComponentGBit | vk.ColorComponentBBit | vk.ColorComponentABit),
+		BlendEnable:         vk.True,
+		SrcColorBlendFactor: vk.BlendFactorSrcAlpha,
+		DstColorBlendFactor: vk.BlendFactorOneMinusSrcAlpha,
+		ColorBlendOp:        vk.BlendOpAdd,
+		SrcAlphaBlendFactor: vk.BlendFactorOne,
+		DstAlphaBlendFactor: vk.BlendFactorZero,
+		AlphaBlendOp:        vk.BlendOpAdd,
+	}
+
+	colorBlending := vk.PipelineColorBlendStateCreateInfo{
+		SType:           vk.StructureTypePipelineColorBlendStateCreateInfo,
+		LogicOpEnable:   vk.False,
+		AttachmentCount: 1,
+		PAttachments:    []vk.PipelineColorBlendAttachmentState{colorBlendAttachment},
+	}
+
+	// Pipeline layout
 	pipelineLayoutInfo := vk.PipelineLayoutCreateInfo{
 		SType: vk.StructureTypePipelineLayoutCreateInfo,
 	}
@@ -488,10 +686,89 @@ func (r *VulkanRenderer) createGraphicsPipeline() error {
 	}
 	r.pipelineLayout = pipelineLayout
 
-	// Note: Full pipeline creation requires shader modules
-	// For now we'll skip the pipeline and use a clear-only render pass
+	// Create the graphics pipeline for triangles
+	pipelineInfo := vk.GraphicsPipelineCreateInfo{
+		SType:               vk.StructureTypeGraphicsPipelineCreateInfo,
+		StageCount:          uint32(len(shaderStages)),
+		PStages:             shaderStages,
+		PVertexInputState:   &vertexInputInfo,
+		PInputAssemblyState: &inputAssembly,
+		PViewportState:      &viewportState,
+		PRasterizationState: &rasterizer,
+		PMultisampleState:   &multisampling,
+		PColorBlendState:    &colorBlending,
+		Layout:              r.pipelineLayout,
+		RenderPass:          r.renderPass,
+		Subpass:             0,
+	}
+
+	pipelines := make([]vk.Pipeline, 1)
+	if result := vk.CreateGraphicsPipelines(r.device, vk.NullPipelineCache, 1, []vk.GraphicsPipelineCreateInfo{pipelineInfo}, nil, pipelines); result != vk.Success {
+		return fmt.Errorf("failed to create graphics pipeline: %d", result)
+	}
+	r.pipeline = pipelines[0]
+
+	// Create line pipeline for curves
+	lineAssembly := vk.PipelineInputAssemblyStateCreateInfo{
+		SType:                  vk.StructureTypePipelineInputAssemblyStateCreateInfo,
+		Topology:               vk.PrimitiveTopologyLineList,
+		PrimitiveRestartEnable: vk.False,
+	}
+
+	lineRasterizer := vk.PipelineRasterizationStateCreateInfo{
+		SType:                   vk.StructureTypePipelineRasterizationStateCreateInfo,
+		DepthClampEnable:        vk.False,
+		RasterizerDiscardEnable: vk.False,
+		PolygonMode:             vk.PolygonModeFill,
+		LineWidth:               2.0, // Thicker lines for curves
+		CullMode:                vk.CullModeFlags(vk.CullModeNone),
+		FrontFace:               vk.FrontFaceCounterClockwise,
+		DepthBiasEnable:         vk.False,
+	}
+
+	linePipelineInfo := vk.GraphicsPipelineCreateInfo{
+		SType:               vk.StructureTypeGraphicsPipelineCreateInfo,
+		StageCount:          uint32(len(shaderStages)),
+		PStages:             shaderStages,
+		PVertexInputState:   &vertexInputInfo,
+		PInputAssemblyState: &lineAssembly,
+		PViewportState:      &viewportState,
+		PRasterizationState: &lineRasterizer,
+		PMultisampleState:   &multisampling,
+		PColorBlendState:    &colorBlending,
+		Layout:              r.pipelineLayout,
+		RenderPass:          r.renderPass,
+		Subpass:             0,
+	}
+
+	linePipelines := make([]vk.Pipeline, 1)
+	if result := vk.CreateGraphicsPipelines(r.device, vk.NullPipelineCache, 1, []vk.GraphicsPipelineCreateInfo{linePipelineInfo}, nil, linePipelines); result != vk.Success {
+		return fmt.Errorf("failed to create line graphics pipeline: %d", result)
+	}
+	r.linePipeline = linePipelines[0]
 
 	return nil
+}
+
+func (r *VulkanRenderer) createShaderModule(code []byte) (vk.ShaderModule, error) {
+	// Convert to uint32 slice
+	codeUint32 := make([]uint32, len(code)/4)
+	for i := range codeUint32 {
+		codeUint32[i] = binary.LittleEndian.Uint32(code[i*4:])
+	}
+
+	createInfo := vk.ShaderModuleCreateInfo{
+		SType:    vk.StructureTypeShaderModuleCreateInfo,
+		CodeSize: uint(len(code)),
+		PCode:    codeUint32,
+	}
+
+	var shaderModule vk.ShaderModule
+	if result := vk.CreateShaderModule(r.device, &createInfo, nil, &shaderModule); result != vk.Success {
+		return nil, fmt.Errorf("failed to create shader module: %d", result)
+	}
+
+	return shaderModule, nil
 }
 
 func (r *VulkanRenderer) createFramebuffers() error {
@@ -579,6 +856,87 @@ func (r *VulkanRenderer) createSyncObjects() error {
 	return nil
 }
 
+func (r *VulkanRenderer) createVertexBuffer() error {
+	bufferSize := vk.DeviceSize(r.maxVertices * uint32(unsafe.Sizeof(Vertex{})))
+
+	bufferInfo := vk.BufferCreateInfo{
+		SType:       vk.StructureTypeBufferCreateInfo,
+		Size:        bufferSize,
+		Usage:       vk.BufferUsageFlags(vk.BufferUsageVertexBufferBit),
+		SharingMode: vk.SharingModeExclusive,
+	}
+
+	var buffer vk.Buffer
+	if result := vk.CreateBuffer(r.device, &bufferInfo, nil, &buffer); result != vk.Success {
+		return fmt.Errorf("failed to create vertex buffer: %d", result)
+	}
+	r.vertexBuffer = buffer
+
+	// Get memory requirements
+	var memRequirements vk.MemoryRequirements
+	vk.GetBufferMemoryRequirements(r.device, r.vertexBuffer, &memRequirements)
+	memRequirements.Deref()
+
+	// Find suitable memory type
+	memTypeIndex := r.findMemoryType(memRequirements.MemoryTypeBits,
+		vk.MemoryPropertyFlags(vk.MemoryPropertyHostVisibleBit|vk.MemoryPropertyHostCoherentBit))
+	if memTypeIndex == ^uint32(0) {
+		return fmt.Errorf("failed to find suitable memory type")
+	}
+
+	allocInfo := vk.MemoryAllocateInfo{
+		SType:           vk.StructureTypeMemoryAllocateInfo,
+		AllocationSize:  memRequirements.Size,
+		MemoryTypeIndex: memTypeIndex,
+	}
+
+	var memory vk.DeviceMemory
+	if result := vk.AllocateMemory(r.device, &allocInfo, nil, &memory); result != vk.Success {
+		return fmt.Errorf("failed to allocate vertex buffer memory: %d", result)
+	}
+	r.vertexBufferMemory = memory
+
+	vk.BindBufferMemory(r.device, r.vertexBuffer, r.vertexBufferMemory, 0)
+
+	return nil
+}
+
+func (r *VulkanRenderer) findMemoryType(typeFilter uint32, properties vk.MemoryPropertyFlags) uint32 {
+	for i := uint32(0); i < r.memoryProperties.MemoryTypeCount; i++ {
+		r.memoryProperties.MemoryTypes[i].Deref()
+		if (typeFilter&(1<<i)) != 0 &&
+			(r.memoryProperties.MemoryTypes[i].PropertyFlags&properties) == properties {
+			return i
+		}
+	}
+	return ^uint32(0)
+}
+
+func (r *VulkanRenderer) updateVertexBuffer(vertices []Vertex) error {
+	if len(vertices) == 0 {
+		r.vertexCount = 0
+		return nil
+	}
+
+	if uint32(len(vertices)) > r.maxVertices {
+		vertices = vertices[:r.maxVertices]
+	}
+
+	bufferSize := vk.DeviceSize(len(vertices) * int(unsafe.Sizeof(Vertex{})))
+
+	var data unsafe.Pointer
+	vk.MapMemory(r.device, r.vertexBufferMemory, 0, bufferSize, 0, &data)
+
+	// Copy vertex data
+	vertexSlice := (*[1 << 30]Vertex)(data)[:len(vertices):len(vertices)]
+	copy(vertexSlice, vertices)
+
+	vk.UnmapMemory(r.device, r.vertexBufferMemory)
+
+	r.vertexCount = uint32(len(vertices))
+	return nil
+}
+
 func (r *VulkanRenderer) recordCommandBuffer(commandBuffer vk.CommandBuffer, imageIndex uint32) error {
 	beginInfo := vk.CommandBufferBeginInfo{
 		SType: vk.StructureTypeCommandBufferBeginInfo,
@@ -588,19 +946,9 @@ func (r *VulkanRenderer) recordCommandBuffer(commandBuffer vk.CommandBuffer, ima
 		return fmt.Errorf("failed to begin command buffer: %d", result)
 	}
 
-	// Clear color based on polarization - creates a dynamic background
-	normP := r.cell.Polarization
-	var clearR, clearG, clearB float32 = 0.1, 0.1, 0.15
-
-	// Shift background color slightly based on polarization
-	if normP > 0 {
-		clearR += float32(normP) * 0.1
-	} else {
-		clearB += float32(-normP) * 0.1
-	}
-
+	// Dark background
 	clearValue := vk.ClearValue{}
-	clearValue.SetColor([]float32{clearR, clearG, clearB, 1.0})
+	clearValue.SetColor([]float32{0.05, 0.05, 0.08, 1.0})
 
 	renderPassInfo := vk.RenderPassBeginInfo{
 		SType:       vk.StructureTypeRenderPassBeginInfo,
@@ -616,8 +964,32 @@ func (r *VulkanRenderer) recordCommandBuffer(commandBuffer vk.CommandBuffer, ima
 
 	vk.CmdBeginRenderPass(commandBuffer, &renderPassInfo, vk.SubpassContentsInline)
 
-	// Without a proper graphics pipeline, we can only clear the screen
-	// The clear color changes based on polarization state
+	// Generate vertices for visualization
+	vertices := r.generateVisualizationVertices()
+	if len(vertices) > 0 {
+		r.updateVertexBuffer(vertices)
+
+		// Bind pipeline and draw
+		vertexBuffers := []vk.Buffer{r.vertexBuffer}
+		offsets := []vk.DeviceSize{0}
+
+		// Draw filled primitives (cell, background elements)
+		vk.CmdBindPipeline(commandBuffer, vk.PipelineBindPointGraphics, r.pipeline)
+		vk.CmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets)
+
+		// Count triangle vertices (groups of 3)
+		triangleCount := r.countTriangleVertices(vertices)
+		if triangleCount > 0 {
+			vk.CmdDraw(commandBuffer, triangleCount, 1, 0, 0)
+		}
+
+		// Draw lines (curves)
+		if r.linePipeline != nil && r.vertexCount > triangleCount {
+			vk.CmdBindPipeline(commandBuffer, vk.PipelineBindPointGraphics, r.linePipeline)
+			lineCount := r.vertexCount - triangleCount
+			vk.CmdDraw(commandBuffer, lineCount, 1, triangleCount, 0)
+		}
+	}
 
 	vk.CmdEndRenderPass(commandBuffer)
 
@@ -628,9 +1000,318 @@ func (r *VulkanRenderer) recordCommandBuffer(commandBuffer vk.CommandBuffer, ima
 	return nil
 }
 
+func (r *VulkanRenderer) countTriangleVertices(vertices []Vertex) uint32 {
+	// Count vertices that are part of filled triangles
+	// Cell: 6, Plot bg: 6, Level bar bg: 6, Level bar segments: 30*6 = 180
+	// Total triangle vertices: 6 + 6 + 6 + 180 = 198
+	return 198
+}
+
+func (r *VulkanRenderer) generateVisualizationVertices() []Vertex {
+	var vertices []Vertex
+
+	// Get current polarization and compute level (0-29)
+	normP := r.cell.Polarization
+	level := int(math.Round((normP + 1.0) / 2.0 * 29.0))
+	if level < 0 {
+		level = 0
+	}
+	if level > 29 {
+		level = 29
+	}
+	r.currentLevel = level
+
+	// === TRIANGLES FIRST (drawn with triangle pipeline) ===
+
+	// 1. Draw ferroelectric cell (colored rectangle on left side) - 6 vertices
+	cellVertices := r.generateCellVertices(normP, level)
+	vertices = append(vertices, cellVertices...)
+
+	// 2. Draw P-E plot area background - 6 vertices
+	plotBgVertices := r.generatePlotBackgroundVertices()
+	vertices = append(vertices, plotBgVertices...)
+
+	// 3. Draw level indicator bar - 6 + 180 = 186 vertices
+	levelVertices := r.generateLevelBarVertices(level)
+	vertices = append(vertices, levelVertices...)
+
+	// === LINES AFTER (drawn with line pipeline) ===
+
+	// 4. Draw grid lines
+	gridVertices := r.generateGridVertices()
+	vertices = append(vertices, gridVertices...)
+
+	// 5. Draw axes
+	axisVertices := r.generateAxisVertices()
+	vertices = append(vertices, axisVertices...)
+
+	// 6. Draw hysteresis curve from plot data
+	if r.plot != nil && len(r.plot.Points) > 1 {
+		curveVertices := r.generateCurveVertices()
+		vertices = append(vertices, curveVertices...)
+	}
+
+	// 7. Draw current position marker
+	if r.plot != nil {
+		markerVertices := r.generateMarkerVertices()
+		vertices = append(vertices, markerVertices...)
+	}
+
+	return vertices
+}
+
+func (r *VulkanRenderer) generateCellVertices(normP float64, level int) []Vertex {
+	// Cell position (left side of screen)
+	x1 := float32(-0.9)
+	y1 := float32(-0.5)
+	x2 := float32(-0.5)
+	y2 := float32(0.5)
+
+	// Color based on polarization: blue (-) to white (0) to red (+)
+	var color [4]float32
+	if normP >= 0 {
+		// White to red
+		t := float32(normP)
+		color = [4]float32{1.0, 1.0 - t*0.7, 1.0 - t*0.9, 1.0}
+	} else {
+		// White to blue
+		t := float32(-normP)
+		color = [4]float32{1.0 - t*0.9, 1.0 - t*0.7, 1.0, 1.0}
+	}
+
+	// Two triangles forming a quad
+	return []Vertex{
+		{Position: [2]float32{x1, y1}, Color: color},
+		{Position: [2]float32{x2, y1}, Color: color},
+		{Position: [2]float32{x1, y2}, Color: color},
+		{Position: [2]float32{x2, y1}, Color: color},
+		{Position: [2]float32{x2, y2}, Color: color},
+		{Position: [2]float32{x1, y2}, Color: color},
+	}
+}
+
+func (r *VulkanRenderer) generatePlotBackgroundVertices() []Vertex {
+	// Plot area background (dark)
+	x1 := float32(-0.35)
+	y1 := float32(-0.8)
+	x2 := float32(0.95)
+	y2 := float32(0.8)
+
+	bgColor := [4]float32{0.1, 0.1, 0.12, 1.0}
+
+	return []Vertex{
+		{Position: [2]float32{x1, y1}, Color: bgColor},
+		{Position: [2]float32{x2, y1}, Color: bgColor},
+		{Position: [2]float32{x1, y2}, Color: bgColor},
+		{Position: [2]float32{x2, y1}, Color: bgColor},
+		{Position: [2]float32{x2, y2}, Color: bgColor},
+		{Position: [2]float32{x1, y2}, Color: bgColor},
+	}
+}
+
+func (r *VulkanRenderer) generateGridVertices() []Vertex {
+	var vertices []Vertex
+
+	gridColor := [4]float32{0.25, 0.25, 0.3, 0.5}
+
+	// Plot bounds
+	plotX1, plotY1 := float32(-0.35), float32(-0.8)
+	plotX2, plotY2 := float32(0.95), float32(0.8)
+
+	// Grid lines (10 divisions)
+	divisions := 10
+	for i := 0; i <= divisions; i++ {
+		t := float32(i) / float32(divisions)
+
+		// Vertical line
+		x := plotX1 + t*(plotX2-plotX1)
+		vertices = append(vertices,
+			Vertex{Position: [2]float32{x, plotY1}, Color: gridColor},
+			Vertex{Position: [2]float32{x, plotY2}, Color: gridColor},
+		)
+
+		// Horizontal line
+		y := plotY1 + t*(plotY2-plotY1)
+		vertices = append(vertices,
+			Vertex{Position: [2]float32{plotX1, y}, Color: gridColor},
+			Vertex{Position: [2]float32{plotX2, y}, Color: gridColor},
+		)
+	}
+
+	return vertices
+}
+
+func (r *VulkanRenderer) generateAxisVertices() []Vertex {
+	axisColor := [4]float32{0.8, 0.8, 0.8, 1.0}
+
+	// Plot bounds
+	plotX1, plotY1 := float32(-0.35), float32(-0.8)
+	plotX2, plotY2 := float32(0.95), float32(0.8)
+
+	// Center of plot
+	centerX := (plotX1 + plotX2) / 2
+	centerY := (plotY1 + plotY2) / 2
+
+	return []Vertex{
+		// X-axis (E field)
+		{Position: [2]float32{plotX1, centerY}, Color: axisColor},
+		{Position: [2]float32{plotX2, centerY}, Color: axisColor},
+		// Y-axis (Polarization)
+		{Position: [2]float32{centerX, plotY1}, Color: axisColor},
+		{Position: [2]float32{centerX, plotY2}, Color: axisColor},
+	}
+}
+
+func (r *VulkanRenderer) generateCurveVertices() []Vertex {
+	var vertices []Vertex
+
+	if r.plot == nil || len(r.plot.Points) < 2 {
+		return vertices
+	}
+
+	curveColor := [4]float32{0.2, 0.6, 1.0, 1.0}
+
+	// Plot bounds
+	plotX1, plotY1 := float32(-0.35), float32(-0.8)
+	plotX2, plotY2 := float32(0.95), float32(0.8)
+
+	// Convert plot points to screen coordinates
+	for i := 0; i < len(r.plot.Points)-1; i++ {
+		// Normalize to 0-1
+		x1, y1 := r.plot.NormalizeToScreen(r.plot.Points[i].X, r.plot.Points[i].Y)
+		x2, y2 := r.plot.NormalizeToScreen(r.plot.Points[i+1].X, r.plot.Points[i+1].Y)
+
+		// Convert to plot area coordinates
+		screenX1 := plotX1 + float32(x1)*(plotX2-plotX1)
+		screenY1 := plotY1 + float32(y1)*(plotY2-plotY1)
+		screenX2 := plotX1 + float32(x2)*(plotX2-plotX1)
+		screenY2 := plotY1 + float32(y2)*(plotY2-plotY1)
+
+		// Trail fade effect - older points are more transparent
+		alpha := float32(0.3) + float32(i)/float32(len(r.plot.Points))*0.7
+		fadeColor := [4]float32{curveColor[0], curveColor[1], curveColor[2], alpha}
+
+		vertices = append(vertices,
+			Vertex{Position: [2]float32{screenX1, screenY1}, Color: fadeColor},
+			Vertex{Position: [2]float32{screenX2, screenY2}, Color: fadeColor},
+		)
+	}
+
+	return vertices
+}
+
+func (r *VulkanRenderer) generateMarkerVertices() []Vertex {
+	var vertices []Vertex
+
+	if r.plot == nil {
+		return vertices
+	}
+
+	markerColor := [4]float32{1.0, 0.3, 0.3, 1.0}
+
+	// Plot bounds
+	plotX1, plotY1 := float32(-0.35), float32(-0.8)
+	plotX2, plotY2 := float32(0.95), float32(0.8)
+
+	// Current position
+	x, y := r.plot.NormalizeToScreen(r.plot.CurrentE, r.plot.CurrentP)
+	screenX := plotX1 + float32(x)*(plotX2-plotX1)
+	screenY := plotY1 + float32(y)*(plotY2-plotY1)
+
+	// Draw a diamond marker
+	size := float32(0.02)
+	vertices = append(vertices,
+		// Top
+		Vertex{Position: [2]float32{screenX, screenY + size}, Color: markerColor},
+		Vertex{Position: [2]float32{screenX - size, screenY}, Color: markerColor},
+		// Right
+		Vertex{Position: [2]float32{screenX, screenY + size}, Color: markerColor},
+		Vertex{Position: [2]float32{screenX + size, screenY}, Color: markerColor},
+		// Bottom
+		Vertex{Position: [2]float32{screenX + size, screenY}, Color: markerColor},
+		Vertex{Position: [2]float32{screenX, screenY - size}, Color: markerColor},
+		// Left
+		Vertex{Position: [2]float32{screenX, screenY - size}, Color: markerColor},
+		Vertex{Position: [2]float32{screenX - size, screenY}, Color: markerColor},
+	)
+
+	return vertices
+}
+
+func (r *VulkanRenderer) generateLevelBarVertices(level int) []Vertex {
+	var vertices []Vertex
+
+	// Level indicator bar on the right of the cell
+	barX := float32(-0.45)
+	barY1 := float32(-0.5)
+	barY2 := float32(0.5)
+	barWidth := float32(0.03)
+
+	// Background bar
+	bgColor := [4]float32{0.2, 0.2, 0.25, 1.0}
+	vertices = append(vertices,
+		Vertex{Position: [2]float32{barX, barY1}, Color: bgColor},
+		Vertex{Position: [2]float32{barX + barWidth, barY1}, Color: bgColor},
+		Vertex{Position: [2]float32{barX, barY2}, Color: bgColor},
+		Vertex{Position: [2]float32{barX + barWidth, barY1}, Color: bgColor},
+		Vertex{Position: [2]float32{barX + barWidth, barY2}, Color: bgColor},
+		Vertex{Position: [2]float32{barX, barY2}, Color: bgColor},
+	)
+
+	// Level indicator segments (30 levels)
+	segHeight := (barY2 - barY1) / 30.0
+	for i := 0; i < 30; i++ {
+		y1 := barY1 + float32(i)*segHeight + 0.002
+		y2 := barY1 + float32(i+1)*segHeight - 0.002
+
+		var segColor [4]float32
+		if i == level {
+			// Current level - bright white
+			segColor = [4]float32{1.0, 1.0, 1.0, 1.0}
+		} else if i < level {
+			// Below current level - gradient blue to white
+			t := float32(i) / 29.0
+			segColor = [4]float32{0.3 + t*0.7, 0.3 + t*0.7, 1.0, 0.6}
+		} else {
+			// Above current level - gradient white to red
+			t := float32(i) / 29.0
+			segColor = [4]float32{1.0, 1.0 - t*0.7, 1.0 - t*0.7, 0.6}
+		}
+
+		vertices = append(vertices,
+			Vertex{Position: [2]float32{barX + 0.002, y1}, Color: segColor},
+			Vertex{Position: [2]float32{barX + barWidth - 0.002, y1}, Color: segColor},
+			Vertex{Position: [2]float32{barX + 0.002, y2}, Color: segColor},
+			Vertex{Position: [2]float32{barX + barWidth - 0.002, y1}, Color: segColor},
+			Vertex{Position: [2]float32{barX + barWidth - 0.002, y2}, Color: segColor},
+			Vertex{Position: [2]float32{barX + 0.002, y2}, Color: segColor},
+		)
+	}
+
+	return vertices
+}
+
 // Run starts the main render loop.
 func (r *VulkanRenderer) Run() error {
 	r.running = true
+
+	// Set up key callback for interactive control
+	r.window.SetKeyCallback(func(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
+		if action == glfw.Press || action == glfw.Repeat {
+			switch key {
+			case glfw.KeyEscape:
+				r.running = false
+			case glfw.KeyQ:
+				r.running = false
+			}
+		}
+	})
+
+	// Print controls
+	fmt.Println("\nControls:")
+	fmt.Println("  ESC/Q : Quit")
+	fmt.Println("  The simulation runs automatically")
+	fmt.Println()
 
 	for r.running && !r.window.ShouldClose() {
 		glfw.PollEvents()
@@ -715,6 +1396,14 @@ func (r *VulkanRenderer) Cleanup() {
 	if r.device != nil {
 		vk.DeviceWaitIdle(r.device)
 
+		// Destroy vertex buffer
+		if r.vertexBuffer != nil {
+			vk.DestroyBuffer(r.device, r.vertexBuffer, nil)
+		}
+		if r.vertexBufferMemory != nil {
+			vk.FreeMemory(r.device, r.vertexBufferMemory, nil)
+		}
+
 		vk.DestroySemaphore(r.device, r.imageAvailableSem, nil)
 		vk.DestroySemaphore(r.device, r.renderFinishedSem, nil)
 		vk.DestroyFence(r.device, r.inFlightFence, nil)
@@ -728,8 +1417,19 @@ func (r *VulkanRenderer) Cleanup() {
 		if r.pipeline != nil {
 			vk.DestroyPipeline(r.device, r.pipeline, nil)
 		}
+		if r.linePipeline != nil {
+			vk.DestroyPipeline(r.device, r.linePipeline, nil)
+		}
 		vk.DestroyPipelineLayout(r.device, r.pipelineLayout, nil)
 		vk.DestroyRenderPass(r.device, r.renderPass, nil)
+
+		// Destroy shader modules
+		if r.vertShaderModule != nil {
+			vk.DestroyShaderModule(r.device, r.vertShaderModule, nil)
+		}
+		if r.fragShaderModule != nil {
+			vk.DestroyShaderModule(r.device, r.fragShaderModule, nil)
+		}
 
 		for _, iv := range r.imageViews {
 			vk.DestroyImageView(r.device, iv, nil)
