@@ -354,7 +354,13 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	freqSlider.Value = 0.5
 	freqLabel := widget.NewLabel("Frequency: 0.50 Hz")
 	freqSlider.OnChanged = func(v float64) {
+		a.mu.Lock()
 		a.frequency = v
+		// Reset trail when frequency changes
+		a.eHistory = a.eHistory[:0]
+		a.pHistory = a.pHistory[:0]
+		a.simTime = 0
+		a.mu.Unlock()
 		freqLabel.SetText(fmt.Sprintf("Frequency: %.2f Hz", v))
 	}
 
@@ -435,19 +441,24 @@ func (a *App) simulationLoop() {
 		dt := time.Since(lastTime).Seconds()
 		lastTime = time.Now()
 		a.simTime += dt
+		// Wrap simTime to prevent floating-point issues after long runs
+		if a.simTime > 1000 {
+			a.simTime = math.Mod(a.simTime, 1000)
+		}
 
 		a.mu.Lock()
 
 		// Generate E-field based on waveform
 		if a.autoMode && a.waveform != WaveformManual {
 			Emax := a.material.Ec * 2
-			phase := 2 * math.Pi * a.frequency * a.simTime
+			// Wrap phase to prevent floating-point precision loss over long times
+			phase := math.Mod(2*math.Pi*a.frequency*a.simTime, 2*math.Pi)
 
 			switch a.waveform {
 			case WaveformSine:
 				a.electricField = Emax * math.Sin(phase)
 			case WaveformTriangle:
-				p := math.Mod(phase, 2*math.Pi) / (2 * math.Pi)
+				p := phase / (2 * math.Pi)
 				if p < 0.25 {
 					a.electricField = Emax * (4 * p)
 				} else if p < 0.75 {
@@ -841,15 +852,16 @@ func (r *levelRenderer) Refresh() {
 	bg.Resize(size)
 	r.objects = append(r.objects, bg)
 
-	// Draw 30 level segments
-	margin := float32(5)
-	barW := size.Width - 2*margin
-	totalH := size.Height - 2*margin
+	// Draw 30 level segments - use same margin as plot (40) to align vertically
+	marginH := float32(40) // Match plot's vertical margin
+	marginW := float32(5)
+	barW := size.Width - 2*marginW
+	totalH := size.Height - 2*marginH
 	segH := totalH / 30
 	gap := float32(2)
 
 	for i := 0; i < 30; i++ {
-		y := margin + float32(29-i)*segH
+		y := marginH + float32(29-i)*segH
 
 		var segColor color.RGBA
 		if i == level {
@@ -877,14 +889,14 @@ func (r *levelRenderer) Refresh() {
 
 		seg := canvas.NewRectangle(segColor)
 		seg.Resize(fyne.NewSize(barW, segH-gap))
-		seg.Move(fyne.NewPos(margin, y))
+		seg.Move(fyne.NewPos(marginW, y))
 		r.objects = append(r.objects, seg)
 
 		// Level number for every 5th level
 		if i%5 == 0 || i == 29 {
 			label := canvas.NewText(fmt.Sprintf("%d", i+1), colorAxis)
 			label.TextSize = 10
-			label.Move(fyne.NewPos(margin+barW+2, y))
+			label.Move(fyne.NewPos(marginW+barW+2, y))
 			r.objects = append(r.objects, label)
 		}
 	}
