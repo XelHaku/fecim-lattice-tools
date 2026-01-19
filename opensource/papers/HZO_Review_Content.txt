@@ -1,0 +1,230 @@
+An optical diffractive deep neural network with
+multiple frequency-channels
+Yingshi Chen1, Jinfeng Zhu1
+1 Institute of Electromagnetics and Acoustics, and Department of Electronic Science, Xiamen University, Xiamen 361005, China
+
+E-mail: gsp@grusoft.com
+
+Abstract
+Diffractive deep neural network (DNNet) is a novel machine learning framework on the modulation of optical transmission. Diffractive
+network would get predictions at the speed of light. It's pure passive architecture, no additional power consumption. We improved the
+accuracy of diffractive network with optical waves at different frequency. Each layers have multiple frequency-channels (optical distributions
+at different frequency). These channels are merged at the output plane to get final output. The experiment in the fasion-MNIST and EMNIST
+datasets showed multiple frequency-channels would increase the accuracy a lot. We also give detailed analysis to show the difference between
+DNNet and MLP. The modulation process in DNNet is actually optical activation function. We develop an open source package ONNet.
+The source codes are available at https://github.com/closest-git/ONNet.
+
+Keywords: machine learning, optical neural network, multiple frequency channel, optical activation function
+
+1. Introduction
+   Diffractive deep neural network(DNNet)[1,2] is a novel machine learning framework on the physical principles of optics,
+which is still in its infancy and shows great potential. DNNet tries to find optimal modulation parameters to change the phase,
+amplitude or other physical variable of optical wave propagation. So in the final output plane, the optical distribution has special
+pattern which is the indicator of object’s class or value. DNNet tries to extract features from the wave distribution in the three
+dimensional space, which is fundamentally different from the images, audios or videos. The learning of wave propagation has
+hardly been studied in machine learning. This is a new subject. DNNet opens new doors for the machine learning.
+   If must have to pick a reference, the most similar tool in the machine learning is multiple layer perceptron (MLP) [10]. [1]
+gives some comparison between the structure of diffractive neural networks and electronic networks, which is actually MLP.
+As we showed in section 2, there are still many big differences. Compared to more complex deep convolution neural networks
+(CNN), DNNet lacks more key features: 1) No convolution layers. 2) No batch normalization or other normalization module.
+3) No pooling layers. There are some ways to implement more complex optical neural networks, which have optical
+normalization layers and optical pooling layers (We will discuss this in the following papers). But the first point is the key
+difference. There’s no sign how to add some optical kernels to learn the various details and hierarchical features of input images.
+So learning ability of DNNet is much weak than CNN, which is also verified by our testing results. Even in the tiny fashion-
+MNIST and EMNIST [19] datasets, the performance is not satisfactory. So there is long way for the DNNet to catch up with
+his cousin, deep MLP or deep CNN.
+   In this article, we present a new diffractive network with multiple frequency-channels (MF_DNet). We define frequency
+channel as the optical distribution corresponding to a certain frequency at each layer. As figure 1 showes, we use optical waves
+at different frequency to get more frequency-channels. Then we merge these channels to get final result at the output layer.
+Experiments show that this method improves the accuracy. The D2NNet in [1] is the simplest MF_DNet. Or MF_DNet with
+only one channel.
+   For the simulation of optical neural networks, we developed ONNet. It’s an open-source Python/C++ package and the codes
+are available at https://github.com/closest-git/ONNet. ONNet implements diffractive layer on the module of pytorch [15],
+which is one of the best deep learning frameworks. With the powerful automatic differentiation [17] in pytorch, it’s easy to get
+the gradient for all operations in the complex diffractive process. For example, the fast Fourier transform (FFT) and inverse
+FFT operator, which is the key operator for the numerical simulation of diffractive process. The main disadvantage of pytorch
+is the lack of support for complex tensors. ONNet implemented various complex-number tensor operations. As mentioned
+above, DNNet is not CNN, so ONNet has not use any convolution layers in the current release.
+                  Figure 1 MF_DNet - Diffractive deep neural network with multiple frequecncy-channels
+
+    So the main contributions of this paper are as follows. 1) A detailed and in-depth analysis of DNNet’s structure. We
+compared the similarity and difference between DNNet and MLP. The modulation process in DNNet is actually optical
+activation function. 2) We present MF_DNet, which improve DNNet with multi-frequency channels. The more channels, the
+higher accuracy. 3) An open source package ONNet that will bring a lot of help to the simulation of optical neural networks.
+
+2. Analysis of DNNet
+  For the wave from ith pixel in the lth layer, formula (1) defines its distribution in the three dimensional space.
+                                       𝑙       𝑝−𝑝𝑖        1      1         𝑗2𝜋𝑟
+                                      𝜔𝑖,𝑝 =          (         + ) 𝑒𝑥𝑝 (          )       (1)
+                                                𝑟2        2𝜋𝑟    𝑗𝜆          𝜆
+  Where 𝑟 is distance between the point 𝑝 and 𝑝𝑖 ; 𝑗 = √−1; 𝜆 is the wavelength.
+
+   For the detail proof of formula (1), please see [1]. DNNet uses stacked layers to adjust the propagation of optical waves. As
+figure 1 showes, each pixel in each diffractive layer(including input and oupt layer) has different modulation parameters. They
+will change the amplitude and phase value of optical waves. So in the final output layer , there are special optical pattern. Some
+regions are more brighter than other regions. By adjusting these parameters, we can change the position of brighter regions. To
+use these patterns as the indicator of class number, we must solve a very difficult optimazation probem. Machine learnig is a
+poweful tool for this problem. And experiments verified that we do find possible solution with acceptable accuracy. This
+stacked multilayers are similar to the structure of MLP, but there are still many big differences.
+   To compare classical multiple layer perceptron (MLP) and DNNet, we first give some concise definition of MLP. Let
+complex function 𝑓(𝑥; 𝜃) is the target function parameterized by θ in complex space ℂ . Given training data D =
+{(𝑥𝑖 , 𝑦𝑖 ), 𝑖 = 1,2, ⋯ , 𝑀} where x denotes the input and y the class number. A MLP try to learn the function 𝑓(𝑥; 𝜃) by neural
+network usually consists of stacked layers. The learned model should fit the training data well and have good generalization in
+the testing data. Let L denotes the total number of layers and 𝑙 ∈ {1,2, ⋯ , 𝐿}, formula (2) defines the transformation in the
+classical MLP, which consists of a linear mapping 𝑍 𝑙 = (𝑊 𝑙 )𝑇 ℎ𝑙−1 + 𝑏 𝑙 and followed by an element-wise nonlinearity
+activation function: ℎ𝑙 = ∅(𝑧 𝑙 ).
+                                                          ℎ𝑙 = ∅(𝑧 𝑙 )
+                                                  { 𝑙         𝑙−1 𝑙−1              (2)
+                                                   𝑧𝑖 = ∑𝑘 𝑤𝑘,𝑖  ℎ𝑘 + 𝑏 𝑙
+                                                    𝑙−1 𝑙
+                                                  𝑤𝑘,𝑖 , 𝑏 ∈ ℂ𝑛 are learnable parameters
+   Formula (3) defines transformation in the DNNet [1, 2].
+
+
+
+
+                                                                      2
+                                                      ℎ𝑖𝑙 = 𝑡𝑖𝑙 𝑧𝑖𝑙
+                                                   𝑙         𝑙−1 𝑙−1
+                                                 {𝑧𝑖 = ∑𝑘 𝜔𝑘,𝑖     ℎ𝑘                         (3)
+                                                  𝑡𝑖 = 𝑎𝑖 𝑒𝑥𝑝(𝑗𝜙𝑖𝑙 )
+                                                    𝑙     𝑙
+
+   where
+                                                𝑙       𝑝−𝑝𝑖        1         1      𝑗2𝜋𝑟
+                                               𝜔𝑖,𝑝 =          (         + ) 𝑒𝑥𝑝 (          ) are constants for the wave propagation
+                                                         𝑟2        2𝜋𝑟        𝑗𝜆𝜆
+                                                𝑎𝑖𝑙 (amplitude), 𝜙𝑖𝑙 (the pahse value ) are learnable parameters
+
+   Compare formula (2) and formula (3), we could see three differences.
+                                                                                   𝑙−1
+   1) The difference meaning of transfer matrix 𝑊 𝑙 . In the case of DNNet, 𝜔𝑘,𝑖       is not learnable parameters, just some constants
+from the numerical simulation of wave propagation. In fact, ONNnet package calculate these parameters before the training
+process. And reuse these values to reduce computation time. So for each hidden layer with N neurons, MLP has N × N
+parameters, while DDnet has only 2N parameters. In some implementions, 𝑎𝑖𝑙 is always 1 and only 𝜙𝑖𝑙 are adjustable parameters,
+so only N parameters in this case.
+   2) DNNet has special activation function. That is, ℎ𝑖𝑙 = 𝑡𝑖𝑙 𝑧𝑖𝑙 is an optical activation defined in the complex space. [1] declares
+ 𝑙
+𝑡𝑖 is something like bias item. But we think that it just special activation functions. In fact, we can add extra bias item as
+discussed in the next point.
+   3) No bias item 𝑏 𝑙 . We have tried to add bias item 𝑏 𝑙 in the DNNet, that is,
+                                     ℎ𝑖𝑙 = 𝑡𝑖𝑙 𝑧𝑖𝑙 + 𝑏 𝑙 .
+But no significant change in the accuracy. We would give detailed analysis in the following paper.
+
+3. Diffractive network with multiple frequency-channels
+   For each diffractive layers, there are different optical distribution at different frequency. We call these optical distributions
+as frequency-channels, just like different channels in the CNN. It’s well knowned that deep CNN would get higher accuracy
+with more channels. So we get similar results in the DNNet, higher accuracy with more frequency-channels.
+   At the output layer, we get frequency-channel at different frequncy. Then we merge these channels to get final result with
+weighting coefficient. The loss function is defined in formula (4).
+                                    Loss = 𝑙𝑜𝑠𝑠(∑ 𝑤𝑓 × 𝑐ℎ𝑎𝑛𝑛𝑒𝑙 )                             (4)
+   where
+         𝑙𝑜𝑠𝑠 is the function to get classification error. For exsample, cross entropy function or mean squared error.
+         𝑤𝑓 is the weighting coefficient for each 𝑐ℎ𝑎𝑛𝑛𝑒𝑙, which is also learned by MF_DNET.
+
+   The following is the detail of training and predicting algorithm.
+                                                  Algorithm 1 Training algorithm
+
+                        1 Pick some frequencies in specified range
+                        2 for each frequency
+                               Get the frequency-channel at each layer
+                               At output plane, get modulus for each frequency-channel
+                        3 Sum up all output modulus with the weighting coefficient
+                        4 Get loss by the formula (4)
+                        5 Get gradient from the loss function and call back-propagation to improve the model
+                        6 finish training, save the model
+
+
+
+
+                                                                          3
+                                          Algorithm 2 Predicting algorithm for input image
+
+                        1 Load trained model for each frequency
+                        2 For each model
+                              Get the frequency-channel at each layer
+                              At output plane, get modulus for each frequency-channel
+                        3 Sum up all output modulus with the weighting coefficient
+                        4 Call cross-entropy classification function to get output vector
+                        5 The class number is the index corresponding to maximum value
+
+  As figure 1 showes, there are some modifications to implement MF_DNet. At the input layer, we transmit different optical
+ pulse one by one. The output layer need an extra optical accumulator to merge the signals at different channels. MF_DNet
+ still retains the advantage of DNNet. That is, MF_DNet would get predictions at the speed of light. It's pure passive
+ architecture, no additional power consumption.
+
+3. Results and discussion
+   We tested MF_DNet on two MNIST-like datasets(fasion-MNIST, EMNIST[19]), which is harder than MNIST. MNIST is
+the simplest testing datasets in image classification problems. It’s so trivial that nearly no machine learning teams will use
+MNIST as testing dataset. Since DNNet has good accuary of in MNIST(higher than 90%) [1] , we should test it by more
+complex datasets. fasion-MNIST consists of a training set consisting of 60000 examples belonging to 10 different classes and
+a test set of 10000 examples. Figure 2 showes some pictures of fasion-MNIST. EMNIST is a set of handwritten character digits
+derived from the NIST Special Database 19. We use the “balanced” split of EMNIST which has 47 classes. Figure 3 showes
+some pictures of EMNIST.
+   Figure 4 is the learning curves on fasion-MNIST. Figure 5 is the learning curves on EMNIST. It’s clear that with more
+frequency channels, MF_DNet would get much higher accuracy than standard DDNet. In the case fasion-MNIST, the accuracy
+increased from 73% to 85%. In the case EMNIST, the accuracy increased from 50% to 73%.
+   In the case of EMNIST, we must admit the performance on the EMNIST is poor (only 73%). But this is not the question.
+Just as said in the start of this article, diffractive is still in its infancy. With more structures and algorithms, we are sure there
+will be a great improvement. Just like the RELU, batch normalization, drop out…, these algorithms improve the accuracy of
+deep CNN drastically.
+
+
+
+
+         Figure 2 fasion-MNIST datasets (10 classes)                        Figure 3 EMNIST datasets(47 classes)
+
+
+
+
+     Figure 4 The learning cuvers on fasion-MNIST                     Figure 5 The learning cuvers on EMNIST
+
+
+
+
+                                                                  4
+4 Conclusions
+  We give some in-depth analysis of DNNet’s structure. We clarify that modulation process in DNNet is actually optical
+ activation function. We improve the accuracy of DNNet with multiple frequency-channels. We released a new open source
+ package ONNet. The main object of ONNet is to help people to simulation and study of optical neural networks. As verified
+ by some datasets, the learning ability of DNNet is still weak. We need more structures and algorithms to improve its ability.
+ Multiple frequency-channels is a effective algorithm for this task. And ONNet is a high performance and user-friendly package
+ for more study and trials.
+
+  References
+[1] Lin, Xing, et al. "All-optical machine learning using diffractive deep neural networks." Science 361.6406 (2018): 1004-1008.
+[2] Luo, Yi, et al. "Design of task-specific optical systems using broadband diffractive neural networks." Light: Science & Applications 8.1
+    (2019): 1-14.
+[3] Wei, Haiqing, et al. "Comment on All-optical machine learning using diffractive deep neural networks." arXiv preprint
+    arXiv:1809.08360 (2018).
+[4] Mengu, Deniz, et al. "Response to Comment on" All-optical machine learning using diffractive deep neural networks"." arXiv preprint
+    arXiv:1810.04384 (2018).
+[5] Colburn, Shane, et al. "Optical frontend for a convolutional neural network." Applied optics 58.12 (2019): 3179-3186.
+[6] Zuo, Ying, et al. "All Optical Neural Network with Nonlinear Activation Functions." arXiv preprint arXiv:1904.10819 (2019).
+[7] Mengu, Deniz, et al. "Analysis of diffractive optical neural networks and their integration with electronic neural networks." IEEE
+    Journal of Selected Topics in Quantum Electronics (2019).
+[8] Zheng, Shuiqin, et al. "Orthogonality of Diffractive Deep Neural Networks." arXiv preprint arXiv:1811.03370 (2018).
+[9] Chang, Julie, et al. "Hybrid optical-electronic convolutional neural networks with optimized diffractive optics for image classification."
+    Scientific reports 8.1 (2018): 12324.1
+[10] Bishop, Christopher M. Pattern recognition and machine learning. springer, 2006.
+[11] LeCun, Yann, Yoshua Bengio, and Geoffrey Hinton. "Deep learning." nature 521.7553 (2015): 436-444.
+[12] Bottou, Léon. "Large-scale machine learning with stochastic gradient descent." Proceedings of COMPSTAT'2010. Physica-Verlag
+    HD, 2010. 177-186.
+[13] Rumelhart, David E., Geoffrey E. Hinton, and Ronald J. Williams. "Learning representations by back-propagating errors." nature
+    323.6088 (1986): 533.
+[14] Abadi, Martín, et al. "Tensorflow: A system for large-scale machine learning." 12th {USENIX} Symposium on Operating Systems
+    Design and Implementation ({OSDI} 16). 2016.
+[15] Paszke, Adam, et al. "PyTorch: An imperative style, high-performance deep learning library." Advances in Neural Information
+    Processing Systems. 2019.
+[16] Deng, Jia, et al. "Imagenet: A large-scale hierarchical image database." 2009 IEEE conference on computer vision and pattern
+    recognition. Ieee, 2009.
+[17] Paszke, Adam, et al. "Automatic differentiation in pytorch." (2017).
+[18] ONNnet: https://github.com/closest-git/ONNet
+[19] Cohen, Gregory, et al. "EMNIST: an extension of MNIST to handwritten letters." arXiv preprint arXiv:1702.05373 (2017).
+[20] Goodman, Joseph W. Introduction to Fourier optics. Roberts and Company Publishers, 2005.
+
+
+
+
+                                                                      5
+

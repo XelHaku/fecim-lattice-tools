@@ -1,0 +1,1240 @@
+                                              Marginal Contribution Feature Importance - an
+                                               Axiomatic Approach for The Natural Case
+
+
+                                                          Amnon Catav                                        Boyang Fu
+                                                    School of Computer Science                   Department of Computer Science
+                                                        Tel-Aviv University                     University of California, Los Angeles
+arXiv:2010.07910v1 [cs.LG] 15 Oct 2020
+
+
+
+
+                                                  amnoncatav@mail.tau.ac.il                         boyang1995@g.ucla.edu
+
+                                                           Jason Ernst                                  Sriram Sankararaman
+                                               Department of Biological Chemistry                   Department of Human Genetics
+                                              Department of Computational Medicine               Department of Computational Medicine
+                                                Department of Computer Science                     Department of Computer Science
+                                               University of California, Los Angeles              University of California, Los Angeles
+                                                    jason.ernst@ucla.edu                                sriram@cs.ucla.edu
+
+                                                                               Ran Gilad-Bachrach
+                                                                        Department of Biomedical Engineering
+                                                                                Tel-Aviv University
+                                                                              rgb@tauex.tau.ac.il
+
+
+
+                                                                                       Abstract
+
+                                                  When training a predictive model over medical data, the goal is sometimes to
+                                                  gain insights about a certain disease. In such cases, it is common to use feature
+                                                  importance as a tool to highlight significant factors contributing to that disease.
+                                                  As there are many existing methods for computing feature importance scores,
+                                                  understanding their relative merits is not trivial. Further, the diversity of scenarios
+                                                  in which they are used lead to different expectations from the feature importance
+                                                  scores. While it is common to make the distinction between local scores that focus
+                                                  on individual predictions and global scores that look at the contribution of a feature
+                                                  to the model, another important division distinguishes model scenarios, in which
+                                                  the goal is to understand predictions of a given model from natural scenarios, in
+                                                  which the goal is to understand a phenomenon such as a disease. We develop a set
+                                                  of axioms that represent the properties expected from a feature importance function
+                                                  in the natural scenario and prove that there exists only one function that satisfies all
+                                                  of them, the Marginal Contribution Feature Importance (MCI). We analyze this
+                                                  function for its theoretical and empirical properties and compare it to other feature
+                                                  importance scores. While our focus is the natural scenario, we suggest that our
+                                                  axiomatic approach could be carried out in other scenarios too.
+
+
+                                         1   Introduction
+                                         In recent years, increasing amounts of data coupled with the rise of highly complex models such
+                                         as artificial neural networks have led to major advances in our ability to model highly complex
+                                         relations [23]. These increasingly complex models tend to be harder to interpret [25]. This has
+                                         led to extensive work on interpretability [30], explainability [21], and more specifically regarding
+                                         algorithms that assign feature importance [27, 31, 32, 34, 35]. Most of the previous works on feature
+                                         importance have focused on assigning importance scores for predictions of a specific trained model.
+Methods for assigning feature importance scores are commonly divided into local and global, where
+the goal of local scores is to explain how much each feature effects a specific prediction while the
+goal of the global scores is to explain how much each feature is effecting the model predictions across
+the entire data distribution. However, there are scenarios where assigning feature importance to
+explain a phenomena in the real world is also very useful. For example, consider the case of modeling
+the relations between gene expression to a certain disease. A scientist may be interested in gene
+importance as a tool for highlighting the genes most related to that disease to prioritize experiments
+to be done in the lab.
+We identify another important dimension that defines different goals for feature importance scores.
+This dimension differentiates between model feature importance scores, which aim to explain a given
+model, from the natural feature importance scores, which aim to explain a phenomenon in the real
+world such as factors that contribute to heightened risk of a disease. This raises the question whether
+feature importance scores that were designed to explain a model would work well in natural scenarios.
+In this work we argue that the scenarios are different and we show examples where methods that were
+designed to explain a model would fail to explain a natural phenomenon. Chen and his co-authors [8]
+recently demonstrated the difference between explaining a model and explaining the data for a specific
+use case in the context of Shapley value. In this work we address this difference more broadly.
+Most previous work on feature importance focused on explaining models [3, 5, 10, 27, 31, 32, 34, 35].
+Therefore, in this work we focus on the natural setting and more specifically on the global-natural
+scenario. To come up with a good feature importance function for this setting we identify few axioms
+that any feature importance score in the global-natural case should satisfy to have the properties
+expected of it. We prove that there is only one function that satisfies these axioms, the Marginal
+Contribution Feature Importance (MCI). We compare this score to other feature importance scores,
+both from a theoretical standpoint and from an empirical one.
+The contributions of this paper are the following:
+
+      1. We define a new important dimension for feature importance scores that differentiate the
+         model scenario in which the goal is to explain model predictions from the natural scenario
+         in which the goal is to explain a phenomenon in the real world.
+      2. We focus on the global-natural scenario and present three simple properties (axioms) that
+         every feature importance score in this scenario should have.
+      3. We prove that these axioms uniquely identify the MCI score.
+      4. We analyse the theoretical properties of MCI and show empirically that it is more accurate
+         and robust than other available solutions.
+
+2   Feature Importance Scenarios
+It has been noted that the term “feature importance” may have different meanings in different
+scenarios [32]. In the introduction we already discussed the common distinction between local and
+global scenarios in which feature importance is used, and suggested another distinction between
+model scenarios and natural scenarios. To clarify this two dimensional distinction, in the following
+we list potential use cases for each scenario.
+
+Global-natural (the scientist scenario): When studying the association between gnomic loci or
+gene expression and a disease it is common for a scientist to train models that predict the disease
+as a tool to study the disease [12, 29]. Note that in this case models are acting as a surrogate for
+the natural phenomenon being studied. Here, feature importance is used to rank loci or genes that
+may have significant influence on the disease. Note that this use case is not limited to genomics.
+Similar scenarios have been described in medical studies [16], in chemical sciences [28], and other
+domains [11].
+
+Global-model (the engineer scenario): Another common use case for feature importance is in
+understanding a specific model. For example, for security purposes it is important to understand the
+sensitivity of a model to changes in specific features [17]. In other cases, feature importance is used
+for explaining a model [1] or identifying bugs [36]. Note that main users of the importance scores are
+the engineers who develop the model and would like to verify its correctness.
+
+
+                                                     2
+Local-model (the user scenario): In this scenario, a user of a predictive model is interested in
+explanation of a specific prediction [24]. For example, it may be a customer trying to understand why
+an application for credit was denied by a credit-provider and what can the customer do to change this
+decision. Here feature importance serves in understanding how the model used by the credit provider
+sees the customer.
+
+Local-natural (the patient scenario): Consider analyzing the CT scan of a patient for identifying
+cancer tumors. Important features here are places in the image that are cancerous. In this case, the
+goal in highlighting important features is to identify the location of the tumor in the body, and the
+model is only a tool for doing that.
+To summarize, in model scenarios the goal is to understand a specific model whereas in the natural
+scenarios the model is just a tool for learning a natural structure. Further, in the local scenarios the
+goal is to understand the effect of each feature on a specific prediction or case, whereas in the global
+scenario the goal is to understand the global effect of each feature.
+This differences also reflect in the expectations of feature importance scores. While the difference
+between the local and global settings has been discussed before [32, 36, 38], we would like to explain
+here some differences between the model scenarios and the natural scenarios scores. Imagine a
+scientist investigating the relation between gene expression to a disease, while some of those genes
+are highly correlated in their expression. From a scientist point of view, correlated genes encapsulate
+the same information about the disease, and therefore they are equally important. On the other hand,
+from an engineer’s point of view, a model built for making predictions using the same data could use
+just a portion of those genes for the sake of making accurate predictions. In this case, an engineer
+trying to understand the model would like to consider only the specific genes the model uses.
+From the previous discussion, it follows that feature importance scores that may work well in the
+model setting will not necessarily be adequate for the natural setting. In the rest of the work, we
+focus our attention on the global-natural scenario that has received limited attention thus far.
+
+
+3    Definitions and Notations
+
+In this section, we introduce important concepts that were defined by previous works [10] and are
+relevant to the global-natural scenario. These concepts will serve us in defining our method. We start
+our discussion with Shapley value, a fundamental concept in game theory that was recently adopted
+to the realm of feature importance [27, 10]. Shapley value was originally designed for problems of
+cost allocation where n participants cooperate to achieve a certain good [33]. Shapley value uses
+an evaluation function ν : 2n 7→ R+ , that computes for each set of players S the value generated if
+these participants were to cooperate, where for the empty set the evaluation is assumed to be zero.
+Shapley presented four axioms that a fair allocation of cost should have and showed that there is only
+one fair cost allocation function [33]:
+
+                                               1    X
+                                                      ∆ f, Sfσ , ν .
+                                                                  
+                                  Iν (f ) =                                                               (1)
+                                              |F |!
+                                                  σ∈π(F )
+
+
+where F is the set of all features, π(F ) is the set of all permutations of F , Sfσ is the set of all features
+preceding f in permutation σ, and ∆ (f, S, ν) = ν (S ∪ {f }) − ν (S).
+By treating features as players cooperating to make accurate predictions, this idea was adopted
+for feature selection [9] and then was extended to local-model feature importance by the SHAP
+method [27], and recently also extended to the scenario of global-model feature importance by the
+SAGE method [10].
+In the context of global feature importance, the evaluation function is a measure of the predictive
+power of a given set of features [10]. For example, let G(S) be the set of predictors restricted to use
+only the set of features S, then given a loss function `, the predictive power ν can be defined as:
+
+                    ν(S) = min E(x,y) [` (g(x), y)] − min E(x,y) [` (g(x), y)]
+                             g∈G(∅)                          g∈G(S)
+
+
+                                                      3
+where the expectation is with respect to the distribution of the feature vector x and the label y. Other
+examples of measures of predictive power include the AUC of the best classifier in G(S) or the
+mutual information between the set of features and the label.1
+In this work, we refer to a function ν : 2F 7→ R+ as an evaluation function if ν(∅) = 0 and if ν is
+monotone increasing in the sense that if S ⊆ T then ν(S) ≤ ν(T ). This reflects the intuition that
+giving more features to the model can only increase the amount of information on the label and thus
+allows more accurate models.
+While the Shapley values axioms make sense in the realm of allocating costs to beneficiaries, we
+question their adequacy to the natural scenario of feature importance. To demonstrate the problem,
+consider a system with the binary features f1 , f2 , f3 which are Rademacher random variables such
+that the target variable y = f1 ∧ (f2 ∨ f3 ) and the mutual information is the evaluation function.
+Shapley value assigns the feature importance 0.65, 0.15, and 0.15 to f1 , f2 , and f3 respectively.
+However, if f1 is duplicated 3 times then the feature importance becomes 0.15, 0.18, and 0.18 for
+f1 , f2 , and f3 . Note that the importance of f1 drops when it is duplicated while the importance
+of f2 and f3 increases to the point that they become the most important features. This means that
+if these features were indicators of the presence of a certain protein in a blood sample then their
+importance scores may change if measurements are taken of other proteins that are triggered by the
+same mechanism and therefore are highly correlated. As a consequence, if the scientist suspected that
+a certain mechanism is responsible for a disease and therefore sampled many proteins that are related
+to this mechanism then Shapley-based feature importance scores will suggest that these proteins are
+of lesser importance.
+Ablation studies are another common approach to assign importance scores to features [4, 6, 20].
+In this method, the importance of a feature is the reduction in performance due to removing this
+feature. Using the notation above, in ablation studies the importance of feature f is Iν (f ) =
+ν(F ) − ν(F \ {f }).
+Bivariate association is the complement to ablation studies. In this method feature importance is its
+contribution in isolation, that is, Iν (f ) = ν({f }). These methods are commonly used in Genome-
+Wide Association Studies (GWAS) [19, 26], in feature ranking methods [40], feature selection
+methods [18], or in feature screening methods [15].
+As mentioned in [10], both the ablation and the bivariate association methods deal imperfectly with
+specific types of feature interactions. Ablation and Shapley-based methods fail when features are
+highly correlated, while the bivariate method fails when there are synergies between the features. As
+an example consider an XOR where the target variable is the exclusive or of two features - bivariate
+methods would fail to find the association between these features and the target variable.
+So far we have discussed importance scores that are model agnostic. However, it is important to
+mention that there are also importance scores that are specific to a certain type of models. For
+example, in linear models, it is common practice to look at weights assigned to each feature as a
+measure for its importance while in tree-based models, a common practice is to look at the sum
+of the gains from decision nodes in which a feature was used [5]. MAPLE is a method to explain
+ensemble of trees [31] while for deep learning there are methods such as Integrated Gradients [35]
+and DeepLift [34].
+We now move forward to introducing our method, which aims to overcome the difficulties in existing
+methods.
+
+
+4       Marginal Contribution Feature Importance
+
+In previous sections, we discussed the different scenarios in which feature importance can be used
+and presented the limitations of current methods in the global-natural scenario. To find a proper score
+for this scenario we begin by introducing a small set of properties expected of a feature importance
+scoring function in this setting which we refer to as axioms. We show that Marginal Contribution
+Feature Importance (MCI) is the only function that satisfies these axioms and we study its properties.
+
+    1
+        In all cases we apply additive normalization such that ν(∅) = 0.
+
+
+                                                         4
+4.1   The Axioms
+
+The axioms use the Elimination operation, which is defined as follows:
+Definition 1. Let F be a set of features and ν be an evaluation function. Eliminating the set T ⊂ F
+creates a new set of features F 0 = F \ T and a new valuation function ν 0 : F 0 7→ R+ such that
+∀S ⊆ F 0 , ν 0 (S) = ν (S).
+
+Using this definition we introduce the set of required properties (axioms):
+Definition 2. A valid feature importance function Iν in the global-natural scenario is a function
+Iν : F 7→ R+ that has the following properties:
+
+      1. Marginal contribution: The importance of a feature is equal or higher than the increase
+         in the evaluation function when adding it to all the other features, i.e Iν (f ) ≥ (v(F ) −
+         v(F/{f })).
+      2. Elimination: Eliminating features from F can only decrease the importance of each feature.
+         i.e., if T ⊆ F and ν 0 is the evaluation function which is obtained by eliminating T from F
+         then ∀f ∈ F \ T , Iν (f ) ≥ Iν 0 (f ).
+      3. Minimalism: If Iν is the feature importance function, then for every function I : F 7→ R+
+         for which axioms 1 and 2 hold, and for every f ∈ F : Iν (f ) ≤ I(f ).
+
+To understand the rationale behind these axioms, the Marginal contribution states that if a feature
+generates an increase of performance even when all other features are present, then its importance is
+at least as large as this additional gain it creates. This is to say that if the ablation study (see section 3)
+shows a certain gain, then the feature importance is at least this gain.
+The rationale for the Elimination axiom is that the importance of a feature may be apparent only
+when some context is present. For example, if the target variable is the XOR of two features, their
+significance is apparent only when both of them are observed. Therefore, eliminating features can
+cause the estimated importance of the remaining features to drop. On the other hand, if a feature
+shown to be important, that is, it provides high predictive power given the current set of features,
+then its predictive power does not decrease when additional information is provided by adding
+features. Note that it still may be the case that the relative importance of features changes when
+adding or eliminating features. In other words, we may find, by adding features, that a feature that
+was considered less important is very significant in combination with these new features. However, if
+a feature was considered having high predictive power then adding feature can only demonstrate even
+higher predictive power using the additional information provided by the new featues.
+Finally, note that if Iν satisfies the marginal contribution and the elimination properties, then for every
+λ > 1 the function λIν also satisfies these properties. The Minimalism axiom provide disambiguation
+by requiring the selection of the smallest function.
+These axioms allow us to present the main theorem which shows the existence and uniqueness of the
+feature importance function.
+Theorem 3. The function
+                                         Iν (f ) = max ∆ (f, S, ν)
+                                                   S⊆F
+
+is the only function that satisfies the marginal contribution, the elimination and the minimalism
+axioms.
+
+Theorem 3 shows that there is only one way to define a feature importance function that satisfies the
+axioms presented above. We call this function, the Marginal Contribution Feature Importance (MCI)
+function. The proof of this theorem is presented in the supplementary material (Section A).
+
+4.2   Properties of the Marginal Contribution Feature Importance Function
+
+MCI has many advantageous properties as shown in the following theorem.
+Theorem 4. Let F be a set of features, let ν be an evaluation function and let Iν be the feature
+importance function Iν (f ) = max ∆ (f, S, ν). The following holds:
+                                  S⊆F
+
+
+                                                      5
+       • Dummy: if f is a dummy variable, that is ∀S ⊆ F, ∆ (f, S, ν) = 0, then Iν (f ) = 0.
+
+       • Symmetry: if fi and fj are symmetric, that is if for every S ⊆ F we have that
+         ν (S ∪ {fi }) = ν (S ∪ {fj }), then Iν (fi ) = Iν (fj ).
+                                               P
+       • Super-efficiency: ∀S ⊆ F, ν (S) ≤ f ∈S Iν (f ).
+
+       • Sub-additivity: if ν and ω are evaluation functions defined on F then ∀f ∈ F, Iν+ω (f ) ≤
+         Iν (f ) + Iω (f ).
+
+       • Upper bound the self contribution: for every feature f ∈ F , Iν (f ) ≥ ν({f }).
+
+       • Duplication invariance: let F be a set of features and ν be an evaluation function. Assume
+         that fi is a duplication of fj in the sense that for every S ⊆ F \ {fi , fj } we have that
+         ν (S ∪ {fi , fj }) = ν (S ∪ {fi }) = ν (S ∪ {fj }). If F 0 and ν 0 are the results of eliminating
+         fi then ∀f ∈ F 0 , Iν 0 (f ) = Iν (f ).
+
+Recall that the Shapley value is defined by four axioms: efficiency, symmetry, dummy and additiv-
+ity [33]. Theorem 4 shows that MCI has the symmetry and dummy properties, but the efficiency
+property is replaced by a super-efficiency property while the additivity property is replaced by a
+sub-additivity property. The upper bound on self contribution shows that MCI always dominate
+the bivariate association scores. It is also easy to verify that it upper bounds Shapley value and the
+ablation score. Finally, duplication invariance shows that when features are duplicated the feature im-
+portance scores do not change, this is unlike Shapley value for which we showed earlier its sensitivity
+to duplication. The proof of Theorem 4 is presented in the supplementary material (Section A).
+Another interesting property of MCI is the context it can provide for the importance of a feature.
+From the definition of MCI it follows that for every f there is S ⊆ F such that Iν (f ) = ∆ (f, S, ν).
+This S is a context with which f provides a big gain. In some cases this context can give additional
+insight to the scientist.
+
+
+4.3   Computation and Approximation
+
+The complexity of computing the MCI function in a straight forward way is exponential in the number
+of features. Since computing the Shapley value is NP-complete [13], there is no reason to believe that
+MCI is easier to compute. In the supplementary material (Section C) we provide examples for cases
+were MCI can be computed in polynomial time, for example, when ν is sub-modular. Moreover,
+much like Shapley value, MCI can be approximated by sampling techniques [7]. One interesting
+property of MCI is that any sampling based technique provides a lower-bound on the score. We also
+present some upper-bounds that allow for a branch and bound type technique. In addition, we show
+that when there are strong correlations between features an estimation for MCI scores can be derived
+from computing the scores on a much smaller problem.
+Another challenge in computing MCI is obtaining the values of ν for various sets. Using the theory of
+uniform convergence of empirical means (the PAC model) [39], we show that with high probability
+ν can be estimated to within an additive factor using a finite sample and this estimate can be used
+to estimate MCI to within a similar additive factor. Details about computation and approximation
+techniques are provided in the supporting material (Section C).
+
+
+5     Experiments
+
+In this section we analyze the performance of MCI empirically and compare it to other methods. For
+the experiments described here we used the breast cancer sub-type classification task from a gene
+microarray dataset (BRCA) [37]. We present two experiments, in the first one we compare the quality
+of the ranking of the feature importance provided by different methods. In the second experiment we
+test the robustness of the methods to correlations between the features. In the supplementary material
+(Section E) we also provide results for robustness experiments on six different datasets from the UCI
+repository [2].
+
+
+                                                    6
+Table 1: Results of experiments with the BRCA dataset: On the left hand side the results for
+Experiment I, measuring the quality of the scores, are presented using the NDCG scores of prefixes
+of varying sizes of the rankings generated by the different methods (higher is better, the perfect score
+is 1.00). On the right side the results for Experiment II, measuring the robustness of the scores to
+feature correlations. The results are the Minimal Kendall Distance (MKD) between the rankings of
+the top-k ranked elements before and after duplicating the top feature three times. In these results
+lower is better, the perfect score is 0.00.
+                          Experiment I: Quality               Experiment II: Robustness
+                                  NDCG ↑                                MKD ↓
+       Method        @3      @5 @10 @20 @50 @3                    @5 @10 @20 @50
+       MCI         1.00    0.85    0.77    0.88    0.92    0.00    0.00    0.04    0.02    0.03
+       Shapley     0.77    0.70    0.73    0.88    0.88    1.00    0.28    0.13    0.08    0.04
+       Bivariate   1.00    0.85    0.77    0.82    0.92    0.00    0.00    0.00    0.00    0.00
+       Ablation    0.30    0.21    0.28    0.44    0.61    0.12    0.14    0.17    0.09    0.04
+
+
+5.1   Data
+
+We used a BRCA [37] dataset that consists of 17,814 genes from 571 patients that have been diagnosed
+for one of 4 breast cancer sub-types. In our experiments we used the same subset of 50 features
+used in [10]. The main advantage of this dataset is the existing scientific knowledge about genes
+that are related to breast cancer. We used this knowledge to evaluate the quality of different feature
+importance scores.
+
+5.2   Implementation Details
+
+The evaluation of any features subset S ⊆ F was conducted by defining ν(S) to be the average
+negative log-loss over 3-fold cross validations of a logistic regression model trained using only the
+features in S.
+Since computing Shapley values and MCI scores exactly has exponential complexity, we used
+the sampling technique proposed by [10] for the SAGE algorithm. According to this method,
+a random set of permutations Pd of the features is sampled. For each σ ∈ Pd we denote by
+Siσ = {fj : σ(j) < σ(i)} and estimate the feature importance for Shapley and MCI to be:
+         Shapley          1 X
+       Iν        (fi ) =          ∆(fi , Siσ , ν) and IνMCI (fi ) = max ∆(fi , Siσ , ν) .
+                         |Pd |                                      σ∈Pd
+                               σ∈Pd
+
+Recall that using this method provides an unbiased estimator for the Shapley value and a lower bound
+for MCI. In our experiments with BRCA Pd was of the size 215 as we observed that the relative order
+of features stabilizes in both methods at this point.
+
+5.3   Experiment I: Quality
+
+The goal of the first experiment is to evaluate the quality of the importance scores provided by the
+different methods. Each feature importance score generates a ranking of the features. Since there
+is existing scientific knowledge about the association between genes and breast cancer sub-types,
+we consider a better ranking to be one that gives a higher ranking to genes that are known to be
+related to breast cancer [10]. We evaluated the ranking using the well-known Normalized Discounted
+Cumulative Gain (NDCG) metric [22]. The results of the experiment are presented in Table 1. The
+results show that MCI and Bivariate outperform Shapley while Ablation performs poorly. The success
+of the Bivariate method in this experiment suggests that there are no significant synergies between
+the features in this dataset. MCI handled this situation and even outperforms Bivariate slightly in the
+top 20 list. However, due to the strong correlations between features, Ablation failed to generate a
+meaningful ranking and this is a probable explanation also to the low performance of Shapley.
+SAGE [10] is a global feature importance score that was designed for the global-model scenario. It is
+possible to use it in the global-natural scenario by training a model on a portion of the data and using
+the rest for evaluating feature importance. Unfortunately, we found that when used in this manner,
+
+
+                                                   7
+                 (a) Shapley values                                       (b) MCI values
+
+
+
+
+         (c) Shapley values with duplication                      (d) MCI values with duplication
+Figure 1: Feature duplication experiment on the BRCA dataset, with the top 10 ranking features
+displayed. On the top row we show the feature importance according to Shapley (a) and MCI (b).
+The bottom row shows the estimations of both methods, when the top ranked feature (BCL11A) is
+duplicated three time. Both methods produce similar feature importance estimation when the top
+ranked feature is not duplicated. However, when it is, Shapley’ importance assignment (c) is affected
+drastically, while MCI (d) succeeds to remain stable.
+
+
+SAGE’s results are sensitive to the choice of the random seed (other methods were found to be stable)
+and in most cases it is substantially outperformed by MCI. Details are provided in the supplementary
+material (Section F).
+
+5.4   Experiment II: Robustness
+
+The goal of the second experiment, is to measure the robustness of the different methods and more
+specifically the implications of correlated features on the ranking they produce. For each method
+we duplicated three times the feature that was ranked first and re-evaluated the scores and the
+associated ranking with the additional features. We computed the distance between the top-k list
+before duplicating the feature to the top-k list after the duplication.
+To measure the distances between the rankings of the top-k features we used the Minimizing Kendall
+Distance (MKD) [14] metric. In this method, for the ranking rk of the top-k features we define C(rk )
+to be the set of completions of rk to rankings of the entire feature set. i.e., r ∈ C(rk ) if r is a ranking
+of all the features and ∀i = 1, . . . , k, r(i) = rk (i). Using this notation the MKD distance between
+rk and rk0 is MKD(rk , rk0 ) = minr∈C(rk ),r0 ∈C(rk0 ) dτ (r, r0 ) where dτ is the Kendall-tau distance.
+Furthermore, since we introduced duplicated features which are not ranked in the original ranking,
+we included only the first occurrence of this feature in the list of ranked features.
+The results of this experiment are presented in Table 1. As expected, the Bivariate method is not
+effected by the duplicate features since it ignores feature correlations. MCI was resilient to the
+introduction of these features in the top of the list while some small changes are seen at the bottom of
+the list. We suspect that this is noise due to the fact that only a small sample was used to evaluate ν.
+Shapley suffered the most from the introduction of new feature and most of the differences are at the
+top of the list. i.e., features that were considered the most important features before the duplication
+were pushed down the list. Finally, Ablation suffered from the introduction of duplicated features too.
+Additional demonstration of the difference between MCI and Shapley is presented in Figure 1. In this
+figure the top 10 features computed by Shapley and MCI before and after introducing the duplicated
+features are presented. While the rankings before the duplication are similar in both methods, this is
+no longer the case after the duplication. While MCI finds all the duplicates to be as important as the
+
+
+                                                     8
+original feature, Shapley penalizes for the duplication and demotes this feature while promoting the
+feature that was on the 3rd place to the 1st place.
+
+6   Conclusion
+
+In this work we introduced an important distinction between the model scenario of feature importance
+scores, and the natural scenario. We showed in what sense these scenarios are different, and demon-
+strated cases where previous methods, such as Shapley values based methods, behave imperfectly
+when extended to the natural scenario. Therefore, we focused on the natural scenario and used an
+axiomatic approach in which we identified three properties any feature importance function for this
+scenario should satisfy. We showed that there exists a function that satisfy all of these properties, and
+that it is unique. We called it the MCI function and addressed its computational and approximation
+challenges in the supplementary material. Finally, we ran several experiments showing that the MCI
+method performed better in identifying important features, and was robust to addition of correlated
+features, whereas Shapley values based methods are highly affected from this kind of change.
+
+References
+ [1] Amina Adadi and Mohammed Berrada. Peeking inside the black-box: A survey on explainable
+     artificial intelligence (xai). IEEE Access, 6:52138–52160, 2018.
+ [2] Arthur Asuncion and David Newman. UCI machine learning repository, 2007.
+ [3] David Baehrens, Timon Schroeter, Stefan Harmeling, Motoaki Kawanabe, Katja Hansen, and
+     Klaus-Robert Mueller. How to explain individual classification decisions, 2009.
+ [4] Eric Bengtson and Dan Roth. Understanding the value of features for coreference resolution. In
+     Proceedings of the 2008 Conference on Empirical Methods in Natural Language Processing,
+     pages 294–303, Honolulu, Hawaii, October 2008. Association for Computational Linguistics.
+ [5] Leo Breiman, Jerome Friedman, Charles J Stone, and Richard A Olshen. Classification and
+     regression trees. CRC press, 1984.
+ [6] VA Casagrande and IT Diamond. Ablation study of the superior colliculus in the tree shrew
+     (tupaia glis). Journal of Comparative Neurology, 156(2):207–237, 1974.
+ [7] Javier Castro, Daniel Gómez, and Juan Tejada. Polynomial calculation of the shapley value
+     based on sampling. Computers & Operations Research, 36(5):1726–1730, 2009.
+ [8] Hugh Chen, Joseph D. Janizek, Scott Lundberg, and Su-In Lee. True to the model or true to the
+     data?, 2020.
+ [9] Shay Cohen, Gideon Dror, and Eytan Ruppin. Feature selection via coalitional game theory.
+     Neural Computation, 19(7):1939–1961, 2007.
+[10] Ian Covert, Scott Lundberg, and Su-In Lee. Understanding global feature contributions through
+     additive importance measures. arXiv preprint arXiv:2004.00668, 2020.
+[11] Yue Cui, Jesse S Jin, Shiliang Zhang, Suhuai Luo, and Qi Tian. Music video affective under-
+     standing using feature importance analysis. In Proceedings of the ACM International Conference
+     on Image and Video Retrieval, pages 213–219, 2010.
+[12] Padideh Danaee, Reza Ghaeini, and David A Hendrix. A deep learning approach for cancer
+     detection and relevant gene identification. In PACIFIC SYMPOSIUM ON BIOCOMPUTING
+     2017, pages 219–229. World Scientific, 2017.
+[13] Xiaotie Deng and Christos H Papadimitriou. On the complexity of cooperative solution concepts.
+     Mathematics of Operations Research, 19(2):257–266, 1994.
+[14] Ronald Fagin, Ravi Kumar, and Dakshinamurthi Sivakumar. Comparing top k lists. SIAM
+     Journal on discrete mathematics, 17(1):134–160, 2003.
+[15] Jianqing Fan and Jinchi Lv. Sure independence screening for ultrahigh dimensional feature space.
+     Journal of the Royal Statistical Society: Series B (Statistical Methodology), 70(5):849–911,
+     2008.
+
+
+                                                   9
+[16] Juan M Fontana, Muhammad Farooq, and Edward Sazonov. Estimation of feature importance for
+     food intake detection based on random forests classification. In 2013 35th Annual International
+     Conference of the IEEE Engineering in Medicine and Biology Society (EMBC), pages 6756–
+     6759. IEEE, 2013.
+[17] Wenbo Guo, Dongliang Mu, Jun Xu, Purui Su, Gang Wang, and Xinyu Xing. Lemna: Explaining
+     deep learning based security applications. In Proceedings of the 2018 ACM SIGSAC Conference
+     on Computer and Communications Security, pages 364–379, 2018.
+[18] Isabelle Guyon and André Elisseeff. An introduction to variable and feature selection. Journal
+     of machine learning research, 3(Mar):1157–1182, 2003.
+[19] Kadri Haljas, Azmeraw T Amare, Behrooz Z Alizadeh, Yi-Hsiang Hsu, Thomas Mosley, Anne
+     Newman, Joanne Murabito, Henning Tiemeier, Toshiko Tanaka, Cornelia Van Duijn, et al.
+     Bivariate genome-wide association study of depressive symptoms with type 2 diabetes and
+     quantitative glycemic traits. Psychosomatic medicine, 80(3):242, 2018.
+[20] Matteo Hessel, Joseph Modayil, Hado Van Hasselt, Tom Schaul, Georg Ostrovski, Will Dab-
+     ney, Dan Horgan, Bilal Piot, Mohammad Azar, and David Silver. Rainbow: Combining
+     improvements in deep reinforcement learning. In Thirty-Second AAAI Conference on Artificial
+     Intelligence, 2018.
+[21] Andreas Holzinger, Georg Langs, Helmut Denk, Kurt Zatloukal, and Heimo Müller. Causability
+     and explainability of artificial intelligence in medicine. Wiley Interdisciplinary Reviews: Data
+     Mining and Knowledge Discovery, 9(4):e1312, 2019.
+[22] Kalervo Järvelin and Jaana Kekäläinen. Cumulated gain-based evaluation of ir techniques. ACM
+     Transactions on Information Systems (TOIS), 20(4):422–446, 2002.
+[23] Alex Krizhevsky, Ilya Sutskever, and Geoffrey E Hinton. Imagenet classification with deep
+     convolutional neural networks. In F. Pereira, C. J. C. Burges, L. Bottou, and K. Q. Weinberger,
+     editors, Advances in Neural Information Processing Systems 25, pages 1097–1105. Curran
+     Associates, Inc., 2012.
+[24] Todd Kulesza, Margaret Burnett, Weng-Keen Wong, and Simone Stumpf. Principles of ex-
+     planatory debugging to personalize interactive machine learning. In Proceedings of the 20th
+     international conference on intelligent user interfaces, pages 126–137, 2015.
+[25] Zachary C Lipton. The mythos of model interpretability. Queue, 16(3):31–57, 2018.
+[26] Yao-Zhong Liu, Yu-Fang Pei, Jian-Feng Liu, Fang Yang, Yan Guo, Lei Zhang, Xiao-Gang Liu,
+     Han Yan, Liang Wang, Yin-Ping Zhang, et al. Powerful bivariate genome-wide association
+     analyses suggest the sox6 gene influencing both obesity and osteoporosis phenotypes in males.
+     PloS one, 4(8), 2009.
+[27] Scott M Lundberg and Su-In Lee. A unified approach to interpreting model predictions. In
+     Advances in neural information processing systems, pages 4765–4774, 2017.
+[28] Kevin McCloskey, Ankur Taly, Federico Monti, Michael P Brenner, and Lucy J Colwell. Using
+     attribution to decode binding mechanism in neural network models for chemistry. Proceedings
+     of the National Academy of Sciences, 116(24):11624–11629, 2019.
+[29] Brett A McKinney, David M Reif, Marylyn D Ritchie, and Jason H Moore. Machine learning
+     for detecting gene-gene interactions. Applied bioinformatics, 5(2):77–88, 2006.
+[30] Christoph Molnar. Interpretable machine learning. Lulu. com, 2020.
+[31] Gregory Plumb, Denali Molitor, and Ameet S Talwalkar. Model agnostic supervised local
+     explanations. In Advances in Neural Information Processing Systems, pages 2515–2524, 2018.
+[32] Marco Tulio Ribeiro, Sameer Singh, and Carlos Guestrin. " why should i trust you?" explaining
+     the predictions of any classifier. In Proceedings of the 22nd ACM SIGKDD international
+     conference on knowledge discovery and data mining, pages 1135–1144, 2016.
+[33] Lloyd S Shapley. A value for n-person games. Contributions to the Theory of Games, 2(28):307–
+     317, 1953.
+[34] Avanti Shrikumar, Peyton Greenside, and Anshul Kundaje. Learning important features through
+     propagating activation differences. In Proceedings of the 34th International Conference on
+     Machine Learning-Volume 70, pages 3145–3153. JMLR. org, 2017.
+
+
+                                                 10
+[35] Mukund Sundararajan, Ankur Taly, and Qiqi Yan. Axiomatic attribution for deep networks.
+     In Proceedings of the 34th International Conference on Machine Learning-Volume 70, pages
+     3319–3328. JMLR. org, 2017.
+[36] Sarah Tan, Rich Caruana, Giles Hooker, Paul Koch, and Albert Gordo. Learning global additive
+     explanations for neural nets using model distillation. arXiv preprint arXiv:1801.08640, 2018.
+[37] Katarzyna Tomczak, Patrycja Czerwińska, and Maciej Wiznerowicz. The cancer genome atlas
+     (tcga): an immeasurable source of knowledge. Contemporary oncology, 19(1A):A68, 2015.
+[38] Sana Tonekaboni, Shalmali Joshi, David Duvenaud, and Anna Goldenberg. What went
+     wrong and when? instance-wise feature importance for time-series models. arXiv preprint
+     arXiv:2003.02821, 2020.
+[39] Vladimir N Vapnik and A Ya Chervonenkis. On the uniform convergence of relative frequencies
+     of events to their probabilities. In Measures of complexity, pages 11–30. Springer, 2015.
+[40] Alexander Zien, Nicole Krämer, Sören Sonnenburg, and Gunnar Rätsch. The feature importance
+     ranking measure. Lecture Notes in Computer Science, page 694–709, 2009.
+[41] Lovász, László Submodular functions and convexity. In athematical Programming The State of
+     the Art, pages 235–257, 1983.
+
+A     Proofs
+In this section we group together all the proofs for the theorems we presented in the main paper.
+
+A.I   Existence and Uniqueness of the Feature Importance Score
+
+Here we prove Theorem 3 states that there is a function for which all the axioms defined in Definition 2
+hold and that this function is unique. This proof is a constructive proof in the sense that we are able
+to show that the only feature importance function for which the axioms hold is the function Iν that
+assigns to the feature f ∈ F the score
+                      Iv (f ) = max(v(S ∪ {f }) − v(S)) = max ∆ (f, S, ν) .
+                                 S⊆F                           S⊆F
+
+Meaning, the importance of a feature is the maximum contribution to the valuation function ν over
+any subset of features.
+Lemma 1. Let Iν be a feature importance function for which axioms (1), (2) hold (marginal
+contribution, and elimination axiom). Then:
+                                       Iν (f ) ≥ max ∆ (f, S, ν) .
+                                                S⊆F
+
+
+Proof. We prove the statement using induction on the size of the features set F . Let n = |F |. If
+n = 1 (i.e F = {f }) then from the marginal contribution axiom we have that
+
+
+                                    Iν (f ) ≥ ν ({f }) − ν (∅)
+                                            = max ∆ (f, S, ν) .
+                                                  S⊆F
+
+Assume that the statement holds for any set of features of size < n for n > 1. Let |F | = n and let
+f ∈ F . Let S ∗ = arg max ∆ (f, S, ν). If there exists f 0 ∈ F \ {S ∗ ∪ {f }} then from the elimination
+                       S⊆F
+axiom, if {f 0 } is eliminated we will obtain F 0 and ν 0 such that |F 0 | = n − 1 and Iν 0 (f ) ≤ Iν (f ).
+However, since S ∗ ⊆ F 0 we have that from the assumption of the induction
+               Iν (f ) ≥ Iν 0 (f ) ≥ ∆ (f, S ∗ , ν 0 ) = ∆ (f, S ∗ , ν) = max ∆ (f, S, ν) .
+                                                                       S⊆F
+                             ∗
+Otherwise, assume that S         = arg max ∆ (f, S, ν) is such that S ∗ ∪ {f } = F . Therefore,
+                                         S⊆F
+max ∆ (f, S, ν) = ∆ (f, F, ν). From the marginal contribution axiom we have that Iν (f ) ≥
+S⊆F
+∆ (f, F, ν) = max ∆ (f, S, ν).
+               S⊆F
+
+
+
+
+                                                   11
+Lemma 1 shows that any importance function that has the marginal contribution property and the
+eliminate property must assign an importance score of at least max ∆ (f, S, ν) to every feature.
+                                                                           S⊆F
+Therefore, by adding the minimalism axiom we obtain the uniqueness and existence of the feature
+importance function as shown in Theorem 3.
+Here we prove Theorem 3
+
+Proof. Adding the minimalism axiom to Lemma 1 shows that if the marginal contribution and
+the elimination axioms hold for Iν (f ) = max ∆ (f, S, ν) then it is the unique feature importance
+                                               S⊆F
+function. Proving that the marginal contribution axiom hold is straight-forward: for a feature f ∈ F
+             Iν (f ) = max ∆ (f, S, ν) ≥ ∆ (f, F \ {f }, ν) = ν (F ) − ν (F \ {f }) .
+                          S⊆F
+
+To see that the elimination axiom holds too, let T ⊂ F and let f ∈ F \ T . If T is eliminated from F
+to create F 0 and ν 0 then
+           Iν (f ) = max ∆ (f, S, ν) ≥ max0 ∆ (f, S, ν) = max0 ∆ (f, S, ν 0 ) = Iν 0 (f ) .
+                     S⊆F                   S⊆F                      S⊆F
+
+
+
+
+A.II   Properties of the MCI Function
+
+Here, we prove the MCI function properties presented in Theorem 4.
+
+Proof. Dummy: Let f be a dummy variable such that ∀S ⊆ F, ∆ (f, S, ν) = 0 then Iν (f ) =
+max ∆ (f, S, ν) = 0.
+S⊆F
+
+Symmetry: Let fi and fj be such that for every S ⊆ F we have that ν (S ∪ {fi }) = ν (S ∪ {fj }).
+Consider any set S ⊆ F . We consider three cases, (1) fi , fj ∈ S, (2) fi , fj ∈ / S, and (3) exactly one
+of fi , fj is in S. In case (1) we have that ∆ (fi , S, ν) = ∆ (fj , S, ν) = 0. In case (2) we have
+          ∆ (fi , S, ν) = ν (S ∪ {fi }) − ν (S) = ν (S ∪ {fj }) − ν (S) = ∆ (fj , S, ν) .
+In case (3) assume, w.l.o.g. that fi ∈ S and fj ∈ / S. Let S 0 denote the set S where fi is replaced by
+fj and therefore, due to the symmetry between fi and fj it holds that ν (S) = ν (S 0 ). Note also that
+S ∪ {fj } = S 0 ∪ {fi } and therefore ∆ (fi , S, ν) = ∆ (fj , S 0 , ν). From analyzing these 3 cases it
+follows that for every S ⊆ F there exists S 0 ⊆ F such that ∆ (fi , S, ν) = ∆ (fj , S 0 , ν). Therefore,
+Iν (fi ) ≤ Iν (fj ). However, by replacing the roles of fi and fj it also holds that Iν (fi ) ≥ Iν (fj ) and
+therefore Iν (fi ) = Iν (fj ).
+Super-efficiency: Let S ⊆ F . w.l.o.g. let S = {f1 , f2 , . . . , fk }. Define ∀i≤k Si = {fj }j≤i .
+Therefore, S0 = ∅ and Sk = S. Since ν(∅) = 0,
+                                                      k−1
+                                                      X
+                  ν (S)     = ν (Sk ) − ν (S0 ) =           (ν (Si+1 ) − ν (Si ))
+                                                      i=0
+                                k−1
+                                X                           k−1
+                                                            X                    X
+                            =         ∆ (fi+1 , Si , ν) ≤         Iν (fi+1 ) =          Iν (f ) .
+                                i=0                         i=0                  f ∈S
+
+
+Sub-additivity: if ν and ω are valuation functions defined on F then for all f ∈ F
+              Iν+ω (f )    =    max ∆ (f, S, v + ω) = max (∆ (f, S, ν) + ∆ (f, S, ω))
+                                S⊆F                         S⊆F
+                           ≤    max ∆ (f, S, ν) + max ∆ (f, S, ω) = Iν (f ) + Iω (f ) .
+                                S⊆F                  S⊆F
+
+
+Upper bound the self contribution: For f ∈ F We have that Iν (f ) = max ∆ (f, S, ν) ≥
+                                                                                               S⊆F
+∆ (f, ∅, ν) = ν ({f }) − ν (∅) = ν ({f }).
+Duplication invariant: Assume that fi ∈ F is a duplication of fj ∈ F in the sense that for
+every S ⊆ F \ {fi , fj } we have that ν (S ∪ {fi , fj }) = ν (S ∪ {fi }) = ν (S ∪ {fj }). Let F 0
+
+
+                                                     12
+and ν 0 be the results of eliminating {fi } and let f ∈ F 0 . From the elimination axiom we have
+that Iν (f ) ≥ Iν 0 (f ). Assume that S ∗ ⊆ F is such that Iν (f ) = ∆(f, S ∗ , ν). If fi ∈        / S ∗ then
+S ∗ ⊆ F 0 and Iν 0 (f ) ≥ ∆(f, S ∗ , ν 0 ) = ∆(f, S ∗ , ν) = Iν (f ). Otherwise fi ∈ S ∗ and it holds
+for S 0 = S ∗ ∪ {fj } \ {fi } that ∆(f, S ∗ , ν) = ∆(f, S 0 , ν) = ∆(f, S 0 , ν 0 ) ≤ Iν 0 (f ). Therefore, in
+all possible cases we have that Iν (f ) ≤ Iν 0 (f ). When combined with the elimination axiom we
+conclude that Iν (f ) = Iν 0 (f ).
+
+B     Additional Properties of the MCI Function
+In the following theorem we present and prove additional relevant properties of the MCI function,
+that did not mentioned in the main paper.
+Theorem 5. Let F be a set of features, let ν be a valuation function and let Iν be the MCI function.
+The following holds:
+
+       • Scaling: ∀f ∈ F, ∀λ > 0, Iλν (f ) = λIν (f ).
+       • Monotonicity: If ∀S ⊆ F \ {fi , fj }, v (S ∪ {fi }) ≤ v (S ∪ {fj }) then Iv (fi ) ≤ Iv (fj ).
+
+In the following we prove theorem 5
+
+Proof. Scaling: This property follows since for every f and every S it holds that λ∆(f, S, ν) =
+∆(f, S, λν).
+Monotonicity: Let fi , fj ∈ F for which ∀S ⊆ F \ {fi , fj }, v (S ∪ {fi }) ≤ v (S ∪ {fj }). Let S ∗
+be such that Iν (fi ) = ∆(fi , S ∗ , ν). Then, if fj ∈
+                                                     / S ∗ it holds that
+                          Iν (fi ) = ∆(fi , S ∗ , ν) ≤ ∆(fj , S ∗ , ν) ≤ Iν (fj ) .
+Otherwise, if fj ∈ S ∗ then
+                  Iν (fi ) = ∆(fi , S ∗ , ν) ≤ ∆(fj , S ∗ ∪ {fi } \ {fj }, ν) ≤ Iν (fj ) .
+
+
+
+
+C     Computation Optimizations
+We now turn our attention to the computational challenge of computing or approximating the MCI
+function. Straight-forward computation is exponential in the size of the feature set. Therefore we
+study cases in which the computation can be made efficient and approximation techniques.
+
+C.I   Submodularity
+
+In the following we show that if the valuation function ν is submodular [41] then the MCI feature
+importance score is equal to the self contribution of each feature.
+Lemma 2. If ν is sub-modular then Iν (f ) = ν ({f }).
+
+Proof. Recall that in that case there is a diminishing return and therefore for every S ⊆ F \
+{f }:ν (S ∪ {f }) ≤ ν (S) + ν ({f }). Therefore,
+                      ∆(f, S, ν) = ν(S ∪ {f }) − ν(S) ≤ ν({f }) = ∆(f, ∅, ν)
+
+
+
+The submodularity assumption might be too stringent in some cases. For example, if the target
+variable is an XOR of some features then the submodularity assumption does not hold. However,
+if we assume that submodularity holds for large sets then we obtain a polynomial algorithm for
+computing the feature importance. This may make sense in the genomics setting where genes may
+have synergies but we may assume that only small interactions of 2,3, or 4 genes are significant. We
+begin by defining k-size submodularity:
+
+
+                                                     13
+Definition 6. A function ν : F 7→ R is k-size submodular if for every S, T ⊆ F such that |S|, |T | ≥ k
+                               ν(S) + ν(T ) ≥ ν(S ∪ T ) + ν(S ∩ T )
+A function ν : F 7→ R is soft k-size submodular if it holds that for every T ⊆ F , |T | > k, f ∈ F
+there exists S ⊆ T , |S| ≤ k for which:
+                  ν(S ∪ {f }) + ν(T ) ≥ ν((S ∪ {f }) ∪ T ) + ν((S ∪ {f }) ∩ T )
+Lemma 3. If ν is k-size-submodular or soft k-size-submodular then
+                                  Iν (f ) =     max    ∆(f, S, ν)
+                                                S⊆F : |S|≤k
+
+
+Proof. First, we show that if ν is k-size-submodular it is also soft k-size-submodular. Let ν be a
+k-size-submodular valuation function. Let T ⊆ F , |T | > k and let S ⊆ T , |S| ≥ k, f ∈ F . From
+the k-size-submodular property we get that:
+                  ν(S ∪ {f }) + ν(T ) ≥ ν((S ∪ {f }) ∪ T ) + ν((S ∪ {f }) ∩ T )
+And therefore ν is also soft k-size-submodular. Hence, it is enough to prove the theorem for soft
+k-size-submodular functions.
+Let ν be a soft k-size-submodular evaluation function. Let T ⊆ F be such that T =
+arg min {|T | : Iν (f ) = ∆(f, T, ν)}. Assume, in contradiction, that |T | > k. Note that f ∈    / T
+since if f ∈ T then Iν (f ) = ∆(f, T, ν) = 0, and in this case we have that Iν (f ) = ∆(f, ∅, ν) in
+contradiction. Due to the soft k-size submodular and monotonous properties of ν it follows that exists
+S ⊆ T , |S| ≤ k such that:
+                             ν(S ∪ {f }) + ν(T ) ≥ ν(T ∪ {f }) + ν(S)
+Therefore, ∆(f, S, ν) = ν(S ∪ {f }) − ν(S) ≥ ν(T ∪ {f }) − ν(T ) = ∆(f, T, ν). This is a
+contradiction since |S| < |T |.
+
+Lemma 3 shows that if ν is soft k-size-submodular then the entire function Iν can be computed in
+time O |F |k+1 .
+
+C.II   Branch and Bound Optimization
+
+Here we show how we can discard computation for some of the subsets using a branch and bound
+like technique.
+Lemma 4. For every S0 ⊆ S1 ⊆ S2 ⊆ F and f ∈ F :
+                           ∆ (f, S1 , ν) ≤ ν (S2 ∪ {f }) − ν (S0 )
+
+Proof. This lemma follows from the monotonous property of ν.
+               ∆ (f, S1 , ν) = ν (S1 ∪ {f }) − ν (S1 ) ≤ ν (S2 ∪ {f }) − ν (S0 ) .
+
+
+The ability to upper bound Iν provided by this Lemma allows cutting back the computation sig-
+nificantly. For example, if we computed ∆(f, S, ν) for every set S of size k and we have that
+ max ∆(f, S, ν) ≥ max ν(F ) − ν(S) then Iν (f ) = max ∆(f, S, ν). The following lemma
+S:|S|≤k                S:|S|=k                                S:|S|≤k
+proves this property in a more general setting.
+Lemma 5. Let S = {S ⊆ F s.t. |S| = K} and T = {T ⊆ F s.t. |T | = k} for 0 ≤ k ≤ K ≤ |F |.
+Let S̄ = {S ⊆ F : ∃S 0 ∈ S s.t. S 0 ⊆ S} and T = {T ⊆ F : ∃T 0 ∈ T s.t. T ⊆ T 0 }. Let
+sf = max ∆(f, S, ν) and tf = max ∆(f, T, ν) and stf = max ν(S ∪ f ) − ν(T ) then
+       S∈S̄                        T ∈T                         S∈S,T ∈T
+                              max(sf , tf ) ≤ Iν (f ) ≤ max(sf , tf , stf ) .
+
+Proof. The lower bound on Iν (f ) follows from the simple fact that for every S ⊆ 2F
+                                   max ∆(f, S, ν) ≤ Iν (f ) .
+                                          S∈S
+Let S ∗ be such that Iν (f ) = ∆(f, S ∗ , ν). If S ∗ ∈ S̄ ∪ T then Iν (f ) = max(st , tf ). Otherwise, there
+exists S ∈ S and T ∈ T such that T ⊂ S ∗ ⊂ S and from Lemma C.II it holds that
+                               Iν (f ) = ∆(f, S ∗ , ν) ≤ ν(S ∪ f ) − ν(T )
+which completes the proof.
+
+
+                                                     14
+C.III   Heuristics
+
+Recall that for any S ⊆ 2F it holds that max ∆(f, S, ν) ≤ Iν (f ). Therefore, any method can be
+                                             S∈S
+used to select S and obtain a lower bound on the feature importance. In the experiments in this paper
+we used random permutations to generate the set S following the proposal of [10]. This method is
+described in Section 5. Our experiments show that this method is effective. however, in some cases it
+may be too demanding since for every subset of features a model has to be trained. The computational
+cost can be further reduced by using a method such as SAGE [10] to estimate ∆(f, S, ν) from a
+model that was trained on the entire dataset and therefore trained only once. Only for sets S such
+that SAGE estimates that ∆(f, S, ν) is large, the real value can be computed via training models.
+Therefore, the estimator SAGE (or in any other proposed method) is used to eliminate testing sets S
+for which the marginal contribution of f is predicted to be small.
+
+D    Approximations of the MCI Funciton
+Another challenge in computing Iν is computing the evaluation function ν. Recall that we assumed,
+for example, that ν is monotone increasing. This is motivated by thinking about ν(S) as some
+measure of the information that S provides on the target variable. However, if only a finite sample
+exists for evaluating ν then forcing this property is no longer trivial. Therefore, in this section we
+show that using uniform convergence of empirical means [39], or in other words, the PAC theory, it is
+possible to show that ν can be approximated well enough from a finite sample such that the estimate
+of Iν will be good too.
+First, we need to define a way for estimating the valuation function using a finite sample. Let X be a
+random variable consists of features F and let Y be a target random variable. Let D be a finite i.i.d
+sample from X and let HS be a hypothesis class for any subset of features S ⊆ F . For any hypothesis
+h ∈ HS denote by eD (h) the expected error of h over D, and denote by ep (h) the expected error of
+h over the true distribution p(x, y). The estimated valuation function νD : P(F ) −→ R+ defined as
+follows:
+                                       νD (S) = min (eD (h))
+                                                   h∈HS
+
+and the true valuation function ν : P(F ) −→ R+ defined as:
+                                      ∀S⊆F ν(S) = min (eP (h))
+                                                     h∈HS
+
+
+For convenience we assume that HS is finite (this restriction can be exchanged for finite VC
+dimension). denote |H| = max (|HS |).
+                           S⊆F
+
+Theorem 7. Let X be a random variable consists of features F , let Y be a target random variable
+and let HS be a hypothesis class for for any subset
+                                                S ⊆ F.            
+                                             2         2|H|
+For any , δ > 0 and sample D of size m ≥ 2 log2               + |F | it holds that:
+                                                        δ
+                                                            
+                               P max |IνD (f ) − Iν (f )| >  ≤ δ
+                                      f ∈F
+
+
+Proof. Let X be a random variable consists of features F , let Y be a target random variable and let
+HS be a hypothesis
+               class for any
+                             subset of features S ⊆ F . Let , δ > 0 and let D be an i.i.d sample
+            2          2|H|
+of size m ≥ 2 log2            + |F | .
+                        δ
+First, we show that for all S ⊆ F :
+                            |νD (S) − ν(S)| ≤ max |(eD (h) − eP (h))|
+                                                   h∈HS
+
+
+Let S ⊆ F . Denote h∗D = arg minh∈HS eD (h) and h∗ = arg minh∈HS eP (h). We have that:
+        νD (S) − ν(S) = eD (h∗D ) − eP (h∗ ) ≤ eD (h∗ ) − eP (h∗ ) ≤ max |eD (h) − eP (h)|
+                                                                      h∈HS
+
+
+                                                    15
+and also:
+       ν(S) − νD (S) = eP (h∗ ) − eD (h∗D ) ≤ eP (h∗D ) − eD (h∗D ) ≤ max |eD (h) − eP (h)|
+                                                                           h∈HS
+
+
+Next we would like to show that for any f                ∈ F it holds that |IνD (f ) − Iν ( f )| ≤
+2 maxS⊆F |νD (S) − ν(S)|.
+Let f ∈ F and let S ∗ = arg maxS⊆F (∆ (f, S, ν)), SD
+                                                   ∗
+                                                     = arg maxS⊆F (∆ (f, S, νD )).
+Notice that
+                                                     ∗
+                       IνD (f ) − Iν (f )   = ∆ (f, SD , νD ) − ∆ (f, S ∗ , ν)
+                                                     ∗                  ∗
+                                            ≤ ∆ (f, SD , νD ) − ∆ (f, SD   , ν)
+                                            ≤ max |∆ (f, S, νD ) − ∆ (f, S, ν)|
+                                                S⊆F
+
+
+and also
+                       Iν (f ) − IνD (f )   = ∆ (f, S ∗ , ν) − ∆ (f, SD
+                                                                      ∗
+                                                                        , νD )
+                                            ≤ ∆ (f, S , ν) − ∆ (f, S ∗ , νD )
+                                                      ∗
+
+                                            ≤ max |∆ (f, S, νD ) − ∆ (f, S, ν)|
+                                                S⊆F
+
+
+and therefore we get that
+       |IνD (f ) − Iν ( f )|   ≤ max |∆ (f, S, νD ) − ∆ (f, S, ν)|
+                                   S⊆F
+                               =   max |(νD (S ∪ {f }) − νD (S)) − (ν(S ∪ {f }) − ν(S))|
+                                   S⊆F
+                               ≤ max |νD (S ∪ {f }) − ν(S ∪ {f })| + max |νD (S) − ν(S)|
+                                   S⊆F                                     S⊆F
+                               ≤ 2 max |νD (S) − ν(S)|
+                                     S⊆F
+
+
+Hence, using union bound and Hoeffding inequality, for any f ⊆ F it holds that:
+                                                                               
+           P [|IνD (f ) − Iν ( f )| > ] ≤ P 2 max |νD (S) − ν(S)| > 
+                                                S⊆F,h∈HS
+                                                                                
+                                         ≤ P 2 max |eD (h) − eP (h)| > 
+                                                S⊆F,h∈HS
+                                                                                  
+                                                   [
+                                         = P             {2|eD (h) − eP (h)| > }
+                                                      S⊆F,h∈HS
+                                                   X
+                                            ≤              P [2|eD (h) − eP (h)| > ]
+                                                S⊆F,h∈HS
+                                                             −n2
+                                            ≤ 2|F |+1 |H|e    2     ≤δ .
+Where the last inequality follows by using the bound on m in the statement of this theorem.
+
+E    Robustness Experiments on UCI Datasets
+In this section we present additional experiments comparing the robustness of different feature
+importance methods. We follow similar procedure to the one described in Section 5 for additional
+six datasets from the UCI repository [2] (see description of the datasets in Table 2). We do not hold
+quality experiments for these datasets since unlike the BRCA dataset, for these datasets there is no
+definitive knowledge about the importance of features to which we can compare.
+Following the robustness experiment for the BRCA dataset described in Section 5, we first computed
+feature importance using different methods. Then, for each method we duplicated three times the
+feature that was ranked first and re-compute the feature importance. We measure stability using the
+
+
+                                                   16
+                 (a) Shapley values                                  (b) MCI values
+
+
+
+
+         (c) Shapley values with duplication                 (d) MCI values with duplication
+Figure 2: Robustness experiment on the Heart Disease dataset. On the top row we show the
+feature importance according to Shapley (a) and MCI (b). Note that that each method suggesting a
+different ranking within the top three list. The bottom row shows the estimations of both methods,
+when the top ranked feature of each method is duplicated three times. As you can see, Shapley’
+importance assignment (c) is affected drastically form the introduction of duplicates, while MCI (d)
+succeeds to remain stable.
+
+
+
+
+                 (a) Shapley values                                  (b) MCI values
+
+
+
+
+         (c) Shapley values with duplication                 (d) MCI values with duplication
+Figure 3: Robustness experiment on the Wine Quality dataset. On the top row we show the
+feature importance according to Shapley (a) and MCI (b). The bottom row shows the estimations of
+both methods, when the top ranked feature of each method is duplicated three times. As you can see,
+Shapley’ importance assignment (c) is affected drastically form the introduction of duplicates, while
+MCI (d) succeeds to remain stable.
+
+
+
+                                                 17
+                 (a) Shapley values                                    (b) MCI values
+
+
+
+
+         (c) Shapley values with duplication                   (d) MCI values with duplication
+Figure 4: Robustness experiment on the German Credit Default dataset. On the top row we
+show the feature importance according to Shapley (a) and MCI (b). The bottom row shows the
+estimations of both methods, when the top ranked feature of each method is duplicated three times.
+As you can see, the relative differences in the importance scores given by Shapley (c) is affected form
+the introduction of duplicates, while MCI (d) succeeds to remain stable.
+
+
+
+
+                 (a) Shapley values                                    (b) MCI values
+
+
+
+
+         (c) Shapley values with duplication                   (d) MCI values with duplication
+Figure 5: Robustness experiment on the Bike Rental dataset. On the top row we show the feature
+importance according to Shapley (a) and MCI (b). The bottom row shows the estimations of both
+methods, when the top ranked feature of each method is duplicated three times. As you can see, the
+relative differences in the importance scores given by Shapley (c) is affected form the introduction of
+duplicates, while MCI (d) succeeds to remain stable.
+
+
+
+
+                                                  18
+                 (a) Shapley values                                    (b) MCI values
+
+
+
+
+         (c) Shapley values with duplication                   (d) MCI values with duplication
+Figure 6: Robustness experiment on the Online Shopping dataset. On the top row we show the
+feature importance according to Shapley (a) and MCI (b). The bottom row shows the estimations of
+both methods, when the top ranked feature of each method is duplicated three times. As you can see,
+the relative differences in the importance scores given by Shapley (c) is affected form the introduction
+of duplicates, while MCI (d) succeeds to remain stable.
+
+
+
+
+                 (a) Shapley values                                    (b) MCI values
+
+
+
+
+         (c) Shapley values with duplication                   (d) MCI values with duplication
+Figure 7: Robustness experiment on the Bank Marketing dataset. On the top row we show the
+feature importance according Shapley (a) and MCI (b). The bottom row shows the estimations of
+both methods, when the top ranked feature of each method is duplicated three times. As you can see,
+the relative differences in the importance scores given by Shapley (c) is affected form the introduction
+of duplicates, while MCI (d) succeeds to remain stable.
+
+
+
+
+                                                  19
+              Table 2: Description of the UCI datasets used in the robustness experiment
+                 Dataset                    Type           # Features # Examples
+                  Heart Disease            Classification        13              303
+                  Wine Quality             Regression            11             1599
+                  German Credit Default    Classification        20             1000
+                  Bike Rental              Regression            12              303
+                  Online Shopping          Classification        17            12330
+                  Bank Marketing           Classification        16            45211
+
+
+MKD distance described in Section 5. We computed the MKD distances between the top-k list before
+the introduction of the duplicates, and the top-k list after the duplication.
+For each dataset we show the MKD distances for different length of top-k lists in Tables 3–8. In
+addition, we show the feature importance rankings MCI and Shapley methods produce before and
+after the duplication in Figures 2–7.
+For all datasets, the scores assigned by MCI were practically identical with or without the duplicated
+features. However the score assigned by the Shapley method to the feature that was duplicated was
+reduced significantly once duplicated. On the Heart Disease dataset and on the Wine Quality dataset,
+this was sufficient to change the ranking of the top feature to the 2nd or even the 3rd position. On the
+German Credit Default and the Bike Rental datasets the top feature, which had a big margin over the
+2nd most important feature, maintained it’s position but with small margin. On the Online Shopping
+dataset and the Bank marketing dataset, the original margin of the top feature was so big that even
+though the score was reduced after duplicating the top feature, it remained in top position with a large
+margin.
+
+F       Sensitivity of Different Scores Approximations to Random Seed
+In this section we show results for repeating the quality experiment on the BRCA dataset described
+in section 5 using different random seeds. We show that while the SAGE [10] method was highly
+sensitive to the choice of random seed, other methods succeeded to remain stable. Note that in this
+experiments we used the SAGE method for the global-natural scenario, although SAGE method was
+originally designed for the global-model scenario.
+To run SAGE, we trained a logistic regression model over 2/3 of the samples and ran SAGE over the
+remaining 1/3 with marginal sampling size of 512 as suggested by [10]. We used the SAGE code
+available online2 .
+To measure sensitivity we used the MKD distance (see section 5) between ranking prefixes produces
+by the same method, but with a different random seed. In table 9 we show the mean MDK distance
+between rankings prefixes produced with different random seeds. In table 10 we show the NDCG
+scores for the rankings prefixes (see section 5). As shown in these tables, SAGE was highly sensitive
+for the choice of random seed while the other methods was highly stable.
+
+
+
+
+    2
+        https://github.com/icc2115/sage
+
+
+                                                  20
+Table 3: Results of the robustness experiments for the Heart Disease dataset: Below are the
+Minimal Kendall Distance (MKD) between the rankings of the top-k ranked elements before and
+after duplicating the top feature three times. In these results lower is better, the perfect score is 0.00.
+As shown here, Shapley values was highly affected from the introduction to duplicates, while MCI
+remained stable.
+                                 Method      @3      @5 @10 @13
+                               MCI           0.00    0.00    0.00     0.00
+                             . Shapley       0.67    0.18    0.13     0.07
+                               Ablation      0.13    0.11    0.11     0.06
+                               Bivariate     0.00    0.00    0.00     0.00
+
+
+
+
+Table 4: Results of the robustness experiments for the Wine Quality dataset: Below are the
+Minimal Kendall Distance (MKD) between the rankings of the top-k ranked elements before and
+after duplicating the top feature three times. In these results lower is better, the perfect score is 0.00.
+As shown here, Shapley values was highly affected from the introduction to duplicates, while MCI
+remained stable.
+                                     Method       @3      @5 @11
+                                    MCI           0.00   0.00     0.18
+                                  . Shapley       0.33   0.07     0.05
+                                    Ablation      0.13   0.11     0.2
+                                    Bivariate     0.00   0.00     0.00
+
+
+
+
+Table 5: Results of the robustness experiments for the The German Credit Default dataset:
+Below are the Minimal Kendall Distance (MKD) between the rankings of the top-k ranked elements
+before and after duplicating the top feature three times. In these results lower is better, the perfect
+score is 0.00. In figure 4 we show that the relative score of the top feature was highly affected when
+using Shapley value, but remains stable when using MCI.
+                                 Method      @3      @5 @10 @20
+                               MCI           0.00    0.00    0.04     0.02
+                             . Shapley       0.00    0.00    0.06     0.06
+                               Ablation      0.13    0.11    0.07     0.08
+                               Bivariate     0.00    0.00    0.00     0.00
+
+
+
+
+Table 6: Results of the robustness experiments for the Bike Rental dataset: Below are the
+Minimal Kendall Distance (MKD) between the rankings of the top-k ranked elements before and
+after duplicating the top feature three times. In these results lower is better, the perfect score is 0.00.
+In figure 5 we show that the relative score of the top feature was highly affected when using Shapley
+value, but remains stable when using MCI.
+                                 Method      @3      @5 @10 @12
+                               MCI           0.00    0.00    0.02     0.02
+                             . Shapley       0.00    0.00    0.05     0.09
+                               Ablation      0.13    0.11    0.22     0.15
+                               Bivariate     0.00    0.00    0.00     0.00
+
+
+
+
+                                                    21
+Table 7: Results of the robustness experiments for the Online Shopping dataset: Below are the
+Minimal Kendall Distance (MKD) between the rankings of the top-k ranked elements before and
+after duplicating the top feature three times. In these results lower is better, the perfect score is 0.00.
+In figure 6 we show that the relative score of the top feature was affected when using Shapley value,
+but remains stable when using MCI.
+                                 Method      @3      @5 @10 @17
+                               MCI           0.00    0.10    0.02     0.04
+                             . Shapley       0.00    0.06    0.07     0.02
+                               Ablation      0.13    0.11    0.07     0.10
+                               Bivariate     0.00    0.00    0.00     0.00
+
+
+
+
+Table 8: Results of the robustness experiments for the Bank Marketing dataset: Below are the
+Minimal Kendall Distance (MKD) between the rankings of the top-k ranked elements before and
+after duplicating the top feature three times. In these results lower is better, the perfect score is 0.00.
+In figure 7 we show that the relative score of the top feature was affected when using Shapley value,
+but remains stable when using MCI.
+                                 Method      @3      @5 @10 @17
+                               MCI           0.00    0.10    0.02     0.02
+                             . Shapley       0.00    0.00    0.00     0.00
+                               Ablation      0.13    0.11    0.07     0.10
+                               Bivariate     0.00    0.00    0.00     0.00
+
+
+
+
+Table 9: Sensitivity of scores to different random seeds: Here we show the sensitivity of the
+ranking each score produced to five different random seeds. We measure sensitivity by the average ±
+std distance between the ranking produced using each score with different random seeds, for varying
+ranking prefixes lengths. We measure the distance between each pair of rankings using the MKD
+distance described in section 5. As shown below, the ranking produced by SAGE is highly sensitive
+to the choice of random seed, while the other scores are insensitive.
+         Method         @3              @5            @10             @20          @50
+        MCI          0.00 ± 0.00     0.00 ± 0.00     0.01 ± 0.01     0.02 ± 0.01     0.02 ± 0.00
+        Shapley      0.00 ± 0.00     0.00 ± 0.00     0.00 ± 0.00     0.01 ± 0.00     0.00 ± 0.00
+        Bivarite     0.00 ± 0.00     0.00 ± 0.00     0.00 ± 0.00     0.00 ± 0.00     0.00 ± 0.00
+        Ablation     0.00 ± 0.00     0.00 ± 0.00     0.00 ± 0.00     0.00 ± 0.00     0.00 ± 0.00
+        SAGE         0.09 ± 0.13     0.09 ± 0.06     0.13 ± 0.06     0.12 ± 0.03     0.26 ± 0.05
+
+
+
+
+                                                    22
+Table 10: Quality test results for different random seeds: Below are results of the quality test
+for the BRCA dataset described in section 5, repeated five times with different random seeds. We
+measure the quality of the ranking each score produced using the NDCG measure for prefixes of
+varying sizes, while treating breast cancer related genes as more relevant (higher is better, the perfect
+score is 1.00). As shown here, except of the run with random seed 4, MCI performs substantially
+better than SAGE.
+                        Method      Seed @3         @5 @10 @20 @50
+                                     1      1.00    0.85    0.77    0.93    0.93
+                                     2      1.00    0.85    0.77    0.83    0.92
+                       MCI           3      1.00    0.85    0.77    0.88    0.93
+                                     4      1.00    0.85    0.77    0.88    0.92
+                                     5      1.00    0.85    0.77    0.92    0.92
+                                     1      0.77    0.70    0.73    0.88    0.88
+                                     2      0.77    0.70    0.73    0.88    0.88
+                       Shapley       3      0.77    0.70    0.73    0.88    0.88
+                                     4      0.77    0.70    0.73    0.88    0.88
+                                     5      0.77    0.70    0.73    0.88    0.88
+                                     1      1.00    0.85    0.77    0.82    0.92
+                                     2      1.00    0.85    0.77    0.82    0.92
+                       Bivarite      3      1.00    0.85    0.77    0.82    0.92
+                                     4      1.00    0.85    0.77    0.82    0.92
+                                     5      1.00    0.85    0.77    0.82    0.92
+                                     1      0.30    0.21    0.28    0.44    0.62
+                                     2      0.30    0.21    0.28    0.44    0.62
+                       Ablation      3      0.30    0.21    0.28    0.44    0.62
+                                     4      0.30    0.21    0.28    0.44    0.62
+                                     5      0.30    0.21    0.28    0.44    0.62
+                                     1      0.70    0.79    0.58    0.70    0.83
+                                     2      0.70    0.64    0.70    0.70    0.83
+                       SAGE          3      0.77    0.83    0.61    0.73    0.87
+                                     4      1.00    1.00    0.87    0.92    0.97
+                                     5      0.77    0.70    0.74    0.79    0.88
+
+
+
+
+                                                   23
+

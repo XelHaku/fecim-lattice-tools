@@ -1,0 +1,726 @@
+                                                             Systematically Exploring Redundancy Reduction in
+                                                                       Summarizing Long Documents
+
+                                                                             Wen Xiao and Giuseppe Carenini
+                                                                              Department of Computer Science
+                                                                               University of British Columbia
+                                                                              Vancouver, BC, Canada, V6T 1Z4
+                                                                          {xiaowen3, carenini}@cs.ubc.ca
+
+
+                                                                 Abstract                        likely to be redundant than sentences from the same
+                                                 Our analysis of large summarization datasets
+                                                                                                 document, generating a non-redundant summary
+                                                 indicates that redundancy is a very serious     should still be one of the goals for single document
+arXiv:2012.00052v1 [cs.CL] 30 Nov 2020
+
+
+
+
+                                                 problem when summarizing long documents.        summarization (Lin et al., 2009).
+                                                 Yet, redundancy reduction has not been thor-       Generally speaking, there is a trade-off between
+                                                 oughly investigated in neural summarization.    importance and diversity (non-redundancy) (Jung
+                                                 In this work, we systematically explore and     et al., 2019), which is reflected in the two phases,
+                                                 compare different ways to deal with redun-      sentence scoring and sentence selection (Zhou
+                                                 dancy when summarizing long documents.
+                                                                                                 et al., 2018) in which extractive summarization
+                                                 Specifically, we organize the existing meth-
+                                                 ods into categories based on when and how       task can be naturally decomposed. The former typ-
+                                                 the redundancy is considered. Then, in the      ically scores sentences based on importance, while
+                                                 context of these categories, we propose three   the latter selects sentences based on their scores,
+                                                 additional methods balancing non-redundancy     but also possibly taking other factors (including
+                                                 and importance in a general and flexible way.   redundancy) into account.
+                                                 In a series of experiments, we show that our       Traditionally, in non-neural approaches the trade-
+                                                 proposed methods achieve the state-of-the-art
+                                                                                                 off between importance and redundancy has been
+                                                 with respect to ROUGE scores on two scien-
+                                                 tific paper datasets, Pubmed and arXiv, while   carefully considered, with sentence selection pick-
+                                                 reducing redundancy significantly. 1            ing sentences by optimizing an objective function
+                                                                                                 that balances the two aspects (Carbonell and Gold-
+                                         1       Introduction                                    stein, 1998; Ren et al., 2016). In contrast, more
+                                         Summarization is the task of shortening a given         recent works on neural extractive summarization
+                                         document(s) while maintaining the most important        models has so far over-emphasized sentence impor-
+                                         information. In general, a good summarizer should       tance and the corresponding scoring phase, while
+                                         generate a summary that is syntactically accurate,      paying little attention to how to reduce redundancy
+                                         semantically correct, coherent, and non-redundant       in the selection phase, where they simply apply a
+                                         (Saggion and Poibeau, 2013). While extractive           greedy algorithm to select sentences (e.g.,Cheng
+                                         methods tend to have better performance on the          and Lapata (2016); Xiao and Carenini (2019)). No-
+                                         first two aspects, they are typically less coherent     tice that this is especially problematic for long doc-
+                                         and more redundant than abstractive ones, where         uments, where redundancy tends to be a more seri-
+                                         new sentences are often generated by sentence fu-       ous problem, as we have observed in key datasets.
+                                         sion and compression, which helps detecting and         Improving redundancy reduction in neural extrac-
+                                         removing redundancy (Lebanoff et al., 2019). Al-        tive summarization for long documents is a major
+                                         though eliminating redundancy has been initially        goal of this paper.
+                                         and more intensely studied in the field of multi-          Indeed, some recently proposed neural methods
+                                         document summarization (Lloret and Sanz, 2013),         aim to reduce redundancy, but they either do that
+                                         because important sentences selected from mul-          implicitly or inflexibly and only focusing on short
+                                         tiple documents (about the same topic) are more         documents (e.g., news). For instance, some models
+                                             1
+                                                                                                 learn to reduce redundancy when predicting the
+                                            Our code can be found here - http://www.cs.
+                                         ubc.ca/cs-research/lci/research-groups/                 scores (Nallapati et al., 2016a), or jointly learn to
+                                         natural-language-processing/                            score and select sentences (Zhou et al., 2018) in
+an implicit way. However, whether these strategies     significantly.
+actually help reducing redundancy is still an open
+empirical question. The only neural attempt of ex-     2   Related Work
+plicitly reduce redundancy in the sentence selection
+phase is the Trigram Blocking technique, used in       In traditional extractive summarization, the process
+recent extractive summarization models on news         is treated as a discrete optimization problem bal-
+datasets (e.g., (Liu and Lapata, 2019)). However,      ancing between importance scores and redundancy
+the effectiveness of such strategy on the summariza-   scores, with techniques like Maximal Marginal
+tion of long documents has not been tested. Finally,   Relevance(MMR)(Carbonell and Goldstein, 1998),
+a very recent work by Bi et al. (2020) attempts to     redundancy-aware feature-based sentence classi-
+reduce redundancy in more sophisticated ways, but      fiers (Ren et al., 2016) and graph-based submodular
+still focusing on news. Furthermore, since it relies   selection (Lin et al., 2009).
+on BERT, such model is unsuitable to deal with            In recent years, researchers have explored neural
+long documents (with over 3,000 words).                extractive summarization solutions, which score
+                                                       sentences by training the neural models on a large
+  To address this rather confusing situation, char-
+                                                       corpus, and simply apply a greedy algorithm for
+acterized by unclear connections between all the
+                                                       sentence selection (Cheng and Lapata, 2016; Nal-
+proposed neural models, by their limited focus on
+                                                       lapati et al., 2016a). Although a model with a
+short documents, and by spotty evaluations, in this
+                                                       sequence decoder might plausibly encode redun-
+paper we systematically organize existing redun-
+                                                       dancy information implicitly, Kedzie et al. (2018)
+dancy reduction methods into three categories, and
+                                                       empirically show that this is not the case, since non
+compare them with respect to the informativeness
+                                                       auto-regressive models (the ones scoring each sen-
+and redundancy of the generated summary for long
+                                                       tence independently), perform on par with models
+documents. In particular, to perform a fair com-
+                                                       with a sequence decoder. In one of our new meth-
+parison we re-implement all methods by modify-
+                                                       ods, to effectively capture redundancy information,
+ing a common basic model (Xiao and Carenini,
+                                                       we specify a new loss that explicitly consider re-
+2019), which is a top performer on long documents
+                                                       dundancy when training the neural model.
+without considering redundancy. Additionally, we
+                                                          Beyond a greedy algorithm, the Trigram Block-
+propose three new methods that we argue will re-
+                                                       ing is frequently used to explicitly reduce redun-
+duce redundancy more explicitly and flexibly in the
+                                                       dancy in the sentence selection phase (Liu and Lap-
+sentence scoring and sentence selection phase by
+                                                       ata, 2019). In essence, a new sentence is not added
+deploying more suitable decoders, loss functions
+                                                       to the summary if it shares a 3-gram with the pre-
+and/or sentence selection algorithms, again build-
+                                                       viously added one. Paulus et al. (2017) first adopt
+ing for a fair comparison on the common basic
+                                                       the strategy for abstractive summarization, which
+model (Xiao and Carenini, 2019).
+                                                       forces the model not to produce the same trigram
+   To summarize, our main contributions in this        twice in the generated summaries, as a simplified
+paper are: we first examine popular datasets, and      version of MMR (Carbonell and Goldstein, 1998).
+show that redundancy is a more serious problem         Arguably, this method is too crude for documents
+when summarizing long documents (e.g., scientific      with relatively long sentences or specific concentra-
+papers) than short ones (e.g. news). Secondly, we      tions (e.g. scientific papers), where some technical
+not only reorganize and re-implement existing neu-     terms, possibly longer than 2-grams, are repeated
+ral methods for redundancy reduction, but we also      frequently in the ’important sentences’ (even in the
+propose three new general and flexible methods. Fi-    reference summaries). To address this limitation,
+nally, in a series of experiments, we compare exist-   we propose a neural version of MMR to deal with
+ing and proposed methods on long documents (i.e.,      redundancy within the sentence selection phase in
+the Pubmed and arXiv datasets), with respect to        a more flexible way, that can be tuned to balance
+ROUGE scores (Lin, 2004) and redundancy scores         importance and non-redundancy as needed.
+(Peyrard et al., 2017; Feigenblat et al., 2017).          The idea of MMR has also inspired Zhou et al.
+  As a preview, empirical results reveal that the      (2018), who propose a model jointly learning to
+proposed methods achieve state-of-the-art perfor-      score and select the sentences. Yet, this work not
+mance on ROUGE scores, on the two scientific           only focuses on summarizing short documents (i.e.,
+paper datasets, while also reducing the redundancy     news), but also uses MMR implicitly, and arguably
+sub-optimally, by learning a score that only in-
+directly captures the trade-off between relevance
+and redundancy. To improve on this approach,
+in this paper we propose a third new method, in
+which importance and redundancy are explicitly
+weighted, while still making the sentence scoring
+and selection benefit from each other by fine tuning
+the trained neural model through a Reinforcement
+Learning (RL) mechanism.
+   Finally, Bi et al. (2020) is the most recent (still
+unpublished) work on reducing redundancy in neu-
+                                                                Figure 1: The average unique n-gram ratio in the docu-
+ral single document summarization. However, their               ments across different datasets. To reduce the effect of
+goal is very different form ours, since they focus              length difference, stopwords were removed.
+on relatively short documents in the news domain.
+                                                                scores, while Figure 1 shows the average Unique
+3    Measuring Redundancy: metrics and                          n-gram Ratio for the same datasets. These obser-
+     comparing long vs. short documents                         vations provide further evidence that redundancy
+                                                                is a more serious problem in long documents. In
+We use the following two relatively new metrics to              addition, notice that the sentences in the scientific
+measure redundancy in the source documents and                  paper datasets are much longer than in the news
+in the generated summaries.                                     datasets, which plausibly makes it even harder to
+   Unique n-gram ratio2 : proposed in Peyrard                   balance between importance and non-redundancy.
+et al. (2017), it measures n-grams uniqueness; the
+lower it is, the more redundant the document is.                    Datasets   # Doc.   # words/doc.   # words/sent.   NID
+                                                                     Xsum       203k        429            22.8        0.188
+                               count(uniq_n_gram)                   CNNDM       270k        823            19.9        0.205
+ U niq_ngram_ratio =
+                                  count(n_gram)                     Pubmed      115k       3142            35.1        0.255
+                                                                     arXiv      201k       6081            29.2        0.267
+   Normalized Inverse of Diversity (NID): cap-
+tures redundancy, as the inverse of a diversity met-                 Table 1: Longer documents are more redundant
+ric with length normalization. Diversity is defined             4     Redundancy Reduction Methods
+as the entropy of unigrams in the document (Feigen-
+blat et al., 2017). Since longer documents are more             We systematically organize neural redundancy re-
+likely to have a higher entropy, we normalize the               duction methods into three categories, and compare
+diversity with the maximum possible entropy for                 prototypical methods from each category.
+the document log(|D|). Thus, we have:
+                                                                    A The decoder is designed to implicitly take re-
+                         entropy(D)                                   dundancy into account.
+              N ID = 1 −
+                           log(|D|)
+                                                                    B In the sentence scoring phase, explicitly learn
+Note that higher NID indicates more redundancy.
+                                                                      to reduce the redundancy.
+   When we compare the redundancy of long vs.                       C In the sentence selection phase, select sen-
+short documents with respect to these two metrics                     tences with less redundancy.
+on four popular datasets for summarization (CN-
+NDM (Nallapati et al., 2016b), Xsum (Narayan                       In this section, we describe different methods
+et al., 2018), Pubmed and arXiv (Cohan et al.,                  from each category. To compare them in a fair
+2018)), we observe that long documents are sub-                 way, we build all of them on a basic ExtSum-LG
+stantially more redundant than short ones (as it                model (see §4.1), by modifying the decoder and
+was already pointed out in the past (Stewart and                the loss function in the sentence selection phase
+Carbonell, 1998)). Table 1 shows the basic statis-              or the sentence selection algorithm. In Table 2,
+tics of each dataset, along with the average NID                we summarize the architecture (Encoder, Decoder,
+   2
+     In this paper, all the unique n-gram ratios are shown in   Loss Function and sentence selection algorithm) of
+percentage.                                                     all the methods we compare.
+                                                          Sent. Scor.
+       Categ.   Methods                                                                        Sent. Sel.
+                                        Encoder        Decoder             Loss Func.
+         -      Naive MMR                              Cosine Similarity                      MMR Select
+         -      ExtSum-LG              Encoder-LG        MLP           Cross Entropy (CE)        Greedy
+         A        + SR Decoder         Encoder-LG     SR Decoder               CE                Greedy
+         A        + NeuSum Decoder     Encoder-LG   NeuSum Decoder        KL Divergence     NeuSum Decoder
+         B        + RdLoss             Encoder-LG        MLP             CE + Red. Loss1         Greedy
+         C        + Trigram Blocking   Encoder-LG        MLP                   CE           Trigram Blocking
+         C        + MMR-Select         Encoder-LG        MLP                   CE             MMR Select
+         C        + MMR-Select+        Encoder-LG        MLP             CE + Red. Loss2      MMR Select
+
+      Table 2: The architecture of redundancy reduction methods. Bold methods are proposed in this paper.
+
+4.1   Baseline Models                                      an MLP layer as decoder and cross-entropy as the
+We consider two baseline models. One is an influ-          loss function. For the sentence selection phase, it
+ential unsupervised method explicitly balancing im-        greedily picks the sentences according to the score
+portance and redundancy (Naive MMR). The other             predicted by the neural model. In this method, re-
+is our basic neural supervised model not dealing           dundancy is not considered, so it is a good testbed
+with redundancy at all (ExtSum-LG), to which we            for adding and comparing redundancy reduction
+add different redundancy reduction mechanisms.             methods.
+                                                              Specifically, for a document D                =
+Naive MMR                                                  {s1 , s2 , ..., sn }, the output of the encoder is
+MMR (Carbonell and Goldstein, 1998) is a tra-              hi for each sentence si , and the decoder gives
+ditional extractive summarization method, which            output P (yi ) as the confidence score on the
+re-ranks the candidate sentences with a balance            importance of sentence si . Finally, the model is
+between query-relevance(importance) and informa-           trained on the Cross Entropy Loss :
+tion novelty(non-redundancy). Given a document                       n
+                                                                     X
+D, at each step, MMR selects one sentence from             Lce = −     (yi log P (yi )+(1−yi ) log (1 − P (yi ))
+the candidate set D \ Ŝ that is relevant with the                   i=1
+query Q, while containing little redundancy with
+                                                           4.2   Implicitly Reduce Redundancy in the
+the current summary Ŝ. Note that if there is no spe-
+                                                                 neural model (Category A, Table 2)
+cific query, then the query is the representation of
+the whole document. The method can be formally             In this section, we describe two decoders from
+specified as:                                              previous work, in which the redundancy of the
+      M M R = arg max [λSim1 (si , Q)                      summary is considered implicitly.
+                     si ∈D\Ŝ                                 SummaRuNNer Decoder: Nallapati et al.
+                 − (1 − λ) max Sim2 (si , sj )]            (2016a) introduce a decoder that computes a sen-
+                            sj ∈Ŝ                         tence score based on its salience, novelty(non-
+where Sim1 (si , Q) measures the similarity                redundancy) and position to decide whether it
+between the candidate sentence si and the                  should be included in the summary. Formally:
+query, indicating the importance of si , while                         P (yi ) = σ(Wc hi        #Content
+maxsj ∈Ŝ Sim2 (si , sj ) measures the similarity be-
+                                                                              +hi Ws d          #Salience
+tween the candidate sentence si and the current                    T
+summary Ŝ, representing the redundancy, and λ                   −hi Wr tanh(summi )            #N ovelty
+is the balancing factor. In this work, all the Sim                   +Wap pai + Wrp pri         #P osition
+are computed as the cosine similarity between the                                     +b)       #Bias
+embeddings of the sentences.
+                                                            where hi is the hidden state of sentence i from the
+ExtSum-LG                                                  encoder, d is the document representation , summi
+For the basic model, we use the current state-of-          is the summary representation, updated after each
+the-art model (Xiao and Carenini, 2019) on the             decoding step , and pai , pri are absolute and relative
+summarization of long documents. It is a novel             position embeddings, respectively. Once P (yi ) is
+extractive summarization model incorporating lo-           obtained for each sentence i, a greedy algorithm
+cal context and global context in the encoder, with        selects the sentences to form the final summary.
+Notice that although SummaRuNNer does contain                      to reduce redundancy in the sentence scoring phase
+a component assessing novelty, it would be inap-                   by adding a redundancy loss term to the original
+propriate to view this model as explicitly dealing                 loss function, motivated by the success of a similar
+with redunadany because the novelty component is                   strategy of adding a bias loss term in the gender
+not directly supervised.                                           debiasing task (Qian et al., 2019). Our new loss
+   NeuSum Decoder: One of the main drawback                        term Lrd is naturally defined as the expected re-
+of SummaRuNNer decoder is that it always score                     dundancy contained in the resulting summary, as
+the sentences in order, i.e., the former sentences                 shown below:
+are not influenced by the latter ones. In addition, it
+                                                                           L = βLce + (1 − β)Lrd
+only considers redundancy in the sentence scoring                               n Xn
+phase, while simply using a greedy algorithm to                           Lrd =
+                                                                                X
+                                                                                      P (yi )P (yj )Sim(si , sj )
+select sentences according to the resulting scores.                                    i=1 j=1
+To address these problems, Zhou et al. (2018) pro-
+pose a new decoder to identify the relative gain                   where P (yi ), P (yj ) are the confidence scores of
+of sentences, jointly learning to score and select                 sentence i and j on whether to select the sentences
+sentences. In such decoder, instead of feeding the                 in the generated summary, and Sim(si , sj ) is the
+sentences and getting the scores in order, they use a              similarity, i.e. redundancy between sentence i and
+mechanism similar to the pointer network (Vinyals                  j. 4 By adding the redundancy loss term, we pe-
+et al., 2015) to predict the scores of all the sen-                nalize it more if two sentences are similar to each
+tences at each step, select the sentence with the                  other and both of them have high confidence scores.
+highest score, and feed it to the next step of sen-                β is a balance factor, controlling the degree of re-
+tence selection. As for the loss function, they use                dundancy.
+the KL divergence between the predicted score dis-
+tribution and the relative ROUGE F1 gain at each                   4.4      Explicitly Reduce Redundancy in
+step. To be specific, the loss computed at step t is:                       Sentence Selection (Category C, Table 2)
+
+           Lt = DKL (Pt ||Qt )                                     We first introduce an existing method and then pro-
+                    exp(σ(hi ))                                    pose two novel methods that explicitly reduce re-
+       Pt (yi ) = Pn                                               dundancy in the sentence selection phase.
+                   j=1 exp(σ(hj ))
+                                                                      Trigram Blocking is widely used in recent ex-
+                          exp(τ g̃t (yi ))                         tractive summarization models on the news dataset
+      Qt (yi ) =        Pn
+                         j=1 exp(τ g̃t (yj ))                      (e.g. Liu and Lapata (2019)). Intuitively, it borrows
+       gt (yi ) = r1(St−1 ∪ si ) − r1(St−1 )                       the idea of MMR to balance the importance and
+                                                                   non-redundancy when selecting sentences. In par-
+where Pt , Qt are the predicted and ground truth                   ticular, given the predicted sentence scores, instead
+relative gain respectively, gt (yi ) is the ROUGE F1               of just selecting sentences greedily according to the
+gain with respect to the current partial summary                   scores, the current candidate is added to the sum-
+St−1 for sentence si , and g̃t (yi ) is the Min-Max                mary only if it does not have trigram overlap with
+normalized gt (yi ). τ is a smoothing factor, which                the previous selected sentences. Otherwise, the cur-
+is set to 200 empirically on the Pubmed dataset. 3                 rent candidate sentence is ignored and the next one
+4.3    Explicitly Reduce Redundancy in                             is checked, until the length limit is reached.
+       Sentence Scoring (Category B, Table 2)                         MMR-Select: Inspired by the existence of a
+                                                                   relevance/redundancy trade-off, we propose MMR-
+We propose a new method to explicitly learn to
+                                                                   Select, a simple method to eliminate redundancy
+reduce redundancy when scoring the sentences.
+                                                                   when a neural summarizer selects sentences to form
+   RdLoss: Although Zhou et al. (2018) jointly
+                                                                   a summary, in a way that is arguably more flexible
+train the decoder to score and select sentences, it
+                                                                   than Trigram Blocking with a balance factor λ.
+still learns to reduce redundancy implicitly, and the
+                                                                      With the confidence score computed by the basic
+method does not allow controlling the degree of re-
+                                                                   model, P = {P (y1 ), P (y2 ), ..., P (yn )}, instead of
+dundancy. To address this limitation, we propose a
+                                                                   picking sentences greedily, we pick the sentences
+rather simple method to explicitly force the model
+                                                                   according to the MMR-score, which is defined
+   3
+     Due to the complexity of generating the target distribution
+                                                                      4
+Q, we only experiment with this method on Pubmed.                         Noting that we define Sim(si , si ) as 0
+Figure 2: The pipeline of the MMR-Select+ method, where Ŝ, Ŷ and S̄, Ȳ are the summary and labels generated by
+the MMR-Select algorithm and the normal greedy algorithm, respectively. S and Y are the ground truth summary
+and the oracle labels.
+
+based on MMR and updated after each single sen-           the sentences according to P . r(S̄) is the reward
+tence being selected.                                     of this baseline summary and it is subtracted from
+                                                          r(Ŝ) to only positively reward summaries which
+MMR-Select = arg max [MMR-scorei ]
+                      si ∈D\Ŝ                            are better than the baseline. Formally, the whole
+                                                          MMR-Select+ model can be specified as follows:
+MMR-scorei = λP (yi ) − (1 − λ) max Sim(si , sj )]
+                                        sj ∈Ŝ                        L = γLrd + (1 − γ)Lce
+                                                                                                Xn
+The main difference between the Naive MMR and                       Lrd = −(r(Ŝ) − r(S̄))          log P (yˆi )
+MMR-Select falls into the computation of the im-                                                i=1
+portance score. In the Naive MMR, the impor-                          0      1 X
+                                                                  r(S ) =                 ROUGE-k(S 0 , S)
+tance score is the similarity between each sentence                          3
+                                                                                k∈{1,2,L}
+and the query, or the whole document, while in
+MMR-Select, the importance score is computed by
+                                                          5 Experiments
+a trained neural model.
+   MMR-Select+ : The main limitation of MMR- In this section, we describe the settings, results and
+Select is that the sentence scoring phase and the         analysis of the experiments of different methods on
+sentence selection phase cannot benefit from each         the Pubmed and arXiv datasets.
+other, because they are totally separate.                 5.1 Model Settings
+   To promote synergy between these two phases,
+we design a new method, MMR-Select+, shown                Following previous work, we use GloVe (Penning-
+in Figure 2, which synergistically combines three         ton et al., 2014) as word embedding, and the av-
+components: the basic model, the original cross- erage word embedding as the distributed represen-
+entropy loss Lce (in blue), and an RL mechanism           tation of sentences. To be comparable with Xiao
+(in green) whose loss is Lrd . The neural model is        and Carenini (2019), we set word length limit of
+then trained on a mixed objective loss L with γ as        the generated summaries as 200 on both datasets.
+                                                          6 We tune the hyperparameter λ and β in the re-
+the scaling factor. Zooming on the details of the
+RL component, it first generates a summary Ŝ by          spective methods on the validation set, and set
+applying the MMR selection described for MMR- λ = 0.6, β = 0.3 for both datasets. Following
+Select, which is to greedily pick sentences accord- previous work (e.g., Li et al. (2019)), γ was set
+ing to MMR-score, as well as the corresponding            to 0.99. For training MMR-Select+, the learning
+label assignment Ŷ = {yˆ1 , yˆ2 , ..., yˆn } (yˆi = 1 if rate is lr = 1e − 6; we start with the pretrained
+si is selected, yˆi = 0 otherwise). Then, the ex- ExtSumm-LG model. As for the evaluation metric,
+pected reward is computed based on the ROUGE              we use ROUGE scores as the measurement of im-
+score between Ŝ and the gold-standard human ab- portance while using the Unique N-gram Ratio and
+stractive summary S weighted by the probability           NID defined in Section 3 as the measurements of
+of the Ŷ labels. Notice that we also adopt the           redundancy.
+                                                              5
+self-critical strategy (Paulus et al., 2017) to help            The results of ExtSum-LG were obtained by re-running
+                                                          their model.
+accelerating the convergence by adding a baseline             6
+                                                                A document representation in Unsupervised MMR is sim-
+summaryS̄, which is generated by greedily picking         ilarly computed by averaging the embeddings of all the words.
+Figure 3: The average ROUGE scores, average unique n-gram ratios, and average NID scores with different λ used
+in the MMR-Select on the validation set. Remember that the higher the Unique n-gram Ratio, the lower NID, the
+less redundancy contained in the summary.
+                                                                Pubmed                                       arXiv
+             Categ.     Model
+                                                  ROUGE-1      ROUGE-2         ROUGE-L       ROUGE-1       ROUGE-2       ROUGE-L
+                C       Naive MMR                   37.46        11.25           32.22         33.74         8.50          28.36
+                -       ExtSum-LG5                  45.18        20.20           40.72         43.77         17.50         38.71
+                A         +SR Decoder               45.18        20.16           40.69         43.92         17.65         38.83
+                A         +NeuSum Decoder           44.54        19.66           40.42           -             -             -
+                B         +RdLoss                  45.30 †      20.42 †         40.95 †       44.01 †       17.79 †       39.09 †
+                C         +Trigram Blocking         43.33        17.67           39.01         42.75         15.73         37.85
+                C         +MMR-Select              45.29 †      20.30 †         40.90 †        43.81         17.41         38.94
+                C         +MMR-Select+             45.39 †      20.37 †         40.99 †       43.87 †        17.50        38.97 †
+                -       Oracle                      55.05        27.48           49.11         53.89         23.07         46.54
+
+Table 3: Rouge score of different summarization models on the Pubmed and arXiv datasets. † indicates significantly
+better than the ExtSum-LG with confidence level 99% on the Bootstrap Significance test. Green numbers means
+it’s better than ExtSum-LG on the certain metric, and the red numbers means worse.
+                                                             Pubmed                                             arXiv
+       Categ.       Model
+                                          Unigram%     Bigram% Trigram%          NID       Unigram%     Bigram% Trigram%           NID
+         C          Naive MMR                56.55       90.93     96.95        0.1881        53.01       88.82        96.28      0.1992
+         -          ExtSum-LG                53.02       87.29     94.37        0.2066        52.17       87.19        95.38      0.2088
+         A            +SR Decoder            52.88       87.17     94.32       0.2070         51.98       87.08        95.31      0.2097
+         A            +NeuSum Decoder       54.88 †     88.71 †   95.13 †      0.1993 †         -           -            -           -
+         B            +RdLoss               53.23 †      87.41     94.43       0.2052 †       52.17       87.20        95.36      0.2085
+         C            +Trigram Blocking    57.58 † ‡   93.05 † ‡ 98.56 † ‡    0.1818 † ‡    56.12 † ‡   92.38 † ‡ 98.94 † ‡     0.1876 † ‡
+         C            +MMR-Select           53.76 †     88.04 †   94.96 †       0.2022       52.80 †     87.64 †       95.40     0.2055 †
+         C            +MMR-Select+          53.93 †      88.32     95.14        0.2014       52.76 †     87.78 †      95.70 †    0.2055 †
+         -          Oracle                   56.66       89.25     95.55        0.2036        56.74       90.81        96.82      0.2029
+         -          Reference                56.69       89.45     95.95        0.2005        58.92       90.13        97.02      0.1970
+
+Table 4: Unique n-gram ratio and NID score on the two datasets. † indicates significant differences from (Xiao
+and Carenini, 2019) with confidence level 99%, while ‡ indicates significant differences from all the other models
+with confidence level 99% on the Bootstrap Significance test. Noting the higher the Unique n-gram Ratio, the
+lower NID, the less redundancy contained in the summary.Green numbers means it’s better than ExtSum-LG on
+the certain metric, and the red numbers means worse.
+
+5.2   Finetuning λ                                                           the ROUGE score even drops by a small margin,
+                                                                             while the redundancy/diversity still increases/drops.
+Consistently with previous work (Jung et al., 2019),
+                                                                             Then the problem to solve for future work is how
+when we finetune λ of MMR Select on the valida-
+                                                                             to increase the peak, which could be done by either
+tion set, we pinpoint the trade off between impor-
+                                                                             applying finer units (e.g., clauses instead of sen-
+tance and non-redundancy in the generated sum-
+                                                                             tences) or further improve the model that predicts
+mary (see Figure 3). For λ ≤ 0.6, as we in-
+                                                                             the importance score.
+crease the weight of importance score, the aver-
+age ROUGE scores continuously increase while                                 5.3 Overall Results and Analysis
+the redundancy/diversity increases/drops rapidly.                            The experimental results for the ROUGE scores are
+But since extractive methods can only reuse sen-                             shown in Table 3, whereas results for redundancy
+tences from the input document, there is an upper                            scores (Unique N-gram Ratio and NID score) are
+bound on how much the generated summary can                                  shown in Table 4. With respect to the balance be-
+match the ground-truth summary, so when λ > 0.6,                             tween importance and non-redundancy, despite the
+trade-off between the two aspects, all of the three     5.4    More Insights of the Experiments
+methods we propose can reduce redundancy sig-           In addition to the main experiment results discussed
+nificantly while also improving the ROUGE score         above, we further explore the performance on in-
+significantly compared with the ExtSum-LG basic         formativeness (ROUGE score) and redundancy
+neural model. In contrast, the NeuSum Decoder           (Unique N-gram Ratio) of different redundancy
+and Trigram Blocking effectively reduce redun-          reduction methods under two different conditions,
+dancy, but in doing that they hurt the importance       namely the degree of redundancy and the length
+aspect considerably. Even worse, the SR Decoder         of the source documents. Figure 4 shows the re-
+is dominated by the basic model on both aspects.        sults on the Pubmed dataset, while further results
+   Focusing on the redundancy aspect (Table 4),         of a similar analysis on the arXiv dataset can be
+Trigram Blocking makes the largest improvement          found in the Appendices. With respect to the de-
+on redundancy reduction, but with a large drop in       gree of redundancy, (upper part of Figure 4), the
+ROUGE scores. This is in striking contrast with         less redundant the document is, the less impact
+results on news datasets (Liu and Lapata, 2019),        the redundancy reduction methods have. Among
+where Trigram Blocking reduced redundancy while         all the methods, although Trigram Blocking works
+also improving the ROUGE score significantly.           the best with respect to reducing redundancy, it
+Plausibly, the difference between the performances      hurts the informativeness the most. However, it
+across datasets might be the result of the inflexi-     is still a good choice for a rather less redundant
+bility of the method. In both Pubmed and arXiv          document (e.g. the documents in the last two bins
+datasets, the sentences are much longer than those      with avg Unique N-gram Ratio over 0.7), which
+in the news dataset (See Table 1), and therefore,       is also consistent with the previous works show-
+simply dropping candidate sentences with 3-gram         ing the Trigram Blocking works well on the news
+overlap may lead to incorrectly missing sentences       datasets, which tends to be less redundant (see §3).
+with substantial important information.                 As for all the other methods, although they have
+   Furthermore, another insight revealed in Table       the same trends, MMR-Select+ performs the best
+4 is that dealing with redundancy in the sentence       on both informativeness and redundancy reduction,
+selection phase is consistently more effective than     especially for the more redundant documents.
+doing it in the sentence scoring phase, regardless         Regarding to the length of the source document
+of whether this happens implicitly (NeuSum > SR         (bottom part of Figure 4) , as the document become
+Decoder) or explicitly (Trigram Blocking, MMR-          longer, both informativeness and redundancy in
+Select/+ > RdLoss).                                     the summary generated by all methods increases
+   Moving to more specific findings about par-          and then decrease once hitting the peak. MMR-
+ticular systems, we already noted that while the        Select+ and MMR-Select are the best choices to
+NeuSum Decoder reduces redundancy effectively,          balance between the informativeness and redun-
+it performs poorly on the ROUGE score, something        dancy - they are the only two methods having the
+that did not happen with news datasets. A possi-        higher ROUGE scores and higher Unique N-gram
+ble explanation is that the number of sentences         ratios across different lengths, even for the short
+selected for the scientific paper datasets (on aver-    documents with less than 50 sentences.
+age 6-7 sentences) is almost twice the number of           Besides, we also conduct experiments on gener-
+sentences selected for news; and as it was men-         ating summaries with different length limit, where
+tioned in the original paper (Zhou et al., 2018), the   we found that our new methods are stable across
+precision of NeuSum drops rapidly after selecting       different summary lengths (Figure. 5).
+a few sentences.
+                                                        6     Conclusion and Future work
+   Other results confirm established beliefs. The
+considerable difference between Naive MMR and           Balancing sentence importance and redundancy is
+MMR-Select was expected given the recognized            a key problem in extractive summarization. By
+power of neural network over unsupervised meth-         examining large summarization datasets, we find
+ods. Secondly, the unimpressive performance of          that longer documents tend to be more redundant.
+the SR decoder confirms that the in-order sequence      Therefore in this paper, we systematically explore
+scoring is too limited for effectively predicting im-   and compare existing and newly proposed methods
+portance score and reducing redundancy.                 for redundancy reduction in summarizing long doc-
+Figure 4: Comparing the average ROUGE scores and average unique n-gram ratios of different models on the
+Pubmed dataset, conditioned on different degrees of redundancy and lengths of the document (extremely long
+documents - i.e., 1% of the dataset are not shown because of space constraints).7
+
+                                                          uments. Experiments indicate that our novel meth-
+                                                          ods achieve SOTA on the ROUGE scores, while
+                                                          significantly reducing redundancy on two scientific
+                                                          paper datasets (Pubmed and arXiv). Interestingly,
+                                                          we show that redundancy reduction in sentence
+                                                          selection is more effective than in the sentence
+                                                          scoring phase, a finding to be further investigated .
+                                                             Additional venues for future work include ex-
+                                                          perimenting with generating summaries at finer
+                                                          granularity than sentences, as suggested by our
+                                                          analysis of the λ parameter. We also intend to
+                                                          explore other ways to assess redundancy, moving
+                                                          from computing the cosine similarity between sen-
+                                                          tence embeddings, to a pre-trained neural model for
+                                                          sentence similarity. Finally, we plan to run human
+                                                          evaluations to assess the quality of the generated
+                                                          summaries. This is quite challenging for scientific
+                                                          papers, as it requires participants to possess sophis-
+                                                          ticated domain-specific background knowledge.
+
+
+                                                          Acknowledgments
+Figure 5: Comparing the average ROUGE scores and
+average unique n-gram ratios of different models with     We thank reviewers and the UBC-NLP group for
+different word length limits on the Pubmed dataset. See   their insightful comments. This research was sup-
+Appendices for similar results on arXiv.                  ported by the Language & Speech Innovation Lab
+                                                          of Cloud BU, Huawei Technologies Co., Ltd.
+References                                               Chin-Yew Lin. 2004. ROUGE: A package for auto-
+                                                           matic evaluation of summaries. In Text Summariza-
+Keping Bi, Rahul Jha, W. Bruce Croft, and Asli Celiky-     tion Branches Out, pages 74–81, Barcelona, Spain.
+  ilmaz. 2020. AREDSUM: Adaptive Redundancy-               Association for Computational Linguistics.
+  Aware Iterative Sentence Ranking for Extractive
+  Document Summarization.                                Hui Lin, Jeff Bilmes, and Shasha Xie. 2009. Graph-
+                                                           based submodular selection for extractive summa-
+Jaime Carbonell and Jade Goldstein. 1998. The use of
+                                                           rization. Proceedings of the 2009 IEEE Workshop
+   mmr, diversity-based reranking for reordering docu-
+                                                           on Automatic Speech Recognition and Understand-
+   ments and producing summaries. In Proceedings of
+                                                           ing, ASRU 2009, pages 381–386.
+   the 21st Annual International ACM SIGIR Confer-
+   ence on Research and Development in Information       Yang Liu and Mirella Lapata. 2019. Text summariza-
+   Retrieval, SIGIR ’98, pages 335–336, New York,          tion with pretrained encoders. In Proceedings of
+   NY, USA. ACM.                                           the 2019 Conference on Empirical Methods in Nat-
+Jianpeng Cheng and Mirella Lapata. 2016. Neural sum-       ural Language Processing and the 9th International
+   marization by extracting sentences and words. In        Joint Conference on Natural Language Processing
+   Proceedings of the 54th Annual Meeting of the As-       (EMNLP-IJCNLP), pages 3730–3740, Hong Kong,
+   sociation for Computational Linguistics (Volume 1:      China. Association for Computational Linguistics.
+   Long Papers), pages 484–494, Berlin, Germany. As-
+                                                         Elena Lloret and Manuel Sanz. 2013. Tackling redun-
+   sociation for Computational Linguistics.
+                                                           dancy in text summarization through different levels
+Arman Cohan, Franck Dernoncourt, Doo Soon Kim,             of language analysis. Computer Standards & Inter-
+  Trung Bui, Seokhwan Kim, Walter Chang, and Na-           faces, 35:507–518.
+  zli Goharian. 2018. A discourse-aware attention
+  model for abstractive summarization of long docu-      Ramesh Nallapati, Feifei Zhai, and Bowen Zhou.
+  ments. CoRR, abs/1804.05685.                             2016a. Summarunner: A recurrent neural network
+                                                           based sequence model for extractive summarization
+Guy Feigenblat, Haggai Roitman, Odellia Boni, and          of documents. CoRR, abs/1611.04230.
+  David Konopnicki. 2017. Unsupervised query-
+  focused multi-document summarization using the         Ramesh Nallapati, Bowen Zhou, Cicero dos Santos,
+  cross entropy method. In Proceedings of the 40th         Çağlar Gulçehre, and Bing Xiang. 2016b. Abstrac-
+  International ACM SIGIR Conference on Research           tive text summarization using sequence-to-sequence
+  and Development in Information Retrieval, SIGIR          RNNs and beyond. In Proceedings of The 20th
+  ’17, page 961–964. Association for Computing Ma-         SIGNLL Conference on Computational Natural Lan-
+  chinery.                                                 guage Learning, pages 280–290, Berlin, Germany.
+                                                           Association for Computational Linguistics.
+Taehee Jung, Dongyeop Kang, Lucas Mentch, and Ed-
+  uard Hovy. 2019. Earlier Isn’t Always Better: Sub-     Shashi Narayan, Shay B. Cohen, and Mirella Lapata.
+  aspect Analysis on Corpus and System Biases in           2018. Don’t give me the details, just the summary!
+  Summarization. pages 3322–3333.                          topic-aware convolutional neural networks for ex-
+                                                           treme summarization. In Proceedings of the 2018
+Chris Kedzie, Kathleen McKeown, and Hal Daumé III.         Conference on Empirical Methods in Natural Lan-
+  2018. Content selection in deep learning models of       guage Processing, pages 1797–1807, Brussels, Bel-
+  summarization. In Proceedings of the 2018 Con-           gium. Association for Computational Linguistics.
+  ference on Empirical Methods in Natural Language
+  Processing, pages 1818–1828, Brussels, Belgium.        Romain Paulus, Caiming Xiong, and Richard Socher.
+  Association for Computational Linguistics.               2017. A deep reinforced model for abstractive sum-
+                                                           marization. CoRR, abs/1705.04304.
+Logan Lebanoff, John Muchovej, Franck Dernoncourt,
+  Doo Soon Kim, Seokhwan Kim, Walter Chang, and          Jeffrey Pennington, Richard Socher, and Christopher D.
+  Fei Liu. 2019. Analyzing sentence fusion in abstrac-      Manning. 2014. Glove: Global vectors for word rep-
+  tive summarization. In Proceedings of the 2nd Work-       resentation. In Empirical Methods in Natural Lan-
+  shop on New Frontiers in Summarization, pages             guage Processing (EMNLP), pages 1532–1543.
+  104–110, Hong Kong, China. Association for Com-
+  putational Linguistics.                                Maxime Peyrard, Teresa Botschen, and Iryna
+                                                          Gurevych. 2017.       Learning to score system
+Siyao Li, Deren Lei, Pengda Qin, and William Yang         summaries for better content selection evaluation.
+  Wang. 2019. Deep reinforcement learning with dis-       In Proceedings of the Workshop on New Frontiers
+   tributional semantic rewards for abstractive summa-    in Summarization, pages 74–84, Copenhagen, Den-
+   rization. In Proceedings of the 2019 Conference on     mark. Association for Computational Linguistics.
+  Empirical Methods in Natural Language Processing
+   and the 9th International Joint Conference on Natu-   Yusu Qian, Urwa Muaz, Ben Zhang, and Jae Won
+   ral Language Processing (EMNLP-IJCNLP), pages           Hyun. 2019. Reducing gender bias in word-level
+   6040–6046, Hong Kong, China. Association for            language models with a gender-equalizing loss func-
+   Computational Linguistics.                              tion. In Proceedings of the 57th Annual Meeting of
+    the Association for Computational Linguistics: Stu-   interval, while the majority of the documents in the
+    dent Research Workshop, pages 223–228, Florence,      arXiv dataset have number of sentences in the range
+    Italy. Association for Computational Linguistics.
+                                                          100 to 300 with average Unique N-gram Ratio in
+Pengjie Ren, Furu Wei, Zhumin Chen, Jun Ma, and           the 0.6 − 0.7 interval. Consistent with the result on
+  Ming Zhou. 2016. A redundancy-aware sentence            the Pubmed dataset, the Trigram Blocking method
+  regression framework for extractive summarization.      is the best choice for rather less redundant docu-
+  In Proceedings of COLING 2016, the 26th Inter-
+  national Conference on Computational Linguistics:       ments (with average Unique N-gram Ratio larger
+  Technical Papers, pages 33–43, Osaka, Japan. The        than 0.7), and the MMR-Select+ is the one better
+  COLING 2016 Organizing Committee.                       or equivalent to the original model across different
+Horacio Saggion and Thierry Poibeau. 2013. Auto-
+                                                          degree of redundancy, ignoring the outliers. With
+  matic Text Summarization: Past, Present and Future,     respect to the length of the documents, the MMR-
+  pages 3–21. Springer Berlin Heidelberg, Berlin, Hei-    Select+ and MMR-Select are consistently the most
+  delberg.                                                effective methods for balancing redundancy and in-
+Jade Stewart and Jaime Carbonell. 1998. Summariza-        formativeness on documents with different length.
+   tion: (1) using mmr for diversity - based reranking
+   and (2) evaluating summaries. pages 181–195.
+                                                          A.2    Analysis on Selection Overlap
+Oriol Vinyals, Meire Fortunato, and Navdeep Jaitly.
+  2015. Pointer networks. In C. Cortes, N. D.
+  Lawrence, D. D. Lee, M. Sugiyama, and R. Gar-           To explore the difference made by applying differ-
+  nett, editors, Advances in Neural Information Pro-      ent redundancy reduction methods on the original
+  cessing Systems 28, pages 2692–2700. Curran Asso-       method(ExtSumLG), we compare the selected sen-
+  ciates, Inc.
+                                                          tences by all the methods, and show the overlap
+Wen Xiao and Giuseppe Carenini. 2019. Extractive          ratios between every two methods, as well as the
+  summarization of long documents by combining            total number and the average length of selected
+  global and local context. In Proceedings of the
+                                                          sentences in the test set, in Table 5 and Table
+ 2019 Conference on Empirical Methods in Natu-
+  ral Language Processing and the 9th International       6 for Pubmed dataset and arXiv dataset respec-
+ Joint Conference on Natural Language Processing          tively. As we can see from the tables, except for
+ (EMNLP-IJCNLP), pages 3002–3012, Hong Kong,              the SR Decoder, all the other methods tend to se-
+  China. Association for Computational Linguistics.       lect more and shorter sentences than the original
+Qingyu Zhou, Nan Yang, Furu Wei, Shaohan Huang,           summarizer. Regarding the overlap between the
+  Ming Zhou, and Tiejun Zhao. 2018. Neural doc-           original method and the others, we observe that
+  ument summarization by jointly learning to score        among all the three categories, the methods in cat-
+  and select sentences. In Proceedings of the 56th An-
+  nual Meeting of the Association for Computational       egory A tend to produce large differences, since
+  Linguistics (Volume 1: Long Papers), pages 654–         these methods change the structure of the origi-
+  663, Melbourne, Australia. Association for Compu-       nal model. Comparing the methods in Category
+  tational Linguistics.                                   C, around 36% of the sentences are regarded as
+                                                          redundant by Trigram Blocking, which means 36%
+A     Appendices
+                                                          of the sentences have trigram-overlap with other
+In these Appendices, we show more analysis of the         selected sentences, while only around 10% sen-
+experimental results.                                     tences are regarded as redundant by MMR-Select.
+                                                          As the ROUGE scores of MMR-Select are much
+A.1    Analysis on arXiv Dataset under                    better than Trigram Blocking on both datasets, this
+       conditions                                         is in line with our analysis in Section 5.3, Triagram
+Figure 6 shows the performance on informativeness         Blocking dropping some important sentences incor-
+(ROUGE score) and redundancy (Unique N-gram               rectly. Interestingly, we notice that the overlap ratio
+Ratio) of different redundancy reduction methods          between Trigram Block and MMR-Select is con-
+under different conditions on the arXiv dataset.          siderably larger than the overlap ratio of Trigram
+Comparing with the Pubmed dataset, the docu-              Block with original method (ExtSumLG) on both
+ments in the arXiv dataset tend to be longer and          datasets. This indicates that there are some sen-
+more redundant, as the majority of the documents          tences, not selected by the original method, which
+in the Pubmed dataset have less than 100 sentences        are considered to be important by both the Trigram
+with average Unique N-gram Ratio in the 0.5 − 0.6         Blocking and MMR-Select methods.
+Figure 6: Comparing the average ROUGE scores and average unique n-gram ratios of different models on the
+arXiv dataset, conditioned on different degrees of redundancy and lengths of the document.8
+         -           ExtSumLG       +SR     +NeuSum        +RdLoss   +Tri-Block   +MMR-Select     +MMR-Select+
+    ExtSumLG           100.00      72.84     52.00          77.70      60.77        87.71            85.75
+        +SR            72.66       100.00    49.73          70.29      52.24        69.78            70.64
+      +Neusum          60.44       57.94     100.00         60.77      48.47        60.38            61.07
+      +RdLoss          80.84       73.32     54.40          100.00     57.67        79.03            80.08
+     +Tri-Block        64.85       55.89     44.51          59.15      100.00       64.72            64.38
+   +MMR-Select         90.49       72.17     53.59          78.37      62.56        100.00           91.15
+   +MMR-Select+        88.66       73.22     54.33          79.58      62.38        91.35           100.00
+    # Sent. Sel.       36979       36888     42981          38476      39463        38151            38236
+   # words/Sent        40.66       40.84     33.38          38.95      37.21        39.35            39.31
+
+Table 5: Micro overlap ratio (%) between the selections of different methods and the total number and the average
+length of selected sentences in the test set of Pubmed.
+
+A.3   Analysis on Recall and Precision of                    particular tendency to select sentences in particular
+      ROUGE Scores                                           position of the documents. However, as shown in
+                                                             the figure, the trends are all rather similar for all
+We also provide the Precision and Recall of the
+                                                             methods.
+ROUGE scores in the main experiment, the results
+of Pubmed and arXiv datasets are shown in Table 7
+and Table 8, respectively. It is interesting to see that
+the NeuSum Decoder tends to have a high precision
+but low recall, indicating that the generated sum-
+maries tend to be shorter and contain less useful
+information than the original method.
+
+A.4   Analysis on the Relative Position of
+      Selections
+We also show the relative position distribution of
+the selected sentences on both datasets in Figure 7
+to verify if any redundancy reduction method has a
+         -           ExtSumLG      +SR     +NeuSum      +RdLoss    +Tri-Block   +MMR-Select     +MMR-Select+
+    ExtSumLG           100.00     72.06       -          76.51       56.22        75.04            80.21
+        +SR            73.84      100.00      -          69.07       49.16        62.82            67.03
+      +Neusum            -          -         -            -            -           -                -
+      +RdLoss          79.88      70.38       -          100.00      53.00        67.81            72.57
+     +Tri-Block        64.59      55.12       -          58.33       100.00       60.34            62.55
+   +MMR-Select         88.93      72.65       -          76.97       62.23        100.00           93.13
+   +MMR-Select+        89.96      73.36       -          77.96       61.06        88.14           100.00
+    # Sent. Sel.       39698      40681       -          41448       45611        47045            44526
+   # words/Sent        36.26      35.52       -          34.50       30.86        30.73            32.40
+
+Table 6: Micro overlap ratio (%) between the selections of different methods and the total number and the average
+length of selected sentences in the test set of arXiv.
+                                                                      Pubmed
+          Categ.    Model
+                                                 ROUGE-1             ROUGE-2            ROUGE-L
+                                               Prec. Recall        Prec. Recall       Prec. Recall
+             C      Naive MMR                  36.45 42.56         11.05 12.64        31.39 36.53
+             -      ExtSum-LG9                 44.05 51.08         19.82 22.71        39.74 45.97
+             A        +SR Decoder              44.00 51.10         19.75 22.68        39.66 45.96
+             A        +NeuSum Decoder          44.36 49.24         19.74 21.58        40.29 44.62
+             B        +RdLoss                  44.30 51.09         20.11 22.88        40.09 46.11
+             C        +Trigram Blocking        42.67 48.54         17.51 19.73        38.45 43.64
+             C        +MMR-Select              44.25 51.09         19.98 22.75        40.08 46.07
+             C        +MMR-Select+             44.28 51.27         20.01 22.86        40.03 46.24
+
+Table 7: Rouge Recall and Precision of different summarization models on the Pubmed dataset. Green numbers
+means it’s better than ExtSum-LG on the certain metric, and the red numbers means worse.
+                                                                       Arxiv
+          Categ.    Model
+                                                 ROUGE-1            ROUGE-2             ROUGE-L
+                                               Prec. Recall       Prec. Recall        Prec. Recall
+             C      Naive MMR                  29.61 42.69         7.45    10.78      24.92 35.82
+             -      ExtSum-LG10                38.60 54.64        15.38 22.00         34.17 48.26
+             A        +SR Decoder              38.65 54.99        15.47 22.28         34.24 48.64
+             A        +NeuSum Decoder            -     -             -       -          -     -
+             B        +RdLoss                  38.92 54.77        15.68 22.29         34.60 48.59
+             C        +Trigram Blocking        38.04 52.71        13.98 19.47         33.71 46.61
+             C        +MMR-Select              38.85 54.33        15.39 21.74         34.56 48.24
+             C        +MMR-Select+             38.75 54.67        15.41 21.96         34.44 48.51
+
+Table 8: Rouge Recall and Precision of different summarization models on the Pubmed dataset. Green numbers
+means it’s better than ExtSum-LG on the certain metric, and the red numbers means worse.
+
+
+
+
+Figure 7: The relative position distribution of different redundancy reduction methods on Pubmed(left) and
+arXiv(right) datasets.
+
