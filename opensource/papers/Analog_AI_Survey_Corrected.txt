@@ -1,0 +1,1095 @@
+                                     Date of publication xxxx 00, 0000, date of current version xxxx 00, 0000.
+                                     Digital Object Identifier 10.1109/ACCESS.2023.1120000
+
+
+
+
+                                     The Promise of Analog Deep Learning: Recent
+                                     Advances, Challenges and Opportunities
+                                     ADITYA DATAR*1 , PRAMIT SAHA*2
+                                     1
+                                         Independent Researcher
+                                     2
+                                         University of Oxford
+                                     Corresponding author: Pramit Saha (e-mail: pramit.saha@eng.ox.ac.uk).
+arXiv:2406.12911v1 [cs.LG] 13 Jun 2024
+
+
+
+
+                                     * Indicates Equal Contribution
+
+
+
+
+                                           ABSTRACT Much of the present-day Artificial Intelligence (AI) utilizes artificial neural networks, which
+                                           are sophisticated computational models designed to recognize patterns and solve complex problems by
+                                           learning from data. However, a major bottleneck occurs during a device’s calculation of weighted sums for
+                                           forward propagation and optimization procedure for backpropagation, especially for deep neural networks,
+                                           or networks with numerous layers. Exploration into different methods of implementing neural networks
+                                           is necessary for further advancement of the area. While a great deal of research into AI hardware in
+                                           both directions, analog and digital implementation widely exists, much of the existing survey works lacks
+                                           discussion on the progress of analog deep learning. To this end, we attempt to evaluate and specify the
+                                           advantages and disadvantages, along with the current progress with regards to deep learning, for analog
+                                           implementations. In this paper, our focus lies on the comprehensive examination of eight distinct analog
+                                           deep learning methodologies across multiple key parameters. These parameters include attained accuracy
+                                           levels, application domains, algorithmic advancements, computational speed, and considerations of energy
+                                           efficiency and power consumption. We also identify the neural network-based experiments implemented
+                                           using these hardware devices and discuss comparative performance achieved by the different analog deep
+                                           learning methods along with an analysis of their current limitations. Overall, we find that Analog Deep
+                                           Learning has great potential for future consumer-level applications, but there is still a long road ahead in
+                                           terms of scalability. Most of the current implementations are more proof of concept and are not yet practically
+                                           deployable for large-scale models.
+
+
+                                           INDEX TERMS Analog deep learning, neuromorphic computing, ion migration, spintronics, emerging
+                                           hardware for deep learning.
+
+
+                                         I. INTRODUCTION                                                         come immensely vast, and employing larger neural networks
+                                                                                                                 emerges as a promising approach to realize these potentials.
+                                     W        ITH the advent of Artificial Intelligence, Deep Learn-
+                                              ing has enabled significantly greater capabilities
+                                     by adding numerous layers to Artificial Neural Networks
+                                                                                                                    In an ANN, each neuron establishes connections with
+                                                                                                                 every other neuron through weighted synapses. These con-
+                                     (ANNs) [1]–[7]. These additional layers aim to mimic the                    nections allow a neuron to transmit a value scaled by the
+                                     human brain more closely, which comprises an estimated 10                   weight of the synapse, contributing to the activation of other
+                                     billion neurons, each possessing capabilities far beyond those              neurons. These "multiply-and-add" operations can be sim-
+                                     of artificial neurons present in ANNs. While artificial neurons             plified as matrix multiplications, where the neuron values
+                                     operate on abstract activation functions, human neurons are                 form a matrix that gets multiplied by the matrix of synapse
+                                     influenced by a diverse array of factors, including time, space,            weights. This approach facilitates more straightforward code
+                                     the strength of synaptic connections, and electrical pulses.                implementations using matrix libraries. Present-day Artifi-
+                                     Although it remains challenging to simulate all aspects of                  cial Intelligence heavily relies on digital-oriented hardware,
+                                     human decision-making, increasing the number of neurons                     particularly Graphics Processing Units (GPUs), to perform
+                                     and synaptic connections in ANNs through additional lay-                    binary matrix multiplications in neural networks. However,
+                                     ers brings us closer to mimicking the human brain’s behav-                  it is worth noting that a single binary matrix multiplication
+                                     ior. Consequently, the possibilities for AI applications be-                involves a significantly large number of steps due to the nature
+
+                                     VOLUME 11, 2023                                                                                                                           1
+                                                                                         Datar et al.: The Promise of Analog Deep Learning
+
+
+
+of binary computations. As a result, digital hardware does         and patterns from large datasets, enabling the network to
+not offer the most efficient pathway to building much larger       generalize and perform well on new, unseen datasets [2], [4],
+networks without compromising on time, space, and energy           [5], [7]–[13].
+efficiency. Therefore, to expand Deep Learning to encompass           Artificial Neural Networks have enabled us to imitate
+hundreds of layers while maintaining practicality, we must         certain biological brain functions; however, achieving ca-
+explore alternatives to digital implementations of ANNs that       pabilities closely resembling the human brain demands the
+can provide both accuracy and efficiency.                          adoption of deep neural networks, typically comprising 2 or
+   The objective of this review is to provide a comprehensive      more hidden layers. To even approach human-level decision-
+overview and comparison of different emerging technolo-            making, ANNs with hundreds of hidden layers are imperative.
+gies for Analog Deep Learning. These technologies aim to           In the quest to make the fully connected ANNs more efficient,
+enhance AI capabilities by offering efficient and accurate         effective, and scalable, various advanced neural network al-
+alternatives to the existing digital implementations of ANNs.      ternatives have been proposed, including Convolutional Neu-
+By exploring the potential of Analog Deep Learning, we             ral Networks (CNNs) [11], [14]–[16], Spiking Neural Net-
+seek to enable the practical realization of significantly larger   works (SNNs) [17], [18], Recurrent Neural Networks (RNNs)
+neural networks, paving the way for further advancements in        [8], and Transformer Neural Networks (TNNs).
+the field of Artificial Intelligence. Although previous works         Artificial Neural Networks serve as simple feed-forward
+addressing the Analog Deep Learning are focused on the ben-        neural networks applicable to a wide range of Artificial Intel-
+efits of Analog techniques for applications in deep learning,      ligence problems, employing matrix multiplication for com-
+we hope to establish a baseline review of the area, evaluating     putations. Convolutional Neural Networks leverage an algo-
+both the benefits and consequences to determine whether            rithm designed for Computer Vision applications, with layers
+Analog Deep Learning has great potential and should con-           organized in three dimensions to enhance spatial awareness.
+tinue to be studied for future implementations. To the best of     Recurrent Neural Networks excel in tasks requiring mem-
+our knowledge, this is the first work that presents a detailed     ory of past decisions, although their extensive use of Linear
+overview of analog deep learning and its progress from a           Algebra concepts poses challenges for hardware implemen-
+computational point of view.                                       tations. Due to the complex self-attention mechanisms and
+   In this context, our primary contributions are two-fold:        the large number of parameters that need iterative optimiza-
+                                                                   tion, the training of Transformer Neural Networks (TNNs)
+    1) Provide an in-depth comparison of existing Analog
+                                                                   demands a substantial amount of computational resources
+       Deep Learning techniques in terms of algorithms im-
+                                                                   and time. Spiking Neural Networks (SNNs) exhibit great
+       plemented, performance achieved, speed, and power
+                                                                   potential for neuromorphic computing, closely mimicking
+       consumption.
+                                                                   human brain functionalities. However, these networks rely
+    2) Analyze the current state and future prospects for Ana-
+                                                                   on the leaky integrate-and-fire approach, which introduces
+       log Deep Learning
+                                                                   integration complexities and may impede efficiency.
+   The rest of the paper is organised as follows. In Section II,      While RNNs, TNNs, and SNNs demonstrate considerable
+we introduce preliminary concepts like Deep Learning, Ana-         promise in deep learning applications, their limited utilization
+log Deep learning, and Neuromorphic Computing. In Section          is attributed to the constraints and efficiency barriers they
+III, we define and explain the different analog deep learning      impose on digital AI hardware. Realizing their full potential
+implementations along with a visual representation of the          calls for innovations in AI hardware, enabling their inte-
+taxonomy. Section IV elaborates and compares the aforemen-         gration to provide substantial benefits without undesirable
+tioned analog strategies in terms of three main evaluation         consequences. In this pursuit, we look to the past, exploring
+parameters - (i) Algorithms, Applications, and Accuracy, (ii)      the possibility of analog technologies, potentially integrated
+Computational Speed, and (iii) Energy Efficiency and Power         with digital hardware, as the key to unlock next-generation
+Consumption. Next, we discuss the insights derived from the        AI advancements.
+comparison and recommendations based on the insights in
+Section V. Finally, we conclude the article in Section VI.         B. ANALOG DEEP LEARNING
+                                                                   Analog deep learning refers to the utilization of analog com-
+II. BACKGROUND                                                     puting principles and hardware to perform the computations
+A. DEEP LEARNING                                                   involved in deep learning tasks. This approach leverages the
+Deep learning is a subfield of machine learning that involves      continuous nature of analog signals to potentially achieve
+training artificial neural networks to learn and make pre-         higher energy efficiency and faster processing compared to
+dictions from data. These neural networks, inspired by the         traditional digital methods, which rely on discrete represen-
+structure of the human brain, consist of layers of intercon-       tations [19].
+nected nodes that process and transform input data to generate        Digital Deep Learning has garnered praise for its accuracy
+meaningful outputs. Deep learning excels in tasks like image       and ease of implementation, exploring the analog counterpart
+and speech recognition, natural language processing, and           could address several of its limitations, such as efficiency
+decision-making by automatically learning relevant features        and further advancement. Analog devices, on the other hand,
+2                                                                                                                         VOLUME 11, 2023
+Datar et al.: The Promise of Analog Deep Learning
+
+
+
+offer diverse physical properties that can be harnessed to         tronics. In other words, neuromorphic computing systems are
+achieve varied results, akin to leveraging different neural        designed to replicate the brain’s intricate connectivity and
+network architectures for AI applications. Prominent exam-         information processing mechanisms using analog compo-
+ples of analog properties include Cation Migration [1]–[3],        nents. This enables efficient and parallel computation of com-
+[8], [9], [20], [21], Anion Migration [10], [11], [22]–[25],       plex tasks, such as pattern recognition and decision-making,
+Ferroelectric Gating [4], [26]–[32], Phase Change Systems          while potentially offering advantages in energy efficiency
+[5], [14], [17], [33]–[36], Metal-to-Insulator Transition [18],    compared to traditional digital architectures. By simulating
+[37], Superconductivity [6], [38]–[43], and Spintronics [7],       neural behavior through specialized hardware, neuromorphic
+[12], [13], [15], [44]–[46].                                       computing aligns with the goals of analog deep learning by
+   Analog devices, like resistive crossbar arrays [47], [48],      leveraging continuous signals and emulating neural compu-
+have gained popularity as alternatives to GPU-driven ANNs          tation for enhanced performance in certain machine learning
+due to their inherent simplicity. Instead of relying on digital    applications.
+matrix multiplication, which becomes increasingly taxing as
+the number of neurons increases, analog hardware leverages         III. TAXONOMY AND DESCRIPTION OF ANALOG
+the calculations themselves using analog components. Re-           IMPLEMENTATIONS
+sistive crossbar arrays exemplify this approach. By arrang-        We classify the current state of Analog Deep Learning (ADL)
+ing resistors with conductance values corresponding to the         implementation techniques into four main types: (a) Ion Mi-
+network’s weights in an array, connected to other resistors        gration, (b) Charge Distribution, (c) Material-Level Changes,
+via conductive elements, direct modeling of matrix multi-          and (d) Magnetization.
+plication occurs within the hardware. Applying a chosen
+voltage through the device results in currents through specific    A. ION MIGRATION
+resistors, determined by Ohm’s Law. By utilizing Kirchhoff’s       Ion migration has demonstrated significant promise in ac-
+Junction Rule, the currents from individual resistors can be       complishing a wide range of crucial neural functions that
+summed together via conductive connections to a main output        replicate biological systems. The core concept behind ion
+wire.                                                              migration revolves around the careful manipulation of ionic
+   With various analog implementation methods available,           movements within a material. This manipulation is typically
+we can explore and identify the optimal solution for specific      achieved through external stimuli, such as optical pulses [49]–
+AI tasks. However, analog devices exhibit greater sensitiv-        [52] or electric fields [47], [53]–[57]. The primary goal of
+ity to system noise compared to their digital counterparts.        this process is to induce changes in the material’s inherent
+Technologies like Cation Migration, Anion Migration, and           properties, which are readily measurable. For instance, one
+Spintronics showcase high analog characteristics, leading to       of the most notable changes is in the material’s conductance.
+significant variation under different operational conditions.      Materials that facilitate the movement of cations or anions
+As a result, controlling these technologies can prove chal-        offer a promising avenue to achieve electricity conduction
+lenging. Yet, by employing low-noise design and integrating        beyond traditional metals. When bias voltages are applied,
+them with digital circuits, analog devices may become more         mobile cations or anions can be attracted towards the bias
+controllable than ever before, presenting exciting possibilities   direction, effectively promoting charge flow within the ma-
+for Analog Deep Learning.                                          terial. This dynamic mechanism presents significant possi-
+                                                                   bilities for manipulating electric conductivity in a controlled
+C. NEUROMORPHIC COMPUTING                                          manner, enabling applications for neuromorphic computing.
+Neuromorphic computing [48] is an approach to designing               It is to be noted that the process of ion migration is not just
+computer systems and hardware that draws inspiration from          about moving ions, rather, about precisely controlling how
+the structure and functioning of the human brain’s neu-            these ions move within a material’s structure in response to
+ral networks. It aims to mimic the brain’s ability to pro-         external influences. By applying stimuli like light (optical
+cess information using highly interconnected neurons and           pulses) or electricity (electric fields) as mentioned before,
+synapses, enabling efficient and parallel processing of com-       the ions within the material are set in motion in a controlled
+plex tasks. Neuromorphic computing systems are designed            manner. This movement leads to alterations in the material’s
+to perform tasks like pattern recognition, sensory processing,     fundamental characteristics. Conductance, a property that
+and decision-making with lower power consumption and po-           measures how easily electricity can pass through a material,
+tentially higher efficiency compared to traditional computing      is a key attribute that can be effectively modified through this
+architectures. These systems leverage analog components and        process. Such modifications are crucial as they are the basis
+specialized hardware to emulate neural behavior and achieve        for the material’s ability to mimic neural functions. When
+biologically inspired computational capabilities.                  delving deeper into the mechanisms of ion migration, we can
+   In the context of analog deep learning, neuromorphic com-       categorize the various implementations of this principle based
+puting refers to an innovative approach that capitalizes on the    on the type of ion movement they utilize. These categories in-
+principles of the human brain’s neural networks. It intricately    clude cation filament-based approaches and anion migration-
+combines principles from both neuroscience and analog elec-        based methods. Each of these categories represents a different
+VOLUME 11, 2023                                                                                                                    3
+                                                                                             Datar et al.: The Promise of Analog Deep Learning
+
+
+
+
+                                                FIGURE 1. Taxonomy of Analog Deep Learning
+
+
+
+
+strategy in harnessing ion migration to achieve the desired                  implemented in various ways, such as through cation
+changes in material properties.                                              filament-based methods or anion migration-based ap-
+   In cation filament-based methods, the focus is on the move-               proaches. Each method offers a unique strategy for
+ment of positively charged ions (cations). This movement                     altering material properties, providing flexibility in de-
+creates conductive pathways, or ’filaments’, within the ma-                  signing neuromorphic systems. This versatility is im-
+terial. These filaments play a significant role in altering the              portant for tailoring neuromorphic devices to specific
+material’s conductance and are a key aspect of how these                     computational tasks or to replicate particular neural
+devices can mimic neural functions. On the other hand, an-                   functions.
+ion migration-based approaches involve the movement of                    4) Creation of Conductive Pathways: In cation
+negatively charged ions (anions). This type of ion migration                 filament-based methods, the movement of positively
+also leads to changes in the material’s properties, offering a               charged ions creates conductive ’filaments’ within the
+different mechanism to achieve neuromorphic functionalities.                 material. These filaments are crucial for altering the
+   The study and application of ion migration in neuromor-                   material’s conductance, akin to how neural pathways
+phic devices are at the forefront of merging material science                work in the brain. This aspect is vital for creating neu-
+with neural emulation. This convergence is critical for ad-                  romorphic devices that can dynamically change their
+vancing computing technologies and artificial intelligence,                  connectivity patterns, similar to learning and memory
+pushing the boundaries of what can be achieved with tradi-                   formation in biological systems.
+tional computing paradigms. Ion migration is fundamentally
+important in analog deep learning for several reasons:                 B. SEMICONDUCTOR-BASED CHARGE DISTRIBUTION
+    1) Emulation of Biological Neural Functions: One of                Among the diverse array of materials that facilitate the move-
+       the primary goals of artificial neural networks is to           ment of cations or anions, semiconductors hold a unique
+       mimic the way biological brains process information.            position, blurring the lines between conductors and insula-
+       Ion migration in neuromorphic devices allows for the            tors. Semiconductors possess the ability to function as both
+       emulation of a wide array of neural functions that are          conductors and insulators, allowing for analog-like modu-
+       biomimetic, implying that they closely replicate biolog-        lation of their conductance. This exceptional property en-
+       ical processes. This is crucial for developing computing        ables us to manipulate semiconductors’ conductivity using
+       systems that can mimic the efficiency and adaptability          bias voltages, achieved through Ferroelectric Gating, or by
+       of the human brain.                                             introducing charge imbalances via Electrochemical Doping,
+    2) Controlled Manipulation of Material Properties:                 thereby making it suitable for neuromorphic computing.
+       The ability to precisely control ionic movements within            The key to a semiconductor’s behavior lies in its energy
+       a material in response to external stimuli, such as opti-       band structure. It has a valence band (filled with electrons)
+       cal pulses or electric fields, is the main principle of ion     and a conduction band (where electrons can move freely).
+       migration. This control is key to inducing changes in           The gap between these bands (bandgap) is small enough that
+       the material’s inherent properties, such as conductance,        electrons can move from the valence to the conduction band
+       which is essential for neuromorphic computing. The              under certain conditions, like the application of heat or light.
+       conductance changes in materials can be used to simu-           This ability to transition between conductive and insulative
+       late the synaptic plasticity found in biological neurons.       states is what makes semiconductors so valuable. They can be
+    3) Versatility in Implementation: Ion migration can be             manipulated to either allow or prevent the flow of electricity.
+4                                                                                                                             VOLUME 11, 2023
+Datar et al.: The Promise of Analog Deep Learning
+
+
+
+Unlike digital components that operate in binary (on/off),         as temperature and surface area have been observed to have
+semiconductors can exhibit analog-like behavior. This im-          a significant impact on the conductance behavior of different
+plies that their conductance can be modulated in a contin-         materials. By altering these material-level characteristics, we
+uous range, similar to how the human brain modulates the           can effectively modulate the conductance of the material.
+strength of synaptic connections. There are two main types         Notably, controlling the temperature or adjusting the surface
+of semiconductor-based mechanisms for implementation of            area can lead to effective transitions, converting a material
+analog deep learning hardware - (a) Ferroelectric Gating and       from a metal to an insulator or vice versa, making it highly
+(b) Electrochemical Doping. Ferroelectric materials have an        applicable to neuromorphic computing.
+electric polarization that can be reversed by the application         In materials, the movement of electrons, which carry elec-
+of an external electric field. By using ferroelectric materials    trical current, is affected by temperature. As temperature
+as a gate in semiconductor devices, the conductivity of the        changes, it alters the energy levels of electrons, impacting
+semiconductor can be modulated. The ferroelectric gate can         their ability to move and thus the material’s conductance.
+induce or remove electric fields, effectively controlling the      At higher temperatures, electrons gain more energy, which
+movement of electrons in the semiconductor. On the other           can increase their mobility in some materials, leading to
+hand, Electrochemical Doping involves introducing impuri-          higher conductance. Conversely, in other materials, increased
+ties into a semiconductor to change its electrical properties.     thermal energy can lead to more electron scattering, reducing
+Ions are introduced into the semiconductor, creating charge        conductance. Certain materials exhibit phase transitions at
+imbalances. This process alters the semiconductor’s electrical     specific temperatures where they change from conductors to
+characteristics, particularly its conductance. The movement        insulators or vice versa. For example, some materials become
+of cations or anions in this process is crucial. Depending on      superconductors at very low temperatures, where they con-
+the type of ion and its concentration, the semiconductor’s abil-   duct electricity with zero resistance.
+ity to conduct electricity can be significantly altered. Their        The surface area of a material affects the pathways avail-
+unique position between conductors and insulators and their        able for electron movement. In materials with a larger surface
+ability to modulate conductance are pivotal in the develop-        area, there are more pathways for electrons to travel, which
+ment of neuromorphic computing systems. Their capacity to          can influence the material’s conductance. In nanostructured
+emulate neural functions through techniques like Ferroelec-        materials, where the surface area-to-volume ratio is high,
+tric Gating and Electrochemical Doping makes them ideal            surface effects become more pronounced. This can lead to
+for creating computing systems for deep learning that closely      unique conductive properties that differ significantly from
+resemble the efficiency and adaptability of biological brains.     bulk materials. The surface of a material can have different
+These two processes are highly relevant to Analog Deep             electronic states compared to its bulk. Additionally, surfaces
+Learning in the following ways:                                    may participate in chemical reactions that can alter the mate-
+   1) Mimicking Neural Functions: The brain’s neural net-          rial’s conductive properties.
+       works modulate synaptic strengths in a continuous,             This capability to manipulate the the conductance of some
+       analog-like manner. Semiconductors, with their ability      materials is key to developing neuromorphic computing sys-
+       to have finely tuned conductance, can mimic this aspect     tems that can emulate the complex and energy-efficient nature
+       of neural behavior.                                         of biological neural networks, discussed as follows:
+   2) Dynamic Adaptability: Just as biological neurons ad-            1) Material-Level Control: As discussed earlier, by con-
+       just their synaptic strengths based on stimuli, semicon-           trolling temperature and surface area, it is possible to
+       ductors can dynamically alter their conductive states in           fine-tune the conductance of materials. This control is
+       response to external inputs like electric fields or ion            essential for creating neuromorphic devices that can
+       concentrations.                                                    mimic the variable synaptic strengths found in bio-
+   3) Energy Efficiency: Semiconductors can operate at                    logical neural networks. These synaptic strengths are
+       lower power levels compared to traditional digital cir-            commonly called connection weights in artificial neu-
+       cuits, which is a key consideration in mimicking the               ral network which are its learnable parameters. This
+       energy-efficient nature of the human brain. This is also           material-level control allows for the creation of phys-
+       a huge advantage over the conventional digital deep                ical synapses whose strengths can be adjusted, akin to
+       learning pathway.                                                  the weight adjustments in digital neural networks.
+   4) Complex Computations: The ability to modulate con-              2) Metal-Insulator Transitions: The ability to transition
+       ductance in a continuous range allows for complex,                 a material from a metal (conductive) to an insulator
+       non-linear computations, which are essential for tasks             (non-conductive) or vice versa is particularly intrigu-
+       like pattern recognition and decision-making, mirror-              ing. This property can be harnessed to create switches
+       ing brain-like processing.                                         and memory elements in neuromorphic circuits, similar
+                                                                          to how neurons and synapses function in the brain.
+C. MATERIAL-LEVEL CHANGES                                             3) Application in Synaptic Emulation: In analog neu-
+The properties at the material-level play a crucial role in de-           ral computing, materials that can undergo such transi-
+termining the conductance of a material. Characteristics such             tions are valuable for emulating the synaptic plasticity
+VOLUME 11, 2023                                                                                                                 5
+                                                                                         Datar et al.: The Promise of Analog Deep Learning
+
+
+
+       of neurons – the ability of synapses to strengthen or            tage for deep learning systems, which typically require
+       weaken over time, which is fundamental to learning and           extensive computational resources. Techniques based
+       memory.                                                          on magnetic fields and electron spins might offer path-
+    4) Energy Efficiency and Complexity: By leveraging                  ways to more scalable and miniaturized designs, crucial
+       materials whose conductance can be precisely modu-               for developing compact yet powerful deep learning
+       lated, it is possible to create more energy-efficient and        systems.
+       complex computational architectures. This is because          3) Implementing Non-Linear Dynamics: The relation-
+       analog circuits can be more energy-efficient than their          ship between magnetic fields, electron spin alignment,
+       digital counterparts, especially when they operate using         and conductance can introduce non-linear dynamics
+       materials with tunable conductance. By precisely con-            into the system. This is beneficial for deep learning,
+       trolling material properties, these circuits can perform         as non-linear transformations are essential for complex
+       computations with less power, which is a significant             pattern recognition and decision-making tasks.
+       advantage for deep learning applications that require         4) Dynamic Adaptability: Just as synaptic weights in
+       extensive computation.                                           biological brains change in response to stimuli, the
+    5) Implementing Non-Linear Activation Functions:                    conductance in these systems can be dynamically ad-
+       Deep learning involves non-linear transformations, typ-          justed in response to changes in magnetic fields or
+       ically through activation functions like ReLU or sig-            electron spin configurations. This allows for on-the-fly
+       moid. Analog hardware can implement these functions              learning and adaptability. These systems can process
+       physically using materials whose conductance proper-             information in an analog manner, dealing with continu-
+       ties change non-linearly with temperature or surface             ous values rather than binary, which is more akin to how
+       area.                                                            biological neural networks operate and can motivate a
+                                                                        new direction in artificial neural network tailored to the
+D. MAGNETIZATION                                                        strengths of magnetic field and spin-based conductance
+According to Electromagnetic Theory, the arrangement of a               control.
+conductor in a loop induces a magnetic field around it. This
+magnetic field’s strength and distribution are intrinsically       IV. ANALOG DEEP LEARNING PERFORMANCE
+linked to the conductance of the material. By manipulating         A. ALGORITHMS, APPLICATIONS AND ACCURACY
+external influences on the magnetic field, one can effectively     While digital systems are praised for their accuracy, their
+control the conductance of the material. However, beyond           analog counterparts are met with higher levels of noise due
+the influence of external magnetic fields, the subatomic level     to factors such as Brownian motion and heat distributions.
+presents another avenue for manipulating conductance. A            Neural networks rely on the steady state of its weights,
+material’s conductance can be affected by the alignment of         often represented by the conductance or resistance values of
+electron spins within it. Analogously changing the alignment       components in analog crossbar arrays [34], [47], [48]. With
+of electron spins across a device provides a means to finely       random noise interference in the system, the weights may eas-
+control its electrical conductance. Again, manipulation of         ily change their values and heavily impact the functionality
+conductance can be leveraged to mimic varying synaptic             of the network itself. To address this issue, efforts should be
+strength of neural networks.                                       focused on making design decisions for analog components
+   The ability to control the conductance of materials through     that minimize the amount of noise in a device. This process
+magnetic fields and electron spin alignment presents a novel       begins with considering the physical properties utilized by the
+and potentially powerful approach for developing analog deep       device. In the following subsections, we briefly discuss the
+learning hardware. This approach can lead to more energy-          key working mechanisms, application areas, and performance
+efficient, adaptable, and biologically realistic computing sys-    achieved by different state-of-the-art analog deep learning
+tems, pushing the boundaries of what is currently possible in      methods.
+artificial intelligence and machine learning, as follows:
+   1) Simulating Synaptic Weights: In neural networks,
+       the strength of connections (synaptic weights) between      1) Cation Migration
+       neurons is fundamental to learning. By using materi-        One of the most versatile approaches to analog deep learning
+       als whose conductance can be controlled via magnetic        computing devices is Cation Migration [1]–[3], [8], [9],
+       fields and electron spin alignment, analog deep learn-      [20], [21], which involves the oxidation and reduction of a
+       ing systems can simulate these synaptic weights. The        material’s metal ions and the induced movement of cations
+       conductance can be finely tuned to represent different      to control the synpatic weights in a neural network. Most
+       weight values.                                              neuromorphic devices that utilize Cation Migration use mem-
+   2) Energy-Efficient Computation and scalability: This           ristive crossbar arrays to directly realize neural networks,
+       method of controlling conductance can be more energy-       and employ resistive switching for each memristor. Applying
+       efficient compared to traditional voltage-based meth-       a carefully controlled voltage across an electrolytic layer
+       ods. Lower energy consumption is a significant advan-       can allow for easy and stable conductance modulation for
+6                                                                                                                         VOLUME 11, 2023
+Datar et al.: The Promise of Analog Deep Learning
+
+
+
+synaptic transistors that can be placed in a crossbar array [21].   defect states associated with Sn and S vacancies. The va-
+The material of a memristor, a type of synaptic transistor,         cancies of Sn, S, and or both atoms in the makeup of some
+can heavily impact its performance in a neural network.             memristors can keep the conductance modulation somewhat
+We discuss the main cation migration-based deep learning            consistent since the same modifications are made to memris-
+attempts below:                                                     tors throughout the network. The classification was achieved
+                                                                    based on the current flowing through five memristors in the
+(a) Perovskite memristors: A recent study showed that               reservoir at the final time step, which were used as inputs
+perovskite memristors can act as drift-based non-volatile           to the readout layer. Various supervised learning models
+weights, allowing them to be stable memory components               like single-layer perceptron, support vector machine (SVM),
+[1]. Due to its electrically-controllable nature, Cation Mi-        and logistic regression were also implemented. This study
+gration was able to minimize the error involved in inher-           showcased the integration of advanced machine learning
+ently analog operations. The study involved testing a network       techniques with novel hardware (memristors) for efficient
+on the classification of four common neural firing patterns         language processing tasks.
+observed in the human brain: Bursting, Adaptation, Tonic,
+and Irregular. The network was part of a fully-memristive           (c) Cesium Halide Memristors: Su et al. [9] trained a three-
+reservoir computing (RC) framework, interfaced with an ar-          layer fully connected neural network using Cesium Halide
+tificial neural network (ANN), and demonstrate the advan-           Memristors (CHM) via a back-propagation algorithm. Two
+tages of reconfigurable memristive materials. The reservoir         datasets were tested: an 8×8 pixel image version of handwrit-
+was modeled as a network of recurrently-connected units,            ten digits from the Optical Recognition of Handwritten Digits
+functioning as short-term memory. Temporal signals entering         dataset, and a 28×28 image version MNIST database. The
+the reservoir underwent high-dimensional nonlinear transfor-        simulation accounted for real-world imperfections like con-
+mations, enhancing the separability of their temporal features.     ductance variations during weight updates and nonlinearity.
+A Linear Classifier Layer was connected to the reservoir            The classification accuracies for both datasets were recorded
+units with all-to-all connections with 30 inputs, 4 outputs,        over each training epoch. For the smaller 8×8 handwritten
+and one bias unit. The network was trained with a batch             digits dataset, the accuracies were higher than 89% for CsI
+size of 1 and suitably tuned hyperparameters to perform             and 90% for CsBr, deviating only by 6% from the ideal value
+classification based on the temporal information stored in the      simulated with 32-bit floating-point numeric precision. In
+reservoir. The work particularly highlighted the advantages of      the case of the MNIST dataset, accuracies exceeded 85%
+perovskite memristors in a fully-memristive RC framework.           in the second epoch for both devices, reaching 89.4% for
+The framework included a dynamically-configured layer of            CsI and 88.4% for CsBr after 40 epochs. These results
+virtual volatile reservoir nodes and a readout ANN layer with       were compared with other material systems like TaOX that
+non-volatile weights. The reconfigurability addressed three         achieved 80% accuracy and GST phase-change memory that
+computational requirements: accumulating/decaying short-            achieved 82.2% accuracy. The CHMs (CsI and CsBr) used in
+term memory, stable long-term memory for retaining trained          this study showed significant improvements in nonlinearity,
+weights, and a circuit methodology for accessing analog             leading to much higher recognition rates. This demonstrates
+states from binary devices.                                         the potential of using CHMs as basic computing elements in
+   Another similar work [2] used perovskite nanocrystal             analog deep learning systems, highlighting their superiority
+memristors to simulate a three-layered artificial neural net-       in terms of recognition accuracy compared to other materials.
+work (ANN) in image recognition tasks. Two datasets were
+employed for training the ANN: a small image version (8 ×           (d) pV3D3 memristor: A pV3D3 memristor-based flexible
+8 pixels) of handwritten digits from the “Optical Recognition       synapse device [3] has been used to design an ANN with a
+of Handwritten Digits” dataset and a large image version (28        crossbar architecture that consisted of 32×32 input neurons,
+× 28 pixels) of handwritten digits from MNIST dataset. The          10 middle neurons, and 3 output neurons. It was trained for
+network was trained for 25 epochs using backpropagation and         a facial recognition task using nine 32×32 pixel training
+it achieved accuracies: 94% for small images and 88% for            images extracted from the Yale Face Database. After 24
+large images. The recognition accuracy was observed to be           epochs of training, the ANN, based on the flexible pV3D3
+comparable to that of α-MoO3 based synaptic devices.                memristor, achieved an average recognition rate of 88%, mis-
+                                                                    classifying 3 out of 24 images. This performance is slightly
+(b) Tin Sulfide memristors: SnS (Tin Sulfide) memristors            lower but comparable to Yao et al.’s study, which achieved
+[8] were used for simulating a Recurrent Neural Network             a 91% recognition rate using a one-layer perceptron with
+(RNN) that achieved a stable accuracy level of 85% in               a 1T-1R memristor array. Additionally, the recognition rate
+classifying Korean sentences with standard deviations up            for the MNIST handwritten digit dataset was approximately
+to σ = 0.6 nA across different models. The authors im-              86% with the pV3D3 memristor, surpassing the performance
+plemented high-dimensional, nonlinear reservoir computing           of a carbon nanotube synaptic device-based spiking neural
+(RC) using two-dimensional memristors based on tin sulfide          network.
+(SnS). These memristors are unique due to their dual-type
+VOLUME 11, 2023                                                                                                                7
+                                                                                         Datar et al.: The Promise of Analog Deep Learning
+
+
+
+2) Anion Migration
+Anion migration leads to alterations in material properties,        (b) Semiconductor alloy random access memory: An-
+such as conductivity, caused by the targeted movement of            other line of work used single-crystalline Silicon Germa-
+anions, including oxygen ions, sulfur ions, and organic an-         nium (SiGe) epitaxial random access memory (epiRAM) for
+ions. Devices that use Anion Migration are very similar to          simulation of an artificial neural network designed for su-
+those who use Cation Migration in that both involve in-             pervised learning using the MNIST handwritten recognition
+ducing the movement of ions to modulate synaptic weights,           dataset. The network comprised a three-layer structure with
+but the former involves the movement of anions rather than          28×28 neurons in first layer, 300 hidden neurons, and 10
+cations. Anions induced to move by a bias voltage can cause         output neurons, employing a multilayer perception (MLP)
+changes in a material’s conductivity. If the resistive element      algorithm with stochastic gradient descent for weight updates.
+is a filament, then these changes are amplified enough that         This simulation incorporated non-ideal factors of epiRAM
+small changes in the bias voltage can significantly change the      properties, including finite on/off ratio, limited conductance
+conductance of the filament [48]. Anion Migration, coupled          levels, device-to-device variation, cycle-to-cycle variation,
+with memristors in a crossbar array, has proven to be very          wire resistance, and read noise. The 784 input layer neurons
+efficient because of the simplicity and lack of extra regulators,   corresponded to the pixels of a 28×28 MNIST image, while
+sensors, and heavy conversion processes [24].                       the 10 output layer neurons represented the 10 digit classes
+   Since a material’s negative charge carriers tend to be larger    (0–9). The process involved the inner product of the input
+and more controllable, Anion migration can be an excellent          neuron signal vector and the first synapse layer, followed by
+way to keep a neuromorphic device’s systems under control.          activation and binarization, which then served as the input
+Anion Migration devices don’t fall short on accuracy either,        for the second synapse array. The synapse layer consisted of
+as memristors employing Anion Migration in a crossbar array         epiRAM crossbar arrays and peripheral circuits. The network
+had an accuracy of 96% when tested with MNIST image clas-           adjusted synapse weights based on the delta weight calcu-
+sification [11]. Ion migration techniques, both cationic and        lated from the inner product of the input signal vector and
+anionic, are relatively easy to implement and test compared         the synapse vector. After training with one million patterns
+to other techniques becuase of easy ability to control bias         randomly selected from 60,000 images in the training set,
+voltages, both manually and through automation.                     the network’s recognition accuracy was tested with 10,000
+                                                                    images from a separate testing set. The simulation demon-
+(a) Metal oxide memristors: Prezioso et al. [58] used               strated that the epiRAM-based neural network could achieve
+transistor-free metal-oxide memristor crossbars to train a          an average recognition accuracy of 95.1%.
+single-layer perceptron using a coarse-grain version of
+the delta rule algorithm to accurately classify 3x3-pixel           (c) Optically driven semiconductors: Ahmed et al. [52]
+black/white images into three distinct categories (symboliz-        introduced a fully light-modulated semiconductor device and
+ing letters). The authors reported perfect classification results   applied it for the simulation of Optical Neural Networks
+after 23 epochs. A similar work by Yan et al. [59] introduced       (ONNs). The networks were trained for the classification of
+tin oxide-based memristors for implementing and optimizing          28 × 28 pixel images of handwritten digits from the MNIST
+Boltzmann Machine (BM). They demonstrated that recon-               dataset using a single-layer perceptron model. This model
+figurable tin oxide (SnOx)/molybdenum disulfide (MoS2)              also employed supervised learning with a back-propagation
+heterogeneous memristive device is capable of producing             algorithm. It consisted of 784 input neurons corresponding to
+exponential-class stochastic sampling. This device featured         the image pixels and 10 output neurons. The input neurons re-
+dynamically adjustable distribution parameters, facilitating        ceived pixel values, which were transformed into output val-
+the hardware implementation of the Boltzmann Machine                ues through a weight matrix and then processed by a sigmoid
+(BM) that requires temperature regulation. Consequently,            activation function. The synaptic weights in the network were
+this allowed for the precise implementation of the necessary        updated based on the difference between the output value
+cooling strategy. The BM prototype comprised six stochastic         and the label value, using a backpropagation algorithm. The
+units, each equipped with a tin oxide/MoS2 heteromemristor          synaptic weight calculation generally considers both positive
+that exhibited a roughly sigmoidal switching probability in         and negative values, while the conductance of the BP devices
+response to applied voltages, along with accompanying pe-           used is always positive. To address this, synaptic weight was
+ripheral circuitry. Another Au/Ni/HfO2/Ni/SiO2 memristor            treated as the difference between two conductance values,
+was developed by Hu et al. [60] for the simulation and con-         derived from experimental data. The recognition accuracy
+struction of a Memristive Hopfield Neural Network (MHN)             was evaluated for different pulse widths of optical stimuli
+comprising 6,561 synapses, equivalent to an 81x81 matrix.           used in the BP devices. The ONN achieved a maximum
+The authors successfully developed a 3-bit MHN that had             recognition accuracy of approximately 90% with a 1 ms pulse
+nine synapses with 6 memristors and 3 neurons. The synaptic         width, surpassing previously reported neural networks with
+weights in the MHN were programmable, allowing for easy             similar topology. The study also highlighted the stability of
+adjustment to positive or negative values by altering the           the network over extended training cycles, demonstrating its
+conductance of the memristors.                                      potential in neuromorphic computing applications.
+8                                                                                                                         VOLUME 11, 2023
+Datar et al.: The Promise of Analog Deep Learning
+
+
+
+   Zhou et al. [50] developed two-terminal optoelectronic           memristor-based hardware system. This gap was primarily
+resistive random access memory (ORRAM) synaptic devices             due to several challenges: poor yield and non-uniformity of
+with a Pd/MoOx/ITO (indium tin oxide) structure. It was             memristor crossbar arrays, difficulty in matching software-
+capable of ultraviolet (UV) light sensing, optically triggered      level performance due to device imperfections like varia-
+non-volatile and volatile resistance switching, and light-          tions, conductance drift, and device state locking, and the
+tunable synaptic behaviors. For testing, an image database          time-consuming nature of the convolutional operation in
+containing 6×7 pixel images of the letters P, U, and C was          CNNs, which is typically sequential and leads to speed
+used. The study employed a three-layered artificial neural          mismatches in the hardware. Addressing these challenges,
+network with input, hidden, and output nodes being 42, 20,          a versatile memristor-based computing architecture [16]
+and 3 respectively. It was trained through a back-propagation       was proposed for neural networks, featuring a memristor
+(BP) algorithm with a fixed learning rate of 0.01 and sigmoid       cell with a TiN/TaOx/HfOx/TiN material stack and contin-
+activation functions in the hidden and output layers. The           uous conductance-tuning capability. This architecture en-
+ORRAMs were directly connected to the input layer of the            abled the successful demonstration of a complete five-layer
+neural network, and images were processed through the               memristor-based CNN (mCNN) for MNIST digit image
+ORRAM or delivered to the input layer individually during           recognition. The optimized material stacks facilitated re-
+training. Remarkably, the inclusion of the ORRAM array for          liable and uniform analog switching behaviors in 2,048
+preprocessing significantly reduced the number of epochs            one-transistor–one-memristor (1T1R) arrays. Employing a
+required to achieve a 99% recognition accuracy—from 3740            hybrid-training scheme, the experimental recognition accu-
+epochs without ORRAM to 2186 epochs with ORRAM, a                   racy of this system reached 96.19% for the entire test dataset,
+41.5% reduction.                                                    marking a significant advancement in memristor-based neural
+                                                                    network hardware.
+(d) Transistor-memristor arrays: A key computational
+function involving memristors is vector matrix multiplication
+(VMM), which can be executed in compact crossbar lay-               3) Electrochemical Doping
+outs through a single analog computation step. This process         Electrochemical (EC) Doping, as applied to Analog Deep
+leverages Ohm’s law for electrical resistance and Kirchhoff’s       Learning, involves modulating the physical properties of
+current law for current summation. Hu et al. [19] proposed          the device’s material to alter the electrolyte layers and thus
+effective VMM via integrated transistor-memristor arrays and        change the device’s conductance. Due to the nature of doping
+used it for training and implementation of a single-layer           in conductive materials, EC Doping can provide greater accu-
+neural network towards handwriting recognition using the            racy in neural networks and is much less prone to noise than
+MNIST dataset. The network was trained in MATLAB using              the other methods. A bias voltage is used to control the flow of
+softmax regression. For classification, outputs were exponen-       particles inside the material. EC Doping can allow memristors
+tiated and normalized to create a probability distribution, a       to be in a variety of non-volatile states, as one study found a
+step not implemented in the Dot Product Engine (DPE) due            value retention of about 25 hours for an electrochemically-
+to the inability of current memristor crossbars to compute the      doped thin-film transistor [61], thereby increasing likelihood
+nonlinear function directly. A software-trained network was         of an accurate inference by the neural network. Another study
+programmed into a 96 × 40 portion of a 128 × 64 memristor           found that Dual-mode Organic Electrochemical Transistors
+crossbar, representing the largest demonstration using mem-         (OECTs) can operate in both depletion and enhancement
+ristor crossbars in hardware to date. To fit the network into the   modes using a self-doped conjugated polyelectrolyte, with
+DPE platform, the MNIST images were resized to 19 × 20,             changes in the bias voltage also switching modes [62]. How-
+and the network was retrained. The network, which classified        ever, its application has been limited to basic computational
+784 pixel inputs into 10 classes, was reshaped into a 96 ×          operations such as logic gates, and it has not yet been utilized
+40 array without degrading recognition accuracy, which re-          in neural networks, despite their significant potential. Only
+mained at 92.4%. For digit classification using the DPE, input      one type of electrochemically-doped transistor has been suc-
+images were processed and partitioned, with voltage signals         cessfully demonstrated to train neural networks, as discussed
+applied to the rows of the memristor array programmed to the        below.
+trained weight matrix. With linear correction, the hardware
+DPE neural network implementation reached an accuracy of            ENODe: A novel electrochemical neuromorphic organic
+89.9%, only a 2.5% reduction compared to the ideal soft-            device (ENODe), fundamentally different from memristors,
+ware accuracy, with the remaining loss attributed to device         [20] was recently proposed by Burgt et al. The authors
+programming inaccuracies and cumulative wire resistances.           simulated a 3-layered neural network, which they trained
+   All these works demonstrated two-layer and three-layer           and tested on three distinct datasets: an 8 × 8 pixel image
+memristor multi-layer perceptrons for image recognition             version of handwritten digits, the MNIST dataset comprising
+using the MNIST database. However, a complete Convo-                28 × 28 pixel images of handwritten digits, and a Sandia
+lutional Neural Network (CNN), crucial for more com-                file classification dataset. The training of this neural network
+plex image recognition tasks, were not fully realized in a          resulted in an accuracy ranging between 93% and 97% that
+VOLUME 11, 2023                                                                                                                   9
+                                                                                          Datar et al.: The Promise of Analog Deep Learning
+
+
+
+was higher than the accuracy achieved by memristor-based            electrons can flow. When the FeTFET is in the ON state, the
+networks. Notably, this performance was consistently within         barrier is shrunk by a high voltage which propels electrons
+2% of the ideal performance achievable by a floating-point-         across the barrier, and a low voltage widens the barrier in
+based neural network, which represents the theoretical limit        the OFF state and thus impedes electron flow. Using this
+for this algorithm. This close proximity to the theoretical limit   technology, Zhu et al. [26] explored the detection of small
+underscores the effectiveness of ENODes in handling diverse         variations in analog signals. The researchers investigate the
+datasets.                                                           detectability of individual defects in the gate oxide, particu-
+                                                                    larly focusing on the impact of these defects on the transfer
+                                                                    characteristic in FeTFETs. The study reveals that individual
+4) Ferroelectric Gating                                             defects in the oxide lead to fluctuations in current (ID) during
+The Ferroelectric Field-Effect Transistor (FeFET) has gained        the sweeping of gate bias voltage (VGS), both before and after
+many improvements over the past years, especially towards           ferroelectric switching. The most significant current peaks
+neuromorphic computing. This technology employs ferro-              with the largest fluctuations are examined to demonstrate the
+electric polarization, which alters the movement of particles       effect of individual defects. The fluctuations are attributed to
+in a material, thus changing its conductance.                       the capture and emission of electrons by localized, positively
+   However, there are many variations of the technology such        charged defects. The presence of these defects is observed
+as the use of optical modulation and domain-wall switching,         through random telegraph signal (RTS) noise, and the time
+which one study found could be a simpler, more efficient            constants for electron capture and emission are determined.
+way for ferroelectric switching [28]. There are many other          Before ferroelectric switching, a two-level RTS noise is
+benefits of ferroelectric gating, such as the detection of small    observed, indicating one defect trap. After switching, a three-
+variations in analog signals [26] and a closer mimicry of           level RTS noise is observed, suggesting the presence of
+biological neurons using Hafnium Oxide-based FeFETs [31].           two traps. The analysis of the higher current levels (trap 2)
+   Ferroelectric gating is very similar to semiconductor dop-       after switching reveals different time constants for electron
+ing for transistors in that both change the electrical properties   capture and emission. The study also estimates the depth
+of materials, but allows for more steady-states for memristors      (z) of the defect from the channel into the oxide, suggesting
+than doping does for transistors.                                   that the probed individual defect is located at approximately
+                                                                    4 nm depth. Through this accurate identification of defects
+(a) Ferroelectric Field-Effect Transistors (FeFETs): Gao            in the gate oxide, Zhu et al. suggest the potential ferroelec-
+et al. [4] significantly advanced the field by incorporat-          tric switching has for detecting small variations in signals,
+ing interfacial states into a ferroelectric Hf0.5Zr0.5O2 thin       material properties, etc. With reliable inference accuracies,
+film through a carefully controlled annealing process. This         FeFETs may play an important role in the development of
+approach led to the creation of a multifunctional two-              Analog Deep Learning as they are both simple to create and
+dimensional Ferroelectric Field-Effect Transistor (Fe-FET).         applicable to a variety of scenarios.
+The device harnesses the synergistic effects arising from fer-
+roelectric polarization and charge trapping behavior, resulting
+in a single device with a diverse range of capabilities.            5) Phase Change Systems
+   Additionally, this multifunctional device exhibits reliable      The method of changing phases is not specific to any one
+memory properties, allowing for the storage of information          mechanism, but rather a broader method with many specific
+at multiple levels with extended retention times. Beyond            implementations, ranging from ferroelectric switching to su-
+traditional memory functions, the Fe-FET showcases tunable          perconductivity. Phase change devices simply employ meth-
+synaptic behaviors, offering adaptable plasticity that encom-       ods of changing steady-states of a system, which can range
+passes both short-term plasticity (STP) and long-term plas-         from the temperature to the ferroelectric polarization of a
+ticity (LTP). This adaptability mimics the flexible nature of       material. One study suggested that phase-change memristors
+biological synapses.                                                that could change conductance by being heated or cooled
+   Moreover, the device demonstrates well-developed pho-            could easily be integrated with other device components [34].
+todetection capabilities, showcasing its versatility in different   In ferroelectric-based phase change devices, a device can
+applications. The integration of ferroelectric polarization and     transition between states through the addition or removal of
+charge trapping not only enhances memory retention but              protons via a bias voltage [36], with a reported accuracy
+also contributes to the emulation of synaptic behaviors. In         of about 89% in MNIST digit recogntion [14]. However,
+simulations of artificial neural networks, the Fe-FET achieves      ferroelectric polarization does not always work the best in
+a pattern recognition accuracy of 81%, underscoring its effi-       small-scale or high-temperature situations, due to issues like
+cacy in complex cognitive tasks.                                    domain wall pinning in thin-film synaptic transistors [35].
+                                                                    In such situations, other phase change systems may fair
+(b) Ferroelectric Tunnel Field-Effect Transistors (FeT-             better, such as the transition of a material between crystalline
+FETs): Within the broader category of FeFETs, FeTFETs               and amorphous phases through the application of heat. The
+use gate voltages to tune a tunneling barrier through which         heat applied to the material can be controlled externally,
+10                                                                                                                         VOLUME 11, 2023
+Datar et al.: The Promise of Analog Deep Learning
+
+
+
+which will impact the material’s position on the crystalline-     other benefits that could outweigh the consequences, such as
+amorphous spectrum and thus change its conductance for use        ease-of-use in high-temperature small-area situations.
+in a neural network [48]. This type of phase change system
+will likely prove to be the most accurate option in situations    Mott Transion Dynamics: Metal-to-insulator transitions in
+that require AI inferences in hot temperatures, such as the       devices as small as memristors in crossbar arrays must be
+efficient operation of power plants, nuclear reactors, or solar   done in as compact a manner as possible, allowing for the use
+farms.                                                            of Mott transition dynamics. Named after the physicist Nevill
+                                                                  Francis Mott, this transition is powered by the Coulombic
+Temperature Changes: Ge2Sb2Te5 and Ag-and-In-doped                effects of moving charge carriers near the device. Since the
+Sb2Te memristors have come to the forefront of phase change       charge carriers can either attract or repel electrons, they
+memristors due to their gradual changes in conductance trig-      have the ability to cancel out electric fields causing the
+gered by temperature changes. Similar to ionic migration          movement of electrons in the material, which would keep
+memristors, these memristors have a low-resistance state and      the electrons in place or cause them to move, making the
+a high-resistance state. Their operation relies on controlled     material an insulator or a conductor accordingly. Kumar et
+phase changes between a crystalline state (low-resistance)        al. [37] experimentally demonstrate transistor-less networks
+and an amorphous state (high resistance), modulated by the        comprising third-order elements than can perform Boolean
+applied heating time. In the crystalline state, ordered va-       operations and find analog solutions to a computationally
+cancies with charge carriers enhance conductivity, while the      challenging graph-partitioning problem using neuromorphic
+amorphous phase, characterized by structural randomness,          computing powered by Mott transition dynamics. This use of
+results in reduced electron mobility and higher resistance.       metal-to-insulator transition allows for a simple implemen-
+[34].                                                             tation of neuromorphic computing but shows its drawbacks
+   Application of a positive electric field induces Joule heat-   in accuracy as the study found a value retention of a little
+ing in the narrow metal heater situated between the top and       more than 1 hour. Similar to phase-change systems, metal-
+bottom electrodes. This process elevates the temperature of       to-insulator transition-based devices rely on the maintenance
+the phase change material layer beyond its melting point,         of a steady external temperature so that the components of
+causing a swift transition to the amorphous phase upon rapid      the crossbar array do not change conductance values simply
+quenching. Returning to the crystalline state involves main-      due to environmental changes. However, in areas where the
+taining the temperature above the crystallization temperature     temperature is consistent, including consistently high and
+and allowing for gradual cooling. [34]. These phase-change        consistently low-temperature areas, this technology could
+memristors allow for an easy implementation of neuromor-          thrive as the device’s operation can easily be adjusted accord-
+phic computing in areas where temperature changes occur           ing to the external temperatures.
+frequently, as they may be able to benefit the performance
+of a device rather than hinder it. However, this serves as a
+benefit to Digital Deep Learning in comparison to Analog          7) Superconductivity
+Deep Learning, as the latter is reliant on maintaining the        Superconductors may not be the first thought towards better
+temperature within certain ranges to allow for the proper op-     multi-state devices, but superconductors not only provide
+eration of neural networks, while the former can be operated      faster electron transfers but also allow for stronger magnetic
+in a much larger range of temperatures as the components          fields when they are looped. These superconducting loops
+are not reliant on temperature as a main factor in how they       can hold memory for ANNs in terms of fluxons [6], utilizing
+operate.                                                          the quantum capabilities of certain materials such as Mott-
+                                                                  insulating oxides [38]. This opens up possibilities to control
+                                                                  the fluxons using external influences, such as additional
+6) Metal-to-Insulator Transition                                  magnetic fields, which could help mimic the interconnectivity
+Metal-to-insulator transition (MIT) devices are yet another       of the human brain as the device’s other semiconductor loops
+application of phase change systems, as a specific material       could provide such influences. Superconductors have proven
+can be altered by some means (bias voltages, mechanical           to be more useful for running ANNs themselves rather than
+strain, chemical reactions, etc.) to change from a conductor      changing the conductance values of memristors, as supercon-
+to an insulator and vice versa. In between these two extreme      ducting switches are required to transition between the analog
+states there exists a superposition of the two states where the   processes of ANNs to CMOS logic in order to integrate
+material is both a conductor and an insulator. This partial       the two architectures [42]. While superconductors pose a
+conductivity can allow memristors to have different con-          radically different approach to conductance modulation, they
+ductance values corresponding to different synaptic weights       are ultimately hard to integrate into smaller, cheaper AI
+when applied to ANNs. However, MIT devices may be more            products for on-the-go inferences.
+prone to error than devices using other methodologies, as two
+studies found low value retentions [18], [37]. While MIT          (a) Holding Memory: Goteti et al. [6] present a multiter-
+devices may not have exemplary accuracy, they may have            minal synapse network composed of a disordered arrange-
+VOLUME 11, 2023                                                                                                               11
+                                                                                          Datar et al.: The Promise of Analog Deep Learning
+
+
+
+ment of superconducting loops featuring Josephson junc-            each component can take on. Since electron spin is an inherent
+tions, in which magnetic fields are quantized into discrete        physical property in almost all materials and significantly
+fluxons, comprising microscopic circulating supercurrents,         impacts a material’s conductance, it can be extremely reliable.
+and are employed to define memory. The loops serve as              While Spintronics may present a highly complex method that
+traps for fluxons, and the Josephson junctions facilitate their    is much more difficult to test, it has tremendous potential for
+movement between loops, creating a dynamic system with             accurate implementations.
+brain-like spiking information flow. Through experimental
+demonstrations using YBa2Cu3O7-δ-based superconducting             (a) Hardware Acceleration: Due to the small scale of
+loops and Josephson junctions, the study showcases a three-        spintronics, parts of devices can more easily be combined to
+loop network, exhibiting stable memory configurations of           make a single integrated device, which is much more reliable
+trapped flux in loops and thus influencing the rate of fluxon      and nonvolatile as issues such as the von Neumann bottle-
+flow through synaptic connections. Since other parts like          neck are removed. Nasab et al. [15] proposed a Binarized
+as transistors in logic circuits have little interference in the   Neural Network (BNN) harware accelerator by combining
+magnetic flux in these devices, superconductor loops coupled       an XNOR/XOR logic circuit, a magnetic tunnel junction,
+with Josephson Junctions have little data loss, making them a      and a carbon nanotube field-effect transistor into one device,
+great way to implement Recurrent Neural Networks (RNNs)            integrating memory access into the operational area and thus
+without compromising on inference accuracy.                        making the device less prone to data loss and innacurate in-
+                                                                   ferences. Simulating the device with BNN-based inferences,
+(b) Advanced Superconducting Tunnel Junctions: While               the device had an error rate of 0.0164% for the XNOR/XOR
+conventional superconductors are already excellent conduc-         logic circuit. While this specific implementation limits the
+tors, high-transition-temperature superconductors (HTTSs)          device to BNNs, this suggests broader-scale insights for
+are even better conductors, operating at temperatures as low       spintronics because if analog AI is accurate and precise
+as 77 K. However, with flux-based neuromorphic computing,          enough to compete with devices built specifically for precise
+atomic-level control and precision is required of devices that     computations, it is much more likely to compete with the
+use HTTSs in order for there to be reasonably accurate infer-      software-based neural networks that use digital logic circuits
+ences in neuromorphic-computing applications. Cybart et al.        in their operation.
+[40] propose a way to maintain such atomic-level precision in
+HTTSs by writing tunnel barriers directly into YBa2Cu3O(7-         (b) Applications in Analyzing Temporal Sequences:
+δ) thin films using a focused helium-ion beam with a diameter      Romera et al. [12] explore brain-inspired event binding
+of 500 pm. The researchers were able to control the barrier        through transient mutual synchronization of neurons, propos-
+between the HTTPSs from states of very high conductance to         ing its implementation in neural networks with coupled spin-
+states of no conductance (insulation), demonstrating the high      tronic nano-oscillators for analog deep learning. The excep-
+amount of control available over the device. This can apply        tional mutual synchronization ability and precise frequency
+directly to neuromorphic computing as yet another method           tuning enable successful pattern recognition, representing
+of conductance modulation, as the barrier’s conductance can        progress in constructing neural networks for analog deep
+be altered during a network’s backpropagation. For this im-        learning.
+plementation, however, the environmental temperature must             The experiment utilizes interconnected hardware spin-
+be kept within a certain range as the HTTPSs require certain       tronic nano-oscillators, achieving synchronized activities. In-
+environmental conditions in order to function correctly. While     volving three oscillators with individually controllable fre-
+this does suggest opportunities for high-speed and high-           quencies, the emitted microwave signals, initially distinct,
+accuracy inferences, it does not help with the technology’s        synchronize as their frequencies approach within a mutual
+scalability and availability at the consumer-level.                locking range, resulting in a more potent single peak.
+                                                                      This synchronization phenomenon is employed in a hard-
+                                                                   ware neural network with three spintronic oscillators for
+8) Spintronics                                                     recognizing temporal sequences. In a fictional scenario in-
+Devices that employ spintronics involve the modulation of          volving a mouse encountering different cheese types, each
+the physical properties of individual atoms in a material,         leading to unique neuron activities, temporal sequences of
+specifically the spin of electrons. Most spintronic devices        three recorded spikes are used to infer the presented cheese
+use a sandwich approach, in which one layer is fixed with          type.
+a certain magnetization and the magnetization of the other            Inspired by Hopfield et al. [63], the researchers establish
+layer is changed. If the electron spins of the two layers align,   a network with neurons corresponding to the input sequence
+then the magnetization allows for less resistance and therefore    spikes, trained to recognize specific cheese types. Each spin-
+greater conductance, while the opposite is true for if the two     tronic oscillator is tailored to identify a particular cheese, and
+layers do not align. However, unlike digital technologies,         the network is trained to synchronize when presented with
+partial conductances by the "partial" alignment of the two         the correct spike sequence. The learning process involves
+layers do exist, which allows for a far greater range of values    adjusting parameters for the ramps leading to mutual synchro-
+12                                                                                                                         VOLUME 11, 2023
+Datar et al.: The Promise of Analog Deep Learning
+
+
+
+nization.                                                            FeFET synapse [30].
+   The network achieves a 94% recognition rate for various
+cheese types, showcasing its potential for pattern recognition
+tasks. Comparative results with a perceptron trained on the          5) Phase Change Systems
+same dataset emphasize the efficiency of this hardware-based         Phase Change-based devices primarily rely on Ferroelectric
+neural network. The study suggests that spintronic oscillator        Tunnel Junctions (FTJs), effectively combining enhanced
+synchronization holds promise for innovative and efficient           control over ferroelectric gating with the precision of multi-
+applications in neuromorphic computing, particularly in rec-         state devices. Notably, a study demonstrated that a memristor
+ognizing temporal sequences.                                         utilizing an Ag/BaTiO3/Nb:SrTiO3 ferroelectric tunnel junc-
+                                                                     tion (FTJ) achieved an impressive operational speed of 600
+                                                                     ps and accommodated 32 states (5 bits) per cell [5]. As with
+B. SPEED                                                             any device based on electron migration, the operational speed
+1) Cation Migration                                                  can be further enhanced by optimizing the electrode function
+For numerous materials, the mobility of cations surpasses that       and increasing the carrier concentration.
+of electrons, suggesting the potential for higher operational
+speeds in devices employing cation migration. A specific
+study demonstrated a switching time of less than 200 ns for a        6) Metal-to-Insulator Transition
+device tasked with hand-written digit classification [9].            While Metal-Insulator Transition (MIT) may be perceived
+                                                                     as slow due to the typical speed of material-level changes,
+2) Anion Migration                                                   its practicality and potential benefits become evident when
+Devices with anions capable of higher mobility than electrons        applied to significantly smaller devices. For instance, a study
+hold promise for Anion Migration, potentially achieving              demonstrated a relatively quick switching time of approxi-
+operational speeds comparable to electron migration-based            mately 0.1 µs for a device designed for boolean operations
+devices. A notable study employed redox thin-film transistors        [37]. MIT is thus a strong contender for use in situations
+(ReTFTs) to construct logic circuits using analog compo-             requiring simplicity but also very quick inferences.
+nents, revealing a processing time of approximately 42 ns.
+[23]. The use of Cation or Anion Migration-based devices can
+combine organization and ease-of-production with fast and            7) Superconductivity
+accurate results, which could be used very well in consumer-         Superconductors, renowned for their capacity to carry cur-
+level products such as on-device, offline AI inferences to           rents through charge distributions, possess significant poten-
+keep important information regarding the inference private           tial for robust magnetic field generation and maintenance.
+and more secure from interceptions.                                  The inherent speed of superconductors is advantageous in
+                                                                     altering the values stored in magnetic fields, as rapid changes
+                                                                     in current within the superconducting loops swiftly modulate
+3) Electrochemical Doping                                            these values. In a specific study, a device equipped with
+Although EC Doping is primarily applied in semiconductors,           a Josephson Junction, designed for light detection, demon-
+it holds significant potential in Analog Deep Learning due to        strated a turn-on time of 300 ps and a turn-off time of 15 ns
+its direct influence on a device’s physical properties, facilitat-   [42].
+ing faster operational speeds. An illustrative study reported a
+switching time of approximately 5 ns [61]. This remarkable
+speed can easily compete with the double or triple-digit             8) Spintronics
+switching times (in ns) of ion migration implementations, and        Given that electron spin is a fundamental characteristic of ma-
+can prove useful in situations involving quick AI inferences         terials, external control over it can be exceptionally challeng-
+and decision-making, such as the street driving capabilities in      ing. Nevertheless, when practically achievable, this method
+autonomous cars.                                                     holds the potential to yield notable benefits in operational
+                                                                     speed. A specific study reported a switching time of 13 µs
+                                                                     for a device designed for pattern recognition tasks [12].
+4) Ferroelectric Gating
+While Ferroelectric Gating may be perceived as a compar-
+atively slower technique, it remains capable of delivering           C. ENERGY EFFICIENCY AND POWER CONSUMPTION
+reasonable operational speeds when applied to Analog Deep            1) Cation/Anion Migration
+Learning devices. In a specific study, a phototransistor with        By leveraging the movement of a material’s cations instead
+ferroelectric polarization exhibited a remarkable response           of electrons, the ion migration methods exhibit significant
+time of under 20 µs [27]. Additionally, another study achieved       potential for energy efficiency in the context of Deep Learn-
+successful testing of 75 ns electrical pulses using a 5-bit          ing. In a notable instance, the utilization of Electrochemical
+VOLUME 11, 2023                                                                                                                   13
+                                                                                         Datar et al.: The Promise of Analog Deep Learning
+
+
+
+Neuromorphic Organic Devices (ENODes) enabled a study             and the material does not need to be converted completely into
+to replicate biological synapses with energy consumption of       a metal or an insulator to contribute to a functional neural
+less than 10 pJ for devices spanning an area of 103 µm2 ,         network. This, coupled with the high speed of MIT-based
+thereby achieving reduced energy usage through a distinct         inferences, make Phase Change-based networks a viable
+mechanism as compared to memristor-based devices. [20].           alternative to ion migration methods in situations requiring
+The ion migration methods offer opportunities for modular         simplicity and ease-of-use.
+design in assembling networks from individual synaptic tran-
+sistors, which are assembled from components such as elec-
+trical gating and containers with electrolytic materials. Such    5) Superconductivity
+organized design allows for easier investigation into potential   While magnetization is inherently less controllable than
+improvements for the methods over time, as opposed to more        some alternative methods, it still holds promise for providing
+involved methods such as Superconductors and Spintronics.         accurate and efficient solutions to Analog Deep Learning
+                                                                  challenges. A noteworthy study discovered that the coupling
+                                                                  of Josephson Junctions and superconductors with Artificial
+2) Electrochemical Doping
+                                                                  Neural Networks can achieve an impressive spiking energy of
+In comparison to the ionic migration methods, EC Doping           less than 1 aJ [39], notably surpassing the energy efficiency
+involves more high-level resources as the bias voltage is not     of the human brain, which operates at approximately 10 fJ.
+the only part of the system being changed to change con-          While superconductors have remarkable energy usages when
+ductance values. Since the material is electrochemically, the     applied to resistive crossbar arrays in testing environments,
+synaptic transistors that result from this method will be much    they can easily be affected by external factors in consumer-
+more stable and reliable as the behaviors of the system will be   level applications due to their analog nature, and may not
+more predictable [48]. For this reason, ANNs with EC Doping       be the most efficient in terms of energy usage for accurate
+will likely output more accurate results than those with ion      inferences.
+migration in a similar amount of energy usage, but the energy
+required on the production end will be much greater due to the
+need for high amounts of energy in Electrochemical Doping
+                                                                  6) Spintronics
+processes [48].
+                                                                  Spintronics provides yet another avenue for efficient AI infer-
+                                                                  ences through Analog Deep Learning, as magnetic properties
+3) Ferroelectric Gating                                           of materials can be utilized in very small areas to make drastic
+While it might seem intuitive to assume that ferroelectric        differences. For example, using the magnetic spin properties
+gating does not require improvements in energy efficiency         of skyrmions can yield great energy and space efficiency since
+due to its reliance on bias voltages, Ferroelectric Gating        particles in a skyrmion gas can send random thermal signals
+is, in fact, equally competent as other methods, with each        to other particles, thereby mimicking neurons in ANNs [44].
+having its unique specialty that appeals to specific use cases.   Additionally, impedances such as noise from the environment
+Among all the methods discussed in this paper, Ferroelectric      can be minimized by different uses of Spintronics within de-
+Gating stands out for its remarkable energy efficiency, as        vices, as one study found Spintronics-based logic operations
+demonstrated by a study reporting a power consumption of 32       to be much more prone to noise when using spin accumulation
+pJ for a 100 µm2 device implementing reinforcement learning       instead of spin flow, to account for the variable electron veloc-
+[29].                                                             ities and orientations [45]. Devices that employ this method of
+                                                                  Analog Deep Learning can expect to be very packageable and
+                                                                  easy to use in applications involving environmental changes,
+4) Phase Change Systems and Metal-to-Insulator Transition         in contrast to Phase Change systems, which thrive in specific
+While the Metal-to-Insulator Transition may not appear in-        situations.
+tuitively as the most energy-efficient method, it has demon-
+strated remarkable efficiency when applied to Analog Deep         V. DISCUSSION
+Learning. In one study, third-order nanocircuit elements were     While Analog Deep Learning is an emerging field that has
+employed in Deep Learning, resulting in a reported power          proven to have tremendous potential in further developing AI,
+consumption of approximately 2 pJ [37]. Additionally, an-         it is not completely error-free. Due to the nature of analog
+other study utilized a V/VOx/HfWOx/Pt Memristor within            processing, the accuracy of AI inferences can be compro-
+a Spiking Convolutional Neural Network, achieving an im-          mised. Analog systems are very prone to noise, which can be
+pressive energy efficiency of around 0.1 pJ. In general, Phase    a limiting factor in a device’s performance. Due to accuracy
+Change systems have potential to be very efficient methods        and noise considerations, Analog Deep Learning may not be
+of Analog Deep Learning, both in terms of space and energy.       suitable for many high-stakes applications, such as identify-
+This efficiency comes from the fact that there is not much        ing threats by a camera and computer vision. However, for
+surface area required on a device to implement this method        consumer-level applications such as recognizing and pulling
+14                                                                                                                        VOLUME 11, 2023
+Datar et al.: The Promise of Analog Deep Learning
+
+
+
+TABLE 1. Comparative performance of different representative analog deep learning methods in terms of accuracy, speed, and power consumption.
+Empty cell implies corresponding information is not available from the respective paper.
+
+      Ref.   Method              Algorithms   Tasks                                Accuracy                       Switching time          Power consumption
+      [8]    Cation              RNN, RC      Sentence classification              91%
+      [9]    Cation                           Hand-Written Digit Classification    90%                            < 200 ns
+      [1]    Cation              ANN, RC      Classifying Neural Firing Patterns   86.75%/91.8% (training/test)   5-20 ms
+      [2]    Cation              ANN          MNIST digit classification           94%                            100 ms                  < 5.0 x 10−10 J
+      [20]   Cation                                                                                                                       < 10 pJ for 103 µm2 devices
+      [3]    Cation              ANN
+      [23]   Anion                                                                                                42 ns
+      [10]   Anion               BM
+      [11]   Anion               CNN          MNIST Image Recognition              96%
+      [62]   EC Doping
+      [26]   Ferroelectric                                                                                        250 ns
+      [27]   Ferroelectric                                                                                        < 20 µs
+      [29]   Ferroelectric       RL                                                Nonlinearity (0.56/-1.23)                              32 pJ / 100 µm2
+      [30]   Ferroelectric       DNN          Transient Presiach model                                            75 ns
+      [4]    Ferroelectric       ANN          Pattern Recognition                  81%
+      [14]   Phase Change        CNN          MNIST digit recognition              89%                            0.2 s
+      [17]   Phase Change        SNN          Pattern Recognition                  100/80% (low/high noise)       100 ns
+      [5]    Phase Change        ANN          MNIST digit recognition              > 90%                          600 ps
+      [37]   MIT                                                                                                  0.1 µs                  2 pJ
+      [18]   MIT                 SCNN                                                                             1 µs                    0.1 pJ
+      [6]    Superconductivity   ANN
+      [39]   Superconductivity   DNN                                                                                                      < 1 aJ
+      [42]   Superconductivity                Detecting light                                                     15 ns/300 ps (off/on)   0.18 fJ / µm2
+      [43]   Superconductivity                                                     71%
+      [44]   Spintronics                      Stochastic Computing Circuit
+      [7]    Spintronics         ANN          MNIST Digit Classification
+      [12]   Spintronics                      Pattern Recognition                  94%                            13µs
+      [13]   Spintronics                      Pattern Recognition
+      [15]   Spintronics         CNN                                               logic error rate of 0.0164%
+
+
+
+out text from images, the use of analog deep learning is likely                          are likely to incorporate aspects of memory better than other
+to be very beneficial.                                                                   algorithms such as ANNs. Other applications such as self-
+                                                                                         driving systems are likely to benefit with the use of CNNs due
+A. COST                                                                                  to the high amount of spatial awareness embedded in CNN-
+While some methods of Analog Deep Learning, such as Spin-                                based devices. Self-driving systems are likely to benefit from
+tronics and Superconductivity, may require expensive mate-                               ion migration or material-level change implementation types
+rials or resources, some methods have proven to be very cost                             due to their simplicity and low cost of materials, as methods
+efficient for use in AI applications. For example, Ferroelectric                         such as superconductivity and spintronics may unnecessarily
+Gating only requires the use of bias voltages across a material                          drive up device prices.
+to induce its conductance, which is likely to require relatively                            The simplicity of a crossbar array with ion migration or
+inexpensive resources such as a voltage source, the material                             charge distribution-based devices cannot be understated. With
+itself, and the supporting electronics.                                                  such an approach we can shrink down neural networks and di-
+                                                                                         rectly model them with hardware, albeit with a small tradeoff
+B. SCALABILITY                                                                           of accuracy depending on the situation. In the present day, AI
+The Analog Deep Learning methods that are likely to be very                              is very much clustered in areas with access to key resources
+cost efficient are also likely to be used in mass integration                            and computing power, but with Analog Deep Learning we
+and production. While successful and beneficial emulation of                             may be able to place immense power in the hands of day-to-
+a single neural network can be very efficiently done by an                               day consumers.
+analog device, emulation of multiple neural networks in one
+cohesive device is likely to make AI inferences much stronger                            VI. CONCLUSION
+while keeping expenses at bay. Integration of multiple neural                            In this review, we introduced the increasingly popular field
+networks may prove to be a better solution than creating                                 of Analog Deep Learning and discussed its applications, cur-
+one very large neural network in applications such as text                               rent progress, and future potential. We described a taxonomy
+writing programs, where parallelism can significantly boost                              for classifying implementations of Analog Deep Learning,
+efficiency.                                                                              and analyzed each of the eight primary methods. We then
+   Depending on the applications, some Deep Learning al-                                 proceeded to comparing the methods and evaluating their
+gorithms or hardware implementation methods may be more                                  scalability and future implications.
+suitable. For lower-cost, consumer-level applications such as                               From this review, we conclude that Analog Deep Learn-
+personal assistants, Cation Migration is likely to be the best                           ing should be further studied, especially for lower-cost or
+implementation method because of its simplicity. Personal                                consumer-level applications such as personal assistants or
+assistants may also benefit from the use of RNNs, as RNNs                                driving systems. With methods such as cation migration and
+VOLUME 11, 2023                                                                                                                                                         15
+                                                                                                                  Datar et al.: The Promise of Analog Deep Learning
+
+
+
+spintronics which are relatively easy to implement and/or                            [16] P. Yao, H. Wu, B. Gao, J. Tang, Q. Zhang, W. Zhang, J. J. Yang, and H. Qian,
+have adequate accuracy and efficiency, Analog Deep Learn-                                 ‘‘Fully hardware-implemented memristor convolutional neural network,’’
+                                                                                          Nature, vol. 577, no. 7792, pp. 641–646, 2020.
+ing is likely to allow Artificial Intelligence to reach new                          [17] S. Boyn, J. Grollier, G. Lecerf, B. Xu, N. Locatelli, S. Fusil, S. Girod,
+heights.                                                                                  C. Carrétéro, K. Garcia, S. Xavier et al., ‘‘Learning through ferroelectric
+                                                                                          domain dynamics in solid-state synapses,’’ Nature communications, vol. 8,
+                                                                                          no. 1, p. 14736, 2017.
+REFERENCES                                                                           [18] Y. Fu, Y. Zhou, X. Huang, B. Dong, F. Zhuge, Y. Li, Y. He, Y. Chai,
+ [1] R. A. John, Y. Demirağ, Y. Shynkarenko, Y. Berezovska, N. Ohannessian,               and X. Miao, ‘‘Reconfigurable synaptic and neuronal functions in a
+     M. Payvand, P. Zeng, M. I. Bodnarchuk, F. Krumeich, G. Kara,                         v/vox/hfwox/pt memristor for nonpolar spiking convolutional neural net-
+     I. Shorubalko, M. V. Nair, G. A. Cooke, T. Lippert, G. Indiveri, and M. V.           work,’’ Advanced Functional Materials, vol. 32, no. 23, p. 2111996, 2022.
+     Kovalenko, ‘‘Reconfigurable halide perovskite nanocrystal memristors for        [19] M. Hu, C. E. Graves, C. Li, Y. Li, N. Ge, E. Montgomery, N. Davila,
+     neuromorphic computing,’’ Nature communications, vol. 13, no. 1, p. 2074,            H. Jiang, R. S. Williams, J. J. Yang et al., ‘‘Memristor-based analog
+     4 2022. [Online]. Available: https://europepmc.org/articles/PMC9018677               computation and neural network classification with a dot product engine,’’
+ [2] Z. Wu, P. Shi, R. Xing, Y. Xing, Y. Ge, L. Wei, D. Wang, L. Zhao,                    Advanced Materials, vol. 30, no. 9, p. 1705914, 2018.
+     S. Yan, and Y. Chen, ‘‘Quasi-two-dimensional α-molybdenum oxide thin            [20] Y. van de Burgt, E. Lubberman, E. Fuller, S. Keene, G. Faria,
+     film prepared by magnetron sputtering for neuromorphic computing,’’                  S. Agarwal, M. Marinella, A. A. Talin, and A. Salleo, ‘‘A non-volatile
+     RSC Adv., vol. 12, pp. 17 706–17 714, 2022. [Online]. Available:                     organic electrochemical device as a low-voltage artificial synapse for
+     http://dx.doi.org/10.1039/D2RA02652J                                                 neuromorphic computing,’’ Nat Mater, pp. 414–418, 2017. [Online].
+ [3] B. Jang, S. Kim, S. Yang, J. Park, J. Cha, J. Oh, J. Choi, S. Im,                    Available: http://dx.doi.org/10.1038/nmat4856
+     V. Dravid, and S. Choi, ‘‘Polymer analog memristive synapse with                [21] R. Yu, Y. Yan, E. Li, X. Wu, X. Zhang, J. Chen, Y. Hu, H. Chen,
+     atomic-scale conductive filament for flexible neuromorphic computing                 and T. Guo, ‘‘Bi-mode electrolyte-gated synaptic transistor via additional
+     system,’’ Nano Lett, pp. 839–849, 2019. [Online]. Available: http:                   ion doping and its application to artificial nociceptors,’’ Mater. Horiz.,
+     //dx.doi.org/10.1021/acs.nanolett.8b04023                                            vol. 8, pp. 2797–2807, 2021. [Online]. Available: http://dx.doi.org/10.
+ [4] J. Gao, X. Lian, Z. Chen, S. Shi, E. Li, Y. Wang, T. Jin, H. Chen, L. Liu,           1039/D1MH01061A
+     J. Chen et al., ‘‘Multifunctional mote2 fe-fet enabled by ferroelectric         [22] H. Bao, H. Zhou, J. Li, H. Pei, J. Tian, L. Yang, S. Ren, S. Tong,
+     polarization-assisted charge trapping,’’ Advanced Functional Materials,              Y. Li, Y. He, J. Chen, Y. Cai, H. Wu, Q. Liu, Q. Wan, and
+     vol. 32, no. 17, p. 2110415, 2022.                                                   X. Miao, ‘‘Toward memristive in-memory computing: principles and
+ [5] C. Ma, Z. Luo, W. Huang, L. Zhao, Q. Chen, Y. Lin, X. Liu, Z. Chen,                  applications,’’ Front Optoelectron, vol. 15, 2022. [Online]. Available:
+     C. Liu, H. Sun et al., ‘‘Sub-nanosecond memristor based on ferroelectric             http://dx.doi.org/10.1007/s12200-022-00025-4
+     tunnel junction,’’ Nature communications, vol. 11, no. 1, p. 1439, 2020.        [23] M. Kumar, U. Kim, W. Lee, and H. Seo, ‘‘Ultrahigh-speed in-
+ [6] U. S. Goteti, H. Cai, J. C. LeFebvre, S. A. Cybart, and R. C. Dynes, ‘‘Super-        memory electronics enabled by proximity-oxidation-evolved metal
+     conducting disordered neural networks for neuromorphic processing with               oxide redox transistors,’’ Advanced Materials, vol. 34, no. 20, p.
+     fluxons,’’ Science Advances, vol. 8, no. 16, p. eabn4485, 2022.                      2200122, 2022. [Online]. Available: https://onlinelibrary.wiley.com/doi/
+ [7] J. Cai, B. Fang, L. Zhang, W. Lv, B. Zhang, T. Zhou, G. Finocchio,                   abs/10.1002/adma.202200122
+     and Z. Zeng, ‘‘Voltage-controlled spintronic stochastic neuron based on         [24] Q. Xia and J. J. Yang, ‘‘Memristive crossbar arrays for brain-inspired
+     a magnetic tunnel junction,’’ Physical Review Applied, vol. 11, no. 3, p.            computing,’’ Nature materials, vol. 18, no. 4, pp. 309–323, 2019.
+     034015, 2019.                                                                   [25] Y. Li, E. J. Fuller, J. D. Sugar, S. Yoo, D. S. Ashby, C. H. Bennett, R. D.
+ [8] L. Sun, Z. Wang, J. Jiang, Y. Kim, B. Joo, S. Zheng, S. Lee, W. J. Yu, B.-S.         Horton, M. S. Bartsch, M. J. Marinella, W. D. Lu et al., ‘‘Filament-free bulk
+     Kong, and H. Yang, ‘‘In-sensor reservoir computing for language learning             resistive memory enables deterministic analogue switching,’’ Advanced
+     via two-dimensional memristors,’’ Science advances, vol. 7, no. 20, p.               Materials, vol. 32, no. 45, p. 2003984, 2020.
+     eabg1455, 2021.                                                                 [26] Z. Zhu, A. E. Persson, and L.-E. Wernersson, ‘‘Sensing single domains and
+ [9] T.-K. Su, W.-K. Cheng, C.-Y. Chen, W.-C. Wang, Y.-T. Chuang, G.-H. Tan,              individual defects in scaled ferroelectrics,’’ Science Advances, vol. 9, no. 5,
+     H.-C. Lin, C.-H. Hou, C.-M. Liu, Y.-C. Chang, J.-J. Shyue, K.-C. Wu, and             p. eade7098, 2023.
+     H.-W. Lin, ‘‘Room-temperature fabricated multilevel nonvolatile lead-free       [27] L. Lv, F. Zhuge, F. Xie, X. Xiong, Q. Zhang, N. Zhang, Y. Huang, and
+     cesium halide memristors for reconfigurable in-memory computing,’’ ACS               T. Zhai, ‘‘Reconfigurable two-dimensional optoelectronic devices enabled
+     Nano, vol. 16, no. 8, pp. 12 979–12 990, 2022, pMID: 35815946. [Online].             by local ferroelectric polarization,’’ Nature communications, vol. 10, no. 1,
+     Available: https://doi.org/10.1021/acsnano.2c05436                                   p. 3331, 2019.
+[10] X. Yan, J. Ma, T. Wu, A. Zhang, J. Wu, M. Chin, Z. Zhang, M. Dubey,             [28] S. Liu, I. Grinberg, and A. M. Rappe, ‘‘Intrinsic ferroelectric switching
+     W. Wu, M. S.-W. Chen et al., ‘‘Reconfigurable stochastic neurons based               from first principles,’’ Nature, vol. 534, no. 7607, pp. 360–363, 2016.
+     on tin oxide/mos2 hetero-memristors for simulated annealing and the             [29] Y. Zhou, Y. Wang, F. Zhuge, J. Guo, S. Ma, J. Wang, Z. Tang, Y. Li,
+     boltzmann machine,’’ Nature Communications, vol. 12, no. 1, p. 5710,                 X. Miao, Y. He et al., ‘‘A reconfigurable two-wse2-transistor synaptic
+     2021.                                                                                cell for reinforcement learning,’’ Advanced Materials, vol. 34, no. 48, p.
+[11] P. Yao, H. Wu, B. Gao, J. Tang, Q. Zhang, W. Zhang, J. J. Yang, and H. Qian,         2107754, 2022.
+     ‘‘Fully hardware-implemented memristor convolutional neural network,’’          [30] M. Jerry, P.-Y. Chen, J. Zhang, P. Sharma, K. Ni, S. Yu, and S. Datta,
+     Nature, vol. 577, no. 7792, pp. 641–646, 2020.                                       ‘‘Ferroelectric fet analog synapse for acceleration of deep neural network
+[12] M. Romera, P. Talatchian, S. Tsunegi, K. Yakushiji, A. Fukushima, H. Kub-            training,’’ in 2017 IEEE international electron devices meeting (IEDM).
+     ota, S. Yuasa, V. Cros, P. Bortolotti, M. Ernoult et al., ‘‘Binding events           IEEE, 2017, pp. 6–2.
+     through the mutual synchronization of spintronic nano-neurons,’’ Nature         [31] H. Mulaosmanovic, E. Chicca, M. Bertele, T. Mikolajick, and S. Slesazeck,
+     Communications, vol. 13, no. 1, p. 883, 2022.                                        ‘‘Mimicking biological neurons with a nanoscale ferroelectric transistor,’’
+[13] M. Riou, J. Torrejon, B. Garitaine, F. A. Araujo, P. Bortolotti, V. Cros,            Nanoscale, vol. 10, no. 46, pp. 21 755–21 763, 2018.
+     S. Tsunegi, K. Yakushiji, A. Fukushima, H. Kubota et al., ‘‘Temporal            [32] Y. Sun, Y. Lin, A. Zubair, D. Xie, and T. Palacios, ‘‘Wse2/graphene
+     pattern recognition with delayed-feedback spin-torque nano-oscillators,’’            heterojunction synaptic phototransistor with both electrically and optically
+     Physical review applied, vol. 12, no. 2, p. 024049, 2019.                            tunable plasticity,’’ 2D Materials, vol. 8, no. 3, p. 035034, 2021.
+[14] F. Xue, X. He, Z. Wang, J. R. D. Retamal, Z. Chai, L. Jing, C. Zhang,           [33] A. Pantazi, S. Woźniak, T. Tuma, and E. Eleftheriou, ‘‘All-memristive neu-
+     H. Fang, Y. Chai, T. Jiang et al., ‘‘Giant ferroelectric resistance switch-          romorphic computing with level-tuned neurons,’’ Nanotechnology, vol. 27,
+     ing controlled by a modulatory terminal for low-power neuromorphic in-               no. 35, p. 355205, 2016.
+     memory computing,’’ Advanced Materials, vol. 33, no. 21, p. 2008709,            [34] S. J. Kim, S. Kim, and H. W. Jang, ‘‘Competing memristors for brain-
+     2021.                                                                                inspired computing,’’ Iscience, vol. 24, no. 1, 2021.
+[15] M. T. Nasab, A. Amirany, M. H. Moaiyeri, and K. Jafari, ‘‘High-                 [35] C. T. Nelson, P. Gao, J. R. Jokisaari, C. Heikes, C. Adamo, A. Melville, S.-
+     performance and robust spintronic/cntfet-based binarized neural network              H. Baek, C. M. Folkman, B. Winchester, Y. Gu et al., ‘‘Domain dynamics
+     hardware accelerator,’’ IEEE Transactions on Emerging Topics in Com-                 during ferroelectric switching,’’ Science, vol. 334, no. 6058, pp. 968–971,
+     puting, 2022.                                                                        2011.
+
+16                                                                                                                                                     VOLUME 11, 2023
+Datar et al.: The Promise of Analog Deep Learning
+
+
+
+[36] X. He, Y. Ma, C. Zhang, A. Fu, W. Hu, Y. Xu, B. Yu, K. Liu, H. Wang,                 classification with unsupervised learning,’’ Nature Electronics, vol. 1,
+     X. Zhang et al., ‘‘Proton-mediated reversible switching of metastable                no. 2, pp. 137–145, 2018.
+     ferroelectric phases with low operation voltages,’’ Science Advances, vol. 9,   [56] S. J. Kim, T. H. Lee, J.-M. Yang, J. W. Yang, Y. J. Lee, M.-J. Choi, S. A.
+     no. 21, p. eadg4561, 2023.                                                           Lee, J. M. Suh, K. J. Kwak, J. H. Baek et al., ‘‘Vertically aligned two-
+[37] S. Kumar, R. S. Williams, and Z. Wang, ‘‘Third-order nanocircuit elements            dimensional halide perovskites for reliably operable artificial synapses,’’
+     for neuromorphic engineering,’’ Nature, vol. 585, no. 7826, pp. 518–523,             Materials Today, vol. 52, pp. 19–30, 2022.
+     2020.                                                                           [57] K. J. Kwak, D. E. Lee, S. J. Kim, and H. W. Jang, ‘‘Halide perovskites for
+[38] U. S. Goteti, I. A. Zaluzhnyy, S. Ramanathan, R. C. Dynes, and A. Frano,             memristive data storage and artificial synapses,’’ The Journal of Physical
+     ‘‘Low-temperature emergent neuromorphic networks with correlated oxide               Chemistry Letters, vol. 12, no. 37, pp. 8999–9010, 2021.
+     devices,’’ Proceedings of the National Academy of Sciences, vol. 118,           [58] M. Prezioso, F. Merrikh-Bayat, B. D. Hoskins, G. C. Adam, K. K. Likharev,
+     no. 35, p. e2103934118, 2021.                                                        and D. B. Strukov, ‘‘Training and operation of an integrated neuromorphic
+[39] M. L. Schneider, C. A. Donnelly, S. E. Russek, B. Baek, M. R. Pufall,                network based on metal-oxide memristors,’’ Nature, vol. 521, no. 7550, pp.
+     P. F. Hopkins, P. D. Dresselhaus, S. P. Benz, and W. H. Rippard, ‘‘Ul-               61–64, 2015.
+     tralow power artificial synapses using nanotextured magnetic josephson          [59] X. Yan, J. Ma, T. Wu, A. Zhang, J. Wu, M. Chin, Z. Zhang, M. Dubey,
+     junctions,’’ Science advances, vol. 4, no. 1, p. e1701329, 2018.                     W. Wu, M. S.-W. Chen et al., ‘‘Reconfigurable stochastic neurons based
+[40] S. A. Cybart, E. Cho, T. Wong, B. H. Wehlin, M. K. Ma, C. Huynh,                     on tin oxide/mos2 hetero-memristors for simulated annealing and the
+     and R. Dynes, ‘‘Nano josephson superconducting tunnel junctions in                   boltzmann machine,’’ Nature Communications, vol. 12, no. 1, p. 5710,
+     yba2cu3o7–δ directly patterned with a focused helium ion beam,’’ Nature              2021.
+     nanotechnology, vol. 10, no. 7, pp. 598–602, 2015.                              [60] S. Hu, Y. Liu, Z. Liu, T. Chen, J. Wang, Q. Yu, L. Deng, Y. Yin, and
+[41] E. Toomey, M. Onen, M. Colangelo, B. Butters, A. McCaughan, and                      S. Hosaka, ‘‘Associative memory realized by a reconfigurable memristive
+     K. Berggren, ‘‘Bridging the gap between nanowires and josephson junc-                hopfield neural network,’’ Nature communications, vol. 6, no. 1, p. 7522,
+     tions: a superconducting device based on controlled fluxon transfer,’’ Phys-         2015.
+     ical review applied, vol. 11, no. 3, p. 034006, 2019.                           [61] Y. Van De Burgt, E. Lubberman, E. J. Fuller, S. T. Keene, G. C. Faria,
+[42] A. N. McCaughan, V. B. Verma, S. M. Buckley, J. Allmaras, A. Kozorezov,              S. Agarwal, M. J. Marinella, A. Alec Talin, and A. Salleo, ‘‘A non-
+     A. Tait, S. Nam, and J. Shainline, ‘‘A superconducting thermal switch with           volatile organic electrochemical device as a low-voltage artificial synapse
+     ultrahigh impedance for interfacing superconductors to semiconductors,’’             for neuromorphic computing,’’ Nature materials, vol. 16, no. 4, pp. 414–
+     Nature electronics, vol. 2, no. 10, pp. 451–456, 2019.                               418, 2017.
+                                                                                     [62] T. Nguyen-Dang, S. Chae, J. Chatsirisupachai, H. Wakidi, V. Promarak,
+[43] B. A. Primavera and J. M. Shainline, ‘‘An active dendritic tree can mitigate
+                                                                                          Y. Visell, and T.-Q. Nguyen, ‘‘Dual-mode organic electrochemical tran-
+     fan-in limitations in superconducting neurons,’’ Applied Physics Letters,
+                                                                                          sistors based on self-doped conjugated polyelectrolytes for reconfigurable
+     vol. 119, no. 24, 2021.
+                                                                                          electronics,’’ Advanced Materials, vol. 34, no. 23, p. 2200274, 2022.
+[44] D. Pinna, F. A. Araujo, J.-V. Kim, V. Cros, D. Querlioz, P. Bessière,
+                                                                                     [63] J. J. Hopfield and C. D. Brody, ‘‘What is a moment?“cortical” sensory
+     J. Droulez, and J. Grollier, ‘‘Skyrmion gas manipulation for probabilistic
+                                                                                          integration over a brief interval,’’ Proceedings of the National Academy
+     computing,’’ Physical Review Applied, vol. 9, no. 6, p. 064018, 2018.
+                                                                                          of Sciences, vol. 97, no. 25, pp. 13 919–13 924, 2000.
+[45] H. Dery, P. Dalal, Ł. Cywiński, and L. J. Sham, ‘‘Spin-based logic in
+     semiconductors for reconfigurable large-scale circuits,’’ Nature, vol. 447,
+     no. 7144, pp. 573–576, 2007.
+[46] S. Tsunegi, T. Taniguchi, D. Suzuki, K. Yakushiji, A. Fukushima, S. Yuasa,
+     and H. Kubota, ‘‘Control of the stochastic response of magnetization dy-
+     namics in spin-torque oscillator through radio-frequency magnetic fields,’’
+     Scientific Reports, vol. 11, no. 1, p. 16285, 2021.
+[47] M. Onen, N. Emond, B. Wang, D. Zhang, F. M. Ross, J. Li, B. Yildiz, and
+     J. A. Del Alamo, ‘‘Nanosecond protonic programmable resistors for analog
+     deep learning,’’ Science, vol. 377, no. 6605, pp. 539–543, 2022.
+[48] M. Xu, X. Chen, Y. Guo, Y. Wang, D. Qiu, X. Du, Y. Cui, X. Wang, and
+     J. Xiong, ‘‘Reconfigurable neuromorphic computing: Materials, devices,
+     and integration,’’ Advanced Materials, no. 51, pp. 0935–9648, 2023.
+[49] J. Wang, Z. Lv, X. Xing, X. Li, Y. Wang, M. Chen, G. Pang, F. Qian,
+     Y. Zhou, and S.-T. Han, ‘‘Optically modulated threshold switching in
+     core–shell quantum dot based memristive device,’’ Advanced Functional
+     Materials, vol. 30, no. 16, p. 1909114, 2020.
+[50] F. Zhou, Z. Zhou, J. Chen, T. H. Choy, J. Wang, N. Zhang, Z. Lin,
+     S. Yu, J. Kang, H.-S. P. Wong et al., ‘‘Optoelectronic resistive random
+     access memory for neuromorphic vision sensors,’’ Nature nanotechnology,
+     vol. 14, no. 8, pp. 776–782, 2019.
+[51] H.-L. Park, H. Kim, D. Lim, H. Zhou, Y.-H. Kim, Y. Lee, S. Park, and T.-W.
+     Lee, ‘‘Retina-inspired carbon nitride-based photonic synapses for selective
+     detection of uv light,’’ Advanced Materials, vol. 32, no. 11, p. 1906899,
+     2020.
+[52] T. Ahmed, M. Tahir, M. X. Low, Y. Ren, S. A. Tawfik, E. L. Mayes, S. Kuri-
+     akose, S. Nawaz, M. J. Spencer, H. Chen et al., ‘‘Fully light-controlled
+     memory and neuromorphic computation in layered black phosphorus,’’
+     Advanced Materials, vol. 33, no. 10, p. 2004207, 2021.
+[53] Y. Van De Burgt, E. Lubberman, E. J. Fuller, S. T. Keene, G. C. Faria,
+     S. Agarwal, M. J. Marinella, A. Alec Talin, and A. Salleo, ‘‘A non-
+     volatile organic electrochemical device as a low-voltage artificial synapse
+     for neuromorphic computing,’’ Nature materials, vol. 16, no. 4, pp. 414–
+     418, 2017.
+[54] T. Nguyen-Dang, S. Chae, J. Chatsirisupachai, H. Wakidi, V. Promarak,
+     Y. Visell, and T.-Q. Nguyen, ‘‘Dual-mode organic electrochemical tran-
+     sistors based on self-doped conjugated polyelectrolytes for reconfigurable
+     electronics,’’ Advanced Materials, vol. 34, no. 23, p. 2200274, 2022.
+[55] Z. Wang, S. Joshi, S. Savel’Ev, W. Song, R. Midya, Y. Li, M. Rao, P. Yan,
+     S. Asapu, Y. Zhuo et al., ‘‘Fully memristive neural networks for pattern
+
+VOLUME 11, 2023                                                                                                                                                   17
+

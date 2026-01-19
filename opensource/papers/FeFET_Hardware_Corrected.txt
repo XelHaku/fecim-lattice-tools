@@ -1,0 +1,497 @@
+   Comparative Evaluation of Memory Technologies for
+   Synaptic Crossbar Arrays - Part I: Robustness-driven
+    Device-Circuit Co-Design and System Implications
+                    Chunguang Wang*, Jeffry Victor*, and Sumeet K. Gupta, Senior Member, IEEE
+
+                                                                        Crossbar memory arrays not only store the DNN weights but
+   Abstract—In-memory computing (IMC) utilizing synaptic                also perform in-situ matrix-vector multiplication (MVM)
+crossbar arrays is promising for energy-efficient deep                  which is the dominant kernel in DNNs. Further, to mitigate the
+neural network (DNN) accelerators. Various technologies                 low integration density of static random-access memories
+(CMOS and post-CMOS) have been explored as synaptic                     (SRAMs) [1], emerging non-volatile memories (NVMs) such
+device candidates, each with its own pros and cons. In
+                                                                        as resistive RAMs (ReRAMs) [2], ferroelectric transistors
+this work, we perform a design space exploration and
+comparative evaluation of four technologies viz. 8T                     (FeFETs) [3], spin-orbit torque magnetic RAMs (SOT-
+SRAMs, ferroelectric transistors (FeFETs), resistive RAMs               MRAMs) [4] and others are being explored as synaptic
+(ReRAMs) and spin-orbit torque magnetic RAMs (SOT-                      devices.
+MRAMs) in the context of IMC robustness and DNN                            However, each memory technology has its own pros and
+accuracy. For a fair comparison, we carefully optimize                  cons, which needs to be properly understood. Several previous
+each technology specifically for synaptic crossbar design               works [2], [4] have optimized and evaluated individual
+accounting for device and circuit non-idealities. By                    technologies in the context of synaptic crossbar array design.
+integrating different technologies into a cross-layer                   The authors in [5] perform a comparison of various emerging
+simulation flow based on physical models of synaptic
+                                                                        technologies for synaptic crossbar array designs, but focus on
+devices and interconnects, we present insights into
+various device-circuit interactions. Based on the                       energy-latency-area analysis. However, another important
+optimized designs, we obtain inference results for ResNet-              design criterion for IMC designs is to ensure sufficiently large
+20 on CIFAR-10 dataset. Among the four technologies, we                 computational robustness in the presence of device-circuit
+show that FeFETs-based DNNs achieve the highest                         non-idealities. Though several frameworks [6], [7], [8] have
+accuracy (followed closely by ReRAMs) and the largest                   explored the impact of non-idealities in crossbar arrays, a
+resilience to process variations due to the compactness                 detailed comparative analysis of different technologies and an
+and high ON/OFF current ratio of FeFET bit-cells. In Part II            understanding of the interaction of their unique device features
+of this paper, we expand the technology evaluation                      with the non-ideal circuit attributes are lacking.
+considering various device-circuit design knobs used for
+                                                                           In this work, we aim to close this gap by utilizing a cross-
+crossbar arrays.
+                                                                        layer simulation framework to capture device-circuit
+  Index Terms—Deep neural networks, in-memory                           interactions and facilitate the connection between the
+computing, non-volatile memory, synaptic crossbar array.                technology attributes and DNN accuracy. We conduct a
+                                                                        comparative evaluation of 8T-SRAMs, ReRAMs, FeFETs and
+                        I. INTRODUCTION                                 SOT-MRAMs by analyzing their implications on IMC
+
+D
+                                                                        robustness and inference accuracy. In Part I of this paper, we
+     eep neural networks (DNNs) have shown great promise                focus on establishing IMC-driven device-circuit co-
+     for various machine learning applications such as                  optimization strategies and the system implications of the four
+computer vision, autonomous vehicles and others. However,               technologies. In Part II, we extend our comparative
+suffering from the memory bottleneck and large memory                   technology evaluation by considering various design knobs
+footprints, CMOS-based von Neumann architectures are not                utilized for crossbar arrays. The key contributions of this part
+able to provide adequate energy efficiency and on-chip                  of the paper are as follows:
+memory density to meet the surging storage and computation
+                                                                        • Based on physical models for ReRAMs, FeFETs, SOT-
+demands of DNNs. In-memory computing (IMC) based on
+                                                                          MRAMs, 8T-SRAMs and interconnects, we explore the
+synaptic crossbar arrays is a promising alternative to alleviate
+                                                                          design space of synaptic crossbar arrays at the 7nm
+expensive data transfers between memory and processor.
+                                                                          technology node and establish the optimal design choices to
+                                                                          mitigate the impact of hardware non-idealities.
+  This work was supported in part by the Center for Brain-Inspired
+Computing (C-BRIC), and in part by the Center for the Co-Design of      • Based on the optimized designs, we comparatively evaluate
+Cognitive Systems (COCOSYS), funded by Semiconductor Research             the four technologies by analyzing the accuracy of ResNet-
+Corporation (SRC) and DARPA under Grant AWD-004311-S4.                    20 on CIFAR-10 dataset.
+(Corresponding author: Chunguang Wang.)
+  Chunguang Wang, Jeffry Victor, and Sumeet K. Gupta are with the       • We provide insights into the device-circuit interactions and
+Elmore Family School of Electrical and Computer Engineering, Purdue       discuss the factors that dictate the performance of a
+University,   West     Lafayette,     IN     47907     USA   (e-mail:     technology for DNN inference.
+wang4015@purdue.edu;                             louis8@purdue.edu;
+guptask@purdue.edu).
+   * These authors contributed equally to this paper.
+Fig. 1. (a) Schematic and (b) layout of bit-cell of 8T-SRAMs, SOT-MRAMs, ReRAMs and FeFETs. (c) Abstracted bit-cell with three terminals.
+
+                                                                        technology-specific design parameters is not considered
+           II. BACKGROUND AND RELATED WORKS                             comprehensively. GENIEx [2] can capture the data-dependent
+   The key attributes of IMC of MVM in a crossbar array for             non-idealities. However, sensing robustness and device
+DNNs are: (a) synaptic weight encoding in the memory                    variations have not been considered in the analysis. Further, in
+elements in the form of their conductance (b) input vector              the existing works, there is a lack of a comparative evaluation
+encoding as voltages applied on wordlines (WL) or bitlines              of synaptic technology candidates considering the optimal
+(BL) running along the rows and (c) dot product outputs                 device-circuit design choices that target minimizing hardware
+sensed at the sense-lines (SL) running along the columns. For           non-idealities at deeply scaled technology nodes. In this work,
+the input voltage generation, especially for multi-bit input,           we carry out an extensive analysis of the device-circuit
+digital-to-analog converters (DAC) can be used. Similarly, at           interactions accounting for the non-ideal technological and
+the SLs, analog-to-digital converters (ADC) are typically               crossbar array attributes and perform a comparative
+needed to obtain a digital partial sum from the output current          technology evaluation in the context of IMC robustness and
+or the associated quantities (voltage or charge). The synaptic          DNN accuracy at the 7nm technology node.
+weights are encoded by programming the memory elements to
+binary or multiple levels to store a bit-slice of the weight.                    III. SYNAPTIC CROSSBAR ARRAY MODELING
+Similarly, the input bit-stream is applied on the WL or BL as              Based on the Arizona State Predictive process design kit
+binary or multi-level voltages.                                         (ASAP-7) [10] and the corresponding design rules (validated
+   While promising to obtain massively parallel in-situ                 with the 7nm industrial process parameters such as
+computation of MVM, the actual hardware implementations of              gate/metal/fin pitch), we design the bit-cells (including their
+the crossbar arrays show a notable deviation from the ideal or          layouts) and the synaptic arrays for different technologies at
+expected output [2]. Such hardware non-idealities stem from             7nm technology node (Fig. 1). For IMC of MVM in a crossbar
+device non-linearities and variability, finite driveability (i.e.       array, the read port of the bit-cells corresponding to different
+non-zero resistance) of the word-line drivers, load resistance          technologies can be abstracted as cells with three terminals: G,
+of the sensing circuitry, wire resistance (RWIRE) and others [9].       D and S, as shown in Fig. 1. FinFETs with single fin are used
+As a result, the SL current exhibits non-linear behavior with           in the crossbar array for high-density and low capacitance and
+respect to the output that it encodes and can be a source of            are modeled by the 7nm predictive technology multi-gate
+sensing errors. This, in turn, leads to erroneous computations,         model (PTM-MG). For 8T-SRAMs, we employ the low
+which, if critical, can reduce the DNN accuracy. Hence, the             standby power model for FinFETs to minimize the leakage.
+optimization of the synaptic devices and crossbar arrays must           For the NVM technologies (which do not suffer from standby
+account for such non-ideal behavior to minimize its impact on           leakage issues), we utilize the high-performance FinFET
+the inference accuracy.                                                 model to lower the access transistor resistance.
+   Several previous works have analyzed the impact of non-                 We use 16-bit weights which are stored in 16 crossbar
+idealities in crossbar arrays. NeuroSim [6] accounts for the            arrays, each storing a bit-slice of 1. We utilize multiple 64x64
+impact of non-ideal device properties based on synaptic array           crossbar sub-arrays for MVM in this part. In Part II, we
+simulations but does not comprehensively account for all                conduct the analysis for different array sizes. Note, while
+device-circuit non-idealities. CxDNN [7] models the effects of          SRAMs and SOT-MRAMs are limited to a bit-slice of 1,
+parasitic resistances using matrix inversion techniques.                ReRAMs and FeFETs offer multi-level storage, which we
+However, non-linear non-idealities are not considered in that           analyze in Part II. In this part, we focus on a comparative
+work. The works in [8] explore the fundamental limits on the            analysis with a bit-slice of 1. We use 16-bit inputs which are
+compute signal-to-noise ratio (SNR) of crossbars by using               streamed in 16 cycles as binary WL or BL voltages.
+statistical signal and noise models but the impact of
+                                                                                                        TABLE I
+                                                                                          KEY PARAMETERS FOR CROSSBAR ARRAY
+                                                                               WL Voltage        0.7V        BL Voltage        0.25V
+                                                                                Array Size      64 × 64   Driver Resistance    500Ω
+                                                                              Via Resistance    56Ω[13]   Wire Resistance   182Ω/µm[13]
+                                                                             Bits/Input Signal    1b         Bits/Device         1b
+
+                                                                                                     TABLE II
+                                                                                            PARAMETERS IN RERAM MODEL
+                                                                                    I0          g0         V0            g
+                                                                                 0.2mA       0.15nm      0.35V     0.34nm-1.09nm
+
+                                                                                                         TABLE III
+                                                                                               PARAMETERS IN FEFET MODEL
+                                                                                     FE Thickness [nm]              7     6           5
+                                                                               Saturated Polarization [µC/cm2]            30
+                                                                               Remanent Polarization [µC/cm2]             27
+                                                                                  FE Relative Permittivity         22    23.5         25
+                                                                               Coercive Electric Field [MV/cm]     2.4  2.525        2.65
+
+                                                                                                        TABLE IV
+Fig. 2. (a) D-input configuration (b) G-input configuration of synaptic                     PARAMETERS IN SOT-MRAM MODEL
+crossbar array. (c) A dummy column is included in the crossbar array                     FL Dimension          30nm × 60nm × 1.8nm
+to mitigate the impact of IHRS.                                                    Gilbert Damping Constant            0.007
+                                                                                        Spin-Hall Angle                 0.3
+   We consider two options for input encoding: (1) D-input                         Saturation Magnetization       1257.3 emu/cm3
+and (2) G-input. In D-input (Fig. 2 (a)), the inputs are applied                        MgO Thickness              1.1nm-1.3nm
+to bitlines (BLs) which run along the row. For IMC, BLs                   perform comprehensive optimization of key device-circuit
+corresponding to input = 1 are asserted simultaneously while              design knobs considering hardware non-idealities, we use
+all WLs are biased at VDD (=0.7V). D-input configuration is               physics-based models to capture the characteristics of each
+efficient for implementing multi-bits in the input stream. In             technology, the details of which are provided below.
+the G-input configuration (Fig. 2 (b)), the inputs are applied
+on WLs. In this case, both D and S terminals of the bit-cells             A. Interconnect Modeling
+(connected to BL and SL, respectively) run along the column                  We use 3D COMSOL models for the resistivity and
+and all the BLs are biased at a fixed voltage (=0.25V in our              resistance of Cu interconnect with scaled liner/barrier (2nm
+analysis).                                                                TaN and 1nm Ta). The model captures surface scattering and
+   We also include a dummy column with each crossbar array                grain boundary scattering (details in [13]). IR drops on RWIRE
+[11], [12] to minimize the impact of unwanted currents                    are one of the main sources of non-idealities in crossbar arrays
+associated with high-resistance state (HRS) of the memory bit-            [9], especially in deeply scaled technologies. For example, the
+cell (weight =0). If the HRS current (IHRS) is not significantly          line metal resistance for M1- M3 considering scaled liner at
+lower compared to the low-resistance state (LRS; weight=1)                7nm technology node is 182Ω/µm [13]. In contrast, at the
+current (ILRS), computational errors can occur. For instance, if          45nm technology node, RWIRE is 3.3Ω/µm [14]. More than 50X
+NH cells produce IHRS in an array, the accumulated current                increase in RWIRE when scaling from 45nm to 7nm node (due
+NH*IHRS may become larger than ILRS (for large NH and/or low              to increase in resistivity and reduction in cross-sectional area)
+ILRS/IHRS). Thus, this accumulated current is erroneously                 is critical, especially for IMC, which is severely affected by IR
+interpreted as an output ≥ 1 (when ideally, it should be 0).              drops.
+This issue can be countered by using a dummy column with
+                                                                          B. ReRAM Modeling
+all bit-cells in HRS [11]. The dummy column gets the same
+inputs as the regular columns. As shown in Fig. 2 (c), the                   We use a compact model of Al-doped HfOX ReRAM from
+dummy current (ISL,D) is subtracted from the SL current (ISL)             [15] for our analysis. The ReRAM current is given by
+before feeding it to the ADC. This helps in canceling the                                                  𝑔             𝑉
+                                                                                          𝐼 = 𝐼0 ∗ exp (− ) ∗ sinh ( )                (1)
+effect of NH*IHRS. If NL bit-cells in the regular column produce                                          𝑔0            𝑉0
+ILRS, ISL (neglecting the currents produced by cells with input =         Here g is the gap length i.e. the distance between the tip of
+0) is (NLILRS+NHIHRS), while ISL,D is (NL+NH)IHRS. When                   filament and the electrode, V is the applied voltage across the
+subtracted, we obtain NL(ILRS-IHRS), which yields NL as the               ReRAM cell, I0, g0 and V0 are coefficients. The experimentally
+ADC output. This technique has been shown for spin-based                  calibrated parameters (Table II) are from [15]. To enable
+IMC in [11] (since spin-memory have low ILRS/IHRS). It is also            selective access (especially programming) in an array, one
+noteworthy that in the presence of hardware non-idealities                transistor one resistor (1T1R) bit-cell is used (Fig. 1).
+such as parasitic resistances, the cancellation of NHIHRS is not          C. FeFET Modeling
+perfect, which we consider in our analysis by including non-
+idealities with the dummy column.                                           We utilize a compact model of Hf0.5Zr0.5O2-based FeFET in
+   The crossbar array simulation parameters are listed in Table           which the ferroelectric layer is modeled with modified
+I. Parasitic resistances viz. driver resistance, wire resistance          Preisach equations [16] and is coupled with a 7nm transistor.
+and via resistance are considered in the array simulations. To            The key parameters in the model are shown in Table III which
+have been obtained by calibrating the model with experiments          variations scale the bit-cell conductance. Note that different
+in [3] and validating using self-consistent phase-field               technologies may exhibit different amounts of variations,
+simulation [17] (see [18] for details). The FeFET model can           which makes the comparison challenging due to the lack of a
+capture the impact of ferroelectric thickness on FeFET-NVM            systematic experimental characterization of variations for
+which will be discussed later. FeFET bit-cell is designed with        emerging technologies. Therefore, we sweep s from 0 to 0.3 in
+a single FeFET (Fig. 1) by leveraging its self-selecting              the subsequent sections to illustrate the response of each
+functionality.                                                        technology (and its system implications) to process variations.
+                                                                         We also incorporate sense margin (SM) evaluation into our
+D. SOT-MRAM Modeling
+                                                                      analysis to account for the sensing robustness. This is
+   The dynamics of the magnetic tunnel junction (MTJ) is              important because not only does Inon-ideal deviate from Iideal, but
+modeled with non-equilibrium Green’s function and Landau-             also the expected MVM output typically needs to be mapped
+Lifshitz-Gilbert equations [19]. The interaction of the heavy         to a range of Inon-ideal (even without the consideration of
+metal with the MTJ is modeled using micromagnetic                     process variations). This is important while defining the
+simulations [4]. Key experimentally calibrated parameters in          reference levels for the ADCs. To illustrate this point, let us
+the SOT-MRAM model are from [20], [21] and listed in Table            consider the following two scenarios:
+IV. In our design, tunneling magneto-resistance ratio (TMR)           • The first scenario is related to the resistance of the bit-cell
+of MTJ ranges from 500% to 600% based on the experiments              producing a scalar product of 0. Ideally, the bit-cell resistance
+in [22] and following the work in [4]. Note, for lower TMR            should be infinite (zero current); but in reality, this resistance
+values such as 100% -200%, our analysis (and the one in [4])          is not only finite, but varies for different input (In)-weight (W)
+shows that it is challenging to implement IMC. Two access             combinations. Let us define the bit-cell resistances as follows:
+transistors (for writing and reading/computing each) are used         ROFF for In=0, W =1, ROFF,H for In=0, W =0, RHRS for In=1,
+in the SOT-MRAM bit-cell (Fig. 1). The separation of the read         W=0, and RON for In=1, W=1. RHRS, ROFF and ROFF,H
+and write paths in SOT-MRAMs (unlike spin transfer torque             correspond to the scalar product of 0 and their values depend
+(STT) MRAM) enables independent optimization of the MTJ               on the technology. For instance, let us consider the G-input
+for IMC, which is important for achieving high IMC                    configuration (Fig. 2(b)). In this case, ROFF,H >> ROFF for 8T-
+robustness (details later).                                           SRAMs (due to stacking effect) and FeFETs (due to higher
+                                                                      threshold voltage for weight =0). However, for ReRAMs and
+               IV. EVALUATION METHODOLOGY                             SOT-MRAMs, ROFF,H is comparable to ROFF (mainly dictated
+   To comprehensively evaluate the impact of non-idealities in        by the OFF resistance of the access transistor). Furthermore, in
+crossbar arrays on system accuracy, we utilize GENIEX from            FeFETs, ReRAMs and SOT-MRAMs, RHRS < ROFF as the
+[2], appropriately modified for our analysis, as discussed            former corresponds to the asserted state of the bit-cell, while
+subsequently. In the GENIEX framework, extensive HSPICE               the latter is for the de-asserted state. On the other hand, for
+simulations of synaptic crossbar arrays with various input and        8T-SRAMs, RHRS and ROFF are comparable. These
+weight combinations are performed to obtain the non-ideal             comparisons are quantified later; here, we would like to
+current (Inon-ideal) and the non-ideality factor (NF) [4] given by    emphasize the point that different In-W combinations for the
+                            𝐼𝑖𝑑𝑒𝑎𝑙 − 𝐼𝑛𝑜𝑛−𝑖𝑑𝑒𝑎𝑙                       same scalar product yield different bit-cell resistances and
+                     𝑁𝐹 = |                       |             (2)   currents. As a result, the IMC output can also be different.
+                                 𝐼𝑖𝑑𝑒𝑎𝑙
+                                                                      More importantly, the difference between these currents is
+Here, Iideal is the ideal current and NF quantifies the deviation
+                                                                      dependent on the technology. It is worth mentioning that
+of Inon-ideal from Iideal. NF along with the corresponding input
+                                                                      including a dummy column [11] in each crossbar array can
+vector and weight matrix are used to train a multi-layer
+                                                                      partially compensate the impact of finite RHRS, as we discussed
+perceptron (MLP). The MLP models a non-ideal crossbar
+                                                                      earlier.
+array and predicts NF for any input-weight combination. The
+MLP is integrated into the Python framework (as in [2]) to            • The second scenario is associated with the location of the
+evaluate the inference accuracy of ResNet-20 with CIFAR-10            bit-cell in an array producing a non-zero scalar product. This
+dataset in the presence of device-circuit non-idealities.             is important due to the RWIRE and is especially critical for
+   While GENIEX in [2] is optimized for D-input                       scaled technologies in which RWIRE is large. To illustrate this,
+configuration, we expand this framework by optimizing the             let us consider two conditions corresponding to the dot
+MLPs for G-input. We utilize separate MLPs for each column            product = 1: (i) input = [1,0…0], weight = [1,0…0] and (ii)
+of a crossbar array (rather than one per array as in [2]), which      input = [0,0…1], weight = [0,0…1]. In case (i), the first bit-
+helps in improving MLP prediction of NF for G-input design.           cell (farthest from the sensing circuit) produces the scalar
+We also incorporate dummy columns in GENIEX. For that,                product of 1, while in case (ii), the same is true for the last bit-
+SL current is obtained from HSPICE for the regular (ISL) and          cell (closest to the sensing circuit). Thus, the effective RWIRE
+dummy columns (ISL,D). Inon-ideal is calculated as ISL-ISL,D, which   seen by the source of the ON bit-cell is higher for case (i),
+is then used in (2) to obtain NF. Further, we include the effect      while that seen by the drain is higher for case (ii). Depending
+of process variations (in addition to other hardware non-             on the relative sensitivity of RON to the voltage on the D-
+idealities) in the framework. For that, we consider a Gaussian        terminal (VD) and S-terminal (Vs) of the bit-cell, different SL
+distribution with mean = 1 and standard deviation=s, which is         currents are obtained for case (i) and (ii). Similarly, for other
+multiplied by the nominal conductance of the bit-cell. Thus,          input-weight combinations, the currents could be different,
+this distribution represents a factor by which the process            although they represent the same dot product output.
+Fig. 3. Box plot of NF showing that NF of D-input configuration is more
+than NF of G-input configuration for (a) SRAMs (b) ReRAMs
+(c) FeFETs (d) SOT-MRAMs.
+
+   Through extensive HSPICE circuit simulations (for various
+near-extreme input-weight combinations), we obtain the
+minimum and maximum currents representing each output.
+SM between output x and output x-1 is defined as:
+                           𝐼𝑋,𝑀𝐼𝑁 − 𝐼𝑋−1,𝑀𝐴𝑋
+                   𝑆𝑀𝑋 =                                    (3)
+                                    2                                     Fig. 4. Box plot of NF with various RON for (a) SRAMs (b) ReRAMs
+IX,MIN is the minimum current when output is x, and IX-1,MAX is           (c) FeFEsT. SM versus output with various RON for (d) SRAMs
+the maximum current when output is x-1. We obtain SM for                  (e) ReRAMs (f) FeFETs.
+different outputs to evaluate the sensing robustness. As a part           column, and hence, the current in a bit-cell is dependent on the
+of the subsequent design optimizations, SM analysis is utilized           bit-cells only in that column. This reduction of data
+in conjunction with the NF analysis to establish the optimal              dependency for G-input lowers the impact of RWIRE as well as
+design choice for minimizing the impact of non-idealities on              the range of currents for each output, yielding lower NF. At
+IMC robustness. Note that both NF and SM-based analyses                   the 7nm node, the impact of RWIRE is large (as noted before).
+have their own merits. NF represents a statistical analysis               Hence the non-idealities for D-input increase immensely. To
+based on the workload-specific input and weight distributions             manage the non-idealities at the 7nm node and achieve
+but does not consider the ADC sensing limitations. On the                 acceptable level of accuracies, we use G-input.
+other hand, SM-based analysis is a more comprehensive array
+evaluation method accounting for array non-idealities and                 B. ON Resistance Optimization
+practical ADC capabilities, but is based on the (near) worst-                RON optimization is critical for IMC robustness because of
+case scenario and does not capture the workload                           its direct impact on the output current. As RON reduces, the
+characteristics. Hence, we utilize both to study the                      output current increases, which has two opposing effects. On
+optimization strategies.                                                  one hand, it leads to an increase in non-idealities associated
+                                                                          with IR drop on parasitic resistances, which increases NF [4].
+           V. DEVICE-CIRCUIT CO-OPTIMIZATIONS                             On the other hand, the SM improves due to higher current,
+   In this section, we perform technology-agnostic and                    which reduces the sensing errors. Thus, it is important to
+technology-specific optimizations considering the cross-layer             design RON considering the trade-off between NF and SM.
+device-circuit interactions to establish the optimal design                  In 8T-SRAMs, RON is optimized by applying different bias
+metrics for each technology in the presence of non-idealities.            voltage (VBIAS) to gates of M1 and M2 (Fig. 1 (a)). In our
+                                                                          study, we sweep VBIAS from 0.7V (=VDD) to 0.45V tuning RON
+A. D-Input versus G-Input                                                 from 10kΩ to 250kΩ. As RON increases, NF decreases (Fig.
+   Fig. 3 compares the NF of the D-input and G-input                      5(a)), as expected. To understand the effect of RON on SM, let
+configurations for different technologies at the 7nm node. NF             us look at Fig. 4(d). We define OMAX as the maximum output
+for D-input is much larger than G-input, indicating the higher            that can be sensed in a robust fashion by ADC (considering
+effect of non-idealities in the former. This is because the               SM > 1μA). SM for RON = 250kΩ is always below 1μA which
+current-carrying terminals in D-input (BL and SL) run                     indicates poor sensing robustness while OMAX for RON = 10 kΩ,
+orthogonally, and thus, the current through any bit-cell is               20kΩ, and 60kΩ are similar. Although SM for some high
+directly dependent on the conductance of bit-cells in its row             outputs can be negative, these represent the near-worst-case
+and column, and, indirectly, on all the bit-cells in the array            inputs/weight combinations, which are unlikely to occur for a
+(through sneak current paths). On the other hand, for G-input,            DNN workload. Moreover, the occurrence of high output
+the current-carrying terminals are routed vertically along the            values is rare due to sparsity [23]. Therefore, some sensing
+errors may be acceptable. For SRAMs, we design RON to be
+around 60kΩ (VBIAS ≈ 0.52V) based on NF and SM.
+   RON of ReRAMs can be tuned by changing the gap length
+(g) which ranges from 0.34nm to 1.09nm, as per [15]. The
+maximum g (=1.09nm) corresponds to the HRS of ReRAMs.
+The minimum resistance of ReRAMs is 20 kΩ when g is
+0.34nm. We sweep RON of ReRAMs from 20 kΩ to 250 kΩ by                Fig. 5. (a) Box plot of NF for FeFETs with various TFE. FeFETs IDS-VGS
+changing g from 0.34nm to 0.75nm. Based on Fig. 4, we                 characteristics at VDS = 0.25V for TFE = 5nm/7nm.
+optimize RON to be around 60kΩ (g = 0.53nm) considering NF
+and SM.
+   For RON optimization in FeFETs, we tune the set voltages to
+program an optimal threshold voltage of the FeFETs during
+the set state. For that, reset voltage (VRESET = -5V) is first
+applied to the gate of FeFETs to reset the whole array (global
+reset [24]). Then set voltage (VSET) is applied to the gate of
+FeFETs to program weight = 1 selectively. We employ ‘V/2’
+biasing scheme for the unselected/half-selected cells as in           Fig. 6. (a) Box plot of NF for SOT-MRAMs with various TMgO with full
+[25]. In our analysis, we sweep RON of FeFETs from 20 kΩ to           wordline activation. (b) Box plot of NF for SOT-MRAMs with various
+250 kΩ by tuning VSET (Fig. 4). We find that the RON around           TMgO with partial wordline activation.
+                                                                                                       TABLE V
+60kΩ (VSET = 2.2V) is near-optimal for FeFETs considering                   RESISTANCE OF SOT-MRAM FOR DIFFERENT MGO THICKNESS
+the NF and SM analysis.                                                       MgO Thickness (nm)           1.1      1.2      1.3
+   For SOT-MRAMs, RON can be optimized by tuning the                                RON (kΩ)                 8      12       20
+tunneling oxide (MgO) thickness or gate voltage of the read                        RHRS(kΩ)                28       52      100
+access transistor. However, that also changes RHRS, which is                       RHRS/RON                3.5      4.3       5
+quite low in the MTJs due to their low TMR. Therefore, unlike         D. MgO Thickness (TMgO) Optimization in SOT-MRAMs
+the other three technologies, SOT-MRAMs need to consider
+both RON and RHRS at the same time, which we will discuss in             We sweep TMgO from 1.1nm to 1.3nm and tune RON and
+sub-section D.                                                        RHRS of SOT-MRAMs as shown in Table V. As TMgO
+   Further, besides RON, the optimization of ROFF and RHRS can        increases, NF decreases (Fig. 6(a)) due to lower bit-cell
+also be important. For SRAMs, RHRS and ROFF are inherently            currents leading to less IR drop on the parasitic resistances.
+very high in SRAMs, as in both cases, one of the transistors in       The RHRS/RON ratio also increases as TMgO increases which
+the read port is OFF. For ReRAMs, we maximize RHRS by                 further reduces the non-idealities. Increasing TMgO beyond 1.3
+using maximum gap length (as noted earlier). ROFF for                 nm leads to low read currents and SM, even for conventional
+ReRAMs is high as the access transistor is OFF. For FeFETs,           read (i.e. single row assertion). Thus, TMgO = 1.3nm is the
+due to the absence of an access transistor, we need to consider       optimal choice.
+other design knobs to optimize RHRS and ROFF (Fig. 1). In this           However, even for SOT-MRAMs with TMgO =1.3nm, NF is
+work, we focus on FE thickness (TFE) optimization for this            still high due to the low RHRS/RON ratio (or low TMR) of the
+purpose, as discussed next.                                           MTJ. To reduce NF, we use partial WL activations (PWA) in
+                                                                      which 8 rows in a 64 × 64 crossbar array are activated
+C. Ferroelectric Thickness (TFE) Optimization in FeFETs               simultaneously in one cycle. Hence, 8 cycles are needed for
+   TFE is a key design parameter in FeFETs and plays a key            the entire matrix-vector multiplication of the array. Compared
+role in IMC robustness [18]. In our analysis, we fix the              with full WL activation (FWA) in which all the 64 rows in a
+optimized RON value (discussed before) for different TFE by           64 × 64 crossbar array are activated simultaneously, the NF of
+tuning VSET. It may be noted that TFE = 10nm used in several          PWA decreases (Fig. 6 (b)) due to lower currents in the
+experimental works [3], [25] led to unacceptably high short           column.
+channel effects for the 7nm technology node and therefore, is            Therefore, we use TMgO =1.3nm with PWA (8 rows
+not included in our analysis. We observe TFE = 7nm to be the          activated in a single cycle) as the design choice for SOT-
+maximum value that provided reasonably strong gate control            MRAM for subsequent analysis. It may be noted that for the
+with OFF current ~ 60nA. We observe that NF increases with            other three technologies, FWA is used to maximize
+TFE scaling from 7nm to 5nm (Fig. 5 (a)). We can understand           parallelism, while still achieving low NF and high SM.
+this trend from IDS-VGS characteristics of FeFETs for different
+TFE [18]. As shown in Fig. 5 (b), IHRS (corresponding to In=1,        VI. INFERENCE ACCURACY AND TECHNOLOGY COMPARISON
+W=0) increases as TFE scales due to the reduction in the                 Let us now compare the inference accuracy of different
+memory window. This leads to the increase in NF as TFE                technologies for ResNet-20 on CIFAR-10 dataset. Note that
+scales from 7nm to 5nm. Thus, TFE around 7nm is the optimal           the key design parameters of each technology have been
+design point and used for subsequent analysis. It may be noted        optimized according to the analysis in the last section for fair
+that while the dummy column reduces the impact of IHRS (as            comparison. Fig. 7 shows the accuracy of each technology
+discussed before), its alleviation is only partial due to parasitic   considering variations with varying standard deviations: s=0,
+resistances. Therefore, low IHRS yields low NF, even when the         0.1, 0.2 and 0.3. Note that s=0 corresponds to the nominal case
+dummy column is considered (as in our analysis).                      (i.e. without variations). In the nominal case, the inference
+                                                                                                    TABLE VI
+                                                                                 RESISTANCE COMPARISON FOR DIFFERENT TECHNOLOGIES
+                                                                                           RON(kΩ)   RHRS(kΩ)     ROFF(kΩ)   ROFF,H(kΩ)
+                                                                               SRAM          60       2.1*108      1.5*108    4.5*108
+                                                                               FeFET         60        4*103       2.3*104    4.6*106
+                                                                               ReRAM         60       2.3*103      2.1*105    2.1*105
+                                                                             SOT-MRAM        20         100        2.1*105    2.1*105
+
+                                                                           VGS of access transistors in ReRAMs and SOT-MRAMs, and
+                                                                           VGS of FeFETs, and (ii) voltage across the bit-cell (VDS). The
+Fig. 7. Accuracy comparison of various technologies considering            first effect leads to source-degeneration of the transistors. On
+variations with varying standard deviations (s=0/0.1/0.2/0.3) for CIFAR-   the other hand, reducing VD just leads to lower VDS. Our
+10 dataset on ResNet-20. The accuracy of the software baseline is
+92.8%.
+                                                                           analysis shows that the sensitivity of bit-cell current to VDS is
+                                                                           only mildly different in the four technologies (for the design
+accuracies for FeFETs and ReRAMs are comparable (with                      points used in this work). In contrast, the sensitivity of bit-cell
+FeFETs showing mildly larger accuracy). FeFETs and                         to VGS is quite different. In ReRAMs and SOT-MRAMs (and
+ReRAMs exhibit the highest accuracy followed by SRAMs                      for that matter, any 1T1R bit-cell), the design optimizations
+while that of SOT-MRAMs is the lowest. When device                         typically ensure that the access transistor resistance is much
+variations are considered (s=0.1,0.2 and 0.3), the degradation             smaller than the memory device resistance to achieve
+of system accuracy is notable for SOT-MRAMs. FeFETs-                       sufficient distinguishability. Hence, the effect of source
+based DNNs show the least impact of variations on system                   degeneration is minimal, leading to the small sensitivity of bit-
+accuracy followed by ReRAMs and SRAMs. The trend of                        cell current to VS in ReRAMs and SOT-MRAMs. In this
+accuracy for different technologies can be explained as                    respect, the former is better than the latter due to a higher
+follows.                                                                   resistance of ReRAMs device compared to MTJs (as can be
+   In the G-input configuration, the current-carrying wires are            inferred from the RON comparison in Table IV), which reduces
+routed along the column and hence, RWIRE is dependent on the               the relative resistance of the access transistor. However, in
+vertical height of the bit-cell. As illustrated in Fig. 1 (b), the         SRAMs and FeFETs, the source degeneration strongly reduces
+layouts of bit-cells of different technologies have been                   the bit-cell current, leading to a much larger sensitivity of bit-
+optimized to reduce the vertical height as much as possible so             cell current to VS. Thus, ReRAMs exhibit the lowest
+as to align with the needs of G-input. Now, the self-selecting             sensitivity of bit-cell current to IR drops.
+functionality of FeFETs leads to the sharing of both source                   Now, let us put together these three factors viz. layout
+and drain contacts of FeFETs along the column. Hence, the                  height, HRS/OFF resistances and sensitivity of bit-cell
+vertical height of the FeFET bit-cell is 1GP (where GP is the              currents to the IR drops. FeFETs combine the benefits of
+gate pitch). In the ReRAM bit-cell, only one contact of the                compactness (low IR drop), reasonably high ROFF and RHRS
+access transistor can be shared along the column, leading to               (achieved via TFE optimization) and optimized RON to achieve
+layout height = 1.5GP. The vertical height is 2GP for the 8T-              the highest accuracy amongst the four technologies. In the
+SRAM bit-cell and SOT-MRAM bit-cell. Thus, RWIRE is the                    nominal case, the performance of ReRAMs is comparable to
+least for FeFETs due to their smallest layout height.                      FeFETs. On the one hand, ReRAMs are less compact than
+   In addition, RON, RHRS ROFF and ROFF,H of different                     FeFETs leading to higher RWIRE. On the other hand, since bit-
+technologies are crucial parameters, which are compared in                 cell current in ReRAMs is less sensitive to IR drops, the effect
+Table VI. Since SOT-MRAMs have the lowest RON and RHRS,                    of high RWIRE is offset. Moreover, RON optimization and high
+IR drop for SOT-MRAMs is the most detrimental to accuracy.                 ROFF and RHRS help in improving the accuracy. Despite
+The low RHRS/RON ratio in SOT-MRAMs also aggravates the                    offering the highest RHRS, SRAMs suffer from large memory
+non-idealities. As a result, SOT-MRAMs exhibit the lowest                  footprints, leading to high RWIRE. Moreover, the sensitivity of
+accuracy (despite the PWA scheme). RON of SRAMs, FeFETs                    their bit-cell current to IR drops is also high, leading to some
+and ReRAMs are similar (due to the aforementioned                          degradation in accuracy compared to FeFETs and ReRAMs.
+optimizations); however, their RHRS and ROFF are quite                     SOT-MRAMs suffer from low RHRS/RON ratio, low RON and
+different. SRAMs exhibit the highest RHRS (as the read port is             large bit-cell area, leading to the least accuracy amongst the
+OFF), followed by ReRAMs and FeFETs. ROFF of SRAMs is                      four technologies. The appealing attributes of FeFETs lead to
+also the highest (due to low standby power transistors used                the highest accuracy especially when variations are
+(see Section III). FeFETs and ReRAMs exhibit reasonably                    considered. The effect of device variations on DNN accuracy
+high RHRS and ROFF (although not as high as SRAMs).                        is aggravated due to device-circuit non-idealities. As FeFET-
+   Another critical factor affecting the accuracy is the                   based crossbar arrays exhibit the lowest non-idealities, their
+sensitivity of bit-cell current for each technology to the IR              sensitivity to variations is also lower compared to the other
+drops. As noted earlier, IR drop on the RWIRE leads to data-               technologies.
+dependent variations in VD and VS. Specifically, VD reduces
+(from its ideal value) and VS increases due to the IR drop, and                                   VII. CONCLUSION
+the extent of this reduction/increase depends on the input-
+weight combinations. This results in variations in the bit-cell               This work performs a comparative technology evaluation
+currents, which increases the range of NF and reduces IMC                  and provides insights into the design of synaptic crossbar
+robustness. If we examine the bit-cells in Fig. 1 (a), it can be           arrays in the presence of non-idealities at the scaled (7nm)
+observed that increasing VS reduces (i) VGS of M2 in SRAMs,                technology node. Based on a cross-layer design flow, we
+evaluate device-circuit non-idealities and system accuracy                     [11] K. Cho, X. Fong, and S. K. Gupta, “Exchange-coupling-enabled
+                                                                                    electrical-isolation of compute and programming paths in valley-spin
+implications of synaptic crossbar arrays based on 8T-SRAMs,
+                                                                                    Hall effect based spintronic device for neuromorphic applications,”
+ReRAMs, FeFETs and SOT-MRAMs. After an extensive co-                                presented at the Device Research Conference - Conference Digest,
+optimization of design parameters considering non-idealities,                       DRC, 2021. doi: 10.1109/DRC52342.2021.9467139.
+we compare different technologies in terms of the inference                    [12] A. Shafiee, A. Nag, N. Muralimanohar, R. Balasubramonian, J. P.
+                                                                                    Strachan, M. Hu, R. S. Williams, and V. Srikumar, “ISAAC: A
+accuracy for ResNet-20 on CIFAR-10 dataset. Our results
+                                                                                    convolutional neural network accelerator with in-situ analog arithmetic
+show that under nominal conditions, FeFETs-based DNNs                               in crossbars,” presented at the Proceedings - 2016 43rd International
+achieve the highest accuracy followed closely by ReRAMs.                            Symposium on Computer Architecture, ISCA 2016, 2016. doi:
+Further, FeFETs lead to the largest resilience to process                           10.1109/ISCA.2016.12.
+                                                                               [13] X. Chen, C. L. Lo, M. C. Johnson, Z. Chen, and S. K. Gupta, “Modeling
+variations. These system-level benefits are achieved by virtue
+                                                                                    and circuit analysis of interconnects with TaS2 barrier/liner,” presented
+of high ROFF/RHRS and optimized RON of FeFET bit-cells as                           at the Device Research Conference - Conference Digest, DRC, 2021.
+well as their low area which reduces the impact of RWIRE.                           doi: 10.1109/DRC52342.2021.9467160.
+                                                                               [14] P. Moon, V. Chikarmane, K. Fischer, R. Grover, T. A. Ibrahim, and K.
+                                                                                    J. Lee, “Process and electrical results for the on-die interconnect stack
+                         ACKNOWLEDGMENT                                             for Intel’s 45 nm process generation,” Intel Technol. J., vol. 12, pp. 87–
+   We would like to thank X. Chen, A. Malhotra, K. Cho, T,                          92, Jan. 2008.
+                                                                               [15] Z. Jiang, Y. Wu, S. Yu, L. Yang, K. Song, Z. Karim, and H.-S. P.
+Sharma and K. Roy at Purdue University for various useful                           Wong, “A Compact model for metal-oxide resistive random access
+discussions.                                                                        memory with experiment verification,” IEEE Transactions on Electron
+                                                                                    Devices, vol. 63, no. 5, pp. 1884–1892, May 2016, doi:
+                                                                                    10.1109/TED.2016.2545412.
+                             REFERENCES                                        [16] A. K. Saha and S. K. Gupta, “Modeling and comparative analysis of
+                                                                                    hysteretic ferroelectric and anti-ferroelectric FETs,” presented at the
+[1]  A. Jaiswal, I. Chakraborty, A. Agrawal, and K. Roy, “8T SRAM cell as
+                                                                                    Device Research Conference - Conference Digest, DRC, 2018. doi:
+     a multibit dot-product engine for beyond von Neumann computing,”
+                                                                                    10.1109/DRC.2018.8442136.
+     IEEE Transactions on Very Large Scale Integration (VLSI) Systems,
+                                                                               [17] A. K. Saha, M. Si, K. Ni, S. Datta, P. D. Ye, and S. K. Gupta,
+     vol. 27, no. 11, pp. 2556–2567, Nov. 2019, doi:
+                                                                                    “Ferroelectric thickness dependent domain interactions in FEFETs for
+     10.1109/TVLSI.2019.2929245.                                                    memory and logic: A phase-field model based analysis,” presented at
+[2] I. Chakraborty, M. Fayez Ali, D. Eun Kim, A. Ankit, and K. Roy,                 the Technical Digest - International Electron Devices Meeting, IEDM,
+     “GENIEx: A generalized approach to emulating non-ideality in                   2020. doi: 10.1109/IEDM13553.2020.9372099.
+     memristive xbars using neural networks,” presented at the Proceedings -   [18] C. Wang, J. Victor, A. K. Saha, X. Chen, M. Si, T. Sharma, K. Roy, P.
+     Design          Automation        Conference,         2020.        doi:        D. Ye, and S. K. Gupta, “FeFET-based synaptic cross-bar arrays for
+     10.1109/DAC18072.2020.9218688.                                                 deep neural networks: Impact of ferroelectric thickness on device-circuit
+[3] K. Ni, B. Grisafe, W. Chakraborty, A. K. Saha, S. Dutta, M. Jerry, J. A.        non-idealities and system accuracy,” presented at the 2023 Device
+     Smith, S. Gupta, and S. Datta, “In-memory computing primitive for              Research Conference (DRC), IEEE, Jun. 2023, pp. 1–2. doi:
+     sensor data fusion in 28 nm HKMG FeFET technology,” presented at               10.1109/DRC58590.2023.10187042.
+     the Technical Digest - International Electron Devices Meeting, IEDM,      [19] X. Fong, S. K. Gupta, N. N. Mojumder, S. H. Choday, C. Augustine,
+     2019. doi: 10.1109/IEDM.2018.8614527.                                          and K. Roy, “KNACK: A hybrid spin-charge mixed-mode simulator for
+[4] T. Sharma, C. Wang, A. Agrawal, and K. Roy, “Enabling robust SOT-               evaluating different genres of spin-transfer torque MRAM bit-cells,”
+     MTJ crossbars for machine learning using sparsity-aware device-circuit         presented at the International Conference on Simulation of
+     co-design,” presented at the Proceedings of the International                  Semiconductor Processes and Devices, SISPAD, 2011. doi:
+     Symposium on Low Power Electronics and Design, 2021. doi:                      10.1109/SISPAD.2011.6035047.
+     10.1109/ISLPED52811.2021.9502492.                                         [20] S. Ikeda, K. Miura, H. Yamamoto, K. Mizunuma, H. D. Gan, M. Endo,
+[5] K. He, I. Chakraborty, C. Wang, and K. Roy, “Design space and                   S. Kanai, J. Hayakawa, F. Matsukura and H. Ohno, “A perpendicular-
+     memory technology co-exploration for in-memory computing based                 anisotropy CoFeB-MgO magnetic tunnel junction,” Nature Materials,
+     machine learning accelerators,” presented at the IEEE/ACM                      vol. 9, no. 9, 2010, doi: 10.1038/nmat2804.
+     International Conference on Computer-Aided Design, Digest of              [21] C. F. Pai, L. Liu, Y. Li, H. W. Tseng, D. C. Ralph, and R. A. Buhrman,
+     Technical Papers, ICCAD, 2022. doi: 10.1145/3508352.3549453.                   “Spin transfer torque devices utilizing the giant spin Hall effect of
+[6] P. Y. Chen, X. Peng, and S. Yu, “NeuroSim: A circuit-level macro                tungsten,” Applied Physics Letters, vol. 101, no. 12, 2012, doi:
+     model for benchmarking neuro-inspired architectures in online                  10.1063/1.4753947.
+     learning,” IEEE Transactions on Computer-Aided Design of Integrated       [22] S. Ikeda,1, J. Hayakawa, Y. Ashizawa, Y. M. Lee, K. Miura, H.
+     Circuits and Systems, vol. 37, no. 12, 2018, doi:                              Hasegawa, M. Tsunoda, F. Matsukura, and H. Ohno1, “Tunnel
+     10.1109/TCAD.2018.2789723.                                                     magnetoresistance of 604% at 300K by suppression of Ta diffusion in
+[7] S. Jain and A. Raghunathan, “CxDNN: Hardware-software                           CoFeB∕MgO∕CoFeB pseudo-spin-valves annealed at high temperature,”
+     compensation methods for deep neural networks on resistive crossbar            Applied Physics Letters, vol. 93, no. 8, p. 082508, Aug. 2008, doi:
+     systems,” ACM Transactions on Embedded Computing Systems, vol. 18,             10.1063/1.2976435.
+     no. 6, 2019, doi: 10.1145/3362035.                                        [23] S. K. Thirumala, S. Jain, S. K. Gupta, and A. Raghunathan, “Ternary
+[8] S. K. Roy, A. Patil, and N. R. Shanbhag, “Fundamental limits on the             compute-enabled memory using ferroelectric transistors for accelerating
+     computational accuracy of resistive crossbar-based in-memory                   deep neural networks,” presented at the Proceedings of the 2020 Design,
+     architectures,” presented at the Proceedings - IEEE International              Automation and Test in Europe Conference and Exhibition, DATE
+     Symposium        on     Circuits    and     Systems,     2022.     doi:        2020, 2020. doi: 10.23919/DATE48585.2020.9116495.
+     10.1109/ISCAS48785.2022.9937336.                                          [24] M. Trentzsch, S. Flachowsky, R. Richter, J. Paul, B. Reimer, D. Utess,
+[9] I. Chakraborty, M. Ali, A. Ankit, S. Jain, S. Roy, S. Sridharan, A.             S. Jansen, H. Mulaosmanovic, S. Müller, S. Slesazeck, J. Ocker, M.
+     Agrawal, A. Raghunathan, and K. Roy, “Resistive crossbars as                   Noack, J. Müller, P. Polakowski, J. Schreiter, S. Beyer, T. Mikolajick,
+     approximate hardware building blocks for machine learning:                     and B. Rice, “A 28nm HKMG super low power embedded NVM
+     Opportunities and challenges,” presented at the Proceedings of the             technology based on ferroelectric FETs,” presented at the Technical
+     IEEE, 2020. doi: 10.1109/JPROC.2020.3003007.                                   Digest - International Electron Devices Meeting, IEDM, 2017. doi:
+[10] L. Clark, V. Vashishtha, L. Shifren, A. Gujja, S. Sinha, B. Cline, C.          10.1109/IEDM.2016.7838397.
+     Ramamurthy, and G. Yeric, “ASAP7: A 7-nm finFET predictive                [25] K. Ni, X. Li, J. A. Smith, M. Jerry, and S. Datta, “Write disturb in
+     process design kit,” Microelectronics Journal, vol. 53, 2016, doi:             ferroelectric FETs and its implication for 1T-FeFET and memory
+     10.1016/j.mejo.2016.04.006.                                                    arrays,” IEEE Electron Device Letters, vol. 39, no. 11, 2018, doi:
+                                                                                    10.1109/LED.2018.2872347.
+
