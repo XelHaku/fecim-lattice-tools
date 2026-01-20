@@ -515,49 +515,90 @@ func (a *App) createLogPanel() fyne.CanvasObject {
 }
 
 func (a *App) getSlideText() string {
+	a.mu.RLock()
+	level := a.discreteLevel + 1 // 1-indexed for display
+	wrdPhase := a.wrdPhase
+	wrdTarget := a.wrdTargetLevel
+	isWrite := math.Abs(a.electricField) > a.material.Ec
+	a.mu.RUnlock()
+
 	switch a.waveform {
 	case WaveformManual:
-		return "MANUAL MODE\n\n" +
-			"Drag the slider to apply\n" +
-			"an electric field (E).\n\n" +
-			"Watch the polarization (P)\n" +
-			"respond with hysteresis:\n" +
-			"it 'remembers' its history."
-	case WaveformSine:
-		return "SINE WAVE\n\n" +
-			"Continuous E-field sweep\n" +
-			"traces the full hysteresis\n" +
-			"loop.\n\n" +
-			"Notice: P lags behind E.\n" +
-			"This lag IS the memory."
-	case WaveformTriangle:
-		return "TRIANGLE WAVE\n\n" +
-			"Linear ramps show how\n" +
-			"polarization switches at\n" +
-			"the coercive field (Ec).\n\n" +
-			"Orange lines = ±Ec\n" +
-			"Teal lines = ±Pr"
-	case WaveformSquare:
-		return "SQUARE WAVE\n\n" +
-			"Instant jumps between\n" +
-			"±Emax show switching\n" +
-			"dynamics.\n\n" +
-			"The cell flips between\n" +
-			"states rapidly."
+		if isWrite {
+			return fmt.Sprintf("██ WRITING LEVEL %d ██\n\n"+
+				"Electric field E > Ec.\n"+
+				"Domains are switching.\n"+
+				"Polarization is changing.\n\n"+
+				"This is how we STORE data.", level)
+		}
+		return fmt.Sprintf("░░ HOLDING LEVEL %d ░░\n\n"+
+			"E-field is low or zero.\n"+
+			"Polarization PERSISTS.\n"+
+			"No power needed.\n\n"+
+			"This is NON-VOLATILE.", level)
+
+	case WaveformSine, WaveformTriangle, WaveformSquare:
+		phaseText := "░░ READING ░░"
+		if isWrite {
+			phaseText = "██ WRITING ██"
+		}
+		return fmt.Sprintf("%s\n\n"+
+			"Level: %d/30\n\n"+
+			"The P-E loop shows hysteresis:\n"+
+			"• Upper branch: E increasing\n"+
+			"• Lower branch: E decreasing\n"+
+			"• Area inside = energy loss\n\n"+
+			"The SQUARE shape means:\n"+
+			"sharp switching at ±Ec.", phaseText, level)
+
 	case WaveformRandomWalk:
-		return "RANDOM WALK\n\n" +
-			"Picks random target levels\n" +
-			"and ramps to reach them.\n\n" +
-			"This shows multi-level\n" +
-			"storage: not just 0/1,\n" +
-			"but 30 distinct states!"
+		return fmt.Sprintf("RANDOM WALK\n\n"+
+			"Current: Level %d\n\n"+
+			"Picking random targets\n"+
+			"and ramping to reach them.\n\n"+
+			"This shows multi-level\n"+
+			"storage: not just 0/1,\n"+
+			"but 30 distinct states!\n\n"+
+			"─────────────────\n"+
+			"WHY 30 LEVELS?\n"+
+			"Binary: 1 bit = 2 states\n"+
+			"This: 4.9 bits = 30 states\n"+
+			"Same chip = 5× storage", level)
+
 	case WaveformWriteReadDemo:
-		return "WRITE/READ DEMO\n\n" +
-			"1. WRITE: E > Ec sets state\n" +
-			"2. HOLD: E = 0, P persists!\n" +
-			"3. READ: E < Ec, no change\n\n" +
-			"This is non-volatile memory:\n" +
-			"data survives power-off."
+		var phaseExplanation string
+		switch wrdPhase {
+		case 0: // WRITE
+			phaseExplanation = fmt.Sprintf("██ WRITING LEVEL %d ██\n\n"+
+				"Electric field E > Ec.\n"+
+				"Domains are switching.\n"+
+				"Polarization is changing.\n\n"+
+				"This is how we STORE data.", wrdTarget)
+		case 1: // HOLD
+			phaseExplanation = fmt.Sprintf("░░ HOLDING LEVEL %d ░░\n\n"+
+				"E-field is zero.\n"+
+				"Polarization PERSISTS.\n"+
+				"No power needed to retain.\n\n"+
+				"This is NON-VOLATILE memory.", level)
+		case 2: // READ
+			phaseExplanation = fmt.Sprintf("▒▒ READING LEVEL %d ▒▒\n\n"+
+				"Small E-field (E < Ec).\n"+
+				"Polarization unchanged.\n"+
+				"We sense, not alter.\n\n"+
+				"Infinite read endurance.", level)
+		case 3: // DISPLAY
+			phaseExplanation = fmt.Sprintf("✓ READ COMPLETE: %d\n\n"+
+				"Data retrieved successfully!\n"+
+				"State unchanged after read.\n\n"+
+				"Next: Writing new level...", level)
+		}
+		return phaseExplanation + "\n\n─────────────────\n" +
+			"WHY THIS MATTERS\n\n" +
+			"vs DRAM: 1000× less energy\n" +
+			"vs Flash: 10⁷× faster\n" +
+			"30 levels = 4.9 bits/cell\n" +
+			"Non-volatile: no refresh"
+
 	default:
 		return "Select a waveform mode\nto see explanation."
 	}
