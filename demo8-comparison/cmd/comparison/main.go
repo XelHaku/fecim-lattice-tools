@@ -226,10 +226,10 @@ func printSummary(comp comparison.ComparisonResult, adv comparison.FeCIMAdvantag
 	fmt.Println()
 
 	// Find FeCIM metrics
-	var ironDC comparison.DataCenterMetrics
+	var fecimDC comparison.DataCenterMetrics
 	for _, dc := range comp.DataCenter {
 		if dc.Architecture == "FeCIM CIM" {
-			ironDC = dc
+			fecimDC = dc
 		}
 	}
 
@@ -241,22 +241,22 @@ func printSummary(comp comparison.ComparisonResult, adv comparison.FeCIMAdvantag
 	fmt.Printf("  • %.0fx area reduction vs GPU accelerator\n", adv.VsGPU.AreaReduction)
 	fmt.Printf("  • %.0fx lower annual TCO\n", adv.VsCPU.CostReduction)
 	fmt.Printf("  • %.1f kg CO2 reduction per day\n",
-		comp.DataCenter[0].CO2Emissions-ironDC.CO2Emissions)
+		comp.DataCenter[0].CO2Emissions-fecimDC.CO2Emissions)
 	fmt.Println()
 
 	// Calculate total savings
 	cpuTCO := comp.DataCenter[0].TCO
-	annualSavings := cpuTCO - ironDC.TCO
+	annualSavings := cpuTCO - fecimDC.TCO
 	percentSavings := annualSavings / cpuTCO * 100
 
 	fmt.Println("Data Center Impact:")
 	fmt.Println(strings.Repeat("─", 60))
 	fmt.Printf("  Total Power Reduction:    %.1f kW → %.1f kW\n",
-		comp.DataCenter[0].TotalPower, ironDC.TotalPower)
+		comp.DataCenter[0].TotalPower, fecimDC.TotalPower)
 	fmt.Printf("  Annual TCO Savings:       $%.0f (%.0f%% reduction)\n",
 		annualSavings, percentSavings)
 	fmt.Printf("  Carbon Footprint:         %.0f%% reduction\n",
-		(1-ironDC.CO2Emissions/comp.DataCenter[0].CO2Emissions)*100)
+		(1-fecimDC.CO2Emissions/comp.DataCenter[0].CO2Emissions)*100)
 	fmt.Println()
 
 	// Why FeCIM wins

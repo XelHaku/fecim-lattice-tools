@@ -3,6 +3,7 @@ package gui
 
 import (
 	"fmt"
+	"image/color"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -18,6 +19,46 @@ import (
 	"multilayer-ferroelectric-cim-visualizer/demo2-crossbar/pkg/crossbar"
 	"multilayer-ferroelectric-cim-visualizer/demo3-mnist/pkg/training"
 )
+
+// FeCIM theme colors - same as demo1
+var (
+	colorBackground = color.RGBA{0, 50, 100, 255}  // FeCIM blue #003264
+	colorPrimary    = color.RGBA{0, 212, 255, 255} // Cyan
+)
+
+// feCIMTheme implements fyne.Theme for consistent FeCIM branding
+type feCIMTheme struct{}
+
+func (t *feCIMTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
+	switch name {
+	case theme.ColorNameBackground:
+		return colorBackground // FeCIM blue #003264
+	case theme.ColorNameForeground:
+		return color.RGBA{230, 230, 230, 255}
+	case theme.ColorNamePrimary:
+		return colorPrimary
+	case theme.ColorNameButton:
+		return color.RGBA{0, 70, 130, 255} // Slightly lighter blue
+	case theme.ColorNameInputBackground:
+		return color.RGBA{0, 40, 80, 255} // Darker blue for inputs
+	case theme.ColorNameSeparator:
+		return color.RGBA{0, 80, 150, 255} // Separator lines
+	default:
+		return theme.DefaultTheme().Color(name, variant)
+	}
+}
+
+func (t *feCIMTheme) Font(style fyne.TextStyle) fyne.Resource {
+	return theme.DefaultTheme().Font(style)
+}
+
+func (t *feCIMTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
+	return theme.DefaultTheme().Icon(name)
+}
+
+func (t *feCIMTheme) Size(name fyne.ThemeSizeName) float32 {
+	return theme.DefaultTheme().Size(name)
+}
 
 // MNISTApp is the main application for the MNIST demo.
 type MNISTApp struct {
@@ -67,7 +108,7 @@ func NewMNISTApp() *MNISTApp {
 
 	// Create Fyne app
 	ma.fyneApp = app.NewWithID("com.fecim.mnist-demo")
-	ma.fyneApp.Settings().SetTheme(theme.DarkTheme())
+	ma.fyneApp.Settings().SetTheme(&feCIMTheme{})
 
 	// Find data directory
 	ma.dataDir = findDataDir()

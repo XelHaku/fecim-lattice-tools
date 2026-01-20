@@ -117,10 +117,10 @@ func TestFeCIMLowestLatency(t *testing.T) {
 	iron := FeCIMChip()
 
 	cpuResult := cpu.RunInference(workload.TotalOps, 1)
-	ironResult := iron.RunInference(workload.TotalOps, 1)
+	fecimResult := iron.RunInference(workload.TotalOps, 1)
 
 	// FeCIM should have lower latency than CPU
-	if ironResult.Latency >= cpuResult.Latency {
+	if fecimResult.Latency >= cpuResult.Latency {
 		t.Error("FeCIM should have lower latency than CPU")
 	}
 }
@@ -135,13 +135,13 @@ func TestFeCIMLowestEnergy(t *testing.T) {
 
 	cpuResult := cpu.RunInference(workload.TotalOps, 1)
 	gpuResult := gpu.RunInference(workload.TotalOps, 1)
-	ironResult := iron.RunInference(workload.TotalOps, 1)
+	fecimResult := iron.RunInference(workload.TotalOps, 1)
 
 	// FeCIM should have lowest energy
-	if ironResult.Energy >= cpuResult.Energy {
+	if fecimResult.Energy >= cpuResult.Energy {
 		t.Error("FeCIM should use less energy than CPU")
 	}
-	if ironResult.Energy >= gpuResult.Energy {
+	if fecimResult.Energy >= gpuResult.Energy {
 		t.Error("FeCIM should use less energy than GPU")
 	}
 }

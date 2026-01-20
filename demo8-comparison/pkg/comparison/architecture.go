@@ -363,9 +363,9 @@ type FeCIMAdvantage struct {
 func CalculateAdvantages(comparison ComparisonResult) FeCIMAdvantage {
 	var adv FeCIMAdvantage
 
-	var cpuResult, gpuResult, ironResult InferenceResult
-	var cpuDC, gpuDC, ironDC DataCenterMetrics
-	var cpuArch, gpuArch, ironArch *Architecture
+	var cpuResult, gpuResult, fecimResult InferenceResult
+	var cpuDC, gpuDC, fecimDC DataCenterMetrics
+	var cpuArch, gpuArch, fecimArch *Architecture
 
 	for i, arch := range comparison.Architectures {
 		switch arch.Name {
@@ -378,28 +378,28 @@ func CalculateAdvantages(comparison ComparisonResult) FeCIMAdvantage {
 			gpuDC = comparison.DataCenter[i]
 			gpuArch = arch
 		case "FeCIM CIM":
-			ironResult = comparison.Results[i]
-			ironDC = comparison.DataCenter[i]
-			ironArch = arch
+			fecimResult = comparison.Results[i]
+			fecimDC = comparison.DataCenter[i]
+			fecimArch = arch
 		}
 	}
 
 	// vs CPU
-	if cpuArch != nil && ironArch != nil {
-		adv.VsCPU.EnergyReduction = cpuResult.Energy / ironResult.Energy
-		adv.VsCPU.LatencyReduction = cpuResult.Latency / ironResult.Latency
-		adv.VsCPU.ThroughputIncrease = ironResult.Throughput / cpuResult.Throughput
-		adv.VsCPU.PowerReduction = cpuArch.TDP / ironArch.TDP
-		adv.VsCPU.CostReduction = cpuDC.TCO / ironDC.TCO
+	if cpuArch != nil && fecimArch != nil {
+		adv.VsCPU.EnergyReduction = cpuResult.Energy / fecimResult.Energy
+		adv.VsCPU.LatencyReduction = cpuResult.Latency / fecimResult.Latency
+		adv.VsCPU.ThroughputIncrease = fecimResult.Throughput / cpuResult.Throughput
+		adv.VsCPU.PowerReduction = cpuArch.TDP / fecimArch.TDP
+		adv.VsCPU.CostReduction = cpuDC.TCO / fecimDC.TCO
 	}
 
 	// vs GPU
-	if gpuArch != nil && ironArch != nil {
-		adv.VsGPU.EnergyReduction = gpuResult.Energy / ironResult.Energy
-		adv.VsGPU.LatencyReduction = gpuResult.Latency / ironResult.Latency
-		adv.VsGPU.AreaReduction = gpuArch.ChipArea / ironArch.ChipArea
-		adv.VsGPU.PowerReduction = gpuArch.TDP / ironArch.TDP
-		adv.VsGPU.CostReduction = gpuDC.TCO / ironDC.TCO
+	if gpuArch != nil && fecimArch != nil {
+		adv.VsGPU.EnergyReduction = gpuResult.Energy / fecimResult.Energy
+		adv.VsGPU.LatencyReduction = gpuResult.Latency / fecimResult.Latency
+		adv.VsGPU.AreaReduction = gpuArch.ChipArea / fecimArch.ChipArea
+		adv.VsGPU.PowerReduction = gpuArch.TDP / fecimArch.TDP
+		adv.VsGPU.CostReduction = gpuDC.TCO / fecimDC.TCO
 	}
 
 	return adv

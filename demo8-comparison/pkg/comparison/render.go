@@ -237,12 +237,12 @@ func (r *Renderer) RenderSummary(comparison ComparisonResult, adv FeCIMAdvantage
 	sb.WriteString("\n")
 
 	// Find FeCIM results
-	var ironResult InferenceResult
-	var ironDC DataCenterMetrics
+	var fecimResult InferenceResult
+	var fecimDC DataCenterMetrics
 	for i, arch := range comparison.Architectures {
 		if arch.Name == "FeCIM CIM" {
-			ironResult = comparison.Results[i]
-			ironDC = comparison.DataCenter[i]
+			fecimResult = comparison.Results[i]
+			fecimDC = comparison.DataCenter[i]
 		}
 	}
 
@@ -251,11 +251,11 @@ func (r *Renderer) RenderSummary(comparison ComparisonResult, adv FeCIMAdvantage
 
 	sb.WriteString("FeCIM Key Metrics:\n")
 	sb.WriteString(strings.Repeat("─", 60) + "\n")
-	sb.WriteString(fmt.Sprintf("  Inference Latency:    %s\n", formatLatency(ironResult.Latency)))
-	sb.WriteString(fmt.Sprintf("  Energy per Inference: %s\n", formatEnergy(ironResult.Energy)))
-	sb.WriteString(fmt.Sprintf("  Throughput:           %s\n", formatThroughput(ironResult.Throughput)))
-	sb.WriteString(fmt.Sprintf("  Data Center Power:    %.1f kW\n", ironDC.TotalPower))
-	sb.WriteString(fmt.Sprintf("  Annual TCO:           $%.0f\n", ironDC.TCO))
+	sb.WriteString(fmt.Sprintf("  Inference Latency:    %s\n", formatLatency(fecimResult.Latency)))
+	sb.WriteString(fmt.Sprintf("  Energy per Inference: %s\n", formatEnergy(fecimResult.Energy)))
+	sb.WriteString(fmt.Sprintf("  Throughput:           %s\n", formatThroughput(fecimResult.Throughput)))
+	sb.WriteString(fmt.Sprintf("  Data Center Power:    %.1f kW\n", fecimDC.TotalPower))
+	sb.WriteString(fmt.Sprintf("  Annual TCO:           $%.0f\n", fecimDC.TCO))
 	sb.WriteString("\n")
 
 	sb.WriteString(fmt.Sprintf("vs CPU:  %.0fx energy, %.0fx throughput, %.0fx lower TCO\n",

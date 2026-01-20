@@ -3,6 +3,7 @@ package gui
 
 import (
 	"fmt"
+	"image/color"
 	"io"
 	"log"
 	"math/rand"
@@ -19,6 +20,46 @@ import (
 
 	"multilayer-ferroelectric-cim-visualizer/demo2-crossbar/pkg/crossbar"
 )
+
+// FeCIM theme colors - same as demo1
+var (
+	colorBackground = color.RGBA{0, 50, 100, 255}    // FeCIM blue #003264
+	colorPrimary    = color.RGBA{0, 212, 255, 255}   // Cyan
+)
+
+// feCIMTheme implements fyne.Theme for consistent FeCIM branding
+type feCIMTheme struct{}
+
+func (t *feCIMTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
+	switch name {
+	case theme.ColorNameBackground:
+		return colorBackground // FeCIM blue #003264
+	case theme.ColorNameForeground:
+		return color.RGBA{230, 230, 230, 255}
+	case theme.ColorNamePrimary:
+		return colorPrimary
+	case theme.ColorNameButton:
+		return color.RGBA{0, 70, 130, 255} // Slightly lighter blue
+	case theme.ColorNameInputBackground:
+		return color.RGBA{0, 40, 80, 255} // Darker blue for inputs
+	case theme.ColorNameSeparator:
+		return color.RGBA{0, 80, 150, 255} // Separator lines
+	default:
+		return theme.DefaultTheme().Color(name, variant)
+	}
+}
+
+func (t *feCIMTheme) Font(style fyne.TextStyle) fyne.Resource {
+	return theme.DefaultTheme().Font(style)
+}
+
+func (t *feCIMTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
+	return theme.DefaultTheme().Icon(name)
+}
+
+func (t *feCIMTheme) Size(name fyne.ThemeSizeName) float32 {
+	return theme.DefaultTheme().Size(name)
+}
 
 var debug *log.Logger
 var logFile *os.File
@@ -78,6 +119,20 @@ type CrossbarApp struct {
 	keyStatLabel    *widget.Label
 	keyStatValue    *widget.Label
 
+	// Simple right panel widgets (replacing custom widgets)
+	runMVMButton       *widget.Button
+	analyzeIRButton    *widget.Button
+	analyzeSneakButton *widget.Button
+	resetButton        *widget.Button
+	arraySizeLabel     *widget.Label
+	arraySizeSlider    *widget.Slider
+	noiseLabel         *widget.Label
+	noiseSlider        *widget.Slider
+	adcBitsLabel       *widget.Label
+	adcBitsSlider      *widget.Slider
+	colormapSelect     *widget.Select
+	statsLabel         *widget.Label
+
 	// Status
 	statusLabel *widget.Label
 	infoLabel   *widget.Label
@@ -85,6 +140,9 @@ type CrossbarApp struct {
 	// Current state
 	lastInput  []float64
 	lastOutput []float64
+
+	// Vector visualization
+	mvmVis *MVMVisualization
 
 	// Auto demo state
 	autoDemo      bool
@@ -99,7 +157,7 @@ func NewCrossbarApp() *CrossbarApp {
 
 	// Create Fyne app
 	ca.fyneApp = app.NewWithID("com.fecim.crossbar-demo")
-	ca.fyneApp.Settings().SetTheme(theme.DarkTheme())
+	ca.fyneApp.Settings().SetTheme(&feCIMTheme{})
 
 	// Initialize with default config
 	ca.config = &crossbar.Config{
@@ -160,28 +218,64 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	ca.sneakPathHeatmap = NewCrossbarHeatmap(ca.config.Rows, ca.config.Cols)
 	ca.sneakPathHeatmap.SetColormap("plasma")
 
-	// Create control panel
-	ca.controlPanel = NewControlPanel()
-	ca.setupControlCallbacks()
+	// Create MVM visualization with bar charts
+	ca.mvmVis = NewMVMVisualization()
 
-	// Create stats panel
-	ca.statsPanel = NewStatsPanel("Analysis Results")
-
-	// Create level indicator
+	// Create level indicator and mode indicator
 	ca.levelIndicator = NewLevelIndicator()
-
-	// Create Live Slide components (only mode indicator needed now)
 	ca.modeIndicator = NewModeIndicatorBox()
 
-	// Create simple left panel labels with FIXED text (no dynamic updates to prevent resize)
+	// Create simple LEFT panel labels
 	ca.eduTitleLabel = widget.NewLabelWithStyle("What You're Seeing", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	ca.eduContentLabel = widget.NewLabel("CROSSBAR MVM\n\n\"Compute in memory where\nthe same device does memory\nand computation.\"\n\n— Dr. external research group\n\nClick a button to start\na demonstration.")
+	ca.eduContentLabel.Wrapping = fyne.TextWrapOff
 	ca.keyStatLabel = widget.NewLabel("N² Operations")
 	ca.keyStatLabel.Alignment = fyne.TextAlignCenter
 	ca.keyStatValue = widget.NewLabelWithStyle(fmt.Sprintf("%d MACs", ca.config.Rows*ca.config.Cols), fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 
-	// Disable text wrapping to prevent resize
-	ca.eduContentLabel.Wrapping = fyne.TextWrapOff
+	// Create simple RIGHT panel widgets directly (no custom widgets)
+	ca.runMVMButton = widget.NewButton("Run MVM", ca.runMVM)
+	ca.runMVMButton.Importance = widget.HighImportance
+	ca.analyzeIRButton = widget.NewButton("Analyze IR Drop", ca.analyzeIRDrop)
+	ca.analyzeSneakButton = widget.NewButton("Analyze Sneak Paths", ca.analyzeSneakPaths)
+	ca.resetButton = widget.NewButton("Reset Array", ca.resetArray)
+
+	ca.arraySizeLabel = widget.NewLabel("Array Size: 64x64")
+	ca.arraySizeSlider = widget.NewSlider(8, 128)
+	ca.arraySizeSlider.Step = 8
+	ca.arraySizeSlider.Value = 64
+	ca.arraySizeSlider.OnChanged = func(v float64) {
+		size := int(v)
+		ca.arraySizeLabel.SetText(fmt.Sprintf("Array Size: %dx%d", size, size))
+		ca.recreateArray(size, ca.config.NoiseLevel, ca.config.ADCBits)
+	}
+
+	ca.noiseLabel = widget.NewLabel("Noise: 2.0%")
+	ca.noiseSlider = widget.NewSlider(0, 20)
+	ca.noiseSlider.Step = 0.5
+	ca.noiseSlider.Value = 2
+	ca.noiseSlider.OnChanged = func(v float64) {
+		ca.noiseLabel.SetText(fmt.Sprintf("Noise: %.1f%%", v))
+		ca.config.NoiseLevel = v / 100.0
+	}
+
+	ca.adcBitsLabel = widget.NewLabel("ADC Bits: 6")
+	ca.adcBitsSlider = widget.NewSlider(4, 10)
+	ca.adcBitsSlider.Step = 1
+	ca.adcBitsSlider.Value = 6
+	ca.adcBitsSlider.OnChanged = func(v float64) {
+		bits := int(v)
+		ca.adcBitsLabel.SetText(fmt.Sprintf("ADC Bits: %d", bits))
+		ca.config.ADCBits = bits
+	}
+
+	ca.colormapSelect = widget.NewSelect([]string{"fecim", "viridis", "plasma", "coolwarm"}, func(s string) {
+		ca.conductanceHeatmap.SetColormap(s)
+	})
+	ca.colormapSelect.SetSelected("fecim")
+
+	ca.statsLabel = widget.NewLabel("Analysis Results\n\nNo data yet.\nClick Run MVM to start.")
+	ca.statsLabel.Wrapping = fyne.TextWrapOff
 
 	// Create status labels
 	ca.statusLabel = widget.NewLabel("● IDLE | Ready for operations")
@@ -197,6 +291,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		container.NewTabItem("Conductance", container.NewMax(ca.conductanceHeatmap)),
 		container.NewTabItem("IR Drop", container.NewMax(ca.irDropHeatmap)),
 		container.NewTabItem("Sneak Paths", container.NewMax(ca.sneakPathHeatmap)),
+		container.NewTabItem("Input/Output", container.NewMax(ca.mvmVis)),
 	)
 
 	// Title and header with Dr. Tour quote
@@ -214,11 +309,23 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		widget.NewSeparator(),
 	)
 
-	// Right panel - simple VBox, no split (avoids resize issues)
+	// Right panel - using direct widgets (no custom panels)
 	rightPanel := container.NewVBox(
-		ca.controlPanel,
+		ca.runMVMButton,
+		ca.analyzeIRButton,
+		ca.analyzeSneakButton,
+		ca.resetButton,
 		widget.NewSeparator(),
-		ca.statsPanel,
+		ca.arraySizeLabel,
+		ca.arraySizeSlider,
+		ca.noiseLabel,
+		ca.noiseSlider,
+		ca.adcBitsLabel,
+		ca.adcBitsSlider,
+		widget.NewLabel("Colormap:"),
+		ca.colormapSelect,
+		widget.NewSeparator(),
+		ca.statsLabel,
 	)
 
 	// Left panel using simple labels (no custom widgets)
@@ -366,7 +473,7 @@ func (ca *CrossbarApp) onCellTapped(row, col int) {
 
 	ca.levelIndicator.SetLevel(level)
 
-	ca.statsPanel.SetStats(fmt.Sprintf(
+	ca.statsLabel.SetText(fmt.Sprintf(
 		"Selected Cell: [%d, %d]\n"+
 			"Conductance: %.4f\n"+
 			"Level: %d / 29\n"+
@@ -434,7 +541,7 @@ func (ca *CrossbarApp) runMVM() {
 	macOps := ca.config.Rows * ca.config.Cols
 
 	debug.Println("runMVM: Updating stats panel")
-	ca.statsPanel.SetStats(fmt.Sprintf(
+	ca.statsLabel.SetText(fmt.Sprintf(
 		"MVM Complete!\n"+
 			"Input Sum: %.4f\n"+
 			"Output Sum: %.4f\n"+
@@ -486,7 +593,7 @@ func (ca *CrossbarApp) analyzeIRDrop() {
 	ca.irDropHeatmap.SetData(irMap)
 
 	// Update stats
-	ca.statsPanel.SetStats(fmt.Sprintf(
+	ca.statsLabel.SetText(fmt.Sprintf(
 		"IR Drop Analysis\n"+
 			"Max IR Drop: %.2f%%\n"+
 			"Avg IR Drop: %.2f%%\n"+
@@ -542,7 +649,7 @@ func (ca *CrossbarApp) analyzeSneakPaths() {
 	}
 
 	// Update stats
-	ca.statsPanel.SetStats(fmt.Sprintf(
+	ca.statsLabel.SetText(fmt.Sprintf(
 		"Sneak Path Analysis\n"+
 			"Selected Cell: [%d, %d]\n"+
 			"Signal Current: %.6f\n"+
@@ -580,7 +687,7 @@ func (ca *CrossbarApp) resetArray() {
 	ca.conductanceHeatmap.ClearSelection()
 	ca.irDropHeatmap.ClearSelection()
 	ca.sneakPathHeatmap.ClearSelection()
-	ca.statsPanel.SetStats("Array reset with new random weights.\n\nSelect a cell or run an analysis.")
+	ca.statsLabel.SetText("Array reset with new random weights.\n\nSelect a cell or run an analysis.")
 
 	// Update key stat
 	ca.setKeyStatValue(fmt.Sprintf("%d MACs", ca.config.Rows*ca.config.Cols))

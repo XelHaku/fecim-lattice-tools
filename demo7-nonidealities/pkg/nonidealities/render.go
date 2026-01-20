@@ -239,9 +239,9 @@ func (r *Renderer) RenderTechComparison(comparisons map[string]DriftStats) strin
 	}
 
 	// Highlight FeCIM advantage
-	if ironStats, ok := comparisons["FeCIM (FeFET)"]; ok {
+	if fecimStats, ok := comparisons["FeCIM (FeFET)"]; ok {
 		if rramStats, ok := comparisons["RRAM"]; ok {
-			advantage := rramStats.MaxDriftPercent / ironStats.MaxDriftPercent
+			advantage := rramStats.MaxDriftPercent / fecimStats.MaxDriftPercent
 			sb.WriteString(fmt.Sprintf("\nFeCIM advantage: %.0fx lower drift than RRAM!\n", advantage))
 		}
 	}
