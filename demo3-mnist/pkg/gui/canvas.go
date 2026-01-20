@@ -81,7 +81,7 @@ func (dc *DigitCanvas) CreateRenderer() fyne.WidgetRenderer {
 
 // MinSize returns the minimum size for the digit canvas.
 func (dc *DigitCanvas) MinSize() fyne.Size {
-	return fyne.NewSize(280, 280) // 10x scale for visibility
+	return fyne.NewSize(200, 200) // Smaller minimum, scales with window
 }
 
 // generateImage creates the canvas image.

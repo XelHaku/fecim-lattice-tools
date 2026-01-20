@@ -113,27 +113,28 @@ func (cm *ConfusionMatrix) GetClassMetrics(class int) (precision, recall, f1 flo
 func (cm *ConfusionMatrix) CreateRenderer() fyne.WidgetRenderer {
 	cm.raster = canvas.NewRaster(cm.generateImage)
 
-	titleLabel := widget.NewLabel("Confusion Matrix")
+	titleLabel := widget.NewLabel("Confusion Matrix (Actual vs Predicted)")
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 	titleLabel.Alignment = fyne.TextAlignCenter
 
 	accuracyLabel := widget.NewLabel(fmt.Sprintf("Accuracy: %.1f%%", cm.GetAccuracy()*100))
 	accuracyLabel.Alignment = fyne.TextAlignCenter
 
+	// Use Max container for raster to fill available space
 	content := container.NewBorder(
 		titleLabel,
 		accuracyLabel,
 		nil,
 		nil,
-		cm.raster,
+		container.NewMax(cm.raster),
 	)
 
 	return widget.NewSimpleRenderer(content)
 }
 
-// MinSize returns minimum size.
+// MinSize returns minimum size - smaller for flexible layout.
 func (cm *ConfusionMatrix) MinSize() fyne.Size {
-	return fyne.NewSize(320, 320)
+	return fyne.NewSize(250, 250)
 }
 
 // Tapped handles tap events.
@@ -313,7 +314,7 @@ func (mp *MetricsPanel) SetFromConfusionMatrix(cm *ConfusionMatrix) {
 func (mp *MetricsPanel) CreateRenderer() fyne.WidgetRenderer {
 	mp.raster = canvas.NewRaster(mp.generateImage)
 
-	titleLabel := widget.NewLabel("Per-Class Metrics")
+	titleLabel := widget.NewLabel("Per-Class Metrics (Precision/Recall/F1)")
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 	titleLabel.Alignment = fyne.TextAlignCenter
 
@@ -323,20 +324,21 @@ func (mp *MetricsPanel) CreateRenderer() fyne.WidgetRenderer {
 	))
 	summaryLabel.Alignment = fyne.TextAlignCenter
 
+	// Use Max container for raster to fill available space
 	content := container.NewBorder(
 		titleLabel,
 		summaryLabel,
 		nil,
 		nil,
-		mp.raster,
+		container.NewMax(mp.raster),
 	)
 
 	return widget.NewSimpleRenderer(content)
 }
 
-// MinSize returns minimum size.
+// MinSize returns minimum size - smaller for flexible layout.
 func (mp *MetricsPanel) MinSize() fyne.Size {
-	return fyne.NewSize(400, 200)
+	return fyne.NewSize(300, 150)
 }
 
 // generateImage creates the metrics visualization.

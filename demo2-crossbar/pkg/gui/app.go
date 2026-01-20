@@ -134,8 +134,9 @@ type CrossbarApp struct {
 	statsLabel         *widget.Label
 
 	// Status
-	statusLabel *widget.Label
-	infoLabel   *widget.Label
+	statusLabel   *widget.Label
+	infoLabel     *widget.Label
+	hoverInfoLabel *widget.Label
 
 	// Current state
 	lastInput  []float64
@@ -143,6 +144,9 @@ type CrossbarApp struct {
 
 	// Vector visualization
 	mvmVis *MVMVisualization
+
+	// Tabs container for programmatic switching
+	tabs *container.AppTabs
 
 	// Auto demo state
 	autoDemo      bool
@@ -211,6 +215,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	ca.conductanceHeatmap = NewCrossbarHeatmap(ca.config.Rows, ca.config.Cols)
 	ca.conductanceHeatmap.SetColormap("fecim")
 	ca.conductanceHeatmap.OnCellTapped = ca.onCellTapped
+	ca.conductanceHeatmap.OnCellHover = ca.onCellHover
 
 	ca.irDropHeatmap = NewCrossbarHeatmap(ca.config.Rows, ca.config.Cols)
 	ca.irDropHeatmap.SetColormap("coolwarm")
@@ -276,6 +281,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 
 	ca.statsLabel = widget.NewLabel("Analysis Results\n\nNo data yet.\nClick Run MVM to start.")
 	ca.statsLabel.Wrapping = fyne.TextWrapOff
+	ca.statsLabel.TextStyle = fyne.TextStyle{Monospace: true} // Fixed-width prevents resize
 
 	// Create status labels
 	ca.statusLabel = widget.NewLabel("● IDLE | Ready for operations")
@@ -286,8 +292,12 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		ca.config.Rows, ca.config.Cols, ca.config.NoiseLevel*100, ca.config.ADCBits,
 	))
 
+	// Hover info label - shows cell info on mouse hover
+	ca.hoverInfoLabel = widget.NewLabel("Hover over cells to see values")
+	ca.hoverInfoLabel.TextStyle = fyne.TextStyle{Monospace: true}
+
 	// Create tabbed heatmap view - use Max to fill available space
-	tabs := container.NewAppTabs(
+	ca.tabs = container.NewAppTabs(
 		container.NewTabItem("Conductance", container.NewMax(ca.conductanceHeatmap)),
 		container.NewTabItem("IR Drop", container.NewMax(ca.irDropHeatmap)),
 		container.NewTabItem("Sneak Paths", container.NewMax(ca.sneakPathHeatmap)),
@@ -309,8 +319,8 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		widget.NewSeparator(),
 	)
 
-	// Right panel - using direct widgets (no custom panels)
-	rightPanel := container.NewVBox(
+	// Right panel - controls at top, stats in scroll at bottom
+	controlsBox := container.NewVBox(
 		ca.runMVMButton,
 		ca.analyzeIRButton,
 		ca.analyzeSneakButton,
@@ -324,8 +334,18 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		ca.adcBitsSlider,
 		widget.NewLabel("Colormap:"),
 		ca.colormapSelect,
-		widget.NewSeparator(),
-		ca.statsLabel,
+	)
+
+	// Stats in scroll container to prevent resize issues
+	statsScroll := container.NewVScroll(ca.statsLabel)
+	statsScroll.SetMinSize(fyne.NewSize(180, 100))
+
+	rightPanel := container.NewBorder(
+		controlsBox,      // top - fixed controls
+		nil,              // bottom
+		nil,              // left
+		nil,              // right
+		statsScroll,      // center - scrollable stats
 	)
 
 	// Left panel using simple labels (no custom widgets)
@@ -338,18 +358,20 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		ca.keyStatValue,
 	)
 
-	// Simple status footer
+	// Simple status footer with hover info
 	simpleFooter := container.NewHBox(
 		ca.modeIndicator,
 		widget.NewSeparator(),
 		ca.statusLabel,
 		layout.NewSpacer(),
+		ca.hoverInfoLabel,
+		widget.NewSeparator(),
 		ca.infoLabel,
 	)
 
 	// Use HSplit for proportional 3-column layout
 	// Left panel (15%) | Center tabs (70%) | Right panel (15%)
-	leftCenterSplit := container.NewHSplit(leftPanel, tabs)
+	leftCenterSplit := container.NewHSplit(leftPanel, ca.tabs)
 	leftCenterSplit.SetOffset(0.15) // 15% left, 85% center+right
 
 	mainSplit := container.NewHSplit(leftCenterSplit, rightPanel)
@@ -485,18 +507,22 @@ func (ca *CrossbarApp) onCellTapped(row, col int) {
 	ca.modeIndicator.SetMode(DemoModeIdle)
 }
 
-// runMVM performs matrix-vector multiplication.
+// onCellHover handles mouse hover over heatmap cells.
+func (ca *CrossbarApp) onCellHover(row, col int, value float64) {
+	if row < 0 || col < 0 {
+		ca.hoverInfoLabel.SetText("Hover over cells to see values")
+		return
+	}
+	level := int(value * 29)
+	ca.hoverInfoLabel.SetText(fmt.Sprintf("Cell[%d,%d]: %.4f (Level %d/29)", row, col, value, level))
+}
+
+// runMVM performs matrix-vector multiplication with animation.
 func (ca *CrossbarApp) runMVM() {
 	debug.Println("runMVM: Starting")
 
-	// Update mode and educational panel
-	debug.Println("runMVM: Setting mode to Compute")
-	ca.modeIndicator.SetMode(DemoModeCompute)
-	debug.Println("runMVM: Setting MVM explanation phase 1")
-	ca.setEducationalContent("Compute-in-Memory", "MVM OPERATION\n\n1. Input voltages V applied\n   to column lines\n\nEach voltage drives current\nthrough ALL cells in column.")
-	debug.Println("runMVM: Updating status")
-	ca.updateStatus("COMPUTE | Applying input voltages...")
-	debug.Println("runMVM: Adding to operation log")
+	// Disable button during computation
+	ca.runMVMButton.Disable()
 
 	// Create random input
 	debug.Printf("runMVM: Creating input vector of size %d", ca.config.Cols)
@@ -505,70 +531,110 @@ func (ca *CrossbarApp) runMVM() {
 		input[i] = rand.Float64()
 	}
 	ca.lastInput = input
-	debug.Println("runMVM: Setting input display")
+	ca.mvmVis.SetInput(input)
 
-	// Phase 2: Computing
-	debug.Println("runMVM: Setting MVM explanation phase 2")
-	ca.setEducationalContent("Compute-in-Memory", "MVM OPERATION\n\n2. Current flows through\n   ALL cells simultaneously\n\nI = G × V (Ohm's Law)\nEach cell multiplies!")
+	// Run animated MVM in goroutine
+	go ca.runMVMAnimated(input)
+}
 
-	// Perform MVM
-	debug.Println("runMVM: Performing MVM computation")
+// runMVMAnimated performs the MVM with visual animation.
+func (ca *CrossbarApp) runMVMAnimated(input []float64) {
+	// Phase 1: Input voltages applied (300ms)
+	fyne.Do(func() {
+		ca.modeIndicator.SetMode(DemoModeCompute)
+		ca.updateStatus("COMPUTE | Phase 1: Applying input voltages...")
+
+		// Highlight all columns to show input voltages
+		cols := make([]int, ca.config.Cols)
+		for i := range cols {
+			cols[i] = i
+		}
+		ca.conductanceHeatmap.SetInputHighlight(cols)
+		ca.conductanceHeatmap.SetAnimPhase(1, 0)
+	})
+	time.Sleep(300 * time.Millisecond)
+
+	// Phase 2: Current flowing through cells (500ms animation)
+	fyne.Do(func() {
+		ca.updateStatus("COMPUTE | Phase 2: Current flowing through cells...")
+	})
+
+	// Animate wave propagation
+	steps := 10
+	for i := 0; i <= steps; i++ {
+		progress := float64(i) / float64(steps)
+		fyne.Do(func() {
+			ca.conductanceHeatmap.SetAnimPhase(2, progress)
+		})
+		time.Sleep(50 * time.Millisecond)
+	}
+
+	// Perform actual MVM computation
 	output, err := ca.array.MVM(input)
 	if err != nil {
-		debug.Printf("runMVM: Error - %v", err)
-		ca.updateStatus(fmt.Sprintf("COMPUTE | Error: %v", err))
-		ca.modeIndicator.SetMode(DemoModeIdle)
+		fyne.Do(func() {
+			ca.updateStatus(fmt.Sprintf("COMPUTE | Error: %v", err))
+			ca.modeIndicator.SetMode(DemoModeIdle)
+			ca.conductanceHeatmap.ClearAnimation()
+			ca.runMVMButton.Enable()
+		})
 		return
 	}
-	debug.Printf("runMVM: MVM complete, output size %d", len(output))
 	ca.lastOutput = output
-	debug.Println("runMVM: Setting output display")
 
-	// Phase 3: Results
-	debug.Println("runMVM: Setting MVM explanation phase 3")
-	ca.setEducationalContent("Compute-in-Memory", "MVM OPERATION\n\n3. Row currents collected\n   = dot product result\n\nN² multiplications in\nONE clock cycle!")
+	// Phase 3: Output currents collected (300ms)
+	fyne.Do(func() {
+		ca.updateStatus("COMPUTE | Phase 3: Collecting output currents...")
+		ca.mvmVis.SetOutput(output)
 
-	// Update stats
-	var sumInput, sumOutput float64
-	for _, v := range input {
-		sumInput += v
-	}
-	for _, v := range output {
-		sumOutput += v
-	}
+		// Highlight all rows to show output currents
+		rows := make([]int, ca.config.Rows)
+		for i := range rows {
+			rows[i] = i
+		}
+		ca.conductanceHeatmap.SetOutputHighlight(rows)
+		ca.conductanceHeatmap.SetAnimPhase(3, 1)
+	})
+	time.Sleep(300 * time.Millisecond)
 
-	reads, writes := ca.array.GetStats()
-	macOps := ca.config.Rows * ca.config.Cols
+	// Finish and show results
+	fyne.Do(func() {
+		ca.conductanceHeatmap.ClearAnimation()
 
-	debug.Println("runMVM: Updating stats panel")
-	ca.statsLabel.SetText(fmt.Sprintf(
-		"MVM Complete!\n"+
-			"Input Sum: %.4f\n"+
-			"Output Sum: %.4f\n"+
-			"Total Reads: %d\n"+
-			"Total Writes: %d\n"+
-			"MAC Operations: %d",
-		sumInput, sumOutput, reads, writes,
-		macOps,
-	))
+		// Calculate stats
+		var sumInput, sumOutput float64
+		for _, v := range input {
+			sumInput += v
+		}
+		for _, v := range output {
+			sumOutput += v
+		}
 
-	// Update key stat
-	debug.Println("runMVM: Updating key stat")
-	ca.setKeyStatValue(fmt.Sprintf("%d MACs in 1 cycle", macOps))
+		reads, writes := ca.array.GetStats()
+		macOps := ca.config.Rows * ca.config.Cols
 
-	// Log completion
-	debug.Println("runMVM: Logging completion")
+		ca.statsLabel.SetText(fmt.Sprintf(
+			"MVM Complete!\n"+
+				"Input Sum: %.4f\n"+
+				"Output Sum: %.4f\n"+
+				"Total Reads: %d\n"+
+				"Total Writes: %d\n"+
+				"MAC Operations: %d",
+			sumInput, sumOutput, reads, writes, macOps,
+		))
 
-	// Update status and return to idle
-	debug.Println("runMVM: Final status update")
-	ca.updateStatus(fmt.Sprintf("COMPUTE | Complete: %d parallel multiplications", macOps))
-	debug.Println("runMVM: Setting mode to Idle")
-	ca.modeIndicator.SetMode(DemoModeIdle)
+		ca.updateStatus(fmt.Sprintf("COMPUTE | Complete: %d parallel MACs", macOps))
+		ca.modeIndicator.SetMode(DemoModeIdle)
+		ca.runMVMButton.Enable()
+	})
 	debug.Println("runMVM: Complete")
 }
 
 // analyzeIRDrop performs IR drop analysis.
 func (ca *CrossbarApp) analyzeIRDrop() {
+	// Switch to IR Drop tab
+	ca.tabs.SelectIndex(1)
+
 	// Update mode and educational panel
 	ca.modeIndicator.SetMode(DemoModeIRDrop)
 	ca.setEducationalContent("Non-Ideality: IR Drop", "IR DROP ANALYSIS\n\nWire resistance causes\nvoltage drop along lines.\n\nCells far from drivers\nsee reduced voltage.\n\nThis affects accuracy:\n• Worst at corners\n• Mitigate with drivers")
@@ -590,6 +656,11 @@ func (ca *CrossbarApp) analyzeIRDrop() {
 
 	// Update IR drop heatmap
 	irMap := analysis.GetIRDropMap()
+	debug.Printf("IR Drop map size: %dx%d, MaxIRDrop: %.6f", len(irMap), len(irMap[0]), analysis.MaxIRDrop)
+	// Sample some values to see the range
+	if len(irMap) > 0 && len(irMap[0]) > 0 {
+		debug.Printf("IR Drop sample values: [0,0]=%.4f, [mid,mid]=%.4f", irMap[0][0], irMap[len(irMap)/2][len(irMap[0])/2])
+	}
 	ca.irDropHeatmap.SetData(irMap)
 
 	// Update stats
@@ -623,6 +694,9 @@ func (ca *CrossbarApp) analyzeIRDrop() {
 
 // analyzeSneakPaths performs sneak path analysis.
 func (ca *CrossbarApp) analyzeSneakPaths() {
+	// Switch to Sneak Paths tab
+	ca.tabs.SelectIndex(2)
+
 	// Update mode and educational panel
 	ca.modeIndicator.SetMode(DemoModeSneakPath)
 	ca.setEducationalContent("Non-Ideality: Sneak Paths", "SNEAK PATH ANALYSIS\n\nCurrent can flow through\nunintended paths in passive\ncrossbar arrays.\n\nMitigation strategies:\n• Selector devices\n• 1T1R architecture\n• Threshold switching")
@@ -637,6 +711,10 @@ func (ca *CrossbarApp) analyzeSneakPaths() {
 
 	// Update sneak path heatmap
 	sneakMap := analysis.GetSneakMap()
+	debug.Printf("Sneak map size: %dx%d", len(sneakMap), len(sneakMap[0]))
+	if len(sneakMap) > 0 && len(sneakMap[0]) > 0 {
+		debug.Printf("Sneak sample values: [0,0]=%.4f, [mid,mid]=%.4f", sneakMap[0][0], sneakMap[len(sneakMap)/2][len(sneakMap[0])/2])
+	}
 	ca.sneakPathHeatmap.SetData(sneakMap)
 
 	// Highlight selected cell

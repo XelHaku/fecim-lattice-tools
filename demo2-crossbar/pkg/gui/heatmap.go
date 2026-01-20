@@ -26,6 +26,12 @@ type CrossbarHeatmap struct {
 	selectedCol int
 	showSelection bool
 
+	// Animation state
+	animPhase      int        // 0=none, 1=input, 2=compute, 3=output
+	animProgress   float64    // 0-1 progress within phase
+	highlightCols  []int      // Columns to highlight (input)
+	highlightRows  []int      // Rows to highlight (output)
+
 	// Callbacks
 	OnCellTapped func(row, col int)
 	OnCellHover  func(row, col int, value float64)
@@ -162,6 +168,65 @@ func (h *CrossbarHeatmap) TappedSecondary(*fyne.PointEvent) {
 	h.ClearSelection()
 }
 
+// MouseMoved tracks mouse position for hover info.
+func (h *CrossbarHeatmap) MouseMoved(e *fyne.PointEvent) {
+	size := h.Size()
+	cellW := float64(size.Width-40) / float64(h.cols)
+	cellH := float64(size.Height-40) / float64(h.rows)
+	cellSize := math.Min(cellW, cellH)
+
+	col := int((float64(e.Position.X) - 20) / cellSize)
+	row := int((float64(e.Position.Y) - 20) / cellSize)
+
+	if row >= 0 && row < h.rows && col >= 0 && col < h.cols {
+		if h.OnCellHover != nil {
+			h.OnCellHover(row, col, h.data[row][col])
+		}
+	}
+}
+
+// MouseIn is called when mouse enters the widget.
+func (h *CrossbarHeatmap) MouseIn(*fyne.PointEvent) {}
+
+// MouseOut is called when mouse leaves the widget.
+func (h *CrossbarHeatmap) MouseOut() {
+	if h.OnCellHover != nil {
+		h.OnCellHover(-1, -1, 0) // Signal mouse left
+	}
+}
+
+// SetAnimPhase sets the current animation phase.
+// Phase 0: No animation
+// Phase 1: Input voltages being applied (highlight columns)
+// Phase 2: Computing (wave animation through cells)
+// Phase 3: Output currents (highlight rows)
+func (h *CrossbarHeatmap) SetAnimPhase(phase int, progress float64) {
+	h.animPhase = phase
+	h.animProgress = progress
+	h.Refresh()
+}
+
+// SetInputHighlight highlights specific columns (for input voltage visualization).
+func (h *CrossbarHeatmap) SetInputHighlight(cols []int) {
+	h.highlightCols = cols
+	h.Refresh()
+}
+
+// SetOutputHighlight highlights specific rows (for output current visualization).
+func (h *CrossbarHeatmap) SetOutputHighlight(rows []int) {
+	h.highlightRows = rows
+	h.Refresh()
+}
+
+// ClearAnimation clears all animation state.
+func (h *CrossbarHeatmap) ClearAnimation() {
+	h.animPhase = 0
+	h.animProgress = 0
+	h.highlightCols = nil
+	h.highlightRows = nil
+	h.Refresh()
+}
+
 // generateImage creates the heatmap image.
 func (h *CrossbarHeatmap) generateImage(w, h_size int) image.Image {
 	img := image.NewRGBA(image.Rect(0, 0, w, h_size))
@@ -214,6 +279,60 @@ func (h *CrossbarHeatmap) generateImage(w, h_size int) image.Image {
 					img.Set(x0+1, y, highlightColor)
 					img.Set(x1-1, y, highlightColor)
 					img.Set(x1-2, y, highlightColor)
+				}
+			}
+
+			// Animation overlays
+			if h.animPhase > 0 {
+				var overlay color.RGBA
+				shouldOverlay := false
+
+				// Phase 1: Input - highlight active columns with cyan
+				if h.animPhase == 1 {
+					for _, col := range h.highlightCols {
+						if j == col {
+							overlay = color.RGBA{0, 255, 255, 100}
+							shouldOverlay = true
+							break
+						}
+					}
+				}
+
+				// Phase 2: Compute - wave animation
+				if h.animPhase == 2 {
+					wavePos := int(h.animProgress * float64(h.rows))
+					if i <= wavePos {
+						overlay = color.RGBA{255, 200, 0, 80}
+						shouldOverlay = true
+					}
+				}
+
+				// Phase 3: Output - highlight active rows with orange
+				if h.animPhase == 3 {
+					for _, row := range h.highlightRows {
+						if i == row {
+							overlay = color.RGBA{255, 150, 0, 100}
+							shouldOverlay = true
+							break
+						}
+					}
+				}
+
+				// Apply overlay by blending
+				if shouldOverlay {
+					for y := y0; y < y1; y++ {
+						for x := x0; x < x1; x++ {
+							orig := img.RGBAAt(x, y)
+							alpha := float64(overlay.A) / 255.0
+							blended := color.RGBA{
+								R: uint8(float64(orig.R)*(1-alpha) + float64(overlay.R)*alpha),
+								G: uint8(float64(orig.G)*(1-alpha) + float64(overlay.G)*alpha),
+								B: uint8(float64(orig.B)*(1-alpha) + float64(overlay.B)*alpha),
+								A: 255,
+							}
+							img.Set(x, y, blended)
+						}
+					}
 				}
 			}
 		}

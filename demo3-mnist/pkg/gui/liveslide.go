@@ -56,7 +56,7 @@ type MNISTModeIndicator struct {
 func NewMNISTModeIndicator() *MNISTModeIndicator {
 	m := &MNISTModeIndicator{
 		mode:    MNISTModeIdle,
-		minSize: fyne.NewSize(120, 50),
+		minSize: fyne.NewSize(100, 40),
 	}
 	m.ExtendBaseWidget(m)
 	return m
@@ -116,23 +116,23 @@ func (r *mnistModeRenderer) Refresh() {
 	case MNISTModeIdle:
 		bgColor = color.RGBA{60, 60, 80, 255}
 		borderColor = color.RGBA{100, 100, 130, 255}
-		modeText = "░░ IDLE ░░"
+		modeText = "IDLE"
 	case MNISTModeDrawing:
 		bgColor = color.RGBA{80, 50, 150, 255}
 		borderColor = color.RGBA{140, 100, 220, 255}
-		modeText = "✎ DRAWING ✎"
+		modeText = "DRAWING"
 	case MNISTModeInference:
 		bgColor = color.RGBA{50, 120, 180, 255}
 		borderColor = color.RGBA{100, 180, 255, 255}
-		modeText = "▶▶ INFERENCE ▶▶"
+		modeText = "INFERENCE"
 	case MNISTModeEvaluating:
 		bgColor = color.RGBA{180, 120, 50, 255}
 		borderColor = color.RGBA{255, 180, 100, 255}
-		modeText = "⚙ EVALUATING ⚙"
+		modeText = "EVALUATING"
 	case MNISTModeLoading:
 		bgColor = color.RGBA{50, 150, 80, 255}
 		borderColor = color.RGBA{100, 220, 130, 255}
-		modeText = "↓ LOADING ↓"
+		modeText = "LOADING"
 	}
 
 	// Border
@@ -141,18 +141,25 @@ func (r *mnistModeRenderer) Refresh() {
 	r.objects = append(r.objects, border)
 
 	// Background
-	padding := float32(3)
+	padding := float32(2)
 	bg := canvas.NewRectangle(bgColor)
 	bg.Resize(fyne.NewSize(size.Width-padding*2, size.Height-padding*2))
 	bg.Move(fyne.NewPos(padding, padding))
 	r.objects = append(r.objects, bg)
 
-	// Mode text
+	// Mode text - scale with widget size
 	text := canvas.NewText(modeText, color.White)
-	text.TextSize = 14
+	fontSize := size.Height * 0.35
+	if fontSize > 14 {
+		fontSize = 14
+	}
+	if fontSize < 10 {
+		fontSize = 10
+	}
+	text.TextSize = fontSize
 	text.TextStyle = fyne.TextStyle{Bold: true}
-	textWidth := float32(len(modeText) * 8)
-	text.Move(fyne.NewPos((size.Width-textWidth)/2, (size.Height-20)/2))
+	textWidth := float32(len(modeText)) * fontSize * 0.6
+	text.Move(fyne.NewPos((size.Width-textWidth)/2, (size.Height-fontSize)/2))
 	r.objects = append(r.objects, text)
 }
 
@@ -177,7 +184,7 @@ func NewMNISTEducationalPanel() *MNISTEducationalPanel {
 	e := &MNISTEducationalPanel{
 		title:   "What You're Seeing",
 		content: "Draw a digit to see\nneural network inference.",
-		minSize: fyne.NewSize(200, 200),
+		minSize: fyne.NewSize(150, 150),
 	}
 	e.ExtendBaseWidget(e)
 	return e
@@ -309,7 +316,7 @@ func NewMNISTOperationLog() *MNISTOperationLog {
 	o := &MNISTOperationLog{
 		maxEntries: 10,
 		startTime:  time.Now(),
-		minSize:    fyne.NewSize(200, 180),
+		minSize:    fyne.NewSize(150, 120),
 		entries:    make([]string, 0, 10),
 	}
 	o.titleLabel = widget.NewLabelWithStyle("Operation Log", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
@@ -387,7 +394,7 @@ func NewPredictionDisplay() *PredictionDisplay {
 	p := &PredictionDisplay{
 		prediction: -1,
 		confidence: 0,
-		minSize:    fyne.NewSize(150, 120),
+		minSize:    fyne.NewSize(100, 80),
 	}
 	p.ExtendBaseWidget(p)
 	return p
@@ -458,13 +465,14 @@ func (r *predictionRenderer) Refresh() {
 	border.Resize(size)
 	r.objects = append(r.objects, border)
 
-	// Title
+	// Title - positioned relative to size
 	title := canvas.NewText("PREDICTION", color.RGBA{180, 180, 200, 255})
-	title.TextSize = 12
-	title.Move(fyne.NewPos((size.Width-80)/2, 8))
+	title.TextSize = 10
+	titleW := float32(70)
+	title.Move(fyne.NewPos((size.Width-titleW)/2, 5))
 	r.objects = append(r.objects, title)
 
-	// Big number
+	// Big number - scale font with widget size
 	var predText string
 	if pred < 0 {
 		predText = "?"
@@ -472,9 +480,17 @@ func (r *predictionRenderer) Refresh() {
 		predText = fmt.Sprintf("%d", pred)
 	}
 	predLabel := canvas.NewText(predText, color.White)
-	predLabel.TextSize = 48
+	fontSize := size.Height * 0.45
+	if fontSize > 48 {
+		fontSize = 48
+	}
+	if fontSize < 20 {
+		fontSize = 20
+	}
+	predLabel.TextSize = fontSize
 	predLabel.TextStyle = fyne.TextStyle{Bold: true}
-	predLabel.Move(fyne.NewPos((size.Width-30)/2, 28))
+	textW := fontSize * 0.6
+	predLabel.Move(fyne.NewPos((size.Width-textW)/2, size.Height*0.25))
 	r.objects = append(r.objects, predLabel)
 
 	// Confidence
@@ -483,8 +499,9 @@ func (r *predictionRenderer) Refresh() {
 		confText = "-"
 	}
 	confLabel := canvas.NewText(confText, borderColor)
-	confLabel.TextSize = 14
-	confLabel.Move(fyne.NewPos((size.Width-40)/2, size.Height-25))
+	confLabel.TextSize = 12
+	confLabelW := float32(40)
+	confLabel.Move(fyne.NewPos((size.Width-confLabelW)/2, size.Height-18))
 	r.objects = append(r.objects, confLabel)
 }
 
@@ -509,7 +526,7 @@ func NewMNISTKeyStat(label, value string) *MNISTKeyStat {
 	k := &MNISTKeyStat{
 		label:   label,
 		value:   value,
-		minSize: fyne.NewSize(150, 60),
+		minSize: fyne.NewSize(100, 50),
 	}
 	k.ExtendBaseWidget(k)
 	return k

@@ -88,7 +88,7 @@ func (lav *LayerActivationView) GetPrediction() (int, float64) {
 
 // CreateRenderer implements fyne.Widget.
 func (lav *LayerActivationView) CreateRenderer() fyne.WidgetRenderer {
-	// Create rasters for each layer
+	// Create rasters for each layer - they will resize with their container
 	lav.inputRaster = canvas.NewRaster(lav.generateInputImage)
 	lav.hiddenRaster = canvas.NewRaster(lav.generateHiddenImage)
 	lav.outputRaster = canvas.NewRaster(lav.generateOutputImage)
@@ -98,11 +98,11 @@ func (lav *LayerActivationView) CreateRenderer() fyne.WidgetRenderer {
 	inputLabel.TextStyle = fyne.TextStyle{Bold: true}
 	inputLabel.Alignment = fyne.TextAlignCenter
 
-	hiddenLabel := widget.NewLabel("Hidden Layer")
+	hiddenLabel := widget.NewLabel("Hidden (128)")
 	hiddenLabel.TextStyle = fyne.TextStyle{Bold: true}
 	hiddenLabel.Alignment = fyne.TextAlignCenter
 
-	outputLabel := widget.NewLabel("Output (10 Classes)")
+	outputLabel := widget.NewLabel("Output (10)")
 	outputLabel.TextStyle = fyne.TextStyle{Bold: true}
 	outputLabel.Alignment = fyne.TextAlignCenter
 
@@ -114,52 +114,62 @@ func (lav *LayerActivationView) CreateRenderer() fyne.WidgetRenderer {
 	lav.confidenceLabel = widget.NewLabel("Confidence: -")
 	lav.confidenceLabel.Alignment = fyne.TextAlignCenter
 
-	// Layout each layer vertically with its label
-	inputBox := container.NewVBox(
-		inputLabel,
-		container.NewCenter(lav.inputRaster),
+	// Layout each layer with Border+Max for proper expansion
+	inputBox := container.NewBorder(
+		inputLabel, nil, nil, nil,
+		container.NewMax(lav.inputRaster),
 	)
 
-	hiddenBox := container.NewVBox(
-		hiddenLabel,
-		container.NewCenter(lav.hiddenRaster),
+	hiddenBox := container.NewBorder(
+		hiddenLabel, nil, nil, nil,
+		container.NewMax(lav.hiddenRaster),
 	)
 
-	outputBox := container.NewVBox(
+	outputBox := container.NewBorder(
 		outputLabel,
-		container.NewCenter(lav.outputRaster),
-		widget.NewSeparator(),
-		lav.predictionLabel,
-		lav.confidenceLabel,
+		container.NewVBox(
+			widget.NewSeparator(),
+			lav.predictionLabel,
+			lav.confidenceLabel,
+		),
+		nil, nil,
+		container.NewMax(lav.outputRaster),
 	)
 
-	// Horizontal layout: input -> hidden -> output
-	content := container.NewHBox(
-		inputBox,
-		widget.NewSeparator(),
-		hiddenBox,
-		widget.NewSeparator(),
-		outputBox,
-	)
+	// Use HSplit for proper proportional layout that resizes
+	leftSplit := container.NewHSplit(inputBox, hiddenBox)
+	leftSplit.SetOffset(0.45)
 
-	return widget.NewSimpleRenderer(content)
+	mainSplit := container.NewHSplit(leftSplit, outputBox)
+	mainSplit.SetOffset(0.65)
+
+	return widget.NewSimpleRenderer(mainSplit)
 }
 
-// MinSize returns minimum size.
+// MinSize returns minimum size - smaller to allow flexible resizing.
 func (lav *LayerActivationView) MinSize() fyne.Size {
-	return fyne.NewSize(600, 200)
+	return fyne.NewSize(400, 150)
 }
 
 // generateInputImage creates the 28x28 input visualization.
 func (lav *LayerActivationView) generateInputImage(w, h int) image.Image {
-	// Fixed size for input
-	size := 140
-	img := image.NewRGBA(image.Rect(0, 0, size, size))
+	// Use actual widget size for responsive layout
+	if w < 10 {
+		w = 140
+	}
+	if h < 10 {
+		h = 140
+	}
+	size := w
+	if h < w {
+		size = h
+	}
+	img := image.NewRGBA(image.Rect(0, 0, w, h))
 
 	// Background
 	bgColor := color.RGBA{25, 25, 35, 255}
-	for y := 0; y < size; y++ {
-		for x := 0; x < size; x++ {
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
 			img.Set(x, y, bgColor)
 		}
 	}
@@ -167,6 +177,10 @@ func (lav *LayerActivationView) generateInputImage(w, h int) image.Image {
 	if len(lav.inputLayer) < 784 {
 		return img
 	}
+
+	// Center the 28x28 grid
+	offsetX := (w - size) / 2
+	offsetY := (h - size) / 2
 
 	// Draw 28x28 pixels
 	cellSize := size / 28
@@ -182,11 +196,11 @@ func (lav *LayerActivationView) generateInputImage(w, h int) image.Image {
 					A: 255,
 				}
 
-				x0 := px * cellSize
-				y0 := py * cellSize
+				x0 := offsetX + px*cellSize
+				y0 := offsetY + py*cellSize
 				for y := y0; y < y0+cellSize; y++ {
 					for x := x0; x < x0+cellSize; x++ {
-						if x < size && y < size {
+						if x >= 0 && x < w && y >= 0 && y < h {
 							img.Set(x, y, c)
 						}
 					}
@@ -200,14 +214,19 @@ func (lav *LayerActivationView) generateInputImage(w, h int) image.Image {
 
 // generateHiddenImage creates the hidden layer activation visualization.
 func (lav *LayerActivationView) generateHiddenImage(w, h int) image.Image {
-	width := 160
-	height := 140
-	img := image.NewRGBA(image.Rect(0, 0, width, height))
+	// Use actual widget dimensions for responsive layout
+	if w < 10 {
+		w = 160
+	}
+	if h < 10 {
+		h = 140
+	}
+	img := image.NewRGBA(image.Rect(0, 0, w, h))
 
 	// Background
 	bgColor := color.RGBA{25, 25, 35, 255}
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
 			img.Set(x, y, bgColor)
 		}
 	}
@@ -221,8 +240,9 @@ func (lav *LayerActivationView) generateHiddenImage(w, h int) image.Image {
 	cols := int(math.Ceil(math.Sqrt(float64(neurons))))
 	rows := (neurons + cols - 1) / cols
 
-	cellW := (width - 10) / cols
-	cellH := (height - 10) / rows
+	padding := 5
+	cellW := (w - 2*padding) / cols
+	cellH := (h - 2*padding) / rows
 	if cellW < 2 {
 		cellW = 2
 	}
@@ -257,10 +277,10 @@ func (lav *LayerActivationView) generateHiddenImage(w, h int) image.Image {
 			A: 255,
 		}
 
-		x0 := 5 + col*cellW
-		y0 := 5 + row*cellH
-		for y := y0; y < y0+cellH-1 && y < height; y++ {
-			for x := x0; x < x0+cellW-1 && x < width; x++ {
+		x0 := padding + col*cellW
+		y0 := padding + row*cellH
+		for y := y0; y < y0+cellH-1 && y < h; y++ {
+			for x := x0; x < x0+cellW-1 && x < w; x++ {
 				img.Set(x, y, c)
 			}
 		}
@@ -271,14 +291,19 @@ func (lav *LayerActivationView) generateHiddenImage(w, h int) image.Image {
 
 // generateOutputImage creates the output layer bar chart.
 func (lav *LayerActivationView) generateOutputImage(w, h int) image.Image {
-	width := 200
-	height := 140
-	img := image.NewRGBA(image.Rect(0, 0, width, height))
+	// Use actual widget dimensions for responsive layout
+	if w < 10 {
+		w = 200
+	}
+	if h < 10 {
+		h = 140
+	}
+	img := image.NewRGBA(image.Rect(0, 0, w, h))
 
 	// Background
 	bgColor := color.RGBA{25, 25, 35, 255}
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
 			img.Set(x, y, bgColor)
 		}
 	}
@@ -305,10 +330,10 @@ func (lav *LayerActivationView) generateOutputImage(w, h int) image.Image {
 		lav.confidenceLabel.SetText(fmt.Sprintf("Confidence: %.1f%%", maxVal*100))
 	}
 
-	// Draw bar chart
+	// Draw bar chart with responsive dimensions
 	padding := 15
-	barWidth := (width - 2*padding) / 10
-	chartHeight := height - 2*padding
+	barWidth := (w - 2*padding) / 10
+	chartHeight := h - 2*padding
 
 	// Draw bars for each class
 	for i := 0; i < 10; i++ {
@@ -317,8 +342,8 @@ func (lav *LayerActivationView) generateOutputImage(w, h int) image.Image {
 
 		x0 := padding + i*barWidth + 1
 		x1 := padding + (i+1)*barWidth - 1
-		y0 := height - padding - barHeight
-		y1 := height - padding
+		y0 := h - padding - barHeight
+		y1 := h - padding
 
 		// Color: green for prediction, coral for others
 		var c color.RGBA
@@ -330,22 +355,19 @@ func (lav *LayerActivationView) generateOutputImage(w, h int) image.Image {
 
 		for y := y0; y < y1; y++ {
 			for x := x0; x < x1; x++ {
-				if x >= 0 && x < width && y >= 0 && y < height {
+				if x >= 0 && x < w && y >= 0 && y < h {
 					img.Set(x, y, c)
 				}
 			}
 		}
-
-		// Draw class number below (as simple pixels)
-		// Skip for simplicity - label is in predictionLabel
 	}
 
 	// Draw axis
 	axisColor := color.RGBA{80, 80, 90, 255}
-	for x := padding; x < width-padding; x++ {
-		img.Set(x, height-padding, axisColor)
+	for x := padding; x < w-padding; x++ {
+		img.Set(x, h-padding, axisColor)
 	}
-	for y := padding; y < height-padding; y++ {
+	for y := padding; y < h-padding; y++ {
 		img.Set(padding, y, axisColor)
 	}
 
@@ -399,24 +421,25 @@ func (obc *OutputBarChart) GetPrediction() int {
 func (obc *OutputBarChart) CreateRenderer() fyne.WidgetRenderer {
 	obc.raster = canvas.NewRaster(obc.generateImage)
 
-	titleLabel := widget.NewLabel("Class Probabilities")
+	titleLabel := widget.NewLabel("Class Probabilities (0-9)")
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 	titleLabel.Alignment = fyne.TextAlignCenter
 
+	// Use Max container for raster to fill available space
 	content := container.NewBorder(
 		titleLabel,
 		nil,
 		nil,
 		nil,
-		obc.raster,
+		container.NewMax(obc.raster),
 	)
 
 	return widget.NewSimpleRenderer(content)
 }
 
-// MinSize returns minimum size.
+// MinSize returns minimum size - smaller for flexible layout.
 func (obc *OutputBarChart) MinSize() fyne.Size {
-	return fyne.NewSize(300, 150)
+	return fyne.NewSize(200, 100)
 }
 
 // generateImage creates the bar chart image.

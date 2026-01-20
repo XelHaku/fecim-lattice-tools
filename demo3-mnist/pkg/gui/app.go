@@ -4,6 +4,8 @@ package gui
 import (
 	"fmt"
 	"image/color"
+	"io"
+	"log"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -19,6 +21,33 @@ import (
 	"multilayer-ferroelectric-cim-visualizer/demo2-crossbar/pkg/crossbar"
 	"multilayer-ferroelectric-cim-visualizer/demo3-mnist/pkg/training"
 )
+
+var debug *log.Logger
+var logFile *os.File
+
+func init() {
+	// Create logs directory
+	logsDir := "<local-path>"
+	os.MkdirAll(logsDir, 0755)
+
+	// Create log file with datetime
+	timestamp := time.Now().Format("2006-01-02_15-04-05")
+	logPath := filepath.Join(logsDir, timestamp+"-mnist-demo03.log")
+
+	var err error
+	logFile, err = os.Create(logPath)
+	if err != nil {
+		// Fallback to stdout if file creation fails
+		debug = log.New(os.Stdout, "[DEBUG] ", log.Ltime|log.Lmicroseconds)
+		debug.Printf("Failed to create log file: %v, using stdout", err)
+		return
+	}
+
+	// Write to both file and stdout
+	multiWriter := io.MultiWriter(os.Stdout, logFile)
+	debug = log.New(multiWriter, "[DEBUG] ", log.Ltime|log.Lmicroseconds)
+	debug.Printf("Logging to: %s", logPath)
+}
 
 // FeCIM theme colors - same as demo1
 var (
@@ -88,6 +117,8 @@ type MNISTApp struct {
 	statusLabel     *widget.Label
 	predictionLabel *widget.Label
 	confidenceLabel *widget.Label
+	hoverInfoLabel  *widget.Label
+	infoLabel       *widget.Label
 
 	// Test data for confusion matrix
 	testImages [][]float64
@@ -104,11 +135,13 @@ type MNISTApp struct {
 
 // NewMNISTApp creates and initializes the MNIST demo application.
 func NewMNISTApp() *MNISTApp {
+	debug.Println("NewMNISTApp: Creating application")
 	ma := &MNISTApp{}
 
 	// Create Fyne app
 	ma.fyneApp = app.NewWithID("com.fecim.mnist-demo")
 	ma.fyneApp.Settings().SetTheme(&feCIMTheme{})
+	debug.Println("NewMNISTApp: Applied FeCIM theme")
 
 	// Find data directory
 	ma.dataDir = findDataDir()
@@ -141,10 +174,15 @@ func NewMNISTApp() *MNISTApp {
 	weightsPath := filepath.Join(ma.dataDir, "pretrained_weights.json")
 	if _, err := os.Stat(weightsPath); err == nil {
 		if err := ma.network.LoadWeights(weightsPath); err == nil {
-			fmt.Println("Loaded pretrained weights from", weightsPath)
+			debug.Printf("NewMNISTApp: Loaded pretrained weights from %s", weightsPath)
+		} else {
+			debug.Printf("NewMNISTApp: Failed to load weights: %v", err)
 		}
+	} else {
+		debug.Printf("NewMNISTApp: No pretrained weights found at %s", weightsPath)
 	}
 
+	debug.Println("NewMNISTApp: Initialization complete")
 	return ma
 }
 
@@ -169,17 +207,23 @@ func findDataDir() string {
 
 // Run starts the GUI application.
 func (ma *MNISTApp) Run() {
+	debug.Println("App: Creating window")
 	ma.window = ma.fyneApp.NewWindow("FeCIM Demo 3: MNIST Neural Network")
 	ma.window.Resize(fyne.NewSize(1400, 900))
 
 	// Create main layout
+	debug.Println("App: Creating main layout")
 	content := ma.createMainLayout()
+	debug.Println("App: Setting window content")
 	ma.window.SetContent(content)
 
 	// Initialize
+	debug.Println("App: Updating status")
 	ma.updateStatus("Ready. Draw a digit or load test data.")
 
+	debug.Println("App: ShowAndRun starting")
 	ma.window.ShowAndRun()
+	debug.Println("App: Window closed")
 }
 
 // createMainLayout builds the main application layout.
@@ -220,6 +264,13 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 	ma.predictionLabel.TextStyle = fyne.TextStyle{Bold: true, Monospace: true}
 
 	ma.confidenceLabel = widget.NewLabel("Confidence: -")
+
+	// Hover info label - shows activation info on mouse hover
+	ma.hoverInfoLabel = widget.NewLabel("Hover over neurons to see values")
+	ma.hoverInfoLabel.TextStyle = fyne.TextStyle{Monospace: true}
+
+	// Info label with network specs
+	ma.infoLabel = widget.NewLabel("Network: 784→128→10 | Levels: 30 | Target: 87%")
 
 	// Control buttons
 	clearBtn := widget.NewButton("Clear Canvas", func() {
@@ -281,65 +332,87 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 		ma.confidenceLabel,
 	)
 
-	leftPanel := container.NewVBox(
-		widget.NewLabel("Demo Mode:"),
-		ma.demoModeSelect,
-		widget.NewSeparator(),
-		canvasLabel,
+	// Left panel with scroll for proper sizing
+	leftPanel := container.NewBorder(
+		container.NewVBox(
+			widget.NewLabel("Demo Mode:"),
+			ma.demoModeSelect,
+			widget.NewSeparator(),
+			canvasLabel,
+		),
+		container.NewVBox(
+			predictionBox,
+			widget.NewSeparator(),
+			buttonBox,
+		),
+		nil, nil,
 		container.NewCenter(ma.digitCanvas),
-		predictionBox,
-		widget.NewSeparator(),
-		buttonBox,
 	)
 
-	// Center panel: Layer activations
+	// Center panel: Layer activations with proper expansion
 	activationLabel := widget.NewLabel("Network Activations")
 	activationLabel.TextStyle = fyne.TextStyle{Bold: true}
 	activationLabel.Alignment = fyne.TextAlignCenter
 
-	centerPanel := container.NewVBox(
-		activationLabel,
-		widget.NewSeparator(),
-		ma.layerView,
-		widget.NewSeparator(),
-		ma.outputChart,
+	// Use VSplit for center panel to allow proper resizing
+	centerSplit := container.NewVSplit(
+		container.NewMax(ma.layerView),
+		container.NewMax(ma.outputChart),
+	)
+	centerSplit.SetOffset(0.6) // 60% layer view, 40% output chart
+
+	centerPanel := container.NewBorder(
+		container.NewVBox(activationLabel, widget.NewSeparator()),
+		nil, nil, nil,
+		centerSplit,
 	)
 
 	// Right panel (educational): Educational + Log + Key Stat
-	educationalRight := container.NewVBox(
+	educationalRight := container.NewBorder(
 		ma.educationalPanel,
-		widget.NewSeparator(),
-		ma.operationLog,
-		widget.NewSeparator(),
 		ma.keyStat,
-	)
-
-	// Metrics panel for evaluation tab
-	metricsRight := container.NewVBox(
-		ma.confusionMatrix,
-		widget.NewSeparator(),
-		ma.metricsPanel,
-		widget.NewSeparator(),
-		ma.classStatsPanel,
-	)
-
-	// Tabs for different views
-	drawTab := container.NewTabItem("Draw & Predict",
-		container.NewBorder(
-			nil, nil,
-			container.NewPadded(leftPanel),
-			container.NewPadded(educationalRight),
-			container.NewPadded(centerPanel),
+		nil, nil,
+		container.NewVBox(
+			widget.NewSeparator(),
+			ma.operationLog,
+			widget.NewSeparator(),
 		),
 	)
 
-	metricsTab := container.NewTabItem("Evaluation Metrics",
-		container.NewPadded(metricsRight),
+	// Metrics panel for evaluation tab - use VSplit for resizing
+	metricsSplit := container.NewVSplit(
+		container.NewMax(ma.confusionMatrix),
+		container.NewVBox(
+			widget.NewSeparator(),
+			ma.metricsPanel,
+			widget.NewSeparator(),
+			ma.classStatsPanel,
+		),
 	)
+	metricsSplit.SetOffset(0.5)
+
+	// Use HSplit for proportional 3-column layout (like demo2)
+	// Left panel (20%) | Center panel (55%) | Right panel (25%)
+	leftCenterSplit := container.NewHSplit(
+		leftPanel,
+		centerPanel,
+	)
+	leftCenterSplit.SetOffset(0.22) // 22% left, 78% center+right
+
+	mainSplit := container.NewHSplit(
+		leftCenterSplit,
+		educationalRight,
+	)
+	mainSplit.SetOffset(0.78) // 78% left+center, 22% right
+
+	// Tabs for different views - use Max for full expansion
+	drawTab := container.NewTabItem("Draw & Predict", container.NewMax(mainSplit))
+
+	metricsTab := container.NewTabItem("Evaluation Metrics", container.NewMax(metricsSplit))
 
 	tabs := container.NewAppTabs(drawTab, metricsTab)
 
-	// Footer with mode indicator and status
+	// Footer with mode indicator and status (like demo2)
 	footer := container.NewVBox(
 		widget.NewSeparator(),
 		container.NewHBox(
@@ -347,7 +420,9 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 			widget.NewSeparator(),
 			ma.statusLabel,
 			layout.NewSpacer(),
-			widget.NewLabel("FeCIM Ferroelectric CIM | 30 Discrete Levels"),
+			ma.hoverInfoLabel,
+			widget.NewSeparator(),
+			ma.infoLabel,
 		),
 	)
 
@@ -363,42 +438,80 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 	return mainContent
 }
 
-// onDigitChanged handles canvas drawing updates.
+// onDigitChanged handles canvas drawing updates with animated phases (like demo2 MVM).
 func (ma *MNISTApp) onDigitChanged(pixels []float64) {
-	ma.modeIndicator.SetMode(MNISTModeInference)
-	ma.educationalPanel.SetInferenceExplanation(1)
+	debug.Println("onDigitChanged: Starting inference")
 
-	// Run inference
+	// Run animated inference in goroutine for smooth UI
+	go ma.runInferenceAnimated(pixels)
+}
+
+// runInferenceAnimated performs inference with visual animation phases (like demo2 MVM).
+func (ma *MNISTApp) runInferenceAnimated(pixels []float64) {
+	// Phase 1: Input processing (200ms)
+	fyne.Do(func() {
+		ma.modeIndicator.SetMode(MNISTModeInference)
+		ma.updateStatus("INFERENCE | Phase 1: Processing input pixels...")
+		ma.educationalPanel.SetInferenceExplanation(1)
+		ma.hoverInfoLabel.SetText("Phase 1: Input → 784 neurons")
+	})
+	time.Sleep(200 * time.Millisecond)
+
+	// Phase 2: Hidden layer computation (300ms)
+	fyne.Do(func() {
+		ma.updateStatus("INFERENCE | Phase 2: Hidden layer MVM (784→128)...")
+		ma.educationalPanel.SetInferenceExplanation(2)
+		ma.hoverInfoLabel.SetText("Phase 2: MVM 100,352 MACs")
+	})
+
+	// Get layer activations
 	input, hidden, probs := ma.network.GetLayerActivations(pixels)
+	debug.Printf("onDigitChanged: Got activations - input:%d hidden:%d probs:%d",
+		len(input), len(hidden), len(probs))
+	time.Sleep(300 * time.Millisecond)
 
-	ma.educationalPanel.SetInferenceExplanation(2)
+	// Phase 3: Output layer computation (200ms)
+	fyne.Do(func() {
+		ma.updateStatus("INFERENCE | Phase 3: Output layer MVM (128→10)...")
+		ma.layerView.SetActivations(input, hidden, probs)
+		ma.hoverInfoLabel.SetText("Phase 3: MVM 1,280 MACs")
+	})
+	time.Sleep(200 * time.Millisecond)
 
-	// Update visualization
-	ma.layerView.SetActivations(input, hidden, probs)
-	ma.outputChart.SetValues(probs)
+	// Phase 4: Final prediction (display results)
+	fyne.Do(func() {
+		ma.educationalPanel.SetInferenceExplanation(3)
+		ma.outputChart.SetValues(probs)
 
-	ma.educationalPanel.SetInferenceExplanation(3)
+		// Get final prediction
+		pred, conf := ma.network.Predict(pixels)
+		debug.Printf("onDigitChanged: Prediction=%d Confidence=%.2f%%", pred, conf*100)
 
-	// Update prediction
-	pred, conf := ma.network.Predict(pixels)
-	ma.predictionLabel.SetText(fmt.Sprintf("Prediction: %d", pred))
-	ma.confidenceLabel.SetText(fmt.Sprintf("Confidence: %.1f%%", conf*100))
-	ma.predictionDisplay.SetPrediction(pred, conf)
+		ma.predictionLabel.SetText(fmt.Sprintf("Prediction: %d", pred))
+		ma.confidenceLabel.SetText(fmt.Sprintf("Confidence: %.1f%%", conf*100))
+		ma.predictionDisplay.SetPrediction(pred, conf)
 
-	// Log and update status
-	ma.operationLog.AddPrediction(pred, conf)
-	ma.updateStatus(fmt.Sprintf("INFERENCE | Prediction: %d (%.1f%% confidence)", pred, conf*100))
-	ma.modeIndicator.SetMode(MNISTModeIdle)
+		// Log and update status
+		ma.operationLog.AddPrediction(pred, conf)
+		totalMACs := 784*128 + 128*10
+		ma.updateStatus(fmt.Sprintf("INFERENCE | Prediction: %d (%.1f%% confidence) | %d MACs", pred, conf*100, totalMACs))
+		ma.hoverInfoLabel.SetText(fmt.Sprintf("Complete: %d parallel MACs", totalMACs))
+		ma.modeIndicator.SetMode(MNISTModeIdle)
+	})
+	debug.Println("onDigitChanged: Complete")
 }
 
 // loadRandomTestDigit loads a random digit from test data.
 func (ma *MNISTApp) loadRandomTestDigit() {
+	debug.Println("loadRandomTestDigit: Starting")
 	ma.modeIndicator.SetMode(MNISTModeLoading)
 	ma.operationLog.Add("Loading random test digit")
 
 	if len(ma.testImages) == 0 {
+		debug.Println("loadRandomTestDigit: No test data, loading...")
 		ma.loadTestData()
 		if len(ma.testImages) == 0 {
+			debug.Println("loadRandomTestDigit: Failed to load test data")
 			ma.updateStatus("● IDLE | No test data available")
 			ma.modeIndicator.SetMode(MNISTModeIdle)
 			return
@@ -408,6 +521,7 @@ func (ma *MNISTApp) loadRandomTestDigit() {
 	idx := rand.Intn(len(ma.testImages))
 	pixels := ma.testImages[idx]
 	label := ma.testLabels[idx]
+	debug.Printf("loadRandomTestDigit: Selected digit #%d (label: %d)", idx, label)
 
 	ma.digitCanvas.SetPixels(pixels)
 	ma.onDigitChanged(pixels)
@@ -418,6 +532,7 @@ func (ma *MNISTApp) loadRandomTestDigit() {
 
 // loadTestData loads MNIST test data.
 func (ma *MNISTApp) loadTestData() {
+	debug.Println("loadTestData: Starting")
 	ma.modeIndicator.SetMode(MNISTModeLoading)
 	ma.updateStatus("LOADING | Loading test data...")
 	ma.operationLog.Add("Loading MNIST test data")
@@ -425,10 +540,12 @@ func (ma *MNISTApp) loadTestData() {
 	// Try to load from IDX files
 	testImagesPath := filepath.Join(ma.dataDir, "t10k-images-idx3-ubyte")
 	testLabelsPath := filepath.Join(ma.dataDir, "t10k-labels-idx1-ubyte")
+	debug.Printf("loadTestData: Trying to load from %s", testImagesPath)
 
 	images, labels, err := loadMNISTData(testImagesPath, testLabelsPath)
 	if err != nil {
 		// Fall back to generating synthetic data for demo
+		debug.Printf("loadTestData: MNIST not found (%v), using synthetic data", err)
 		ma.operationLog.Add("Using synthetic data (MNIST not found)")
 		ma.updateStatus("LOADING | Using synthetic test data")
 		ma.testImages, ma.testLabels = generateSyntheticData(100)
@@ -445,6 +562,7 @@ func (ma *MNISTApp) loadTestData() {
 		ma.testLabels = labels
 	}
 
+	debug.Printf("loadTestData: Loaded %d samples", len(ma.testImages))
 	ma.operationLog.Add(fmt.Sprintf("Loaded %d samples", len(ma.testImages)))
 	ma.updateStatus(fmt.Sprintf("● IDLE | Loaded %d test samples", len(ma.testImages)))
 	ma.modeIndicator.SetMode(MNISTModeIdle)
@@ -452,23 +570,28 @@ func (ma *MNISTApp) loadTestData() {
 
 // evaluateNetwork runs evaluation on test data.
 func (ma *MNISTApp) evaluateNetwork() {
+	debug.Println("evaluateNetwork: Starting")
 	ma.modeIndicator.SetMode(MNISTModeEvaluating)
 	ma.educationalPanel.SetEvaluationExplanation()
 	ma.operationLog.Add("Starting full evaluation")
 
 	if len(ma.testImages) == 0 {
+		debug.Println("evaluateNetwork: No test data, loading...")
 		ma.loadTestData()
 		if len(ma.testImages) == 0 {
+			debug.Println("evaluateNetwork: Failed to load test data")
 			ma.updateStatus("● IDLE | No test data for evaluation")
 			ma.modeIndicator.SetMode(MNISTModeIdle)
 			return
 		}
 	}
 
+	debug.Printf("evaluateNetwork: Testing on %d samples", len(ma.testImages))
 	ma.updateStatus(fmt.Sprintf("EVALUATING | Testing on %d samples...", len(ma.testImages)))
 
 	// Compute confusion matrix
 	confMatrix := ma.network.ComputeConfusionMatrix(ma.testImages, ma.testLabels)
+	debug.Println("evaluateNetwork: Confusion matrix computed")
 
 	// Convert to [10][10]int
 	var matrix [10][10]int
@@ -490,15 +613,21 @@ func (ma *MNISTApp) evaluateNetwork() {
 	}
 
 	accuracy := ma.confusionMatrix.GetAccuracy()
+	debug.Printf("evaluateNetwork: Accuracy=%.2f%%", accuracy*100)
 	ma.metricsPanel.SetMetrics(precArr, recArr, f1Arr, accuracy)
 
 	// Update key stat
 	ma.keyStat.SetValue(fmt.Sprintf("%.1f%%", accuracy*100))
 
+	// Update hover info with evaluation summary
+	totalMACs := len(ma.testImages) * (784*128 + 128*10)
+	ma.hoverInfoLabel.SetText(fmt.Sprintf("Evaluated: %d MACs total", totalMACs))
+
 	// Log result
 	ma.operationLog.Add(fmt.Sprintf("Accuracy: %.1f%% on %d samples", accuracy*100, len(ma.testImages)))
 	ma.updateStatus(fmt.Sprintf("● IDLE | Evaluation complete: %.1f%% accuracy", accuracy*100))
 	ma.modeIndicator.SetMode(MNISTModeIdle)
+	debug.Println("evaluateNetwork: Complete")
 }
 
 // onConfusionCellTapped handles clicks on the confusion matrix.
