@@ -21,7 +21,7 @@ type CrossbarApp struct {
 	window  fyne.Window
 
 	// Core components
-	array *crossbar.Array
+	array  *crossbar.Array
 	config *crossbar.Config
 
 	// GUI components
@@ -29,9 +29,16 @@ type CrossbarApp struct {
 	irDropHeatmap      *CrossbarHeatmap
 	sneakPathHeatmap   *CrossbarHeatmap
 
-	controlPanel *ControlPanel
-	statsPanel   *StatsPanel
+	controlPanel   *ControlPanel
+	statsPanel     *StatsPanel
 	levelIndicator *LevelIndicator
+
+	// Live Slide components
+	modeIndicator    *ModeIndicatorBox
+	educationalPanel *EducationalPanel
+	operationLog     *OperationLog
+	ioDisplay        *InputOutputDisplay
+	keyStat          *KeyStatBox
 
 	// Status
 	statusLabel *widget.Label
@@ -111,8 +118,16 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	// Create level indicator
 	ca.levelIndicator = NewLevelIndicator()
 
+	// Create Live Slide components
+	ca.modeIndicator = NewModeIndicatorBox()
+	ca.educationalPanel = NewEducationalPanel()
+	ca.educationalPanel.SetIdleExplanation()
+	ca.operationLog = NewOperationLog()
+	ca.ioDisplay = NewInputOutputDisplay()
+	ca.keyStat = NewKeyStatBox("N² Operations", fmt.Sprintf("%d MACs", ca.config.Rows*ca.config.Cols))
+
 	// Create status labels
-	ca.statusLabel = widget.NewLabel("Status: Ready")
+	ca.statusLabel = widget.NewLabel("● IDLE | Ready for operations")
 	ca.statusLabel.TextStyle = fyne.TextStyle{Bold: true}
 
 	ca.infoLabel = widget.NewLabel(fmt.Sprintf(
@@ -127,46 +142,60 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		container.NewTabItem("Sneak Paths", container.NewPadded(ca.sneakPathHeatmap)),
 	)
 
-	// Title and header
+	// Title and header with Dr. Tour quote
 	titleLabel := widget.NewLabel("IronLattice Crossbar Array Visualization")
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 	titleLabel.Alignment = fyne.TextAlignCenter
 
-	subtitleLabel := widget.NewLabel("Ferroelectric Compute-in-Memory with 30 Discrete Analog States")
-	subtitleLabel.Alignment = fyne.TextAlignCenter
+	quoteLabel := widget.NewLabel("\"Compute in memory where the same device does memory and computation.\" — Dr. external research group")
+	quoteLabel.Alignment = fyne.TextAlignCenter
+	quoteLabel.TextStyle = fyne.TextStyle{Italic: true}
 
 	header := container.NewVBox(
 		titleLabel,
-		subtitleLabel,
+		quoteLabel,
 		widget.NewSeparator(),
 	)
 
-	// Footer with status
+	// Footer with status bar showing mode and current action
 	footer := container.NewVBox(
 		widget.NewSeparator(),
 		container.NewHBox(
+			ca.modeIndicator,
+			widget.NewSeparator(),
 			ca.statusLabel,
 			layout.NewSpacer(),
 			ca.infoLabel,
 		),
 	)
 
-	// Right panel (controls + stats)
+	// Right panel (controls + I/O display + stats)
 	rightPanel := container.NewVBox(
 		ca.controlPanel,
+		widget.NewSeparator(),
+		ca.ioDisplay,
 		widget.NewSeparator(),
 		ca.statsPanel,
 		widget.NewSeparator(),
 		ca.levelIndicator,
 	)
 
-	// Main content
+	// Left panel (educational + log + key stat)
+	leftPanel := container.NewVBox(
+		ca.educationalPanel,
+		widget.NewSeparator(),
+		ca.operationLog,
+		widget.NewSeparator(),
+		ca.keyStat,
+	)
+
+	// Main content with left panel for educational content
 	mainContent := container.NewBorder(
-		header,  // top
-		footer,  // bottom
-		nil,     // left
-		container.NewPadded(rightPanel), // right
-		tabs,    // center
+		header,                           // top
+		footer,                           // bottom
+		container.NewPadded(leftPanel),   // left
+		container.NewPadded(rightPanel),  // right
+		tabs,                             // center
 	)
 
 	return mainContent
