@@ -27,9 +27,9 @@ var (
 	colorSecondary  = color.RGBA{255, 107, 107, 255} // Coral red
 	colorAccent     = color.RGBA{78, 205, 196, 255}  // Teal
 	colorWarning    = color.RGBA{255, 230, 109, 255} // Yellow
-	colorBackground = color.RGBA{26, 26, 46, 255}    // Dark blue
-	colorGrid       = color.RGBA{60, 60, 80, 128}    // Grid lines
-	colorAxis       = color.RGBA{150, 150, 150, 255} // Axis lines
+	colorBackground = color.RGBA{0, 50, 100, 255}    // IronLattice blue #003264
+	colorGrid       = color.RGBA{0, 70, 130, 128}    // Grid lines (lighter blue)
+	colorAxis       = color.RGBA{150, 180, 200, 255} // Axis lines
 	colorPositive   = color.RGBA{255, 100, 100, 255} // Positive polarization
 	colorNegative   = color.RGBA{100, 150, 255, 255} // Negative polarization
 )
@@ -82,11 +82,11 @@ type App struct {
 	plot           *PEPlot
 	levelIndicator *LevelIndicator
 	cellViz        *CellVisualizer
+	modeIndicator  *ModeIndicator // WRITE/READ mode indicator with colored box
 	eFieldSlider   *widget.Slider
 	eFieldLabel    *widget.Label
 	pLabel         *widget.Label
 	levelLabel     *widget.Label
-	modeLabel      *widget.Label // WRITE/READ mode indicator
 	materialSelect *widget.Select
 	waveformSelect *widget.Select
 	statusLabel    *widget.Label
@@ -222,35 +222,19 @@ func (a *App) createUI() fyne.CanvasObject {
 		widget.NewLabelWithStyle("This is the cell", fyne.TextAlignCenter, fyne.TextStyle{Italic: true}),
 	)
 
-	// Left column of right panel: Controls + Info (15% of 1280 = ~190px)
-	leftCol := container.NewVBox(
+	// Controls panel (22% of window width)
+	controlsCol := container.NewScroll(container.NewVBox(
 		controls,
 		widget.NewSeparator(),
 		info,
-	)
-	leftColFixed := container.New(&fixedWidthLayout{width: 190}, leftCol)
+	))
 
-	// Right column of right panel: Slide + Log (12% of 1280 = ~155px)
-	rightCol := container.NewVBox(
+	// Slide + Log panel (12% of window width)
+	slideLogCol := container.NewScroll(container.NewVBox(
 		slidePanel,
 		widget.NewSeparator(),
 		logPanel,
-	)
-	rightColFixed := container.New(&fixedWidthLayout{width: 155}, rightCol)
-
-	// Right panel with two columns side by side (scrollable)
-	rightPanel := container.NewScroll(container.NewHBox(
-		leftColFixed,
-		widget.NewSeparator(),
-		rightColFixed,
 	))
-	rightPanel.SetMinSize(fyne.NewSize(360, 0))
-
-	// Left side: cell (fixed width)
-	leftSide := container.NewHBox(
-		cellContainer,
-		widget.NewSeparator(),
-	)
 
 	// Plot and level indicator side by side with shared title row
 	plotTitle := widget.NewLabelWithStyle("P-E Hysteresis Loop", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
@@ -288,12 +272,14 @@ func (a *App) createUI() fyne.CanvasObject {
 		layout.NewSpacer(),
 	)
 
-	// Main layout: left fixed, center expands, right fixed
-	mainLayout := container.NewBorder(
-		nil, nil,
-		leftSide,
-		rightPanel,
+	// Main layout using percentage-based widths
+	// Cell: 12%, Plot: 54%, Controls: 22%, Slide/Log: 12%
+	mainLayout := container.New(
+		&percentHBoxLayout{weights: []float32{0.12, 0.54, 0.22, 0.12}},
+		cellContainer,
 		centerArea,
+		controlsCol,
+		slideLogCol,
 	)
 
 	return container.NewBorder(
@@ -483,7 +469,8 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 func (a *App) createInfoPanel() fyne.CanvasObject {
 	a.pLabel = widget.NewLabel("P: 0.00 µC/cm²")
 	a.levelLabel = widget.NewLabel("Level: 15/30")
-	a.modeLabel = widget.NewLabelWithStyle("Mode: READ", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	a.modeIndicator = NewModeIndicator()
+	a.modeIndicator.SetMinSize(fyne.NewSize(180, 55))
 
 	return container.NewVBox(
 		widget.NewLabelWithStyle("Current State", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
@@ -492,7 +479,7 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 		a.pLabel,
 		a.levelLabel,
 		widget.NewSeparator(),
-		a.modeLabel,
+		a.modeIndicator,
 		widget.NewSeparator(),
 		widget.NewLabelWithStyle("Material Parameters", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		widget.NewSeparator(),
@@ -577,7 +564,10 @@ func (a *App) getSlideText() string {
 }
 
 func (a *App) addLogEntry(entry string) {
-	a.logEntries = append(a.logEntries, entry)
+	// Add timestamp prefix
+	timestamp := fmt.Sprintf("t=%.1fs", a.simTime)
+	fullEntry := fmt.Sprintf("%s %s", timestamp, entry)
+	a.logEntries = append(a.logEntries, fullEntry)
 	if len(a.logEntries) > a.maxLogLines {
 		a.logEntries = a.logEntries[1:]
 	}
@@ -651,7 +641,7 @@ func (a *App) simulationLoop() {
 					oldTarget := a.rwTargetLevel
 					a.rwTargetLevel = rand.Intn(30) + 1 // Random level 1-30
 					// Log target change
-					a.addLogEntry(fmt.Sprintf("-> Target: %d (was %d)", a.rwTargetLevel, oldTarget))
+					a.addLogEntry(fmt.Sprintf("TARGET %d→%d", oldTarget, a.rwTargetLevel))
 				}
 				// Calculate E needed to reach that level
 				// Level 1-30 maps to E-field: must exceed Ec to cause switching
@@ -802,12 +792,9 @@ func (a *App) updateUI(eField, pol float64, level int, eHist, pHist []float64) {
 		a.levelLabel.SetText(fmt.Sprintf("Level: %d/30", level+1))
 
 		// Update WRITE/READ mode indicator based on E vs Ec
-		// Use visual markers to distinguish modes
-		if math.Abs(eField) > a.material.Ec {
-			a.modeLabel.SetText("Mode: [WRITE] |E|>Ec")
-		} else {
-			a.modeLabel.SetText("Mode: (READ) |E|<Ec")
-		}
+		isWrite := math.Abs(eField) > a.material.Ec
+		a.modeIndicator.SetWrite(isWrite)
+		a.modeIndicator.Refresh()
 
 		// Update slider position for auto modes
 		if a.autoMode {
@@ -838,17 +825,17 @@ func (a *App) updateUI(eField, pol float64, level int, eHist, pHist []float64) {
 					a.lastLogPhase = wrdPhase
 					switch wrdPhase {
 					case 0:
-						a.addLogEntry(fmt.Sprintf(">> WRITE(%d)", wrdTarget))
+						a.addLogEntry(fmt.Sprintf("WRITE → %d", wrdTarget))
 					case 1:
-						a.addLogEntry(fmt.Sprintf("   HOLD @ %d", level+1))
+						a.addLogEntry(fmt.Sprintf("HOLD  → %d", level+1))
 					case 2:
-						a.addLogEntry(fmt.Sprintf("<< READ..."))
+						a.addLogEntry("READ  ...")
 					case 3:
-						status := "OK"
+						status := "✓"
 						if wrdRead != wrdTarget {
 							status = "~"
 						}
-						a.addLogEntry(fmt.Sprintf("   Got: %d [%s]", wrdRead, status))
+						a.addLogEntry(fmt.Sprintf("READ  → %d %s", wrdRead, status))
 					}
 					a.mu.Unlock()
 				}
@@ -1150,16 +1137,30 @@ func (r *peplotRenderer) Refresh() {
 		}
 	}
 
-	// Current position marker
+	// Current position marker - large with glow effect
 	markerX := marginLeft + plotW/2 + float32(r.plot.currentE/r.plot.eMax)*plotW/2
 	markerY := centerY - float32(r.plot.currentP/r.plot.pMax)*plotH/2
 
+	// Outer glow (larger, semi-transparent)
+	markerGlow := canvas.NewCircle(color.RGBA{colorWarning.R, colorWarning.G, colorWarning.B, 80})
+	markerGlow.Resize(fyne.NewSize(28, 28))
+	markerGlow.Move(fyne.NewPos(markerX-14, markerY-14))
+	r.objects = append(r.objects, markerGlow)
+
+	// Middle glow
+	markerMidGlow := canvas.NewCircle(color.RGBA{colorWarning.R, colorWarning.G, colorWarning.B, 150})
+	markerMidGlow.Resize(fyne.NewSize(20, 20))
+	markerMidGlow.Move(fyne.NewPos(markerX-10, markerY-10))
+	r.objects = append(r.objects, markerMidGlow)
+
+	// Main marker (solid)
 	marker := canvas.NewCircle(colorWarning)
-	marker.Resize(fyne.NewSize(12, 12))
-	marker.Move(fyne.NewPos(markerX-6, markerY-6))
+	marker.Resize(fyne.NewSize(14, 14))
+	marker.Move(fyne.NewPos(markerX-7, markerY-7))
 	r.objects = append(r.objects, marker)
 
-	markerInner := canvas.NewCircle(colorBackground)
+	// Inner highlight (white center)
+	markerInner := canvas.NewCircle(color.RGBA{255, 255, 255, 200})
 	markerInner.Resize(fyne.NewSize(6, 6))
 	markerInner.Move(fyne.NewPos(markerX-3, markerY-3))
 	r.objects = append(r.objects, markerInner)
@@ -1232,7 +1233,7 @@ func (r *levelRenderer) Refresh() {
 	size := r.indicator.Size()
 
 	// Background
-	bg := canvas.NewRectangle(color.RGBA{30, 30, 40, 255})
+	bg := canvas.NewRectangle(color.RGBA{0, 40, 80, 255}) // Darker blue for level indicator
 	bg.Resize(size)
 	r.objects = append(r.objects, bg)
 
@@ -1355,7 +1356,7 @@ func (r *cellRenderer) Refresh() {
 	size := r.cell.Size()
 
 	// Background
-	bg := canvas.NewRectangle(color.RGBA{25, 25, 40, 255})
+	bg := canvas.NewRectangle(color.RGBA{0, 40, 80, 255}) // Darker blue for cell viz
 	bg.Resize(size)
 	r.objects = append(r.objects, bg)
 
@@ -1375,25 +1376,26 @@ func (r *cellRenderer) Refresh() {
 	border.Move(fyne.NewPos(cellX-borderWidth, cellY-borderWidth))
 	r.objects = append(r.objects, border)
 
-	// Cell color based on level (gradient from blue to red)
+	// Cell color based on level - matches the level indicator gradient
+	// Level 1 (i=0) = Yellow, Level 15 = Pink/salmon, Level 30 (i=29) = Red
 	t := float64(level) / 29.0
 	var cellColor color.RGBA
 	if t < 0.5 {
-		// Blue to white transition
+		// Yellow to pink transition (levels 1-15)
 		t2 := t * 2
 		cellColor = color.RGBA{
-			uint8(50 + t2*200),
-			uint8(80 + t2*170),
-			uint8(255),
+			255,                       // R stays high
+			uint8(230 - t2*80),        // G decreases: 230 -> 150
+			uint8(100 + t2*80),        // B increases: 100 -> 180
 			255,
 		}
 	} else {
-		// White to red transition
+		// Pink to red transition (levels 16-30)
 		t2 := (t - 0.5) * 2
 		cellColor = color.RGBA{
-			255,
-			uint8(250 - t2*200),
-			uint8(255 - t2*200),
+			255,                       // R stays high
+			uint8(150 - t2*100),       // G decreases: 150 -> 50
+			uint8(180 - t2*130),       // B decreases: 180 -> 50
 			255,
 		}
 	}
@@ -1459,6 +1461,118 @@ func (r *cellRenderer) Objects() []fyne.CanvasObject {
 func (r *cellRenderer) Destroy() {}
 
 // ============================================================
+// Mode Indicator Widget - WRITE/READ with colored background
+// ============================================================
+
+// ModeIndicator shows the current mode (WRITE/READ) with colored background
+type ModeIndicator struct {
+	widget.BaseWidget
+
+	mu       sync.RWMutex
+	isWrite  bool
+	minSize  fyne.Size
+}
+
+// NewModeIndicator creates a new mode indicator
+func NewModeIndicator() *ModeIndicator {
+	m := &ModeIndicator{
+		isWrite: false,
+		minSize: fyne.NewSize(180, 60),
+	}
+	m.ExtendBaseWidget(m)
+	return m
+}
+
+func (m *ModeIndicator) SetMinSize(size fyne.Size) {
+	m.minSize = size
+}
+
+func (m *ModeIndicator) MinSize() fyne.Size {
+	return m.minSize
+}
+
+func (m *ModeIndicator) SetWrite(isWrite bool) {
+	m.mu.Lock()
+	m.isWrite = isWrite
+	m.mu.Unlock()
+}
+
+func (m *ModeIndicator) CreateRenderer() fyne.WidgetRenderer {
+	return &modeRenderer{indicator: m}
+}
+
+type modeRenderer struct {
+	indicator *ModeIndicator
+	objects   []fyne.CanvasObject
+}
+
+func (r *modeRenderer) MinSize() fyne.Size {
+	return r.indicator.minSize
+}
+
+func (r *modeRenderer) Layout(size fyne.Size) {
+	r.Refresh()
+}
+
+func (r *modeRenderer) Refresh() {
+	r.indicator.mu.RLock()
+	isWrite := r.indicator.isWrite
+	r.indicator.mu.RUnlock()
+
+	r.objects = r.objects[:0]
+	size := r.indicator.Size()
+
+	// Box colors
+	var bgColor, borderColor color.RGBA
+	var modeText, conditionText string
+
+	if isWrite {
+		bgColor = color.RGBA{180, 50, 50, 255}    // Red background
+		borderColor = color.RGBA{255, 100, 100, 255}
+		modeText = "██ WRITE ██"
+		conditionText = "|E| > Ec"
+	} else {
+		bgColor = color.RGBA{50, 150, 80, 255}    // Green background
+		borderColor = color.RGBA{100, 220, 130, 255}
+		modeText = "░░ READ ░░"
+		conditionText = "|E| < Ec"
+	}
+
+	// Border
+	border := canvas.NewRectangle(borderColor)
+	border.Resize(size)
+	r.objects = append(r.objects, border)
+
+	// Background with padding
+	padding := float32(3)
+	bg := canvas.NewRectangle(bgColor)
+	bg.Resize(fyne.NewSize(size.Width-padding*2, size.Height-padding*2))
+	bg.Move(fyne.NewPos(padding, padding))
+	r.objects = append(r.objects, bg)
+
+	// Mode text (centered, top)
+	modeLabel := canvas.NewText(modeText, color.White)
+	modeLabel.TextSize = 16
+	modeLabel.TextStyle = fyne.TextStyle{Bold: true}
+	textW := float32(100)
+	modeLabel.Move(fyne.NewPos((size.Width-textW)/2, 8))
+	r.objects = append(r.objects, modeLabel)
+
+	// Condition text (centered, bottom)
+	condLabel := canvas.NewText(conditionText, color.RGBA{220, 220, 220, 255})
+	condLabel.TextSize = 14
+	condLabelW := float32(70)
+	condLabel.Move(fyne.NewPos((size.Width-condLabelW)/2, 32))
+	r.objects = append(r.objects, condLabel)
+}
+
+func (r *modeRenderer) Objects() []fyne.CanvasObject {
+	return r.objects
+}
+
+func (r *modeRenderer) Destroy() {}
+
+// ============================================================
 // Custom Theme
 // ============================================================
 
@@ -1467,13 +1581,17 @@ type ironLatticeTheme struct{}
 func (t *ironLatticeTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
 	switch name {
 	case theme.ColorNameBackground:
-		return color.RGBA{20, 20, 35, 255}
+		return colorBackground // IronLattice blue #003264
 	case theme.ColorNameForeground:
 		return color.RGBA{230, 230, 230, 255}
 	case theme.ColorNamePrimary:
 		return colorPrimary
 	case theme.ColorNameButton:
-		return color.RGBA{40, 40, 60, 255}
+		return color.RGBA{0, 70, 130, 255} // Slightly lighter blue
+	case theme.ColorNameInputBackground:
+		return color.RGBA{0, 40, 80, 255} // Darker blue for inputs
+	case theme.ColorNameSeparator:
+		return color.RGBA{0, 80, 150, 255} // Separator lines
 	default:
 		return theme.DefaultTheme().Color(name, variant)
 	}
@@ -1514,5 +1632,41 @@ func (l *fixedWidthLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	for _, o := range objects {
 		o.Resize(fyne.NewSize(l.width, size.Height))
 		o.Move(fyne.NewPos(0, 0))
+	}
+}
+
+// ============================================================
+// Percentage-Based HBox Layout
+// ============================================================
+
+// percentHBoxLayout distributes width based on percentage weights
+// Children are laid out left-to-right with widths proportional to their weights
+type percentHBoxLayout struct {
+	weights []float32 // percentage weights (0.0 to 1.0 each)
+}
+
+func (l *percentHBoxLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	minH := float32(0)
+	for _, o := range objects {
+		if o.Visible() {
+			minH = fyne.Max(minH, o.MinSize().Height)
+		}
+	}
+	return fyne.NewSize(100, minH) // Minimal width, will expand
+}
+
+func (l *percentHBoxLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	x := float32(0)
+	for i, o := range objects {
+		if !o.Visible() {
+			continue
+		}
+		var w float32
+		if i < len(l.weights) {
+			w = size.Width * l.weights[i]
+		}
+		o.Resize(fyne.NewSize(w, size.Height))
+		o.Move(fyne.NewPos(x, 0))
+		x += w
 	}
 }

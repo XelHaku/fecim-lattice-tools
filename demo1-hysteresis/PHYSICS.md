@@ -263,7 +263,55 @@ This is the **Preisach model**: The macroscopic hysteresis loop emerges from the
 
 ---
 
-## Part 6: Minor Loops
+## Part 6: Write vs Read Operations
+
+### The Fundamental Principle
+
+Ferroelectric memory has a built-in threshold (Ec) that separates destructive and non-destructive operations:
+
+```
+         │←───── READ ZONE ─────→│←── WRITE ──→│
+         │     (safe sensing)    │  (changes P) │
+         │                       │              │
+    ─────┼───────────────────────┼──────────────┼────→ |E|
+         0                      Ec            Emax
+```
+
+### WRITE Operation: |E| > Ec
+
+When the applied field exceeds the coercive field:
+- Hysterons begin switching
+- Polarization changes
+- New state is written to memory
+
+```go
+// In simulation: when |E| > Ec, hysterons flip
+if E >= hysteron.Alpha {
+    hysteron.State = +1  // Switch UP
+}
+```
+
+### READ Operation: |E| < Ec
+
+When the applied field stays below the coercive field:
+- No hysterons switch
+- Polarization remains unchanged
+- State can be sensed non-destructively
+
+```go
+// In simulation: when Beta < E < Alpha, state persists
+// This is implicit — no code needed, hysteron just keeps its state!
+```
+
+### Why This Matters
+
+1. **Non-destructive readout** — You can read the memory millions of times without degrading it
+2. **Clear write threshold** — You know exactly when you're modifying vs sensing
+3. **The demo shows this** — Watch the mode indicator switch between [WRITE] and (READ)
+
+---
+
+## Part 7: Minor Loops
 
 ### What if We Don't Complete the Full Cycle?
 
@@ -308,10 +356,27 @@ With this understanding, Demo 1 shows:
 2. **The 30 States** - See which analog level you're at based on P value
 3. **Minor Loops** - Reverse direction partway and see the inner loops form
 4. **Material Comparison** - Different Ec, Ps values → different loop shapes
+5. **WRITE vs READ** - Real-time indicator shows when |E| > Ec (WRITE) vs |E| < Ec (READ)
+6. **Memory Operations Log** - Watch actual WRITE/READ cycles in the Write/Read Demo mode
+
+### The Write/Read Demo Mode
+
+The demo includes a special mode that demonstrates actual memory operations:
+
+```
+Phase 1: WRITE     Phase 2: HOLD      Phase 3: READ      Phase 4: DISPLAY
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│ E > Ec      │    │ E = 0       │    │ E < Ec      │    │ E = 0       │
+│ P changes!  │ →  │ P persists! │ →  │ P unchanged │ →  │ Show result │
+│ WRITE mode  │    │ MEMORY!     │    │ READ mode   │    │ Wrote=Read? │
+└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+```
+
+**Key insight:** The HOLD phase proves non-volatility — P stays at the written value even when E returns to zero!
 
 ---
 
-## Part 7: How Demo 1 Actually Implements the Physics
+## Part 8: How Demo 1 Actually Implements the Physics
 
 This section documents exactly what the code does — verified by source analysis.
 
@@ -396,13 +461,25 @@ A wider σ would give a more slanted/soft loop.
 
 ### How 30 Levels Are Discretized
 
-The continuous polarization P is mapped to discrete levels in the GUI loop (`gui.go:416`):
+The continuous polarization P is mapped to discrete levels in the simulation loop:
 
 ```go
 a.discreteLevel = int(math.Round((a.normalizedP + 1) / 2 * 29))
 ```
 
 Where `normalizedP = P / Ps` ranges from -1 to +1.
+
+### WRITE/READ Mode Detection
+
+The UI determines the current mode by comparing |E| to Ec:
+
+```go
+if math.Abs(eField) > a.material.Ec {
+    a.modeLabel.SetText("Mode: [WRITE] |E|>Ec")
+} else {
+    a.modeLabel.SetText("Mode: (READ) |E|<Ec")
+}
+```
 
 | Normalized P | Level |
 |--------------|-------|
@@ -453,5 +530,19 @@ Where Tc = 723 K (~450°C) is the Curie temperature. Above Tc, the material lose
 | Loop shape | From Gaussian distribution (σ=20%) | ✅ Emergent, not forced |
 | 30 levels | Linear discretization of P | ✅ Simple & correct |
 | Minor loops | Implicit via hysteron states | ✅ Works correctly |
+| Write vs Read | |E| > Ec threshold detection | ✅ Physics-accurate |
 | τ switching | Defined but not used in viz | ⚠️ Quasistatic approx |
 | Temperature | Ec(T) scaling implemented | ✅ Physics-accurate |
+
+---
+
+## Demo Waveform Modes
+
+| Mode | Physics Demonstrated |
+|------|---------------------|
+| Manual | Direct E-field control, hysteresis exploration |
+| Sine Wave | Full hysteresis loop traversal |
+| Triangle Wave | Linear ramps showing Ec threshold |
+| Square Wave | Fast switching dynamics |
+| Random Walk | Multi-level storage (30 states) |
+| Write/Read Demo | Complete memory operation cycle |

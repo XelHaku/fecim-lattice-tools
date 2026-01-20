@@ -169,6 +169,47 @@ In computer terms: 30 levels ≈ 5 bits of information per cell (instead of 1 bi
 
 ---
 
+## Write vs Read: The Key to Non-Volatile Memory
+
+### Writing = Pushing HARD
+
+To **write** (change) the memory, you need to push past the "sticky point" (called Ec, the coercive field):
+
+```
+    Push HARD (past Ec)
+           ↓
+    ━━━━━━━━━━━━━━━━━━━
+    │                 │
+    │  ↑ FLIPS! ↑     │  ← Memory changes!
+    │                 │
+    ━━━━━━━━━━━━━━━━━━━
+```
+
+### Reading = Pushing GENTLY
+
+To **read** (sense) the memory without changing it, use a small push (below Ec):
+
+```
+    Push gently (below Ec)
+           ↓
+    ━━━━━━━━━━━━━━━━━━━
+    │                 │
+    │  → stays →      │  ← Memory unchanged!
+    │                 │
+    ━━━━━━━━━━━━━━━━━━━
+```
+
+### The Magic
+
+```
+WRITE: |Voltage| > Ec  →  Memory CHANGES
+READ:  |Voltage| < Ec  →  Memory STAYS (just sense it!)
+```
+
+This is why ferroelectric memory is special — you can read it without destroying the data!
+
+---
+
 ## Real-World Benefit: Smarter AI, Less Power
 
 **Old Way (GPUs):**
@@ -198,10 +239,12 @@ Old Way:                          IronLattice:
 
 When you run the demo, you'll see:
 
-1. **The Loop** — Watch the "stubborn magnets" trace their path as you change the voltage
-2. **30 Levels** — See which "parking floor" you're on
-3. **Different Materials** — Try different flavors of the magic crystal
-4. **Live Updates** — Drag the slider and watch physics happen!
+1. **The Memory Cell** — A colored square showing the current level (1-30), blue to red gradient
+2. **The P-E Loop** — Watch the "stubborn magnets" trace their path as you change the voltage
+3. **30 Levels Bar** — See which "parking floor" you're on
+4. **WRITE/READ Indicator** — Shows when voltage is high enough to change memory (WRITE) vs just sensing (READ)
+5. **Educational Panel** — Explains what's happening in each mode
+6. **Memory Log** — Watch the read/write operations scroll by in real-time!
 
 ---
 
@@ -209,13 +252,38 @@ When you run the demo, you'll see:
 
 ```bash
 cd demo1-hysteresis
-./hysteresis
+go run ./cmd/demo
 ```
 
 **Things to try:**
-- Drag the voltage slider back and forth — watch the loop form!
+
+### 1. Sine Wave Mode (Default)
+- Watch the loop form automatically
+- See how P "lags behind" E — that's the memory!
+
+### 2. Random Walk Mode
+- Select "Random Walk" from the waveform dropdown
+- Watch it pick random levels and ramp to them
+- This shows "store this, store that" — real memory operation!
+
+### 3. Write/Read Demo Mode (Best for understanding!)
+- Select "Write/Read Demo" from the dropdown
+- Watch the 4-phase cycle:
+  - **WRITE**: Voltage goes HIGH (past Ec) → level changes
+  - **HOLD**: Voltage returns to ZERO → level STAYS! (memory!)
+  - **READ**: Small voltage pulse (below Ec) → level unchanged
+  - **DISPLAY**: Shows what was written vs what was read
+- The Memory Log shows each operation!
+
+### 4. Manual Mode
+- Select "Manual" and drag the slider yourself
 - Stop halfway — see how the level "remembers" where you stopped
 - Try different materials — some have "stickier" magnets than others
+
+### 5. Frequency Slider
+- Speed up or slow down ANY mode with the frequency slider
+- Slow = easier to see what's happening
+- Fast = more dramatic!
 
 ---
 
@@ -247,5 +315,16 @@ For the curious, here's what the demo actually computes:
 | The smooth curve | Hysterons distributed as a 2D Gaussian around ±Ec |
 | The 30 levels | Simple formula: `Level = round((P/Ps + 1) × 14.5)` |
 | Memory effect | Each hysteron stays put between its thresholds |
+| WRITE/READ indicator | Compares `|E|` vs `Ec` in real-time |
+| Memory Log | Tracks phase transitions in Write/Read Demo mode |
 
 The physics is real — the loop is **emergent**, not drawn!
+
+### New Waveform Modes
+
+| Mode | What it demonstrates |
+|------|---------------------|
+| Random Walk | Multi-level storage: picks random levels, ramps E to reach them |
+| Write/Read Demo | Full memory cycle: WRITE → HOLD → READ → verify |
+
+Both modes respond to the **Frequency slider** — speed them up or slow them down!
