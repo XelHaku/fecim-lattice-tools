@@ -104,6 +104,23 @@ func (h *CrossbarHeatmap) ClearSelection() {
 	h.Refresh()
 }
 
+// SetDimensions changes the dimensions of the heatmap and reinitializes data.
+func (h *CrossbarHeatmap) SetDimensions(rows, cols int) {
+	h.rows = rows
+	h.cols = cols
+	h.selectedRow = -1
+	h.selectedCol = -1
+	h.showSelection = false
+
+	// Reinitialize data
+	h.data = make([][]float64, rows)
+	for i := range h.data {
+		h.data[i] = make([]float64, cols)
+	}
+
+	h.Refresh()
+}
+
 // CreateRenderer implements fyne.Widget.
 func (h *CrossbarHeatmap) CreateRenderer() fyne.WidgetRenderer {
 	h.raster = canvas.NewRaster(h.generateImage)

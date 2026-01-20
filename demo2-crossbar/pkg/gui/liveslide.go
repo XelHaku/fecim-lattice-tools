@@ -185,7 +185,7 @@ func NewEducationalPanel() *EducationalPanel {
 	e := &EducationalPanel{
 		title:   "What You're Seeing",
 		content: "Select an operation to see\nwhat's happening.",
-		minSize: fyne.NewSize(200, 200),
+		minSize: fyne.NewSize(180, 150),
 	}
 	e.ExtendBaseWidget(e)
 	return e
@@ -322,10 +322,10 @@ type OperationLog struct {
 // NewOperationLog creates a new operation log.
 func NewOperationLog() *OperationLog {
 	o := &OperationLog{
-		maxEntries: 10,
+		maxEntries: 6,
 		startTime:  time.Now(),
-		minSize:    fyne.NewSize(200, 180),
-		entries:    make([]string, 0, 10),
+		minSize:    fyne.NewSize(180, 100),
+		entries:    make([]string, 0, 6),
 	}
 	o.titleLabel = widget.NewLabelWithStyle("Operation Log", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	o.contentLabel = widget.NewLabel("Waiting for operations...")
@@ -413,8 +413,8 @@ type InputOutputDisplay struct {
 // NewInputOutputDisplay creates a new I/O display.
 func NewInputOutputDisplay() *InputOutputDisplay {
 	d := &InputOutputDisplay{
-		maxDisplay: 8,
-		minSize:    fyne.NewSize(200, 160),
+		maxDisplay: 6,
+		minSize:    fyne.NewSize(180, 100),
 	}
 	d.inputLabel = widget.NewLabelWithStyle("Input Vector V", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	d.outputLabel = widget.NewLabelWithStyle("Output Vector I", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})

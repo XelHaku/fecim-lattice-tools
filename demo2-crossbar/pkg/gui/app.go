@@ -176,33 +176,41 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		),
 	)
 
-	// Right panel (controls + I/O display + stats)
+	// Right panel (controls + stats) - compact layout
 	rightPanel := container.NewVBox(
 		ca.controlPanel,
 		widget.NewSeparator(),
-		ca.ioDisplay,
-		widget.NewSeparator(),
 		ca.statsPanel,
-		widget.NewSeparator(),
-		ca.levelIndicator,
 	)
 
-	// Left panel (educational + log + key stat)
+	// Left panel (educational + key stat) - compact layout
 	leftPanel := container.NewVBox(
 		ca.educationalPanel,
-		widget.NewSeparator(),
-		ca.operationLog,
 		widget.NewSeparator(),
 		ca.keyStat,
 	)
 
-	// Main content with left panel for educational content
+	// Bottom bar with I/O display and operation log
+	bottomBar := container.NewGridWithColumns(3,
+		ca.ioDisplay,
+		ca.operationLog,
+		ca.levelIndicator,
+	)
+
+	// Combined footer with bottom bar
+	combinedFooter := container.NewVBox(
+		widget.NewSeparator(),
+		bottomBar,
+		footer,
+	)
+
+	// Main content - no scrolling, fixed layout
 	mainContent := container.NewBorder(
-		header,                           // top
-		footer,                           // bottom
-		container.NewPadded(leftPanel),   // left
-		container.NewPadded(rightPanel),  // right
-		tabs,                             // center
+		header,         // top
+		combinedFooter, // bottom
+		leftPanel,      // left
+		rightPanel,     // right
+		tabs,           // center
 	)
 
 	return mainContent
@@ -252,16 +260,11 @@ func (ca *CrossbarApp) recreateArray(size int, noise float64, adcBits int) {
 		return
 	}
 
-	// Recreate heatmaps
-	ca.conductanceHeatmap = NewCrossbarHeatmap(size, size)
-	ca.conductanceHeatmap.SetColormap("ironlattice")
-	ca.conductanceHeatmap.OnCellTapped = ca.onCellTapped
-
-	ca.irDropHeatmap = NewCrossbarHeatmap(size, size)
-	ca.irDropHeatmap.SetColormap("coolwarm")
-
-	ca.sneakPathHeatmap = NewCrossbarHeatmap(size, size)
-	ca.sneakPathHeatmap.SetColormap("plasma")
+	// Resize existing heatmaps instead of creating new ones
+	// This preserves the widget references in the window layout
+	ca.conductanceHeatmap.SetDimensions(size, size)
+	ca.irDropHeatmap.SetDimensions(size, size)
+	ca.sneakPathHeatmap.SetDimensions(size, size)
 
 	ca.programRandomWeights()
 	ca.updateConductanceDisplay()
