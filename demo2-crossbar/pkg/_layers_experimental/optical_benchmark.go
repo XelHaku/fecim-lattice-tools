@@ -913,7 +913,7 @@ func (mpb *MLPerfTinyBenchmark) Run() *MLPerfPowerResult {
 }
 
 // =============================================================================
-// IRONLATTICE OPTICAL-CIM INTEGRATION
+// FECIM OPTICAL-CIM INTEGRATION
 // =============================================================================
 
 // FeCIMOpticalConfig configures HZO-based optical CIM

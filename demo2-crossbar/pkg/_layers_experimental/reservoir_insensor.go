@@ -1299,7 +1299,7 @@ func RunReservoirBenchmarks() []ReservoirBenchmark {
 }
 
 // =============================================================================
-// INTEGRATION WITH IRONLATTICE
+// INTEGRATION WITH FECIM
 // =============================================================================
 
 // FeCIMReservoirConfig configures HZO-based reservoir

@@ -1015,7 +1015,7 @@ func (c *FerroKVCache) GetAllValues(layer, head, maxPosition int) [][]float64 {
 }
 
 // =============================================================================
-// IRONLATTICE CAM-ATTENTION SYSTEM
+// FECIM CAM-ATTENTION SYSTEM
 // =============================================================================
 
 // FeCIMCAMAttentionConfig configures integrated system

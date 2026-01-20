@@ -950,7 +950,7 @@ func (tcam *TernaryCAM) GetSearchEnergy() float64 {
 }
 
 // ============================================================================
-// IRONLATTICE MEMCAPACITOR-HDC INTEGRATION
+// FECIM MEMCAPACITOR-HDC INTEGRATION
 // ============================================================================
 
 // FeCIMHDCConfig configures FeCIM HDC system

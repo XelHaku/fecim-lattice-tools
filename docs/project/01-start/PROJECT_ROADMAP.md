@@ -345,7 +345,7 @@ multilayer-ferroelectric-cim-visualizer/
 │   ├── PROJECT_ROADMAP.md
 │   ├── DEMO_IMPLEMENTATION.md
 │   ├── HZO_PARAMETERS.md
-│   └── IRONLATTICE_PARADIGM.md
+│   └── FECIM_PARADIGM.md
 │
 └── papers/
     └── DOWNLOAD_PLAN.md

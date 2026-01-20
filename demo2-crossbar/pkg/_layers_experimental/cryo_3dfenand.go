@@ -715,7 +715,7 @@ func (bnn *BayesianNNSupport) ProgramSampledWeights(sampled [][]float64) error {
 }
 
 // ============================================================================
-// INTEGRATED IRONLATTICE CRYOGENIC 3D SYSTEM
+// INTEGRATED FECIM CRYOGENIC 3D SYSTEM
 // ============================================================================
 
 // FeCIMCryo3D integrates cryogenic computing with 3D FeNAND

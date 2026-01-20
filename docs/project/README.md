@@ -7,7 +7,7 @@ Technical documentation for Ferroelectric CIM ferroelectric compute-in-memory vi
 | Need to... | Go to |
 |------------|-------|
 | Get started | [01-start/PLAYBOOK.md](01-start/PLAYBOOK.md) |
-| Learn the physics | [02-curriculum/IRONLATTICE_PARADIGM.md](02-curriculum/IRONLATTICE_PARADIGM.md) |
+| Learn the physics | [02-curriculum/FECIM_PARADIGM.md](02-curriculum/FECIM_PARADIGM.md) |
 | Run demos | [04-demos/VULKAN_DEMO_GUIDE.md](04-demos/VULKAN_DEMO_GUIDE.md) |
 | Find HZO parameters | [03-technical/HZO_PARAMETERS.md](03-technical/HZO_PARAMETERS.md) |
 
@@ -21,7 +21,7 @@ multilayer-ferroelectric-cim-visualizer/
 │   └── STRATEGIC_VALUE.md  # Business value proposition
 │
 ├── 02-curriculum/      # Learning materials
-│   ├── IRONLATTICE_PARADIGM.md   # Deep dive (doctoral level)
+│   ├── FECIM_PARADIGM.md   # Deep dive (doctoral level)
 │   ├── CURRICULUM.md             # Learning path overview
 │   └── CURRICULUM_DETAILED.md    # Detailed curriculum
 │
@@ -55,7 +55,7 @@ multilayer-ferroelectric-cim-visualizer/
 2. **[CURRICULUM.md](02-curriculum/CURRICULUM.md)** - Learning path
 
 ### For Engineers
-1. **[IRONLATTICE_PARADIGM.md](02-curriculum/IRONLATTICE_PARADIGM.md)** - Deep physics/engineering
+1. **[FECIM_PARADIGM.md](02-curriculum/FECIM_PARADIGM.md)** - Deep physics/engineering
 2. **[HZO_PARAMETERS.md](03-technical/HZO_PARAMETERS.md)** - Material parameters
 3. **[VULKAN_DEMO_GUIDE.md](04-demos/VULKAN_DEMO_GUIDE.md)** - GPU implementation
 

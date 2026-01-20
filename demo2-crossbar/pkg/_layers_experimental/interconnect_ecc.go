@@ -1171,7 +1171,7 @@ func max(a, b int) int {
 }
 
 // =============================================================================
-// IRONLATTICE INTEGRATED SYSTEM
+// FECIM INTEGRATED SYSTEM
 // =============================================================================
 
 // FeCIMInterconnectECC represents the complete FeCIM multi-die system

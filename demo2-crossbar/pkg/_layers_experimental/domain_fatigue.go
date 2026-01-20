@@ -1164,7 +1164,7 @@ func (array *DomainAwareCIMArray) GetArrayStatistics() map[string]interface{} {
 }
 
 // ============================================================================
-// IRONLATTICE DOMAIN-AWARE INTEGRATION
+// FECIM DOMAIN-AWARE INTEGRATION
 // ============================================================================
 
 // FeCIMDomainConfig configures FeCIM domain-aware simulation

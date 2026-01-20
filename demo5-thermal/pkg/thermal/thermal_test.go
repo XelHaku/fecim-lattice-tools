@@ -256,41 +256,41 @@ func TestFeCIMLowPower(t *testing.T) {
 	// FeCIM: ~0.001 pJ per MAC → very low power density
 	// Traditional: ~10 pJ per MAC → high power density (10,000x more)
 
-	ironLatticeSim := DefaultThermalSim()
+	feCIMSim := DefaultThermalSim()
 	traditionalSim := DefaultThermalSim()
-	ironLatticeSim.Reset()
+	feCIMSim.Reset()
 	traditionalSim.Reset()
 
 	// Apply typical workload power densities for CIM arrays
 	// Traditional CIM/GPU: ~10-100 W/cm² = 1e5 - 1e6 W/m²
 	// FeCIM: 1000-10000x lower
-	ironLatticePower := 1e4   // W/m² (very low - FeCIM advantage)
+	feCIMPower := 1e4   // W/m² (very low - FeCIM advantage)
 	traditionalPower := 1e7  // W/m² (high - typical CMOS)
 
 	for y := 8; y < 24; y++ {
 		for x := 8; x < 24; x++ {
-			ironLatticeSim.SetPower(x, y, ironLatticePower)
+			feCIMSim.SetPower(x, y, feCIMPower)
 			traditionalSim.SetPower(x, y, traditionalPower)
 		}
 	}
 
 	// Run both simulations for 10 µs (10000 steps at 1 ns each)
-	ironLatticeSim.StepMultiple(10000, 1e-9)
+	feCIMSim.StepMultiple(10000, 1e-9)
 	traditionalSim.StepMultiple(10000, 1e-9)
 
-	ironLatticeMax := ironLatticeSim.GetMaxTemperature()
+	feCIMMax := feCIMSim.GetMaxTemperature()
 	traditionalMax := traditionalSim.GetMaxTemperature()
 
 	// FeCIM should be significantly cooler
-	if ironLatticeMax >= traditionalMax {
+	if feCIMMax >= traditionalMax {
 		t.Errorf("FeCIM should be cooler: IL=%.2f°C, Traditional=%.2f°C",
-			ironLatticeMax, traditionalMax)
+			feCIMMax, traditionalMax)
 	}
 
 	// Log the results
-	ilRise := ironLatticeMax - ironLatticeSim.AmbientTemp
+	ilRise := feCIMMax - feCIMSim.AmbientTemp
 	tradRise := traditionalMax - traditionalSim.AmbientTemp
-	t.Logf("FeCIM: %.2f°C (rise: %.2f°C)", ironLatticeMax, ilRise)
+	t.Logf("FeCIM: %.2f°C (rise: %.2f°C)", feCIMMax, ilRise)
 	t.Logf("Traditional: %.2f°C (rise: %.2f°C)", traditionalMax, tradRise)
 	if ilRise > 0.01 {
 		t.Logf("Temperature ratio: %.0fx cooler with FeCIM", tradRise/ilRise)

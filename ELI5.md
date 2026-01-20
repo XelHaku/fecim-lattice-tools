@@ -2296,7 +2296,7 @@ Improvement: 10,000×!
 
 ```
 ┌────────────────────────────────────────────────────────────┐
-│                    IRONLATTICE CHEAT SHEET                 │
+│                    FECIM CHEAT SHEET                 │
 ├────────────────────────────────────────────────────────────┤
 │                                                            │
 │  Ohm's Law:     I = V × G    (physics does multiplication)│

@@ -1064,7 +1064,7 @@ func (felix *FELIXAccelerator) GetEfficiency() float64 {
 }
 
 // ============================================================================
-// IRONLATTICE STOCHASTIC-HYBRID INTEGRATION
+// FECIM STOCHASTIC-HYBRID INTEGRATION
 // ============================================================================
 
 // FeCIMStochasticConfig configures FeCIM stochastic-hybrid system

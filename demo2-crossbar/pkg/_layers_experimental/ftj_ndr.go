@@ -831,7 +831,7 @@ func (syn *FTJSynapse) GetWeight() float64 {
 }
 
 // =============================================================================
-// IRONLATTICE FTJ INTEGRATION
+// FECIM FTJ INTEGRATION
 // =============================================================================
 
 // FeCIMFTJConfig configures HZO-based FTJ for FeCIM

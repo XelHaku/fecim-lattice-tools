@@ -955,7 +955,7 @@ Hybrid CIM Advantages:
 }
 
 // =============================================================================
-// IRONLATTICE NC-FET HYBRID SYSTEM
+// FECIM NC-FET HYBRID SYSTEM
 // =============================================================================
 
 // FeCIMNCFETHybrid represents FeCIM-optimized system

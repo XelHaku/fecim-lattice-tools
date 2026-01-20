@@ -54,7 +54,7 @@ func main() {
 func printHeader() {
 	fmt.Println()
 	fmt.Println("╔══════════════════════════════════════════════════════════════╗")
-	fmt.Println("║           IRONLATTICE NON-IDEALITIES ANALYSIS                ║")
+	fmt.Println("║           FECIM NON-IDEALITIES ANALYSIS                ║")
 	fmt.Println("║        IR Drop • Sneak Paths • Conductance Drift             ║")
 	fmt.Println("╚══════════════════════════════════════════════════════════════╝")
 	fmt.Println()

@@ -945,7 +945,7 @@ func (acam *AnalogCAM) SearchAnalog(query []float64) ([]int, []float64) {
 }
 
 // ============================================================================
-// INTEGRATED IRONLATTICE HIL-CAM SYSTEM
+// INTEGRATED FECIM HIL-CAM SYSTEM
 // ============================================================================
 
 // FeCIMHILCAM integrates HIL testing with CAM functionality

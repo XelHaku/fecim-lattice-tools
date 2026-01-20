@@ -1137,7 +1137,7 @@ func (nvp *NeuromorphicVisionPipeline) ProcessEventWindow(events []*DVSEvent) []
 }
 
 // ============================================================================
-// INTEGRATED IRONLATTICE FEDERATED VISION SYSTEM
+// INTEGRATED FECIM FEDERATED VISION SYSTEM
 // ============================================================================
 
 // FeCIMFederatedVision integrates federated learning with neuromorphic vision

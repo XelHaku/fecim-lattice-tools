@@ -11,7 +11,7 @@
 ## CURRENT STATUS (2026-01-19)
 
 ```
-THE IRONLATTICE STORY - 8 DEMOS
+THE FECIM STORY - 8 DEMOS
 
 Demo 1        Demo 2        Demo 3        Demo 4
 "How the      "How we       "What we      "How it fits
@@ -233,7 +233,7 @@ cd demo5-thermal && go run ./cmd/thermal --realtime
 
 ---
 
-## IRONLATTICE SPECS (From Dr. Tour)
+## FECIM SPECS (From Dr. Tour)
 
 | Spec | Ferroelectric CIM Hardware | Our Simulation | Verification |
 |------|---------------------|----------------|--------------|

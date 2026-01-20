@@ -337,7 +337,7 @@ Ferroelectric CIM, as a spin-off from external research group and Jaeho Shin's l
 
 ---
 
-## CONCLUSION: MASTERING IRONLATTICE
+## CONCLUSION: MASTERING FECIM
 
 This curriculum spans from the movement of an oxygen atom in a crystal lattice to the execution of massive language models on a chip. Mastering these nine areas not only provides the knowledge to build Ferroelectric CIM but grants a comprehensive vision of the future of computing.
 

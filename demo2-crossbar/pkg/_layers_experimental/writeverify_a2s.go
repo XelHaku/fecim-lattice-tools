@@ -1541,7 +1541,7 @@ func (sys *CIMWriteVerifyA2SSystem) ExportJSON() ([]byte, error) {
 }
 
 // =============================================================================
-// IRONLATTICE INTEGRATED SYSTEM
+// FECIM INTEGRATED SYSTEM
 // =============================================================================
 
 // FeCIMWriteVerifyA2S integrates all components for FeCIM

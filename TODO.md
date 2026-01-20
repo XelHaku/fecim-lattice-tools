@@ -60,7 +60,7 @@ PHASE 1               PHASE 2               PHASE 3
 ## 8-Demo Roadmap
 
 ```
-THE IRONLATTICE STORY
+THE FECIM STORY
 
 Demo 1        Demo 2        Demo 3        Demo 4
 "This is      "This is      "This is      "This is how
@@ -195,7 +195,7 @@ competition"  architecture" challenges"   else"
 From Dr. Tour's response to WSJ article "The Microchip Era Is About to End":
 
 ```
-WAFER-SCALE BENEFITS OF IRONLATTICE
+WAFER-SCALE BENEFITS OF FECIM
 
 1. Memory Bottleneck Solved     → CIM eliminates data movement
 2. Packaging Complexity Reduced → Fewer chips, simpler interconnects

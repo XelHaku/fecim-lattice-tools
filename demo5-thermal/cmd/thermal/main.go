@@ -224,9 +224,9 @@ func showComparisonDemo() {
 	fmt.Println()
 
 	// Create two simulations
-	ironLattice := thermal.DefaultThermalSim()
+	feCIM := thermal.DefaultThermalSim()
 	traditional := thermal.DefaultThermalSim()
-	ironLattice.Reset()
+	feCIM.Reset()
 	traditional.Reset()
 
 	// Power densities based on Dr. Tour's claims
@@ -238,13 +238,13 @@ func showComparisonDemo() {
 	fmt.Println("  Ratio: 1000-10,000× lower power!")
 	fmt.Println()
 
-	ironLatticePower := 1e4   // W/m² - very low power density (FeCIM advantage)
+	feCIMPower := 1e4   // W/m² - very low power density (FeCIM advantage)
 	traditionalPower := 1e7  // W/m² - typical high-performance CMOS
 
 	// Apply uniform workload
 	for y := 0; y < 32; y++ {
 		for x := 0; x < 32; x++ {
-			ironLattice.SetPower(x, y, ironLatticePower)
+			feCIM.SetPower(x, y, feCIMPower)
 			traditional.SetPower(x, y, traditionalPower)
 		}
 	}
@@ -254,7 +254,7 @@ func showComparisonDemo() {
 	fmt.Printf("Running %d simulation steps (10 µs simulated time)...\n", simSteps)
 	fmt.Println()
 
-	ironLattice.StepMultiple(simSteps, 1e-9)
+	feCIM.StepMultiple(simSteps, 1e-9)
 	traditional.StepMultiple(simSteps, 1e-9)
 
 	// Display results
@@ -263,10 +263,10 @@ func showComparisonDemo() {
 	fmt.Println("FeCIM Heat Map:")
 	renderer.MinTemp = 25
 	renderer.MaxTemp = 85
-	fmt.Println(renderer.Render(ironLattice))
-	fmt.Printf("  Max Temp: %.2f°C\n", ironLattice.GetMaxTemperature())
-	fmt.Printf("  Avg Temp: %.2f°C\n", ironLattice.GetAverageTemperature())
-	warning1 := ironLattice.CheckThermalWarning()
+	fmt.Println(renderer.Render(feCIM))
+	fmt.Printf("  Max Temp: %.2f°C\n", feCIM.GetMaxTemperature())
+	fmt.Printf("  Avg Temp: %.2f°C\n", feCIM.GetAverageTemperature())
+	warning1 := feCIM.CheckThermalWarning()
 	if warning1 != nil {
 		fmt.Printf("  Status: %s\n", warning1.Message)
 	} else {
@@ -287,7 +287,7 @@ func showComparisonDemo() {
 	fmt.Println()
 
 	// Temperature comparison
-	ilTempRise := ironLattice.GetMaxTemperature() - ironLattice.AmbientTemp
+	ilTempRise := feCIM.GetMaxTemperature() - feCIM.AmbientTemp
 	tradTempRise := traditional.GetMaxTemperature() - traditional.AmbientTemp
 
 	fmt.Println("Temperature Rise Comparison:")

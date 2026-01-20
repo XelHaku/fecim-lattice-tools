@@ -1056,7 +1056,7 @@ func (c *Ferro2DCrossbar) ApplySTDPUpdate(preSpikes, postSpikes []float64, learn
 }
 
 // =============================================================================
-// IRONLATTICE NC-2D SYSTEM INTEGRATION
+// FECIM NC-2D SYSTEM INTEGRATION
 // =============================================================================
 
 // FeCIMNC2DConfig configures integrated NC and 2D ferroelectric system

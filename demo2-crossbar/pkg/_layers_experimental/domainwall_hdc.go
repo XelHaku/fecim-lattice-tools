@@ -977,7 +977,7 @@ func (hdc *HDCClassifier) EvaluateAccuracy(samples [][]interface{}, labels []int
 }
 
 // =============================================================================
-// INTEGRATED IRONLATTICE SYSTEM
+// INTEGRATED FECIM SYSTEM
 // =============================================================================
 
 // FeCIMDWHDCSystem combines domain wall synapses with HDC

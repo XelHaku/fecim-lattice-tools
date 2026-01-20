@@ -172,7 +172,7 @@ func Run() error {
 
 func (a *App) run() error {
 	a.fyneApp = app.New()
-	a.fyneApp.Settings().SetTheme(&ironLatticeTheme{})
+	a.fyneApp.Settings().SetTheme(&feCIMTheme{})
 
 	a.mainWindow = a.fyneApp.NewWindow("FeCIM Hysteresis Visualizer - Demo 1")
 	a.mainWindow.Resize(fyne.NewSize(1280, 900))
@@ -1617,9 +1617,9 @@ func (r *modeRenderer) Destroy() {}
 // Custom Theme
 // ============================================================
 
-type ironLatticeTheme struct{}
+type feCIMTheme struct{}
 
-func (t *ironLatticeTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
+func (t *feCIMTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
 	switch name {
 	case theme.ColorNameBackground:
 		return colorBackground // FeCIM blue #003264
@@ -1638,15 +1638,15 @@ func (t *ironLatticeTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVar
 	}
 }
 
-func (t *ironLatticeTheme) Font(style fyne.TextStyle) fyne.Resource {
+func (t *feCIMTheme) Font(style fyne.TextStyle) fyne.Resource {
 	return theme.DefaultTheme().Font(style)
 }
 
-func (t *ironLatticeTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
+func (t *feCIMTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
 	return theme.DefaultTheme().Icon(name)
 }
 
-func (t *ironLatticeTheme) Size(name fyne.ThemeSizeName) float32 {
+func (t *feCIMTheme) Size(name fyne.ThemeSizeName) float32 {
 	return theme.DefaultTheme().Size(name)
 }
 

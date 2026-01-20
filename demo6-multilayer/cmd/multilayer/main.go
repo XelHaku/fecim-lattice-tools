@@ -81,7 +81,7 @@ func main() {
 func printHeader(stack *multilayer.Stack) {
 	fmt.Println()
 	fmt.Println("╔══════════════════════════════════════════════════════════════╗")
-	fmt.Println("║           IRONLATTICE 3D MULTI-LAYER ARCHITECTURE            ║")
+	fmt.Println("║           FECIM 3D MULTI-LAYER ARCHITECTURE            ║")
 	fmt.Println("║              Ferroelectric Compute-in-Memory                 ║")
 	fmt.Println("╚══════════════════════════════════════════════════════════════╝")
 	fmt.Println()

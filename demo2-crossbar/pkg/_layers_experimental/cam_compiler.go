@@ -1249,7 +1249,7 @@ Hardware Utilization:
 }
 
 // =============================================================================
-// INTEGRATED IRONLATTICE CAM + COMPILER SYSTEM
+// INTEGRATED FECIM CAM + COMPILER SYSTEM
 // =============================================================================
 
 // FeCIMCAMCompiler combines CAM acceleration with SNN compilation

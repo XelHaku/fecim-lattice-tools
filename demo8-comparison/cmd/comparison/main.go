@@ -76,14 +76,14 @@ func main() {
 func printHeader() {
 	fmt.Println()
 	fmt.Println("╔══════════════════════════════════════════════════════════════╗")
-	fmt.Println("║         IRONLATTICE TECHNOLOGY COMPARISON                    ║")
+	fmt.Println("║         FECIM TECHNOLOGY COMPARISON                    ║")
 	fmt.Println("║     CPU+DRAM vs GPU vs FeCIM Compute-in-Memory         ║")
 	fmt.Println("╚══════════════════════════════════════════════════════════════╝")
 	fmt.Println()
 
 	// IMPORTANT: Print warning banner about estimated specifications
 	fmt.Println("╔══════════════════════════════════════════════════════════════╗")
-	fmt.Println("║  ⚠️  WARNING: IRONLATTICE SPECIFICATIONS ARE ESTIMATED ⚠️     ║")
+	fmt.Println("║  ⚠️  WARNING: FECIM SPECIFICATIONS ARE ESTIMATED ⚠️     ║")
 	fmt.Println("╠══════════════════════════════════════════════════════════════╣")
 	fmt.Println("║  FeCIM is at TRL 4 (lab validation only).             ║")
 	fmt.Println("║  Dr. Tour did NOT disclose chip-level specs (TDP, TOPS).    ║")
@@ -199,7 +199,7 @@ func showDataCenterComparison(renderer *comparison.Renderer, comp comparison.Com
 
 func showFeCIMAdvantages(renderer *comparison.Renderer, advantages comparison.FeCIMAdvantage) {
 	fmt.Println("═══════════════════════════════════════════════════════════════")
-	fmt.Println("                  IRONLATTICE ADVANTAGES")
+	fmt.Println("                  FECIM ADVANTAGES")
 	fmt.Println("═══════════════════════════════════════════════════════════════")
 	fmt.Println()
 

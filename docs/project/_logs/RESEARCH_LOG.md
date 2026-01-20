@@ -1093,7 +1093,7 @@ demo1-hysteresis/
 - HZO_PARAMETERS.md: Material properties
 - DEMO_IMPLEMENTATION.md: Roadmap for 3 demos
 - CURRICULUM.md: 8-area doctoral curriculum
-- IRONLATTICE_PARADIGM.md: Technology overview
+- FECIM_PARADIGM.md: Technology overview
 
 ### Next Iteration Topics
 1. [ ] Implement actual Vulkan initialization
@@ -34030,7 +34030,7 @@ Optical computing offers the promise of near-speed-of-light computation with min
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                    IRONLATTICE EDGE-OPTICAL SYSTEM                      │
+│                    FECIM EDGE-OPTICAL SYSTEM                      │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                         │
 │   Hybrid Architecture:                                                  │
