@@ -1,9 +1,10 @@
 # IronLattice Visualizer
 
-**Interactive Ferroelectric Compute-in-Memory Demos**
+**GPU-Accelerated Ferroelectric Compute-in-Memory Demos**
 
 [![Go](https://img.shields.io/badge/Go-1.21+-00ADD8?logo=go)](https://go.dev)
 [![Fyne](https://img.shields.io/badge/Fyne-2.4-blue?logo=go)](https://fyne.io)
+[![Vulkan](https://img.shields.io/badge/Vulkan-1.3-AC162C?logo=vulkan)](https://www.vulkan.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Demos](https://img.shields.io/badge/Demos-5%2F8-blue.svg)]()
 
@@ -31,8 +32,9 @@ Demo 8: "This is why it beats everything else"   🔲 PRIORITY
 ## Quick Start
 
 ```bash
-# Install Fyne dependencies (Ubuntu/Debian)
+# Install dependencies (Ubuntu/Debian)
 sudo apt-get install gcc libgl1-mesa-dev xorg-dev
+sudo apt-get install vulkan-tools vulkan-sdk libglfw3-dev
 
 # Demo 1: Ferroelectric Hysteresis (P-E curve, 30 levels)
 cd demo1-hysteresis && go build ./cmd/hysteresis && ./hysteresis
@@ -239,6 +241,8 @@ Top View (Heat Map)        Side View
 |-----------|------------|
 | Language | Go 1.21+ |
 | GUI | Fyne 2.4 |
+| GPU | Vulkan 1.3 |
+| Shaders | GLSL → SPIR-V |
 | Physics | Preisach/Mayergoyz model |
 | Neural Network | Crossbar MVM simulation |
 | Tests | 110+ passing |
@@ -297,4 +301,4 @@ IronLattice is a trademark of its respective owners at external research institu
 
 *5/8 demos complete. Building the future of computing.*
 
-*Built with Go, Fyne, and curiosity.*
+*Built with Go, Fyne, Vulkan, and curiosity.*

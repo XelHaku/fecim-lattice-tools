@@ -8,6 +8,8 @@
 
 **If you only have 60 seconds, read this.**
 
+> ⚠️ **DISCLAIMER:** IronLattice is at **TRL 4** (lab validation). Energy claims (10M× vs NAND, 80-90% DC savings) are from Dr. Tour's presentation and have NOT been independently verified.
+
 ## The Problem
 AI is eating the world, but it's also eating all the electricity. Data centers are projected to consume 8% of global power by 2030. Why? Because computers waste 90% of their energy just moving data around.
 
@@ -23,16 +25,18 @@ Using a special material called HZO (Hafnium-Zirconium-Oxide), we build memory c
 
 | What | Traditional | IronLattice | Improvement |
 |------|-------------|-------------|-------------|
-| Energy per operation | 10 pJ | 0.001 pJ | **10,000×** |
+| Energy per operation | 10 pJ | 0.001 pJ | **10,000×*** |
 | Data movement | Billions of trips | Zero | **∞** |
 | Operations in parallel | 1-1000 | Millions | **1000×** |
 | States per cell | 1 bit (0 or 1) | ~5 bits (30 levels) | **5×** |
+
+*Energy claims from Dr. Tour, not independently verified
 
 ## The Proof
 - ✅ Real material demonstrated in Dr. Tour's lab at external research institution
 - ✅ 30 discrete analog states achieved
 - ✅ Works with standard CMOS manufacturing
-- ✅ Our simulation achieves 95.8% MNIST accuracy
+- ✅ Hardware achieved 87% MNIST (88% theoretical max)
 
 ## The Vision
 A future where:
@@ -851,7 +855,7 @@ Input Image (28×28 pixels):          Output:
 
 > "We're at 87% validation here... theoretical is 88% is the theoretical maximum." — Dr. Tour
 
-**Our demo achieves 95.8% accuracy!** (Even better than Dr. Tour's reported results!)
+**Hardware achieved 87% accuracy** (88% theoretical max per Dr. Tour). Simulation may exceed this under idealized conditions.
 
 ## Training
 
@@ -1064,72 +1068,78 @@ Because IronLattice uses so much less energy:
 
 # Part 11: The 8 Demos
 
-## The Story We're Telling
+## The Story We're Telling (All 8 Complete!)
 
 ```
-Demo 1: "This is how the memory cell works"
-Demo 2: "This is how we compute in memory"
-Demo 3: "This is what we can build with it"
-Demo 4: "This is how it fits in a real chip"
-Demo 5: "This is how we manage heat"
-Demo 6: "This is how we scale to 3D"
-Demo 7: "This is what can go wrong (and how we fix it)"
-Demo 8: "This is why it beats everything else"
+Demo 1: "This is how the memory cell works"        ✅ Fyne GUI
+Demo 2: "This is how we compute in memory"         ✅ Fyne GUI
+Demo 3: "This is what we can build with it"        ✅ Fyne GUI
+Demo 4: "This is how it fits in a real chip"       ✅ CLI
+Demo 5: "This is how we manage heat"               ✅ CLI
+Demo 6: "This is how we scale to 3D"               ✅ CLI
+Demo 7: "This is what can go wrong (and how we fix it)"  ✅ CLI
+Demo 8: "This is why it beats everything else"     ✅ CLI
 ```
 
-## Demo 1: Hysteresis Visualizer ✅ COMPLETE
+## Demo 1: Hysteresis Visualizer ✅ Fyne GUI
 
 **What it shows:**
-- P-E hysteresis curve in real-time
-- Voltage slider you can drag
-- 30 analog states visualization
-- HZO material parameters
+- P-E hysteresis curve in real-time with fade trail
+- 30 discrete levels visualized
+- Material selector (Default HZO, Optimized, IronLattice)
+- Waveform modes (Sine, Triangle, Square, Manual)
 
 **Who it's for:** Everyone (educational foundation)
 
 ```
-Run: cd demo1-hysteresis && go build -o hysteresis ./cmd/hysteresis && ./hysteresis
+Run: cd demo1-hysteresis && go build ./cmd/hysteresis && ./hysteresis
 ```
 
-## Demo 2: Crossbar MVM ✅ COMPLETE
+## Demo 2: Crossbar MVM ✅ Fyne GUI
 
 **What it shows:**
-- Matrix-vector multiply in action
-- Currents flowing through grid
-- 30-level conductance quantization
-- Compute-in-memory principle
+- Interactive heatmap with click-to-select cells
+- IR drop analysis with wire resistance modeling
+- Sneak path current visualization
+- Three tabbed views: Conductance, IR Drop, Sneak Paths
 
 **Who it's for:** Engineers, AI researchers
 
 ```
-Run: cd demo2-crossbar && go build -o inference ./cmd/inference && ./inference --show-mvm
+Run: cd demo2-crossbar && go build -o crossbar-gui ./cmd/crossbar-gui && ./crossbar-gui
 ```
 
-## Demo 3: MNIST Neural Network ✅ COMPLETE
+## Demo 3: MNIST Neural Network ✅ Fyne GUI
 
 **What it shows:**
 - Draw a digit → watch inference → see prediction
 - Two crossbar layers visualized
-- Softmax probability bars
-- **95.8% accuracy!** (exceeds Dr. Tour's 87% target)
+- Confusion matrix with clickable cells
+- Per-class metrics (precision, recall, F1)
+
+**Hardware accuracy:** 87% (88% theoretical max per Dr. Tour)
 
 **Who it's for:** Investors, media, conferences
 
 ```
-Run: cd demo3-mnist && go build -o mnist ./cmd/mnist && ./mnist --interactive
+Run: cd demo3-mnist && go build -o mnist-gui ./cmd/mnist-gui && ./mnist-gui
 ```
 
-## Demo 4: Peripheral Circuits 🔲 PLANNED
+## Demo 4: Peripheral Circuits ✅ CLI
 
 **What it shows:**
 - DAC, ADC, charge pump, TIA
 - Full write/read path
-- CMOS compatibility
-- Energy consumption per operation
+- INL/DNL linearity analysis
+- Timing diagrams and power breakdown
 
 **Who it's for:** Foundry partners, system designers
 
-## Demo 5: Thermal Simulation 🔲 PLANNED
+```
+Run: cd demo4-circuits && go run ./cmd/circuits --all
+```
+
+## Demo 5: Thermal Simulation ✅ CLI
 
 **What it shows:**
 - 2D heat map visualization
@@ -1139,34 +1149,51 @@ Run: cd demo3-mnist && go build -o mnist ./cmd/mnist && ./mnist --interactive
 
 **Who it's for:** Design engineers, thermal analysts
 
-## Demo 6: Multi-Layer 3D 🔲 PLANNED
+```
+Run: cd demo5-thermal && go run ./cmd/thermal --realtime
+```
+
+## Demo 6: Multi-Layer 3D ✅ CLI
 
 **What it shows:**
-- 3D rendered layer stack
+- 3D rendered layer stack (ASCII)
 - Via connections between layers
-- Data flow animation
-- Scaling possibilities
+- Data flow visualization
+- Energy comparison and yield estimation
 
 **Who it's for:** Architects, investors
 
-## Demo 7: Non-Idealities 🔲 PLANNED
+```
+Run: cd demo6-multilayer && go run ./cmd/multilayer --all
+```
+
+## Demo 7: Non-Idealities ✅ CLI
 
 **What it shows:**
-- IR drop visualization
-- Sneak path animation
-- Conductance drift over time
+- IR drop visualization and mitigation
+- Sneak path analysis with selector devices
+- Conductance drift over time (technology comparison)
 - Impact on accuracy
 
 **Who it's for:** Device engineers, reliability engineers
 
-## Demo 8: Technology Comparison 🔲 PLANNED
+```
+Run: cd demo7-nonidealities && go run ./cmd/nonidealities --all
+```
+
+## Demo 8: Technology Comparison ✅ CLI
 
 **What it shows:**
-- Side-by-side race: DRAM+CPU vs GPU vs IronLattice
-- Time, energy, operations metrics
-- Data center savings projection
+- Side-by-side: DRAM+CPU vs GPU vs IronLattice
+- Multiple workloads: MNIST, ResNet, BERT, GPT-2, LLM
+- Data center TCO, power, CO2 projections
+- **Includes honesty disclaimer about estimated specs**
 
 **Who it's for:** Investors, executives
+
+```
+Run: cd demo8-comparison && go run ./cmd/comparison --all --workload=bert
+```
 
 ```
 ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
@@ -1177,6 +1204,8 @@ Run: cd demo3-mnist && go build -o mnist ./cmd/mnist && ./mnist --interactive
 │ Energy: 100 │  │ Energy: 50  │  │ Energy: 0.1 │
 │ Steps: 1000 │  │ Steps: 100  │  │ Steps: 1    │
 └─────────────┘  └─────────────┘  └─────────────┘
+
+⚠️  IronLattice specs are ESTIMATES (TRL 4, lab only)
 ```
 
 ---
@@ -1186,38 +1215,45 @@ Run: cd demo3-mnist && go build -o mnist ./cmd/mnist && ./mnist --interactive
 ```
 ironlattice-vis/
 │
-├── demo1-hysteresis/      ✅ P-E curve demo
+├── demo1-hysteresis/      ✅ P-E curve demo (Fyne GUI)
 │   ├── cmd/hysteresis/    ← Main program
 │   ├── pkg/ferroelectric/ ← Preisach model
-│   ├── pkg/simulation/    ← Engine (thread-safe)
-│   ├── pkg/render/        ← 30-level indicator
 │   └── shaders/           ← Vulkan graphics
 │
-├── demo2-crossbar/        ✅ MVM visualization
-│   ├── cmd/inference/     ← Main program
+├── demo2-crossbar/        ✅ MVM + non-idealities (Fyne GUI)
+│   ├── cmd/crossbar-gui/  ← Main program
 │   ├── pkg/crossbar/      ← Array model (30 levels)
-│   └── pkg/visualization/ ← Terminal display
+│   └── pkg/gui/           ← IR drop, sneak paths tabs
 │
-├── demo3-mnist/           ✅ MNIST classifier (95.8%!)
-│   ├── cmd/mnist/         ← Interactive demo
+├── demo3-mnist/           ✅ MNIST classifier (Fyne GUI)
+│   ├── cmd/mnist-gui/     ← Interactive demo
 │   ├── pkg/training/      ← Neural network
 │   ├── pkg/mnist/         ← Data loading
-│   ├── data/              ← Pretrained weights
-│   └── train_and_save.go  ← Training script
+│   └── data/              ← MNIST dataset
 │
-├── demo4-circuits/        🔲 Peripheral circuits
-├── demo5-thermal/         🔲 Thermal simulation
-├── demo6-multilayer/      🔲 3D multi-layer
-├── demo7-nonidealities/   🔲 Real-world issues
-├── demo8-comparison/      🔲 Technology comparison
+├── demo4-circuits/        ✅ Peripheral circuits (CLI)
+│   ├── cmd/circuits/      ← DAC/ADC/TIA demo
+│   └── pkg/peripherals/   ← Circuit models
+│
+├── demo5-thermal/         ✅ Thermal simulation (CLI)
+│   ├── cmd/thermal/       ← Heat map demo
+│   └── pkg/thermal/       ← Diffusion model
+│
+├── demo6-multilayer/      ✅ 3D multi-layer (CLI)
+│   ├── cmd/multilayer/    ← Stack visualization
+│   └── pkg/multilayer/    ← Via network, energy
+│
+├── demo7-nonidealities/   ✅ Non-idealities analysis (CLI)
+│   ├── cmd/nonidealities/ ← Standalone analysis
+│   └── pkg/nonidealities/ ← IR drop, sneak, drift
+│
+├── demo8-comparison/      ✅ Technology comparison (CLI)
+│   ├── cmd/comparison/    ← CPU vs GPU vs CIM
+│   └── pkg/comparison/    ← Workloads, metrics
 │
 ├── docs/                  ← Documentation
-│   └── STRATEGIC_VALUE.md ← Business value analysis
 │
-├── papers/                ← Research papers
 ├── README.md              ← Project overview
-├── TODO.md                ← Task tracking
-├── command.md             ← AI assistant context
 └── ELI5.md                ← You are here! 🎉
 ```
 
@@ -1255,7 +1291,7 @@ go mod tidy
 
 ```bash
 go test ./... -v
-# Should see: 19 tests passing
+# Should see: 130+ tests passing
 ```
 
 ---
@@ -1417,9 +1453,11 @@ IronLattice is arriving at exactly the right moment.
 | Metric | Target | Achieved |
 |--------|--------|----------|
 | Analog states | 30 levels | ✅ 30 levels |
-| MNIST accuracy | 87% | ✅ **95.8%** |
-| Energy vs NAND | 10,000,000× lower | Simulated |
-| Energy vs DRAM | 1,000× lower | Simulated |
+| MNIST accuracy | 88% (theoretical max) | ✅ 87% (hardware) |
+| Energy vs NAND | 10,000,000× lower | Claimed* |
+| Energy vs DRAM | 1,000× lower | Claimed* |
+
+*Energy claims from Dr. Tour's presentation, not independently verified
 
 ## Comparison
 
@@ -1450,23 +1488,32 @@ IronLattice is arriving at exactly the right moment.
 
 # Part 18: Current Status
 
-## What's Done
+## All 8 Demos Complete!
 
+**GUI Demos (Fyne):**
 - ✅ Demo 1: Hysteresis visualizer with 30-level indicator
-- ✅ Demo 2: Crossbar MVM with 30-level quantization
-- ✅ Demo 3: MNIST classifier at 95.8% accuracy
-- ✅ 19 unit tests passing
-- ✅ Thread-safe simulation engine
-- ✅ Pretrained weights saved
-- ✅ Complete documentation
+- ✅ Demo 2: Crossbar MVM with IR drop & sneak path tabs
+- ✅ Demo 3: MNIST classifier with confusion matrix
 
-## What's Next
+**CLI Demos:**
+- ✅ Demo 4: Peripheral circuits (DAC, ADC, TIA, timing)
+- ✅ Demo 5: Thermal simulation with real-time diffusion
+- ✅ Demo 6: Multi-layer 3D with via network analysis
+- ✅ Demo 7: Non-idealities (IR drop, sneak paths, drift)
+- ✅ Demo 8: Technology comparison (CPU vs GPU vs CIM)
 
-1. **Demo 4:** Peripheral circuits (DAC, ADC, TIA)
-2. **Demo 5:** Thermal simulation
-3. **Demo 6:** Multi-layer 3D visualization
-4. **Demo 7:** Non-idealities simulator
-5. **Demo 8:** Technology comparison
+**Testing & Quality:**
+- ✅ 130+ unit tests passing
+- ✅ Honesty disclaimers on estimated specs
+- ✅ TRL 4 warnings in investor-facing demos
+
+## Important Accuracy Notes
+
+**Hardware (Dr. Tour's lab):** 87% MNIST accuracy (88% theoretical max)
+
+**Simulation:** May exceed hardware due to idealized conditions - simulation does not include all real-world non-idealities.
+
+**Energy claims:** 10M× vs NAND is from Dr. Tour's presentation and has NOT been independently verified.
 
 ## The Dream
 
@@ -1720,9 +1767,9 @@ A: Every technology has challenges:
 ## Technical Questions
 
 **Q: How accurate can it get?**
-A: Our MNIST demo achieves 95.8% accuracy. State-of-the-art digital achieves ~99%. The gap comes from:
+A: Dr. Tour's hardware achieved 87% MNIST accuracy (88% theoretical max). State-of-the-art digital achieves ~99%. The gap comes from:
 - Quantization (30 levels vs. 32-bit float)
-- Analog noise
+- Analog noise and non-idealities
 This is acceptable for many applications; techniques like quantization-aware training help.
 
 **Q: Can it do training, or just inference?**
@@ -2255,15 +2302,15 @@ Improvement: 10,000×!
 │  Ohm's Law:     I = V × G    (physics does multiplication)│
 │  MVM:           I = G × V    (matrix-vector multiply)     │
 │  States:        30 levels    (not binary!)                │
-│  Target:        87% MNIST    (we got 95.8%!)              │
+│  MNIST:         87% hardware (88% theoretical max)        │
 │                                                            │
-│  Run Demo 1:    cd demo1-hysteresis && go build ...       │
-│  Run Demo 2:    cd demo2-crossbar && go build ...         │
-│  Run Demo 3:    cd demo3-mnist && go build ...            │
-│  Run Tests:     go test ./... -v                          │
+│  GUI Demos:     demo1-hysteresis, demo2-crossbar,         │
+│                 demo3-mnist (Fyne)                        │
+│  CLI Demos:     demo4-8 (go run ./cmd/...)                │
+│  Run Tests:     go test ./... (130+ tests)                │
 │                                                            │
-│  Key Files:     TODO.md (tasks), command.md (context)     │
-│                 docs/STRATEGIC_VALUE.md (business)        │
+│  ⚠️  TRL 4: Lab validation only                           │
+│  ⚠️  Energy claims not independently verified              │
 │                                                            │
 └────────────────────────────────────────────────────────────┘
 ```
