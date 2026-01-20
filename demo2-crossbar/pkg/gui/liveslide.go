@@ -4,6 +4,8 @@ package gui
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -14,6 +16,8 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"image/color"
 )
+
+var lsDebug = log.New(os.Stdout, "[WIDGET] ", log.Ltime|log.Lmicroseconds)
 
 // DemoMode represents the current demo mode.
 type DemoMode int
@@ -59,7 +63,7 @@ type ModeIndicatorBox struct {
 func NewModeIndicatorBox() *ModeIndicatorBox {
 	m := &ModeIndicatorBox{
 		mode:    DemoModeIdle,
-		minSize: fyne.NewSize(120, 50),
+		minSize: fyne.NewSize(100, 30),
 	}
 	m.ExtendBaseWidget(m)
 	return m
@@ -67,10 +71,13 @@ func NewModeIndicatorBox() *ModeIndicatorBox {
 
 // SetMode updates the current mode.
 func (m *ModeIndicatorBox) SetMode(mode DemoMode) {
+	lsDebug.Printf("ModeIndicator: SetMode(%s)", mode.String())
 	m.mu.Lock()
 	m.mode = mode
 	m.mu.Unlock()
+	lsDebug.Println("ModeIndicator: Calling Refresh")
 	m.Refresh()
+	lsDebug.Println("ModeIndicator: Refresh done")
 }
 
 // GetMode returns the current mode.
@@ -173,11 +180,13 @@ func (r *modeIndicatorBoxRenderer) Destroy() {}
 type EducationalPanel struct {
 	widget.BaseWidget
 
-	mu       sync.RWMutex
-	title    string
-	content  string
-	phase    int
-	minSize  fyne.Size
+	mu           sync.RWMutex
+	title        string
+	content      string
+	phase        int
+	minSize      fyne.Size
+	titleLabel   *widget.Label
+	contentLabel *widget.Label
 }
 
 // NewEducationalPanel creates a new educational panel.
@@ -185,19 +194,25 @@ func NewEducationalPanel() *EducationalPanel {
 	e := &EducationalPanel{
 		title:   "What You're Seeing",
 		content: "Select an operation to see\nwhat's happening.",
-		minSize: fyne.NewSize(180, 150),
+		minSize: fyne.NewSize(150, 80),
 	}
+	e.titleLabel = widget.NewLabelWithStyle(e.title, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	e.contentLabel = widget.NewLabel(e.content)
+	e.contentLabel.Wrapping = fyne.TextWrapWord
 	e.ExtendBaseWidget(e)
 	return e
 }
 
 // SetContent updates the educational content.
 func (e *EducationalPanel) SetContent(title, content string) {
+	lsDebug.Printf("EducationalPanel: SetContent(%s)", title)
 	e.mu.Lock()
 	e.title = title
 	e.content = content
 	e.mu.Unlock()
-	e.Refresh()
+	e.titleLabel.SetText(title)
+	e.contentLabel.SetText(content)
+	lsDebug.Println("EducationalPanel: SetContent done")
 }
 
 // SetPhase updates the current phase for phase-aware content.
@@ -286,19 +301,10 @@ func (e *EducationalPanel) MinSize() fyne.Size {
 
 // CreateRenderer implements fyne.Widget.
 func (e *EducationalPanel) CreateRenderer() fyne.WidgetRenderer {
-	e.mu.RLock()
-	title := e.title
-	content := e.content
-	e.mu.RUnlock()
-
-	titleLabel := widget.NewLabelWithStyle(title, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	contentLabel := widget.NewLabel(content)
-	contentLabel.Wrapping = fyne.TextWrapWord
-
 	box := container.NewVBox(
-		titleLabel,
+		e.titleLabel,
 		widget.NewSeparator(),
-		contentLabel,
+		e.contentLabel,
 	)
 
 	return widget.NewSimpleRenderer(box)
@@ -324,7 +330,7 @@ func NewOperationLog() *OperationLog {
 	o := &OperationLog{
 		maxEntries: 6,
 		startTime:  time.Now(),
-		minSize:    fyne.NewSize(180, 100),
+		minSize:    fyne.NewSize(150, 60),
 		entries:    make([]string, 0, 6),
 	}
 	o.titleLabel = widget.NewLabelWithStyle("Operation Log", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
@@ -414,7 +420,7 @@ type InputOutputDisplay struct {
 func NewInputOutputDisplay() *InputOutputDisplay {
 	d := &InputOutputDisplay{
 		maxDisplay: 6,
-		minSize:    fyne.NewSize(180, 100),
+		minSize:    fyne.NewSize(150, 60),
 	}
 	d.inputLabel = widget.NewLabelWithStyle("Input Vector V", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	d.outputLabel = widget.NewLabelWithStyle("Output Vector I", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
@@ -426,18 +432,22 @@ func NewInputOutputDisplay() *InputOutputDisplay {
 
 // SetInput updates the input vector display.
 func (d *InputOutputDisplay) SetInput(values []float64) {
+	lsDebug.Printf("IODisplay: SetInput (len=%d)", len(values))
 	d.mu.Lock()
 	d.inputValues = values
 	d.mu.Unlock()
 	d.updateDisplay()
+	lsDebug.Println("IODisplay: SetInput done")
 }
 
 // SetOutput updates the output vector display.
 func (d *InputOutputDisplay) SetOutput(values []float64) {
+	lsDebug.Printf("IODisplay: SetOutput (len=%d)", len(values))
 	d.mu.Lock()
 	d.outputValues = values
 	d.mu.Unlock()
 	d.updateDisplay()
+	lsDebug.Println("IODisplay: SetOutput done")
 }
 
 func (d *InputOutputDisplay) formatVector(values []float64, prefix string) string {
@@ -505,7 +515,7 @@ type QuoteBox struct {
 func NewQuoteBox(quote string) *QuoteBox {
 	q := &QuoteBox{
 		quote:   quote,
-		minSize: fyne.NewSize(300, 40),
+		minSize: fyne.NewSize(200, 30),
 	}
 	q.ExtendBaseWidget(q)
 	return q
@@ -537,10 +547,12 @@ func (q *QuoteBox) CreateRenderer() fyne.WidgetRenderer {
 type KeyStatBox struct {
 	widget.BaseWidget
 
-	mu      sync.RWMutex
-	label   string
-	value   string
-	minSize fyne.Size
+	mu          sync.RWMutex
+	label       string
+	value       string
+	minSize     fyne.Size
+	labelWidget *widget.Label
+	valueWidget *widget.Label
 }
 
 // NewKeyStatBox creates a new key stat box.
@@ -548,8 +560,11 @@ func NewKeyStatBox(label, value string) *KeyStatBox {
 	k := &KeyStatBox{
 		label:   label,
 		value:   value,
-		minSize: fyne.NewSize(150, 60),
+		minSize: fyne.NewSize(120, 40),
 	}
+	k.labelWidget = widget.NewLabel(label)
+	k.labelWidget.Alignment = fyne.TextAlignCenter
+	k.valueWidget = widget.NewLabelWithStyle(value, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	k.ExtendBaseWidget(k)
 	return k
 }
@@ -559,7 +574,7 @@ func (k *KeyStatBox) SetValue(value string) {
 	k.mu.Lock()
 	k.value = value
 	k.mu.Unlock()
-	k.Refresh()
+	k.valueWidget.SetText(value)
 }
 
 // MinSize returns the minimum size.
@@ -569,16 +584,6 @@ func (k *KeyStatBox) MinSize() fyne.Size {
 
 // CreateRenderer implements fyne.Widget.
 func (k *KeyStatBox) CreateRenderer() fyne.WidgetRenderer {
-	k.mu.RLock()
-	label := k.label
-	value := k.value
-	k.mu.RUnlock()
-
-	labelWidget := widget.NewLabel(label)
-	labelWidget.Alignment = fyne.TextAlignCenter
-
-	valueWidget := widget.NewLabelWithStyle(value, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-
-	box := container.NewVBox(labelWidget, valueWidget)
+	box := container.NewVBox(k.labelWidget, k.valueWidget)
 	return widget.NewSimpleRenderer(box)
 }

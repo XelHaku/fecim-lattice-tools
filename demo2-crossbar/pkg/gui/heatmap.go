@@ -45,7 +45,7 @@ func NewCrossbarHeatmap(rows, cols int) *CrossbarHeatmap {
 		colormap: "viridis",
 		selectedRow: -1,
 		selectedCol: -1,
-		cellSize: 8,
+		cellSize: 6, // Smaller cell size to fit better
 	}
 
 	// Initialize data
@@ -131,14 +131,21 @@ func (h *CrossbarHeatmap) CreateRenderer() fyne.WidgetRenderer {
 }
 
 // MinSize returns the minimum size of the widget.
+// Uses a small fixed minimum - actual size adapts to container.
 func (h *CrossbarHeatmap) MinSize() fyne.Size {
-	return fyne.NewSize(float32(h.cols)*h.cellSize+40, float32(h.rows)*h.cellSize+40)
+	return fyne.NewSize(100, 100)
 }
 
 // Tapped handles tap events on the heatmap.
 func (h *CrossbarHeatmap) Tapped(e *fyne.PointEvent) {
-	col := int((e.Position.X - 20) / h.cellSize)
-	row := int((e.Position.Y - 20) / h.cellSize)
+	// Calculate cell size dynamically based on current widget size
+	size := h.Size()
+	cellW := float64(size.Width-40) / float64(h.cols)
+	cellH := float64(size.Height-40) / float64(h.rows)
+	cellSize := math.Min(cellW, cellH)
+
+	col := int((float64(e.Position.X) - 20) / cellSize)
+	row := int((float64(e.Position.Y) - 20) / cellSize)
 
 	if row >= 0 && row < h.rows && col >= 0 && col < h.cols {
 		h.SetSelection(row, col)

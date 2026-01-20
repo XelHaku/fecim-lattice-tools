@@ -3,7 +3,11 @@ package gui
 
 import (
 	"fmt"
+	"io"
+	"log"
 	"math/rand"
+	"os"
+	"path/filepath"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -15,6 +19,33 @@ import (
 
 	"ironlattice-vis/demo2-crossbar/pkg/crossbar"
 )
+
+var debug *log.Logger
+var logFile *os.File
+
+func init() {
+	// Create logs directory
+	logsDir := "<local-path>"
+	os.MkdirAll(logsDir, 0755)
+
+	// Create log file with datetime
+	timestamp := time.Now().Format("2006-01-02_15-04-05")
+	logPath := filepath.Join(logsDir, timestamp+"-crossbar-demo02.log")
+
+	var err error
+	logFile, err = os.Create(logPath)
+	if err != nil {
+		// Fallback to stdout if file creation fails
+		debug = log.New(os.Stdout, "[DEBUG] ", log.Ltime|log.Lmicroseconds)
+		debug.Printf("Failed to create log file: %v, using stdout", err)
+		return
+	}
+
+	// Write to both file and stdout
+	multiWriter := io.MultiWriter(os.Stdout, logFile)
+	debug = log.New(multiWriter, "[DEBUG] ", log.Ltime|log.Lmicroseconds)
+	debug.Printf("Logging to: %s", logPath)
+}
 
 // CrossbarApp is the main application for the crossbar demo.
 type CrossbarApp struct {
@@ -88,18 +119,25 @@ func NewCrossbarApp() *CrossbarApp {
 
 // Run starts the GUI application.
 func (ca *CrossbarApp) Run() {
+	debug.Println("App: Creating window")
 	ca.window = ca.fyneApp.NewWindow("IronLattice Demo 2: Crossbar Array MVM")
 	ca.window.Resize(fyne.NewSize(1400, 900))
 
 	// Create main layout
+	debug.Println("App: Creating main layout")
 	content := ca.createMainLayout()
+	debug.Println("App: Setting window content")
 	ca.window.SetContent(content)
 
 	// Initialize displays
+	debug.Println("App: Updating conductance display")
 	ca.updateConductanceDisplay()
+	debug.Println("App: Updating status")
 	ca.updateStatus("Ready. Program weights and run MVM operations.")
 
+	debug.Println("App: ShowAndRun starting")
 	ca.window.ShowAndRun()
+	debug.Println("App: Window closed")
 }
 
 // createMainLayout builds the main application layout.
@@ -142,11 +180,11 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		ca.config.Rows, ca.config.Cols, ca.config.NoiseLevel*100, ca.config.ADCBits,
 	))
 
-	// Create tabbed heatmap view
+	// Create tabbed heatmap view - use Max to fill available space
 	tabs := container.NewAppTabs(
-		container.NewTabItem("Conductance", container.NewPadded(ca.conductanceHeatmap)),
-		container.NewTabItem("IR Drop", container.NewPadded(ca.irDropHeatmap)),
-		container.NewTabItem("Sneak Paths", container.NewPadded(ca.sneakPathHeatmap)),
+		container.NewTabItem("Conductance", container.NewMax(ca.conductanceHeatmap)),
+		container.NewTabItem("IR Drop", container.NewMax(ca.irDropHeatmap)),
+		container.NewTabItem("Sneak Paths", container.NewMax(ca.sneakPathHeatmap)),
 	)
 
 	// Title and header with Dr. Tour quote
@@ -164,53 +202,36 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		widget.NewSeparator(),
 	)
 
-	// Footer with status bar showing mode and current action
-	footer := container.NewVBox(
-		widget.NewSeparator(),
-		container.NewHBox(
-			ca.modeIndicator,
-			widget.NewSeparator(),
-			ca.statusLabel,
-			layout.NewSpacer(),
-			ca.infoLabel,
-		),
-	)
-
-	// Right panel (controls + stats) - compact layout
+	// Right panel (controls + stats) - compact, fixed width
 	rightPanel := container.NewVBox(
 		ca.controlPanel,
 		widget.NewSeparator(),
 		ca.statsPanel,
 	)
 
-	// Left panel (educational + key stat) - compact layout
+	// Left panel (educational + key stat) - compact, fixed width
 	leftPanel := container.NewVBox(
 		ca.educationalPanel,
 		widget.NewSeparator(),
 		ca.keyStat,
 	)
 
-	// Bottom bar with I/O display and operation log
-	bottomBar := container.NewGridWithColumns(3,
-		ca.ioDisplay,
-		ca.operationLog,
-		ca.levelIndicator,
-	)
-
-	// Combined footer with bottom bar
-	combinedFooter := container.NewVBox(
+	// Simple status footer
+	simpleFooter := container.NewHBox(
+		ca.modeIndicator,
 		widget.NewSeparator(),
-		bottomBar,
-		footer,
+		ca.statusLabel,
+		layout.NewSpacer(),
+		ca.infoLabel,
 	)
 
-	// Main content - no scrolling, fixed layout
+	// Main content - simple 3-column layout with center heatmap
 	mainContent := container.NewBorder(
-		header,         // top
-		combinedFooter, // bottom
-		leftPanel,      // left
-		rightPanel,     // right
-		tabs,           // center
+		header,       // top
+		simpleFooter, // bottom
+		leftPanel,    // left
+		rightPanel,   // right
+		tabs,         // center
 	)
 
 	return mainContent
@@ -327,36 +348,50 @@ func (ca *CrossbarApp) onCellTapped(row, col int) {
 
 // runMVM performs matrix-vector multiplication.
 func (ca *CrossbarApp) runMVM() {
+	debug.Println("runMVM: Starting")
+
 	// Update mode and educational panel
+	debug.Println("runMVM: Setting mode to Compute")
 	ca.modeIndicator.SetMode(DemoModeCompute)
+	debug.Println("runMVM: Setting MVM explanation phase 1")
 	ca.educationalPanel.SetMVMExplanation(1)
+	debug.Println("runMVM: Updating status")
 	ca.updateStatus("COMPUTE | Applying input voltages...")
+	debug.Println("runMVM: Adding to operation log")
 	ca.operationLog.Add("MVM: Generating input vector")
 
 	// Create random input
+	debug.Printf("runMVM: Creating input vector of size %d", ca.config.Cols)
 	input := make([]float64, ca.config.Cols)
 	for i := range input {
 		input[i] = rand.Float64()
 	}
 	ca.lastInput = input
+	debug.Println("runMVM: Setting input display")
 	ca.ioDisplay.SetInput(input)
 
 	// Phase 2: Computing
+	debug.Println("runMVM: Setting MVM explanation phase 2")
 	ca.educationalPanel.SetMVMExplanation(2)
 	ca.operationLog.Add("MVM: Computing I = G × V")
 
 	// Perform MVM
+	debug.Println("runMVM: Performing MVM computation")
 	output, err := ca.array.MVM(input)
 	if err != nil {
+		debug.Printf("runMVM: Error - %v", err)
 		ca.updateStatus(fmt.Sprintf("COMPUTE | Error: %v", err))
 		ca.operationLog.AddWithResult("MVM", err.Error(), false)
 		ca.modeIndicator.SetMode(DemoModeIdle)
 		return
 	}
+	debug.Printf("runMVM: MVM complete, output size %d", len(output))
 	ca.lastOutput = output
+	debug.Println("runMVM: Setting output display")
 	ca.ioDisplay.SetOutput(output)
 
 	// Phase 3: Results
+	debug.Println("runMVM: Setting MVM explanation phase 3")
 	ca.educationalPanel.SetMVMExplanation(3)
 
 	// Update stats
@@ -371,6 +406,7 @@ func (ca *CrossbarApp) runMVM() {
 	reads, writes := ca.array.GetStats()
 	macOps := ca.config.Rows * ca.config.Cols
 
+	debug.Println("runMVM: Updating stats panel")
 	ca.statsPanel.SetStats(fmt.Sprintf(
 		"MVM Complete!\n"+
 			"Input Sum: %.4f\n"+
@@ -383,14 +419,19 @@ func (ca *CrossbarApp) runMVM() {
 	))
 
 	// Update key stat
+	debug.Println("runMVM: Updating key stat")
 	ca.keyStat.SetValue(fmt.Sprintf("%d MACs in 1 cycle", macOps))
 
 	// Log completion
+	debug.Println("runMVM: Logging completion")
 	ca.operationLog.AddWithResult("MVM", fmt.Sprintf("%d ops", macOps), true)
 
 	// Update status and return to idle
+	debug.Println("runMVM: Final status update")
 	ca.updateStatus(fmt.Sprintf("COMPUTE | Complete: %d parallel multiplications", macOps))
+	debug.Println("runMVM: Setting mode to Idle")
 	ca.modeIndicator.SetMode(DemoModeIdle)
+	debug.Println("runMVM: Complete")
 }
 
 // analyzeIRDrop performs IR drop analysis.
