@@ -214,10 +214,12 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		widget.NewSeparator(),
 	)
 
-	// Right panel using VSplit for proportional layout (40% controls, 60% stats)
-	rightSplit := container.NewVSplit(ca.controlPanel, ca.statsPanel)
-	rightSplit.SetOffset(0.4)
-	rightPanel := rightSplit
+	// Right panel - simple VBox, no split (avoids resize issues)
+	rightPanel := container.NewVBox(
+		ca.controlPanel,
+		widget.NewSeparator(),
+		ca.statsPanel,
+	)
 
 	// Left panel using simple labels (no custom widgets)
 	leftPanel := container.NewVBox(
