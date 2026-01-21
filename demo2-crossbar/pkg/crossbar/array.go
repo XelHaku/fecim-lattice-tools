@@ -122,6 +122,7 @@ func (a *Array) ProgramWeightMatrix(weights [][]float64) error {
 
 // MVM performs matrix-vector multiplication: y = W * x
 // Input x is applied to columns (bit lines), output y is read from rows (word lines).
+// Returns normalized output in [0,1] range representing weighted sum.
 func (a *Array) MVM(input []float64) ([]float64, error) {
 	if len(input) > a.config.Cols {
 		return nil, fmt.Errorf("input size (%d) exceeds array columns (%d)", len(input), a.config.Cols)
@@ -142,8 +143,12 @@ func (a *Array) MVM(input []float64) ([]float64, error) {
 			sum += g * quantizedInput
 		}
 
+		// Normalize by max possible value (when all inputs and weights are 1.0)
+		// This keeps output in [0,1] range for subsequent processing
+		normalizedSum := sum / float64(len(input))
+
 		// Quantize output through ADC
-		output[i] = a.quantizeADC(sum / float64(len(input)))
+		output[i] = a.quantizeADC(normalizedSum)
 		a.totalReads++
 	}
 
@@ -181,21 +186,21 @@ func (a *Array) VMM(input []float64) ([]float64, error) {
 }
 
 // quantizeDAC applies DAC quantization to input voltage.
-// Uses FeCIM 30 levels for analog computation.
 func (a *Array) quantizeDAC(value float64) float64 {
 	// Clamp to [0, 1]
 	value = math.Max(0, math.Min(1, value))
-	// Use FeCIM 30-level quantization
-	return QuantizeTo30Levels(value)
+	// Quantize based on DAC bits
+	levels := float64(a.dacLevels - 1)
+	return math.Round(value*levels) / levels
 }
 
 // quantizeADC applies ADC quantization to output current.
-// Uses FeCIM 30 levels for analog computation.
 func (a *Array) quantizeADC(value float64) float64 {
 	// Clamp to [0, 1]
 	value = math.Max(0, math.Min(1, value))
-	// Use FeCIM 30-level quantization
-	return QuantizeTo30Levels(value)
+	// Quantize based on ADC bits
+	levels := float64(a.adcLevels - 1)
+	return math.Round(value*levels) / levels
 }
 
 // GetStats returns array statistics.

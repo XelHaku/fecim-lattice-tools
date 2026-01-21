@@ -42,24 +42,24 @@ func main() {
 	}
 	fmt.Printf("Loaded %d test images\n", len(testImages))
 
-	// Use smaller subset for faster training
-	trainSubset := 10000
+	// Use subset for training (full 60k is slow but more accurate)
+	trainSubset := 30000
 	if len(trainImages) > trainSubset {
 		trainImages = trainImages[:trainSubset]
 		trainLabels = trainLabels[:trainSubset]
 	}
 
-	// Create crossbar arrays
+	// Create crossbar arrays with no noise for training
 	hidden := 128
 	layer1, err := crossbar.NewArray(&crossbar.Config{
-		Rows: hidden, Cols: 784, NoiseLevel: 0, ADCBits: 8, DACBits: 8,
+		Rows: hidden, Cols: 784, NoiseLevel: 0, ADCBits: 16, DACBits: 16, // High resolution for training
 	})
 	if err != nil {
 		log.Fatalf("Failed to create layer1: %v", err)
 	}
 
 	layer2, err := crossbar.NewArray(&crossbar.Config{
-		Rows: 10, Cols: hidden, NoiseLevel: 0, ADCBits: 8, DACBits: 8,
+		Rows: 10, Cols: hidden, NoiseLevel: 0, ADCBits: 16, DACBits: 16, // High resolution for training
 	})
 	if err != nil {
 		log.Fatalf("Failed to create layer2: %v", err)
@@ -69,8 +69,9 @@ func main() {
 	net := training.NewMNISTNetwork(layer1, layer2)
 
 	// Training parameters
-	epochs := 15
-	learningRate := 0.5
+	// Higher learning rate needed to overcome 30-level quantization threshold
+	epochs := 20
+	learningRate := 1.0
 
 	fmt.Printf("\nTraining with:\n")
 	fmt.Printf("  - Epochs: %d\n", epochs)

@@ -183,8 +183,11 @@ func (n *SimpleNetwork) Evaluate(images [][]float64, labels []int) float64 {
 }
 
 // QuantizeAndExport quantizes weights to 30 levels and exports to crossbar arrays
+// Uses centered encoding: weight 0 maps to conductance 0.5
+// MNISTNetwork.Forward() expects: effective_weight = (conductance - 0.5) * 4
+// So we encode: conductance = weight/4 + 0.5, clamped to [0, 1]
 func (n *SimpleNetwork) QuantizeAndExport(layer1, layer2 *crossbar.Array) {
-	// Find weight ranges for normalization
+	// Find weight ranges for info
 	w1Min, w1Max := n.W1[0][0], n.W1[0][0]
 	for i := 0; i < 784; i++ {
 		for j := 0; j < n.hidden; j++ {
@@ -213,20 +216,32 @@ func (n *SimpleNetwork) QuantizeAndExport(layer1, layer2 *crossbar.Array) {
 	fmt.Printf("W2 range: [%.4f, %.4f]\n", w2Min, w2Max)
 
 	// Quantize and export layer 1 (784 cols x 128 rows)
+	// Centered encoding: conductance = weight/4 + 0.5
 	for j := 0; j < n.hidden; j++ {
 		for i := 0; i < 784; i++ {
-			// Normalize to [0, 1]
-			normalized := (n.W1[i][j] - w1Min) / (w1Max - w1Min + 1e-10)
-			// ProgramWeight will quantize to 30 levels
-			layer1.ProgramWeight(j, i, normalized)
+			// Map weight to conductance [0, 1] with 0 at 0.5
+			conductance := n.W1[i][j]/4.0 + 0.5
+			if conductance < 0 {
+				conductance = 0
+			}
+			if conductance > 1 {
+				conductance = 1
+			}
+			layer1.ProgramWeight(j, i, conductance)
 		}
 	}
 
 	// Quantize and export layer 2 (128 cols x 10 rows)
 	for j := 0; j < 10; j++ {
 		for i := 0; i < n.hidden; i++ {
-			normalized := (n.W2[i][j] - w2Min) / (w2Max - w2Min + 1e-10)
-			layer2.ProgramWeight(j, i, normalized)
+			conductance := n.W2[i][j]/4.0 + 0.5
+			if conductance < 0 {
+				conductance = 0
+			}
+			if conductance > 1 {
+				conductance = 1
+			}
+			layer2.ProgramWeight(j, i, conductance)
 		}
 	}
 }
@@ -373,7 +388,7 @@ func main() {
 
 	// Save weights using MNISTNetwork format
 	fmt.Println("\nSaving quantized weights...")
-	trainNet := training.NewMNISTNetwork(layer1, layer2)
+	trainNet := training.NewMNISTNetworkWithWeights(layer1, layer2)
 	// Copy biases
 	for i := range trainNet.GetBiases1() {
 		trainNet.SetBias1(i, net.B1[i])

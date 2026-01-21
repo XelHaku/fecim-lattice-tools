@@ -20,6 +20,12 @@ type MNISTNetwork struct {
 	biases2 []float64       // Output layer biases
 
 	hiddenSize int
+
+	// Scale factors for quantized weights (loaded from weights file)
+	l1Scale  float64 // Scale for layer 1 weights
+	l1Offset float64 // Offset for layer 1 weights
+	l2Scale  float64 // Scale for layer 2 weights
+	l2Offset float64 // Offset for layer 2 weights
 }
 
 // NewMNISTNetwork creates a new MNIST network using crossbar arrays.
@@ -38,6 +44,20 @@ func NewMNISTNetwork(layer1, layer2 *crossbar.Array) *MNISTNetwork {
 	net.initializeWeights()
 
 	return net
+}
+
+// NewMNISTNetworkWithWeights creates a network with pre-loaded crossbar arrays.
+// Does NOT reinitialize weights - use this when arrays already have trained weights.
+func NewMNISTNetworkWithWeights(layer1, layer2 *crossbar.Array) *MNISTNetwork {
+	hiddenSize := layer1.Rows()
+
+	return &MNISTNetwork{
+		layer1:     layer1,
+		layer2:     layer2,
+		biases1:    make([]float64, hiddenSize),
+		biases2:    make([]float64, 10),
+		hiddenSize: hiddenSize,
+	}
 }
 
 func (n *MNISTNetwork) initializeWeights() {
@@ -73,37 +93,50 @@ func (n *MNISTNetwork) initializeWeights() {
 }
 
 // Forward performs forward pass through the network.
-// Uses dual-weight encoding: W_effective = W_pos - W_neg (simulated with offset)
+// Uses direct matrix multiplication with quantized weights.
+// If scale/offset are set (from loaded weights), uses them to reconstruct original weights.
+// Otherwise falls back to legacy encoding: effective_weight = (conductance - 0.5) * 4
 func (n *MNISTNetwork) Forward(input []float64) []float64 {
-	// Layer 1: MVM + bias + ReLU
-	hidden, _ := n.layer1.MVM(input)
-	for i := range hidden {
-		// Scale up from [0,1] range and center around 0
-		// Effective weight = (conductance - 0.5) * 2, giving [-1, 1] range
-		hidden[i] = (hidden[i]-0.5)*4.0 + n.biases1[i]
+	// Get weight matrices (cached internally by crossbar)
+	w1 := n.layer1.GetConductanceMatrix() // [hidden][784]
+	w2 := n.layer2.GetConductanceMatrix() // [10][hidden]
+
+	// Layer 1: input (784) -> hidden (128) with ReLU
+	hidden := make([]float64, n.hiddenSize)
+	for j := 0; j < n.hiddenSize; j++ {
+		sum := n.biases1[j]
+		for i := 0; i < len(input); i++ {
+			var effectiveWeight float64
+			if n.l1Scale > 0 {
+				// New format: quantized weight in [0,1] needs rescaling
+				// original_weight = qw * scale + offset
+				effectiveWeight = w1[j][i]*n.l1Scale + n.l1Offset
+			} else {
+				// Legacy format: effective = (conductance - 0.5) * 4
+				effectiveWeight = (w1[j][i] - 0.5) * 4.0
+			}
+			sum += input[i] * effectiveWeight
+		}
 		// ReLU
-		if hidden[i] < 0 {
-			hidden[i] = 0
+		if sum > 0 {
+			hidden[j] = sum
 		}
 	}
 
-	// Normalize hidden activations for stability
-	maxHidden := 0.0
-	for _, h := range hidden {
-		if h > maxHidden {
-			maxHidden = h
+	// Layer 2: hidden (128) -> output (10)
+	output := make([]float64, 10)
+	for j := 0; j < 10; j++ {
+		sum := n.biases2[j]
+		for i := 0; i < n.hiddenSize; i++ {
+			var effectiveWeight float64
+			if n.l2Scale > 0 {
+				effectiveWeight = w2[j][i]*n.l2Scale + n.l2Offset
+			} else {
+				effectiveWeight = (w2[j][i] - 0.5) * 4.0
+			}
+			sum += hidden[i] * effectiveWeight
 		}
-	}
-	if maxHidden > 1.0 {
-		for i := range hidden {
-			hidden[i] /= maxHidden
-		}
-	}
-
-	// Layer 2: MVM + bias
-	output, _ := n.layer2.MVM(hidden)
-	for i := range output {
-		output[i] = (output[i]-0.5)*4.0 + n.biases2[i]
+		output[j] = sum
 	}
 
 	// Softmax
@@ -140,16 +173,27 @@ func (n *MNISTNetwork) TrainEpoch(images [][]float64, labels []int, learningRate
 		input := images[idx]
 		target := labels[idx]
 
-		// Forward pass with gradient tracking
-		hidden := n.forwardHidden(input)
-		output := n.forwardOutput(hidden)
+		// Forward pass - keep raw hidden activations for gradient
+		hiddenRaw, _ := n.layer1.MVM(input)
+		hidden := make([]float64, len(hiddenRaw))
+		for i := range hiddenRaw {
+			hidden[i] = (hiddenRaw[i]-0.5)*4.0 + n.biases1[i]
+			if hidden[i] < 0 {
+				hidden[i] = 0 // ReLU
+			}
+		}
+
+		output, _ := n.layer2.MVM(hidden)
+		for i := range output {
+			output[i] = (output[i]-0.5)*4.0 + n.biases2[i]
+		}
 		probs := softmax(output)
 
 		// Compute cross-entropy loss
 		loss := -math.Log(probs[target] + 1e-10)
 		totalLoss += loss
 
-		// Backward pass (simplified gradient descent)
+		// Backward pass
 		// Compute output gradients
 		outputGrad := make([]float64, 10)
 		for i := range outputGrad {
@@ -159,25 +203,24 @@ func (n *MNISTNetwork) TrainEpoch(images [][]float64, labels []int, learningRate
 			}
 		}
 
-		// Update layer 2 weights and biases
-		n.updateLayer2(hidden, outputGrad, learningRate)
-
-		// Compute hidden gradients
-		// Note: layer2Weights already fetched in updateLayer2, but we need it before update
-		// This is acceptable since it's O(1) per sample, not O(n²)
-		hiddenGrad := make([]float64, n.hiddenSize)
+		// IMPORTANT: Get layer2 weights BEFORE updating
 		layer2Weights := n.layer2.GetConductanceMatrix()
+
+		// Compute hidden gradients using ORIGINAL weights
+		hiddenGrad := make([]float64, n.hiddenSize)
 		for j := 0; j < n.hiddenSize; j++ {
 			for i := 0; i < 10; i++ {
-				// Map conductance [0,1] to effective weight [-2,2] (matches forward pass scaling)
 				effectiveWeight := (layer2Weights[i][j] - 0.5) * 4.0
 				hiddenGrad[j] += outputGrad[i] * effectiveWeight
 			}
-			// ReLU derivative (straight-through estimator)
+			// ReLU derivative
 			if hidden[j] <= 0 {
 				hiddenGrad[j] = 0
 			}
 		}
+
+		// Now update layer 2 weights and biases
+		n.updateLayer2(hidden, outputGrad, learningRate)
 
 		// Update layer 1 weights and biases
 		n.updateLayer1(input, hiddenGrad, learningRate)
@@ -194,20 +237,6 @@ func (n *MNISTNetwork) forwardHidden(input []float64) []float64 {
 			hidden[i] = 0
 		}
 	}
-
-	// Normalize for stability
-	maxHidden := 0.0
-	for _, h := range hidden {
-		if h > maxHidden {
-			maxHidden = h
-		}
-	}
-	if maxHidden > 1.0 {
-		for i := range hidden {
-			hidden[i] /= maxHidden
-		}
-	}
-
 	return hidden
 }
 
@@ -220,47 +249,38 @@ func (n *MNISTNetwork) forwardOutput(hidden []float64) []float64 {
 }
 
 func (n *MNISTNetwork) updateLayer2(hidden, grad []float64, lr float64) {
-	// Fetch matrix once (was O(n³) when called inside loop)
+	// Fetch matrix once
 	weights := n.layer2.GetConductanceMatrix()
 
-	// Update weights
+	// Update weights - gradient is in output space, need to scale to conductance space
+	// The forward pass scales by 4.0, so gradient needs inverse scaling: 1/4 = 0.25
 	for i := 0; i < 10; i++ {
 		for j := 0; j < n.hiddenSize; j++ {
 			w := weights[i][j]
-
-			// Compute gradient and update
-			// Use straight-through estimator: gradient flows through quantization
-			dw := grad[i] * hidden[j] * lr
-			newW := w - dw*0.5 // Scale and convert back to conductance range
-
+			dw := grad[i] * hidden[j] * lr * 0.25
+			newW := w - dw
 			// ProgramWeight handles quantization to 30 levels
 			n.layer2.ProgramWeight(i, j, newW)
 		}
-
-		// Update bias
+		// Update bias (no scaling needed)
 		n.biases2[i] -= grad[i] * lr
 	}
 }
 
 func (n *MNISTNetwork) updateLayer1(input, grad []float64, lr float64) {
-	// Fetch matrix once (was O(n³) when called inside loop)
+	// Fetch matrix once
 	weights := n.layer1.GetConductanceMatrix()
 
-	// Update weights
+	// Update weights - gradient is in hidden space, need to scale to conductance space
 	for i := 0; i < n.hiddenSize; i++ {
 		for j := 0; j < len(input); j++ {
 			w := weights[i][j]
-
-			// Compute gradient and update
-			// Use straight-through estimator: gradient flows through quantization
-			dw := grad[i] * input[j] * lr
-			newW := w - dw*0.5
-
+			dw := grad[i] * input[j] * lr * 0.25
+			newW := w - dw
 			// ProgramWeight handles quantization to 30 levels
 			n.layer1.ProgramWeight(i, j, newW)
 		}
-
-		// Update bias
+		// Update bias (no scaling needed)
 		n.biases1[i] -= grad[i] * lr
 	}
 }
@@ -300,6 +320,7 @@ func (n *MNISTNetwork) SaveWeights(filename string) error {
 }
 
 // LoadWeights loads network weights from a JSON file.
+// Supports both legacy format and new format with scale/offset.
 func (n *MNISTNetwork) LoadWeights(filename string) error {
 	jsonData, err := os.ReadFile(filename)
 	if err != nil {
@@ -311,11 +332,21 @@ func (n *MNISTNetwork) LoadWeights(filename string) error {
 		Layer2Weights [][]float64 `json:"layer2_weights"`
 		Biases1       []float64   `json:"biases1"`
 		Biases2       []float64   `json:"biases2"`
+		L1Scale       float64     `json:"l1_scale"`
+		L1Offset      float64     `json:"l1_offset"`
+		L2Scale       float64     `json:"l2_scale"`
+		L2Offset      float64     `json:"l2_offset"`
 	}
 
 	if err := json.Unmarshal(jsonData, &data); err != nil {
 		return err
 	}
+
+	// Store scale factors for inference
+	n.l1Scale = data.L1Scale
+	n.l1Offset = data.L1Offset
+	n.l2Scale = data.L2Scale
+	n.l2Offset = data.L2Offset
 
 	// Program weights to crossbar arrays
 	for i, row := range data.Layer1Weights {
