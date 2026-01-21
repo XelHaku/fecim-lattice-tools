@@ -20,24 +20,24 @@ type HZOMaterial struct {
 	Ec float64 // Coercive field
 
 	// Dielectric properties
-	Epsilon    float64 // Relative permittivity (high frequency)
-	EpsilonLF  float64 // Low frequency permittivity
-	LossAngle  float64 // Dielectric loss tangent (tan δ)
+	Epsilon   float64 // Relative permittivity (high frequency)
+	EpsilonLF float64 // Low frequency permittivity
+	LossAngle float64 // Dielectric loss tangent (tan δ)
 
 	// Film properties
 	Thickness float64 // Film thickness (m)
 	Area      float64 // Active area (m²)
 
 	// Dynamics
-	Tau    float64 // Characteristic switching time (s)
-	Tau0   float64 // Activation attempt frequency inverse (s)
-	Ea     float64 // Activation energy for switching (eV)
-	Alpha  float64 // Switching exponent (KAI model)
+	Tau   float64 // Characteristic switching time (s)
+	Tau0  float64 // Activation attempt frequency inverse (s)
+	Ea    float64 // Activation energy for switching (eV)
+	Alpha float64 // Switching exponent (KAI model)
 
 	// Temperature properties
-	CurieTemp    float64 // Curie temperature (K)
-	TempCoeffEc  float64 // Temperature coefficient of Ec (V/m/K)
-	TempCoeffPr  float64 // Temperature coefficient of Pr (C/m²/K)
+	CurieTemp   float64 // Curie temperature (K)
+	TempCoeffEc float64 // Temperature coefficient of Ec (V/m/K)
+	TempCoeffPr float64 // Temperature coefficient of Pr (C/m²/K)
 
 	// Reliability parameters
 	EnduranceCycles float64 // Endurance limit (cycles)
@@ -51,24 +51,24 @@ type HZOMaterial struct {
 func DefaultHZO() *HZOMaterial {
 	return &HZOMaterial{
 		Name:            "HZO (Si-doped)",
-		Pr:              25e-2,     // 25 μC/cm² = 0.25 C/m²
-		Ps:              30e-2,     // 30 μC/cm² = 0.30 C/m²
-		Ec:              1.2e8,     // 1.2 MV/cm = 1.2e8 V/m
-		Epsilon:         30,        // High frequency permittivity
-		EpsilonLF:       38,        // Low frequency (includes domain contribution)
-		LossAngle:       0.02,      // tan δ ≈ 2%
-		Thickness:       10e-9,     // 10 nm
-		Area:            100e-12,   // 100 nm² typical device
-		Tau:             1e-9,      // ~1 ns intrinsic switching
-		Tau0:            1e-13,     // Attempt frequency ~10 THz
-		Ea:              0.7,       // Activation energy ~0.7 eV
-		Alpha:           2.0,       // KAI exponent (2D growth)
-		CurieTemp:       723,       // ~450°C
-		TempCoeffEc:     -2e5,      // Ec decreases with T
-		TempCoeffPr:     -5e-5,     // Pr decreases with T
-		EnduranceCycles: 1e10,      // 10^10 cycles
-		RetentionTime:   3.15e9,    // 100 years at 85°C
-		ImrintField:     1e6,       // Small imprint
+		Pr:              25e-2,   // 25 μC/cm² = 0.25 C/m²
+		Ps:              30e-2,   // 30 μC/cm² = 0.30 C/m²
+		Ec:              1.2e8,   // 1.2 MV/cm = 1.2e8 V/m
+		Epsilon:         30,      // High frequency permittivity
+		EpsilonLF:       38,      // Low frequency (includes domain contribution)
+		LossAngle:       0.02,    // tan δ ≈ 2%
+		Thickness:       10e-9,   // 10 nm
+		Area:            100e-12, // 100 nm² typical device
+		Tau:             1e-9,    // ~1 ns intrinsic switching
+		Tau0:            1e-13,   // Attempt frequency ~10 THz
+		Ea:              0.7,     // Activation energy ~0.7 eV
+		Alpha:           2.0,     // KAI exponent (2D growth)
+		CurieTemp:       723,     // ~450°C
+		TempCoeffEc:     -2e5,    // Ec decreases with T
+		TempCoeffPr:     -5e-5,   // Pr decreases with T
+		EnduranceCycles: 1e10,    // 10^10 cycles
+		RetentionTime:   3.15e9,  // 100 years at 85°C
+		ImrintField:     1e6,     // Small imprint
 	}
 }
 
@@ -78,23 +78,23 @@ func DefaultHZO() *HZOMaterial {
 func OptimizedHZO() *HZOMaterial {
 	return &HZOMaterial{
 		Name:            "HZO Superlattice",
-		Pr:              45e-2,     // 45 μC/cm² (superlattice enhanced)
-		Ps:              50e-2,     // 50 μC/cm²
-		Ec:              0.8e8,     // 0.8 MV/cm (reduced by negative capacitance)
+		Pr:              45e-2, // 45 μC/cm² (superlattice enhanced)
+		Ps:              50e-2, // 50 μC/cm²
+		Ec:              0.8e8, // 0.8 MV/cm (reduced by negative capacitance)
 		Epsilon:         35,
 		EpsilonLF:       50,
 		LossAngle:       0.015,
 		Thickness:       10e-9,
 		Area:            100e-12,
-		Tau:             0.5e-9,    // Faster switching
+		Tau:             0.5e-9, // Faster switching
 		Tau0:            1e-13,
-		Ea:              0.5,       // Lower activation energy
+		Ea:              0.5, // Lower activation energy
 		Alpha:           2.5,
-		CurieTemp:       773,       // Higher Tc
+		CurieTemp:       773, // Higher Tc
 		TempCoeffEc:     -1.5e5,
 		TempCoeffPr:     -3e-5,
-		EnduranceCycles: 1e12,      // Better endurance
-		RetentionTime:   1e10,      // Excellent retention
+		EnduranceCycles: 1e12, // Better endurance
+		RetentionTime:   1e10, // Excellent retention
 		ImrintField:     0.5e6,
 	}
 }
@@ -124,23 +124,23 @@ func OptimizedHZO() *HZOMaterial {
 func FeCIMMaterial() *HZOMaterial {
 	return &HZOMaterial{
 		Name:            "FeCIM HZO",
-		Pr:              30e-2,     // 30 μC/cm² - ESTIMATED (not disclosed)
-		Ps:              35e-2,     // 35 μC/cm² - ESTIMATED (not disclosed)
-		Ec:              1.0e8,     // 1.0 MV/cm - ESTIMATED (not disclosed)
-		Epsilon:         32,        // ESTIMATED
-		EpsilonLF:       40,        // ESTIMATED
-		LossAngle:       0.01,      // Low loss - ESTIMATED
-		Thickness:       10e-9,     // ESTIMATED
+		Pr:              30e-2,         // 30 μC/cm² - ESTIMATED (not disclosed)
+		Ps:              35e-2,         // 35 μC/cm² - ESTIMATED (not disclosed)
+		Ec:              1.0e8,         // 1.0 MV/cm - ESTIMATED (not disclosed)
+		Epsilon:         32,            // ESTIMATED
+		EpsilonLF:       40,            // ESTIMATED
+		LossAngle:       0.01,          // Low loss - ESTIMATED
+		Thickness:       10e-9,         // ESTIMATED
 		Area:            45e-9 * 45e-9, // 45nm pitch cell - ESTIMATED
-		Tau:             10e-9,     // 10 ns (from Tour's slides, not 1ns)
+		Tau:             10e-9,         // 10 ns (from Tour's slides, not 1ns)
 		Tau0:            1e-13,
 		Ea:              0.6,
 		Alpha:           2.0,
 		CurieTemp:       723,
 		TempCoeffEc:     -1.8e5,
 		TempCoeffPr:     -4e-5,
-		EnduranceCycles: 1e9,       // 10^9 DEMONSTRATED (10^12 is TARGET)
-		RetentionTime:   1e7,       // 10^7 sec (~116 days) DEMONSTRATED
+		EnduranceCycles: 1e9, // 10^9 DEMONSTRATED (10^12 is TARGET)
+		RetentionTime:   1e7, // 10^7 sec (~116 days) DEMONSTRATED
 		ImrintField:     1e6,
 	}
 }
@@ -152,9 +152,9 @@ func FeCIMMaterial() *HZOMaterial {
 func FeCIMMaterialTarget() *HZOMaterial {
 	mat := FeCIMMaterial()
 	mat.Name = "FeCIM HZO (TARGET - NOT DEMONSTRATED)"
-	mat.EnduranceCycles = 1e12      // TARGET - not yet achieved
-	mat.RetentionTime = 3.15e9     // TARGET - 100 years (not demonstrated)
-	mat.Tau = 1e-9                 // TARGET - 1ns (demonstrated ~10ns)
+	mat.EnduranceCycles = 1e12 // TARGET - not yet achieved
+	mat.RetentionTime = 3.15e9 // TARGET - 100 years (not demonstrated)
+	mat.Tau = 1e-9             // TARGET - 1ns (demonstrated ~10ns)
 	return mat
 }
 

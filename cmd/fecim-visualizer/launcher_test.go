@@ -22,19 +22,10 @@ func TestGetDemos(t *testing.T) {
 		}
 	}
 
-	// Demos 1-3 should be ready
-	readyDemos := []int{1, 2, 3}
-	for _, num := range readyDemos {
-		if !demos[num-1].Ready {
-			t.Errorf("Demo %d should be ready", num)
-		}
-	}
-
-	// Demos 4-8 should not be ready
-	notReadyDemos := []int{4, 5, 6, 7, 8}
-	for _, num := range notReadyDemos {
-		if demos[num-1].Ready {
-			t.Errorf("Demo %d should not be ready", num)
+	// All demos 1-8 should be ready
+	for _, demo := range demos {
+		if !demo.Ready {
+			t.Errorf("Demo %d should be ready", demo.Number)
 		}
 	}
 }
@@ -222,10 +213,10 @@ func TestDemoCardWithTestApp(t *testing.T) {
 	window.Show()
 }
 
-func TestComingSoonTabNotReady(t *testing.T) {
+func TestAllDemosReady(t *testing.T) {
 	demos := GetDemos()
 
-	// Count ready vs not ready
+	// Count ready demos
 	readyCount := 0
 	for _, d := range demos {
 		if d.Ready {
@@ -233,8 +224,8 @@ func TestComingSoonTabNotReady(t *testing.T) {
 		}
 	}
 
-	// Should have exactly 3 ready demos
-	if readyCount != 3 {
-		t.Errorf("Expected 3 ready demos, got %d", readyCount)
+	// All 8 demos should be ready
+	if readyCount != 8 {
+		t.Errorf("Expected 8 ready demos, got %d", readyCount)
 	}
 }

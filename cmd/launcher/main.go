@@ -19,12 +19,12 @@ import (
 
 // FeCIM theme colors
 var (
-	colorBackground  = color.RGBA{0, 50, 100, 255}  // FeCIM blue #003264
-	colorPrimary     = color.RGBA{0, 212, 255, 255} // Cyan
-	colorCardBg      = color.RGBA{0, 40, 80, 255}   // Darker blue for cards
-	colorDisabled    = color.RGBA{80, 80, 80, 255}  // Gray for coming soon
-	colorReady       = color.RGBA{0, 200, 100, 255} // Green for ready
-	colorComingSoon  = color.RGBA{150, 150, 150, 255}
+	colorBackground = color.RGBA{0, 50, 100, 255}  // FeCIM blue #003264
+	colorPrimary    = color.RGBA{0, 212, 255, 255} // Cyan
+	colorCardBg     = color.RGBA{0, 40, 80, 255}   // Darker blue for cards
+	colorDisabled   = color.RGBA{80, 80, 80, 255}  // Gray for coming soon
+	colorReady      = color.RGBA{0, 200, 100, 255} // Green for ready
+	colorComingSoon = color.RGBA{150, 150, 150, 255}
 )
 
 // feCIMTheme implements fyne.Theme for consistent FeCIM branding
@@ -161,11 +161,11 @@ func main() {
 
 	// Main layout
 	content := container.NewBorder(
-		header,  // top
-		footer,  // bottom
-		nil,     // left
-		nil,     // right
-		grid,    // center
+		header, // top
+		footer, // bottom
+		nil,    // left
+		nil,    // right
+		grid,   // center
 	)
 
 	w.SetContent(content)

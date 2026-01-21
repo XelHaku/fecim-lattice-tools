@@ -15,11 +15,11 @@ type ControlPanel struct {
 	widget.BaseWidget
 
 	// Controls
-	ArraySizeSlider  *widget.Slider
-	NoiseSlider      *widget.Slider
-	ADCBitsSlider    *widget.Slider
-	ColormapSelect   *widget.Select
-	DemoModeSelect   *widget.Select
+	ArraySizeSlider *widget.Slider
+	NoiseSlider     *widget.Slider
+	ADCBitsSlider   *widget.Slider
+	ColormapSelect  *widget.Select
+	DemoModeSelect  *widget.Select
 
 	// Buttons
 	RunMVMButton       *widget.Button
@@ -323,7 +323,7 @@ type LevelIndicator struct {
 // NewLevelIndicator creates a new level indicator.
 func NewLevelIndicator() *LevelIndicator {
 	li := &LevelIndicator{
-		levels: 30,
+		levels:       30,
 		currentLevel: 0,
 	}
 	li.ExtendBaseWidget(li)

@@ -326,8 +326,8 @@ func (r *PERenderer) RenderMaterialComparison() string {
 	sb.WriteString(strings.Repeat("─", 70) + "\n")
 
 	for _, m := range materials {
-		PruC := m.Pr * 100  // C/m² to µC/cm²
-		EcMV := m.Ec / 1e8  // V/m to MV/cm
+		PruC := m.Pr * 100 // C/m² to µC/cm²
+		EcMV := m.Ec / 1e8 // V/m to MV/cm
 		tauNs := m.Tau * 1e9
 		endurance := fmt.Sprintf("%.0e", m.EnduranceCycles)
 

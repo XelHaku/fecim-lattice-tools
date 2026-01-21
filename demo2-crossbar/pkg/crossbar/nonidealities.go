@@ -212,9 +212,9 @@ func (a *Array) AnalyzeSneakPaths(selectedRow, selectedCol int) *SneakPathAnalys
 				}
 			} else {
 				// General three-cell path
-				g1 := a.cells[selectedRow][j].Conductance   // Same row, different col
-				g2 := a.cells[i][j].Conductance             // Diagonal cell
-				g3 := a.cells[i][selectedCol].Conductance   // Same col, different row
+				g1 := a.cells[selectedRow][j].Conductance // Same row, different col
+				g2 := a.cells[i][j].Conductance           // Diagonal cell
+				g3 := a.cells[i][selectedCol].Conductance // Same col, different row
 
 				if g1 > 0 && g2 > 0 && g3 > 0 {
 					// Three resistors in series

@@ -4,13 +4,14 @@
 // via keyboard controls, with visual feedback displayed on screen.
 //
 // Controls:
-//   E/D - Increase/Decrease Electric Field amplitude
-//   T/G - Increase/Decrease Temperature (modifies Landau coefficients)
-//   W   - Cycle waveform (Sine, Triangle, Square)
-//   F/V - Increase/Decrease Frequency
-//   R   - Reset simulation
-//   Space - Pause/Resume
-//   Q   - Quit
+//
+//	E/D - Increase/Decrease Electric Field amplitude
+//	T/G - Increase/Decrease Temperature (modifies Landau coefficients)
+//	W   - Cycle waveform (Sine, Triangle, Square)
+//	F/V - Increase/Decrease Frequency
+//	R   - Reset simulation
+//	Space - Pause/Resume
+//	Q   - Quit
 package gui
 
 import (
@@ -50,16 +51,16 @@ type LabBench struct {
 	Running bool
 
 	// Callbacks - invoked when parameters change
-	OnEFieldChange     func(float64)
+	OnEFieldChange      func(float64)
 	OnTemperatureChange func(float64)
-	OnFrequencyChange  func(float64)
-	OnWaveformChange   func(int)
-	OnPauseToggle      func(bool)
-	OnReset            func()
-	OnQuit             func()
+	OnFrequencyChange   func(float64)
+	OnWaveformChange    func(int)
+	OnPauseToggle       func(bool)
+	OnReset             func()
+	OnQuit              func()
 
 	// Derived values (for display)
-	LandauAlpha float64 // Current α coefficient (from temperature)
+	LandauAlpha   float64 // Current α coefficient (from temperature)
 	CoerciveField float64 // Current Ec (temperature-dependent)
 }
 
@@ -284,17 +285,17 @@ func formatFrequency(f float64) string {
 // Below Tc: α < 0 → ferroelectric (double-well potential)
 // Above Tc: α > 0 → paraelectric (single-well potential)
 type TemperatureEffects struct {
-	Tc         float64 // Curie temperature (K)
-	Alpha0     float64 // Base α coefficient
-	AlphaT     float64 // α at current temperature
-	IsFerro    bool    // True if T < Tc
+	Tc      float64 // Curie temperature (K)
+	Alpha0  float64 // Base α coefficient
+	AlphaT  float64 // α at current temperature
+	IsFerro bool    // True if T < Tc
 }
 
 // ComputeTemperatureEffects calculates Landau parameters at temperature T.
 func ComputeTemperatureEffects(T float64) *TemperatureEffects {
 	const (
-		Tc     = 700.0  // Curie temperature for HZO (K)
-		alpha0 = 2.5e8  // Base coefficient (C⁻²·m²·J)
+		Tc     = 700.0 // Curie temperature for HZO (K)
+		alpha0 = 2.5e8 // Base coefficient (C⁻²·m²·J)
 	)
 
 	// Curie-Weiss law
@@ -310,12 +311,12 @@ func ComputeTemperatureEffects(T float64) *TemperatureEffects {
 
 // SliderValue represents a normalized slider position [0, 1].
 type SliderValue struct {
-	Value    float64 // Current value
-	Min      float64 // Minimum
-	Max      float64 // Maximum
-	Label    string  // Display label
-	Unit     string  // Unit string
-	Format   string  // Printf format for value
+	Value  float64 // Current value
+	Min    float64 // Minimum
+	Max    float64 // Maximum
+	Label  string  // Display label
+	Unit   string  // Unit string
+	Format string  // Printf format for value
 }
 
 // Normalized returns the slider position as [0, 1].

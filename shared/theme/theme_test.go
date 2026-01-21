@@ -18,9 +18,9 @@ func TestFeCIMThemeColors(t *testing.T) {
 	th := &FeCIMTheme{}
 
 	tests := []struct {
-		name     string
+		name      string
 		colorName fyne.ThemeColorName
-		want     color.Color
+		want      color.Color
 	}{
 		{
 			name:      "Background is FeCIM blue",

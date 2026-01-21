@@ -261,12 +261,12 @@ func (s *Stack) Forward(input []float64) ([]float64, error) {
 
 // DataFlowStats returns statistics about data flow through the stack.
 type DataFlowStats struct {
-	LayerName      string
-	InputSize      int
-	OutputSize     int
-	MACOperations  int
-	DataMovement   int // Bytes moved (for comparison)
-	CIMAdvantage   float64
+	LayerName     string
+	InputSize     int
+	OutputSize    int
+	MACOperations int
+	DataMovement  int // Bytes moved (for comparison)
+	CIMAdvantage  float64
 }
 
 // AnalyzeDataFlow returns data flow statistics for each layer.
@@ -315,10 +315,10 @@ func (s *Stack) EstimateEnergy() []EnergyEstimate {
 
 	// FeCIM: ~0.001 pJ per MAC
 	// Traditional: ~1-10 pJ per MAC
-	cimMACEnergy := 0.001        // pJ
-	traditionalMACEnergy := 5.0  // pJ
-	dataMoveCostPerByte := 0.1   // pJ (for CIM, minimal)
-	traditionalDataCost := 10.0  // pJ per byte
+	cimMACEnergy := 0.001       // pJ
+	traditionalMACEnergy := 5.0 // pJ
+	dataMoveCostPerByte := 0.1  // pJ (for CIM, minimal)
+	traditionalDataCost := 10.0 // pJ per byte
 
 	for i, layer := range s.Layers {
 		macs := layer.Rows * layer.Cols

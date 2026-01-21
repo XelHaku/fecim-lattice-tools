@@ -215,7 +215,7 @@ func (a *ArchitectureDiagram) generateImage(w, h int) image.Image {
 	// Right side: CIM (FeCIM)
 	// Draw combined box
 	cimColor := color.RGBA{100, 200, 150, 255}
-	midX := w / 2 + 50
+	midX := w/2 + 50
 	drawBox(img, midX, 30, 100, 40, cimColor)
 
 	// Draw "NO DATA MOVEMENT" text indicator (simple line)
@@ -253,23 +253,23 @@ func drawBox(img *image.RGBA, x, y, width, height int, c color.RGBA) {
 type DataCenterCalculator struct {
 	widget.BaseWidget
 
-	workloadLabel     *widget.Label
-	macsLabel         *widget.Label
-	inferencesLabel   *widget.Label
+	workloadLabel   *widget.Label
+	macsLabel       *widget.Label
+	inferencesLabel *widget.Label
 
-	cpuEnergyLabel    *widget.Label
-	gpuEnergyLabel    *widget.Label
-	fecimEnergyLabel  *widget.Label
+	cpuEnergyLabel   *widget.Label
+	gpuEnergyLabel   *widget.Label
+	fecimEnergyLabel *widget.Label
 
-	cpuPowerLabel     *widget.Label
-	gpuPowerLabel     *widget.Label
-	fecimPowerLabel   *widget.Label
+	cpuPowerLabel   *widget.Label
+	gpuPowerLabel   *widget.Label
+	fecimPowerLabel *widget.Label
 
-	cpuCostLabel      *widget.Label
-	gpuCostLabel      *widget.Label
-	fecimCostLabel    *widget.Label
+	cpuCostLabel   *widget.Label
+	gpuCostLabel   *widget.Label
+	fecimCostLabel *widget.Label
 
-	savingsLabel      *widget.Label
+	savingsLabel *widget.Label
 }
 
 // NewDataCenterCalculator creates a new calculator widget.

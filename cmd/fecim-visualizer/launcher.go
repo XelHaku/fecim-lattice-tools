@@ -48,35 +48,35 @@ func GetDemos() []DemoInfo {
 			Title:       "Circuits",
 			Subtitle:    "Peripheral Design",
 			Description: "How it fits in a real chip: DAC, ADC, and signal conditioning circuits",
-			Ready:       false,
+			Ready:       true,
 		},
 		{
 			Number:      5,
 			Title:       "Thermal",
 			Subtitle:    "1000x Cooler",
 			Description: "Why it runs cool: compare thermal profiles vs NAND and DRAM",
-			Ready:       false,
+			Ready:       true,
 		},
 		{
 			Number:      6,
 			Title:       "3D Stack",
 			Subtitle:    "Scalable Layers",
 			Description: "How we scale: multi-layer stacking for massive parallelism",
-			Ready:       false,
+			Ready:       true,
 		},
 		{
 			Number:      7,
 			Title:       "Non-Idealities",
 			Subtitle:    "Real Challenges",
 			Description: "What we face: IR drop, sneak paths, and drift analysis",
-			Ready:       false,
+			Ready:       true,
 		},
 		{
 			Number:      8,
 			Title:       "Comparison",
-			Subtitle:    "Why IL Wins",
+			Subtitle:    "Why FeCIM Wins",
 			Description: "The bottom line: energy, speed, and cost comparison with verified sources",
-			Ready:       false,
+			Ready:       true,
 		},
 	}
 }
@@ -84,9 +84,9 @@ func GetDemos() []DemoInfo {
 // DemoCard creates a card widget for a demo
 type DemoCard struct {
 	widget.BaseWidget
-	info      DemoInfo
-	onTapped  func()
-	minSize   fyne.Size
+	info     DemoInfo
+	onTapped func()
+	minSize  fyne.Size
 }
 
 // NewDemoCard creates a new demo card
@@ -137,11 +137,11 @@ func (r *demoCardRenderer) Refresh() {
 	// Background color based on ready state
 	var bgColor, borderColor, textColor color.RGBA
 	if info.Ready {
-		bgColor = color.RGBA{0, 60, 120, 255}     // Darker blue for ready
+		bgColor = color.RGBA{0, 60, 120, 255}      // Darker blue for ready
 		borderColor = color.RGBA{0, 212, 255, 255} // Cyan border
 		textColor = color.RGBA{255, 255, 255, 255}
 	} else {
-		bgColor = color.RGBA{30, 40, 50, 200}     // Gray for coming soon
+		bgColor = color.RGBA{30, 40, 50, 200} // Gray for coming soon
 		borderColor = color.RGBA{80, 90, 100, 255}
 		textColor = color.RGBA{120, 130, 140, 255}
 	}
@@ -297,7 +297,7 @@ func CreateLauncherContent(onDemoSelected func(demoNum int)) fyne.CanvasObject {
 		}
 	}
 	progressLabel := widget.NewLabelWithStyle(
-		"3/8 Demos Ready",
+		"8/8 Demos Ready",
 		fyne.TextAlignCenter,
 		fyne.TextStyle{},
 	)
@@ -329,7 +329,7 @@ func CreateLauncherContent(onDemoSelected func(demoNum int)) fyne.CanvasObject {
 
 	// Instructions at bottom
 	instructionsLabel := widget.NewLabelWithStyle(
-		"Click on a READY demo to explore. Coming Soon demos are under development.",
+		"Click on any demo card to explore. All 8 demos are fully functional!",
 		fyne.TextAlignCenter,
 		fyne.TextStyle{Italic: true},
 	)

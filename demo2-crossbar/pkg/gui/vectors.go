@@ -365,7 +365,7 @@ func (c *ComparisonChart) generateImage(w, h int) image.Image {
 		img.Set(x, legendY, idealColor)
 		img.Set(x, legendY+1, idealColor)
 	}
-	for x := padding+60; x < padding+80; x++ {
+	for x := padding + 60; x < padding+80; x++ {
 		img.Set(x, legendY, actualColor)
 		img.Set(x, legendY+1, actualColor)
 	}

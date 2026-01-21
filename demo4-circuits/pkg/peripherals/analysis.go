@@ -158,17 +158,17 @@ func AnalyzeTiming(dac *DAC, adc *ADC, tia *TIA, pump *ChargePump) *TimingAnalys
 
 // PowerBreakdown contains power consumption breakdown.
 type PowerBreakdown struct {
-	DACPower  float64 // DAC power (W)
-	ADCPower  float64 // ADC power (W)
-	TIAPower  float64 // TIA power (W)
-	PumpPower float64 // Charge pump power (W)
+	DACPower   float64 // DAC power (W)
+	ADCPower   float64 // ADC power (W)
+	TIAPower   float64 // TIA power (W)
+	PumpPower  float64 // Charge pump power (W)
 	TotalPower float64 // Total peripheral power (W)
 
 	// Energy per operation
-	DACEnergy  float64
-	ADCEnergy  float64
-	TIAEnergy  float64
-	PumpEnergy float64
+	DACEnergy   float64
+	ADCEnergy   float64
+	TIAEnergy   float64
+	PumpEnergy  float64
 	TotalEnergy float64 // Per operation
 
 	// Fractions

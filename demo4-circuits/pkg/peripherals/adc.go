@@ -7,34 +7,34 @@ import (
 // ADC represents an Analog-to-Digital Converter for crossbar read operations.
 // 5-bit ADC quantizes current/voltage to 30 discrete levels.
 type ADC struct {
-	Bits          int     // Resolution in bits
-	VrefHigh      float64 // High reference voltage
-	VrefLow       float64 // Low reference voltage
-	INL           float64 // Integral nonlinearity (LSB)
-	DNL           float64 // Differential nonlinearity (LSB)
+	Bits           int     // Resolution in bits
+	VrefHigh       float64 // High reference voltage
+	VrefLow        float64 // Low reference voltage
+	INL            float64 // Integral nonlinearity (LSB)
+	DNL            float64 // Differential nonlinearity (LSB)
 	ConversionTime float64 // Conversion time (ns)
-	Type          ADCType // Architecture type
+	Type           ADCType // Architecture type
 }
 
 // ADCType specifies the ADC architecture.
 type ADCType int
 
 const (
-	ADCTypeSAR ADCType = iota // Successive Approximation Register
-	ADCTypeFlash              // Flash (parallel)
-	ADCTypeSigmaDelta         // Sigma-Delta (oversampling)
+	ADCTypeSAR        ADCType = iota // Successive Approximation Register
+	ADCTypeFlash                     // Flash (parallel)
+	ADCTypeSigmaDelta                // Sigma-Delta (oversampling)
 )
 
 // DefaultADC returns an ADC configured for FeCIM read operations.
 func DefaultADC() *ADC {
 	return &ADC{
-		Bits:          5,     // 32 levels, we use 30
-		VrefHigh:      1.0,   // Max sense voltage
-		VrefLow:       0.0,   // Min sense voltage
-		INL:           0.5,   // 0.5 LSB INL
-		DNL:           0.25,  // 0.25 LSB DNL
+		Bits:           5,    // 32 levels, we use 30
+		VrefHigh:       1.0,  // Max sense voltage
+		VrefLow:        0.0,  // Min sense voltage
+		INL:            0.5,  // 0.5 LSB INL
+		DNL:            0.25, // 0.25 LSB DNL
 		ConversionTime: 50,   // 50 ns for SAR
-		Type:          ADCTypeSAR,
+		Type:           ADCTypeSAR,
 	}
 }
 
@@ -55,7 +55,7 @@ func (a *ADC) Convert(voltage float64) int {
 
 	// Linear quantization
 	fraction := (voltage - a.VrefLow) / (a.VrefHigh - a.VrefLow)
-	level := int(fraction * float64(a.Levels()-1) + 0.5)
+	level := int(fraction*float64(a.Levels()-1) + 0.5)
 
 	if level >= a.Levels() {
 		level = a.Levels() - 1

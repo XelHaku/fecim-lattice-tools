@@ -11,11 +11,11 @@ import (
 
 // State represents the current simulation state.
 type State struct {
-	Time         float64 // Simulation time (s)
-	Voltage      float64 // Applied voltage (V)
+	Time          float64 // Simulation time (s)
+	Voltage       float64 // Applied voltage (V)
 	ElectricField float64 // Electric field (V/m)
-	Polarization float64 // Current polarization (C/m²)
-	NormPol      float64 // Normalized polarization (-1 to +1)
+	Polarization  float64 // Current polarization (C/m²)
+	NormPol       float64 // Normalized polarization (-1 to +1)
 
 	// History for plotting
 	VoltageHistory []float64

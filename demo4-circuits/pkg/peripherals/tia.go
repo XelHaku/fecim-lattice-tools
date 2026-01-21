@@ -7,23 +7,23 @@ import (
 // TIA represents a Transimpedance Amplifier for current-to-voltage conversion.
 // Used in crossbar read path to sense column currents.
 type TIA struct {
-	Gain            float64 // Transimpedance gain (Ohms)
-	Bandwidth       float64 // -3dB bandwidth (Hz)
-	InputNoiseRMS   float64 // Input-referred noise (A/sqrt(Hz))
-	OutputOffset    float64 // Output offset voltage (V)
-	MaxInputCurrent float64 // Maximum input current (A)
+	Gain             float64 // Transimpedance gain (Ohms)
+	Bandwidth        float64 // -3dB bandwidth (Hz)
+	InputNoiseRMS    float64 // Input-referred noise (A/sqrt(Hz))
+	OutputOffset     float64 // Output offset voltage (V)
+	MaxInputCurrent  float64 // Maximum input current (A)
 	MaxOutputVoltage float64 // Maximum output voltage (V)
 }
 
 // DefaultTIA returns a TIA configured for crossbar sense operations.
 func DefaultTIA() *TIA {
 	return &TIA{
-		Gain:            10e3,   // 10 kΩ transimpedance
-		Bandwidth:       100e6,  // 100 MHz bandwidth
-		InputNoiseRMS:   1e-12,  // 1 pA/sqrt(Hz) input noise
-		OutputOffset:    5e-3,   // 5 mV output offset
-		MaxInputCurrent: 100e-6, // 100 µA max input
-		MaxOutputVoltage: 1.0,   // 1V max output
+		Gain:             10e3,   // 10 kΩ transimpedance
+		Bandwidth:        100e6,  // 100 MHz bandwidth
+		InputNoiseRMS:    1e-12,  // 1 pA/sqrt(Hz) input noise
+		OutputOffset:     5e-3,   // 5 mV output offset
+		MaxInputCurrent:  100e-6, // 100 µA max input
+		MaxOutputVoltage: 1.0,    // 1V max output
 	}
 }
 

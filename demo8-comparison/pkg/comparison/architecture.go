@@ -6,9 +6,9 @@ import (
 
 // Architecture represents a compute architecture for neural network inference.
 type Architecture struct {
-	Name        string  // Architecture name
-	Description string  // Brief description
-	Technology  string  // Underlying technology
+	Name        string // Architecture name
+	Description string // Brief description
+	Technology  string // Underlying technology
 
 	// Physical parameters
 	ProcessNode float64 // Process node (nm)
@@ -16,9 +16,9 @@ type Architecture struct {
 	TDP         float64 // Thermal design power (W)
 
 	// Performance parameters
-	PeakTOPS    float64 // Peak operations per second (TOPS)
-	MemoryBW    float64 // Memory bandwidth (GB/s)
-	MemorySize  float64 // Memory size (GB)
+	PeakTOPS   float64 // Peak operations per second (TOPS)
+	MemoryBW   float64 // Memory bandwidth (GB/s)
+	MemorySize float64 // Memory size (GB)
 
 	// Efficiency metrics (calculated or specified)
 	TOPSPerWatt float64 // Energy efficiency (TOPS/W)
@@ -55,9 +55,9 @@ func GPUAccelerator() *Architecture {
 		Description:     "High-performance GPU with HBM memory",
 		Technology:      "CMOS + HBM",
 		ProcessNode:     4,
-		ChipArea:        800, // Large GPU die
-		TDP:             400, // High-end GPU
-		PeakTOPS:        100, // Modern AI GPU
+		ChipArea:        800,  // Large GPU die
+		TDP:             400,  // High-end GPU
+		PeakTOPS:        100,  // Modern AI GPU
 		MemoryBW:        2000, // HBM bandwidth
 		MemorySize:      80,   // HBM capacity
 		TOPSPerWatt:     0.25,
@@ -247,14 +247,14 @@ func LLMWorkload() Workload {
 
 // DataCenterMetrics contains metrics for data center scale.
 type DataCenterMetrics struct {
-	Architecture   string  // Architecture name
-	ChipsRequired  int     // Number of chips needed
-	TotalPower     float64 // Total power (kW)
-	RackSpace      int     // Rack units required
+	Architecture     string  // Architecture name
+	ChipsRequired    int     // Number of chips needed
+	TotalPower       float64 // Total power (kW)
+	RackSpace        int     // Rack units required
 	InferencesPerSec float64 // Total throughput
 	CostPerInference float64 // Cost per inference ($)
-	TCO            float64 // Total cost of ownership ($/year)
-	CO2Emissions   float64 // kg CO2 per day
+	TCO              float64 // Total cost of ownership ($/year)
+	CO2Emissions     float64 // kg CO2 per day
 }
 
 // ScaleToDataCenter calculates data center scale metrics.
@@ -309,11 +309,11 @@ func ScaleToDataCenter(arch *Architecture, targetThroughput float64, workload Wo
 
 // ComparisonResult contains full comparison between architectures.
 type ComparisonResult struct {
-	Workload    Workload
-	BatchSize   int
+	Workload      Workload
+	BatchSize     int
 	Architectures []*Architecture
-	Results     []InferenceResult
-	DataCenter  []DataCenterMetrics
+	Results       []InferenceResult
+	DataCenter    []DataCenterMetrics
 }
 
 // CompareArchitectures runs a full comparison.
@@ -351,11 +351,11 @@ type FeCIMAdvantage struct {
 		CostReduction      float64
 	}
 	VsGPU struct {
-		EnergyReduction    float64
-		LatencyReduction   float64
-		AreaReduction      float64
-		PowerReduction     float64
-		CostReduction      float64
+		EnergyReduction  float64
+		LatencyReduction float64
+		AreaReduction    float64
+		PowerReduction   float64
+		CostReduction    float64
 	}
 }
 

@@ -26,15 +26,15 @@ type CrossbarHeatmap struct {
 	colormap   string
 
 	// Selection
-	selectedRow int
-	selectedCol int
+	selectedRow   int
+	selectedCol   int
 	showSelection bool
 
 	// Animation state
-	animPhase      int        // 0=none, 1=input, 2=compute, 3=output
-	animProgress   float64    // 0-1 progress within phase
-	highlightCols  []int      // Columns to highlight (input)
-	highlightRows  []int      // Rows to highlight (output)
+	animPhase     int     // 0=none, 1=input, 2=compute, 3=output
+	animProgress  float64 // 0-1 progress within phase
+	highlightCols []int   // Columns to highlight (input)
+	highlightRows []int   // Rows to highlight (output)
 
 	// Callbacks
 	OnCellTapped func(row, col int)
@@ -48,14 +48,14 @@ type CrossbarHeatmap struct {
 // NewCrossbarHeatmap creates a new crossbar heatmap widget.
 func NewCrossbarHeatmap(rows, cols int) *CrossbarHeatmap {
 	h := &CrossbarHeatmap{
-		rows:     rows,
-		cols:     cols,
-		minVal:   0,
-		maxVal:   1,
-		colormap: "viridis",
+		rows:        rows,
+		cols:        cols,
+		minVal:      0,
+		maxVal:      1,
+		colormap:    "viridis",
 		selectedRow: -1,
 		selectedCol: -1,
-		cellSize: 6, // Smaller cell size to fit better
+		cellSize:    6, // Smaller cell size to fit better
 	}
 
 	// Initialize data

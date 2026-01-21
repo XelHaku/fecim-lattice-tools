@@ -238,8 +238,8 @@ func showComparisonDemo() {
 	fmt.Println("  Ratio: 1000-10,000× lower power!")
 	fmt.Println()
 
-	feCIMPower := 1e4   // W/m² - very low power density (FeCIM advantage)
-	traditionalPower := 1e7  // W/m² - typical high-performance CMOS
+	feCIMPower := 1e4       // W/m² - very low power density (FeCIM advantage)
+	traditionalPower := 1e7 // W/m² - typical high-performance CMOS
 
 	// Apply uniform workload
 	for y := 0; y < 32; y++ {

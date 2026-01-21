@@ -8,11 +8,11 @@ import (
 
 // Config contains rendering configuration.
 type Config struct {
-	Width       int     // Window width in pixels
-	Height      int     // Window height in pixels
-	Title       string  // Window title
-	TargetFPS   int     // Target frames per second
-	VSync       bool    // Enable vertical sync
+	Width        int    // Window width in pixels
+	Height       int    // Window height in pixels
+	Title        string // Window title
+	TargetFPS    int    // Target frames per second
+	VSync        bool   // Enable vertical sync
 	Antialiasing bool   // Enable antialiasing
 }
 
@@ -198,7 +198,7 @@ func NewLevelIndicator() *LevelIndicator {
 		Y:             0.1,
 		Width:         0.08,
 		Height:        0.8,
-		CurrentLevel:  15, // Middle level
+		CurrentLevel:  15,                        // Middle level
 		ActiveColor:   Color{0.2, 0.7, 0.3, 1.0}, // Green for active
 		InactiveColor: Color{0.3, 0.3, 0.3, 0.5}, // Gray for inactive
 		BorderColor:   Color{0.2, 0.2, 0.2, 1.0},

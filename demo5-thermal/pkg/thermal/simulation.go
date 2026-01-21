@@ -9,17 +9,17 @@ import (
 // Implements heat diffusion equation: dT/dt = α∇²T + Q/(ρ*cp)
 // where α is thermal diffusivity and Q is heat generation rate.
 type ThermalSim struct {
-	Grid               [][]float64 // Temperature grid (°C)
-	PowerMap           [][]float64 // Heat generation map (W/m²)
-	Width              int         // Grid width
-	Height             int         // Grid height
-	Conductivity       float64     // Thermal conductivity (W/m·K)
-	Diffusivity        float64     // Thermal diffusivity (m²/s)
-	VolumetricHeatCap  float64     // ρ*cp volumetric heat capacity (J/m³·K)
-	AmbientTemp        float64     // Ambient temperature (°C)
-	MaxTemp            float64     // Maximum safe operating temperature (°C)
-	CellSize           float64     // Size of each grid cell (m)
-	mu                 sync.RWMutex
+	Grid              [][]float64 // Temperature grid (°C)
+	PowerMap          [][]float64 // Heat generation map (W/m²)
+	Width             int         // Grid width
+	Height            int         // Grid height
+	Conductivity      float64     // Thermal conductivity (W/m·K)
+	Diffusivity       float64     // Thermal diffusivity (m²/s)
+	VolumetricHeatCap float64     // ρ*cp volumetric heat capacity (J/m³·K)
+	AmbientTemp       float64     // Ambient temperature (°C)
+	MaxTemp           float64     // Maximum safe operating temperature (°C)
+	CellSize          float64     // Size of each grid cell (m)
+	mu                sync.RWMutex
 }
 
 // LayerConfig holds thermal properties for a single layer.
@@ -62,12 +62,12 @@ func NewThermalSim(width, height int) *ThermalSim {
 		PowerMap:          powerMap,
 		Width:             width,
 		Height:            height,
-		Conductivity:      150.0,   // Silicon ~150 W/m·K
-		Diffusivity:       8.8e-5,  // Silicon thermal diffusivity
-		VolumetricHeatCap: 1.63e6,  // Silicon ρ*cp ≈ 2330*700 J/m³·K
-		AmbientTemp:       25.0,    // Room temperature
-		MaxTemp:           85.0,    // Typical max for CMOS
-		CellSize:          1e-6,    // 1 µm grid cells
+		Conductivity:      150.0,  // Silicon ~150 W/m·K
+		Diffusivity:       8.8e-5, // Silicon thermal diffusivity
+		VolumetricHeatCap: 1.63e6, // Silicon ρ*cp ≈ 2330*700 J/m³·K
+		AmbientTemp:       25.0,   // Room temperature
+		MaxTemp:           85.0,   // Typical max for CMOS
+		CellSize:          1e-6,   // 1 µm grid cells
 	}
 }
 

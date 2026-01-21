@@ -24,8 +24,8 @@ import (
 
 // FeCIM theme colors - same as demo1
 var (
-	colorBackground = color.RGBA{0, 50, 100, 255}    // FeCIM blue #003264
-	colorPrimary    = color.RGBA{0, 212, 255, 255}   // Cyan
+	colorBackground = color.RGBA{0, 50, 100, 255}  // FeCIM blue #003264
+	colorPrimary    = color.RGBA{0, 212, 255, 255} // Cyan
 )
 
 // feCIMTheme implements fyne.Theme for consistent FeCIM branding
@@ -121,20 +121,20 @@ type CrossbarApp struct {
 	keyStatValue    *widget.Label
 
 	// Simple right panel widgets (replacing custom widgets)
-	runMVMButton *widget.Button
-	resetButton  *widget.Button
-	arraySizeLabel     *widget.Label
-	arraySizeSlider    *widget.Slider
-	noiseLabel         *widget.Label
-	noiseSlider        *widget.Slider
-	adcBitsLabel       *widget.Label
-	adcBitsSlider      *widget.Slider
-	colormapSelect     *widget.Select
-	statsLabel         *widget.Label
+	runMVMButton    *widget.Button
+	resetButton     *widget.Button
+	arraySizeLabel  *widget.Label
+	arraySizeSlider *widget.Slider
+	noiseLabel      *widget.Label
+	noiseSlider     *widget.Slider
+	adcBitsLabel    *widget.Label
+	adcBitsSlider   *widget.Slider
+	colormapSelect  *widget.Select
+	statsLabel      *widget.Label
 
 	// Status
-	statusLabel   *widget.Label
-	infoLabel     *widget.Label
+	statusLabel    *widget.Label
+	infoLabel      *widget.Label
 	hoverInfoLabel *widget.Label
 
 	// Current state

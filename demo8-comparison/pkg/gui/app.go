@@ -100,25 +100,25 @@ type ComparisonApp struct {
 	fecimSpec EnergySpec
 
 	// GUI components
-	energyChart         *EnergyBarChart
-	archDiagram         *ArchitectureDiagram
-	calculator          *DataCenterCalculator
-	verifiedTable       *VerifiedClaimsTable
-	educationalPanel    *ComparisonEducationalPanel
-	operationLog        *ComparisonOperationLog
-	modeIndicator       *ComparisonModeIndicator
+	energyChart      *EnergyBarChart
+	archDiagram      *ArchitectureDiagram
+	calculator       *DataCenterCalculator
+	verifiedTable    *VerifiedClaimsTable
+	educationalPanel *ComparisonEducationalPanel
+	operationLog     *ComparisonOperationLog
+	modeIndicator    *ComparisonModeIndicator
 
 	// Controls
-	workloadSelect      *widget.Select
-	inferencesSlider    *widget.Slider
-	inferencesLabel     *widget.Label
+	workloadSelect   *widget.Select
+	inferencesSlider *widget.Slider
+	inferencesLabel  *widget.Label
 
 	// Status
-	statusLabel         *widget.Label
+	statusLabel *widget.Label
 
 	// Current settings
-	currentWorkload     string
-	currentInferences   float64
+	currentWorkload   string
+	currentInferences float64
 }
 
 // NewComparisonApp creates the comparison demo application.
@@ -350,12 +350,12 @@ func (ca *ComparisonApp) updateCalculations() {
 	macs := ca.getWorkloadMACs()
 
 	// Calculate energy per inference (µJ)
-	cpuEnergy := float64(macs) * ca.cpuSpec.EnergyFJ / 1e9   // fJ to µJ
+	cpuEnergy := float64(macs) * ca.cpuSpec.EnergyFJ / 1e9 // fJ to µJ
 	gpuEnergy := float64(macs) * ca.gpuSpec.EnergyFJ / 1e9
 	fecimEnergy := float64(macs) * ca.fecimSpec.EnergyFJ / 1e9
 
 	// Calculate power for target inferences/sec (W)
-	cpuPower := cpuEnergy * ca.currentInferences / 1e6   // µJ * inf/s = µW, /1e6 = W
+	cpuPower := cpuEnergy * ca.currentInferences / 1e6 // µJ * inf/s = µW, /1e6 = W
 	gpuPower := gpuEnergy * ca.currentInferences / 1e6
 	fecimPower := fecimEnergy * ca.currentInferences / 1e6
 

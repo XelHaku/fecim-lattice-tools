@@ -93,13 +93,13 @@ type App struct {
 	pauseBtn       *widget.Button
 
 	// Educational slide and log
-	slideTitle    *widget.Label
-	slideText     *widget.Label
-	logText       *widget.Label
-	logEntries    []string
-	maxLogLines   int
-	lastLogPhase  int // Track phase changes to avoid duplicate logs
-	lastRWTarget  int // Track Random Walk target changes
+	slideTitle   *widget.Label
+	slideText    *widget.Label
+	logText      *widget.Label
+	logEntries   []string
+	maxLogLines  int
+	lastLogPhase int // Track phase changes to avoid duplicate logs
+	lastRWTarget int // Track Random Walk target changes
 }
 
 // WaveformType represents the input waveform
@@ -1446,18 +1446,18 @@ func (r *cellRenderer) Refresh() {
 		// Yellow to pink transition (levels 1-15)
 		t2 := t * 2
 		cellColor = color.RGBA{
-			255,                       // R stays high
-			uint8(230 - t2*80),        // G decreases: 230 -> 150
-			uint8(100 + t2*80),        // B increases: 100 -> 180
+			255,                // R stays high
+			uint8(230 - t2*80), // G decreases: 230 -> 150
+			uint8(100 + t2*80), // B increases: 100 -> 180
 			255,
 		}
 	} else {
 		// Pink to red transition (levels 16-30)
 		t2 := (t - 0.5) * 2
 		cellColor = color.RGBA{
-			255,                       // R stays high
-			uint8(150 - t2*100),       // G decreases: 150 -> 50
-			uint8(180 - t2*130),       // B decreases: 180 -> 50
+			255,                 // R stays high
+			uint8(150 - t2*100), // G decreases: 150 -> 50
+			uint8(180 - t2*130), // B decreases: 180 -> 50
 			255,
 		}
 	}
@@ -1530,9 +1530,9 @@ func (r *cellRenderer) Destroy() {}
 type ModeIndicator struct {
 	widget.BaseWidget
 
-	mu       sync.RWMutex
-	isWrite  bool
-	minSize  fyne.Size
+	mu      sync.RWMutex
+	isWrite bool
+	minSize fyne.Size
 }
 
 // NewModeIndicator creates a new mode indicator
@@ -1589,12 +1589,12 @@ func (r *modeRenderer) Refresh() {
 	var modeText, conditionText string
 
 	if isWrite {
-		bgColor = color.RGBA{180, 50, 50, 255}    // Red background
+		bgColor = color.RGBA{180, 50, 50, 255} // Red background
 		borderColor = color.RGBA{255, 100, 100, 255}
 		modeText = "██ WRITE ██"
 		conditionText = "|E| > Ec"
 	} else {
-		bgColor = color.RGBA{50, 150, 80, 255}    // Green background
+		bgColor = color.RGBA{50, 150, 80, 255} // Green background
 		borderColor = color.RGBA{100, 220, 130, 255}
 		modeText = "░░ READ ░░"
 		conditionText = "|E| < Ec"

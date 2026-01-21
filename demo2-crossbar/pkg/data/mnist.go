@@ -13,11 +13,11 @@ import (
 
 const (
 	// MNIST dataset URLs
-	mnistBaseURL     = "http://yann.lecun.com/exdb/mnist/"
-	trainImagesFile  = "train-images-idx3-ubyte.gz"
-	trainLabelsFile  = "train-labels-idx1-ubyte.gz"
-	testImagesFile   = "t10k-images-idx3-ubyte.gz"
-	testLabelsFile   = "t10k-labels-idx1-ubyte.gz"
+	mnistBaseURL    = "http://yann.lecun.com/exdb/mnist/"
+	trainImagesFile = "train-images-idx3-ubyte.gz"
+	trainLabelsFile = "train-labels-idx1-ubyte.gz"
+	testImagesFile  = "t10k-images-idx3-ubyte.gz"
+	testLabelsFile  = "t10k-labels-idx1-ubyte.gz"
 
 	// Image dimensions
 	MNISTImageSize = 28

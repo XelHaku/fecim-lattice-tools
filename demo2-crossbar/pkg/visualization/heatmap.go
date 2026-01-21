@@ -38,11 +38,11 @@ type HeatmapVertex struct {
 
 // CrossbarHeatmap generates visualization data for a crossbar array.
 type CrossbarHeatmap struct {
-	config    *HeatmapConfig
+	config     *HeatmapConfig
 	rows, cols int
-	data      [][]float64
-	minVal    float64
-	maxVal    float64
+	data       [][]float64
+	minVal     float64
+	maxVal     float64
 }
 
 // NewCrossbarHeatmap creates a new heatmap visualization.

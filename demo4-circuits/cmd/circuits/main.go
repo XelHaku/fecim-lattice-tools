@@ -172,7 +172,7 @@ func showADCDemo(level int) {
 	fmt.Println()
 
 	// Demo: Convert voltage back to level
-	voltage := float64(level) / 29.0 * (adc.VrefHigh - adc.VrefLow) + adc.VrefLow
+	voltage := float64(level)/29.0*(adc.VrefHigh-adc.VrefLow) + adc.VrefLow
 	convertedLevel := adc.Convert(voltage)
 	convertedLevelNL := adc.ConvertWithNonlinearity(voltage)
 

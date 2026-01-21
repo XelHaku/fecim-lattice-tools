@@ -6,7 +6,7 @@
 [![Fyne](https://img.shields.io/badge/Fyne-2.4-blue?logo=go)](https://fyne.io)
 [![Vulkan](https://img.shields.io/badge/Vulkan-1.3-AC162C?logo=vulkan)](https://www.vulkan.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Demos](https://img.shields.io/badge/Demos-5%2F8-blue.svg)]()
+[![Demos](https://img.shields.io/badge/Demos-8%2F8-brightgreen.svg)]()
 
 ---
 
@@ -14,17 +14,17 @@
 
 ---
 
-## The Story: 8 Demos
+## The Story: 8 Demos (ALL COMPLETE)
 
 ```
-Demo 1: "This is how the memory cell works"      ✅ Fyne GUI
-Demo 2: "This is how we compute in memory"       ✅ Fyne GUI
-Demo 3: "This is what we can build with it"      ✅ Fyne GUI
-Demo 4: "This is how it fits in a real chip"     ✅ CLI
-Demo 5: "This is how we manage heat"             ✅ CLI
-Demo 6: "This is how we scale to 3D"             🔲 TODO
-Demo 7: "This is what can go wrong"              ✅ (in Demo 2)
-Demo 8: "This is why it beats everything else"   🔲 PRIORITY
+Demo 1: "This is how the memory cell works"      ✅ Fyne GUI - P-E Hysteresis
+Demo 2: "This is how we compute in memory"       ✅ Fyne GUI - Crossbar MVM
+Demo 3: "This is what we can build with it"      ✅ Fyne GUI - MNIST 87%
+Demo 4: "This is how it fits in a real chip"     ✅ Fyne GUI - Peripheral Circuits
+Demo 5: "This is how we manage heat"             ✅ Fyne GUI - Thermal Analysis
+Demo 6: "This is how we scale to 3D"             ✅ Fyne GUI - 3D Multilayer Stack
+Demo 7: "This is what can go wrong"              ✅ Fyne GUI - Non-Idealities
+Demo 8: "This is why it beats everything else"   ✅ Fyne GUI - Technology Comparison
 ```
 
 ---
@@ -34,8 +34,11 @@ Demo 8: "This is why it beats everything else"   🔲 PRIORITY
 ```bash
 # Install dependencies (Ubuntu/Debian)
 sudo apt-get install gcc libgl1-mesa-dev xorg-dev
-sudo apt-get install vulkan-tools vulkan-sdk libglfw3-dev
 
+# Build and run the unified visualizer (ALL 8 DEMOS)
+go build ./cmd/fecim-visualizer && ./fecim-visualizer
+
+# Or run individual demos:
 # Demo 1: Ferroelectric Hysteresis (P-E curve, 30 levels)
 cd demo1-hysteresis && go build ./cmd/hysteresis && ./hysteresis
 
@@ -46,12 +49,21 @@ cd demo2-crossbar && go build -o crossbar-gui ./cmd/crossbar-gui && ./crossbar-g
 cd demo3-mnist && go build -o mnist-gui ./cmd/mnist-gui && ./mnist-gui
 
 # Demo 4: Peripheral Circuits (DAC, ADC, timing)
-cd demo4-circuits && go run ./cmd/circuits --all
+cd demo4-circuits && go build -o circuits-gui ./cmd/circuits-gui && ./circuits-gui
 
 # Demo 5: Thermal Simulation
-cd demo5-thermal && go run ./cmd/thermal --realtime
+cd demo5-thermal && go build -o thermal ./cmd/thermal && ./thermal
 
-# Run all tests
+# Demo 6: 3D Multilayer Stack
+cd demo6-multilayer && go build -o multilayer-gui ./cmd/multilayer-gui && ./multilayer-gui
+
+# Demo 7: Non-Idealities Analysis
+cd demo7-nonidealities && go build -o nonidealities-gui ./cmd/nonidealities-gui && ./nonidealities-gui
+
+# Demo 8: Technology Comparison
+cd demo8-comparison && go build -o comparison-gui ./cmd/comparison-gui && ./comparison-gui
+
+# Run all tests (157 tests)
 go test ./...
 ```
 
@@ -201,37 +213,93 @@ Top View (Heat Map)        Side View
 
 ---
 
-### Demo 6: Multi-Layer 3D 🔲
+### Demo 6: Multi-Layer 3D Stack ✅
 
-**Purpose:** Full system architecture (TODO)
+**Purpose:** Visualize 3D stacking for massive parallelism
+
+```
+                    ┌─────────────────┐
+    Layer 3 ────→   │ 64×10 (Output)  │
+                    └───────┬─────────┘
+                            │ vias
+                    ┌───────┴─────────┐
+    Layer 2 ────→   │ 128×64 (Hidden) │
+                    └───────┬─────────┘
+                            │ vias
+                    ┌───────┴─────────┐
+    Layer 1 ────→   │ 784×128 (Input) │
+                    └─────────────────┘
+```
+
+**Features:**
+- 3D isometric visualization of stacked layers
+- Layer selector and highlight
+- Via network visualization
+- Layer specifications display
+- Energy comparison with traditional compute
 
 ---
 
 ### Demo 7: Non-Idealities ✅
 
-**Purpose:** Real-world engineering challenges (integrated in Demo 2)
+**Purpose:** Real-world engineering challenges
 
-- IR drop visualization
-- Sneak path current animation
-- Conductance drift modeling
-- Impact on accuracy
+```
+Tab 1: IR Drop Analysis
+┌──────────────────────┐
+│ ■■■□□□□  V_applied   │
+│ ■■□□□□□  V_actual    │
+│ Worst corner: (15,15)│
+└──────────────────────┘
+
+Tab 2: Sneak Path Analysis
+┌──────────────────────┐
+│ Target: X            │
+│ Parasitic paths: ─── │
+│ SNR: 24.5 dB        │
+└──────────────────────┘
+
+Tab 3: Conductance Drift
+┌──────────────────────┐
+│ FeCIM: 0.001%/decade │
+│ RRAM: 0.1%/decade   │
+│ PCM: 1%/decade      │
+└──────────────────────┘
+```
+
+**Features:**
+- IR drop voltage gradient heatmap
+- Sneak path current visualization
+- Conductance drift time-series plot
+- Technology comparison (FeCIM vs RRAM vs PCM)
+- Mitigation strategies
 
 ---
 
-### Demo 8: Technology Comparison 🔲
+### Demo 8: Technology Comparison ✅
 
-**Purpose:** Investor pitch — why Ferroelectric CIM wins (PRIORITY)
+**Purpose:** The bottom line — why FeCIM wins
 
 ```
-┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-│    DRAM     │  │    GPU      │  │ Ferroelectric CIM │
-│    +CPU     │  │   (CUDA)    │  │    (CIM)    │
-├─────────────┤  ├─────────────┤  ├─────────────┤
-│ Time: 100μs │  │ Time: 10μs  │  │ Time: 0.1μs │
-│ Energy: 100 │  │ Energy: 50  │  │ Energy: 0.1 │
-│ Steps: 1000 │  │ Steps: 100  │  │ Steps: 1    │
-└─────────────┘  └─────────────┘  └─────────────┘
+Energy per MAC (fJ)
+═══════════════════════════════════════════
+CPU+DRAM  ████████████████████████████ 1000
+GPU+HBM   ██████████                    100
+FeCIM     █                              10
+
+Von Neumann              Compute-in-Memory
+┌──────┐   ←→   ┌──────┐     ┌────────────┐
+│ CPU  │  data  │ Mem  │     │ Mem=Compute│
+└──────┘        └──────┘     │  No move   │
+  Bottleneck!                └────────────┘
 ```
+
+**Features:**
+- Energy per MAC bar chart comparison
+- Architecture diagrams (Von Neumann vs CIM)
+- Data center power calculator
+- Verified vs claimed specifications
+- Source citations and disclaimers
 
 ---
 
@@ -245,7 +313,7 @@ Top View (Heat Map)        Side View
 | Shaders | GLSL → SPIR-V |
 | Physics | Preisach/Mayergoyz model |
 | Neural Network | Crossbar MVM simulation |
-| Tests | 110+ passing |
+| Tests | 157 passing |
 
 ---
 
@@ -253,15 +321,18 @@ Top View (Heat Map)        Side View
 
 ```
 multilayer-ferroelectric-cim-visualizer/
-├── demo1-hysteresis/     ✅ Single cell P-E curve (Fyne GUI)
-├── demo2-crossbar/       ✅ Crossbar MVM (Fyne GUI)
-├── demo3-mnist/          ✅ MNIST classifier (Fyne GUI)
-├── demo4-circuits/       ✅ Peripheral circuits (CLI)
-├── demo5-thermal/        ✅ Thermal simulation (CLI)
-├── demo6-multilayer/     🔲 3D multi-layer
-├── demo7-nonidealities/  ✅ (integrated in demo2)
-├── demo8-comparison/     🔲 Technology comparison
-├── docs/                 Documentation
+├── cmd/
+│   └── fecim-visualizer/  ✅ Unified GUI (ALL 8 DEMOS)
+├── demo1-hysteresis/      ✅ Single cell P-E curve (Fyne GUI)
+├── demo2-crossbar/        ✅ Crossbar MVM (Fyne GUI)
+├── demo3-mnist/           ✅ MNIST classifier (Fyne GUI)
+├── demo4-circuits/        ✅ Peripheral circuits (Fyne GUI)
+├── demo5-thermal/         ✅ Thermal simulation (Fyne GUI)
+├── demo6-multilayer/      ✅ 3D multi-layer (Fyne GUI)
+├── demo7-nonidealities/   ✅ Non-idealities (Fyne GUI)
+├── demo8-comparison/      ✅ Technology comparison (Fyne GUI)
+├── shared/                Shared packages (theme, logging)
+├── docs/                  Documentation
 └── go.mod
 ```
 
@@ -299,6 +370,6 @@ Ferroelectric CIM is a trademark of its respective owners at external research i
 
 ---
 
-*5/8 demos complete. Building the future of computing.*
+*8/8 demos complete. The future of computing is here.*
 
-*Built with Go, Fyne, Vulkan, and curiosity.*
+*Built with Go, Fyne, and curiosity.*

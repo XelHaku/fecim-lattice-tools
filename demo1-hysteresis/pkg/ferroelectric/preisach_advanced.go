@@ -21,9 +21,9 @@ type MayergoyzPreisach struct {
 	material *HZOMaterial
 
 	// Preisach plane discretization
-	hysterons   []Hysteron // Array of hysterons
-	numAlpha    int        // Grid points along alpha axis
-	numBeta     int        // Grid points along beta axis
+	hysterons    []Hysteron  // Array of hysterons
+	numAlpha     int         // Grid points along alpha axis
+	numBeta      int         // Grid points along beta axis
 	distribution [][]float64 // μ(α, β) distribution weights
 
 	// Distribution parameters (Gaussian model)
@@ -34,8 +34,8 @@ type MayergoyzPreisach struct {
 	Correlation float64 // Correlation between alpha and beta
 
 	// Temperature dependence
-	Temperature float64 // Operating temperature (K)
-	CurieTemp   float64 // Curie temperature (K)
+	Temperature  float64 // Operating temperature (K)
+	CurieTemp    float64 // Curie temperature (K)
 	TempExponent float64 // Temperature exponent for Ec(T)
 
 	// State tracking
@@ -52,19 +52,19 @@ type MayergoyzPreisach struct {
 // NewMayergoyzPreisach creates a new full Preisach model.
 func NewMayergoyzPreisach(material *HZOMaterial, gridSize int) *MayergoyzPreisach {
 	m := &MayergoyzPreisach{
-		material:     material,
-		numAlpha:     gridSize,
-		numBeta:      gridSize,
-		AlphaMean:    material.Ec,      // +Ec
-		AlphaSigma:   material.Ec * 0.2, // 20% distribution
-		BetaMean:     -material.Ec,     // -Ec
-		BetaSigma:    material.Ec * 0.2,
-		Correlation:  0.5, // Some correlation between α and β
-		Temperature:  300, // Room temperature (K)
-		CurieTemp:    723, // HZO Curie temperature ~450°C
-		TempExponent: 0.5, // Typical exponent
-		fatigueRate:  1e-10, // Very low fatigue for HZO
-		wakeupCycles: 100,
+		material:      material,
+		numAlpha:      gridSize,
+		numBeta:       gridSize,
+		AlphaMean:     material.Ec,       // +Ec
+		AlphaSigma:    material.Ec * 0.2, // 20% distribution
+		BetaMean:      -material.Ec,      // -Ec
+		BetaSigma:     material.Ec * 0.2,
+		Correlation:   0.5,   // Some correlation between α and β
+		Temperature:   300,   // Room temperature (K)
+		CurieTemp:     723,   // HZO Curie temperature ~450°C
+		TempExponent:  0.5,   // Typical exponent
+		fatigueRate:   1e-10, // Very low fatigue for HZO
+		wakeupCycles:  100,
 		currentWakeup: 0.8, // Start partially woken up
 	}
 
@@ -385,11 +385,11 @@ func (m *MayergoyzPreisach) DiscreteStates(N int) []DiscreteState {
 		}
 
 		states[i] = DiscreteState{
-			Level:       i,
+			Level:        i,
 			Polarization: targetP,
-			NormalizedP: normalizedP,
-			Voltage:     voltage * m.material.Thickness,
-			Conductance: m.polarizationToConductance(targetP),
+			NormalizedP:  normalizedP,
+			Voltage:      voltage * m.material.Thickness,
+			Conductance:  m.polarizationToConductance(targetP),
 		}
 	}
 
@@ -398,11 +398,11 @@ func (m *MayergoyzPreisach) DiscreteStates(N int) []DiscreteState {
 
 // DiscreteState represents one of the 30 programmable states.
 type DiscreteState struct {
-	Level       int     // State index (0-29)
+	Level        int     // State index (0-29)
 	Polarization float64 // Polarization (C/m²)
-	NormalizedP float64 // P/Ps (-1 to +1)
-	Voltage     float64 // Programming voltage (V)
-	Conductance float64 // Equivalent conductance (S)
+	NormalizedP  float64 // P/Ps (-1 to +1)
+	Voltage      float64 // Programming voltage (V)
+	Conductance  float64 // Equivalent conductance (S)
 }
 
 // polarizationToConductance converts polarization to channel conductance.
@@ -410,7 +410,7 @@ type DiscreteState struct {
 func (m *MayergoyzPreisach) polarizationToConductance(P float64) float64 {
 	// Simplified model: G = G0 + ΔG * (P/Ps)
 	// FeCIM: 1µS to 100µS range
-	G0 := 50e-6  // 50 µS baseline
+	G0 := 50e-6     // 50 µS baseline
 	deltaG := 49e-6 // ±49 µS range
 
 	normalizedP := P / m.material.Ps

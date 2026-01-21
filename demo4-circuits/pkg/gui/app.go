@@ -279,8 +279,8 @@ func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 
 	// Main content
 	mainContent := container.NewBorder(
-		header, // top
-		footer, // bottom
+		header,                            // top
+		footer,                            // bottom
 		container.NewPadded(controlPanel), // left
 		container.NewPadded(rightPanel),   // right
 		container.NewPadded(centerPanel),  // center

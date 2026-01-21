@@ -106,12 +106,12 @@ type MNISTApp struct {
 	outputChart     *OutputBarChart
 
 	// Live Slide components
-	modeIndicator      *MNISTModeIndicator
-	educationalPanel   *MNISTEducationalPanel
-	operationLog       *MNISTOperationLog
-	predictionDisplay  *PredictionDisplay
-	keyStat            *MNISTKeyStat
-	demoModeSelect     *widget.Select
+	modeIndicator     *MNISTModeIndicator
+	educationalPanel  *MNISTEducationalPanel
+	operationLog      *MNISTOperationLog
+	predictionDisplay *PredictionDisplay
+	keyStat           *MNISTKeyStat
+	demoModeSelect    *widget.Select
 
 	// Labels
 	statusLabel     *widget.Label

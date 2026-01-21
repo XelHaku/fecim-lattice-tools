@@ -39,10 +39,10 @@ func TestQuantizeTo30LevelsSpecificValues(t *testing.T) {
 		input    float64
 		expected float64
 	}{
-		{0.0, 0.0},               // Level 0
-		{1.0, 1.0},               // Level 29
-		{0.5, 15.0 / 29.0},       // 0.5 * 29 = 14.5 -> rounds to 15 -> 15/29
-		{1.0 / 29.0, 1.0 / 29.0}, // Level 1
+		{0.0, 0.0},                 // Level 0
+		{1.0, 1.0},                 // Level 29
+		{0.5, 15.0 / 29.0},         // 0.5 * 29 = 14.5 -> rounds to 15 -> 15/29
+		{1.0 / 29.0, 1.0 / 29.0},   // Level 1
 		{14.0 / 29.0, 14.0 / 29.0}, // Level 14 (exact)
 	}
 

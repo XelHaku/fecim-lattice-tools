@@ -6,12 +6,12 @@ import (
 
 // IRDropSimulator models voltage drop along metal lines in a crossbar.
 type IRDropSimulator struct {
-	Rows         int       // Number of rows in crossbar
-	Cols         int       // Number of columns in crossbar
-	RowResist    float64   // Resistance per row segment (Ohms)
-	ColResist    float64   // Resistance per column segment (Ohms)
-	VoltageIn    []float64 // Input voltages (row drivers)
-	VoltageOut   []float64 // Output voltages (column sense)
+	Rows         int         // Number of rows in crossbar
+	Cols         int         // Number of columns in crossbar
+	RowResist    float64     // Resistance per row segment (Ohms)
+	ColResist    float64     // Resistance per column segment (Ohms)
+	VoltageIn    []float64   // Input voltages (row drivers)
+	VoltageOut   []float64   // Output voltages (column sense)
 	Conductances [][]float64 // Conductance matrix (S)
 
 	// Results
@@ -35,8 +35,8 @@ func NewIRDropSimulator(rows, cols int) *IRDropSimulator {
 	return &IRDropSimulator{
 		Rows:         rows,
 		Cols:         cols,
-		RowResist:    2.5,   // 2.5 Ω per segment (typical metal interconnect)
-		ColResist:    2.5,   // 2.5 Ω per segment
+		RowResist:    2.5, // 2.5 Ω per segment (typical metal interconnect)
+		ColResist:    2.5, // 2.5 Ω per segment
 		VoltageIn:    make([]float64, rows),
 		VoltageOut:   make([]float64, cols),
 		Conductances: conductances,

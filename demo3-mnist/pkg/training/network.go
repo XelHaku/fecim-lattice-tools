@@ -80,7 +80,7 @@ func (n *MNISTNetwork) Forward(input []float64) []float64 {
 	for i := range hidden {
 		// Scale up from [0,1] range and center around 0
 		// Effective weight = (conductance - 0.5) * 2, giving [-1, 1] range
-		hidden[i] = (hidden[i] - 0.5) * 4.0 + n.biases1[i]
+		hidden[i] = (hidden[i]-0.5)*4.0 + n.biases1[i]
 		// ReLU
 		if hidden[i] < 0 {
 			hidden[i] = 0
@@ -103,7 +103,7 @@ func (n *MNISTNetwork) Forward(input []float64) []float64 {
 	// Layer 2: MVM + bias
 	output, _ := n.layer2.MVM(hidden)
 	for i := range output {
-		output[i] = (output[i] - 0.5) * 4.0 + n.biases2[i]
+		output[i] = (output[i]-0.5)*4.0 + n.biases2[i]
 	}
 
 	// Softmax
@@ -189,7 +189,7 @@ func (n *MNISTNetwork) TrainEpoch(images [][]float64, labels []int, learningRate
 func (n *MNISTNetwork) forwardHidden(input []float64) []float64 {
 	hidden, _ := n.layer1.MVM(input)
 	for i := range hidden {
-		hidden[i] = (hidden[i] - 0.5) * 4.0 + n.biases1[i]
+		hidden[i] = (hidden[i]-0.5)*4.0 + n.biases1[i]
 		if hidden[i] < 0 {
 			hidden[i] = 0
 		}
@@ -214,7 +214,7 @@ func (n *MNISTNetwork) forwardHidden(input []float64) []float64 {
 func (n *MNISTNetwork) forwardOutput(hidden []float64) []float64 {
 	output, _ := n.layer2.MVM(hidden)
 	for i := range output {
-		output[i] = (output[i] - 0.5) * 4.0 + n.biases2[i]
+		output[i] = (output[i]-0.5)*4.0 + n.biases2[i]
 	}
 	return output
 }

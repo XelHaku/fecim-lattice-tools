@@ -113,7 +113,7 @@ func (c *ChargePump) ChargeTransferEfficiency() float64 {
 func (c *ChargePump) Area() float64 {
 	// Area dominated by capacitors
 	// Typical: ~0.1 fF/µm² for MIM caps in 65nm
-	capDensity := 0.1e-15 / 1e-12 // F/µm²
+	capDensity := 0.1e-15 / 1e-12                        // F/µm²
 	totalCap := c.FlyCapacitance * float64(c.Stages) * 2 // Fly + output caps
 	return totalCap / capDensity                         // µm²
 }

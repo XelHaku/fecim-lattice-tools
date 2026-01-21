@@ -291,10 +291,10 @@ func (ma *MultilayerApp) updateStackView() {
 	maxWidth := float32(300)
 
 	colors := []color.Color{
-		color.RGBA{0, 180, 220, 255}, // Cyan
-		color.RGBA{0, 220, 180, 255}, // Teal
+		color.RGBA{0, 180, 220, 255},   // Cyan
+		color.RGBA{0, 220, 180, 255},   // Teal
 		color.RGBA{100, 200, 255, 255}, // Light blue
-		color.RGBA{0, 150, 200, 255}, // Blue
+		color.RGBA{0, 150, 200, 255},   // Blue
 	}
 
 	for i := len(ma.stack.Layers) - 1; i >= 0; i-- {

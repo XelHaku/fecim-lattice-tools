@@ -18,10 +18,10 @@ type DriftSimulator struct {
 	GMax         float64     // Maximum conductance (S)
 
 	// Drift parameters
-	DriftCoeff   float64 // Drift coefficient (typically 0.01-0.1 for RRAM, much lower for FeFET)
-	ReadDisturb  float64 // Read disturb probability per read
-	Temperature  float64 // Operating temperature (K)
-	Time         float64 // Elapsed time (seconds)
+	DriftCoeff  float64 // Drift coefficient (typically 0.01-0.1 for RRAM, much lower for FeFET)
+	ReadDisturb float64 // Read disturb probability per read
+	Temperature float64 // Operating temperature (K)
+	Time        float64 // Elapsed time (seconds)
 
 	// Statistics
 	DriftHistory []DriftSnapshot
@@ -220,7 +220,7 @@ func (d *DriftSimulator) GetCurrentLevel(row, col int) int {
 	}
 
 	g := d.Conductances[row][col]
-	level := int((g - d.GMin) / (d.GMax - d.GMin) * float64(d.Levels-1) + 0.5)
+	level := int((g-d.GMin)/(d.GMax-d.GMin)*float64(d.Levels-1) + 0.5)
 	if level < 0 {
 		level = 0
 	}
@@ -237,7 +237,7 @@ func (d *DriftSimulator) GetInitialLevel(row, col int) int {
 	}
 
 	g := d.InitialConds[row][col]
-	level := int((g - d.GMin) / (d.GMax - d.GMin) * float64(d.Levels-1) + 0.5)
+	level := int((g-d.GMin)/(d.GMax-d.GMin)*float64(d.Levels-1) + 0.5)
 	if level < 0 {
 		level = 0
 	}
@@ -262,10 +262,10 @@ type DriftStats struct {
 
 // TechDriftComparison compares drift across technologies.
 type TechDriftComparison struct {
-	FeFETDrift  float64 // FeCIM (FeFET) drift coefficient
-	RRAMDrift   float64 // RRAM drift coefficient
-	PCMDrift    float64 // Phase-change memory drift coefficient
-	FlashDrift  float64 // Flash memory drift coefficient
+	FeFETDrift     float64 // FeCIM (FeFET) drift coefficient
+	RRAMDrift      float64 // RRAM drift coefficient
+	PCMDrift       float64 // Phase-change memory drift coefficient
+	FlashDrift     float64 // Flash memory drift coefficient
 	FeFETAdvantage float64 // FeFET advantage factor
 }
 
@@ -318,10 +318,10 @@ func (d *DriftSimulator) GetStats() DriftStats {
 
 	// Technology comparison
 	comparison := TechDriftComparison{
-		FeFETDrift:  0.001,  // Very low for FeFET
-		RRAMDrift:   0.05,   // Higher for RRAM
-		PCMDrift:    0.1,    // Higher for PCM
-		FlashDrift:  0.02,   // Medium for Flash
+		FeFETDrift:     0.001,        // Very low for FeFET
+		RRAMDrift:      0.05,         // Higher for RRAM
+		PCMDrift:       0.1,          // Higher for PCM
+		FlashDrift:     0.02,         // Medium for Flash
 		FeFETAdvantage: 0.05 / 0.001, // 50x better than RRAM
 	}
 
@@ -381,9 +381,9 @@ func CompareTechnologies(rows, cols int, simulationTime float64) map[string]Drif
 		readDisturb float64
 	}{
 		"FeCIM (FeFET)": {0.001, 1e-6},
-		"RRAM":                {0.05, 1e-4},
-		"PCM":                 {0.1, 1e-3},
-		"Flash":               {0.02, 1e-5},
+		"RRAM":          {0.05, 1e-4},
+		"PCM":           {0.1, 1e-3},
+		"Flash":         {0.02, 1e-5},
 	}
 
 	for name, params := range technologies {

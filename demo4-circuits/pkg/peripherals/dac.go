@@ -19,12 +19,12 @@ type DAC struct {
 // DefaultDAC returns a DAC configured for FeCIM 30-level operation.
 func DefaultDAC() *DAC {
 	return &DAC{
-		Bits:       5,     // 32 levels, we use 30
-		VrefHigh:   1.5,   // +1.5V for positive write
-		VrefLow:    -1.5,  // -1.5V for negative write
-		INL:        0.5,   // 0.5 LSB INL
-		DNL:        0.25,  // 0.25 LSB DNL
-		SettleTime: 10,    // 10 ns settling time
+		Bits:       5,    // 32 levels, we use 30
+		VrefHigh:   1.5,  // +1.5V for positive write
+		VrefLow:    -1.5, // -1.5V for negative write
+		INL:        0.5,  // 0.5 LSB INL
+		DNL:        0.25, // 0.25 LSB DNL
+		SettleTime: 10,   // 10 ns settling time
 	}
 }
 

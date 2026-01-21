@@ -22,11 +22,11 @@ type SneakPathAnalyzer struct {
 
 // SneakPath represents a single sneak current path.
 type SneakPath struct {
-	StartRow    int     // Starting row
-	StartCol    int     // Starting column
+	StartRow    int      // Starting row
+	StartCol    int      // Starting column
 	PathCells   [][2]int // Cells along the path
-	PathCurrent float64 // Current through this path
-	PathLength  int     // Number of cells in path
+	PathCurrent float64  // Current through this path
+	PathLength  int      // Number of cells in path
 }
 
 // NewSneakPathAnalyzer creates a sneak path analyzer.

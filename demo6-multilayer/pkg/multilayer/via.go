@@ -40,8 +40,8 @@ func NewViaArray(fromLayer, toLayer, count int) *ViaArray {
 			X:           i,
 			FromLayer:   fromLayer,
 			ToLayer:     toLayer,
-			Resistance:  10.0,  // 10 Ohms typical
-			Capacitance: 0.1,   // 0.1 fF typical
+			Resistance:  10.0, // 10 Ohms typical
+			Capacitance: 0.1,  // 0.1 fF typical
 			Current:     0.0,
 		}
 	}

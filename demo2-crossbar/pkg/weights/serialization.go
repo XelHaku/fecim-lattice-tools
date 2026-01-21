@@ -12,29 +12,29 @@ import (
 
 // ModelMetadata stores model information for serialization.
 type ModelMetadata struct {
-	Name        string            `json:"name"`
-	Version     string            `json:"version"`
-	Architecture string           `json:"architecture"`
-	NumLayers   int               `json:"num_layers"`
-	TotalParams int               `json:"total_params"`
-	Quantized   bool              `json:"quantized"`
-	QuantBits   int               `json:"quant_bits,omitempty"`
-	Custom      map[string]string `json:"custom,omitempty"`
+	Name         string            `json:"name"`
+	Version      string            `json:"version"`
+	Architecture string            `json:"architecture"`
+	NumLayers    int               `json:"num_layers"`
+	TotalParams  int               `json:"total_params"`
+	Quantized    bool              `json:"quantized"`
+	QuantBits    int               `json:"quant_bits,omitempty"`
+	Custom       map[string]string `json:"custom,omitempty"`
 }
 
 // SerializedLayer stores weights for a single layer in model serialization.
 type SerializedLayer struct {
-	Name     string        `json:"name"`
-	Type     string        `json:"type"` // "linear", "conv2d", "attention", etc.
-	Shape    []int         `json:"shape"`
-	Weights  [][]float64   `json:"weights,omitempty"`
-	Biases   []float64     `json:"biases,omitempty"`
-	Extra    map[string]interface{} `json:"extra,omitempty"`
+	Name    string                 `json:"name"`
+	Type    string                 `json:"type"` // "linear", "conv2d", "attention", etc.
+	Shape   []int                  `json:"shape"`
+	Weights [][]float64            `json:"weights,omitempty"`
+	Biases  []float64              `json:"biases,omitempty"`
+	Extra   map[string]interface{} `json:"extra,omitempty"`
 }
 
 // Model represents a complete neural network model for serialization.
 type Model struct {
-	Metadata ModelMetadata    `json:"metadata"`
+	Metadata ModelMetadata     `json:"metadata"`
 	Layers   []SerializedLayer `json:"layers"`
 }
 
@@ -371,11 +371,11 @@ type QuantizedModel struct {
 
 // QuantizedLayerWeights stores quantized weights.
 type QuantizedLayerWeights struct {
-	Name      string
-	Type      string
-	Shape     []int
-	Weights   [][]int8  // Quantized to int8
-	Biases    []int16   // Quantized to int16
+	Name        string
+	Type        string
+	Shape       []int
+	Weights     [][]int8 // Quantized to int8
+	Biases      []int16  // Quantized to int16
 	WeightScale float64
 	BiasScale   float64
 }
@@ -481,7 +481,7 @@ type CrossbarMapping struct {
 	LayerName   string
 	TileSize    [2]int // [rows, cols]
 	NumTiles    int
-	TileOffsets [][2]int // Starting offset for each tile
+	TileOffsets [][2]int   // Starting offset for each tile
 	TileMasks   [][][]bool // Skip masks for sparse weights
 }
 

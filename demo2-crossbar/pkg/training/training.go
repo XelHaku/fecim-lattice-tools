@@ -10,11 +10,11 @@ import (
 
 // TrainingConfig holds training hyperparameters.
 type TrainingConfig struct {
-	LearningRate   float64 // Base learning rate
-	WeightDecay    float64 // L2 regularization
-	Momentum       float64 // Momentum coefficient
-	BatchSize      int     // Mini-batch size
-	Epochs         int     // Number of training epochs
+	LearningRate float64 // Base learning rate
+	WeightDecay  float64 // L2 regularization
+	Momentum     float64 // Momentum coefficient
+	BatchSize    int     // Mini-batch size
+	Epochs       int     // Number of training epochs
 
 	// Hardware-aware parameters
 	WeightClipMin  float64 // Minimum weight (conductance)
@@ -408,8 +408,8 @@ type MLCProgrammer struct {
 func NewMLCProgrammer(bits int) *MLCProgrammer {
 	return &MLCProgrammer{
 		NumLevels:     1 << bits,
-		PulseWidth:    200,  // 200 ns typical
-		PulseVoltage:  2.5,  // 2.5V typical
+		PulseWidth:    200, // 200 ns typical
+		PulseVoltage:  2.5, // 2.5V typical
 		VerifyEnabled: true,
 		MaxRetries:    10,
 	}

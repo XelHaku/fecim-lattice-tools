@@ -264,8 +264,8 @@ func TestFeCIMLowPower(t *testing.T) {
 	// Apply typical workload power densities for CIM arrays
 	// Traditional CIM/GPU: ~10-100 W/cm² = 1e5 - 1e6 W/m²
 	// FeCIM: 1000-10000x lower
-	feCIMPower := 1e4   // W/m² (very low - FeCIM advantage)
-	traditionalPower := 1e7  // W/m² (high - typical CMOS)
+	feCIMPower := 1e4       // W/m² (very low - FeCIM advantage)
+	traditionalPower := 1e7 // W/m² (high - typical CMOS)
 
 	for y := 8; y < 24; y++ {
 		for x := 8; x < 24; x++ {

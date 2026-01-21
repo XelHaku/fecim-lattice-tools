@@ -8,12 +8,12 @@ import (
 
 // HeatMapRenderer renders thermal data as ASCII art.
 type HeatMapRenderer struct {
-	MinTemp    float64 // Minimum temperature for scale
-	MaxTemp    float64 // Maximum temperature for scale
-	UseColor   bool    // Enable ANSI color output
-	ShowScale  bool    // Show temperature scale
-	Width      int     // Rendered width (0 = auto)
-	Height     int     // Rendered height (0 = auto)
+	MinTemp   float64 // Minimum temperature for scale
+	MaxTemp   float64 // Maximum temperature for scale
+	UseColor  bool    // Enable ANSI color output
+	ShowScale bool    // Show temperature scale
+	Width     int     // Rendered width (0 = auto)
+	Height    int     // Rendered height (0 = auto)
 }
 
 // DefaultRenderer returns a renderer with typical settings.

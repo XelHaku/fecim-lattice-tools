@@ -79,18 +79,18 @@ var (
 
 // KeyMap defines keyboard bindings
 type KeyMap struct {
-	Up        key.Binding
-	Down      key.Binding
-	Left      key.Binding
-	Right     key.Binding
-	Space     key.Binding
-	Tab       key.Binding
-	Enter     key.Binding
-	Reset     key.Binding
-	Help      key.Binding
-	Quit      key.Binding
+	Up         key.Binding
+	Down       key.Binding
+	Left       key.Binding
+	Right      key.Binding
+	Space      key.Binding
+	Tab        key.Binding
+	Enter      key.Binding
+	Reset      key.Binding
+	Help       key.Binding
+	Quit       key.Binding
 	ToggleAuto key.Binding
-	Material  key.Binding
+	Material   key.Binding
 }
 
 // DefaultKeyMap returns the default key bindings
@@ -189,29 +189,29 @@ func (w WaveformType) String() string {
 // Model represents the TUI application state
 type Model struct {
 	// Physics
-	material    *ferroelectric.HZOMaterial
-	preisach    *ferroelectric.MayergoyzPreisach
-	materials   []*ferroelectric.HZOMaterial
-	matIndex    int
+	material  *ferroelectric.HZOMaterial
+	preisach  *ferroelectric.MayergoyzPreisach
+	materials []*ferroelectric.HZOMaterial
+	matIndex  int
 
 	// Simulation state
-	electricField   float64 // Current E-field (V/m)
-	polarization    float64 // Current P (C/m²)
-	normalizedP     float64 // P/Ps
-	discreteLevel   int     // 0-29
+	electricField float64 // Current E-field (V/m)
+	polarization  float64 // Current P (C/m²)
+	normalizedP   float64 // P/Ps
+	discreteLevel int     // 0-29
 
 	// History for plotting
-	eHistory []float64
-	pHistory []float64
+	eHistory   []float64
+	pHistory   []float64
 	maxHistory int
 
 	// UI state
-	waveform    WaveformType
-	autoMode    bool
-	paused      bool
-	simTime     float64
-	frequency   float64
-	showHelp    bool
+	waveform  WaveformType
+	autoMode  bool
+	paused    bool
+	simTime   float64
+	frequency float64
+	showHelp  bool
 
 	// Plot dimensions
 	plotWidth  int
@@ -237,22 +237,22 @@ func NewModel() Model {
 	preisach := ferroelectric.NewMayergoyzPreisach(mat, 30)
 
 	return Model{
-		material:    mat,
-		preisach:    preisach,
-		materials:   materials,
-		matIndex:    0,
-		maxHistory:  200,
-		eHistory:    make([]float64, 0, 200),
-		pHistory:    make([]float64, 0, 200),
-		waveform:    WaveformSine,
-		autoMode:    true,
-		paused:      false,
-		frequency:   2.0, // 2 Hz for visible animation
-		plotWidth:   60,
-		plotHeight:  20,
-		keys:        DefaultKeyMap(),
-		help:        help.New(),
-		lastTick:    time.Now(),
+		material:   mat,
+		preisach:   preisach,
+		materials:  materials,
+		matIndex:   0,
+		maxHistory: 200,
+		eHistory:   make([]float64, 0, 200),
+		pHistory:   make([]float64, 0, 200),
+		waveform:   WaveformSine,
+		autoMode:   true,
+		paused:     false,
+		frequency:  2.0, // 2 Hz for visible animation
+		plotWidth:  60,
+		plotHeight: 20,
+		keys:       DefaultKeyMap(),
+		help:       help.New(),
+		lastTick:   time.Now(),
 	}
 }
 

@@ -14,37 +14,37 @@ import (
 type Format int
 
 const (
-	FormatJSON Format = iota // Human-readable JSON
-	FormatBinary             // Compact binary format
-	FormatNumPy              // NumPy .npy compatible
+	FormatJSON   Format = iota // Human-readable JSON
+	FormatBinary               // Compact binary format
+	FormatNumPy                // NumPy .npy compatible
 )
 
 // LayerWeights holds weights for a single neural network layer.
 type LayerWeights struct {
-	Name   string      `json:"name"`
-	Shape  []int       `json:"shape"`  // [rows, cols] or [out_features, in_features]
-	Dtype  string      `json:"dtype"`  // "float32" or "float64"
-	Data   []float64   `json:"data"`   // Flattened weight data
-	Bias   []float64   `json:"bias,omitempty"`
-	Quant  *QuantInfo  `json:"quant,omitempty"`
+	Name  string     `json:"name"`
+	Shape []int      `json:"shape"` // [rows, cols] or [out_features, in_features]
+	Dtype string     `json:"dtype"` // "float32" or "float64"
+	Data  []float64  `json:"data"`  // Flattened weight data
+	Bias  []float64  `json:"bias,omitempty"`
+	Quant *QuantInfo `json:"quant,omitempty"`
 }
 
 // QuantInfo holds quantization parameters for hardware deployment.
 type QuantInfo struct {
-	Bits       int     `json:"bits"`       // Quantization bits
-	Scale      float64 `json:"scale"`      // Scaling factor
-	ZeroPoint  float64 `json:"zero_point"` // Zero point offset
-	Symmetric  bool    `json:"symmetric"`  // Symmetric quantization
-	PerChannel bool    `json:"per_channel"`// Per-channel vs per-tensor
+	Bits       int     `json:"bits"`        // Quantization bits
+	Scale      float64 `json:"scale"`       // Scaling factor
+	ZeroPoint  float64 `json:"zero_point"`  // Zero point offset
+	Symmetric  bool    `json:"symmetric"`   // Symmetric quantization
+	PerChannel bool    `json:"per_channel"` // Per-channel vs per-tensor
 }
 
 // ModelWeights holds all weights for a complete model.
 type ModelWeights struct {
-	Name       string         `json:"name"`
-	Version    string         `json:"version"`
-	NumLayers  int            `json:"num_layers"`
-	Layers     []LayerWeights `json:"layers"`
-	Metadata   map[string]any `json:"metadata,omitempty"`
+	Name      string         `json:"name"`
+	Version   string         `json:"version"`
+	NumLayers int            `json:"num_layers"`
+	Layers    []LayerWeights `json:"layers"`
+	Metadata  map[string]any `json:"metadata,omitempty"`
 }
 
 // NewModelWeights creates a new model weights container.
