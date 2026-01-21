@@ -12,3 +12,4 @@ demo1-hysteresis/hysteresis
 # Output of go coverage
 *.out
 /logs
+shared/logging/
