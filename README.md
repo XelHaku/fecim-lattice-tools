@@ -2,8 +2,8 @@
 
 **6 World-Class Modules for Ferroelectric Compute-in-Memory**
 
-[![Go](https://img.shields.io/badge/Go-1.21+-00ADD8?logo=go)](https://go.dev)
-[![Fyne](https://img.shields.io/badge/Fyne-2.4-blue?logo=go)](https://fyne.io)
+[![Go](https://img.shields.io/badge/Go-1.24+-00ADD8?logo=go)](https://go.dev)
+[![Fyne](https://img.shields.io/badge/Fyne-2.7.2-blue?logo=go)](https://fyne.io)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Modules](https://img.shields.io/badge/Modules-6%2F6-brightgreen.svg)]()
 
@@ -270,8 +270,8 @@ Neural Network Weights          Physical Crossbar Array
 
 | Component | Technology |
 |-----------|------------|
-| Language | Go 1.21+ |
-| GUI | Fyne 2.4 |
+| Language | Go 1.24+ |
+| GUI | Fyne 2.7.2 |
 | Physics | Preisach/Mayergoyz model |
 | Neural Network | Crossbar MVM simulation |
 | Non-Idealities | IR drop, sneak paths, drift |
