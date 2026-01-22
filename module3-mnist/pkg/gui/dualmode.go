@@ -66,6 +66,7 @@ type DualModeApp struct {
 
 	// Status
 	statusLabel *widget.Label
+	initialized bool // true after UI is fully built
 
 	// Last inference result for refresh
 	lastPixels []float64
@@ -158,6 +159,10 @@ func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
 			bottomRow,
 		),
 	)
+
+	// Mark as initialized and trigger initial setup
+	app.initialized = true
+	app.changeHiddenSize(128) // Initialize with default hidden size
 
 	return mainContent
 }
@@ -702,6 +707,9 @@ func weightToColor(normalized float64) color.Color {
 
 // updateWeightHeatmap refreshes the weight visualization.
 func (app *DualModeApp) updateWeightHeatmap() {
+	if !app.initialized {
+		return
+	}
 	if app.weightHeatmap != nil {
 		app.weightHeatmap.Refresh()
 	}
@@ -743,6 +751,11 @@ func (app *DualModeApp) updateWeightHeatmap() {
 // changeHiddenSize changes the network hidden layer size.
 // This requires loading different pretrained weights.
 func (app *DualModeApp) changeHiddenSize(size int) {
+	// Skip during initialization - will be called again after UI is ready
+	if !app.initialized {
+		return
+	}
+
 	// Map size to weight file
 	weightsFile := fmt.Sprintf("pretrained_30_h%d.json", size)
 	weightsPath := filepath.Join(app.dataDir, weightsFile)
