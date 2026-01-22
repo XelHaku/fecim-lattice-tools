@@ -14,8 +14,10 @@ package main
 
 import (
 	"fmt"
+	"image"
 	"image/color"
 	"image/png"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -77,12 +79,15 @@ func (t *feCIMTheme) Size(name fyne.ThemeSizeName) float32 {
 	return theme.DefaultTheme().Size(name)
 }
 
-// RecordingState manages FFmpeg video recording
+// RecordingState manages FFmpeg video recording using canvas capture
 type RecordingState struct {
 	mu          sync.Mutex
 	isRecording bool
+	stopChan    chan struct{}
 	cmd         *exec.Cmd
+	stdin       io.WriteCloser
 	outputFile  string
+	window      fyne.Window
 }
 
 func newRecordingState() *RecordingState {
@@ -123,7 +128,7 @@ func takeScreenshot(window fyne.Window) string {
 	return filename
 }
 
-// startRecording begins FFmpeg screen recording
+// startRecording begins FFmpeg video recording using Fyne canvas capture
 func (rs *RecordingState) startRecording(window fyne.Window) error {
 	rs.mu.Lock()
 	defer rs.mu.Unlock()
@@ -141,36 +146,105 @@ func (rs *RecordingState) startRecording(window fyne.Window) error {
 	// Generate filename with timestamp
 	timestamp := time.Now().Format("2006-01-02_15-04-05")
 	rs.outputFile = filepath.Join(recordingDir, fmt.Sprintf("fecim_recording_%s.mp4", timestamp))
+	rs.window = window
+	rs.stopChan = make(chan struct{})
 
-	// Get window position and size for recording
-	// On Linux with X11, we use x11grab
-	// The window position needs to be obtained - for now we'll record the full screen
-	// and let the user crop or we can try to get window geometry
+	// Get initial frame to determine size
+	img := window.Canvas().Capture()
+	bounds := img.Bounds()
+	width := bounds.Dx()
+	height := bounds.Dy()
 
-	// FFmpeg command for screen recording on Linux (X11)
-	// Using :0.0 as display, recording full screen
-	// Users can adjust the -video_size and -i parameters as needed
+	// Ensure dimensions are even (required by H.264)
+	if width%2 != 0 {
+		width--
+	}
+	if height%2 != 0 {
+		height--
+	}
+
+	// FFmpeg command to receive raw RGB frames from stdin
 	rs.cmd = exec.Command("ffmpeg",
-		"-y",                       // Overwrite output file
-		"-f", "x11grab",            // X11 screen capture
-		"-framerate", "30",         // 30 FPS
-		"-video_size", "1920x1080", // Default screen size (adjust as needed)
-		"-i", ":0.0",               // Display :0, screen 0
-		"-c:v", "libx264",          // H.264 codec
-		"-preset", "ultrafast",     // Fast encoding for real-time
-		"-crf", "23",               // Quality (lower = better, 18-28 is good range)
-		"-pix_fmt", "yuv420p",      // Pixel format for compatibility
+		"-y",                                      // Overwrite output file
+		"-f", "rawvideo",                          // Raw video input
+		"-pixel_format", "rgb24",                  // RGB24 format
+		"-video_size", fmt.Sprintf("%dx%d", width, height), // Frame size
+		"-framerate", "20",                        // 20 FPS (balance between smoothness and CPU)
+		"-i", "-",                                 // Read from stdin
+		"-c:v", "libx264",                         // H.264 codec
+		"-preset", "ultrafast",                    // Fast encoding
+		"-crf", "23",                              // Quality
+		"-pix_fmt", "yuv420p",                     // Output pixel format
 		rs.outputFile,
 	)
 
-	// Start FFmpeg in background
+	// Get stdin pipe
+	var err error
+	rs.stdin, err = rs.cmd.StdinPipe()
+	if err != nil {
+		return fmt.Errorf("error getting stdin pipe: %w", err)
+	}
+
+	// Start FFmpeg
 	if err := rs.cmd.Start(); err != nil {
 		return fmt.Errorf("error starting FFmpeg: %w", err)
 	}
 
 	rs.isRecording = true
+
+	// Start capture goroutine
+	go rs.captureLoop(width, height)
+
 	fmt.Println("Recording started:", rs.outputFile)
 	return nil
+}
+
+// captureLoop continuously captures frames and sends to FFmpeg
+func (rs *RecordingState) captureLoop(width, height int) {
+	ticker := time.NewTicker(50 * time.Millisecond) // 20 FPS
+	defer ticker.Stop()
+
+	frameBuffer := make([]byte, width*height*3) // RGB24
+
+	for {
+		select {
+		case <-rs.stopChan:
+			return
+		case <-ticker.C:
+			// Capture frame on main thread
+			var img image.Image
+			done := make(chan struct{})
+			fyne.Do(func() {
+				img = rs.window.Canvas().Capture()
+				close(done)
+			})
+			<-done
+
+			if img == nil {
+				continue
+			}
+
+			// Convert to RGB24 and write to FFmpeg
+			bounds := img.Bounds()
+			idx := 0
+			for y := bounds.Min.Y; y < bounds.Min.Y+height && y < bounds.Max.Y; y++ {
+				for x := bounds.Min.X; x < bounds.Min.X+width && x < bounds.Max.X; x++ {
+					r, g, b, _ := img.At(x, y).RGBA()
+					frameBuffer[idx] = byte(r >> 8)
+					frameBuffer[idx+1] = byte(g >> 8)
+					frameBuffer[idx+2] = byte(b >> 8)
+					idx += 3
+				}
+			}
+
+			// Write frame to FFmpeg
+			rs.mu.Lock()
+			if rs.stdin != nil && rs.isRecording {
+				rs.stdin.Write(frameBuffer)
+			}
+			rs.mu.Unlock()
+		}
+	}
 }
 
 // stopRecording stops the FFmpeg recording
@@ -182,12 +256,16 @@ func (rs *RecordingState) stopRecording() (string, error) {
 		return "", fmt.Errorf("not recording")
 	}
 
-	// Send 'q' to FFmpeg to stop gracefully
-	if rs.cmd != nil && rs.cmd.Process != nil {
-		// FFmpeg responds to SIGINT for graceful stop
-		rs.cmd.Process.Signal(os.Interrupt)
+	// Signal capture loop to stop
+	close(rs.stopChan)
 
-		// Wait for process to finish
+	// Close stdin to signal EOF to FFmpeg
+	if rs.stdin != nil {
+		rs.stdin.Close()
+	}
+
+	// Wait for FFmpeg to finish
+	if rs.cmd != nil {
 		rs.cmd.Wait()
 	}
 
