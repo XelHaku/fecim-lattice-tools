@@ -297,13 +297,7 @@ func (a *App) createHeader() fyne.CanvasObject {
 		fyne.TextStyle{Bold: true},
 	)
 
-	subtitle := widget.NewLabelWithStyle(
-		"\"It's got 30 discrete states. So it's not 0-1-0-1.\" — Dr. external research group",
-		fyne.TextAlignCenter,
-		fyne.TextStyle{Italic: true},
-	)
-
-	return container.NewVBox(title, subtitle, widget.NewSeparator())
+	return container.NewVBox(title, widget.NewSeparator())
 }
 
 func (a *App) createControlsPanel() fyne.CanvasObject {

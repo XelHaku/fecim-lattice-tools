@@ -270,16 +270,9 @@ func CreateLauncherContent(onDemoSelected func(demoNum int)) fyne.CanvasObject {
 
 	// Subtitle with narrative
 	subtitleLabel := widget.NewLabelWithStyle(
-		"6 World-Class Demos: Physics → Compute → Application → System → Business → Design",
+		"6 Demos: Physics → Compute → Application → System → Business → Design",
 		fyne.TextAlignCenter,
 		fyne.TextStyle{},
-	)
-
-	// Dr. Tour quote
-	quoteLabel := widget.NewLabelWithStyle(
-		"\"Compute in memory where the same device does the memory and the computation.\" - Dr. external research group",
-		fyne.TextAlignCenter,
-		fyne.TextStyle{Italic: true},
 	)
 
 	// Progress indicator
@@ -298,7 +291,6 @@ func CreateLauncherContent(onDemoSelected func(demoNum int)) fyne.CanvasObject {
 	header := container.NewVBox(
 		titleLabel,
 		subtitleLabel,
-		quoteLabel,
 		widget.NewSeparator(),
 		progressLabel,
 		widget.NewSeparator(),

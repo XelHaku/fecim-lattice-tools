@@ -223,18 +223,8 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 	titleLabel.Alignment = fyne.TextAlignCenter
 
-	quoteLabel := widget.NewLabel("\"This could lower data center energy by 80 to 90%\" — Dr. external research group")
-	quoteLabel.Alignment = fyne.TextAlignCenter
-	quoteLabel.TextStyle = fyne.TextStyle{Italic: true}
-
-	disclaimerLabel := widget.NewLabel("Note: FeCIM specs are CLAIMED (TRL 4), not independently verified. CPU/GPU specs from published datasheets.")
-	disclaimerLabel.Alignment = fyne.TextAlignCenter
-	disclaimerLabel.TextStyle = fyne.TextStyle{Italic: true}
-
 	header := container.NewVBox(
 		titleLabel,
-		quoteLabel,
-		disclaimerLabel,
 		widget.NewSeparator(),
 	)
 

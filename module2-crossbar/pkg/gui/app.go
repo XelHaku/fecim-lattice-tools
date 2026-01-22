@@ -237,7 +237,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 
 	// Create simple LEFT panel labels
 	ca.eduTitleLabel = widget.NewLabelWithStyle("What You're Seeing", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	ca.eduContentLabel = widget.NewLabel("CROSSBAR MVM\n\n\"Compute in memory where\nthe same device does memory\nand computation.\"\n\n— Dr. external research group\n\nClick a button to start\na demonstration.")
+	ca.eduContentLabel = widget.NewLabel("CROSSBAR MVM\n\nClick a button to start\na demonstration.")
 	ca.eduContentLabel.Wrapping = fyne.TextWrapOff
 	ca.keyStatLabel = widget.NewLabel("N² Operations")
 	ca.keyStatLabel.Alignment = fyne.TextAlignCenter
@@ -346,18 +346,13 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		}
 	}
 
-	// Title and header with Dr. Tour quote
+	// Title and header
 	titleLabel := widget.NewLabel("FeCIM Crossbar Array Visualization")
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 	titleLabel.Alignment = fyne.TextAlignCenter
 
-	quoteLabel := widget.NewLabel("\"Compute in memory where the same device does memory and computation.\" — Dr. external research group")
-	quoteLabel.Alignment = fyne.TextAlignCenter
-	quoteLabel.TextStyle = fyne.TextStyle{Italic: true}
-
 	header := container.NewVBox(
 		titleLabel,
-		quoteLabel,
 		widget.NewSeparator(),
 	)
 
@@ -978,7 +973,7 @@ func (ca *CrossbarApp) resetArray() {
 	// Update key stat
 	ca.setKeyStatValue(fmt.Sprintf("%d MACs", ca.config.Rows*ca.config.Cols))
 
-	ca.setEducationalContent("What You're Seeing", "CROSSBAR MVM\n\n\"Compute in memory where\nthe same device does memory\nand computation.\"\n\n— Dr. external research group\n\nClick a button to start\na demonstration.")
+	ca.setEducationalContent("What You're Seeing", "CROSSBAR MVM\n\nClick a button to start\na demonstration.")
 	ca.updateStatus("● IDLE | Array reset with random weights")
 	ca.modeIndicator.SetMode(DemoModeIdle)
 }
@@ -1009,7 +1004,7 @@ func (ca *CrossbarApp) onDemoModeChanged(mode string) {
 				"• Sneak Paths computed\n"+
 				"• Tabs auto-cycle")
 	case "Manual":
-		ca.setEducationalContent("What You're Seeing", "CROSSBAR MVM\n\n\"Compute in memory where\nthe same device does memory\nand computation.\"\n\n— Dr. external research group\n\nClick a button to start\na demonstration.")
+		ca.setEducationalContent("What You're Seeing", "CROSSBAR MVM\n\nClick a button to start\na demonstration.")
 	}
 }
 

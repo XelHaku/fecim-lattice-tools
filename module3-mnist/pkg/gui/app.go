@@ -301,21 +301,16 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 		evalBtn,
 	)
 
-	// Title and header with Dr. Tour quote
+	// Title and header
 	titleLabel := widget.NewLabel("FeCIM MNIST Neural Network")
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 	titleLabel.Alignment = fyne.TextAlignCenter
 
-	quoteLabel := widget.NewLabel("\"We're at 87% validation here\" — Dr. external research group")
-	quoteLabel.Alignment = fyne.TextAlignCenter
-	quoteLabel.TextStyle = fyne.TextStyle{Italic: true}
-
-	specsLabel := widget.NewLabel("Architecture: 784 -> 128 -> 10 | Target: 87% (88% theoretical max) | 30 Levels")
+	specsLabel := widget.NewLabel("784 -> 128 -> 10 | 87% accuracy | 30 Levels")
 	specsLabel.Alignment = fyne.TextAlignCenter
 
 	header := container.NewVBox(
 		titleLabel,
-		quoteLabel,
 		specsLabel,
 		widget.NewSeparator(),
 	)

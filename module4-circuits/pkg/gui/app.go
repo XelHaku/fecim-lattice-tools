@@ -203,21 +203,16 @@ func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 		writeBtn, readBtn,
 	)
 
-	// Title and header with Dr. Tour quote
+	// Title and header
 	titleLabel := widget.NewLabel("FeCIM Peripheral Circuits")
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 	titleLabel.Alignment = fyne.TextAlignCenter
 
-	quoteLabel := widget.NewLabel("\"Works on a standard CMOS line\" — Dr. external research group")
-	quoteLabel.Alignment = fyne.TextAlignCenter
-	quoteLabel.TextStyle = fyne.TextStyle{Italic: true}
-
-	specsLabel := widget.NewLabel("DAC (5-bit) → Charge Pump → FeFET Cell → TIA → ADC (5-bit) | 30 Levels")
+	specsLabel := widget.NewLabel("DAC (5-bit) → Charge Pump → FeFET → TIA → ADC (5-bit) | 30 Levels")
 	specsLabel.Alignment = fyne.TextAlignCenter
 
 	header := container.NewVBox(
 		titleLabel,
-		quoteLabel,
 		specsLabel,
 		widget.NewSeparator(),
 	)
