@@ -446,19 +446,30 @@ func main() {
 				return
 			}
 			recordBtn.SetIcon(theme.MediaStopIcon())
-			// Start timer to show real-time datetime with milliseconds
+			// Start timer to show real-time datetime with milliseconds and take screenshots
 			recordingTimerStop = make(chan struct{})
 			go func() {
-				ticker := time.NewTicker(50 * time.Millisecond) // Update ~20 times per second
-				defer ticker.Stop()
+				displayTicker := time.NewTicker(50 * time.Millisecond)  // Update display ~20 times per second
+				screenshotTicker := time.NewTicker(5 * time.Second)     // Screenshot every 5 seconds
+				defer displayTicker.Stop()
+				defer screenshotTicker.Stop()
 				for {
 					select {
 					case <-recordingTimerStop:
 						return
-					case <-ticker.C:
+					case <-displayTicker.C:
 						fyne.Do(func() {
 							now := time.Now()
 							recordBtn.SetText(now.Format("02 Jan 06 15:04:05.000"))
+						})
+					case <-screenshotTicker.C:
+						// Take screenshot on main thread
+						fyne.Do(func() {
+							sectionName := "recording"
+							if tabs.Selected() != nil {
+								sectionName = sectionNameFromTab(tabs.Selected().Text)
+							}
+							takeScreenshot(window, sectionName)
 						})
 					}
 				}

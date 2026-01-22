@@ -75,55 +75,93 @@ func (app *TabbedCrossbarApp) Run() {
 }
 
 func (app *TabbedCrossbarApp) createMainLayout() fyne.CanvasObject {
-	// Header
-	header := app.createHeader()
+	// Create view selector buttons (replaces nested tabs to save space)
+	var contentContainer *fyne.Container
 
-	// Create tabs
-	app.tabContainer = container.NewAppTabs(
-		container.NewTabItem("1. Ideal MVM", app.idealTab.Content()),
-		container.NewTabItem("2. IR Drop Analysis", app.irdropTab.Content()),
-		container.NewTabItem("3. Sneak Paths", app.sneakTab.Content()),
-		container.NewTabItem("4. Drift & Variation", app.driftTab.Content()),
-	)
-	app.tabContainer.SetTabLocation(container.TabLocationTop)
+	// Button group for view selection
+	idealBtn := widget.NewButton("Conductance", func() {})
+	irDropBtn := widget.NewButton("IR Drop", func() {})
+	sneakBtn := widget.NewButton("Sneak Paths", func() {})
+	driftBtn := widget.NewButton("Input/Output", func() {})
 
-	// Tab change callback
-	app.tabContainer.OnSelected = func(tab *container.TabItem) {
-		switch tab.Text {
-		case "1. Ideal MVM":
+	updateView := func(view int) {
+		// Update button styles to show active view
+		if view == 0 {
+			idealBtn.Importance = widget.HighImportance
+			irDropBtn.Importance = widget.MediumImportance
+			sneakBtn.Importance = widget.MediumImportance
+			driftBtn.Importance = widget.MediumImportance
 			app.statusLabel.SetText("Ideal MVM - No non-idealities")
-		case "2. IR Drop Analysis":
+			contentContainer.Objects[0] = app.idealTab.Content()
+		} else if view == 1 {
+			idealBtn.Importance = widget.MediumImportance
+			irDropBtn.Importance = widget.HighImportance
+			sneakBtn.Importance = widget.MediumImportance
+			driftBtn.Importance = widget.MediumImportance
 			app.statusLabel.SetText("IR Drop - Voltage drop along metal lines")
-		case "3. Sneak Paths":
+			contentContainer.Objects[0] = app.irdropTab.Content()
+		} else if view == 2 {
+			idealBtn.Importance = widget.MediumImportance
+			irDropBtn.Importance = widget.MediumImportance
+			sneakBtn.Importance = widget.HighImportance
+			driftBtn.Importance = widget.MediumImportance
 			app.statusLabel.SetText("Sneak Paths - Parasitic current paths")
-		case "4. Drift & Variation":
+			contentContainer.Objects[0] = app.sneakTab.Content()
+		} else if view == 3 {
+			idealBtn.Importance = widget.MediumImportance
+			irDropBtn.Importance = widget.MediumImportance
+			sneakBtn.Importance = widget.MediumImportance
+			driftBtn.Importance = widget.HighImportance
 			app.statusLabel.SetText("Drift - Conductance change over time")
+			contentContainer.Objects[0] = app.driftTab.Content()
 		}
+		idealBtn.Refresh()
+		irDropBtn.Refresh()
+		sneakBtn.Refresh()
+		driftBtn.Refresh()
+		contentContainer.Refresh()
 	}
+
+	idealBtn.OnTapped = func() { updateView(0) }
+	irDropBtn.OnTapped = func() { updateView(1) }
+	sneakBtn.OnTapped = func() { updateView(2) }
+	driftBtn.OnTapped = func() { updateView(3) }
+
+	// Header with inline view selector
+	title := canvas.NewText("FeCIM Crossbar Array Visualization", color.White)
+	title.TextSize = 16
+	title.TextStyle = fyne.TextStyle{Bold: true}
+
+	viewLabel := widget.NewLabel("What You're Seeing")
+
+	buttonBar := container.NewHBox(
+		viewLabel,
+		idealBtn,
+		irDropBtn,
+		sneakBtn,
+		driftBtn,
+	)
+
+	header := container.NewVBox(
+		buttonBar,
+		widget.NewSeparator(),
+	)
+
+	// Content container (will be swapped based on button selection)
+	contentContainer = container.NewMax(app.idealTab.Content())
+
+	// Set initial view
+	updateView(0)
 
 	return container.NewBorder(
 		header,
 		app.statusLabel,
 		nil,
 		nil,
-		app.tabContainer,
+		contentContainer,
 	)
 }
 
-func (app *TabbedCrossbarApp) createHeader() fyne.CanvasObject {
-	title := canvas.NewText("Demo 2: Crossbar MVM + Non-Idealities", color.White)
-	title.TextSize = 20
-	title.TextStyle = fyne.TextStyle{Bold: true}
-
-	subtitle := widget.NewLabel("Ideal Operation | IR Drop | Sneak Paths | Conductance Drift")
-	subtitle.Alignment = fyne.TextAlignCenter
-
-	return container.NewVBox(
-		container.NewCenter(title),
-		container.NewCenter(subtitle),
-		widget.NewSeparator(),
-	)
-}
 
 // Start is called when the tab is selected in unified visualizer.
 func (app *TabbedCrossbarApp) Start() {

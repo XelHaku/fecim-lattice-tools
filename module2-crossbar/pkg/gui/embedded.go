@@ -53,7 +53,22 @@ func (e *EmbeddedCrossbarApp) BuildContent(fyneApp fyne.App, parentWindow fyne.W
 	e.fyneApp = fyneApp
 	e.window = parentWindow
 
-	// Create main layout
+	// Create enhanced layout (embedded version always uses enhanced features)
+	content := e.createEnhancedMainLayout()
+
+	// Initialize displays
+	e.updateConductanceDisplay()
+	e.updateStatus("Ready. Program weights and run MVM operations.")
+
+	return content
+}
+
+// BuildContentStandard creates standard UI content for embedding (no enhanced features)
+func (e *EmbeddedCrossbarApp) BuildContentStandard(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject {
+	e.fyneApp = fyneApp
+	e.window = parentWindow
+
+	// Create standard layout
 	content := e.createMainLayout()
 
 	// Initialize displays

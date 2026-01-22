@@ -122,7 +122,7 @@ func (a *Array) ProgramWeightMatrix(weights [][]float64) error {
 
 // MVM performs matrix-vector multiplication: y = W * x
 // Input x is applied to columns (bit lines), output y is read from rows (word lines).
-// Returns normalized output in [0,1] range representing weighted sum.
+// Physics: I_row = Σ(G_ij × V_j) - each cell contributes current via Ohm's law.
 func (a *Array) MVM(input []float64) ([]float64, error) {
 	if len(input) > a.config.Cols {
 		return nil, fmt.Errorf("input size (%d) exceeds array columns (%d)", len(input), a.config.Cols)
@@ -130,22 +130,27 @@ func (a *Array) MVM(input []float64) ([]float64, error) {
 
 	output := make([]float64, a.config.Rows)
 
+	// Find max possible current for normalization
+	// This occurs when all weights = 1.0 and all inputs = 1.0
+	maxCurrent := float64(len(input)) // Theoretical maximum
+
 	for i := 0; i < a.config.Rows; i++ {
 		var sum float64
 		for j := 0; j < len(input); j++ {
 			// Quantize input through DAC
-			quantizedInput := a.quantizeDAC(input[j])
+			vIn := a.quantizeDAC(input[j])
 
-			// Read conductance with noise
+			// Read conductance with device variation noise
 			g := a.cells[i][j].Conductance * a.cells[i][j].NoiseFactor
 
-			// Accumulate current (Ohm's law: I = G * V)
-			sum += g * quantizedInput
+			// Ohm's Law: I = G × V
+			// Accumulate current (physical summation via Kirchhoff's current law)
+			sum += g * vIn
 		}
 
-		// Normalize by max possible value (when all inputs and weights are 1.0)
-		// This keeps output in [0,1] range for subsequent processing
-		normalizedSum := sum / float64(len(input))
+		// Normalize by max possible current to keep in [0,1] range
+		// This allows stacking multiple MVMs in neural networks
+		normalizedSum := sum / maxCurrent
 
 		// Quantize output through ADC
 		output[i] = a.quantizeADC(normalizedSum)

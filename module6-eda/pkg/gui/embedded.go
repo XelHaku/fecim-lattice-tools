@@ -25,22 +25,60 @@ func NewEmbeddedEDAApp() *EmbeddedEDAApp {
 
 // BuildContent creates the UI content for embedding in the main app
 func (app *EmbeddedEDAApp) BuildContent(fyneApp fyne.App, window fyne.Window) fyne.CanvasObject {
-	// Create tabs
-	tabContainer := container.NewAppTabs(
-		container.NewTabItem("1. Compiler", tabs.MakeCompilerTab(app.state, window)),
-		container.NewTabItem("2. Layout", tabs.MakeLayoutTab(app.state)),
-		container.NewTabItem("3. Explorer", makePlaceholderTab("Design space explorer coming soon")),
-		container.NewTabItem("4. Simulate", makePlaceholderTab("Simulation bridge coming soon")),
-		container.NewTabItem("5. Export", tabs.MakeExportTab(app.state, window)),
-		container.NewTabItem("6. Learn", makePlaceholderTab("Learning resources coming soon")),
-	)
-	tabContainer.SetTabLocation(container.TabLocationTop)
+	// Create tab contents
+	compilerContent := tabs.MakeCompilerTab(app.state, window)
+	layoutContent := tabs.MakeLayoutTab(app.state)
+	explorerContent := makePlaceholderTab("Design space explorer coming soon")
+	simulateContent := makePlaceholderTab("Simulation bridge coming soon")
+	exportContent := tabs.MakeExportTab(app.state, window)
+	learnContent := makePlaceholderTab("Learning resources coming soon")
 
-	// Add preview banner
+	// View selector (replaces nested tabs to save space)
+	viewSelector := widget.NewSelect(
+		[]string{"Compiler", "Layout", "Explorer", "Simulate", "Export", "Learn"},
+		nil,
+	)
+	viewSelector.SetSelected("Compiler")
+
+	// Content container
+	contentContainer := container.NewMax(compilerContent)
+
+	// Update view based on selection
+	viewSelector.OnChanged = func(view string) {
+		switch view {
+		case "Compiler":
+			contentContainer.Objects[0] = compilerContent
+		case "Layout":
+			contentContainer.Objects[0] = layoutContent
+		case "Explorer":
+			contentContainer.Objects[0] = explorerContent
+		case "Simulate":
+			contentContainer.Objects[0] = simulateContent
+		case "Export":
+			contentContainer.Objects[0] = exportContent
+		case "Learn":
+			contentContainer.Objects[0] = learnContent
+		}
+		contentContainer.Refresh()
+	}
+
+	// Header with inline view selector
 	banner := widget.NewLabel("PREVIEW: Bridge to open-source EDA tools (ngspice, KLayout, CiMLoop)")
 	banner.Alignment = fyne.TextAlignCenter
 
-	app.content = container.NewBorder(banner, nil, nil, nil, tabContainer)
+	headerRow := container.NewHBox(
+		widget.NewLabel("View:"),
+		viewSelector,
+		widget.NewSeparator(),
+		banner,
+	)
+
+	header := container.NewVBox(
+		headerRow,
+		widget.NewSeparator(),
+	)
+
+	app.content = container.NewBorder(header, nil, nil, nil, contentContainer)
 	return app.content
 }
 

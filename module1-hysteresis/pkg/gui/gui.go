@@ -1358,17 +1358,33 @@ func (r *levelRenderer) Refresh() {
 	r.objects = append(r.objects, bitsLabel)
 
 	// Draw 30 level segments
-	marginH := float32(50) // Space for title at top
-	marginBottom := float32(10)
+	// Match P-E plot margins for proper Y-axis alignment
+	marginH := float32(50)     // Top margin - matches plot marginTop
+	marginBottom := float32(35) // Bottom margin - matches plot marginBottom
 	marginW := float32(6)
 	labelW := float32(28)
 	barW := size.Width - 2*marginW - labelW
 	totalH := size.Height - marginH - marginBottom
+
+	// Calculate center Y (same as plot's centerY)
+	centerY := marginH + totalH/2
+
+	// pMax = Ps * 1.2 in the plot, so we scale by 1.2 to match
+	// the actual polarization range on the Y-axis
+	pMaxScale := float32(1.2)
 	segH := totalH / 30
 	gap := float32(2)
 
 	for i := 0; i < 30; i++ {
-		y := marginH + float32(29-i)*segH
+		// Calculate normalized polarization for this level (-1 to +1)
+		normalizedP := (float32(i)/29.0)*2.0 - 1.0
+
+		// Calculate Y position to match plot's P-axis scaling
+		// On the plot: Y = centerY - (normP / pMaxScale) * totalH / 2
+		yCenterForLevel := centerY - (normalizedP / pMaxScale) * totalH / 2
+
+		// Position the segment centered at this Y
+		y := yCenterForLevel - segH/2
 
 		// Color gradient
 		t := float64(i) / 29.0

@@ -107,6 +107,12 @@ type CrossbarApp struct {
 	statsPanel     *StatsPanel
 	levelIndicator *LevelIndicator
 
+	// Enhanced widgets
+	metricsPanel       *MetricsPanel
+	comparisonBadge    *ComparisonBadge
+	accuracyWaterfall  *AccuracyWaterfall
+	beforeAfterToggle  *BeforeAfterToggle
+
 	// Live Slide components
 	modeIndicator    *ModeIndicatorBox
 	educationalPanel *EducationalPanel
@@ -140,6 +146,7 @@ type CrossbarApp struct {
 	// Current state
 	lastInput          []float64
 	lastOutput         []float64
+	lastMVMResult      *crossbar.MVMResult
 	lastIRDropAnalysis *crossbar.IRDropAnalysis
 	lastSneakAnalysis  *crossbar.SneakPathAnalysis
 
@@ -188,14 +195,32 @@ func NewCrossbarApp() *CrossbarApp {
 
 // Run starts the GUI application.
 func (ca *CrossbarApp) Run() {
+	ca.RunWithLayout(false) // Use standard layout by default
+}
+
+// RunEnhanced starts the GUI with enhanced features.
+func (ca *CrossbarApp) RunEnhanced() {
+	ca.RunWithLayout(true) // Use enhanced layout
+}
+
+// RunWithLayout starts the GUI application with specified layout.
+func (ca *CrossbarApp) RunWithLayout(enhanced bool) {
 	debug.Println("App: Creating window")
-	ca.window = ca.fyneApp.NewWindow("FeCIM Demo 2: Crossbar Array MVM")
-	ca.window.Resize(fyne.NewSize(1200, 800))
-	// Window can be resized - layout adapts
+	windowTitle := "FeCIM Demo 2: Crossbar Array MVM"
+	if enhanced {
+		windowTitle += " (Enhanced)"
+	}
+	ca.window = ca.fyneApp.NewWindow(windowTitle)
+	ca.window.Resize(fyne.NewSize(1400, 900))
 
 	// Create main layout
 	debug.Println("App: Creating main layout")
-	content := ca.createMainLayout()
+	var content fyne.CanvasObject
+	if enhanced {
+		content = ca.createEnhancedMainLayout()
+	} else {
+		content = ca.createMainLayout()
+	}
 	debug.Println("App: Setting window content")
 	ca.window.SetContent(content)
 

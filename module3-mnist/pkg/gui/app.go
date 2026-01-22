@@ -301,17 +301,26 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 		evalBtn,
 	)
 
-	// Title and header
+	// View selector buttons (replaces tabs to save vertical space)
+	var contentContainer *fyne.Container
+	drawBtn := widget.NewButton("Draw & Predict", func() {})
+	metricsBtn := widget.NewButton("Evaluation Metrics", func() {})
+
+	// Title and header with inline view selector
 	titleLabel := widget.NewLabel("FeCIM MNIST Neural Network")
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 	titleLabel.Alignment = fyne.TextAlignCenter
 
-	specsLabel := widget.NewLabel("784 -> 128 -> 10 | 87% accuracy | 30 Levels")
-	specsLabel.Alignment = fyne.TextAlignCenter
+	viewSelectorRow := container.NewHBox(
+		widget.NewLabel("View:"),
+		drawBtn,
+		metricsBtn,
+		layout.NewSpacer(),
+		widget.NewLabel("784 -> 128 -> 10 | 87% accuracy | 30 Levels"),
+	)
 
 	header := container.NewVBox(
-		titleLabel,
-		specsLabel,
+		viewSelectorRow,
 		widget.NewSeparator(),
 	)
 
@@ -401,13 +410,6 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 	)
 	mainSplit.SetOffset(0.78) // 78% left+center, 22% right
 
-	// Tabs for different views - use Max for full expansion
-	drawTab := container.NewTabItem("Draw & Predict", container.NewMax(mainSplit))
-
-	metricsTab := container.NewTabItem("Evaluation Metrics", container.NewMax(metricsSplit))
-
-	tabs := container.NewAppTabs(drawTab, metricsTab)
-
 	// Footer with mode indicator and status (like demo2)
 	footer := container.NewVBox(
 		widget.NewSeparator(),
@@ -422,13 +424,38 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 		),
 	)
 
+	// Content container (will be swapped based on button selection)
+	contentContainer = container.NewMax(mainSplit)
+
+	// Setup view switching logic
+	updateView := func(view int) {
+		if view == 0 {
+			drawBtn.Importance = widget.HighImportance
+			metricsBtn.Importance = widget.MediumImportance
+			contentContainer.Objects[0] = container.NewMax(mainSplit)
+		} else {
+			drawBtn.Importance = widget.MediumImportance
+			metricsBtn.Importance = widget.HighImportance
+			contentContainer.Objects[0] = container.NewMax(metricsSplit)
+		}
+		drawBtn.Refresh()
+		metricsBtn.Refresh()
+		contentContainer.Refresh()
+	}
+
+	drawBtn.OnTapped = func() { updateView(0) }
+	metricsBtn.OnTapped = func() { updateView(1) }
+
+	// Set initial view
+	updateView(0)
+
 	// Main content
 	mainContent := container.NewBorder(
 		header, // top
 		footer, // bottom
 		nil,    // left
 		nil,    // right
-		tabs,   // center
+		contentContainer, // center
 	)
 
 	return mainContent

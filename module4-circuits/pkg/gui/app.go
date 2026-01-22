@@ -239,35 +239,58 @@ func (ca *CircuitsApp) Run() {
 
 // createMainLayout builds the main application layout with tabs.
 func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
-	// Create tabs
-	writeTab := container.NewTabItem("WRITE", ca.createWriteTab())
-	readTab := container.NewTabItem("READ", ca.createReadTab())
-	computeTab := container.NewTabItem("COMPUTE", ca.createComputeTab())
-	comparisonTab := container.NewTabItem("COMPARISON", ca.createComparisonTab())
-	timingTab := container.NewTabItem("TIMING", ca.createTimingTab())
-	specsTab := container.NewTabItem("SPECS", ca.createSpecsTab())
+	// Create tab contents
+	writeTabContent := ca.createWriteTab()
+	readTabContent := ca.createReadTab()
+	computeTabContent := ca.createComputeTab()
+	comparisonTabContent := ca.createComparisonTab()
+	timingTabContent := ca.createTimingTab()
+	specsTabContent := ca.createSpecsTab()
 
-	ca.mainTabs = container.NewAppTabs(
-		writeTab,
-		readTab,
-		computeTab,
-		comparisonTab,
-		timingTab,
-		specsTab,
+	// View selector dropdown (replaces nested tabs to save space)
+	viewSelector := widget.NewSelect(
+		[]string{"WRITE", "READ", "COMPUTE", "COMPARISON", "TIMING", "SPECS"},
+		nil,
 	)
-	ca.mainTabs.SetTabLocation(container.TabLocationTop)
+	viewSelector.SetSelected("WRITE")
 
-	// Header
+	// Content container
+	contentContainer := container.NewMax(writeTabContent)
+
+	// Update view based on selection
+	viewSelector.OnChanged = func(view string) {
+		switch view {
+		case "WRITE":
+			contentContainer.Objects[0] = writeTabContent
+		case "READ":
+			contentContainer.Objects[0] = readTabContent
+		case "COMPUTE":
+			contentContainer.Objects[0] = computeTabContent
+		case "COMPARISON":
+			contentContainer.Objects[0] = comparisonTabContent
+		case "TIMING":
+			contentContainer.Objects[0] = timingTabContent
+		case "SPECS":
+			contentContainer.Objects[0] = specsTabContent
+		}
+		contentContainer.Refresh()
+	}
+
+	// Header with inline view selector
 	titleLabel := widget.NewLabel("FeCIM Peripheral Circuits Visualizer")
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
-	titleLabel.Alignment = fyne.TextAlignCenter
 
-	subtitleLabel := widget.NewLabel("Interactive DAC → FeFET → TIA → ADC Pipeline | 30 Discrete Levels")
-	subtitleLabel.Alignment = fyne.TextAlignCenter
+	headerRow := container.NewHBox(
+		titleLabel,
+		layout.NewSpacer(),
+		widget.NewLabel("View:"),
+		viewSelector,
+		layout.NewSpacer(),
+		widget.NewLabel("DAC → FeFET → TIA → ADC | 30 Levels"),
+	)
 
 	header := container.NewVBox(
-		titleLabel,
-		subtitleLabel,
+		headerRow,
 		widget.NewSeparator(),
 	)
 
@@ -280,7 +303,7 @@ func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 		footerLabel,
 	)
 
-	return container.NewBorder(header, footer, nil, nil, ca.mainTabs)
+	return container.NewBorder(header, footer, nil, nil, contentContainer)
 }
 
 // ============================================================================
