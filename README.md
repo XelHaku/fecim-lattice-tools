@@ -1,11 +1,11 @@
 # Ferroelectric CIM Visualizer
 
-**5 World-Class Demos for Ferroelectric Compute-in-Memory**
+**6 World-Class Modules for Ferroelectric Compute-in-Memory**
 
 [![Go](https://img.shields.io/badge/Go-1.21+-00ADD8?logo=go)](https://go.dev)
 [![Fyne](https://img.shields.io/badge/Fyne-2.4-blue?logo=go)](https://fyne.io)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Demos](https://img.shields.io/badge/Demos-5%2F5-brightgreen.svg)]()
+[![Modules](https://img.shields.io/badge/Modules-6%2F6-brightgreen.svg)]()
 
 ---
 
@@ -13,7 +13,7 @@
 
 ---
 
-## The FeCIM Story: 5 Core Demos
+## The FeCIM Story: 6 Core Modules
 
 ```
 THE FeCIM NARRATIVE
@@ -23,31 +23,32 @@ THE FeCIM NARRATIVE
  memory cell work?"     compute with it?"   build with it?"
       ↓                      ↓                    ↓
 ┌──────────┐          ┌──────────┐          ┌──────────┐
-│  DEMO 1  │    →     │  DEMO 2  │    →     │  DEMO 3  │
+│ MODULE 1 │    →     │ MODULE 2 │    →     │ MODULE 3 │
 │Hysteresis│          │ Crossbar │          │  MNIST   │
 │          │          │   +      │          │  87%     │
 │30 levels │          │Non-Ideal │          │FLAGSHIP  │
 └──────────┘          └──────────┘          └──────────┘
   PHYSICS              COMPUTE             APPLICATION
 
-"How does it fit       "Why does FeCIM
- in a real chip?"       beat everything?"
-      ↓                      ↓
-┌──────────┐          ┌──────────┐
-│  DEMO 4  │    →     │  DEMO 5  │
-│ Circuits │          │Comparison│
-│  System  │          │ Investor │
-│   CMOS   │          │  Pitch   │
-└──────────┘          └──────────┘
-  SYSTEM               BUSINESS
+"How does it fit       "Why does FeCIM        "How do we
+ in a real chip?"       beat everything?"      build chips?"
+      ↓                      ↓                      ↓
+┌──────────┐          ┌──────────┐          ┌──────────┐
+│ MODULE 4 │    →     │ MODULE 5 │    →     │ MODULE 6 │
+│ Circuits │          │Comparison│          │  Design  │
+│  System  │          │ Investor │          │  Suite   │
+│   CMOS   │          │  Pitch   │          │   EDA    │
+└──────────┘          └──────────┘          └──────────┘
+  SYSTEM               BUSINESS              TOOLING
 ```
 
 ```
-Demo 1: "How the memory cell works"           ✅ Fyne GUI - P-E Hysteresis
-Demo 2: "How we compute + handle challenges"  ✅ Fyne GUI - Crossbar MVM + Non-Idealities
-Demo 3: "What we can build with it"           ✅ Fyne GUI - MNIST 87% (FP vs CIM)
-Demo 4: "How it fits in a real chip"          ✅ Fyne GUI - Peripheral Circuits
-Demo 5: "Why FeCIM beats everything"          ✅ Fyne GUI - Technology Comparison
+Module 1: "How the memory cell works"           ✅ Fyne GUI - P-E Hysteresis
+Module 2: "How we compute + handle challenges"  ✅ Fyne GUI - Crossbar MVM + Non-Idealities
+Module 3: "What we can build with it"           ✅ Fyne GUI - MNIST 87% (FP vs CIM)
+Module 4: "How it fits in a real chip"          ✅ Fyne GUI - Peripheral Circuits
+Module 5: "Why FeCIM beats everything"          ✅ Fyne GUI - Technology Comparison
+Module 6: "How do we build chips?"              ✅ Fyne GUI - FeCIM Design Suite (EDA)
 ```
 
 ---
@@ -58,24 +59,8 @@ Demo 5: "Why FeCIM beats everything"          ✅ Fyne GUI - Technology Comparis
 # Install dependencies (Ubuntu/Debian)
 sudo apt-get install gcc libgl1-mesa-dev xorg-dev
 
-# Build and run the unified visualizer (ALL 5 DEMOS)
-go build ./cmd/fecim-visualizer && ./fecim-visualizer
-
-# Or run individual demos:
-# Demo 1: Ferroelectric Hysteresis (P-E curve, 30 levels)
-cd demo1-hysteresis && go build ./cmd/hysteresis && ./hysteresis
-
-# Demo 2: Crossbar MVM + Non-Idealities (4 tabs)
-cd demo2-crossbar && go build -o crossbar-gui ./cmd/crossbar-gui && ./crossbar-gui
-
-# Demo 3: MNIST Neural Network (FP vs CIM dual mode)
-cd demo3-mnist && go build -o mnist-gui ./cmd/mnist-gui && ./mnist-gui
-
-# Demo 4: Peripheral Circuits (DAC, ADC, timing)
-cd demo4-circuits && go build -o circuits-gui ./cmd/circuits-gui && ./circuits-gui
-
-# Demo 5: Technology Comparison (Technical Briefing)
-cd demo8-comparison && go build -o comparison-gui ./cmd/comparison-gui && ./comparison-gui
+# Run the unified visualizer (ALL 6 MODULES)
+./launch.sh
 
 # Run all tests
 go test ./...
@@ -99,9 +84,9 @@ go test ./...
 
 ---
 
-## Demo Details
+## Module Details
 
-### Demo 1: Ferroelectric Hysteresis ✅
+### Module 1: Ferroelectric Hysteresis ✅
 
 **Purpose:** Understand single cell physics — "The Memory Cell"
 
@@ -125,7 +110,7 @@ go test ./...
 
 ---
 
-### Demo 2: Crossbar MVM + Non-Idealities ✅ (4 TABS)
+### Module 2: Crossbar MVM + Non-Idealities ✅ (4 TABS)
 
 **Purpose:** Understand compute-in-memory AND real-world challenges — "The Crossbar Computer"
 
@@ -166,7 +151,7 @@ go test ./...
 
 ---
 
-### Demo 3: MNIST Neural Network ✅ (FLAGSHIP)
+### Module 3: MNIST Neural Network ✅ (FLAGSHIP)
 
 **Purpose:** See real AI application — "The AI Brain"
 
@@ -191,7 +176,7 @@ go test ./...
 
 ---
 
-### Demo 4: Peripheral Circuits ✅
+### Module 4: Peripheral Circuits ✅
 
 **Purpose:** Understand full chip system — "The Chip System"
 
@@ -223,7 +208,7 @@ Digital: [22]             Digital: [22]
 
 ---
 
-### Demo 5: Technology Comparison ✅ (INVESTOR PITCH)
+### Module 5: Technology Comparison ✅ (INVESTOR PITCH)
 
 **Purpose:** The business case — "Why FeCIM Wins"
 
@@ -256,6 +241,31 @@ Competitive Matrix (Only FeCIM has ✅ everywhere)
 
 ---
 
+### Module 6: FeCIM Design Suite ✅ (EDA TOOLING)
+
+**Purpose:** Bridge from simulation to silicon — "The Chip Builder"
+
+```
+Neural Network Weights          Physical Crossbar Array
+
+┌─────────────────┐             ┌─────────────────┐
+│  0.5  -0.3  0.8 │   Compile   │ G₁₅  G₈   G₂₂  │
+│ -0.2   0.6  0.1 │ ─────────→  │ G₁₁  G₁₈  G₅   │
+│  0.9  -0.7  0.4 │             │ G₂₆  G₃   G₁₄  │
+└─────────────────┘             └─────────────────┘
+   Floating Point                 30-Level Cells
+```
+
+**Features:**
+- **Compiler Tab:** Load weights, configure array, compile to cells
+- **Layout Tab:** Visual crossbar grid (color-coded by conductance)
+- **Export Tab:** JSON, CSV, and SPICE netlist generation
+- Quantization to 30 FeCIM levels
+- PSNR and utilization statistics
+- CLI tool for automated/headless compilation
+
+---
+
 ## Technical Stack
 
 | Component | Technology |
@@ -273,24 +283,25 @@ Competitive Matrix (Only FeCIM has ✅ everywhere)
 ```
 multilayer-ferroelectric-cim-visualizer/
 ├── cmd/
-│   └── fecim-visualizer/  ✅ Unified GUI (ALL 5 DEMOS)
+│   └── fecim-visualizer/  ✅ Unified GUI (ALL 6 MODULES)
 ├── demo1-hysteresis/      ✅ Single cell P-E curve
 ├── demo2-crossbar/        ✅ Crossbar MVM + Non-Idealities (4 tabs)
 ├── demo3-mnist/           ✅ MNIST classifier (FP vs CIM)
 ├── demo4-circuits/        ✅ Peripheral circuits
-├── demo8-comparison/      ✅ Technology comparison (Demo 5)
+├── demo6-eda/             ✅ FeCIM Design Suite (EDA tooling)
+├── demo8-comparison/      ✅ Technology comparison (Module 5)
 ├── shared/                Shared packages (theme, logging)
 ├── docs/
-│   └── archive/           Archived demos (5, 6, 7)
+│   └── archive/           Archived demos
 └── go.mod
 ```
 
-### Archived Demos
+### Archived Modules
 
-The following demos were consolidated or archived during the 5-demo restructuring:
-- **Demo 5 (Thermal)**: Content merged into comparison
-- **Demo 6 (3D Stack)**: Archived — too futuristic for current TRL
-- **Demo 7 (Non-Idealities)**: Merged into Demo 2 as tabs
+The following modules were consolidated or archived during restructuring:
+- **Thermal**: Content merged into comparison
+- **3D Stack**: Archived — too futuristic for current TRL
+- **Non-Idealities**: Merged into Module 2 as tabs
 
 See `docs/archive/removed-demos/README.md` for details.
 
@@ -328,6 +339,6 @@ Ferroelectric CIM is a trademark of its respective owners at external research i
 
 ---
 
-*5 world-class demos. The future of computing is here.*
+*6 world-class demos. The future of computing is here.*
 
 *Built with Go, Fyne, and curiosity.*
