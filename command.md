@@ -1,197 +1,148 @@
-/ralph-loop:ralph-loop " FeCIM Visualizer - CRASH FIX AND TESTING MISSION
+/ralph-loop "BUILD DEMO 6: FeCIM Design Suite
 
-CRITICAL PROBLEM: App crashes on various demos due to nil pointer dereferences during initialization.
-SECONDARY PROBLEM: MNIST demo doesnt predict correctly - weights appear untrained.
+GOAL: Create the EDA bridge tool from plan-demo6.md
 
- PHASE 1: CRASH DETECTION AND FIX 
+PLAN FILE: <local-path>
+Look for section: COPY-PASTE STARTER TEMPLATES
 
-KNOWN CRASH PATTERN:
-- Fyne Select widgets SetSelected() triggers callback IMMEDIATELY during creation
-- Callback calls update functions (updateHeatmap, updateStackView, etc.)
-- Update functions access containers that arent created yet = CRASH
+---
+PHASE 1: Setup (Do First)
+---
 
-FIX PATTERN (apply to ALL demos):
-1. Reorder creation: Create visualization containers BEFORE control panels with Select widgets
-2. Add nil checks at start of ALL update functions:
-   go
-   func (app *App) updateSomething() {
-       if app.container == nil {
-           return
-       }
-       // rest of function
-   }
-   
+1. Create project:
+   mkdir -p demo6-eda/cmd/eda-gui
+   mkdir -p demo6-eda/pkg/compiler
+   mkdir -p demo6-eda/pkg/export
+   mkdir -p demo6-eda/pkg/gui/tabs
+   mkdir -p demo6-eda/data
+   cd demo6-eda
+   go mod init demo6-eda
+   go get fyne.io/fyne/v2@latest
 
-DEMOS TO CHECK AND FIX:
+2. Create pkg/compiler/types.go
+   Copy Template 1 from plan-demo6.md
+   Structs: CompileConfig, CellAssignment, CrossbarMapping, Stats
 
-DEMO 1 (Hysteresis):
-- Check for Select widgets with SetSelected
-- Add nil checks to update functions if missing
-- TEST: Click Demo 1 tab - should NOT crash
+3. Test: go build ./pkg/compiler
 
-DEMO 2 (Crossbar):
-- Check for Select widgets with SetSelected
-- Add nil checks to update functions if missing
-- TEST: Click Demo 2 tab - should NOT crash
+---
+PHASE 2: Compiler (Core Logic)
+---
 
-DEMO 3 (MNIST):
-- Check for Select widgets with SetSelected
-- Add nil checks to update functions if missing
-- TEST: Click Demo 3 tab - should NOT crash
+1. Create pkg/compiler/compiler.go
+   Copy Template 2 from plan-demo6.md
+   Main function: Compile(weights [][]float64, config CompileConfig) (*CrossbarMapping, error)
 
-DEMO 4 (Circuits):
-- Check for Select widgets with SetSelected
-- Add nil checks to update functions if missing
-- TEST: Click Demo 4 tab - should NOT crash
+2. Create pkg/compiler/compiler_test.go
+   Copy Template 3 from plan-demo6.md
 
-DEMO 5 (Thermal) - FIXED:
-- Reordered centerPanel before leftPanel
-- Added nil checks to updateHeatmap(), updateStats()
-- VERIFY: Click Demo 5 tab - should NOT crash
+3. Test: go test ./pkg/compiler -v
+   ALL TESTS MUST PASS
 
-DEMO 6 (Multilayer) - FIXED:
-- Reordered centerPanel before leftPanel
-- Added nil checks to updateStackView(), updateMetrics()
-- VERIFY: Click Demo 6 tab - should NOT crash
+---
+PHASE 3: Export Functions
+---
 
-DEMO 7 (Non-Idealities) - FIXED:
-- Added nil checks to updateIRDrop(), updateSneakPaths(), updateDrift()
-- VERIFY: Click Demo 7 tab - should NOT crash
+1. Create pkg/export/json.go
+   Function: ExportJSON(mapping, path) - uses json.MarshalIndent
 
-DEMO 8 (Comparison) - FIXED:
-- Added nil check to updateStatus()
-- VERIFY: Click Demo 8 tab - should NOT crash
+2. Create pkg/export/csv.go
+   Function: ExportCSV(mapping, path) - row,col,weight,level,conductance
 
- PHASE 2: CRASH TESTING PROCEDURE 
+3. Create pkg/export/spice.go
+   Copy Template 5 from plan-demo6.md
+   Function: GenerateSPICE(mapping, vdd) returns SPICE netlist string
 
-MANDATORY TEST SEQUENCE (run ./fecim-visualizer):
+4. Test: go test ./pkg/export -v
 
-1. App launches - Launcher tab visible? YES/NO
-2. Click Demo 1 card - Hysteresis loads without crash? YES/NO
-3. Return to Launcher, Click Demo 2 card - Crossbar loads without crash? YES/NO
-4. Return to Launcher, Click Demo 3 card - MNIST loads without crash? YES/NO
-5. Return to Launcher, Click Demo 4 card - Circuits loads without crash? YES/NO
-6. Return to Launcher, Click Demo 5 card - Thermal loads without crash? YES/NO
-7. Return to Launcher, Click Demo 6 card - 3D Stack loads without crash? YES/NO
-8. Return to Launcher, Click Demo 7 card - Non-Idealities loads without crash? YES/NO
-9. Return to Launcher, Click Demo 8 card - Comparison loads without crash? YES/NO
+---
+PHASE 4: GUI Shell
+---
 
-If ANY crash occurs:
-1. Note which demo crashed
-2. Read the stack trace to find the nil pointer location
-3. Apply the fix pattern (nil check or reorder creation)
-4. Rebuild and retest ALL demos
+1. Create cmd/eda-gui/main.go
+   Copy Template 4 from plan-demo6.md
+   Creates Fyne window with 6 tabs
 
- PHASE 3: MNIST WEIGHT TRAINING 
+2. Test: go run ./cmd/eda-gui
+   Window should open with 6 tab buttons
 
-PROBLEM: MNIST predictions are wrong because weights are untrained.
+---
+PHASE 5: Tab 1 - Compiler Tab
+---
 
-EVIDENCE: pretrained_weights.json has nearly uniform values (~0.48-0.55)
-This indicates weights were never properly trained.
+1. Create pkg/gui/tabs/compiler_tab.go
+   - Load Weights button with file picker
+   - Config inputs: rows, cols, levels
+   - Compile button
+   - Results text showing stats
 
-TRAINING DATA AVAILABLE:
-- demo3-mnist/data/train-images-idx3-ubyte.gz (60,000 training images)
-- demo3-mnist/data/train-labels-idx1-ubyte.gz (60,000 training labels)
-- demo3-mnist/data/t10k-images-idx3-ubyte.gz (10,000 test images)
-- demo3-mnist/data/t10k-labels-idx1-ubyte.gz (10,000 test labels)
+2. Wire into main.go
 
-TRAINING SCRIPT: demo3-mnist/train_mnist_proper.go
+3. Test: Load sample JSON, compile, see stats
 
-TO TRAIN:
-bash
-cd <local-path>
-go run demo3-mnist/train_mnist_proper.go
+---
+PHASE 6: Tab 5 - Export Tab
+---
 
+1. Create pkg/gui/tabs/export_tab.go
+   - Checkboxes for JSON, CSV, SPICE
+   - Export button
+   - Shows list of created files
 
-Expected output:
-- Training for 15 epochs
-- Final accuracy should be ~85-87%
-- Weights saved to demo3-mnist/data/pretrained_weights.json
+2. Test full workflow: Tab1 compile then Tab5 export
 
-AFTER TRAINING:
-1. Rebuild: go build ./cmd/fecim-visualizer
-2. Test: Run app, go to Demo 3, draw a digit
-3. Verify prediction matches drawn digit reasonably
+---
+PHASE 7: Tab 2 - Layout Tab
+---
 
- PHASE 4: FUNCTIONAL TESTING 
+1. Create pkg/gui/tabs/layout_tab.go
+   - Canvas showing colored grid
+   - Blue = low conductance, Red = high
+   - Click cell shows details
 
-After crash fixes and MNIST training, test each demo FUNCTIONALITY:
+---
+MVP DONE after Phase 7
+---
 
-DEMO 1 (Hysteresis):
-- [ ] P-E curve traces when frequency > 0
-- [ ] 30-level indicator shows current level
-- [ ] Waveform selector works (Sine, Triangle, Square, Manual)
-- [ ] Material selector works
-- [ ] Manual slider works
+---
+SAMPLE DATA - Create this file:
+---
 
-DEMO 2 (Crossbar MVM):
-- [ ] Conductance heatmap shows colors (not all same color)
-- [ ] IR Drop tab shows voltage gradient
-- [ ] Sneak Paths tab shows current map
-- [ ] Run MVM button works
-- [ ] Array size selector works
+File: data/sample_weights_8x8.json
 
-DEMO 3 (MNIST):
-- [ ] Drawing canvas accepts mouse input
-- [ ] Drawing shows on canvas
-- [ ] Prediction updates as you draw
-- [ ] Predicted digit is REASONABLE for what you drew
-- [ ] Confidence bars update
-- [ ] Clear button works
+{
+  \"rows\": 8,
+  \"cols\": 8,
+  \"weights\": [
+    [0.1, -0.2, 0.3, -0.4, 0.5, -0.6, 0.7, -0.8],
+    [-0.1, 0.2, -0.3, 0.4, -0.5, 0.6, -0.7, 0.8],
+    [0.15, -0.25, 0.35, -0.45, 0.55, -0.65, 0.75, -0.85],
+    [-0.15, 0.25, -0.35, 0.45, -0.55, 0.65, -0.75, 0.85],
+    [0.05, -0.15, 0.25, -0.35, 0.45, -0.55, 0.65, -0.75],
+    [-0.05, 0.15, -0.25, 0.35, -0.45, 0.55, -0.65, 0.75],
+    [0.2, -0.3, 0.4, -0.5, 0.6, -0.7, 0.8, -0.9],
+    [-0.2, 0.3, -0.4, 0.5, -0.6, 0.7, -0.8, 0.9]
+  ]
+}
 
-DEMO 4 (Circuits):
-- [ ] Signal flow diagram visible
-- [ ] Level slider changes values
-- [ ] Timing diagram shows waveforms
-- [ ] Write/Read buttons work
+---
+KEY FORMULAS
+---
 
-DEMO 5 (Thermal):
-- [ ] Heat map shows color gradient (blue to red)
-- [ ] Technology selector changes the map
-- [ ] Stats panel updates
-- [ ] Multi-layer view works
+Quantize: level = round((weight + maxWeight) / (2 * maxWeight) * (Levels-1))
+Conductance: G = GMin + (level / (Levels-1)) * (GMax - GMin)
+Resistance: R = 1000000 / G (ohms from microsiemens)
 
-DEMO 6 (3D Stack):
-- [ ] Isometric stack visualization shows layers
-- [ ] Stack selector changes between Demo/MNIST stacks
-- [ ] Layer list shows layer info
-- [ ] Metrics panel shows values
-- [ ] Energy comparison bars visible
+---
+COMMANDS
+---
 
-DEMO 7 (Non-Idealities):
-- [ ] IR Drop tab shows heatmap with gradient
-- [ ] Sneak Paths tab shows current map with target X
-- [ ] Drift tab shows time series chart
-- [ ] Technology Comparison tab shows bars
-- [ ] Mitigation buttons work
+Build: go build ./...
+Test: go test ./... -v
+Run: go run ./cmd/eda-gui
 
-DEMO 8 (Comparison):
-- [ ] Energy bar chart shows 3 bars (CPU, GPU, FeCIM)
-- [ ] Architecture diagram visible
-- [ ] Workload selector works
-- [ ] Inferences slider updates calculations
-- [ ] Calculator shows power and cost values
+---
+SUCCESS = MVP working with Tab 1, Tab 2, Tab 5
+---
 
- SUCCESS CRITERIA 
-
-MUST ALL BE TRUE:
-1. go build ./cmd/fecim-visualizer - succeeds
-2. ./fecim-visualizer - launches without crash
-3. ALL 8 demo tabs can be opened without crash
-4. Can navigate between ALL demos via cards and tabs
-5. MNIST predicts reasonably after training (not random)
-6. Each demos core functionality works
-
- QUICK REFERENCE 
-
-Build: go build ./cmd/fecim-visualizer
-Run: ./fecim-visualizer
-Test: go test ./...
-Train MNIST: go run demo3-mnist/train_mnist_proper.go
-Vet: go vet ./...
-
-Key files to check for crashes:
-- demo*/pkg/gui/app.go - look for SetSelected() calls
-- Look for update functions that access containers
-
-Output when complete: ALL 8 DEMOS LOAD WITHOUT CRASH - MNIST PREDICTS CORRECTLY" --max-iterations 1000
+Output: Weights compile to cells, export to JSON/CSV/SPICE, visual grid shows" --max-iterations 1000

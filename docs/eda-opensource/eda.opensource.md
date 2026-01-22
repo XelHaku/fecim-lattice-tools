@@ -378,6 +378,299 @@ Your project—a "FeCIM Visualizer and Compiler"—fills the most critical void.
 
 ---
 
+---
+
+## 12. Recent Developments (2025-2026 Update)
+
+This section extends the original research with the latest developments in the open-source EDA ecosystem.
+
+### 12.1 OpenROAD and OpenLane Evolution
+
+The OpenROAD project has made significant strides since 2024, expanding product capabilities and global deployment across both industry and educational programs.
+
+#### 12.1.1 Industrial Adoption
+
+- **Infineon** is now using OpenROAD and OpenLane for experimental and innovative projects, building initial prototypes using open-source tools before cross-checking with commercial tools for production.
+- **Intel** has showcased GenAI integration with OpenROAD to drive intelligent and efficient chip design methodologies.
+- **IHP** now offers shuttle services for fab-ready designs using the OpenROAD flow directly.
+- Thousands of RISC-V projects, including RI5CY, MEMS controllers, and AES cores, have been successfully taped out.
+
+#### 12.1.2 Advanced Node Progress
+
+OpenROAD has been applied in advanced nodes of academic RISC-V initiatives. The **BlackParrot 12nm** open-source processor utilized OpenROAD's RTL-MP for its floorplan, demonstrating the tool's capability at modern technology nodes.
+
+#### 12.1.3 Machine Learning Integration
+
+OpenROAD's **AutoTuner** now incorporates machine-learning architecture that methodically explores tool settings in the cloud, significantly reducing the need for expert hand-tuning and lowering the barrier to entry for silicon design.
+
+### 12.2 Ecosystem Changes: Post-Efabless Era
+
+A major disruption occurred in early 2025 when **Efabless**, the open-source chip pioneer based in Palo Alto, shut down after failing to complete its latest funding round. This had significant implications for the ecosystem:
+
+#### 12.2.1 Tiny Tapeout Transition
+
+- The project transitioned from SkyWater Technologies via Efabless to **IHP** (Leibniz Institute for High Performance Microelectronics).
+- New chip loan terms were introduced: chips remain IHP property with a default 2-year loan period.
+- **SwissChips Initiative** stepped in to sponsor shuttles, covering manufacturing costs for Swiss residents.
+
+#### 12.2.2 Active Shuttle Programs (2025-2026)
+
+| Shuttle | Process | Launch Date | Closing Date | Designs | Expected Delivery |
+|---------|---------|-------------|--------------|---------|-------------------|
+| **TTIHP26a** | IHP 130nm | Nov 2025 | Mar 2026 | Open | Sep 2026 |
+| **TTSKY25b** | SKY130 | Sep 2025 | Nov 2025 | 316 | Jun 2026 |
+| **TTSKY25a** | SKY130 | Jun 2025 | Sep 2025 | 237 | May 2026 |
+| **TTIHP25a** | IHP 130nm | Mar 2025 | Mar 2025 | 548 | Dec 2025 |
+
+### 12.3 New Simulation and Modeling Tools
+
+#### 12.3.1 CIM Simulation Frameworks
+
+The landscape of Compute-in-Memory simulation tools has expanded significantly:
+
+| Tool | Institution | Focus | Key Capability |
+|------|-------------|-------|----------------|
+| **NeuroSim** | Georgia Tech | Circuit-level macro modeling | Validated within 5-10% of silicon |
+| **CiMLoop** | MIT | System-level statistical modeling | Orders of magnitude faster than cycle-accurate |
+| **PIMSimulator** | Academic | Cycle-accurate DRAM-based PIM | DRAMSim2-backed HBM2-class modeling |
+| **3D CiM LLM Sim** | Academic | LLM inference on 3D AIMC | Dense and MoE architecture support |
+| **CINM (Cinnamon)** | Academic | Compilation infrastructure | Up to 51× performance improvement |
+| **PIMCOMP** | Academic | End-to-end DNN compiler | Generic multi-level optimization |
+| **FAST** | Academic | Hardware-software co-design | Ultra-fast training with non-ideality modeling |
+
+#### 12.3.2 CINM (Cinnamon) Compiler
+
+A notable addition is **CINM**, a compilation tool that can modify acceleratable LLVM IRs to offload them to CIM accelerators automatically, without re-engineering legacy software. Experimental results show:
+- Up to **51× performance improvement** compared to x86 processors
+- Up to **309× energy efficiency improvement**
+- Automatic translation of legacy programs to CIM-supported binary executables
+
+#### 12.3.3 FeFET Simulation Advances
+
+Recent 2025 work has improved FeFET simulation capabilities:
+
+- **Cadence Virtuoso** workflows now support standalone FeCap models using Landau-Khalatnikov equations
+- **TCAD Sentaurus** integration with calibrated Preisach model parameters for realistic FE behavior
+- Design-specific thickness thresholds (~55nm) identified for reliable bistability and retention
+- FeFET-based CIM unit circuits demonstrated in HfO₂-doped configurations
+
+### 12.4 GDSFactory: Layout Generation Evolution
+
+**GDSFactory** has matured into a comprehensive Python library for chip design (version 9.31.0 as of late 2025):
+
+#### Key Features:
+- **Backend Upgrade**: Migrated from gdstk to KLayout C++ library for enhanced performance
+- **Multi-domain Support**: Photonics, Analog, Quantum, MEMS, PCBs, and 3D-printable objects
+- **Simulation Integration**: Direct integration with Ansys, Lumerical, Tidy3d, MEEP, DEVSIM, SAX, MEOW, and Xyce
+- **Built-in Verification**: DRC, DFM, LVS, connectivity checks, and dummy fill
+- **Multi-format Output**: GDSII, OASIS, STL, and GERBER
+
+**GDSFactory+** now offers an enterprise GUI for chip design built on VSCode, providing foundry PDK access, schematic capture, and industry-level support.
+
+### 12.5 OpenVAF and Verilog-A Ecosystem
+
+The Verilog-A compact model ecosystem has stabilized with important developments:
+
+#### 12.5.1 OpenVAF-Reloaded
+- **OSDI 0.4 API** version now available for modern compact models
+- Pre-compiled models available for Linux (Ubuntu 22.04) and Windows 10/11 (64-bit)
+- Simulation speed comparable to (sometimes faster than) built-in C-coded models
+- **ADMS officially deprecated** due to maintenance issues and buggy output
+
+#### 12.5.2 ngspice Updates (v43-44)
+- OSDI, KLU, readline, OpenMP, and XSPICE defined as standard configure options
+- Code model `d_cosim` supports **Icarus Verilog** for mixed-signal simulation
+- Access to all modern compact models: short channel MOS, FinFETs, double gate transistors, SiGe bipolars, III-V HEMTs
+
+### 12.6 IHP SG13G2 PDK Updates
+
+The IHP Open Source PDK has seen significant activity in 2025:
+
+#### 12.6.1 Shuttle Program
+- **April 2025** (Testfield T586): Active submissions
+- **May 2025** (Testfield T588): Open for submissions
+- **September 2025**: Initial PR by Sep 1, final GDS by Sep 14
+
+#### 12.6.2 RRAM/Memristor Module
+IHP offers a fully CMOS-integrated memristive module based on resistive **TiN/HfO₂-x/TiN** switching devices in **SG13S** technology (note: SG13S, not SG13G2). A PDK including layout and Verilog-A simulation model is available upon request.
+
+#### 12.6.3 Magic Support
+A second flow supporting Magic VLSI is planned for 2025, expanding layout options beyond KLayout.
+
+### 12.7 Chiplet and UCIe Developments
+
+The chiplet ecosystem has made significant progress toward open standards:
+
+#### 12.7.1 Open Source UCIe Simulation
+**Zero ASIC** has developed open-source simulation capabilities for UCIe using:
+- **Verilator**, **Xyce**, **Icarus**, and **Switchboard** (open-source high-performance co-simulation library)
+- Analog simulation of signal chains including TX predriver, TX driver with impedance control
+- Channel models based on S-parameter data from the UCIe organization
+- Results parsing using **Spyci**, formatted with NumPy and Matplotlib
+
+#### 12.7.2 Standards Progress
+- **UCIe 2.0** support added to commercial tools (Keysight Chiplet PHY Designer 2025)
+- **AMBA CHI C2C** from Arm: open-source protocol for coherent, low-latency chiplet communication
+- **Open Domain-Specific Architecture (ODSA)** Project: 50+ companies, six work efforts
+
+#### 12.7.3 Current Gaps
+UCIe does not yet fully support:
+- Power delivery networks (PDN)
+- Chiplet verification flow automation
+- Design automation tools integration
+- Firmware interoperability
+
+### 12.8 RISC-V Silicon Verification
+
+#### 12.8.1 Notable Tapeouts
+- **Basilisk**: First end-to-end open-source, Linux-capable RISC-V SoC in IHP's open 130nm technology
+  - 64-bit RISC-V core
+  - Fully digital HyperRAM DRAM controller
+  - USB 1.1 and VGA peripherals
+
+- **preDRAC**: First RISC-V processor designed and fabricated by Spanish/Mexican academic institutions
+  - Joint development by BSC, CIC-IPN, IMB-CNM (CSIC), and UPC
+  - CMOS 65nm technology
+
+- **OpenTitan®**: World's first open-source silicon root of trust
+  - **Ibex®**: Production-quality, formally verified 32-bit RISC-V core in production
+
+#### 12.8.2 Verification Landscape
+- Open-source starting points: Verilator, cocotb, RISC-V DV
+- Commercial solutions for production: ImperasDV, STING with VCS® simulation, VC Formal™
+- Tiny Tapeout RISC-V peripheral crowdsourcing initiative on TTSKY25a
+
+### 12.9 Analog Neural Network Accelerator Tools
+
+#### 12.9.1 Open Source Frameworks
+
+| Tool | Provider | Target | Status |
+|------|----------|--------|--------|
+| **AIHWKIT** | IBM | Hardware-aware training for analog AI | Active, documented |
+| **NVDLA** | NVIDIA | Standard DNN inference accelerator | Open architecture |
+| **DnnWeaver** | Academic | FPGA DNN acceleration | Caffe-to-Verilog |
+| **PipeCNN** | Academic | OpenCL-based FPGA CNN | HLS-based |
+| **Ecko Project** | Academic | Open-source NN accelerator design | Sky130 validated |
+
+#### 12.9.2 Ecko Project
+The Ecko project leverages automated, community-driven methodologies for NN accelerator design using publicly available tools:
+- Successfully generated layouts for two small NN examples (<1000 parameters) on **Sky130**
+- Incorporates dense, activation, and 2D convolution layers
+- Demonstrates that current open-source tools effectively automate low-complexity neural network architectures
+
+### 12.10 Memristor Crossbar Design Advances
+
+#### 12.10.1 Simulation Tools
+- **FAST (Functional Array Simulator)**: End-to-end functional simulator for precise training, mapping, and evaluation on memristor crossbars
+- **SySCIM**: SystemC-AMS simulation tool for memristive CIM
+- **SEMulator3D**: Virtual fabrication for 3D ReRAM architecture pathfinding
+- **PIM-HLS**: Automatic hardware generation for heterogeneous PIM-based NN accelerators
+
+#### 12.10.2 Key Design Challenges Addressed
+Modern tools now handle:
+- **IR-drop** modeling and compensation
+- **Device-to-device (D2D) variation** simulation
+- **Stuck-at-fault (SAF)** detection and mitigation
+- **Sneak-path current** analysis in crossbar arrays
+- **Multi-layer stacking** for 3D integration
+
+#### 12.10.3 Emerging Materials (2025)
+- **2D MoS₂-based memristive crossbar arrays** demonstrated for synaptic applications
+- **Roll-to-roll mechanical exfoliation** combined with inkjet printing for scalable fabrication
+- Focus on improving device yield and reducing C2C/D2D variability
+
+---
+
+## 13. Updated Integration Strategy
+
+Based on the 2025-2026 developments, the integration strategy for connecting visualization tools with the EDA stack can be updated:
+
+### 13.1 Enhanced Python-to-SPICE Workflow
+
+With ngspice 43/44 and OpenVAF-reloaded:
+
+```
+1. User configures crossbar in GUI
+2. Tool generates .spice netlist with:
+   - SKY130/GF180/IHP SG13G2 transistor models for drivers
+   - Pre-compiled .osdi FeFET models (OpenVAF-reloaded)
+3. Invoke ngspice with OSDI enabled
+4. Parse output with Python (NumPy/Matplotlib)
+```
+
+### 13.2 Enhanced Python-to-GDSII Workflow
+
+With GDSFactory 9.x:
+
+```python
+import gdsfactory as gf
+
+# Define crossbar using KLayout backend
+@gf.cell
+def fefet_crossbar(rows: int, cols: int, pitch: float):
+    c = gf.Component()
+    # Procedural array generation
+    # Built-in DRC checking
+    # Export to GDSII/OASIS
+    return c
+```
+
+### 13.3 New CIM Modeling Integration
+
+```
+1. Architecture exploration → CiMLoop (YAML export)
+2. Hardware-software co-design → CINM compiler
+3. Detailed simulation → FAST simulator
+4. Physical design → GDSFactory → OpenLane macro
+```
+
+### 13.4 Recommended Tool Stack (2026)
+
+| Stage | Primary Tool | Alternative |
+|-------|--------------|-------------|
+| Architecture | CiMLoop | NeuroSim |
+| RTL Design | Yosys + Verilator | SpinalHDL |
+| Analog Sim | ngspice + OpenVAF | Xyce |
+| Layout Gen | GDSFactory | KLayout Python |
+| P&R | OpenROAD | OpenLane 2.0 |
+| Verification | Magic + Netgen | KLayout DRC |
+| Tapeout | Tiny Tapeout (IHP) | IHP direct shuttle |
+
+---
+
+## 14. Future Outlook
+
+### 14.1 Emerging Trends
+
+1. **AI-Assisted EDA**: OpenROAD's AutoTuner represents the beginning of ML-driven optimization in open-source EDA
+2. **3D Integration**: Multi-layer memristor stacking and chiplet ecosystems are converging
+3. **Standardization**: UCIe and AMBA CHI C2C are enabling interoperable chiplet designs
+4. **FeFET Maturation**: HfO₂-based FeFETs demonstrated in 28nm and 14nm FDSOI nodes
+
+### 14.2 Remaining Gaps
+
+| Gap | Current State | Expected Resolution |
+|-----|--------------|---------------------|
+| Native FeFET PDK | Custom Verilog-A models | Research fab partnerships |
+| Push-button CIM layout | Manual/scripted | Community tool development |
+| Large-scale crossbar sim | O(N²) SPICE | GPU-accelerated simulators |
+| Chiplet verification | Fragmented | UCIe tooling standardization |
+
+### 14.3 The Strategic Opportunity (Revised)
+
+The post-Efabless ecosystem has actually strengthened with:
+- **IHP** providing more direct fab access with RRAM capabilities
+- **SwissChips** and European initiatives funding open silicon
+- **FOSSi Foundation** roadmap driving European open EDA
+
+A FeCIM Visualizer and Compiler now has clearer integration paths:
+1. **Simulation**: ngspice + OpenVAF (mature, documented)
+2. **Layout**: GDSFactory + KLayout (production-ready)
+3. **Fabrication**: IHP SG13G2/SG13S shuttles (RRAM-capable)
+4. **Verification**: Magic + Netgen (tape-out proven)
+
+---
+
 ## Works Cited
 
 1. OpenLANE: The Open-Source Digital ASIC Implementation Flow - woset-workshop, https://woset-workshop.github.io/PDFs/2020/a21.pdf
@@ -417,3 +710,375 @@ Your project—a "FeCIM Visualizer and Compiler"—fills the most critical void.
 35. ZTM Community Discord. Learn Together, Grow Together. | Zero To Mastery, https://zerotomastery.io/community/developer-community-discord/
 36. Tiny Tapeout :: Quicker, easier and cheaper to make your own chip!, https://tinytapeout.com/
 37. OpenLane vs OpenROAD #900 - GitHub, https://github.com/The-OpenROAD-Project/OpenLane/discussions/900
+
+### 2025-2026 Update References
+
+38. The OpenROAD Project - Official Website, https://theopenroadproject.org/
+39. OpenROAD Project - Wikipedia, https://en.wikipedia.org/wiki/OpenROAD_Project
+40. Industrial Experience with Open-Source EDA Tools - ACM/IEEE MLCAD 2022, https://dl.acm.org/doi/10.1145/3551901.3557040
+41. Memory Is All You Need: CIM Architectures for LLM Inference - arXiv, https://arxiv.org/html/2406.08413v1
+42. CINM (Cinnamon): A Compilation Infrastructure for Heterogeneous CIM - ResearchGate, https://www.researchgate.net/publication/390679656
+43. Modeling and Simulation Frameworks for PIM Architectures - arXiv, https://arxiv.org/html/2512.00096v1
+44. SRAM-based CIM Literature Collection - GitHub BUAA-CI-LAB, https://github.com/BUAA-CI-LAB/Literatures-on-SRAM-based-CIM
+45. FeFET-Based Computing-in-Memory Unit Circuit - PMC, https://pmc.ncbi.nlm.nih.gov/articles/PMC11858781/
+46. Dual-Bit FeFET for enhanced storage and endurance - Nature npj, https://www.nature.com/articles/s44335-025-00030-8
+47. Modeling of FeFETs and their Application - University of Oulu, https://oulurepo.oulu.fi/bitstream/10024/57025/1/nbnfioulu-202506164534.pdf
+48. IHP Open Source PDK - GitHub, https://github.com/IHP-GmbH/IHP-Open-PDK
+49. IHP Open Source PDK Documentation, https://www.ihp-microelectronics.com/services/research-and-prototyping-service/fast-design-enablement/open-source-pdk
+50. IHP SG13G2 Tape Out April 2025 - GitHub, https://github.com/IHP-GmbH/TO_Apr2025
+51. GDSFactory Documentation - v9.31.0, https://gdsfactory.github.io/gdsfactory/
+52. GDSFactory - GitHub, https://github.com/gdsfactory/gdsfactory
+53. Tiny Tapeout Chips - Official, https://tinytapeout.com/chips/
+54. SwissChips TinyTapeout Shuttle Announcement, https://swisschips.ethz.ch/news-and-events/swisschips-news/2025/12/announcing-the-next-swisschips-supported-tinytapeout-shuttle-submit-your-design-today.html
+55. Tiny Tapeout Opens IHP Shuttle - Hackster.io, https://www.hackster.io/news/tiny-tapeout-opens-an-ihp-shuttle-for-your-open-source-chip-designs-but-beware-the-new-terms-77e0b292cae4
+56. Tiny Tapeout hit as Efabless closes - EE News Europe, https://www.eenewseurope.com/en/tiny-tapeout-hit-as-efabless-closes/
+57. Ngspice Verilog-A with OSDI/OpenVAF, https://ngspice.sourceforge.io/osdi.html
+58. OpenVAF Verilog-A Compiler - GitHub, https://github.com/pascalkuthe/OpenVAF
+59. Ngspice News and Releases, https://ngspice.sourceforge.io/news.html
+60. VA-Models: Verilog-A simulation models - GitHub, https://github.com/dwarning/VA-Models
+61. Zero ASIC - Lowering the Barrier to Chiplets, https://www.zeroasic.com/blog/ucie-open-source-design
+62. Building An Open Chiplet Economy - OCP, https://www.opencompute.org/blog/building-an-open-chiplet-economy
+63. UCIe Consortium at OFC 2025, https://www.uciexpress.org/post/ucie-consortium-showcases-chiplet-innovation-at-ofc-2025
+64. Basilisk: End-to-End Open-Source RISC-V SoC - arXiv, https://arxiv.org/html/2406.15107v1
+65. lowRISC Open-Source Silicon Designs, https://lowrisc.org/
+66. RISC-V in 2025: Open-Source Future of Embedded Design - Tessolve, https://embedded.tessolve.com/blogs/risc-v-in-2025-the-open-source-shift-in-embedded-system-design/
+67. IBM Analog Hardware Acceleration Kit (AIHWKIT), https://aihwkit.readthedocs.io/en/latest/
+68. NVIDIA Deep Learning Accelerator (NVDLA), https://nvdla.org/
+69. DnnWeaver v2.0 - Open Source DNN Accelerator, http://dnnweaver.org/
+70. ADNA: Automating ASIC Development of NN Accelerators - MDPI, https://www.mdpi.com/2079-9292/14/7/1432
+71. Analog-AI Chip for Speech Recognition - Nature, https://www.nature.com/articles/s41586-023-06337-5
+72. Optimizing hardware-software co-design for memristor crossbars - Science China, https://link.springer.com/article/10.1007/s11432-024-4240-x
+73. Fast prototyping of memristors for ReRAMs - PMC, https://pmc.ncbi.nlm.nih.gov/articles/PMC12690548/
+74. 2D MoS2-Based Memristive Crossbar for Synaptic Applications - ACS, https://pubs.acs.org/doi/10.1021/acsami.5c00688
+75. IHP Open DesignLib Documentation, https://ihp-open-ip.readthedocs.io/en/latest/
+
+---
+
+## 15. Additional Papers and Resources (January 2026 Update)
+
+This section provides an expanded collection of papers and resources organized by topic area, compiled to support deeper research into FeCIM, open-source EDA, and emerging memory technologies.
+
+### 15.1 FeFET Modeling and Simulation
+
+| Paper | Authors/Source | Year | Key Contribution |
+|-------|---------------|------|------------------|
+| [Modeling of FeFETs and their Application in Non-Volatile SRAM](https://oulurepo.oulu.fi/bitstream/10024/57025/1/nbnfioulu-202506164534.pdf) | Haidar M., University of Oulu | 2025 | Standalone FeCap model using Landau-Khalatnikov equations; Cadence Virtuoso Verilog-A implementation |
+| [Temperature- and variability-aware compact modeling of ferroelectric FDSOI FET](https://www.sciencedirect.com/science/article/abs/pii/S0038110124001035) | ScienceDirect | 2024 | Preisach-based Verilog-A model with temperature and history effects |
+| [Logic-in-memory application of ferroelectric WS2-channel FET](https://www.nature.com/articles/s41699-024-00466-9) | Nature npj 2D Materials | 2024 | 2D FeFET-based LiM with sub-2nm DG structures; BSIM-IMG integration |
+| [AI Hardware Architecture Design Based on Logic-in-Memory FeFET at Sub-3nm Nodes](https://advanced.onlinelibrary.wiley.com/doi/full/10.1002/aisy.202400370) | Advanced Intelligent Systems | 2024-2025 | FinFET compact models; 85.2% power reduction for CNN accelerators |
+| [Semi-empirical and Verilog-A compatible compact model for ferroelectric hysteresis](https://www.researchgate.net/publication/361052290) | ResearchGate | 2022 | Foundation work for circuit-simulator compatible FeFET models |
+| [A Verilog-A Compact Model for Negative Capacitance FET](https://www.researchgate.net/publication/309376456) | ResearchGate | 2016 | Early NCFET Verilog-A modeling methodology |
+
+### 15.2 Compute-in-Memory (CIM) Architecture
+
+| Paper | Authors/Source | Year | Key Contribution |
+|-------|---------------|------|------------------|
+| [Memory Is All You Need: CIM Architectures for LLM Inference](https://arxiv.org/html/2406.08413v1) | arXiv | 2024 | Comprehensive overview of CIM for transformer/LLM acceleration |
+| [Architecture and Programming of Analog IMC Accelerators for DNNs](https://research.ibm.com/publications/architecture-and-programming-of-analog-in-memory-computing-accelerators-for-deep-neural-networks) | IBM Research, IPDPS | 2024 | Heterogeneous programmable accelerator with 2D mesh; PCM at 14nm |
+| [Novel Analog-Computing-in-Memory Architecture with Scalable Multi-Bit MAC](https://www.mdpi.com/2079-9292/14/20/4030) | MDPI Electronics | 2025 | Pipelining scheme for MAC/ADC decoupling; flexible weight organization |
+| [Fast and robust analog in-memory deep neural network training](https://www.nature.com/articles/s41467-024-51221-z) | Nature Communications | 2024 | c-TTv2 and AGAD algorithms for in-memory training |
+| [A compute-in-memory chip based on resistive random-access memory](https://www.nature.com/articles/s41586-022-04992-8) | Nature | 2022 | Foundational RRAM CIM chip demonstration |
+| [SRAM-based CIM Literature Collection](https://github.com/BUAA-CI-LAB/Literatures-on-SRAM-based-CIM) | BUAA-CI-LAB GitHub | 2024-2025 | Comprehensive reading list for SRAM CIM research |
+
+### 15.3 CIM Simulation and Modeling Tools
+
+| Tool/Paper | Source | Key Capability |
+|------------|--------|----------------|
+| [NeuroSim V1.5: Improved Software Backbone for Benchmarking CIM Accelerators](https://arxiv.org/html/2505.02314v1) | arXiv | 2025 | TensorRT integration; transformer support; 6.5× faster runtime |
+| [NeuroSim Simulator: Validation and Benchmark](https://www.frontiersin.org/journals/artificial-intelligence/articles/10.3389/frai.2021.659060/full) | Frontiers in AI | 2021 | Validated within 1% of 40nm RRAM macro post-layout |
+| [CiMLoop: A Flexible, Accurate, and Fast CIM Modeling Tool](https://arxiv.org/pdf/2405.07259) | MIT, arXiv | 2024 | System-level statistical modeling; NeuroSim plug-in integration |
+| [DNN_NeuroSim_V2.1 - On-chip Training](https://github.com/neurosim/DNN_NeuroSim_V2.1) | GitHub | 2024 | PyTorch interface; training-focused benchmark framework |
+| [CINM (Cinnamon): Compilation Infrastructure for Heterogeneous CIM/CNM](https://arxiv.org/abs/2301.07486) | ACM ASPLOS | 2024 | MLIR-based; up to 51× performance improvement; UPMEM/memristor support |
+
+### 15.4 Memristor Crossbar Arrays
+
+| Paper | Authors/Source | Year | Key Contribution |
+|-------|---------------|------|------------------|
+| [Resistive Switching Random-Access Memory (RRAM): Applications and Requirements](https://pubs.acs.org/doi/10.1021/acs.chemrev.4c00845) | Chemical Reviews | 2024 | Comprehensive review of RRAM device engineering for IMC |
+| [Optimizing hardware-software co-design for memristor crossbars](https://link.springer.com/article/10.1007/s11432-024-4240-x) | Science China | 2024 | IR-drop, D2D variation, SAF modeling |
+| [Fast prototyping of memristors for ReRAMs and neuromorphic computing](https://pmc.ncbi.nlm.nih.gov/articles/PMC12690548/) | PMC | 2025 | High-throughput Ag/MoS2/Au fabrication; 10²-10⁴ resistance ratio |
+| [Stochastic Yet Precise: Memristor Crossbar Arrays for In-Memory Computing](https://advanced.onlinelibrary.wiley.com/doi/10.1002/adfm.202523780) | Advanced Functional Materials | 2025 | Multi-bit analog memory; PUF; hardware-seeded GAN |
+| [Purely self-rectifying memristor-based passive crossbar array](https://www.nature.com/articles/s41467-023-44620-1) | Nature Communications | 2024 | 1kb passive crossbar with self-rectifying devices |
+| [Ultralow Powered 2D MoS2-Based Memristive Crossbar](https://pubs.acs.org/doi/10.1021/acsami.5c00688) | ACS Applied Materials | 2025 | 94% device yield; microsecond switching |
+
+### 15.5 Open-Source EDA and RTL-to-GDSII
+
+| Paper/Resource | Source | Year | Key Contribution |
+|----------------|--------|------|------------------|
+| [Comprehensive RTL-to-GDSII Workflow for Custom Embedded FPGA Using Open-Source Tools](https://www.mdpi.com/2079-9292/14/19/3866) | MDPI Electronics | 2025 | OpenLane + OpenFPGA methodology for SKY130 |
+| [OpenLANE: The Open-Source Digital ASIC Implementation Flow](https://woset-workshop.github.io/PDFs/2020/a21.pdf) | WOSET | 2020 | Original OpenLane paper |
+| [Stitching FPGA Fabrics with FABulous and OpenLane 2](https://dl.acm.org/doi/10.1145/3622781.3674189) | ACM Computing Frontiers | 2024 | FABulous + OpenLane 2 integration |
+| [OpenROAD Flow Scripts Tutorial](https://openroad-flow-scripts.readthedocs.io/en/latest/tutorials/FlowTutorial.html) | OpenROAD Docs | 2025 | Comprehensive flow tutorial |
+| [GDSFactory Documentation](https://gdsfactory.github.io/gdsfactory/) | GDSFactory | 2025 | v9.31.0; KLayout backend; multi-domain support |
+| [GDS Factory: Build Better Hardware with Better Software](https://ieeetv.ieee.org/repp/gds-factory-build-better-hardware-with-better-software) | IEEE REPP | 2024 | IEEE presentation on GDSFactory workflow |
+
+### 15.6 Neuromorphic Computing Hardware
+
+| Paper | Authors/Source | Year | Key Contribution |
+|-------|---------------|------|------------------|
+| [Neuromorphic Hardware and Computing 2024](https://www.nature.com/collections/jaidjgeceb) | Nature Collection | 2024 | Cross-journal collection of neuromorphic research |
+| [The road to commercial success for neuromorphic technologies](https://www.nature.com/articles/s41467-025-57352-1) | Nature Communications | 2025 | Commercial viability analysis; co-processor paradigm |
+| [Roadmap to Neuromorphic Computing with Emerging Technologies](https://arxiv.org/html/2407.02353v1) | arXiv | 2024 | Comprehensive technology roadmap |
+| [Exploring Neuromorphic Computing Based on SNNs: Algorithms to Hardware](https://dl.acm.org/doi/full/10.1145/3571155) | ACM Computing Surveys | 2023 | Survey from algorithms to hardware implementation |
+| [Enabling Efficient Processing of SNNs with On-Chip Learning](https://arxiv.org/abs/2504.00957) | arXiv | 2025 | Edge AI on commodity neuromorphic processors |
+| [Neuromorphic Computing 2025: Current SotA](https://humanunsupervised.com/papers/neuromorphic_landscape.html) | Human Unsupervised | 2025 | State-of-the-art landscape analysis |
+
+### 15.7 Phase-Change Memory (PCM) for Analog AI
+
+| Paper | Authors/Source | Year | Key Contribution |
+|-------|---------------|------|------------------|
+| [Rapid learning with PCM-based IMC through learning-to-learn](https://www.nature.com/articles/s41467-025-56345-4) | Nature Communications | 2025 | Meta-learning on neuromorphic hardware |
+| [Deep neural network inference with 64-core PCM-based IMC chip](https://research.ibm.com/publications/deep-neural-network-inference-with-a-64-core-in-memory-compute-chip-based-on-phase-change-memory--2) | IBM Research, CIMTEC | 2024 | 64-core AIMC chip; 14nm + backend PCM |
+| [Heterogeneous Embedded NPUs with PCM-based AIMC](https://research.ibm.com/publications/heterogeneous-embedded-neural-processing-units-utilizing-pcm-based-analog-in-memory-computing) | IBM Research, IEDM | 2024 | Heterogeneous digital/analog edge AI architecture |
+| [The Role of PCM in Edge Computing and AIMC](https://www.mdpi.com/1424-8220/25/12/3618) | MDPI Sensors | 2025 | Review of PCM for smart sensing and NN acceleration |
+| [An analog-AI chip for energy-efficient speech recognition](https://www.nature.com/articles/s41586-023-06337-5) | Nature | 2023 | IBM NorthPole prototype; 14× better performance/watt |
+
+### 15.8 Chiplet and UCIe Standards
+
+| Paper/Resource | Source | Year | Key Contribution |
+|----------------|--------|------|------------------|
+| [UCIe: Standard for an Open Chiplet Ecosystem](https://ieeexplore.ieee.org/document/10669138/) | IEEE Micro | 2025 | Comprehensive UCIe overview and future directions |
+| [High-performance 3D SiP designs with UCIe](https://www.nature.com/articles/s41928-024-01126-y) | Nature Electronics | 2024 | 3D UCIe integration approaching monolithic performance |
+| [UCIe 3.0 Specification Overview](https://www.uciexpress.org/specifications) | UCIe Consortium | 2025 | 48/64 GT/s support; architectural updates |
+| [Zero ASIC UCIe Open-Source Simulation](https://www.zeroasic.com/blog/ucie-open-source-design) | Zero ASIC | 2024 | Verilator + Xyce + Switchboard simulation stack |
+| [Building An Open Chiplet Economy](https://www.opencompute.org/blog/building-an-open-chiplet-economy) | Open Compute Project | 2024 | ODSA project; 50+ companies collaboration |
+
+### 15.9 RISC-V Open-Source Silicon
+
+| Paper/Resource | Source | Year | Key Contribution |
+|----------------|--------|------|------------------|
+| [Survey of Verification of RISC-V Processors](https://link.springer.com/article/10.1007/s10836-025-06169-3) | Journal of Electronic Testing | 2025 | Comprehensive verification methodology survey |
+| [Basilisk: End-to-End Open-Source Linux-Capable RISC-V SoC](https://arxiv.org/html/2406.15107v1) | arXiv (ETH Zurich) | 2024 | First end-to-end open-source Linux SoC in IHP 130nm |
+| [GHAZI: Open-Source ASIC Implementation of RISC-V SoC](https://www.researchgate.net/publication/366569126) | TechRxiv | 2022 | Complete open-source digital tooling methodology |
+| [An Academic RISC-V Silicon Implementation](https://ieeexplore.ieee.org/document/9268664/) | IEEE | 2020 | Academic tapeout methodology using open components |
+| [Review of 2024 and aims for 2025 - Zero to ASIC](https://www.zerotoasiccourse.com/post/year_update_2024/) | Zero to ASIC | 2025 | 13 RISC-V CPUs taped out; Linux on Tiny Tapeout |
+
+### 15.10 Verilog-A and Compact Models
+
+| Resource | Source | Key Capability |
+|----------|--------|----------------|
+| [OpenVAF: Next Generation Verilog-A Compiler](https://openvaf.semimod.de/) | SemiMod | 10× faster compilation; OSDI 0.4 API |
+| [OpenVAF GitHub Repository](https://github.com/pascalkuthe/OpenVAF) | GitHub | Source code; pre-compiled binaries |
+| [VA-Models: Verilog-A Simulation Models](https://github.com/dwarning/VA-Models) | GitHub | Collection of CMC and other compact models |
+| [Ngspice OSDI/OpenVAF Documentation](https://ngspice.sourceforge.io/osdi.html) | ngspice | Integration guide; supported models |
+| [Free software support for compact modelling with Verilog-A](https://ojs.midem-drustvo.si/index.php/InfMIDEM/article/view/1999) | Informacije MIDEM | Academic analysis of open Verilog-A ecosystem |
+
+### 15.11 Neural Network Accelerator Design
+
+| Paper/Tool | Source | Year | Key Contribution |
+|------------|--------|------|------------------|
+| [ADNA: Automating ASIC Development of NN Accelerators](https://www.mdpi.com/2079-9292/14/7/1432) | MDPI Electronics | 2025 | Automated accelerator generation methodology |
+| [IBM AIHWKIT](https://aihwkit.readthedocs.io/en/latest/) | IBM | 2024 | Hardware-aware training toolkit for analog AI |
+| [NVIDIA Deep Learning Accelerator (NVDLA)](https://nvdla.org/) | NVIDIA | Open | Standard DNN inference accelerator architecture |
+| [DnnWeaver v2.0](http://dnnweaver.org/) | Academic | Open | Caffe-to-Verilog FPGA acceleration |
+| [Neural-Networks-on-Silicon Collection](https://github.com/fengbintu/Neural-Networks-on-Silicon) | GitHub | 2024 | Curated paper collection on NN accelerators |
+
+---
+
+## 16. Recommended Reading Path
+
+For researchers entering the FeCIM space, the following reading sequence is recommended:
+
+### Phase 1: Foundations
+1. Start with the [NeuroSim Validation paper](https://www.frontiersin.org/journals/artificial-intelligence/articles/10.3389/frai.2021.659060/full) to understand CIM benchmarking
+2. Review [OpenLane paper](https://woset-workshop.github.io/PDFs/2020/a21.pdf) for RTL-to-GDSII fundamentals
+3. Study the [RRAM Chemical Reviews paper](https://pubs.acs.org/doi/10.1021/acs.chemrev.4c00845) for device physics
+
+### Phase 2: FeFET Specialization
+1. Read the [University of Oulu FeFET thesis](https://oulurepo.oulu.fi/bitstream/10024/57025/1/nbnfioulu-202506164534.pdf) for Verilog-A modeling
+2. Study [Sub-3nm FeFET FinFET paper](https://advanced.onlinelibrary.wiley.com/doi/full/10.1002/aisy.202400370) for advanced node design
+3. Explore [CINM (Cinnamon)](https://arxiv.org/abs/2301.07486) for compiler infrastructure
+
+### Phase 3: System Integration
+1. Review [Memory Is All You Need](https://arxiv.org/html/2406.08413v1) for LLM/transformer CIM
+2. Study [IBM PCM AIMC papers](https://research.ibm.com/publications/heterogeneous-embedded-neural-processing-units-utilizing-pcm-based-analog-in-memory-computing) for production architecture
+3. Explore [UCIe IEEE Micro paper](https://ieeexplore.ieee.org/document/10669138/) for chiplet integration
+
+### Phase 4: Fabrication Preparation
+1. Review [Basilisk SoC paper](https://arxiv.org/html/2406.15107v1) for IHP tapeout methodology
+2. Study [GDSFactory documentation](https://gdsfactory.github.io/gdsfactory/) for layout generation
+3. Follow [Zero to ASIC 2024 review](https://www.zerotoasiccourse.com/post/year_update_2024/) for practical tapeout guidance
+
+---
+
+## 17. Extended Paper Collection (January 2026 Supplement)
+
+This section provides additional papers organized by specialized topics to support advanced research in FeCIM and related technologies.
+
+### 17.1 Ferroelectric HfO₂/ZrO₂ Materials Science
+
+| Paper | Source | Year | Key Contribution |
+|-------|--------|------|------------------|
+| [Ferroelectric Hafnium Oxide: A Potential Game-Changer for Nanoelectronics](https://advanced.onlinelibrary.wiley.com/doi/10.1002/aelm.202400686) | Advanced Electronic Materials | 2025 | CMOS-compatible HfO₂ ferroelectrics; reliability analysis |
+| [Ferroelectric materials, devices, and chips for advanced computing](https://link.springer.com/article/10.1007/s11432-025-4432-x) | Science China Information Sciences | 2025 | Doping strategies; stress engineering; oxygen vacancy control |
+| [HfO₂-based FeFETs: From materials to applications](https://pubs.aip.org/aip/jap/article/138/1/010701/3351745) | Journal of Applied Physics | 2025 | Comprehensive review; 1-5V switching; ns-scale speed |
+| [Progress in computational understanding of ferroelectric mechanisms in HfO₂](https://www.nature.com/articles/s41524-024-01352-0) | npj Computational Materials | 2024 | HZO physics; Zr doping mechanisms; lower crystallization temps |
+| [HfO₂-based ferroelectric thin film and memory device applications](https://pmc.ncbi.nlm.nih.gov/articles/PMC11197553/) | PMC | 2024 | Post-Moore era review; HZO superlattice >10¹² cycle endurance |
+| [Emerging Opportunities for FeFET: Integration of 2D Materials](https://advanced.onlinelibrary.wiley.com/doi/10.1002/adfm.202310438) | Advanced Functional Materials | 2024 | 2D channel FeFETs; flexible electronics |
+| [Enhanced memory window of α-IGZO FeFET with HfO₂ interfacial layer](https://link.springer.com/article/10.1007/s11432-024-4429-7) | Science China | 2025 | 1.1V memory window; 10⁷ cycle endurance |
+
+### 17.2 Emerging Memory Comparison (MRAM/STT-RAM/SOT-RAM/ReRAM)
+
+| Paper | Source | Year | Key Contribution |
+|-------|--------|------|------------------|
+| [Progress of emerging non-volatile memory technologies in industry](https://link.springer.com/article/10.1557/s43579-024-00660-2) | MRS Communications | 2024 | Industry status of MRAM, ReRAM, PCM, FeRAM |
+| [In-memory computing with emerging memory devices: Status and outlook](https://pubs.aip.org/aip/aml/article/1/1/010902/2878744) | APL Machine Learning | 2023 | Comprehensive IMC device comparison |
+| [TSMC MRAM Breakthrough](https://eu.36kr.com/en/p/3513986660637571) | 36Kr | 2024 | SOT-MRAM 1ns switching; separated read/write paths |
+| [The Next New Memories](https://semiengineering.com/the-next-new-memories/) | Semiconductor Engineering | 2024 | MRAM vs ReRAM vs FeFET analysis |
+| [What's the Difference Between Emerging Memory Technologies?](https://www.electronicdesign.com/technologies/embedded/article/21806070) | Electronic Design | 2024 | Technology comparison overview |
+
+### 17.3 ADC/DAC Design for CIM Readout Circuits
+
+| Paper | Source | Year | Key Contribution |
+|-------|--------|------|------------------|
+| [28-nm 9T SRAM CIM macro with redundant array-assisted ADC](https://www.sciencedirect.com/science/article/abs/pii/S1879239124001012) | Integration | 2024 | 4-bit ADC using redundant columns |
+| [Current-Mode SAR ADC for Memristor Readout in 28nm CMOS](https://juser.fz-juelich.de/record/1039472/files/ADC_MEMRISYS_2024_V2.pdf) | MEMRISYS | 2024 | No TIA needed; 6-bit @ 100 MSps; <3mW |
+| [44.3 TOPS/W SRAM CIM with DAC/ADC-Less Operations](https://www.researchgate.net/publication/381689074) | ResearchGate | 2024 | Near-CIM analog memory eliminates converters |
+| [AFPR-CIM: Analog Floating-Point RRAM CIM with Dynamic Range FP-ADC](https://arxiv.org/html/2402.13798v1) | arXiv | 2024 | Dynamic range adaptive quantization |
+| [Readout Circuit Design for RRAM Array-Based CIM](https://www.mdpi.com/2079-9292/13/13/2478) | MDPI Electronics | 2024 | 8-bit SAR ADC; 47.26 fJ/Conv in 110nm |
+| [HCiM: ADC-Less Hybrid Analog-Digital CIM Accelerator](https://dl.acm.org/doi/10.1145/3658617.3697572) | ASP-DAC | 2025 | Up to 28× energy reduction vs 7-bit ADC |
+| [Review of SRAM-based Compute-in-Memory Circuits](https://arxiv.org/html/2411.06079v2) | arXiv | 2024 | ADC strategies; sparsity-aware power reduction |
+
+### 17.4 IR-Drop Compensation and Non-Ideality Mitigation
+
+| Paper | Source | Year | Key Contribution |
+|-------|--------|------|------------------|
+| [Optimizing hardware-software co-design for memristor crossbars](https://link.springer.com/article/10.1007/s11432-024-4240-x) | Science China | 2025 | FAST simulator; CAFM scheme; 54%+ accuracy recovery |
+| [Current Opinions on Memristor-Accelerated ML Hardware](https://arxiv.org/html/2501.12644v1) | arXiv | 2025 | 16Mb RRAM macro; 31.2 TFLOPS/W |
+| [Hardware implementation of memristor-based ANNs](https://www.nature.com/articles/s41467-024-45670-9) | Nature Communications | 2024 | Comprehensive protocol for memristive ANN design |
+| [Compensation architecture utilizing residual resource for RRAM CIM](https://www.sciencedirect.com/science/article/abs/pii/S0026269224001010) | Microelectronics Journal | 2024 | Architecture-level accuracy compensation |
+| [Mitigate IR-Drop by Modulating Neuron Activation Functions](https://www.researchgate.net/publication/371567734) | ResearchGate | 2023 | Activation function modulation for IR-drop |
+
+### 17.5 Hardware-Aware Quantization and Training
+
+| Paper | Source | Year | Key Contribution |
+|-------|--------|------|------------------|
+| [Full-stack memristor-based CIM system with SW/HW co-development](https://www.nature.com/articles/s41467-025-57183-0) | Nature Communications | 2025 | Full-stack design; bit-slicing aware training |
+| [Hardware-Aware Quantization for Accurate Memristor NNs](https://dl.acm.org/doi/10.1145/3676536.3698023) | ICCAD | 2024 | Bit-precision tuning for conductance variation |
+| [Memristor-based adaptive ADC for CIM](https://www.nature.com/articles/s41467-025-65233-w) | Nature Communications | 2025 | Adaptive quantization; 15.1× energy efficiency |
+| [Model quantization for computing-in-memory: a survey](https://link.springer.com/article/10.1007/s11432-024-4522-8) | Science China | 2025 | Comprehensive CIM quantization survey |
+| [CNN Implementation with Binary Activation and Weight Quantization](https://pubs.acs.org/doi/10.1021/acsami.3c13775) | ACS Applied Materials | 2024 | 32×32 memristor crossbar; overshoot suppression |
+
+### 17.6 Transformer/Attention Mechanism on Analog CIM
+
+| Paper | Source | Year | Key Contribution |
+|-------|--------|------|------------------|
+| [Analog IMC attention mechanism for fast LLMs](https://www.nature.com/articles/s43588-025-00854-1) | Nature Computational Science | 2025 | 70,000× energy reduction; 100× speed-up vs GPU |
+| [Analog and Digital Hybrid Attention Accelerator](https://arxiv.org/abs/2409.04940) | arXiv/IEEE | 2024 | 75% token pruning; 14.8 TOPS/W; 65nm CMOS |
+| [Efficient memristor accelerator for transformer self-attention](https://www.nature.com/articles/s41598-024-75021-z) | Scientific Reports | 2024 | Memristor crossbar for MatMul bottleneck |
+| [HARDSEA: Hybrid Analog-ReRAM Digital-SRAM for Dynamic Sparse Self-Attention](https://ieeexplore.ieee.org/document/10719540/) | IEEE TVLSI | 2024 | Sparse attention acceleration |
+
+### 17.7 Spiking Neural Networks on Memristor Hardware
+
+| Paper | Source | Year | Key Contribution |
+|-------|--------|------|------------------|
+| [Memristor-Based Spiking Neuromorphic Systems for Brain-Inspired Computing](https://www.mdpi.com/2079-4991/15/14/1130) | MDPI Nanomaterials | 2025 | TSM sub-pJ spiking; <30ns latency; >10¹⁰ neurons/cm² |
+| [Fully memristive SNN for energy-efficient graph learning](https://pmc.ncbi.nlm.nih.gov/articles/PMC12057669/) | Science | 2025 | 1.93 pJ/op @ 180nm; 37.3× lower power |
+| [Memristor-based SNNs: Cooperative development](https://www.sciencedirect.com/science/article/pii/S270947232400011X) | ScienceDirect | 2024 | SNN algorithm-hardware co-design |
+| [Analog Implementation of Spiking Neuron with Memristive Synapses](https://www.mdpi.com/2227-7390/12/13/2025) | Mathematics | 2024 | Analog neuromorphic prototyping |
+| [Memristor-Based ANNs for Hardware Neuromorphic Computing](https://spj.science.org/doi/10.34133/research.0758) | Research | 2024 | RRAM synapses + TSM neurons |
+
+### 17.8 3D Monolithic Integration for CIM
+
+| Paper | Source | Year | Key Contribution |
+|-------|--------|------|------------------|
+| [M3D-LIME: Monolithic 3D integration of RRAM hybrid memory](https://www.nature.com/articles/s41467-023-42981-1) | Nature Communications | 2023 | 3-layer chip; 96% accuracy; 18.3× efficiency vs GPU |
+| [Eq-CIM: Monolithic 3D IGZO-RRAM-SRAM architecture](https://link.springer.com/article/10.1007/s11432-024-4078-1) | Science China | 2025 | RRAM between Metal 5/6; IGZO on Metal 9 |
+| [M3D-MP4: Multi-Layer CNT-CMOS/RRAM Mixed-Precision CIM](https://ieeexplore.ieee.org/iel8/10872985/10872987/10873492.pdf) | IEEE | 2025 | 4 functional layers; ≤300°C process |
+| [3D Stacked IGZO 2T0C DRAM for CIM](https://www.science.org/doi/10.1126/sciadv.adu4323) | Science Advances | 2025 | 8×8 array; 3-bit storage; >100s retention |
+| [Monolithic 3D integration for energy-efficient computing](https://www.sciencedirect.com/science/article/abs/pii/S1359028624000652) | ScienceDirect | 2024 | M3D review; CNT, 2D materials, oxide semiconductors |
+
+### 17.9 TCAD Simulation for FeFET
+
+| Paper/Resource | Source | Year | Key Contribution |
+|----------------|--------|------|------------------|
+| [Ferroelectric-Based Electrostatic Doping for TFET](https://pmc.ncbi.nlm.nih.gov/articles/PMC10051887/) | PMC | 2023 | Sentaurus TCAD; Lombardi mobility model |
+| [TCAD numerical modeling of NC ferroelectric devices](https://www.sciencedirect.com/science/article/abs/pii/S0038110122001137) | Solid-State Electronics | 2022 | HZO in Sentaurus; radiation detection |
+| [TCAD modeling of Ferroelectric Materials (IWORID 2024)](https://indico.global/event/8935/contributions/85672/) | INFN/IWORID | 2024 | Enhanced electronic device modeling |
+| [Tunneling FET Calibration: Sentaurus vs. Silvaco](https://www.researchgate.net/publication/347929897) | ResearchGate | 2020 | TCAD tool comparison methodology |
+| [FeFET Simulation Discussions](https://www.researchgate.net/post/How_to_perform_FeFET_and_NCFET_simulation_in_sentaurus_tcad) | ResearchGate | 2024-2025 | Community resources; FERRO model application |
+
+### 17.10 Optical/Photonic Compute-in-Memory
+
+| Paper | Source | Year | Key Contribution |
+|-------|--------|------|------------------|
+| [MIT Photonic Processor for Ultrafast AI](https://news.mit.edu/2024/photonic-processor-could-enable-ultrafast-ai-computations-1202) | MIT News / Nature Photonics | 2024 | <0.5ns computation; 92%+ accuracy |
+| [MAFT-ONN: Photonic Processor for 6G](https://news.mit.edu/2025/photonic-processor-could-streamline-6g-wireless-signal-processing-0611) | MIT News | 2025 | 100× faster than digital; 10,000 neurons/chip |
+| [Lightmatter Photonic AI Processor](https://lightmatter.co/blog/a-new-kind-of-computer/) | Lightmatter | 2025 | ResNet, BERT, RL without modifications |
+| [IEEE/HP Labs Silicon Photonics Platform](https://ieeephotonics.org/announcements/2025ieee-study-leverages-silicon-photonics-for-scalable-and-sustainable-ai-hardwareapril-3-2025/) | IEEE JSTQE | 2025 | Wafer-scale integration; on-chip lasers/amplifiers |
+| [Photonics for Neuromorphic Computing: Fundamentals and Devices](https://advanced.onlinelibrary.wiley.com/doi/10.1002/adma.202312825) | Advanced Materials | 2025 | Sub-ns latency; low heat dissipation |
+| [Integrated Neuromorphic Photonic Computing for AI Acceleration](https://advanced.onlinelibrary.wiley.com/doi/10.1002/adma.202508029) | Advanced Materials | 2025 | Emerging network architectures |
+| [Optical computing accelerators: Principle and perspective](https://journal.hep.com.cn/fop/EN/10.15302/frontphys.2025.032302) | Frontiers of Physics | 2025 | Comprehensive optical accelerator review |
+
+### 17.11 Electrochemical RAM (ECRAM) for Analog AI
+
+| Paper | Source | Year | Key Contribution |
+|-------|--------|------|------------------|
+| [Prospects and challenges of ECRAM for deep-learning accelerators](https://www.sciencedirect.com/science/article/pii/S1359028624000536) | ScienceDirect | 2024 | Symmetric states; low variability; low energy |
+| [ECRAM: Recent advances in materials, devices, and systems](https://nanoconvergencejournal.springeropen.com/articles/10.1186/s40580-024-00415-8) | Nano Convergence | 2024 | 1st/2nd gen ECRAM; solid electrolytes |
+| [Open-loop analog programmable ECRAM array](https://www.nature.com/articles/s41467-023-41958-4) | Nature Communications | 2023 | Programmable analog arrays |
+| [POSTECH ECRAM for AI - Science Advances](https://www.sciencedaily.com/releases/2024/08/240801121936.htm) | ScienceDaily | 2024 | Largest ECRAM array; commercialization potential |
+| [Multi-Bit ECRAM Analog Neuromorphic System - 97.3% Accuracy](https://pubmed.ncbi.nlm.nih.gov/39312419/) | PubMed | 2024 | High-precision current readout |
+| [Computing With Chemicals Makes Faster AI](https://spectrum.ieee.org/analog-ai-ecram-artificial-synapse) | IEEE Spectrum | 2024 | ECRAM as artificial synapse |
+
+### 17.12 Device Reliability: Endurance and Retention
+
+| Paper | Source | Year | Key Contribution |
+|-------|--------|------|------------------|
+| [HfO₂-based FeFETs: Materials and Reliability](https://pubs.aip.org/aip/jap/article/138/1/010701/3351745) | Journal of Applied Physics | 2025 | 10⁴-10⁵ cycle endurance challenges |
+| [Progress of emerging NVM technologies in industry](https://pmc.ncbi.nlm.nih.gov/articles/PMC11618178/) | PMC | 2024 | HZO 10¹² cycles @ VLSI 2024; STT-MRAM 10¹⁵ cycles |
+| [Advances of embedded RRAM in industrial manufacturing](https://iopscience.iop.org/article/10.1088/2631-7990/ad2fea) | IJEM | 2024 | RRAM >10¹² cycles; >10 year retention |
+| [FeFET Advancements and Challenges for Next-Gen NVM](https://www.sciencedirect.com/science/article/abs/pii/S2352492823002817) | ScienceDirect | 2023 | Gate-stack degradation analysis |
+| [Enhancing RRAM Reliability with Al Doping](http://ieeexplore.ieee.org/iel8/7298/11157712/11039729.pdf) | IEEE | 2025 | Al-doped HfO₂; improved stability @ 125°C |
+| [Atomic-Scale Insights into RRAM Switching Mechanisms](https://arxiv.org/pdf/2509.16512) | arXiv | 2025 | Fundamental switching physics |
+
+---
+
+## 18. Quick Reference: Key GitHub Repositories
+
+| Repository | Description | URL |
+|------------|-------------|-----|
+| **NeuroSim** | CIM accelerator benchmark | https://github.com/neurosim/DNN_NeuroSim_V2.1 |
+| **CiMLoop** | System-level CIM modeling | https://github.com/mit-emze/cimloop |
+| **CINM (Cinnamon)** | MLIR-based CIM compiler | https://github.com/tud-ccc/Cinnamon |
+| **OpenVAF** | Verilog-A compiler | https://github.com/pascalkuthe/OpenVAF |
+| **VA-Models** | Compact model collection | https://github.com/dwarning/VA-Models |
+| **GDSFactory** | Python chip layout | https://github.com/gdsfactory/gdsfactory |
+| **OpenROAD** | RTL-to-GDSII flow | https://github.com/The-OpenROAD-Project/OpenROAD |
+| **OpenLane** | ASIC flow controller | https://github.com/The-OpenROAD-Project/OpenLane |
+| **IHP Open PDK** | 130nm BiCMOS PDK | https://github.com/IHP-GmbH/IHP-Open-PDK |
+| **SkyWater PDK** | 130nm CMOS PDK | https://github.com/google/skywater-pdk |
+| **SRAM CIM Literatures** | Paper collection | https://github.com/BUAA-CI-LAB/Literatures-on-SRAM-based-CIM |
+| **Neural-Networks-on-Silicon** | Accelerator papers | https://github.com/fengbintu/Neural-Networks-on-Silicon |
+| **IBM AIHWKIT** | Analog AI toolkit | https://github.com/IBM/aihwkit |
+
+---
+
+## 19. Conference and Journal Quick Reference
+
+### Top Venues for CIM/FeCIM Research
+
+| Venue | Type | Focus Area |
+|-------|------|------------|
+| **ISSCC** | Conference | Circuits; CIM chip demonstrations |
+| **VLSI** | Symposium | Device + circuits; memory technology |
+| **IEDM** | Conference | Devices; FeFET/RRAM fundamentals |
+| **DAC/ICCAD** | Conference | EDA; accelerator architecture |
+| **ISCA/MICRO** | Conference | Computer architecture; systems |
+| **Nature Electronics** | Journal | High-impact device/system papers |
+| **Nature Communications** | Journal | Broad scope; CIM demonstrations |
+| **IEEE JSSC** | Journal | Circuit implementations |
+| **IEEE TVLSI** | Journal | VLSI systems and architectures |
+| **Advanced Materials** | Journal | Materials science; device physics |
+
+### Key Research Groups
+
+| Institution | Focus | Notable Work |
+|-------------|-------|--------------|
+| **Georgia Tech** | NeuroSim; CIM benchmarking | Prof. Shimeng Yu |
+| **MIT** | CiMLoop; photonic computing | Prof. Murmann, Prof. Englund |
+| **IBM Research** | PCM AIMC; AIHWKIT | Zurich/Almaden labs |
+| **ETH Zurich** | Open-source RISC-V; Basilisk | PULP team |
+| **Stanford** | Memristor arrays | Prof. Wong |
+| **POSTECH** | ECRAM; analog AI | Neuromorphic team |
+| **Intel** | Loihi neuromorphic | Intel Labs |
