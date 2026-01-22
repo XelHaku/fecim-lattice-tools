@@ -1,12 +1,11 @@
 # Ferroelectric CIM Visualizer
 
-**GPU-Accelerated Ferroelectric Compute-in-Memory Demos**
+**5 World-Class Demos for Ferroelectric Compute-in-Memory**
 
 [![Go](https://img.shields.io/badge/Go-1.21+-00ADD8?logo=go)](https://go.dev)
 [![Fyne](https://img.shields.io/badge/Fyne-2.4-blue?logo=go)](https://fyne.io)
-[![Vulkan](https://img.shields.io/badge/Vulkan-1.3-AC162C?logo=vulkan)](https://www.vulkan.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Demos](https://img.shields.io/badge/Demos-8%2F8-brightgreen.svg)]()
+[![Demos](https://img.shields.io/badge/Demos-5%2F5-brightgreen.svg)]()
 
 ---
 
@@ -14,17 +13,41 @@
 
 ---
 
-## The Story: 8 Demos (ALL COMPLETE)
+## The FeCIM Story: 5 Core Demos
 
 ```
-Demo 1: "This is how the memory cell works"      ✅ Fyne GUI - P-E Hysteresis
-Demo 2: "This is how we compute in memory"       ✅ Fyne GUI - Crossbar MVM
-Demo 3: "This is what we can build with it"      ✅ Fyne GUI - MNIST 87%
-Demo 4: "This is how it fits in a real chip"     ✅ Fyne GUI - Peripheral Circuits
-Demo 5: "This is how we manage heat"             ✅ Fyne GUI - Thermal Analysis
-Demo 6: "This is how we scale to 3D"             ✅ Fyne GUI - 3D Multilayer Stack
-Demo 7: "This is what can go wrong"              ✅ Fyne GUI - Non-Idealities
-Demo 8: "This is why it beats everything else"   ✅ Fyne GUI - Technology Comparison
+THE FeCIM NARRATIVE
+═══════════════════════════════════════════════════════════════════════
+
+"How does the          "How do we          "What can we
+ memory cell work?"     compute with it?"   build with it?"
+      ↓                      ↓                    ↓
+┌──────────┐          ┌──────────┐          ┌──────────┐
+│  DEMO 1  │    →     │  DEMO 2  │    →     │  DEMO 3  │
+│Hysteresis│          │ Crossbar │          │  MNIST   │
+│          │          │   +      │          │  87%     │
+│30 levels │          │Non-Ideal │          │FLAGSHIP  │
+└──────────┘          └──────────┘          └──────────┘
+  PHYSICS              COMPUTE             APPLICATION
+
+"How does it fit       "Why does FeCIM
+ in a real chip?"       beat everything?"
+      ↓                      ↓
+┌──────────┐          ┌──────────┐
+│  DEMO 4  │    →     │  DEMO 5  │
+│ Circuits │          │Comparison│
+│  System  │          │ Investor │
+│   CMOS   │          │  Pitch   │
+└──────────┘          └──────────┘
+  SYSTEM               BUSINESS
+```
+
+```
+Demo 1: "How the memory cell works"           ✅ Fyne GUI - P-E Hysteresis
+Demo 2: "How we compute + handle challenges"  ✅ Fyne GUI - Crossbar MVM + Non-Idealities
+Demo 3: "What we can build with it"           ✅ Fyne GUI - MNIST 87% (FP vs CIM)
+Demo 4: "How it fits in a real chip"          ✅ Fyne GUI - Peripheral Circuits
+Demo 5: "Why FeCIM beats everything"          ✅ Fyne GUI - Technology Comparison
 ```
 
 ---
@@ -35,35 +58,26 @@ Demo 8: "This is why it beats everything else"   ✅ Fyne GUI - Technology Compa
 # Install dependencies (Ubuntu/Debian)
 sudo apt-get install gcc libgl1-mesa-dev xorg-dev
 
-# Build and run the unified visualizer (ALL 8 DEMOS)
+# Build and run the unified visualizer (ALL 5 DEMOS)
 go build ./cmd/fecim-visualizer && ./fecim-visualizer
 
 # Or run individual demos:
 # Demo 1: Ferroelectric Hysteresis (P-E curve, 30 levels)
 cd demo1-hysteresis && go build ./cmd/hysteresis && ./hysteresis
 
-# Demo 2: Crossbar MVM (IR drop, sneak paths, heatmaps)
+# Demo 2: Crossbar MVM + Non-Idealities (4 tabs)
 cd demo2-crossbar && go build -o crossbar-gui ./cmd/crossbar-gui && ./crossbar-gui
 
-# Demo 3: MNIST Neural Network (draw digits, watch inference)
+# Demo 3: MNIST Neural Network (FP vs CIM dual mode)
 cd demo3-mnist && go build -o mnist-gui ./cmd/mnist-gui && ./mnist-gui
 
 # Demo 4: Peripheral Circuits (DAC, ADC, timing)
 cd demo4-circuits && go build -o circuits-gui ./cmd/circuits-gui && ./circuits-gui
 
-# Demo 5: Thermal Simulation
-cd demo5-thermal && go build -o thermal ./cmd/thermal && ./thermal
-
-# Demo 6: 3D Multilayer Stack
-cd demo6-multilayer && go build -o multilayer-gui ./cmd/multilayer-gui && ./multilayer-gui
-
-# Demo 7: Non-Idealities Analysis
-cd demo7-nonidealities && go build -o nonidealities-gui ./cmd/nonidealities-gui && ./nonidealities-gui
-
-# Demo 8: Technology Comparison
+# Demo 5: Technology Comparison (Technical Briefing)
 cd demo8-comparison && go build -o comparison-gui ./cmd/comparison-gui && ./comparison-gui
 
-# Run all tests (157 tests)
+# Run all tests
 go test ./...
 ```
 
@@ -89,7 +103,7 @@ go test ./...
 
 ### Demo 1: Ferroelectric Hysteresis ✅
 
-**Purpose:** Understand single cell physics
+**Purpose:** Understand single cell physics — "The Memory Cell"
 
 ```
       P                    ┌───────────┐
@@ -111,9 +125,9 @@ go test ./...
 
 ---
 
-### Demo 2: Crossbar Array MVM ✅
+### Demo 2: Crossbar MVM + Non-Idealities ✅ (4 TABS)
 
-**Purpose:** Understand compute-in-memory
+**Purpose:** Understand compute-in-memory AND real-world challenges — "The Crossbar Computer"
 
 ```
      V₀   V₁   V₂   V₃  (input voltages)
@@ -127,19 +141,36 @@ go test ./...
  ●=conductance (30 levels, color coded)
 ```
 
-**Features:**
-- Interactive heatmap with click-to-select cells
-- IR drop analysis with wire resistance modeling
-- Sneak path current visualization
-- Three tabbed views: Conductance, IR Drop, Sneak Paths
+**Tab 1: Ideal MVM**
+- Interactive heatmap with click-to-program cells
+- Matrix-vector multiplication visualization
+- Perfect operation baseline
+
+**Tab 2: IR Drop Analysis**
+- Wire resistance modeling
+- Voltage gradient heatmap
+- Worst-case corner identification
+- Mitigation: 2x/4x wider metal lines
+
+**Tab 3: Sneak Path Currents**
+- Parasitic current visualization
+- Target cell vs interference
+- SNR degradation
+- Mitigation: Selector devices (100:1, 1000:1)
+
+**Tab 4: Drift & Variation**
+- Conductance drift over time
+- Read disturb effects
+- FeCIM vs ReRAM vs PCM comparison
+- 10-year retention prediction
 
 ---
 
-### Demo 3: MNIST Neural Network ✅
+### Demo 3: MNIST Neural Network ✅ (FLAGSHIP)
 
-**Purpose:** See real AI application
+**Purpose:** See real AI application — "The AI Brain"
 
-> **Note:** Ferroelectric CIM hardware achieved **87%** with **88% theoretical max** (Dr. Tour). Our simulation uses idealized conditions and may exceed real hardware.
+> **Note:** Ferroelectric CIM hardware achieved **87%** with **88% theoretical max** (Dr. Tour). Our simulation includes dual-mode FP vs CIM comparison.
 
 ```
 ┌─────────┐    ┌─────────┐    ┌─────────┐
@@ -151,16 +182,18 @@ go test ./...
 
 **Features:**
 - Interactive 28×28 digit drawing canvas
-- Real-time inference as you draw
-- Layer activation visualization
-- Confusion matrix with clickable cells
-- Per-class metrics (precision, recall, F1)
+- **Dual-mode inference:** Full Precision vs CIM comparison
+- Hardware controls: Quantization levels, noise, ADC/DAC bits
+- Failure mode presets (Ideal, Quant Cliff, Noisy, Broken ADC)
+- Weight visualization heatmap (30 discrete colors)
+- Guided Tour mode (7 steps)
+- Energy efficiency display (10,000× savings)
 
 ---
 
 ### Demo 4: Peripheral Circuits ✅
 
-**Purpose:** Understand full chip system
+**Purpose:** Understand full chip system — "The Chip System"
 
 ```
 WRITE PATH                 READ PATH
@@ -186,99 +219,13 @@ Digital: [22]             Digital: [22]
 - INL/DNL linearity analysis
 - Timing diagrams
 - Power breakdown
+- CMOS compatibility checklist
 
 ---
 
-### Demo 5: Thermal Simulation ✅
+### Demo 5: Technology Comparison ✅ (INVESTOR PITCH)
 
-**Purpose:** Engineering analysis
-
-```
-Top View (Heat Map)        Side View
-
-░░░▒▒▓▓████▓▓▒▒░░░        ███ Layer 3
-░░▒▒▓██████████▓▒▒░░       ↕ heat
-░▒▓████████████████▓▒░     ███ Layer 2
-░░▒▒▓██████████▓▒▒░░       ↕ heat
-░░░▒▒▓▓████▓▓▒▒░░░         ███ Layer 1
-                           ░░░ Heat Sink
-25°C ░▒▓█ 85°C
-```
-
-**Features:**
-- 2D heat map visualization
-- Real-time heat diffusion
-- Hotspot identification
-- Thermal throttling warnings
-
----
-
-### Demo 6: Multi-Layer 3D Stack ✅
-
-**Purpose:** Visualize 3D stacking for massive parallelism
-
-```
-                    ┌─────────────────┐
-    Layer 3 ────→   │ 64×10 (Output)  │
-                    └───────┬─────────┘
-                            │ vias
-                    ┌───────┴─────────┐
-    Layer 2 ────→   │ 128×64 (Hidden) │
-                    └───────┬─────────┘
-                            │ vias
-                    ┌───────┴─────────┐
-    Layer 1 ────→   │ 784×128 (Input) │
-                    └─────────────────┘
-```
-
-**Features:**
-- 3D isometric visualization of stacked layers
-- Layer selector and highlight
-- Via network visualization
-- Layer specifications display
-- Energy comparison with traditional compute
-
----
-
-### Demo 7: Non-Idealities ✅
-
-**Purpose:** Real-world engineering challenges
-
-```
-Tab 1: IR Drop Analysis
-┌──────────────────────┐
-│ ■■■□□□□  V_applied   │
-│ ■■□□□□□  V_actual    │
-│ Worst corner: (15,15)│
-└──────────────────────┘
-
-Tab 2: Sneak Path Analysis
-┌──────────────────────┐
-│ Target: X            │
-│ Parasitic paths: ─── │
-│ SNR: 24.5 dB        │
-└──────────────────────┘
-
-Tab 3: Conductance Drift
-┌──────────────────────┐
-│ FeCIM: 0.001%/decade │
-│ RRAM: 0.1%/decade   │
-│ PCM: 1%/decade      │
-└──────────────────────┘
-```
-
-**Features:**
-- IR drop voltage gradient heatmap
-- Sneak path current visualization
-- Conductance drift time-series plot
-- Technology comparison (FeCIM vs RRAM vs PCM)
-- Mitigation strategies
-
----
-
-### Demo 8: Technology Comparison ✅
-
-**Purpose:** The bottom line — why FeCIM wins
+**Purpose:** The business case — "Why FeCIM Wins"
 
 ```
 Energy per MAC (fJ)
@@ -287,19 +234,25 @@ CPU+DRAM  ███████████████████████�
 GPU+HBM   ██████████                    100
 FeCIM     █                              10
 
-Von Neumann              Compute-in-Memory
-┌──────┐   ←→   ┌──────┐     ┌────────────┐
-│ CPU  │  data  │ Mem  │     │ Mem=Compute│
-└──────┘        └──────┘     │  No move   │
-  Bottleneck!                └────────────┘
+Competitive Matrix (Only FeCIM has ✅ everywhere)
+┌──────────┬──────┬──────┬──────┬──────┐
+│ Feature  │FeCIM │ NAND │ReRAM │ PCM  │
+├──────────┼──────┼──────┼──────┼──────┤
+│ Energy   │  ✅  │  ❌  │  🟡  │  🟡  │
+│ Speed    │  ✅  │  ❌  │  ✅  │  ❌  │
+│ Endure   │  ✅  │  ❌  │  ❌  │  🟡  │
+│ 30 lvls  │  ✅  │  ✅  │  ❌  │  ✅  │
+│ CIM      │  ✅  │  ❌  │  🟡  │  🟡  │
+└──────────┴──────┴──────┴──────┴──────┘
 ```
 
 **Features:**
 - Energy per MAC bar chart comparison
-- Architecture diagrams (Von Neumann vs CIM)
-- Data center power calculator
-- Verified vs claimed specifications
-- Source citations and disclaimers
+- Competitive technology matrix (FeCIM vs NAND vs ReRAM vs PCM vs MRAM)
+- **Data center savings calculator** (input GPUs, see annual savings)
+- Market opportunity ($403B by 2030)
+- TRL progression roadmap (currently TRL 4)
+- Verified vs claimed specifications with sources
 
 ---
 
@@ -309,11 +262,9 @@ Von Neumann              Compute-in-Memory
 |-----------|------------|
 | Language | Go 1.21+ |
 | GUI | Fyne 2.4 |
-| GPU | Vulkan 1.3 |
-| Shaders | GLSL → SPIR-V |
 | Physics | Preisach/Mayergoyz model |
 | Neural Network | Crossbar MVM simulation |
-| Tests | 157 passing |
+| Non-Idealities | IR drop, sneak paths, drift |
 
 ---
 
@@ -322,19 +273,26 @@ Von Neumann              Compute-in-Memory
 ```
 multilayer-ferroelectric-cim-visualizer/
 ├── cmd/
-│   └── fecim-visualizer/  ✅ Unified GUI (ALL 8 DEMOS)
-├── demo1-hysteresis/      ✅ Single cell P-E curve (Fyne GUI)
-├── demo2-crossbar/        ✅ Crossbar MVM (Fyne GUI)
-├── demo3-mnist/           ✅ MNIST classifier (Fyne GUI)
-├── demo4-circuits/        ✅ Peripheral circuits (Fyne GUI)
-├── demo5-thermal/         ✅ Thermal simulation (Fyne GUI)
-├── demo6-multilayer/      ✅ 3D multi-layer (Fyne GUI)
-├── demo7-nonidealities/   ✅ Non-idealities (Fyne GUI)
-├── demo8-comparison/      ✅ Technology comparison (Fyne GUI)
+│   └── fecim-visualizer/  ✅ Unified GUI (ALL 5 DEMOS)
+├── demo1-hysteresis/      ✅ Single cell P-E curve
+├── demo2-crossbar/        ✅ Crossbar MVM + Non-Idealities (4 tabs)
+├── demo3-mnist/           ✅ MNIST classifier (FP vs CIM)
+├── demo4-circuits/        ✅ Peripheral circuits
+├── demo8-comparison/      ✅ Technology comparison (Demo 5)
 ├── shared/                Shared packages (theme, logging)
-├── docs/                  Documentation
+├── docs/
+│   └── archive/           Archived demos (5, 6, 7)
 └── go.mod
 ```
+
+### Archived Demos
+
+The following demos were consolidated or archived during the 5-demo restructuring:
+- **Demo 5 (Thermal)**: Content merged into comparison
+- **Demo 6 (3D Stack)**: Archived — too futuristic for current TRL
+- **Demo 7 (Non-Idealities)**: Merged into Demo 2 as tabs
+
+See `docs/archive/removed-demos/README.md` for details.
 
 ---
 
@@ -370,6 +328,6 @@ Ferroelectric CIM is a trademark of its respective owners at external research i
 
 ---
 
-*8/8 demos complete. The future of computing is here.*
+*5 world-class demos. The future of computing is here.*
 
 *Built with Go, Fyne, and curiosity.*

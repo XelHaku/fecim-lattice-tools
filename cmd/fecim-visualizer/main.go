@@ -1,7 +1,14 @@
 // Command fecim-visualizer provides a unified GUI application with all FeCIM demos as tabs.
 //
 // This is the main entry point for the FeCIM Visualization Suite.
-// It combines all individual demos into a single application with tab navigation.
+// It combines all 5 demos into a single application with tab navigation.
+//
+// The 5-Demo Story:
+//   Demo 1: The Memory Cell (Hysteresis) - How the cell works
+//   Demo 2: The Crossbar Computer (MVM + Non-Idealities) - How we compute
+//   Demo 3: The AI Brain (MNIST) - What we can build
+//   Demo 4: The Chip System (Circuits) - How it fits in a chip
+//   Demo 5: Why FeCIM Wins (Comparison) - The business case
 package main
 
 import (
@@ -16,10 +23,7 @@ import (
 	demo2gui "multilayer-ferroelectric-cim-visualizer/demo2-crossbar/pkg/gui"
 	demo3gui "multilayer-ferroelectric-cim-visualizer/demo3-mnist/pkg/gui"
 	demo4gui "multilayer-ferroelectric-cim-visualizer/demo4-circuits/pkg/gui"
-	demo5gui "multilayer-ferroelectric-cim-visualizer/demo5-thermal/pkg/gui"
-	demo6gui "multilayer-ferroelectric-cim-visualizer/demo6-multilayer/pkg/gui"
-	demo7gui "multilayer-ferroelectric-cim-visualizer/demo7-nonidealities/pkg/gui"
-	demo8gui "multilayer-ferroelectric-cim-visualizer/demo8-comparison/pkg/gui"
+	demo5gui "multilayer-ferroelectric-cim-visualizer/demo8-comparison/pkg/gui"
 )
 
 // FeCIM theme colors
@@ -64,15 +68,12 @@ func (t *feCIMTheme) Size(name fyne.ThemeSizeName) float32 {
 
 // DemoApp holds the demo instances
 type DemoApp struct {
-	demo1    *demo1gui.EmbeddedApp
-	demo2    *demo2gui.EmbeddedCrossbarApp
-	demo3    *demo3gui.EmbeddedMNISTApp
-	demo3b   *demo3gui.EmbeddedDualModeApp // FP vs CIM comparison
-	demo4    *demo4gui.EmbeddedCircuitsApp
-	demo5    *demo5gui.EmbeddedThermalApp
-	demo6    *demo6gui.EmbeddedMultilayerApp
-	demo7    *demo7gui.EmbeddedNonIdealitiesApp
-	demo8    *demo8gui.EmbeddedComparisonApp
+	demo1  *demo1gui.EmbeddedApp                // Hysteresis
+	demo2  *demo2gui.EmbeddedTabbedCrossbarApp  // Crossbar + Non-Idealities (merged)
+	demo3  *demo3gui.EmbeddedMNISTApp           // MNIST (basic)
+	demo3b *demo3gui.EmbeddedDualModeApp        // MNIST FP vs CIM
+	demo4  *demo4gui.EmbeddedCircuitsApp        // Circuits
+	demo5  *demo5gui.EmbeddedComparisonApp      // Comparison (technical briefing)
 }
 
 func main() {
@@ -81,20 +82,17 @@ func main() {
 	fyneApp.Settings().SetTheme(&feCIMTheme{})
 
 	// Create main window
-	window := fyneApp.NewWindow("FeCIM Visualization Suite")
+	window := fyneApp.NewWindow("FeCIM Visualization Suite - 5 World-Class Demos")
 	window.Resize(fyne.NewSize(1400, 900))
 
 	// Create demo instances
 	demos := &DemoApp{
 		demo1:  demo1gui.NewEmbeddedApp(),
-		demo2:  demo2gui.NewEmbeddedCrossbarApp(),
+		demo2:  demo2gui.NewEmbeddedTabbedCrossbarApp(), // New tabbed version with non-idealities
 		demo3:  demo3gui.NewEmbeddedMNISTApp(),
 		demo3b: demo3gui.NewEmbeddedDualModeApp(),
 		demo4:  demo4gui.NewEmbeddedCircuitsApp(),
-		demo5:  demo5gui.NewEmbeddedThermalApp(),
-		demo6:  demo6gui.NewEmbeddedMultilayerApp(),
-		demo7:  demo7gui.NewEmbeddedNonIdealitiesApp(),
-		demo8:  demo8gui.NewEmbeddedComparisonApp(),
+		demo5:  demo5gui.NewEmbeddedComparisonApp(),
 	}
 
 	// Create tabs container (will be populated below)
@@ -102,8 +100,23 @@ func main() {
 
 	// Create launcher content with callback to switch tabs
 	launcherContent := CreateLauncherContent(func(demoNum int) {
-		if tabs != nil && demoNum >= 1 && demoNum <= 8 {
-			tabs.SelectIndex(demoNum) // Demo 1 is at index 1, etc.
+		if tabs != nil {
+			// Map demo number to tab index
+			// Home=0, Demo1=1, Demo2=2, Demo3=3, Demo3b=4, Demo4=5, Demo5=6
+			tabIndex := 0
+			switch demoNum {
+			case 1:
+				tabIndex = 1
+			case 2:
+				tabIndex = 2
+			case 3:
+				tabIndex = 3
+			case 4:
+				tabIndex = 5
+			case 5:
+				tabIndex = 6
+			}
+			tabs.SelectIndex(tabIndex)
 		}
 	})
 
@@ -114,22 +127,16 @@ func main() {
 	demo3bContent := demos.demo3b.BuildContent(fyneApp, window)
 	demo4Content := demos.demo4.BuildContent(fyneApp, window)
 	demo5Content := demos.demo5.BuildContent(fyneApp, window)
-	demo6Content := demos.demo6.BuildContent(fyneApp, window)
-	demo7Content := demos.demo7.BuildContent(fyneApp, window)
-	demo8Content := demos.demo8.BuildContent(fyneApp, window)
 
-	// Create tabs
+	// Create tabs - 5 demos total (plus home and MNIST variant)
 	tabs = container.NewAppTabs(
 		container.NewTabItem("Home", launcherContent),
 		container.NewTabItem("1. Hysteresis", container.NewMax(demo1Content)),
-		container.NewTabItem("2. Crossbar", container.NewMax(demo2Content)),
+		container.NewTabItem("2. Crossbar+", container.NewMax(demo2Content)),
 		container.NewTabItem("3. MNIST", container.NewMax(demo3Content)),
 		container.NewTabItem("3b. MNIST FP/CIM", container.NewMax(demo3bContent)),
 		container.NewTabItem("4. Circuits", container.NewMax(demo4Content)),
-		container.NewTabItem("5. Thermal", container.NewMax(demo5Content)),
-		container.NewTabItem("6. 3D Stack", container.NewMax(demo6Content)),
-		container.NewTabItem("7. Non-Idealities", container.NewMax(demo7Content)),
-		container.NewTabItem("8. Comparison", container.NewMax(demo8Content)),
+		container.NewTabItem("5. Comparison", container.NewMax(demo5Content)),
 	)
 
 	// Track current demo for start/stop
@@ -151,12 +158,6 @@ func main() {
 			demos.demo4.Stop()
 		case 5:
 			demos.demo5.Stop()
-		case 6:
-			demos.demo6.Stop()
-		case 7:
-			demos.demo7.Stop()
-		case 8:
-			demos.demo8.Stop()
 		}
 
 		// Start new demo
@@ -164,7 +165,7 @@ func main() {
 		case "1. Hysteresis":
 			currentDemo = 1
 			demos.demo1.Start()
-		case "2. Crossbar":
+		case "2. Crossbar+":
 			currentDemo = 2
 			demos.demo2.Start()
 		case "3. MNIST":
@@ -176,18 +177,9 @@ func main() {
 		case "4. Circuits":
 			currentDemo = 4
 			demos.demo4.Start()
-		case "5. Thermal":
+		case "5. Comparison":
 			currentDemo = 5
 			demos.demo5.Start()
-		case "6. 3D Stack":
-			currentDemo = 6
-			demos.demo6.Start()
-		case "7. Non-Idealities":
-			currentDemo = 7
-			demos.demo7.Start()
-		case "8. Comparison":
-			currentDemo = 8
-			demos.demo8.Start()
 		default:
 			currentDemo = 0
 		}
@@ -206,7 +198,4 @@ func main() {
 	demos.demo3b.Stop()
 	demos.demo4.Stop()
 	demos.demo5.Stop()
-	demos.demo6.Stop()
-	demos.demo7.Stop()
-	demos.demo8.Stop()
 }

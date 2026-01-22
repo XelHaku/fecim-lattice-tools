@@ -20,15 +20,17 @@ go build -o fecim-visualizer ./cmd/fecim-visualizer && ./fecim-visualizer
 
 ## Architecture
 
-**Unified tabbed application** with 8 demos:
+**Unified tabbed application** with 5 demos:
 1. **Hysteresis** - P-E curve visualization, Preisach model
-2. **Crossbar MVM** - Matrix-vector multiplication in hardware
-3. **MNIST** - Neural network digit recognition (87% accuracy)
+2. **Crossbar+** - MVM + Non-Idealities (4 tabs: Ideal, IR Drop, Sneak Paths, Drift)
+3. **MNIST** - Neural network digit recognition (87% accuracy, FP vs CIM dual mode)
 4. **Circuits** - DAC/ADC/TIA peripheral design
-5. **Thermal** - 1000x cooler than DRAM comparison
-6. **3D Stack** - Multi-layer crossbar visualization
-7. **Non-Idealities** - IR drop, sneak paths, drift analysis
-8. **Comparison** - FeCIM vs NAND/DRAM benchmarks
+5. **Comparison** - Technology comparison and technical briefing
+
+**Archived demos** (see `docs/archive/removed-demos/`):
+- Thermal (demo5) - Merged into comparison
+- 3D Stack (demo6) - Archived (too futuristic for TRL 4)
+- Non-Idealities (demo7) - Merged into Demo 2 as tabs
 
 ## Code Conventions
 

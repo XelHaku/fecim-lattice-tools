@@ -19,63 +19,42 @@ type DemoInfo struct {
 	Ready       bool
 }
 
-// GetDemos returns all demo information
+// GetDemos returns all demo information (5 consolidated demos)
 func GetDemos() []DemoInfo {
 	return []DemoInfo{
 		{
 			Number:      1,
 			Title:       "Hysteresis",
-			Subtitle:    "P-E Curve",
+			Subtitle:    "The Memory Cell",
 			Description: "How the memory cell works: visualize ferroelectric polarization switching with 30 discrete states",
 			Ready:       true,
 		},
 		{
 			Number:      2,
-			Title:       "Crossbar MVM",
-			Subtitle:    "Matrix Operations",
-			Description: "How we compute in memory: watch matrix-vector multiplication happen in parallel",
+			Title:       "Crossbar+",
+			Subtitle:    "MVM + Non-Idealities",
+			Description: "How we compute in memory: matrix-vector multiplication with IR drop, sneak paths, and drift analysis",
 			Ready:       true,
 		},
 		{
 			Number:      3,
 			Title:       "MNIST",
-			Subtitle:    "Neural Network",
-			Description: "What we can build: draw digits and watch the neural network classify them at 87% accuracy",
+			Subtitle:    "The AI Brain",
+			Description: "What we can build: draw digits and watch the neural network classify them at 87% accuracy (FP vs CIM)",
 			Ready:       true,
 		},
 		{
 			Number:      4,
 			Title:       "Circuits",
-			Subtitle:    "Peripheral Design",
-			Description: "How it fits in a real chip: DAC, ADC, and signal conditioning circuits",
+			Subtitle:    "The Chip System",
+			Description: "How it fits in a real chip: DAC, ADC, TIA, and CMOS-compatible peripheral design",
 			Ready:       true,
 		},
 		{
 			Number:      5,
-			Title:       "Thermal",
-			Subtitle:    "1000x Cooler",
-			Description: "Why it runs cool: compare thermal profiles vs NAND and DRAM",
-			Ready:       true,
-		},
-		{
-			Number:      6,
-			Title:       "3D Stack",
-			Subtitle:    "Scalable Layers",
-			Description: "How we scale: multi-layer stacking for massive parallelism",
-			Ready:       true,
-		},
-		{
-			Number:      7,
-			Title:       "Non-Idealities",
-			Subtitle:    "Real Challenges",
-			Description: "What we face: IR drop, sneak paths, and drift analysis",
-			Ready:       true,
-		},
-		{
-			Number:      8,
 			Title:       "Comparison",
 			Subtitle:    "Why FeCIM Wins",
-			Description: "The bottom line: energy, speed, and cost comparison with verified sources",
+			Description: "The business case: energy efficiency, competitive matrix, data center savings calculator",
 			Ready:       true,
 		},
 	}
@@ -94,7 +73,7 @@ func NewDemoCard(info DemoInfo, onTapped func()) *DemoCard {
 	card := &DemoCard{
 		info:     info,
 		onTapped: onTapped,
-		minSize:  fyne.NewSize(280, 160),
+		minSize:  fyne.NewSize(280, 180),
 	}
 	card.ExtendBaseWidget(card)
 	return card
@@ -282,6 +261,13 @@ func CreateLauncherContent(onDemoSelected func(demoNum int)) fyne.CanvasObject {
 		fyne.TextStyle{Bold: true},
 	)
 
+	// Subtitle with narrative
+	subtitleLabel := widget.NewLabelWithStyle(
+		"5 World-Class Demos: Physics → Compute → Application → System → Business",
+		fyne.TextAlignCenter,
+		fyne.TextStyle{},
+	)
+
 	// Dr. Tour quote
 	quoteLabel := widget.NewLabelWithStyle(
 		"\"Compute in memory where the same device does the memory and the computation.\" - Dr. external research group",
@@ -297,13 +283,14 @@ func CreateLauncherContent(onDemoSelected func(demoNum int)) fyne.CanvasObject {
 		}
 	}
 	progressLabel := widget.NewLabelWithStyle(
-		"8/8 Demos Ready",
+		"5/5 Demos Ready",
 		fyne.TextAlignCenter,
 		fyne.TextStyle{},
 	)
 
 	header := container.NewVBox(
 		titleLabel,
+		subtitleLabel,
 		quoteLabel,
 		widget.NewSeparator(),
 		progressLabel,
@@ -321,15 +308,21 @@ func CreateLauncherContent(onDemoSelected func(demoNum int)) fyne.CanvasObject {
 		})
 	}
 
-	// Grid layout: 4 columns
-	grid := container.New(layout.NewGridLayoutWithColumns(4),
-		cards[0], cards[1], cards[2], cards[3],
-		cards[4], cards[5], cards[6], cards[7],
+	// Grid layout: 3 columns for 5 demos (2-3 rows)
+	// Row 1: Demo 1, 2, 3
+	// Row 2: Demo 4, 5
+	row1 := container.New(layout.NewGridLayoutWithColumns(3),
+		cards[0], cards[1], cards[2],
 	)
+	row2 := container.New(layout.NewGridLayoutWithColumns(3),
+		cards[3], cards[4], layout.NewSpacer(),
+	)
+
+	grid := container.NewVBox(row1, row2)
 
 	// Instructions at bottom
 	instructionsLabel := widget.NewLabelWithStyle(
-		"Click on any demo card to explore. All 8 demos are fully functional!",
+		"Click on any demo card to explore. All 5 demos are fully functional!",
 		fyne.TextAlignCenter,
 		fyne.TextStyle{Italic: true},
 	)
@@ -341,10 +334,18 @@ func CreateLauncherContent(onDemoSelected func(demoNum int)) fyne.CanvasObject {
 		fyne.TextStyle{Monospace: true},
 	)
 
+	// Narrative flow
+	narrativeLabel := widget.NewLabelWithStyle(
+		"The FeCIM Story: Cell → Crossbar → AI → Chip → Business Case",
+		fyne.TextAlignCenter,
+		fyne.TextStyle{},
+	)
+
 	footer := container.NewVBox(
 		widget.NewSeparator(),
 		instructionsLabel,
 		metricsLabel,
+		narrativeLabel,
 	)
 
 	// Center the grid in available space
