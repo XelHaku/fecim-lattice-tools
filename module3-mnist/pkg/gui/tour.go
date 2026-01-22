@@ -81,7 +81,7 @@ func NewGuidedTour(app *DualModeApp) *GuidedTour {
 		},
 		{
 			Title:       "Step 6/7: What About Noise?",
-			Description: "Real hardware has noise from:\n• Read circuits\n• Device variation\n• Temperature effects\n\nWith 30 levels but HIGH noise (0.15), accuracy drops to ~70%.\n\nThis is the challenge Dr. Tour's team solved!",
+			Description: "Real hardware has noise from:\n• Read circuits\n• Device variation\n• Temperature effects\n\nWith 30 levels but HIGH noise (0.15), accuracy drops to ~70%.\n\nNoise mitigation is key to achieving good accuracy!",
 			Action: func() {
 				gt.app.applyPreset(30, 0.15, 6, 8)
 				time.Sleep(500 * time.Millisecond)
@@ -91,7 +91,7 @@ func NewGuidedTour(app *DualModeApp) *GuidedTour {
 		},
 		{
 			Title:       "Step 7/7: FeCIM's Sweet Spot",
-			Description: "With 30 levels and low noise, we achieve 87% accuracy!\n\nThis matches Dr. Tour's hardware results.\n\nThe sweet spot: enough precision to represent the network,\nlow enough noise to be manufacturable.\n\nAnd it uses 10,000x less energy than a GPU!",
+			Description: "With 30 levels and low noise, we achieve 87% accuracy!\n\nThe sweet spot: enough precision to represent the network,\nlow enough noise to be manufacturable.\n\nAnd it uses 10,000x less energy than a GPU!",
 			Action: func() {
 				gt.app.applyPreset(30, 0.01, 8, 8)
 				time.Sleep(500 * time.Millisecond)
