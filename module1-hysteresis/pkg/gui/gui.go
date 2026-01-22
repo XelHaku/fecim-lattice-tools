@@ -191,17 +191,17 @@ func (a *App) run() error {
 }
 
 func (a *App) createUI() fyne.CanvasObject {
-	// Create cell visualizer (THE memory cell!)
+	// Create cell visualizer (THE memory cell!) - prominent size
 	a.cellViz = NewCellVisualizer()
-	a.cellViz.SetMinSize(fyne.NewSize(140, 180))
+	a.cellViz.SetMinSize(fyne.NewSize(200, 240))
 
-	// Create P-E plot
+	// Create P-E plot - will expand to fill space
 	a.plot = NewPEPlot(a.material.Ec*2.5, a.material.Ps*1.2)
 	a.plot.SetMinSize(fyne.NewSize(400, 350))
 
-	// Create level indicator
+	// Create level indicator (wider for better labels)
 	a.levelIndicator = NewLevelIndicator()
-	a.levelIndicator.SetMinSize(fyne.NewSize(70, 350))
+	a.levelIndicator.SetMinSize(fyne.NewSize(80, 350))
 
 	// Create controls panel
 	controls := a.createControlsPanel()
@@ -215,31 +215,38 @@ func (a *App) createUI() fyne.CanvasObject {
 	// Create log panel
 	logPanel := a.createLogPanel()
 
-	// Cell container with label
-	cellContainer := container.NewVBox(
-		widget.NewLabelWithStyle("Memory Cell", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-		a.cellViz,
-		widget.NewLabelWithStyle("This is the cell", fyne.TextAlignCenter, fyne.TextStyle{Italic: true}),
+	// Cell title with underline effect
+	cellTitle := canvas.NewText("MEMORY CELL", color.RGBA{0, 212, 255, 255})
+	cellTitle.TextSize = 18
+	cellTitle.TextStyle = fyne.TextStyle{Bold: true}
+	cellTitle.Alignment = fyne.TextAlignCenter
+
+	cellUnderline := canvas.NewRectangle(color.RGBA{0, 212, 255, 150})
+	cellUnderline.SetMinSize(fyne.NewSize(120, 2))
+
+	cellHeader := container.NewVBox(
+		container.NewCenter(cellTitle),
+		container.NewCenter(cellUnderline),
 	)
 
-	// Controls panel (22% of window width)
-	controlsCol := container.NewScroll(container.NewVBox(
-		controls,
-		widget.NewSeparator(),
-		info,
-	))
+	// Cell container - vertically centered with padding
+	cellContainer := container.NewBorder(
+		cellHeader,
+		nil, nil, nil,
+		container.NewPadded(container.NewCenter(a.cellViz)),
+	)
 
-	// Slide + Log panel (12% of window width)
-	slideLogCol := container.NewScroll(container.NewVBox(
-		slidePanel,
-		widget.NewSeparator(),
-		logPanel,
-	))
-
-	// Plot and level indicator side by side with shared title row
-	plotTitle := widget.NewLabelWithStyle("P-E Hysteresis Loop", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	levelTitle := widget.NewLabelWithStyle("30 Levels", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	levelBits := widget.NewLabel(fmt.Sprintf("%.1f bits", math.Log2(30)))
+	// Right panel - consolidated with better spacing
+	rightPanel := container.NewVBox(
+		container.NewPadded(controls),
+		a.createSectionDivider(),
+		container.NewPadded(info),
+		a.createSectionDivider(),
+		container.NewPadded(slidePanel),
+		a.createSectionDivider(),
+		container.NewPadded(logPanel),
+	)
+	rightScroll := container.NewScroll(rightPanel)
 
 	// Plot + level in same row (level has fixed width)
 	plotAndLevel := container.NewBorder(
@@ -249,22 +256,10 @@ func (a *App) createUI() fyne.CanvasObject {
 		a.plot,
 	)
 
-	// Titles row
-	titlesRow := container.NewBorder(
-		nil, nil,
-		nil,
-		container.NewVBox(levelTitle, levelBits),
-		plotTitle,
-	)
+	// Center area (plot takes full space, no separate title - it's inside plot now)
+	centerArea := plotAndLevel
 
-	// Center area with titles on top
-	centerArea := container.NewBorder(
-		titlesRow,
-		nil, nil, nil,
-		plotAndLevel,
-	)
-
-	// Status bar at bottom
+	// Status bar at bottom - more informative
 	a.statusLabel = widget.NewLabel("Running...")
 	statusBar := container.NewHBox(
 		layout.NewSpacer(),
@@ -272,22 +267,27 @@ func (a *App) createUI() fyne.CanvasObject {
 		layout.NewSpacer(),
 	)
 
-	// Main layout using percentage-based widths
-	// Cell: 12%, Plot: 54%, Controls: 22%, Slide/Log: 12%
+	// Main layout: Cell (14%) | Plot (54%) | Right Panel (32%)
 	mainLayout := container.New(
-		&percentHBoxLayout{weights: []float32{0.12, 0.54, 0.22, 0.12}},
+		&percentHBoxLayout{weights: []float32{0.14, 0.54, 0.32}},
 		cellContainer,
 		centerArea,
-		controlsCol,
-		slideLogCol,
+		rightScroll,
 	)
 
 	return container.NewBorder(
-		a.createHeader(),
+		nil, // No header - cleaner look
 		statusBar,
 		nil, nil,
 		mainLayout,
 	)
+}
+
+// createSectionDivider creates a subtle divider between sections
+func (a *App) createSectionDivider() fyne.CanvasObject {
+	line := canvas.NewRectangle(color.RGBA{0, 100, 180, 100})
+	line.SetMinSize(fyne.NewSize(0, 1))
+	return container.NewPadded(line)
 }
 
 func (a *App) createHeader() fyne.CanvasObject {
@@ -437,40 +437,55 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		trailLabel.SetText(fmt.Sprintf("Trail: %d", int(v)))
 	}
 
-	// Grouped sections for cleaner layout
-	// Simulation Mode group
+	// Grouped sections with styled headers
 	modeGroup := container.NewVBox(
-		widget.NewLabelWithStyle("Mode", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		a.createSectionTitle("MODE"),
 		a.materialSelect,
 		a.waveformSelect,
 	)
 
-	// E-field control group
 	eFieldGroup := container.NewVBox(
-		widget.NewLabelWithStyle("E-field (×Ec)", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		a.createSectionTitle("E-FIELD (×Ec)"),
 		a.eFieldSlider,
 		a.eFieldLabel,
 	)
 
-	// Timing group - frequency and trail on same rows
 	timingGroup := container.NewVBox(
-		widget.NewLabelWithStyle("Timing", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		a.createSectionTitle("TIMING"),
 		container.NewGridWithColumns(2, freqLabel, trailLabel),
 		freqSlider,
 		trailSlider,
 	)
 
-	// Action buttons
-	actionGroup := container.NewHBox(a.pauseBtn, resetBtn)
+	// Action buttons - styled
+	actionGroup := container.NewHBox(
+		layout.NewSpacer(),
+		a.pauseBtn,
+		resetBtn,
+		layout.NewSpacer(),
+	)
 
 	return container.NewVBox(
 		modeGroup,
-		widget.NewSeparator(),
 		eFieldGroup,
-		widget.NewSeparator(),
 		timingGroup,
-		widget.NewSeparator(),
 		actionGroup,
+	)
+}
+
+// createSectionTitle creates a styled section title with underline
+func (a *App) createSectionTitle(text string) fyne.CanvasObject {
+	title := canvas.NewText(text, color.RGBA{0, 212, 255, 255})
+	title.TextSize = 14
+	title.TextStyle = fyne.TextStyle{Bold: true}
+	title.Alignment = fyne.TextAlignCenter
+
+	underline := canvas.NewRectangle(color.RGBA{0, 212, 255, 80})
+	underline.SetMinSize(fyne.NewSize(0, 1))
+
+	return container.NewVBox(
+		container.NewCenter(title),
+		underline,
 	)
 }
 
@@ -478,53 +493,49 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 	a.pLabel = widget.NewLabel("P: 0.00 µC/cm²")
 	a.levelLabel = widget.NewLabel("Level: 15/30")
 	a.modeIndicator = NewModeIndicator()
-	a.modeIndicator.SetMinSize(fyne.NewSize(160, 50))
+	a.modeIndicator.SetMinSize(fyne.NewSize(220, 80))
 
-	// State display - compact 2-column grid
+	// State display - 2-column grid with larger labels
 	stateGrid := container.NewGridWithColumns(2,
 		widget.NewLabel("P:"), a.pLabel,
 		widget.NewLabel("Level:"), a.levelLabel,
 	)
 
-	// Material params - compact display
+	// Material params - compact
 	matParams := widget.NewLabel(fmt.Sprintf(
-		"Pr=%.0f Ps=%.0f µC/cm²\nEc=%.2f MV/cm τ=%.0fns\nEndurance: %.0e",
+		"Pr=%.0f Ps=%.0f µC/cm²  Ec=%.2f MV/cm\nEndurance: %.0e cycles",
 		a.material.Pr*100, a.material.Ps*100,
-		a.material.Ec/1e8, a.material.Tau*1e9,
+		a.material.Ec/1e8,
 		a.material.EnduranceCycles,
 	))
 	matParams.Wrapping = fyne.TextWrapOff
 
 	return container.NewVBox(
-		widget.NewLabelWithStyle("State", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		a.createSectionTitle("STATE"),
 		stateGrid,
-		widget.NewSeparator(),
-		a.modeIndicator,
-		widget.NewSeparator(),
-		widget.NewLabelWithStyle("Material", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		container.NewCenter(a.modeIndicator),
+		a.createSectionTitle("MATERIAL"),
 		matParams,
 	)
 }
 
 func (a *App) createSlidePanel() fyne.CanvasObject {
-	a.slideTitle = widget.NewLabelWithStyle("What You're Seeing", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	a.slideTitle = widget.NewLabel("") // Keep for compatibility
 	a.slideText = widget.NewLabel(a.getSlideText())
 	a.slideText.Wrapping = fyne.TextWrapWord
 
 	return container.NewVBox(
-		a.slideTitle,
-		widget.NewSeparator(),
+		a.createSectionTitle("WHAT YOU'RE SEEING"),
 		a.slideText,
 	)
 }
 
 func (a *App) createLogPanel() fyne.CanvasObject {
-	a.logText = widget.NewLabel("Memory operations will\nappear here...")
+	a.logText = widget.NewLabel("Memory operations will appear here...")
 	a.logText.Wrapping = fyne.TextWrapWord
 
 	return container.NewVBox(
-		widget.NewLabelWithStyle("Memory Log", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-		widget.NewSeparator(),
+		a.createSectionTitle("MEMORY LOG"),
 		a.logText,
 	)
 }
@@ -1018,21 +1029,59 @@ func (r *peplotRenderer) Refresh() {
 	r.objects = r.objects[:0]
 	size := r.plot.Size()
 
-	// Background
-	bg := canvas.NewRectangle(colorBackground)
+	// Background with subtle border
+	bg := canvas.NewRectangle(color.RGBA{0, 40, 90, 255})
 	bg.Resize(size)
 	r.objects = append(r.objects, bg)
 
-	// Margins - larger to accommodate axis labels
-	marginLeft := float32(50)
+	// Inner background
+	innerBg := canvas.NewRectangle(colorBackground)
+	innerBg.Resize(fyne.NewSize(size.Width-4, size.Height-4))
+	innerBg.Move(fyne.NewPos(2, 2))
+	r.objects = append(r.objects, innerBg)
+
+	// Margins - adjusted for better proportions
+	marginLeft := float32(60)
 	marginRight := float32(20)
-	marginTop := float32(25)
+	marginTop := float32(50)
 	marginBottom := float32(35)
 	plotW := size.Width - marginLeft - marginRight
 	plotH := size.Height - marginTop - marginBottom
 
-	// Grid lines (5 divisions each direction from center)
-	numDivisions := 4 // divisions on each side of center
+	// Title inside plot area
+	plotTitle := canvas.NewText("P-E Hysteresis Loop", color.RGBA{255, 255, 255, 255})
+	plotTitle.TextSize = 16
+	plotTitle.TextStyle = fyne.TextStyle{Bold: true}
+	plotTitle.Move(fyne.NewPos(size.Width/2-80, 8))
+	r.objects = append(r.objects, plotTitle)
+
+	// Legend inside plot area (top-left corner)
+	legendX := marginLeft + 10
+	legendY := marginTop + 10
+	legendItems := []struct {
+		color color.RGBA
+		text  string
+	}{
+		{color.RGBA{255, 150, 0, 255}, "Ec"},
+		{color.RGBA{0, 200, 150, 255}, "Pr"},
+		{colorWarning, "Current"},
+	}
+	for _, item := range legendItems {
+		// Color box
+		box := canvas.NewRectangle(item.color)
+		box.Resize(fyne.NewSize(14, 14))
+		box.Move(fyne.NewPos(legendX, legendY))
+		r.objects = append(r.objects, box)
+		// Label
+		label := canvas.NewText(item.text, color.RGBA{200, 200, 200, 255})
+		label.TextSize = 12
+		label.Move(fyne.NewPos(legendX+18, legendY))
+		r.objects = append(r.objects, label)
+		legendX += 60
+	}
+
+	// Grid lines (fewer divisions to avoid overlap)
+	numDivisions := 2 // divisions on each side of center (shows -1, -0.5, 0, 0.5, 1)
 	for i := -numDivisions; i <= numDivisions; i++ {
 		t := float32(i) / float32(numDivisions)
 
@@ -1062,21 +1111,21 @@ func (r *peplotRenderer) Refresh() {
 		}
 		r.objects = append(r.objects, hLine)
 
-		// X-axis tick labels (E-field in MV/cm)
-		if i != 0 {
+		// X-axis tick labels (E-field in MV/cm) - only at edges and center
+		if i != 0 && (i == -numDivisions || i == numDivisions) {
 			eVal := float64(t) * r.plot.eMax / 1e8 // Convert to MV/cm
-			eTickLabel := canvas.NewText(fmt.Sprintf("%.1f", eVal), color.RGBA{180, 180, 180, 255})
-			eTickLabel.TextSize = 10
-			eTickLabel.Move(fyne.NewPos(x-12, marginTop+plotH+3))
+			eTickLabel := canvas.NewText(fmt.Sprintf("%.1f", eVal), color.RGBA{200, 200, 200, 255})
+			eTickLabel.TextSize = 12
+			eTickLabel.Move(fyne.NewPos(x-15, marginTop+plotH+5))
 			r.objects = append(r.objects, eTickLabel)
 		}
 
-		// Y-axis tick labels (P in µC/cm²)
-		if i != 0 {
+		// Y-axis tick labels (P in µC/cm²) - only at edges and center
+		if i != 0 && (i == -numDivisions || i == numDivisions) {
 			pVal := float64(t) * r.plot.pMax * 100 // Convert to µC/cm²
-			pTickLabel := canvas.NewText(fmt.Sprintf("%.0f", pVal), color.RGBA{180, 180, 180, 255})
-			pTickLabel.TextSize = 10
-			pTickLabel.Move(fyne.NewPos(marginLeft-28, y-6))
+			pTickLabel := canvas.NewText(fmt.Sprintf("%.0f", pVal), color.RGBA{200, 200, 200, 255})
+			pTickLabel.TextSize = 12
+			pTickLabel.Move(fyne.NewPos(marginLeft-35, y-7))
 			r.objects = append(r.objects, pTickLabel)
 		}
 	}
@@ -1085,28 +1134,23 @@ func (r *peplotRenderer) Refresh() {
 	centerX := marginLeft + plotW/2
 	centerY := marginTop + plotH/2
 
-	// Zero labels
-	zeroLabelX := canvas.NewText("0", color.RGBA{180, 180, 180, 255})
-	zeroLabelX.TextSize = 10
-	zeroLabelX.Move(fyne.NewPos(centerX-4, marginTop+plotH+3))
-	r.objects = append(r.objects, zeroLabelX)
+	// Zero label (single, at corner to avoid overlap)
+	zeroLabel := canvas.NewText("0", color.RGBA{200, 200, 200, 255})
+	zeroLabel.TextSize = 12
+	zeroLabel.Move(fyne.NewPos(centerX-10, centerY+4))
+	r.objects = append(r.objects, zeroLabel)
 
-	zeroLabelY := canvas.NewText("0", color.RGBA{180, 180, 180, 255})
-	zeroLabelY.TextSize = 10
-	zeroLabelY.Move(fyne.NewPos(marginLeft-15, centerY-6))
-	r.objects = append(r.objects, zeroLabelY)
-
-	// Axis title labels
-	eLabel := canvas.NewText("E (MV/cm)", color.RGBA{200, 200, 200, 255})
-	eLabel.TextSize = 12
+	// Axis title labels (positioned at ends of axes) - larger
+	eLabel := canvas.NewText("E (MV/cm)", color.RGBA{0, 212, 255, 255})
+	eLabel.TextSize = 13
 	eLabel.TextStyle = fyne.TextStyle{Bold: true}
-	eLabel.Move(fyne.NewPos(marginLeft+plotW-65, centerY-18))
+	eLabel.Move(fyne.NewPos(marginLeft+plotW-70, marginTop+plotH+15))
 	r.objects = append(r.objects, eLabel)
 
-	pLabelText := canvas.NewText("P (µC/cm²)", color.RGBA{200, 200, 200, 255})
-	pLabelText.TextSize = 12
+	pLabelText := canvas.NewText("P (µC/cm²)", color.RGBA{0, 212, 255, 255})
+	pLabelText.TextSize = 13
 	pLabelText.TextStyle = fyne.TextStyle{Bold: true}
-	pLabelText.Move(fyne.NewPos(centerX+8, marginTop-2))
+	pLabelText.Move(fyne.NewPos(marginLeft-55, marginTop-18))
 	r.objects = append(r.objects, pLabelText)
 
 	// Ec markers (vertical dashed lines at ±Ec)
@@ -1115,54 +1159,57 @@ func (r *peplotRenderer) Refresh() {
 	ecPosX := centerX + ecRatio*plotW/2
 	ecNegX := centerX - ecRatio*plotW/2
 
-	// +Ec marker
-	ecPosLine := canvas.NewLine(color.RGBA{255, 150, 0, 180})
+	// +Ec marker (dashed effect with shorter line)
+	ecPosLine := canvas.NewLine(color.RGBA{255, 150, 0, 120})
 	ecPosLine.Position1 = fyne.NewPos(ecPosX, marginTop)
 	ecPosLine.Position2 = fyne.NewPos(ecPosX, marginTop+plotH)
 	ecPosLine.StrokeWidth = 2
 	r.objects = append(r.objects, ecPosLine)
+	// Label inside plot area
 	ecPosLabel := canvas.NewText("+Ec", color.RGBA{255, 150, 0, 255})
-	ecPosLabel.TextSize = 10
-	ecPosLabel.Move(fyne.NewPos(ecPosX-10, marginTop+plotH+18))
+	ecPosLabel.TextSize = 11
+	ecPosLabel.Move(fyne.NewPos(ecPosX+4, marginTop+5))
 	r.objects = append(r.objects, ecPosLabel)
 
 	// -Ec marker
-	ecNegLine := canvas.NewLine(color.RGBA{255, 150, 0, 180})
+	ecNegLine := canvas.NewLine(color.RGBA{255, 150, 0, 120})
 	ecNegLine.Position1 = fyne.NewPos(ecNegX, marginTop)
 	ecNegLine.Position2 = fyne.NewPos(ecNegX, marginTop+plotH)
 	ecNegLine.StrokeWidth = 2
 	r.objects = append(r.objects, ecNegLine)
+	// Label inside plot area
 	ecNegLabel := canvas.NewText("-Ec", color.RGBA{255, 150, 0, 255})
-	ecNegLabel.TextSize = 10
-	ecNegLabel.Move(fyne.NewPos(ecNegX-10, marginTop+plotH+18))
+	ecNegLabel.TextSize = 11
+	ecNegLabel.Move(fyne.NewPos(ecNegX-28, marginTop+5))
 	r.objects = append(r.objects, ecNegLabel)
 
 	// Pr markers (horizontal dashed lines at ±Pr)
-	// Pr is roughly 80% of Ps, and Ps is at pMax/1.2
 	prRatio := float32(0.8 / 1.2) // Pr / pMax
 	prPosY := centerY - prRatio*plotH/2
 	prNegY := centerY + prRatio*plotH/2
 
 	// +Pr marker
-	prPosLine := canvas.NewLine(color.RGBA{0, 200, 150, 180})
+	prPosLine := canvas.NewLine(color.RGBA{0, 200, 150, 120})
 	prPosLine.Position1 = fyne.NewPos(marginLeft, prPosY)
 	prPosLine.Position2 = fyne.NewPos(marginLeft+plotW, prPosY)
 	prPosLine.StrokeWidth = 2
 	r.objects = append(r.objects, prPosLine)
+	// Label inside plot area
 	prPosLabel := canvas.NewText("+Pr", color.RGBA{0, 200, 150, 255})
-	prPosLabel.TextSize = 10
-	prPosLabel.Move(fyne.NewPos(marginLeft-35, prPosY-6))
+	prPosLabel.TextSize = 11
+	prPosLabel.Move(fyne.NewPos(marginLeft+plotW-30, prPosY-14))
 	r.objects = append(r.objects, prPosLabel)
 
 	// -Pr marker
-	prNegLine := canvas.NewLine(color.RGBA{0, 200, 150, 180})
+	prNegLine := canvas.NewLine(color.RGBA{0, 200, 150, 120})
 	prNegLine.Position1 = fyne.NewPos(marginLeft, prNegY)
 	prNegLine.Position2 = fyne.NewPos(marginLeft+plotW, prNegY)
 	prNegLine.StrokeWidth = 2
 	r.objects = append(r.objects, prNegLine)
+	// Label inside plot area
 	prNegLabel := canvas.NewText("-Pr", color.RGBA{0, 200, 150, 255})
-	prNegLabel.TextSize = 10
-	prNegLabel.Move(fyne.NewPos(marginLeft-32, prNegY-6))
+	prNegLabel.TextSize = 11
+	prNegLabel.Move(fyne.NewPos(marginLeft+plotW-28, prNegY+4))
 	r.objects = append(r.objects, prNegLabel)
 
 	// Plot the hysteresis data
@@ -1288,44 +1335,72 @@ func (r *levelRenderer) Refresh() {
 	r.objects = r.objects[:0]
 	size := r.indicator.Size()
 
-	// Background
-	bg := canvas.NewRectangle(color.RGBA{0, 40, 80, 255}) // Darker blue for level indicator
-	bg.Resize(size)
+	// Background with subtle border
+	border := canvas.NewRectangle(color.RGBA{0, 100, 180, 255})
+	border.Resize(size)
+	r.objects = append(r.objects, border)
+
+	bg := canvas.NewRectangle(color.RGBA{0, 40, 80, 255})
+	bg.Resize(fyne.NewSize(size.Width-4, size.Height-4))
+	bg.Move(fyne.NewPos(2, 2))
 	r.objects = append(r.objects, bg)
 
-	// Draw 30 level segments - use same margin as plot (40) to align vertically
-	marginH := float32(40) // Match plot's vertical margin
-	marginW := float32(5)
-	barW := size.Width - 2*marginW
-	totalH := size.Height - 2*marginH
+	// Title at top
+	title := canvas.NewText("30 LEVELS", color.RGBA{0, 212, 255, 255})
+	title.TextSize = 12
+	title.TextStyle = fyne.TextStyle{Bold: true}
+	title.Move(fyne.NewPos(8, 8))
+	r.objects = append(r.objects, title)
+
+	bitsLabel := canvas.NewText("4.9 bits", color.RGBA{180, 180, 180, 255})
+	bitsLabel.TextSize = 10
+	bitsLabel.Move(fyne.NewPos(12, 24))
+	r.objects = append(r.objects, bitsLabel)
+
+	// Draw 30 level segments
+	marginH := float32(50) // Space for title at top
+	marginBottom := float32(10)
+	marginW := float32(6)
+	labelW := float32(28)
+	barW := size.Width - 2*marginW - labelW
+	totalH := size.Height - marginH - marginBottom
 	segH := totalH / 30
 	gap := float32(2)
 
 	for i := 0; i < 30; i++ {
 		y := marginH + float32(29-i)*segH
 
+		// Color gradient
+		t := float64(i) / 29.0
 		var segColor color.RGBA
 		if i == level {
-			// Current level - bright white/yellow
+			// Current level - bright yellow highlight with glow
 			segColor = colorWarning
-		} else if i < level {
-			// Below current - gradient blue to cyan
-			t := float64(i) / 29.0
+		} else if t < 0.5 {
+			t2 := t * 2
 			segColor = color.RGBA{
-				uint8(50 + t*150),
-				uint8(50 + t*200),
+				uint8(80 + t2*175),
+				uint8(120 + t2*135),
 				255,
-				200,
+				180,
 			}
 		} else {
-			// Above current - gradient pink to red
-			t := float64(i) / 29.0
+			t2 := (t - 0.5) * 2
 			segColor = color.RGBA{
 				255,
-				uint8(200 - t*150),
-				uint8(200 - t*150),
-				200,
+				uint8(255 - t2*175),
+				uint8(255 - t2*175),
+				180,
 			}
+		}
+
+		// Current level gets extra emphasis
+		if i == level {
+			// Glow effect
+			glow := canvas.NewRectangle(color.RGBA{colorWarning.R, colorWarning.G, colorWarning.B, 100})
+			glow.Resize(fyne.NewSize(barW+6, segH+4))
+			glow.Move(fyne.NewPos(marginW-3, y-2))
+			r.objects = append(r.objects, glow)
 		}
 
 		seg := canvas.NewRectangle(segColor)
@@ -1333,11 +1408,20 @@ func (r *levelRenderer) Refresh() {
 		seg.Move(fyne.NewPos(marginW, y))
 		r.objects = append(r.objects, seg)
 
-		// Level number for every 5th level
-		if i%5 == 0 || i == 29 {
-			label := canvas.NewText(fmt.Sprintf("%d", i+1), colorAxis)
-			label.TextSize = 10
-			label.Move(fyne.NewPos(marginW+barW+2, y))
+		// Level number for every 5th level and current level
+		if i%5 == 0 || i == 29 || i == level {
+			labelColor := colorAxis
+			fontSize := float32(11)
+			if i == level {
+				labelColor = colorWarning
+				fontSize = 12
+			}
+			label := canvas.NewText(fmt.Sprintf("%d", i+1), labelColor)
+			label.TextSize = fontSize
+			if i == level {
+				label.TextStyle = fyne.TextStyle{Bold: true}
+			}
+			label.Move(fyne.NewPos(marginW+barW+4, y+(segH-gap)/2-6))
 			r.objects = append(r.objects, label)
 		}
 	}
@@ -1366,7 +1450,7 @@ type CellVisualizer struct {
 func NewCellVisualizer() *CellVisualizer {
 	c := &CellVisualizer{
 		level:   15,
-		minSize: fyne.NewSize(120, 160),
+		minSize: fyne.NewSize(180, 220),
 	}
 	c.ExtendBaseWidget(c)
 	return c
@@ -1411,47 +1495,61 @@ func (r *cellRenderer) Refresh() {
 	r.objects = r.objects[:0]
 	size := r.cell.Size()
 
-	// Background
-	bg := canvas.NewRectangle(color.RGBA{0, 40, 80, 255}) // Darker blue for cell viz
+	// Background with subtle gradient effect
+	bg := canvas.NewRectangle(color.RGBA{0, 35, 70, 255})
 	bg.Resize(size)
 	r.objects = append(r.objects, bg)
 
-	// Calculate cell size and position
-	margin := float32(10)
+	// Calculate cell size and position - larger cell
+	margin := float32(15)
 	cellSize := size.Width - 2*margin
-	if size.Height-60 < cellSize {
-		cellSize = size.Height - 60
+	if size.Height-70 < cellSize {
+		cellSize = size.Height - 70
 	}
 	cellX := (size.Width - cellSize) / 2
-	cellY := margin
+	cellY := margin + 5
 
-	// Cell border (electrode representation)
+	// Outer glow (based on cell color)
+	t := float64(level) / 29.0
+	var glowColor color.RGBA
+	if t < 0.5 {
+		glowColor = color.RGBA{100, 150, 255, 60} // Blue glow
+	} else {
+		glowColor = color.RGBA{255, 150, 100, 60} // Red glow
+	}
+	outerGlow := canvas.NewRectangle(glowColor)
+	outerGlow.Resize(fyne.NewSize(cellSize+20, cellSize+20))
+	outerGlow.Move(fyne.NewPos(cellX-10, cellY-10))
+	r.objects = append(r.objects, outerGlow)
+
+	// Cell border (electrode representation) - cyan accent
 	borderWidth := float32(4)
-	border := canvas.NewRectangle(color.RGBA{100, 100, 120, 255})
+	border := canvas.NewRectangle(color.RGBA{0, 180, 220, 255})
 	border.Resize(fyne.NewSize(cellSize+borderWidth*2, cellSize+borderWidth*2))
 	border.Move(fyne.NewPos(cellX-borderWidth, cellY-borderWidth))
 	r.objects = append(r.objects, border)
 
-	// Cell color based on level - matches the level indicator gradient
-	// Level 1 (i=0) = Yellow, Level 15 = Pink/salmon, Level 30 (i=29) = Red
-	t := float64(level) / 29.0
+	// Cell color based on level - intuitive gradient:
+	// Level 1 (negative P) = Blue, Level 15 = White/neutral, Level 30 (positive P) = Red
+	// This matches physics: negative polarization -> positive polarization
+	// t is already calculated above (0.0 to 1.0)
 	var cellColor color.RGBA
 	if t < 0.5 {
-		// Yellow to pink transition (levels 1-15)
-		t2 := t * 2
+		// Blue to white transition (levels 1-15, negative to neutral)
+		t2 := t * 2 // 0 to 1
 		cellColor = color.RGBA{
-			255,                // R stays high
-			uint8(230 - t2*80), // G decreases: 230 -> 150
-			uint8(100 + t2*80), // B increases: 100 -> 180
+			uint8(80 + t2*175),  // R: 80 -> 255
+			uint8(120 + t2*135), // G: 120 -> 255
+			255,                 // B stays high
 			255,
 		}
 	} else {
-		// Pink to red transition (levels 16-30)
-		t2 := (t - 0.5) * 2
+		// White to red transition (levels 16-30, neutral to positive)
+		t2 := (t - 0.5) * 2 // 0 to 1
 		cellColor = color.RGBA{
 			255,                 // R stays high
-			uint8(150 - t2*100), // G decreases: 150 -> 50
-			uint8(180 - t2*130), // B decreases: 180 -> 50
+			uint8(255 - t2*175), // G: 255 -> 80
+			uint8(255 - t2*175), // B: 255 -> 80
 			255,
 		}
 	}
@@ -1463,39 +1561,56 @@ func (r *cellRenderer) Refresh() {
 	r.objects = append(r.objects, cell)
 
 	// Inner glow effect
-	glowSize := cellSize * 0.6
+	glowSize := cellSize * 0.5
 	glowX := cellX + (cellSize-glowSize)/2
 	glowY := cellY + (cellSize-glowSize)/2
 	glow := canvas.NewRectangle(color.RGBA{
-		uint8(min(int(cellColor.R)+30, 255)),
-		uint8(min(int(cellColor.G)+30, 255)),
-		uint8(min(int(cellColor.B)+30, 255)),
-		100,
+		uint8(min(int(cellColor.R)+20, 255)),
+		uint8(min(int(cellColor.G)+20, 255)),
+		uint8(min(int(cellColor.B)+20, 255)),
+		80,
 	})
 	glow.Resize(fyne.NewSize(glowSize, glowSize))
 	glow.Move(fyne.NewPos(glowX, glowY))
 	r.objects = append(r.objects, glow)
 
-	// Level text inside cell
-	levelText := canvas.NewText(fmt.Sprintf("%d", level+1), color.RGBA{0, 0, 0, 200})
-	levelText.TextSize = 28
-	levelText.TextStyle = fyne.TextStyle{Bold: true}
-	textW := float32(20)
-	if level+1 >= 10 {
-		textW = 35
+	// Level text inside cell - larger and centered
+	levelStr := fmt.Sprintf("%d", level+1)
+	// Choose text color based on background brightness
+	var textColor color.RGBA
+	brightness := (int(cellColor.R) + int(cellColor.G) + int(cellColor.B)) / 3
+	if brightness > 180 {
+		textColor = color.RGBA{0, 0, 0, 230} // Dark text on light background
+	} else {
+		textColor = color.RGBA{255, 255, 255, 230} // Light text on dark background
 	}
-	levelText.Move(fyne.NewPos(cellX+(cellSize-textW)/2, cellY+cellSize/2-16))
+	// Scale text size with cell size
+	textSize := cellSize * 0.35
+	if textSize < 24 {
+		textSize = 24
+	}
+	if textSize > 48 {
+		textSize = 48
+	}
+	levelText := canvas.NewText(levelStr, textColor)
+	levelText.TextSize = textSize
+	levelText.TextStyle = fyne.TextStyle{Bold: true}
+	// Calculate width based on text size
+	textW := float32(len(levelStr)) * textSize * 0.6
+	levelText.Move(fyne.NewPos(cellX+(cellSize-textW)/2, cellY+cellSize/2-textSize/2))
 	r.objects = append(r.objects, levelText)
 
-	// Label below cell
+	// Label below cell (centered) - larger
 	labelY := cellY + cellSize + 8
-	levelLabel := canvas.NewText(fmt.Sprintf("Level %d/30", level+1), color.RGBA{200, 200, 200, 255})
+	levelLabelStr := fmt.Sprintf("Level %d/30", level+1)
+	levelLabel := canvas.NewText(levelLabelStr, color.RGBA{220, 220, 220, 255})
 	levelLabel.TextSize = 14
 	levelLabel.TextStyle = fyne.TextStyle{Bold: true}
-	levelLabel.Move(fyne.NewPos(cellX+5, labelY))
+	labelW := float32(len(levelLabelStr)) * 8
+	levelLabel.Move(fyne.NewPos(cellX+(cellSize-labelW)/2, labelY))
 	r.objects = append(r.objects, levelLabel)
 
-	// State description
+	// State description (centered) - larger
 	var stateText string
 	if level < 10 {
 		stateText = "Negative P"
@@ -1504,9 +1619,10 @@ func (r *cellRenderer) Refresh() {
 	} else {
 		stateText = "Intermediate"
 	}
-	stateLabel := canvas.NewText(stateText, color.RGBA{150, 150, 150, 255})
-	stateLabel.TextSize = 11
-	stateLabel.Move(fyne.NewPos(cellX+10, labelY+18))
+	stateLabel := canvas.NewText(stateText, color.RGBA{180, 180, 180, 255})
+	stateLabel.TextSize = 12
+	stateLabelW := float32(len(stateText)) * 7
+	stateLabel.Move(fyne.NewPos(cellX+(cellSize-stateLabelW)/2, labelY+18))
 	r.objects = append(r.objects, stateLabel)
 }
 
@@ -1533,7 +1649,7 @@ type ModeIndicator struct {
 func NewModeIndicator() *ModeIndicator {
 	m := &ModeIndicator{
 		isWrite: false,
-		minSize: fyne.NewSize(180, 60),
+		minSize: fyne.NewSize(200, 70),
 	}
 	m.ExtendBaseWidget(m)
 	return m
@@ -1585,12 +1701,12 @@ func (r *modeRenderer) Refresh() {
 	if isWrite {
 		bgColor = color.RGBA{180, 50, 50, 255} // Red background
 		borderColor = color.RGBA{255, 100, 100, 255}
-		modeText = "██ WRITE ██"
+		modeText = "WRITE"
 		conditionText = "|E| > Ec"
 	} else {
 		bgColor = color.RGBA{50, 150, 80, 255} // Green background
 		borderColor = color.RGBA{100, 220, 130, 255}
-		modeText = "░░ READ ░░"
+		modeText = "READ"
 		conditionText = "|E| < Ec"
 	}
 
@@ -1606,19 +1722,19 @@ func (r *modeRenderer) Refresh() {
 	bg.Move(fyne.NewPos(padding, padding))
 	r.objects = append(r.objects, bg)
 
-	// Mode text (centered, top)
+	// Mode text (centered) - larger
 	modeLabel := canvas.NewText(modeText, color.White)
-	modeLabel.TextSize = 16
+	modeLabel.TextSize = 22
 	modeLabel.TextStyle = fyne.TextStyle{Bold: true}
-	textW := float32(100)
-	modeLabel.Move(fyne.NewPos((size.Width-textW)/2, 8))
+	modeTextW := float32(len(modeText)) * 13
+	modeLabel.Move(fyne.NewPos((size.Width-modeTextW)/2, 12))
 	r.objects = append(r.objects, modeLabel)
 
-	// Condition text (centered, bottom)
-	condLabel := canvas.NewText(conditionText, color.RGBA{220, 220, 220, 255})
+	// Condition text (centered, bottom) - larger
+	condLabel := canvas.NewText(conditionText, color.RGBA{230, 230, 230, 255})
 	condLabel.TextSize = 14
-	condLabelW := float32(70)
-	condLabel.Move(fyne.NewPos((size.Width-condLabelW)/2, 32))
+	condLabelW := float32(len(conditionText)) * 8
+	condLabel.Move(fyne.NewPos((size.Width-condLabelW)/2, 40))
 	r.objects = append(r.objects, condLabel)
 }
 

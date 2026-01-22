@@ -5,44 +5,48 @@ CC:
   tawfik.jarjour@accenture.com
 
 
-Subject: Open-source FeCIM design tool - matches your 87% MNIST, exports to ngspice/GDSII
+Subject: Interactive FeCIM visualization suite - investor demos that let people draw digits and watch the crossbar compute
 
 Dr. Tour,
 
-After watching your COSM presentation - "the same device does the memory and the computation" - I built a visualization and design suite for FeCIM arrays.
+After watching your COSM presentation - "the same device does the memory and the computation" - I built an interactive visualization suite for FeCIM technology. Five modules designed for technical briefinges and foundry conversations.
 
-The project includes six modules:
+**What's working now:**
 
-1. **Hysteresis** - P-E curves using the Preisach model, 30 discrete states (~4.9 bits/cell)
-2. **Crossbar MVM** - Matrix-vector multiply with toggleable non-idealities (IR drop, sneak paths, drift)
-3. **MNIST Inference** - Dual-mode FP32 vs CIM. Configured to match your reported 87% hardware accuracy
-4. **Peripheral Circuits** - DAC/ADC/TIA for the analog interface
-5. **Technology Comparison** - Energy metrics, competitive analysis, market sizing
-6. **FeCIM Design Suite** - Crossbar compiler, layout generator, SPICE netlist export, GDSII output
+1. **Hysteresis** - P-E curves with Preisach model, 30 discrete states (~4.9 bits/cell)
+   → Explains "why 30 levels matters" in 60 seconds
 
-Demo 6 is the core. It addresses a gap I found in the open-source EDA ecosystem: there's no "OpenROAD for Analog" - you can't click a button and get a routed FeFET crossbar. This tool:
+2. **Crossbar MVM** - Matrix-vector multiply with toggleable non-idealities
+   → IR drop, sneak paths, drift - visualize the problems and how FeCIM handles them
 
-- Compiles neural network weights → physical cell conductances and programming voltages
-- Generates SPICE netlists for ngspice simulation (with OpenVAF FeFET models)
-- Exports GDSII layouts compatible with KLayout and GDSFactory
-- Bridges visualization to real open-source silicon tools
+3. **MNIST Demo** - Draw a digit, watch the crossbar recognize it, 87% accuracy
+   → Configured to match your reported hardware result. The "wow moment" for investor meetings.
 
-The MNIST demo validates the simulation against your published 87% result. Users can toggle failure modes to understand why that number is impressive given quantization and device variation.
+4. **Peripheral Circuits** - DAC/ADC/TIA in Write/Read/Compute modes
+   → Shows this is a real system, not just a memory cell
 
-**To be clear:** I don't have access to real hardware data. The physics models are based on published literature and your public presentations. This is a work in progress that would need validation against actual device measurements before any real-world application. I'm building the framework - the accuracy depends on calibration with real data.
+5. **Technology Comparison** - Energy metrics, competitive matrix, market sizing
+   → FeCIM wins every category, investor-ready charts
 
-I've kept attribution clear and avoided any branding that could create IP concerns.
+**In development:**
+- Module 6: FeCIM Design Suite - crossbar compiler, SPICE netlist export, GDSII output
+  → Working toward "OpenROAD for Analog" - click a button, get a routed FeFET crossbar
+
+**The value:** Interactive demos > PowerPoint slides.
+When an investor draws a "7" and watches your crossbar recognize it in real-time, that's worth more than 50 slides explaining the technology.
+
+**To be clear:** Built from published literature and your public presentations - no proprietary data. The physics models would need calibration against real device measurements before any serious application. I'm building the framework; the accuracy depends on real data.
 
 I also appreciate your work on faith and science - it's part of why I paid attention to your COSM talk in the first place.
 
-If there's something specific that would help IronLattice - investor demos, design exploration, or integration with your actual device models - I'd rather build that than guess.
+If this could help IronLattice with investor demos, foundry discussions, or design exploration, I'd rather build what you actually need than guess.
 
 GitHub: github.com/XelHaku/multilayer-ferroelectric-cim-visualizer
-Demo video: [link]
+Demo video: [2-minute walkthrough]
 
 FeCIM Maintainers
 Monterrey, Mexico
-+52 812 193 7470 · WhatsApp · Telegram
++52 812 193 7470 (WhatsApp/Telegram)
 
 github.com/XelHaku
 trebuchetdynamics.com

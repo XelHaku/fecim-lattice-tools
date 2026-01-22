@@ -405,8 +405,14 @@ func main() {
 
 	// Create record button with toggle functionality
 	recordBtn := widget.NewButtonWithIcon("Record", theme.MediaRecordIcon(), nil)
+	var recordingTimerStop chan struct{}
 	recordBtn.OnTapped = func() {
 		if recordingState.IsRecording() {
+			// Stop the timer goroutine
+			if recordingTimerStop != nil {
+				close(recordingTimerStop)
+				recordingTimerStop = nil
+			}
 			// Stop recording
 			outputFile, err := recordingState.stopRecording()
 			if err != nil {
@@ -439,16 +445,43 @@ func main() {
 				}()
 				return
 			}
-			recordBtn.SetText("Stop")
 			recordBtn.SetIcon(theme.MediaStopIcon())
+			// Start timer to show real-time datetime with milliseconds
+			recordingTimerStop = make(chan struct{})
+			go func() {
+				ticker := time.NewTicker(50 * time.Millisecond) // Update ~20 times per second
+				defer ticker.Stop()
+				for {
+					select {
+					case <-recordingTimerStop:
+						return
+					case <-ticker.C:
+						fyne.Do(func() {
+							now := time.Now()
+							recordBtn.SetText(now.Format("02 Jan 06 15:04:05.000"))
+						})
+					}
+				}
+			}()
 		}
 	}
 
-	// Create toolbar with screenshot and record buttons on the right
+	// Create close button
+	closeBtn := widget.NewButtonWithIcon("", theme.CancelIcon(), func() {
+		// Stop recording if active
+		if recordingState.IsRecording() {
+			recordingState.stopRecording()
+		}
+		// Close the application
+		fyneApp.Quit()
+	})
+
+	// Create toolbar with screenshot, record, and close buttons on the right
 	toolbarButtons := container.NewHBox(
 		layout.NewSpacer(),
 		screenshotBtn,
 		recordBtn,
+		closeBtn,
 	)
 
 	// Track current demo for start/stop

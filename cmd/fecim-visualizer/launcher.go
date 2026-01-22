@@ -80,7 +80,7 @@ func NewDemoCard(info DemoInfo, onTapped func()) *DemoCard {
 	card := &DemoCard{
 		info:     info,
 		onTapped: onTapped,
-		minSize:  fyne.NewSize(280, 180),
+		minSize:  fyne.NewSize(350, 220),
 	}
 	card.ExtendBaseWidget(card)
 	return card
@@ -126,48 +126,48 @@ func (r *demoCardRenderer) Refresh() {
 		bgColor = color.RGBA{0, 60, 120, 255}       // Darker blue for ready
 		borderColor = color.RGBA{0, 212, 255, 255}  // Cyan border
 		textColor = color.RGBA{255, 255, 255, 255}  // White for titles
-		descColor = color.RGBA{200, 220, 255, 255}  // Light blue-white for descriptions (high contrast)
+		descColor = color.RGBA{220, 235, 255, 255}  // Bright white-blue for descriptions
 	} else {
-		bgColor = color.RGBA{30, 40, 50, 200} // Gray for coming soon
+		bgColor = color.RGBA{30, 40, 50, 200}
 		borderColor = color.RGBA{80, 90, 100, 255}
 		textColor = color.RGBA{120, 130, 140, 255}
 		descColor = color.RGBA{100, 110, 120, 255}
 	}
 
-	// Border
+	// Border (thicker)
 	border := canvas.NewRectangle(borderColor)
 	border.Resize(size)
 	r.objects = append(r.objects, border)
 
 	// Background
-	padding := float32(2)
+	padding := float32(3)
 	bg := canvas.NewRectangle(bgColor)
 	bg.Resize(fyne.NewSize(size.Width-padding*2, size.Height-padding*2))
 	bg.Move(fyne.NewPos(padding, padding))
 	r.objects = append(r.objects, bg)
 
-	// Scale elements based on card size
-	scale := size.Height / 180.0
+	// Scale elements based on card size (base reference: 220px height)
+	scale := size.Height / 220.0
 	if scale < 1 {
 		scale = 1
 	}
 
-	// Demo number badge
-	badgeSize := float32(36) * scale
-	if badgeSize > 50 {
-		badgeSize = 50
+	// Demo number badge - larger
+	badgeSize := float32(48) * scale
+	if badgeSize > 70 {
+		badgeSize = 70
 	}
-	badgeX := float32(12)
-	badgeY := float32(12)
+	badgeX := float32(16)
+	badgeY := float32(16)
 
 	badgeBg := canvas.NewCircle(borderColor)
 	badgeBg.Resize(fyne.NewSize(badgeSize, badgeSize))
 	badgeBg.Move(fyne.NewPos(badgeX, badgeY))
 	r.objects = append(r.objects, badgeBg)
 
-	numTextSize := float32(20) * scale
-	if numTextSize > 28 {
-		numTextSize = 28
+	numTextSize := float32(26) * scale
+	if numTextSize > 38 {
+		numTextSize = 38
 	}
 	numText := canvas.NewText(string('0'+byte(info.Number)), bgColor)
 	numText.TextSize = numTextSize
@@ -175,54 +175,45 @@ func (r *demoCardRenderer) Refresh() {
 	numText.Move(fyne.NewPos(badgeX+badgeSize/2-numTextSize/4, badgeY+badgeSize/2-numTextSize/2))
 	r.objects = append(r.objects, numText)
 
-	// Title
-	titleSize := float32(18) * scale
-	if titleSize > 26 {
-		titleSize = 26
+	// Title - much larger
+	titleSize := float32(24) * scale
+	if titleSize > 36 {
+		titleSize = 36
 	}
 	title := canvas.NewText(info.Title, textColor)
 	title.TextSize = titleSize
 	title.TextStyle = fyne.TextStyle{Bold: true}
-	title.Move(fyne.NewPos(badgeX+badgeSize+12, 14))
+	title.Move(fyne.NewPos(badgeX+badgeSize+16, 18))
 	r.objects = append(r.objects, title)
 
-	// Subtitle
-	subtitleSize := float32(13) * scale
-	if subtitleSize > 18 {
-		subtitleSize = 18
+	// Subtitle - larger
+	subtitleSize := float32(16) * scale
+	if subtitleSize > 22 {
+		subtitleSize = 22
 	}
 	subtitle := canvas.NewText(info.Subtitle, color.RGBA{0, 212, 255, 255}) // Cyan for subtitle
 	subtitle.TextSize = subtitleSize
-	subtitle.Move(fyne.NewPos(badgeX+badgeSize+12, 14+titleSize+4))
+	subtitle.Move(fyne.NewPos(badgeX+badgeSize+16, 18+titleSize+6))
 	r.objects = append(r.objects, subtitle)
 
-	// Status badge
-	var statusText string
-	var statusColor color.RGBA
+	// Status indicator - small green dot for ready
 	if info.Ready {
-		statusText = "READY"
-		statusColor = color.RGBA{100, 255, 150, 255} // Bright green
-	} else {
-		statusText = "COMING SOON"
-		statusColor = color.RGBA{150, 150, 150, 255}
+		dotSize := float32(12)
+		statusDot := canvas.NewCircle(color.RGBA{100, 255, 150, 255})
+		statusDot.Resize(fyne.NewSize(dotSize, dotSize))
+		statusDot.Move(fyne.NewPos(size.Width-dotSize-12, 12))
+		r.objects = append(r.objects, statusDot)
 	}
-	status := canvas.NewText(statusText, statusColor)
-	status.TextSize = 11
-	status.TextStyle = fyne.TextStyle{Bold: true}
-	status.Move(fyne.NewPos(size.Width-75, 14))
-	r.objects = append(r.objects, status)
 
-	// Description (wrapped manually)
+	// Description - larger and clearer
 	desc := info.Description
-
-	// Simple word wrap - split into lines
-	descSize := float32(13) * scale
-	if descSize > 16 {
-		descSize = 16
+	descSize := float32(15) * scale
+	if descSize > 20 {
+		descSize = 20
 	}
-	maxWidth := size.Width - 28
-	lineY := badgeY + badgeSize + 16
-	lineHeight := descSize + 4
+	maxWidth := size.Width - 36
+	lineY := badgeY + badgeSize + 20
+	lineHeight := descSize + 6
 
 	words := splitWords(desc)
 	line := ""
@@ -231,10 +222,9 @@ func (r *demoCardRenderer) Refresh() {
 		testText := canvas.NewText(testLine, descColor)
 		testText.TextSize = descSize
 		if testText.MinSize().Width > maxWidth && line != "" {
-			// Write current line
 			lineText := canvas.NewText(line, descColor)
 			lineText.TextSize = descSize
-			lineText.Move(fyne.NewPos(14, lineY))
+			lineText.Move(fyne.NewPos(18, lineY))
 			r.objects = append(r.objects, lineText)
 			lineY += lineHeight
 			line = word + " "
@@ -245,18 +235,10 @@ func (r *demoCardRenderer) Refresh() {
 	if line != "" {
 		lineText := canvas.NewText(line, descColor)
 		lineText.TextSize = descSize
-		lineText.Move(fyne.NewPos(14, lineY))
+		lineText.Move(fyne.NewPos(18, lineY))
 		r.objects = append(r.objects, lineText)
 	}
 
-	// Hover hint for ready cards
-	if info.Ready {
-		hint := canvas.NewText("Click to open →", color.RGBA{0, 212, 255, 200})
-		hint.TextSize = 11
-		hint.TextStyle = fyne.TextStyle{Bold: true}
-		hint.Move(fyne.NewPos(size.Width-95, size.Height-22))
-		r.objects = append(r.objects, hint)
-	}
 }
 
 func splitWords(s string) []string {
@@ -288,23 +270,20 @@ func (r *demoCardRenderer) Destroy() {}
 func CreateLauncherContent(onDemoSelected func(demoNum int)) fyne.CanvasObject {
 	demos := GetDemos()
 
-	// Title - larger and more prominent
-	titleLabel := widget.NewLabelWithStyle(
-		"FeCIM Visualization Suite",
-		fyne.TextAlignCenter,
-		fyne.TextStyle{Bold: true},
-	)
+	// Title - large and prominent using canvas text
+	titleText := canvas.NewText("FeCIM Visualization Suite", color.RGBA{255, 255, 255, 255})
+	titleText.TextSize = 28
+	titleText.TextStyle = fyne.TextStyle{Bold: true}
+	titleText.Alignment = fyne.TextAlignCenter
 
 	// Subtitle with narrative
-	subtitleLabel := widget.NewLabelWithStyle(
-		"6 Demos: Physics → Compute → Application → System → Business → Design",
-		fyne.TextAlignCenter,
-		fyne.TextStyle{},
-	)
+	subtitleText := canvas.NewText("6 Demos: Physics → Compute → Application → System → Business → Design", color.RGBA{0, 212, 255, 255})
+	subtitleText.TextSize = 18
+	subtitleText.Alignment = fyne.TextAlignCenter
 
 	header := container.NewVBox(
-		titleLabel,
-		subtitleLabel,
+		container.NewCenter(titleText),
+		container.NewCenter(subtitleText),
 	)
 
 	// Create demo cards
@@ -325,15 +304,13 @@ func CreateLauncherContent(onDemoSelected func(demoNum int)) fyne.CanvasObject {
 		container.New(layout.NewGridLayoutWithColumns(3), cards[3], cards[4], cards[5]),
 	)
 
-	// Key metrics in footer - single line
-	metricsLabel := widget.NewLabelWithStyle(
-		"30 Levels (4.9 bits) | 87% MNIST | 10M× vs NAND | 1000× vs DRAM | TRL 4  —  Click any card to explore",
-		fyne.TextAlignCenter,
-		fyne.TextStyle{Monospace: true},
-	)
+	// Key metrics in footer - larger text
+	metricsText := canvas.NewText("30 Levels (4.9 bits) | 87% MNIST | 10M× vs NAND | 1000× vs DRAM | TRL 4  —  Click any card to explore", color.RGBA{180, 200, 220, 255})
+	metricsText.TextSize = 16
+	metricsText.Alignment = fyne.TextAlignCenter
 
 	footer := container.NewVBox(
-		metricsLabel,
+		container.NewCenter(metricsText),
 	)
 
 	// Use border layout - grid expands to fill center
