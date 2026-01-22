@@ -1,0 +1,536 @@
+{
+  "config": {
+    "array_rows": 8,
+    "array_cols": 8,
+    "levels": 30,
+    "g_min": 1,
+    "g_max": 100,
+    "v_prog_min": 2,
+    "v_prog_max": 5,
+    "t_pulse": 50
+  },
+  "cells": [
+    {
+      "row": 0,
+      "col": 0,
+      "weight_value": 0.1,
+      "quant_level": 16,
+      "conductance": 55.62068965517241,
+      "program_v": 3.655172413793103
+    },
+    {
+      "row": 0,
+      "col": 1,
+      "weight_value": -0.2,
+      "quant_level": 11,
+      "conductance": 38.55172413793103,
+      "program_v": 3.1379310344827585
+    },
+    {
+      "row": 0,
+      "col": 2,
+      "weight_value": 0.3,
+      "quant_level": 19,
+      "conductance": 65.86206896551724,
+      "program_v": 3.9655172413793105
+    },
+    {
+      "row": 0,
+      "col": 3,
+      "weight_value": -0.4,
+      "quant_level": 8,
+      "conductance": 28.310344827586206,
+      "program_v": 2.8275862068965516
+    },
+    {
+      "row": 0,
+      "col": 4,
+      "weight_value": 0.5,
+      "quant_level": 23,
+      "conductance": 79.51724137931035,
+      "program_v": 4.379310344827586
+    },
+    {
+      "row": 0,
+      "col": 5,
+      "weight_value": -0.6,
+      "quant_level": 5,
+      "conductance": 18.06896551724138,
+      "program_v": 2.5172413793103448
+    },
+    {
+      "row": 0,
+      "col": 6,
+      "weight_value": 0.7,
+      "quant_level": 26,
+      "conductance": 89.75862068965517,
+      "program_v": 4.689655172413794
+    },
+    {
+      "row": 0,
+      "col": 7,
+      "weight_value": -0.8,
+      "quant_level": 2,
+      "conductance": 7.827586206896552,
+      "program_v": 2.206896551724138
+    },
+    {
+      "row": 1,
+      "col": 0,
+      "weight_value": -0.1,
+      "quant_level": 13,
+      "conductance": 45.37931034482759,
+      "program_v": 3.344827586206897
+    },
+    {
+      "row": 1,
+      "col": 1,
+      "weight_value": 0.2,
+      "quant_level": 18,
+      "conductance": 62.44827586206897,
+      "program_v": 3.8620689655172415
+    },
+    {
+      "row": 1,
+      "col": 2,
+      "weight_value": -0.3,
+      "quant_level": 10,
+      "conductance": 35.13793103448276,
+      "program_v": 3.0344827586206895
+    },
+    {
+      "row": 1,
+      "col": 3,
+      "weight_value": 0.4,
+      "quant_level": 21,
+      "conductance": 72.6896551724138,
+      "program_v": 4.172413793103448
+    },
+    {
+      "row": 1,
+      "col": 4,
+      "weight_value": -0.5,
+      "quant_level": 6,
+      "conductance": 21.482758620689655,
+      "program_v": 2.6206896551724137
+    },
+    {
+      "row": 1,
+      "col": 5,
+      "weight_value": 0.6,
+      "quant_level": 24,
+      "conductance": 82.93103448275862,
+      "program_v": 4.482758620689655
+    },
+    {
+      "row": 1,
+      "col": 6,
+      "weight_value": -0.7,
+      "quant_level": 3,
+      "conductance": 11.241379310344827,
+      "program_v": 2.310344827586207
+    },
+    {
+      "row": 1,
+      "col": 7,
+      "weight_value": 0.8,
+      "quant_level": 27,
+      "conductance": 93.17241379310344,
+      "program_v": 4.793103448275862
+    },
+    {
+      "row": 2,
+      "col": 0,
+      "weight_value": 0.15,
+      "quant_level": 17,
+      "conductance": 59.03448275862068,
+      "program_v": 3.758620689655172
+    },
+    {
+      "row": 2,
+      "col": 1,
+      "weight_value": -0.25,
+      "quant_level": 10,
+      "conductance": 35.13793103448276,
+      "program_v": 3.0344827586206895
+    },
+    {
+      "row": 2,
+      "col": 2,
+      "weight_value": 0.35,
+      "quant_level": 20,
+      "conductance": 69.27586206896552,
+      "program_v": 4.068965517241379
+    },
+    {
+      "row": 2,
+      "col": 3,
+      "weight_value": -0.45,
+      "quant_level": 7,
+      "conductance": 24.896551724137932,
+      "program_v": 2.7241379310344827
+    },
+    {
+      "row": 2,
+      "col": 4,
+      "weight_value": 0.55,
+      "quant_level": 23,
+      "conductance": 79.51724137931035,
+      "program_v": 4.379310344827586
+    },
+    {
+      "row": 2,
+      "col": 5,
+      "weight_value": -0.65,
+      "quant_level": 4,
+      "conductance": 14.655172413793103,
+      "program_v": 2.413793103448276
+    },
+    {
+      "row": 2,
+      "col": 6,
+      "weight_value": 0.75,
+      "quant_level": 27,
+      "conductance": 93.17241379310344,
+      "program_v": 4.793103448275862
+    },
+    {
+      "row": 2,
+      "col": 7,
+      "weight_value": -0.85,
+      "quant_level": 1,
+      "conductance": 4.413793103448276,
+      "program_v": 2.103448275862069
+    },
+    {
+      "row": 3,
+      "col": 0,
+      "weight_value": -0.15,
+      "quant_level": 12,
+      "conductance": 41.96551724137931,
+      "program_v": 3.2413793103448274
+    },
+    {
+      "row": 3,
+      "col": 1,
+      "weight_value": 0.25,
+      "quant_level": 19,
+      "conductance": 65.86206896551724,
+      "program_v": 3.9655172413793105
+    },
+    {
+      "row": 3,
+      "col": 2,
+      "weight_value": -0.35,
+      "quant_level": 9,
+      "conductance": 31.724137931034484,
+      "program_v": 2.931034482758621
+    },
+    {
+      "row": 3,
+      "col": 3,
+      "weight_value": 0.45,
+      "quant_level": 22,
+      "conductance": 76.10344827586206,
+      "program_v": 4.275862068965517
+    },
+    {
+      "row": 3,
+      "col": 4,
+      "weight_value": -0.55,
+      "quant_level": 6,
+      "conductance": 21.482758620689655,
+      "program_v": 2.6206896551724137
+    },
+    {
+      "row": 3,
+      "col": 5,
+      "weight_value": 0.65,
+      "quant_level": 25,
+      "conductance": 86.34482758620689,
+      "program_v": 4.586206896551724
+    },
+    {
+      "row": 3,
+      "col": 6,
+      "weight_value": -0.75,
+      "quant_level": 2,
+      "conductance": 7.827586206896552,
+      "program_v": 2.206896551724138
+    },
+    {
+      "row": 3,
+      "col": 7,
+      "weight_value": 0.85,
+      "quant_level": 28,
+      "conductance": 96.58620689655173,
+      "program_v": 4.896551724137931
+    },
+    {
+      "row": 4,
+      "col": 0,
+      "weight_value": 0.05,
+      "quant_level": 15,
+      "conductance": 52.20689655172414,
+      "program_v": 3.5517241379310347
+    },
+    {
+      "row": 4,
+      "col": 1,
+      "weight_value": -0.15,
+      "quant_level": 12,
+      "conductance": 41.96551724137931,
+      "program_v": 3.2413793103448274
+    },
+    {
+      "row": 4,
+      "col": 2,
+      "weight_value": 0.25,
+      "quant_level": 19,
+      "conductance": 65.86206896551724,
+      "program_v": 3.9655172413793105
+    },
+    {
+      "row": 4,
+      "col": 3,
+      "weight_value": -0.35,
+      "quant_level": 9,
+      "conductance": 31.724137931034484,
+      "program_v": 2.931034482758621
+    },
+    {
+      "row": 4,
+      "col": 4,
+      "weight_value": 0.45,
+      "quant_level": 22,
+      "conductance": 76.10344827586206,
+      "program_v": 4.275862068965517
+    },
+    {
+      "row": 4,
+      "col": 5,
+      "weight_value": -0.55,
+      "quant_level": 6,
+      "conductance": 21.482758620689655,
+      "program_v": 2.6206896551724137
+    },
+    {
+      "row": 4,
+      "col": 6,
+      "weight_value": 0.65,
+      "quant_level": 25,
+      "conductance": 86.34482758620689,
+      "program_v": 4.586206896551724
+    },
+    {
+      "row": 4,
+      "col": 7,
+      "weight_value": -0.75,
+      "quant_level": 2,
+      "conductance": 7.827586206896552,
+      "program_v": 2.206896551724138
+    },
+    {
+      "row": 5,
+      "col": 0,
+      "weight_value": -0.05,
+      "quant_level": 14,
+      "conductance": 48.793103448275865,
+      "program_v": 3.4482758620689653
+    },
+    {
+      "row": 5,
+      "col": 1,
+      "weight_value": 0.15,
+      "quant_level": 17,
+      "conductance": 59.03448275862068,
+      "program_v": 3.758620689655172
+    },
+    {
+      "row": 5,
+      "col": 2,
+      "weight_value": -0.25,
+      "quant_level": 10,
+      "conductance": 35.13793103448276,
+      "program_v": 3.0344827586206895
+    },
+    {
+      "row": 5,
+      "col": 3,
+      "weight_value": 0.35,
+      "quant_level": 20,
+      "conductance": 69.27586206896552,
+      "program_v": 4.068965517241379
+    },
+    {
+      "row": 5,
+      "col": 4,
+      "weight_value": -0.45,
+      "quant_level": 7,
+      "conductance": 24.896551724137932,
+      "program_v": 2.7241379310344827
+    },
+    {
+      "row": 5,
+      "col": 5,
+      "weight_value": 0.55,
+      "quant_level": 23,
+      "conductance": 79.51724137931035,
+      "program_v": 4.379310344827586
+    },
+    {
+      "row": 5,
+      "col": 6,
+      "weight_value": -0.65,
+      "quant_level": 4,
+      "conductance": 14.655172413793103,
+      "program_v": 2.413793103448276
+    },
+    {
+      "row": 5,
+      "col": 7,
+      "weight_value": 0.75,
+      "quant_level": 27,
+      "conductance": 93.17241379310344,
+      "program_v": 4.793103448275862
+    },
+    {
+      "row": 6,
+      "col": 0,
+      "weight_value": 0.2,
+      "quant_level": 18,
+      "conductance": 62.44827586206897,
+      "program_v": 3.8620689655172415
+    },
+    {
+      "row": 6,
+      "col": 1,
+      "weight_value": -0.3,
+      "quant_level": 10,
+      "conductance": 35.13793103448276,
+      "program_v": 3.0344827586206895
+    },
+    {
+      "row": 6,
+      "col": 2,
+      "weight_value": 0.4,
+      "quant_level": 21,
+      "conductance": 72.6896551724138,
+      "program_v": 4.172413793103448
+    },
+    {
+      "row": 6,
+      "col": 3,
+      "weight_value": -0.5,
+      "quant_level": 6,
+      "conductance": 21.482758620689655,
+      "program_v": 2.6206896551724137
+    },
+    {
+      "row": 6,
+      "col": 4,
+      "weight_value": 0.6,
+      "quant_level": 24,
+      "conductance": 82.93103448275862,
+      "program_v": 4.482758620689655
+    },
+    {
+      "row": 6,
+      "col": 5,
+      "weight_value": -0.7,
+      "quant_level": 3,
+      "conductance": 11.241379310344827,
+      "program_v": 2.310344827586207
+    },
+    {
+      "row": 6,
+      "col": 6,
+      "weight_value": 0.8,
+      "quant_level": 27,
+      "conductance": 93.17241379310344,
+      "program_v": 4.793103448275862
+    },
+    {
+      "row": 6,
+      "col": 7,
+      "weight_value": -0.9,
+      "quant_level": 0,
+      "conductance": 1,
+      "program_v": 2
+    },
+    {
+      "row": 7,
+      "col": 0,
+      "weight_value": -0.2,
+      "quant_level": 11,
+      "conductance": 38.55172413793103,
+      "program_v": 3.1379310344827585
+    },
+    {
+      "row": 7,
+      "col": 1,
+      "weight_value": 0.3,
+      "quant_level": 19,
+      "conductance": 65.86206896551724,
+      "program_v": 3.9655172413793105
+    },
+    {
+      "row": 7,
+      "col": 2,
+      "weight_value": -0.4,
+      "quant_level": 8,
+      "conductance": 28.310344827586206,
+      "program_v": 2.8275862068965516
+    },
+    {
+      "row": 7,
+      "col": 3,
+      "weight_value": 0.5,
+      "quant_level": 23,
+      "conductance": 79.51724137931035,
+      "program_v": 4.379310344827586
+    },
+    {
+      "row": 7,
+      "col": 4,
+      "weight_value": -0.6,
+      "quant_level": 5,
+      "conductance": 18.06896551724138,
+      "program_v": 2.5172413793103448
+    },
+    {
+      "row": 7,
+      "col": 5,
+      "weight_value": 0.7,
+      "quant_level": 26,
+      "conductance": 89.75862068965517,
+      "program_v": 4.689655172413794
+    },
+    {
+      "row": 7,
+      "col": 6,
+      "weight_value": -0.8,
+      "quant_level": 2,
+      "conductance": 7.827586206896552,
+      "program_v": 2.206896551724138
+    },
+    {
+      "row": 7,
+      "col": 7,
+      "weight_value": 0.9,
+      "quant_level": 29,
+      "conductance": 100,
+      "program_v": 5
+    }
+  ],
+  "stats": {
+    "total_cells": 64,
+    "used_cells": 64,
+    "utilization": 1,
+    "weight_min": -0.9,
+    "weight_max": 0.9,
+    "quant_mse": 0.00031435790725327004,
+    "quant_psnr_db": 34.11060629957444,
+    "unique_levels": 30
+  }
+}
