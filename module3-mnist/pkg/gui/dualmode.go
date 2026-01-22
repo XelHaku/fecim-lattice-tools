@@ -386,13 +386,17 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 		widget.NewLabel("Hidden:"), app.hiddenSelect,
 	)
 
-	// Preset buttons
-	idealBtn := widget.NewButton("Ideal", func() { app.applyPreset(30, 0.01, 8, 8) })
-	quantCliffBtn := widget.NewButton("QuantCliff", func() { app.applyPreset(2, 0.01, 8, 8) })
-	noisyBtn := widget.NewButton("Noisy", func() { app.applyPreset(30, 0.15, 6, 8) })
-	brokenBtn := widget.NewButton("BrokenADC", func() { app.applyPreset(30, 0.01, 3, 8) })
+	// Preset buttons (first row: standard presets)
+	idealBtn := widget.NewButton("Ideal", func() { app.applyPresetWithMode(30, 0.01, 8, 8, false) })
+	quantCliffBtn := widget.NewButton("QuantCliff", func() { app.applyPresetWithMode(2, 0.01, 8, 8, false) })
+	noisyBtn := widget.NewButton("Noisy", func() { app.applyPresetWithMode(30, 0.15, 6, 8, false) })
+	brokenBtn := widget.NewButton("BrokenADC", func() { app.applyPresetWithMode(30, 0.01, 3, 8, false) })
 
-	presetRow := container.NewGridWithColumns(4, idealBtn, quantCliffBtn, noisyBtn, brokenBtn)
+	// Tour Mode button (single-layer, matches Dr. Tour's ~87% demo)
+	tour87Btn := widget.NewButton("Tour87%", func() { app.applyPresetWithMode(30, 0.01, 8, 8, true) })
+	tour87Btn.Importance = widget.HighImportance // Highlight this button
+
+	presetRow := container.NewGridWithColumns(5, idealBtn, quantCliffBtn, noisyBtn, brokenBtn, tour87Btn)
 
 	// Quick test
 	app.testResultLabel = widget.NewLabel("")
@@ -597,6 +601,11 @@ func (app *DualModeApp) resetResults() {
 
 // applyPreset sets hardware parameters to a failure mode preset.
 func (app *DualModeApp) applyPreset(levels int, noise float64, adcBits, dacBits int) {
+	app.applyPresetWithMode(levels, noise, adcBits, dacBits, false)
+}
+
+// applyPresetWithMode sets hardware parameters with optional Tour Mode (single-layer).
+func (app *DualModeApp) applyPresetWithMode(levels int, noise float64, adcBits, dacBits int, singleLayer bool) {
 	app.levelsSlider.SetValue(float64(levels))
 	app.noiseSlider.SetValue(noise)
 	app.adcSelect.SetSelected(fmt.Sprintf("%d", adcBits))
@@ -606,6 +615,12 @@ func (app *DualModeApp) applyPreset(levels int, noise float64, adcBits, dacBits 
 	app.network.SetNoiseLevel(noise)
 	app.network.SetADCBits(adcBits)
 	app.network.SetDACBits(dacBits)
+	app.network.SetSingleLayer(singleLayer)
+
+	// Update status to indicate Tour Mode
+	if singleLayer {
+		app.statusLabel.SetText("Tour Mode: Single-layer (784→10) ~87% max accuracy")
+	}
 
 	app.updateWeightHeatmap()
 

@@ -3,6 +3,7 @@
 package gui
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"math"
@@ -19,16 +20,24 @@ type PhasedStrategyDiagram struct {
 	widget.BaseWidget
 
 	mu           sync.RWMutex
-	currentPhase int     // 0-2 for highlighted phase
-	animProgress float64 // Arrow animation progress
-	raster       *canvas.Raster
+	currentPhase int
+	animProgress float64
 	minSize      fyne.Size
+
+	raster      *canvas.Raster
+	titleText   *canvas.Text
+	phaseLabels []*canvas.Text
+	subtitles   []*canvas.Text
+	benefits    []*canvas.Text
 }
 
 // NewPhasedStrategyDiagram creates a new strategy diagram.
 func NewPhasedStrategyDiagram() *PhasedStrategyDiagram {
 	p := &PhasedStrategyDiagram{
-		minSize: fyne.NewSize(500, 120),
+		minSize:     fyne.NewSize(450, 100),
+		phaseLabels: make([]*canvas.Text, 3),
+		subtitles:   make([]*canvas.Text, 3),
+		benefits:    make([]*canvas.Text, 3),
 	}
 	p.ExtendBaseWidget(p)
 	return p
@@ -59,15 +68,87 @@ func (p *PhasedStrategyDiagram) MinSize() fyne.Size {
 
 // CreateRenderer implements fyne.Widget.
 func (p *PhasedStrategyDiagram) CreateRenderer() fyne.WidgetRenderer {
-	p.raster = canvas.NewRaster(p.generateImage)
-	return widget.NewSimpleRenderer(p.raster)
+	p.raster = canvas.NewRaster(p.generateBoxes)
+
+	p.titleText = canvas.NewText("COMMERCIALIZATION STRATEGY", color.RGBA{0, 212, 255, 255})
+	p.titleText.TextSize = 11
+	p.titleText.TextStyle = fyne.TextStyle{Bold: true}
+
+	phases := []string{"PHASE 1", "PHASE 2", "PHASE 3"}
+	subs := []string{"NAND Flash", "DRAM", "Full CIM"}
+	bens := []string{"Drop-in compatible", "No refresh needed", "80-90% savings"}
+
+	for i := 0; i < 3; i++ {
+		p.phaseLabels[i] = canvas.NewText(phases[i], color.RGBA{0, 212, 255, 255})
+		p.phaseLabels[i].TextSize = 9
+		p.phaseLabels[i].TextStyle = fyne.TextStyle{Bold: true}
+
+		p.subtitles[i] = canvas.NewText(subs[i], color.RGBA{200, 200, 200, 255})
+		p.subtitles[i].TextSize = 9
+
+		p.benefits[i] = canvas.NewText(bens[i], color.RGBA{100, 200, 150, 255})
+		p.benefits[i].TextSize = 8
+	}
+
+	return &phasedStrategyRenderer{widget: p}
 }
 
-// generateImage creates the strategy diagram.
-func (p *PhasedStrategyDiagram) generateImage(w, h int) image.Image {
+type phasedStrategyRenderer struct {
+	widget *PhasedStrategyDiagram
+}
+
+func (r *phasedStrategyRenderer) MinSize() fyne.Size {
+	return r.widget.minSize
+}
+
+func (r *phasedStrategyRenderer) Layout(size fyne.Size) {
+	r.widget.raster.Resize(size)
+
+	r.widget.titleText.Move(fyne.NewPos(size.Width/2-90, 3))
+
+	boxWidth := (size.Width - 80) / 3
+	spacing := float32(30)
+	startY := float32(25)
+
+	for i := 0; i < 3; i++ {
+		boxX := float32(20) + float32(i)*(boxWidth+spacing)
+		r.widget.phaseLabels[i].Move(fyne.NewPos(boxX+boxWidth/2-25, startY+5))
+		r.widget.subtitles[i].Move(fyne.NewPos(boxX+boxWidth/2-25, startY+18))
+		r.widget.benefits[i].Move(fyne.NewPos(boxX+5, startY+45))
+	}
+}
+
+func (r *phasedStrategyRenderer) Refresh() {
+	r.widget.mu.RLock()
+	currentPhase := r.widget.currentPhase
+	r.widget.mu.RUnlock()
+
+	for i := 0; i < 3; i++ {
+		if i == currentPhase {
+			r.widget.phaseLabels[i].Color = color.RGBA{0, 255, 255, 255}
+		} else {
+			r.widget.phaseLabels[i].Color = color.RGBA{0, 212, 255, 255}
+		}
+		canvas.Refresh(r.widget.phaseLabels[i])
+	}
+
+	r.widget.raster.Refresh()
+}
+
+func (r *phasedStrategyRenderer) Objects() []fyne.CanvasObject {
+	objects := []fyne.CanvasObject{r.widget.raster, r.widget.titleText}
+	for i := 0; i < 3; i++ {
+		objects = append(objects, r.widget.phaseLabels[i], r.widget.subtitles[i], r.widget.benefits[i])
+	}
+	return objects
+}
+
+func (r *phasedStrategyRenderer) Destroy() {}
+
+// generateBoxes creates the strategy boxes and arrows.
+func (p *PhasedStrategyDiagram) generateBoxes(w, h int) image.Image {
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
 
-	// Background
 	bgColor := color.RGBA{25, 35, 55, 255}
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
@@ -75,7 +156,7 @@ func (p *PhasedStrategyDiagram) generateImage(w, h int) image.Image {
 		}
 	}
 
-	if w < 300 || h < 80 {
+	if w < 200 || h < 60 {
 		return img
 	}
 
@@ -84,34 +165,17 @@ func (p *PhasedStrategyDiagram) generateImage(w, h int) image.Image {
 	animProgress := p.animProgress
 	p.mu.RUnlock()
 
-	// Title
-	drawTextSimple(img, "COMMERCIALIZATION STRATEGY", w/2-100, 8, color.RGBA{0, 212, 255, 255}, 12)
+	boxWidth := (w - 80) / 3
+	boxHeight := 40
+	startY := 20
+	spacing := 30
 
-	// Phase data
-	phases := []struct {
-		title    string
-		subtitle string
-		benefit  string
-	}{
-		{"PHASE 1", "NAND Flash", "Drop-in compatible"},
-		{"PHASE 2", "DRAM", "No refresh needed"},
-		{"PHASE 3", "Full CIM", "80-90% savings"},
-	}
+	for i := 0; i < 3; i++ {
+		boxX := 20 + i*(boxWidth+spacing)
 
-	// Layout
-	boxWidth := (w - 100) / 3
-	boxHeight := 50
-	startY := 30
-	spacing := 40
-
-	for i, phase := range phases {
-		boxX := 30 + i*(boxWidth+spacing)
-
-		// Determine if this phase is highlighted
 		isHighlighted := i == currentPhase
 		isAnimated := int(animProgress) == i
 
-		// Box colors
 		var borderColor, fillColor color.RGBA
 		if isHighlighted || isAnimated {
 			borderColor = color.RGBA{0, 212, 255, 255}
@@ -121,42 +185,27 @@ func (p *PhasedStrategyDiagram) generateImage(w, h int) image.Image {
 			fillColor = color.RGBA{40, 50, 70, 255}
 		}
 
-		// Draw box
-		drawBoxFilled(img, boxX, startY, boxWidth, boxHeight, borderColor, fillColor)
-
-		// Phase title
-		titleColor := borderColor
-		drawTextSimple(img, phase.title, boxX+boxWidth/2-25, startY+8, titleColor, 10)
-
-		// Subtitle
-		drawTextSimple(img, phase.subtitle, boxX+boxWidth/2-30, startY+22, color.RGBA{200, 200, 200, 255}, 9)
-
-		// Benefit (below box)
-		drawTextSimple(img, phase.benefit, boxX+5, startY+boxHeight+5, color.RGBA{100, 200, 150, 255}, 8)
+		drawBoxFilledInvestor(img, boxX, startY, boxWidth, boxHeight, borderColor, fillColor)
 
 		// Arrow to next phase
 		if i < 2 {
 			arrowX := boxX + boxWidth + 5
 			arrowY := startY + boxHeight/2
 
-			// Arrow color based on animation
 			arrowAlpha := uint8(150)
 			if int(animProgress) == i {
-				// Pulsing arrow
-				pulse := math.Sin(animProgress*math.Pi*2) * 0.5 + 0.5
+				pulse := math.Sin(animProgress*math.Pi*2)*0.5 + 0.5
 				arrowAlpha = uint8(150 + pulse*105)
 			}
 			arrowColor := color.RGBA{0, 212, 255, arrowAlpha}
 
-			// Draw arrow line
 			for ax := 0; ax < spacing-10; ax++ {
 				img.Set(arrowX+ax, arrowY, arrowColor)
 				img.Set(arrowX+ax, arrowY+1, arrowColor)
 			}
 
-			// Arrow head
 			for ay := -4; ay <= 4; ay++ {
-				headX := arrowX + spacing - 15 + abs(ay)
+				headX := arrowX + spacing - 15 + absInvestor(ay)
 				img.Set(headX, arrowY+ay, arrowColor)
 			}
 		}
@@ -165,11 +214,31 @@ func (p *PhasedStrategyDiagram) generateImage(w, h int) image.Image {
 	return img
 }
 
-func abs(x int) int {
+func absInvestor(x int) int {
 	if x < 0 {
 		return -x
 	}
 	return x
+}
+
+func drawBoxFilledInvestor(img *image.RGBA, x, y, width, height int, borderColor, fillColor color.RGBA) {
+	for dy := 2; dy < height-2; dy++ {
+		for dx := 2; dx < width-2; dx++ {
+			img.Set(x+dx, y+dy, fillColor)
+		}
+	}
+	for dx := 0; dx < width; dx++ {
+		img.Set(x+dx, y, borderColor)
+		img.Set(x+dx, y+1, borderColor)
+		img.Set(x+dx, y+height-1, borderColor)
+		img.Set(x+dx, y+height-2, borderColor)
+	}
+	for dy := 0; dy < height; dy++ {
+		img.Set(x, y+dy, borderColor)
+		img.Set(x+1, y+dy, borderColor)
+		img.Set(x+width-1, y+dy, borderColor)
+		img.Set(x+width-2, y+dy, borderColor)
+	}
 }
 
 // AnalogStatesComparison shows binary vs FeCIM memory comparison.
@@ -177,15 +246,27 @@ type AnalogStatesComparison struct {
 	widget.BaseWidget
 
 	mu           sync.RWMutex
-	animProgress float64 // Counter animation
-	raster       *canvas.Raster
+	animProgress float64
 	minSize      fyne.Size
+
+	raster       *canvas.Raster
+	binaryTitle  *canvas.Text
+	fecimTitle   *canvas.Text
+	binaryStats1 *canvas.Text
+	binaryStats2 *canvas.Text
+	fecimStats1  *canvas.Text
+	fecimStats2  *canvas.Text
+	taglineText  *canvas.Text
+	label0       *canvas.Text
+	label1       *canvas.Text
+	labelStart   *canvas.Text
+	labelEnd     *canvas.Text
 }
 
 // NewAnalogStatesComparison creates a new analog states comparison.
 func NewAnalogStatesComparison() *AnalogStatesComparison {
 	a := &AnalogStatesComparison{
-		minSize: fyne.NewSize(400, 150),
+		minSize: fyne.NewSize(400, 130),
 	}
 	a.ExtendBaseWidget(a)
 	return a
@@ -205,15 +286,129 @@ func (a *AnalogStatesComparison) MinSize() fyne.Size {
 
 // CreateRenderer implements fyne.Widget.
 func (a *AnalogStatesComparison) CreateRenderer() fyne.WidgetRenderer {
-	a.raster = canvas.NewRaster(a.generateImage)
-	return widget.NewSimpleRenderer(a.raster)
+	a.raster = canvas.NewRaster(a.generateGraphics)
+
+	a.binaryTitle = canvas.NewText("BINARY MEMORY", color.RGBA{200, 100, 100, 255})
+	a.binaryTitle.TextSize = 10
+	a.binaryTitle.TextStyle = fyne.TextStyle{Bold: true}
+
+	a.fecimTitle = canvas.NewText("FeCIM MEMORY", color.RGBA{100, 200, 150, 255})
+	a.fecimTitle.TextSize = 10
+	a.fecimTitle.TextStyle = fyne.TextStyle{Bold: true}
+
+	a.binaryStats1 = canvas.NewText("2 states", color.RGBA{180, 180, 180, 255})
+	a.binaryStats1.TextSize = 9
+
+	a.binaryStats2 = canvas.NewText("1 bit/cell", color.RGBA{150, 150, 150, 255})
+	a.binaryStats2.TextSize = 9
+
+	a.fecimStats1 = canvas.NewText("30 states", color.RGBA{180, 180, 180, 255})
+	a.fecimStats1.TextSize = 9
+
+	a.fecimStats2 = canvas.NewText("4.9 bits/cell", color.RGBA{100, 200, 150, 255})
+	a.fecimStats2.TextSize = 9
+
+	a.taglineText = canvas.NewText("Same silicon, 5x more information", color.RGBA{0, 212, 255, 255})
+	a.taglineText.TextSize = 10
+	a.taglineText.TextStyle = fyne.TextStyle{Bold: true}
+
+	a.label0 = canvas.NewText("0", color.RGBA{200, 200, 200, 255})
+	a.label0.TextSize = 10
+
+	a.label1 = canvas.NewText("1", color.RGBA{50, 50, 50, 255})
+	a.label1.TextSize = 10
+
+	a.labelStart = canvas.NewText("1", color.RGBA{150, 150, 255, 255})
+	a.labelStart.TextSize = 8
+
+	a.labelEnd = canvas.NewText("30", color.RGBA{255, 150, 150, 255})
+	a.labelEnd.TextSize = 8
+
+	return &analogStatesRenderer{widget: a}
 }
 
-// generateImage creates the analog states comparison.
-func (a *AnalogStatesComparison) generateImage(w, h int) image.Image {
+type analogStatesRenderer struct {
+	widget *AnalogStatesComparison
+}
+
+func (r *analogStatesRenderer) MinSize() fyne.Size {
+	return r.widget.minSize
+}
+
+func (r *analogStatesRenderer) Layout(size fyne.Size) {
+	r.widget.raster.Resize(size)
+	midX := size.Width / 2
+
+	r.widget.binaryTitle.Move(fyne.NewPos(20, 5))
+	r.widget.fecimTitle.Move(fyne.NewPos(midX+20, 5))
+
+	r.widget.label0.Move(fyne.NewPos(42, 42))
+	r.widget.label1.Move(fyne.NewPos(82, 42))
+
+	cellY := float32(25)
+	cellSize := float32(30)
+	r.widget.binaryStats1.Move(fyne.NewPos(30, cellY+cellSize+8))
+	r.widget.binaryStats2.Move(fyne.NewPos(30, cellY+cellSize+22))
+
+	r.widget.labelStart.Move(fyne.NewPos(midX+22, cellY+cellSize+5))
+	r.widget.labelEnd.Move(fyne.NewPos(size.Width-35, cellY+cellSize+5))
+
+	r.widget.fecimStats1.Move(fyne.NewPos(midX+20, cellY+cellSize+18))
+	r.widget.fecimStats2.Move(fyne.NewPos(midX+20, cellY+cellSize+32))
+
+	r.widget.taglineText.Move(fyne.NewPos(size.Width/2-100, size.Height-18))
+}
+
+func (r *analogStatesRenderer) Refresh() {
+	r.widget.mu.RLock()
+	animProgress := r.widget.animProgress
+	r.widget.mu.RUnlock()
+
+	// Pulse tagline
+	pulse := 0.7 + math.Sin(animProgress*2)*0.3
+	r.widget.taglineText.Color = color.RGBA{
+		0,
+		uint8(212 * pulse),
+		uint8(255 * pulse),
+		255,
+	}
+
+	// Animated bits display
+	bitsTarget := 4.9
+	bitsDisplay := bitsTarget
+	if animProgress < 2.0 {
+		bitsDisplay = bitsTarget * (animProgress / 2.0)
+	}
+	r.widget.fecimStats2.Text = fmt.Sprintf("%.1f bits/cell", bitsDisplay)
+
+	r.widget.raster.Refresh()
+	canvas.Refresh(r.widget.taglineText)
+	canvas.Refresh(r.widget.fecimStats2)
+}
+
+func (r *analogStatesRenderer) Objects() []fyne.CanvasObject {
+	return []fyne.CanvasObject{
+		r.widget.raster,
+		r.widget.binaryTitle,
+		r.widget.fecimTitle,
+		r.widget.label0,
+		r.widget.label1,
+		r.widget.binaryStats1,
+		r.widget.binaryStats2,
+		r.widget.labelStart,
+		r.widget.labelEnd,
+		r.widget.fecimStats1,
+		r.widget.fecimStats2,
+		r.widget.taglineText,
+	}
+}
+
+func (r *analogStatesRenderer) Destroy() {}
+
+// generateGraphics creates the analog states graphics.
+func (a *AnalogStatesComparison) generateGraphics(w, h int) image.Image {
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
 
-	// Background
 	bgColor := color.RGBA{25, 35, 55, 255}
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
@@ -221,37 +416,28 @@ func (a *AnalogStatesComparison) generateImage(w, h int) image.Image {
 		}
 	}
 
-	if w < 200 || h < 100 {
+	if w < 150 || h < 80 {
 		return img
 	}
 
-	a.mu.RLock()
-	animProgress := a.animProgress
-	a.mu.RUnlock()
-
 	midX := w / 2
 
-	// LEFT SIDE: Binary Memory
-	drawTextSimple(img, "BINARY MEMORY", 20, 15, color.RGBA{200, 100, 100, 255}, 11)
-
-	// Draw 2-cell grid (0 and 1)
-	cellSize := 35
-	cellY := 40
+	// Binary cells
+	cellSize := 30
+	cellY := 25
 	for i := 0; i < 2; i++ {
 		cellX := 30 + i*(cellSize+5)
 		var cellColor color.RGBA
 		if i == 0 {
-			cellColor = color.RGBA{40, 40, 40, 255} // Black for 0
+			cellColor = color.RGBA{40, 40, 40, 255}
 		} else {
-			cellColor = color.RGBA{255, 255, 255, 255} // White for 1
+			cellColor = color.RGBA{255, 255, 255, 255}
 		}
-		// Draw cell
 		for dy := 0; dy < cellSize; dy++ {
 			for dx := 0; dx < cellSize; dx++ {
 				img.Set(cellX+dx, cellY+dy, cellColor)
 			}
 		}
-		// Border
 		borderColor := color.RGBA{100, 100, 100, 255}
 		for dx := 0; dx < cellSize; dx++ {
 			img.Set(cellX+dx, cellY, borderColor)
@@ -261,34 +447,19 @@ func (a *AnalogStatesComparison) generateImage(w, h int) image.Image {
 			img.Set(cellX, cellY+dy, borderColor)
 			img.Set(cellX+cellSize-1, cellY+dy, borderColor)
 		}
-		// Label
-		label := "0"
-		if i == 1 {
-			label = "1"
-		}
-		labelColor := color.RGBA{100, 100, 100, 255}
-		if i == 0 {
-			labelColor = color.RGBA{200, 200, 200, 255}
-		}
-		drawTextSimple(img, label, cellX+cellSize/2-4, cellY+cellSize/2-6, labelColor, 12)
 	}
 
-	// Binary stats
-	drawTextSimple(img, "2 states", 30, cellY+cellSize+10, color.RGBA{180, 180, 180, 255}, 10)
-	drawTextSimple(img, "1 bit/cell", 30, cellY+cellSize+25, color.RGBA{150, 150, 150, 255}, 9)
-
-	// RIGHT SIDE: FeCIM Memory
-	drawTextSimple(img, "FeCIM MEMORY", midX+20, 15, color.RGBA{100, 200, 150, 255}, 11)
-
-	// Draw 30-cell gradient (horizontal bar divided into cells)
+	// FeCIM gradient bar
 	gradWidth := w - midX - 40
-	gradHeight := 35
-	gradY := 40
+	gradHeight := 30
+	gradY := 25
 	cellWidth := gradWidth / 30
+	if cellWidth < 1 {
+		cellWidth = 1
+	}
 
 	for i := 0; i < 30; i++ {
 		cellX := midX + 20 + i*cellWidth
-		// Color gradient from blue to red
 		t := float64(i) / 29.0
 		var cellColor color.RGBA
 		if t < 0.5 {
@@ -308,7 +479,6 @@ func (a *AnalogStatesComparison) generateImage(w, h int) image.Image {
 				255,
 			}
 		}
-		// Draw cell
 		for dy := 0; dy < gradHeight; dy++ {
 			for dx := 0; dx < cellWidth; dx++ {
 				if cellX+dx < w-20 {
@@ -318,42 +488,20 @@ func (a *AnalogStatesComparison) generateImage(w, h int) image.Image {
 		}
 	}
 
-	// Border around gradient
+	// Border
 	borderColor := color.RGBA{0, 212, 255, 255}
 	for dx := 0; dx < gradWidth; dx++ {
-		img.Set(midX+20+dx, gradY, borderColor)
-		img.Set(midX+20+dx, gradY+gradHeight-1, borderColor)
+		if midX+20+dx < w {
+			img.Set(midX+20+dx, gradY, borderColor)
+			img.Set(midX+20+dx, gradY+gradHeight-1, borderColor)
+		}
 	}
 	for dy := 0; dy < gradHeight; dy++ {
 		img.Set(midX+20, gradY+dy, borderColor)
-		img.Set(midX+20+gradWidth-1, gradY+dy, borderColor)
+		if midX+20+gradWidth-1 < w {
+			img.Set(midX+20+gradWidth-1, gradY+dy, borderColor)
+		}
 	}
-
-	// Labels
-	drawTextSimple(img, "1", midX+25, gradY+gradHeight+5, color.RGBA{150, 150, 255, 255}, 8)
-	drawTextSimple(img, "30", midX+gradWidth-5, gradY+gradHeight+5, color.RGBA{255, 150, 150, 255}, 8)
-
-	// FeCIM stats with animated counter
-	drawTextSimple(img, "30 states", midX+20, gradY+gradHeight+20, color.RGBA{180, 180, 180, 255}, 10)
-
-	// Animated bits counter
-	bitsTarget := 4.9
-	bitsDisplay := bitsTarget
-	if animProgress < 2.0 {
-		bitsDisplay = bitsTarget * (animProgress / 2.0)
-	}
-	bitsText := formatNumberWithDecimal(bitsDisplay, 1) + " bits/cell"
-	drawTextSimple(img, bitsText, midX+20, gradY+gradHeight+35, color.RGBA{100, 200, 150, 255}, 10)
-
-	// Bottom tagline
-	pulse := 0.7 + math.Sin(animProgress*2)*0.3
-	taglineColor := color.RGBA{
-		uint8(float64(0) * pulse),
-		uint8(float64(212) * pulse),
-		uint8(float64(255) * pulse),
-		255,
-	}
-	drawTextSimple(img, "Same silicon, 5x more information", w/2-100, h-15, taglineColor, 11)
 
 	return img
 }
@@ -365,38 +513,33 @@ type WeebitNanoCard struct {
 
 // NewWeebitNanoCard creates a new Weebit card.
 func NewWeebitNanoCard() *WeebitNanoCard {
-	w := &WeebitNanoCard{}
-	w.ExtendBaseWidget(w)
-	return w
+	wc := &WeebitNanoCard{}
+	wc.ExtendBaseWidget(wc)
+	return wc
 }
 
 // MinSize returns minimum size.
-func (w *WeebitNanoCard) MinSize() fyne.Size {
-	return fyne.NewSize(280, 180)
+func (wc *WeebitNanoCard) MinSize() fyne.Size {
+	return fyne.NewSize(250, 160)
 }
 
 // CreateRenderer implements fyne.Widget.
-func (w *WeebitNanoCard) CreateRenderer() fyne.WidgetRenderer {
-	// Title with icon
+func (wc *WeebitNanoCard) CreateRenderer() fyne.WidgetRenderer {
 	title := widget.NewLabelWithStyle("PRECEDENT: WEEBIT NANO", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 
-	// Quote
 	quote := widget.NewLabel("\"This company Weebit—this is another memory that came out of my lab... it's selling now on the market with three big customers.\"")
 	quote.Wrapping = fyne.TextWrapWord
 	quote.TextStyle = fyne.TextStyle{Italic: true}
 
-	// Attribution
 	attribution := widget.NewLabel("— Dr. external research group")
 	attribution.Alignment = fyne.TextAlignTrailing
 
-	// Checkmarks
-	check1 := widget.NewLabel("✓ Started at TRL 4 (like FeCIM today)")
-	check2 := widget.NewLabel("✓ Now partnered with major foundries")
-	check3 := widget.NewLabel("✓ Proven commercialization path")
+	check1 := widget.NewLabel("Y Started at TRL 4 (like FeCIM)")
+	check2 := widget.NewLabel("Y Now partnered with foundries")
+	check3 := widget.NewLabel("Y Proven commercialization path")
 
 	checks := container.NewVBox(check1, check2, check3)
 
-	// Stock note
 	stockNote := widget.NewLabel("ASX: WBT")
 	stockNote.TextStyle = fyne.TextStyle{Italic: true}
 

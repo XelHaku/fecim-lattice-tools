@@ -118,8 +118,15 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 		container.NewTabItem("Accuracy Analysis", waterfallTab),
 	)
 
-	// Update educational panel based on selected tab
+	// Update educational panel based on selected tab and preserve selection
 	ca.tabs.OnSelected = func(tab *container.TabItem) {
+		// Apply persisted selection to the newly selected tab's heatmap
+		if ca.selectedRow >= 0 && ca.selectedCol >= 0 {
+			ca.syncSelection(ca.selectedRow, ca.selectedCol)
+			// Update tooltip for the selected cell based on current tab
+			ca.updateTooltipForTab(tab.Text, ca.selectedRow, ca.selectedCol)
+		}
+
 		switch tab.Text {
 		case "Conductance":
 			ca.setEducationalContent("Conductance Matrix",
@@ -581,6 +588,9 @@ func (ca *CrossbarApp) onBeforeAfterCellTapped(row, col int, isIdeal bool) {
 		return
 	}
 
+	// Sync selection across all heatmaps
+	ca.syncSelection(row, col)
+
 	var idealVal, actualVal float64
 	if ca.beforeAfterToggle.idealData != nil && row < len(ca.beforeAfterToggle.idealData) &&
 		col < len(ca.beforeAfterToggle.idealData[0]) {
@@ -682,4 +692,54 @@ func (ca *CrossbarApp) assessDegradationImpact(diffPercent float64) string {
 		return "Significant - requires compensation"
 	}
 	return "Critical - exceeds tolerance limits"
+}
+
+// updateTooltipForTab updates the stats panel tooltip based on which tab is selected.
+func (ca *CrossbarApp) updateTooltipForTab(tabName string, row, col int) {
+	if row < 0 || col < 0 {
+		return
+	}
+
+	switch tabName {
+	case "Conductance":
+		matrix := ca.array.GetConductanceMatrix()
+		if row < len(matrix) && col < len(matrix[0]) {
+			value := matrix[row][col]
+			tooltip := ConductanceTooltip(row, col, value, ca.array)
+			ca.statsLabel.SetText(tooltip)
+			level := crossbar.GetLevel(value)
+			ca.updateStatus(fmt.Sprintf("READ | Cell [%d,%d] = Level %d/30 (%.2f µS)",
+				row, col, level, value*99+1))
+		}
+
+	case "IR Drop":
+		tooltip := IRDropTooltip(row, col, ca.lastIRDropAnalysis, ca.array)
+		ca.statsLabel.SetText(tooltip)
+		if ca.lastIRDropAnalysis != nil && row < len(ca.lastIRDropAnalysis.EffectiveVoltage) &&
+			col < len(ca.lastIRDropAnalysis.EffectiveVoltage[0]) {
+			effectiveV := ca.lastIRDropAnalysis.EffectiveVoltage[row][col]
+			dropPercent := (1.0 - effectiveV) * 100
+			ca.updateStatus(fmt.Sprintf("IR DROP | Cell [%d,%d]: %.3f V (%.1f%% drop)",
+				row, col, effectiveV, dropPercent))
+		}
+
+	case "Sneak Paths":
+		sneakTargetRow := ca.config.Rows / 2
+		sneakTargetCol := ca.config.Cols / 2
+		tooltip := SneakPathTooltip(row, col, ca.lastSneakAnalysis, sneakTargetRow, sneakTargetCol, ca.array)
+		ca.statsLabel.SetText(tooltip)
+		if ca.lastSneakAnalysis != nil && row < len(ca.lastSneakAnalysis.SneakCurrents) &&
+			col < len(ca.lastSneakAnalysis.SneakCurrents[0]) {
+			sneakCurrent := ca.lastSneakAnalysis.SneakCurrents[row][col]
+			sneakRatio := 0.0
+			if ca.lastSneakAnalysis.TotalSignal > 0 {
+				sneakRatio = sneakCurrent / ca.lastSneakAnalysis.TotalSignal * 100
+			}
+			ca.updateStatus(fmt.Sprintf("SNEAK | Cell [%d,%d]: %.6f (%.2f%% of signal)",
+				row, col, sneakCurrent, sneakRatio))
+		}
+
+	case "Ideal vs Actual":
+		ca.onBeforeAfterCellTapped(row, col, true) // Reuse existing handler
+	}
 }

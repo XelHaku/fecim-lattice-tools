@@ -3,6 +3,7 @@
 package gui
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"math"
@@ -16,10 +17,10 @@ import (
 
 // MarketSegment represents a market segment with growth data.
 type MarketSegment struct {
-	Name   string
-	Y2025  float64 // Billion USD
-	Y2030  float64 // Billion USD
-	Color  color.RGBA
+	Name  string
+	Y2025 float64 // Billion USD
+	Y2030 float64 // Billion USD
+	Color color.RGBA
 }
 
 // marketData holds the market opportunity data.
@@ -36,14 +37,23 @@ type MarketOpportunityChart struct {
 	mu           sync.RWMutex
 	animProgress float64 // 0-1 for bar growth
 	pulsePhase   float64
-	raster       *canvas.Raster
 	minSize      fyne.Size
+
+	raster       *canvas.Raster
+	titleText    *canvas.Text
+	totalText    *canvas.Text
+	subtextLine1 *canvas.Text
+	subtextLine2 *canvas.Text
+	yearLabels   []*canvas.Text
+	segLabels    []*canvas.Text
 }
 
 // NewMarketOpportunityChart creates a new market chart.
 func NewMarketOpportunityChart() *MarketOpportunityChart {
 	m := &MarketOpportunityChart{
-		minSize: fyne.NewSize(500, 200),
+		minSize:    fyne.NewSize(500, 180),
+		yearLabels: make([]*canvas.Text, 2),
+		segLabels:  make([]*canvas.Text, len(marketData)),
 	}
 	m.ExtendBaseWidget(m)
 	return m
@@ -55,7 +65,7 @@ func (m *MarketOpportunityChart) UpdateAnimation(dt float64) {
 	defer m.mu.Unlock()
 
 	if m.animProgress < 1.0 {
-		m.animProgress += dt * 0.5 // 2 seconds to fill
+		m.animProgress += dt * 0.5
 		if m.animProgress > 1.0 {
 			m.animProgress = 1.0
 		}
@@ -80,15 +90,113 @@ func (m *MarketOpportunityChart) MinSize() fyne.Size {
 
 // CreateRenderer implements fyne.Widget.
 func (m *MarketOpportunityChart) CreateRenderer() fyne.WidgetRenderer {
-	m.raster = canvas.NewRaster(m.generateImage)
-	return widget.NewSimpleRenderer(m.raster)
+	m.raster = canvas.NewRaster(m.generateBars)
+
+	m.titleText = canvas.NewText("MARKET OPPORTUNITY ($B)", color.RGBA{0, 212, 255, 255})
+	m.titleText.TextSize = 13
+	m.titleText.TextStyle = fyne.TextStyle{Bold: true}
+
+	m.totalText = canvas.NewText("$711B by 2030", color.RGBA{0, 212, 255, 255})
+	m.totalText.TextSize = 14
+	m.totalText.TextStyle = fyne.TextStyle{Bold: true}
+
+	m.subtextLine1 = canvas.NewText("FeCIM can", color.RGBA{150, 150, 150, 255})
+	m.subtextLine1.TextSize = 10
+
+	m.subtextLine2 = canvas.NewText("address ALL", color.RGBA{100, 200, 150, 255})
+	m.subtextLine2.TextSize = 10
+
+	m.yearLabels[0] = canvas.NewText("2025", color.RGBA{150, 150, 150, 255})
+	m.yearLabels[0].TextSize = 10
+	m.yearLabels[1] = canvas.NewText("2030", color.RGBA{200, 200, 200, 255})
+	m.yearLabels[1].TextSize = 10
+
+	for i, seg := range marketData {
+		m.segLabels[i] = canvas.NewText(seg.Name, color.RGBA{180, 180, 180, 255})
+		m.segLabels[i].TextSize = 9
+	}
+
+	return &marketChartRenderer{widget: m}
 }
 
-// generateImage creates the market chart.
-func (m *MarketOpportunityChart) generateImage(w, h int) image.Image {
+type marketChartRenderer struct {
+	widget *MarketOpportunityChart
+}
+
+func (r *marketChartRenderer) MinSize() fyne.Size {
+	return r.widget.minSize
+}
+
+func (r *marketChartRenderer) Layout(size fyne.Size) {
+	r.widget.raster.Resize(size)
+
+	// Title at top center
+	r.widget.titleText.Move(fyne.NewPos(size.Width/2-100, 5))
+
+	// Total and subtext on left
+	r.widget.totalText.Move(fyne.NewPos(10, size.Height/2-10))
+	r.widget.subtextLine1.Move(fyne.NewPos(15, size.Height/2+15))
+	r.widget.subtextLine2.Move(fyne.NewPos(15, size.Height/2+30))
+
+	// Year labels at bottom
+	chartStartX := float32(100)
+	chartWidth := size.Width - 120
+	r.widget.yearLabels[0].Move(fyne.NewPos(chartStartX+10, size.Height-20))
+	r.widget.yearLabels[1].Move(fyne.NewPos(chartStartX+chartWidth-40, size.Height-20))
+
+	// Segment labels
+	barGroupWidth := chartWidth / float32(len(marketData))
+	for i := range marketData {
+		r.widget.segLabels[i].Move(fyne.NewPos(chartStartX+float32(i)*barGroupWidth+5, size.Height-35))
+	}
+}
+
+func (r *marketChartRenderer) Refresh() {
+	r.widget.mu.RLock()
+	progress := r.widget.animProgress
+	pulsePhase := r.widget.pulsePhase
+	r.widget.mu.RUnlock()
+
+	// Pulse total text
+	if progress >= 1.0 {
+		pulse := 0.7 + math.Sin(pulsePhase)*0.3
+		r.widget.totalText.Color = color.RGBA{
+			0,
+			uint8(212 * pulse),
+			uint8(255 * pulse),
+			255,
+		}
+	} else {
+		r.widget.totalText.Color = color.RGBA{0, 0, 0, 0} // Hidden until done
+	}
+
+	r.widget.raster.Refresh()
+	canvas.Refresh(r.widget.totalText)
+}
+
+func (r *marketChartRenderer) Objects() []fyne.CanvasObject {
+	objects := []fyne.CanvasObject{
+		r.widget.raster,
+		r.widget.titleText,
+		r.widget.totalText,
+		r.widget.subtextLine1,
+		r.widget.subtextLine2,
+	}
+	for _, lbl := range r.widget.yearLabels {
+		objects = append(objects, lbl)
+	}
+	for _, lbl := range r.widget.segLabels {
+		objects = append(objects, lbl)
+	}
+	return objects
+}
+
+func (r *marketChartRenderer) Destroy() {}
+
+// generateBars creates just the bar graphics.
+func (m *MarketOpportunityChart) generateBars(w, h int) image.Image {
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
 
-	// Background
 	bgColor := color.RGBA{25, 35, 55, 255}
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
@@ -96,48 +204,31 @@ func (m *MarketOpportunityChart) generateImage(w, h int) image.Image {
 		}
 	}
 
-	if w < 300 || h < 150 {
+	if w < 200 || h < 100 {
 		return img
 	}
 
 	m.mu.RLock()
 	progress := m.animProgress
-	pulsePhase := m.pulsePhase
 	m.mu.RUnlock()
 
-	// Layout
-	padding := 20
 	labelWidth := 100
-	chartWidth := w - 2*padding - labelWidth
+	chartWidth := w - labelWidth - 20
 	barGroupWidth := chartWidth / len(marketData)
-	maxVal := 450.0 // Max Y value for scaling
+	maxVal := 450.0
 
-	// Title
-	drawTextSimple(img, "MARKET OPPORTUNITY ($B)", w/2-100, 12, color.RGBA{0, 212, 255, 255}, 14)
-
-	// Calculate totals
-	total2025 := 0.0
-	total2030 := 0.0
-	for _, seg := range marketData {
-		total2025 += seg.Y2025
-		total2030 += seg.Y2030
-	}
-
-	// Draw bars for each segment
-	chartStartX := padding + labelWidth
-	chartStartY := padding + 35
-	chartHeight := h - chartStartY - 50
+	chartStartX := labelWidth
+	chartStartY := 30
+	chartHeight := h - chartStartY - 45
 
 	for i, seg := range marketData {
 		groupX := chartStartX + i*barGroupWidth
 
-		// 2025 bar
 		bar2025Height := int(float64(chartHeight) * (seg.Y2025 / maxVal) * progress)
 		bar2025X := groupX + 10
 		bar2025Y := chartStartY + chartHeight - bar2025Height
 		barWidth := (barGroupWidth - 30) / 2
 
-		// Draw 2025 bar
 		darkColor := color.RGBA{seg.Color.R / 2, seg.Color.G / 2, seg.Color.B / 2, 255}
 		for dy := 0; dy < bar2025Height; dy++ {
 			for dx := 0; dx < barWidth; dx++ {
@@ -145,12 +236,10 @@ func (m *MarketOpportunityChart) generateImage(w, h int) image.Image {
 			}
 		}
 
-		// 2030 bar
 		bar2030Height := int(float64(chartHeight) * (seg.Y2030 / maxVal) * progress)
 		bar2030X := groupX + 10 + barWidth + 5
 		bar2030Y := chartStartY + chartHeight - bar2030Height
 
-		// Draw 2030 bar
 		for dy := 0; dy < bar2030Height; dy++ {
 			for dx := 0; dx < barWidth; dx++ {
 				img.Set(bar2030X+dx, bar2030Y+dy, seg.Color)
@@ -160,50 +249,13 @@ func (m *MarketOpportunityChart) generateImage(w, h int) image.Image {
 		// Growth arrow
 		if bar2025Height > 0 && bar2030Height > 0 {
 			arrowColor := color.RGBA{100, 255, 150, 200}
-			// Arrow line
 			for ay := bar2025Y; ay > bar2030Y; ay -= 3 {
 				img.Set(bar2025X+barWidth/2, ay, arrowColor)
 			}
-			// Arrow head
 			for ax := -3; ax <= 3; ax++ {
 				img.Set(bar2030X+barWidth/2+ax, bar2030Y+5, arrowColor)
 			}
 		}
-
-		// Segment label (below)
-		labelY := chartStartY + chartHeight + 5
-		drawTextSimple(img, seg.Name, groupX+5, labelY, color.RGBA{180, 180, 180, 255}, 9)
-
-		// Values on bars
-		if progress >= 1.0 {
-			val2025 := int(seg.Y2025 * progress)
-			val2030 := int(seg.Y2030 * progress)
-			drawTextSimple(img, "$"+formatNumber(float64(val2025))+"B", bar2025X, bar2025Y-12, darkColor, 8)
-			drawTextSimple(img, "$"+formatNumber(float64(val2030))+"B", bar2030X, bar2030Y-12, seg.Color, 8)
-		}
-	}
-
-	// Year labels
-	drawTextSimple(img, "2025", chartStartX+10, chartStartY+chartHeight+20, color.RGBA{150, 150, 150, 255}, 10)
-	drawTextSimple(img, "2030", chartStartX+chartWidth-50, chartStartY+chartHeight+20, color.RGBA{200, 200, 200, 255}, 10)
-
-	// Total headline with pulse
-	if progress >= 1.0 {
-		pulse := 0.7 + math.Sin(pulsePhase)*0.3
-		headlineColor := color.RGBA{
-			uint8(float64(0) * pulse),
-			uint8(float64(212) * pulse),
-			uint8(float64(255) * pulse),
-			255,
-		}
-
-		// Hero number
-		totalText := "$711B by 2030"
-		drawTextSimple(img, totalText, padding, chartStartY+chartHeight/2, headlineColor, 16)
-
-		// Subtext
-		drawTextSimple(img, "FeCIM can", padding+5, chartStartY+chartHeight/2+20, color.RGBA{150, 150, 150, 255}, 10)
-		drawTextSimple(img, "address ALL", padding+5, chartStartY+chartHeight/2+35, color.RGBA{100, 200, 150, 255}, 10)
 	}
 
 	return img
@@ -241,12 +293,11 @@ func NewCompetitiveMatrix() *CompetitiveMatrix {
 
 // MinSize returns minimum size.
 func (c *CompetitiveMatrix) MinSize() fyne.Size {
-	return fyne.NewSize(500, 180)
+	return fyne.NewSize(400, 160)
 }
 
 // CreateRenderer implements fyne.Widget.
 func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
-	// Build the table using Fyne widgets
 	header := container.NewGridWithColumns(5,
 		widget.NewLabelWithStyle("Technology", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		widget.NewLabelWithStyle("Energy/MAC", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
@@ -274,7 +325,6 @@ func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
 		rows.Add(row)
 	}
 
-	// Disclaimer
 	disclaimer := widget.NewLabel("* TRL 4 - Lab validation only")
 	disclaimer.TextStyle = fyne.TextStyle{Italic: true}
 
@@ -296,13 +346,18 @@ func createStatusLabel(status int) *widget.Label {
 	var text string
 	switch status {
 	case 0:
-		text = "✗"
+		text = "X"
 	case 1:
-		text = "◐"
+		text = "~"
 	case 2:
-		text = "✓"
+		text = "Y"
 	}
 	label := widget.NewLabel(text)
 	label.Alignment = fyne.TextAlignCenter
 	return label
+}
+
+// formatNumberMarket formats numbers with commas.
+func formatNumberMarket(n float64) string {
+	return fmt.Sprintf("%.0f", n)
 }

@@ -2,6 +2,13 @@
 
 **Derived from the "Zero to ASIC" Demo by Matt Venn & Mohammed Kassem**
 
+> [!IMPORTANT]
+> **2026 Update:** While the *principles* in this guide are timeless, the **logistics** have changed.
+> *   **Efabless** has shut down operations (2025). The shuttle platform has moved.
+> *   **Tiny Tapeout** now runs on the **IHP** process (Germany), not SkyWater via Efabless.
+> *   **OpenLane v2** (Python-based) is now the standard text-to-gds flow.
+> keep this in mind when reading references to "Google Shuttle" or "Efabless".
+
 > *"I'm really a learning-by-doing kind of person... so I just kind of jumped into doing it."*
 
 This guide distills the practical, hands-on insights from the "Zero to ASIC" workflow. While `eda.opensource.md` covers the tools, this guide covers the **journey**—specifically navigating the confusing reality of PDKs, intermediate files, and tapeout logistics.
@@ -35,7 +42,11 @@ The 130nm process is built up in specific layers. Understanding this 3D structur
 
 ## 2. The OpenLane Flow: What Actually Happens?
 
-OpenLane automates the progression from "Code" to "GDSII". If you look under the hood (in the `runs/` directory), here is what you see at each step:
+OpenLane automates the progression from "Code" to "GDSII".
+*   **Classic (v1):** Tcl-based flow (described below).
+*   **Modern (v2/LibreLane):** Python-based flow. The steps are the same, but the configuration is more flexible.
+
+If you look under the hood (in the `runs/` directory), here is what you see at each step:
 
 ### Step A: Synthesis (Yosys)
 *   **Input:** Verilog (`assign out = ~in;`)
@@ -60,26 +71,23 @@ OpenLane automates the progression from "Code" to "GDSII". If you look under the
 
 ---
 
-## 3. The Google Shuttle & Caravel Harness
+## 3. The Open Shuttle Ecosystem (Post-2025)
 
-The "Free Shuttle" program puts your design on a specific chip called **Caravel**.
+The concept of the "Free Shuttle" lives on, but the provider has changed.
 
 ### The "Mega Project Area" (User Project Area)
-*   **Size:** ~10mm² (roughly 2.9mm x 3.5mm).
+*   **Size:** ~10mm² (roughly 2.9mm x 3.5mm) on IHP 130nm or SkyWater.
 *   **Capacity:** Huge for 130nm. You can fit ~1000 small blocks, or 10 RISC-V cores.
 *   **Philosophy:** "Multi-Project Wafer" (MPW). Many different designs share one wafer to split the cost.
 
-### The Harness (Caravel)
-You don't just get a naked chip; you get a System-on-Chip (SoC) wrapper:
-*   **RISC-V Processor:** A management core on the harness itself.
-*   **Logic Analyzer:** Allows you to "peek" at 128 signals inside your design from the management code.
-*   **Wishbone Bus:** A standard interface for your design to talk to the rest of the system.
+### The Harness (Caravel -> IHP Harness)
+You don't just get a naked chip; you get a System-on-Chip (SoC) wrapper.
+*   **Legacy:** The Caravel harness (RISC-V management core) was standard for Efabless.
+*   **Modern:** IHP shuttles use a similar harness concept to provide IO, logic analysis, and wishbone bus access.
 
-### Packaging (WLCSP)
-*   **Wafer Level Chip Scale Package:** The chip *is* the package.
-*   **Bumps:** Solder balls directly on the back of the silicon.
-*   **Pros:** Cheap, low inductance (fast).
-*   **Cons:** Harder to solder by hand than a DIP package (requires distinct PCB design skills).
+### Packaging (WLCSP / QFN)
+*   **Wafer Level Chip Scale Package:** The chip *is* the package (common in SkyWater runs).
+*   **QFN:** IHP runs often use QFN packaging, which is easier for hobbyists to solder.
 
 ---
 
@@ -103,7 +111,7 @@ You don't just get a naked chip; you get a System-on-Chip (SoC) wrapper:
 
 ## 5. Next Steps
 
-1.  **Tiny Tapeout:** Start here. It abstracts the "Caravel" complexity and focuses on the logic.
+1.  **Tiny Tapeout:** Start here. Now running on **IHP 130nm**. It abstracts the harness complexity.
 2.  **Zero to ASIC Course:** Matt Venn’s guided path through this entire stack.
-3.  **Install OpenLane:** Prepare 3GB+ of disk space and Docker.
-4.  **Join the Slack:** The SkyWater PDK Slack is where the specific, detailed help lives.
+3.  **Install OpenLane:** Check out **OpenLane v2** (LibreLane) for the latest Python-based features.
+4.  **Join the Community:** The Tiny Tapeout Discord is now the central hub for the open silicon community.

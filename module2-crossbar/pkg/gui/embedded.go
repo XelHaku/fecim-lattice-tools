@@ -17,7 +17,10 @@ type EmbeddedCrossbarApp struct {
 
 // NewEmbeddedCrossbarApp creates a new embedded crossbar GUI application
 func NewEmbeddedCrossbarApp() *EmbeddedCrossbarApp {
-	ca := &CrossbarApp{}
+	ca := &CrossbarApp{
+		selectedRow: -1, // No selection initially
+		selectedCol: -1,
+	}
 
 	// Initialize with default config
 	ca.config = &crossbar.Config{

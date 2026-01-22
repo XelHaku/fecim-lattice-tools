@@ -652,7 +652,8 @@ func (ca *CrossbarApp) onCellHover(row, col int, value float64) {
 
 // onIRDropCellTapped handles clicks on IR Drop heatmap.
 func (ca *CrossbarApp) onIRDropCellTapped(row, col int) {
-	ca.irDropHeatmap.SetSelection(row, col)
+	// Sync selection across all heatmaps
+	ca.syncSelection(row, col)
 
 	// Generate comprehensive IR drop tooltip
 	tooltip := IRDropTooltip(row, col, ca.lastIRDropAnalysis, ca.array)
@@ -703,18 +704,15 @@ func (ca *CrossbarApp) onIRDropCellHover(row, col int, value float64) {
 
 // onSneakCellTapped handles clicks on Sneak Path heatmap.
 func (ca *CrossbarApp) onSneakCellTapped(row, col int) {
-	ca.sneakPathHeatmap.SetSelection(row, col)
+	// Sync selection across all heatmaps
+	ca.syncSelection(row, col)
 
-	// Get selected target cell (typically center)
-	selectedRow := ca.config.Rows / 2
-	selectedCol := ca.config.Cols / 2
-	if ca.lastSneakAnalysis != nil {
-		// Use actual selected cell from last analysis
-		// For now, use center
-	}
+	// Get selected target cell for sneak analysis (typically center)
+	sneakTargetRow := ca.config.Rows / 2
+	sneakTargetCol := ca.config.Cols / 2
 
 	// Generate comprehensive sneak path tooltip
-	tooltip := SneakPathTooltip(row, col, ca.lastSneakAnalysis, selectedRow, selectedCol, ca.array)
+	tooltip := SneakPathTooltip(row, col, ca.lastSneakAnalysis, sneakTargetRow, sneakTargetCol, ca.array)
 	ca.statsLabel.SetText(tooltip)
 
 	// Update status with key info
