@@ -1,0 +1,77 @@
+# FeCIM 1T1R Cell - Stub LEF for OpenLane Integration
+# This is a PLACEHOLDER cell for simulation and array-level exploration.
+# No physical implementation exists - technology is at TRL 4.
+#
+# 1T1R Architecture: 1 Transistor + 1 Resistive FeFET
+# - Select transistor mitigates sneak path currents
+# - Source Line (SL) provides current path control
+#
+# Cell Dimensions: 0.92um x 2.72um (SKY130 compatible, 4x site width)
+# Usage: Array placement in FeCIM crossbar lattice generator
+
+VERSION 5.8 ;
+BUSBITCHARS "[]" ;
+DIVIDERCHAR "/" ;
+
+MACRO fecim_1t1r
+  CLASS CORE ;
+  FOREIGN fecim_1t1r 0 0 ;
+  ORIGIN 0 0 ;
+  SIZE 0.92 BY 2.72 ;
+  SYMMETRY X Y ;
+  SITE unithd ;
+
+  PIN WL
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    ANTENNADIFFAREA 0.0 ;
+    PORT
+      LAYER met1 ;
+        RECT 0.0 1.26 0.08 1.46 ;
+    END
+  END WL
+
+  PIN BL
+    DIRECTION INOUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER met2 ;
+        RECT 0.42 2.64 0.50 2.72 ;
+    END
+  END BL
+
+  PIN SL
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER met2 ;
+        RECT 0.42 0.0 0.50 0.08 ;
+    END
+  END SL
+
+  PIN VDD
+    DIRECTION INOUT ;
+    USE POWER ;
+    PORT
+      LAYER met1 ;
+        RECT 0.0 2.56 0.92 2.72 ;
+    END
+  END VDD
+
+  PIN VSS
+    DIRECTION INOUT ;
+    USE GROUND ;
+    PORT
+      LAYER met1 ;
+        RECT 0.0 0.0 0.92 0.16 ;
+    END
+  END VSS
+
+  OBS
+    LAYER met1 ;
+      RECT 0.08 0.16 0.84 2.56 ;
+  END
+
+END fecim_1t1r
+
+END LIBRARY

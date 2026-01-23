@@ -21,6 +21,7 @@ func CreateMainWindow(app fyne.App) fyne.Window {
 	// Create tab contents
 	compilerContent := tabs.MakeCompilerTab(state, w)
 	layoutContent := tabs.MakeLayoutTab(state)
+	hdlContent := tabs.MakeHDLTab(state, w) // Phase 3: HDL Generation
 	explorerContent := makePlaceholderTab("Design space explorer coming soon")
 	simulateContent := makePlaceholderTab("Simulation bridge coming soon")
 	exportContent := tabs.MakeExportTab(state, w)
@@ -28,7 +29,7 @@ func CreateMainWindow(app fyne.App) fyne.Window {
 
 	// View selector (replaces nested tabs to save space)
 	viewSelector := widget.NewSelect(
-		[]string{"Compiler", "Layout", "Explorer", "Simulate", "Export", "Learn"},
+		[]string{"Compiler", "Layout", "HDL", "Explorer", "Simulate", "Export", "Learn"},
 		nil,
 	)
 	viewSelector.SetSelected("Compiler")
@@ -43,6 +44,8 @@ func CreateMainWindow(app fyne.App) fyne.Window {
 			contentContainer.Objects[0] = compilerContent
 		case "Layout":
 			contentContainer.Objects[0] = layoutContent
+		case "HDL":
+			contentContainer.Objects[0] = hdlContent
 		case "Explorer":
 			contentContainer.Objects[0] = explorerContent
 		case "Simulate":

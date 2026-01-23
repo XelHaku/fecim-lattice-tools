@@ -1,0 +1,63 @@
+# FeCIM Bit Cell - Stub LEF for OpenLane Integration
+# This is a PLACEHOLDER cell for simulation and array-level exploration.
+# No physical implementation exists - technology is at TRL 4.
+#
+# Cell Dimensions: 0.46um x 2.72um (SKY130 compatible)
+# Usage: Array placement in FeCIM crossbar lattice generator
+
+VERSION 5.8 ;
+BUSBITCHARS "[]" ;
+DIVIDERCHAR "/" ;
+
+MACRO fecim_bit
+  CLASS CORE ;
+  FOREIGN fecim_bit 0 0 ;
+  ORIGIN 0 0 ;
+  SIZE 0.46 BY 2.72 ;
+  SYMMETRY X Y ;
+  SITE unithd ;
+
+  PIN WL
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER met1 ;
+        RECT 0.0 1.26 0.08 1.46 ;
+    END
+  END WL
+
+  PIN BL
+    DIRECTION INOUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER met2 ;
+        RECT 0.19 2.64 0.27 2.72 ;
+    END
+  END BL
+
+  PIN VDD
+    DIRECTION INOUT ;
+    USE POWER ;
+    PORT
+      LAYER met1 ;
+        RECT 0.0 2.56 0.46 2.72 ;
+    END
+  END VDD
+
+  PIN VSS
+    DIRECTION INOUT ;
+    USE GROUND ;
+    PORT
+      LAYER met1 ;
+        RECT 0.0 0.0 0.46 0.16 ;
+    END
+  END VSS
+
+  OBS
+    LAYER met1 ;
+      RECT 0.08 0.16 0.38 2.56 ;
+  END
+
+END fecim_bit
+
+END LIBRARY

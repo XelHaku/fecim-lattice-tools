@@ -3,6 +3,12 @@
 
 package compiler
 
+// Architecture types for crossbar array
+const (
+	ArchPassive = "passive" // Passive crossbar (WL, BL only)
+	Arch1T1R    = "1T1R"    // 1 Transistor 1 Resistor (WL, BL, SL)
+)
+
 // CompileConfig holds all parameters for compilation
 type CompileConfig struct {
 	ArrayRows int     `json:"array_rows"` // Target array rows
@@ -13,20 +19,38 @@ type CompileConfig struct {
 	VProgMin  float64 `json:"v_prog_min"` // Min programming voltage (V)
 	VProgMax  float64 `json:"v_prog_max"` // Max programming voltage (V)
 	TPulse    float64 `json:"t_pulse"`    // Pulse width (ns)
+
+	// Phase 2: Architecture configuration
+	Architecture string  `json:"architecture"` // "passive" or "1T1R"
+	CellPitch    float64 `json:"cell_pitch"`   // Cell width in microns (default: 0.46)
+	RowHeight    float64 `json:"row_height"`   // Cell height in microns (default: 2.72)
 }
 
 // DefaultConfig returns standard FeCIM parameters
 func DefaultConfig() CompileConfig {
 	return CompileConfig{
-		ArrayRows: 128,
-		ArrayCols: 128,
-		Levels:    30,
-		GMin:      1.0,
-		GMax:      100.0,
-		VProgMin:  2.0,
-		VProgMax:  5.0,
-		TPulse:    50.0,
+		ArrayRows:    128,
+		ArrayCols:    128,
+		Levels:       30,
+		GMin:         1.0,
+		GMax:         100.0,
+		VProgMin:     2.0,
+		VProgMax:     5.0,
+		TPulse:       50.0,
+		Architecture: ArchPassive, // Default: passive crossbar
+		CellPitch:    0.46,        // SKY130 compatible: 2 * 0.23um site width
+		RowHeight:    2.72,        // SKY130 standard cell row height
 	}
+}
+
+// Config1T1R returns configuration for 1T1R architecture
+// 1T1R uses a select transistor per cell to mitigate sneak paths
+func Config1T1R() CompileConfig {
+	cfg := DefaultConfig()
+	cfg.Architecture = Arch1T1R
+	cfg.CellPitch = 0.92  // Larger cell for transistor (4x site width)
+	cfg.RowHeight = 2.72  // Same row height
+	return cfg
 }
 
 // CellAssignment represents one programmed FeFET cell

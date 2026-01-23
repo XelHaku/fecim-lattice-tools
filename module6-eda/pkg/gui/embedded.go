@@ -28,6 +28,7 @@ func (app *EmbeddedEDAApp) BuildContent(fyneApp fyne.App, window fyne.Window) fy
 	// Create tab contents
 	compilerContent := tabs.MakeCompilerTab(app.state, window)
 	layoutContent := tabs.MakeLayoutTab(app.state)
+	hdlContent := tabs.MakeHDLTab(app.state, window) // Phase 3: HDL Generation
 	explorerContent := makePlaceholderTab("Design space explorer coming soon")
 	simulateContent := makePlaceholderTab("Simulation bridge coming soon")
 	exportContent := tabs.MakeExportTab(app.state, window)
@@ -35,7 +36,7 @@ func (app *EmbeddedEDAApp) BuildContent(fyneApp fyne.App, window fyne.Window) fy
 
 	// View selector (replaces nested tabs to save space)
 	viewSelector := widget.NewSelect(
-		[]string{"Compiler", "Layout", "Explorer", "Simulate", "Export", "Learn"},
+		[]string{"Compiler", "Layout", "HDL", "Explorer", "Simulate", "Export", "Learn"},
 		nil,
 	)
 	viewSelector.SetSelected("Compiler")
@@ -50,6 +51,8 @@ func (app *EmbeddedEDAApp) BuildContent(fyneApp fyne.App, window fyne.Window) fy
 			contentContainer.Objects[0] = compilerContent
 		case "Layout":
 			contentContainer.Objects[0] = layoutContent
+		case "HDL":
+			contentContainer.Objects[0] = hdlContent
 		case "Explorer":
 			contentContainer.Objects[0] = explorerContent
 		case "Simulate":
