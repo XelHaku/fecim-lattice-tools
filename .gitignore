@@ -15,3 +15,5 @@ shared/logging/
 /fecim-visualizer
 recordings/
 screenshots/
+train-network
+train-single-layer
