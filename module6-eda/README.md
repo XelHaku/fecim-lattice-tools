@@ -80,3 +80,10 @@ module6-eda/
 ├── go.mod
 └── go.sum
 ```
+
+## Documentation
+
+See `docs/eda/` for detailed plans and reference material:
+*   [Implementation Plan](../docs/eda/plan-demo6.md) - Detailed implementation steps
+*   [Strategy](../docs/eda/FeCIM-EDA-Strategy.md) - Project strategy and outreach
+*   [Lattice Generator](../docs/eda/FeCIM-Lattice-Generator-Prompt.md) - Backend technical reference

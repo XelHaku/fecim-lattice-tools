@@ -1129,17 +1129,17 @@ func (r *peplotRenderer) Refresh() {
 		{colorWarning, "Current"},
 	}
 	for _, item := range legendItems {
-		// Color box
+		// Color box - increased from 14 to 16 for better visibility
 		box := canvas.NewRectangle(item.color)
-		box.Resize(fyne.NewSize(14, 14))
+		box.Resize(fyne.NewSize(16, 16))
 		box.Move(fyne.NewPos(legendX, legendY))
 		r.objects = append(r.objects, box)
-		// Label
+		// Label - increased from 12pt to 13pt
 		label := canvas.NewText(item.text, color.RGBA{200, 200, 200, 255})
-		label.TextSize = 12
-		label.Move(fyne.NewPos(legendX+18, legendY))
+		label.TextSize = 13
+		label.Move(fyne.NewPos(legendX+20, legendY))
 		r.objects = append(r.objects, label)
-		legendX += 60
+		legendX += 65
 	}
 
 	// Grid lines (fewer divisions to avoid overlap)
@@ -1190,6 +1190,34 @@ func (r *peplotRenderer) Refresh() {
 			pTickLabel.Move(fyne.NewPos(marginLeft-35, y-7))
 			r.objects = append(r.objects, pTickLabel)
 		}
+	}
+
+	// Additional subtle grid lines for easier value reading
+	// These are finer subdivisions with very low alpha to not distract from main plot
+	subtleGridColor := color.RGBA{0, 80, 140, 25} // Very low alpha for subtle appearance
+	numSubdivisions := 4                          // More divisions for finer grid
+	for i := -numSubdivisions; i <= numSubdivisions; i++ {
+		// Skip the main grid lines (already drawn above)
+		if i == 0 || i == -numSubdivisions || i == numSubdivisions || i == -numSubdivisions/2 || i == numSubdivisions/2 {
+			continue
+		}
+		t := float32(i) / float32(numSubdivisions)
+
+		// Subtle vertical grid line
+		x := marginLeft + plotW/2 + t*plotW/2
+		vLine := canvas.NewLine(subtleGridColor)
+		vLine.Position1 = fyne.NewPos(x, marginTop)
+		vLine.Position2 = fyne.NewPos(x, marginTop+plotH)
+		vLine.StrokeWidth = 1
+		r.objects = append(r.objects, vLine)
+
+		// Subtle horizontal grid line
+		y := marginTop + plotH/2 - t*plotH/2
+		hLine := canvas.NewLine(subtleGridColor)
+		hLine.Position1 = fyne.NewPos(marginLeft, y)
+		hLine.Position2 = fyne.NewPos(marginLeft+plotW, y)
+		hLine.StrokeWidth = 1
+		r.objects = append(r.objects, hLine)
 	}
 
 	// Center coordinates
@@ -1283,9 +1311,9 @@ func (r *peplotRenderer) Refresh() {
 			x2 := marginLeft + plotW/2 + float32(r.plot.eData[i]/r.plot.eMax)*plotW/2
 			y2 := centerY - float32(r.plot.pData[i]/r.plot.pMax)*plotH/2
 
-			// Color based on age (fade effect)
+			// Color based on age (fade effect) - increased fade from 0.7 to 0.85 for better trace distinction
 			age := float64(len(r.plot.eData)-i) / float64(len(r.plot.eData))
-			alpha := uint8(255 * (1 - age*0.7))
+			alpha := uint8(255 * (1 - age*0.85))
 
 			var lineColor color.RGBA
 			if r.plot.pData[i] >= 0 {
@@ -1407,16 +1435,17 @@ func (r *levelRenderer) Refresh() {
 	bg.Move(fyne.NewPos(2, 2))
 	r.objects = append(r.objects, bg)
 
-	// Title at top
+	// Title at top - increased from 12pt to 14pt for better visibility
 	title := canvas.NewText("30 LEVELS", color.RGBA{0, 212, 255, 255})
-	title.TextSize = 12
+	title.TextSize = 14
 	title.TextStyle = fyne.TextStyle{Bold: true}
-	title.Move(fyne.NewPos(8, 8))
+	title.Move(fyne.NewPos(6, 8))
 	r.objects = append(r.objects, title)
 
+	// Bits label - increased from 10pt to 12pt for better readability
 	bitsLabel := canvas.NewText("4.9 bits", color.RGBA{180, 180, 180, 255})
-	bitsLabel.TextSize = 10
-	bitsLabel.Move(fyne.NewPos(12, 24))
+	bitsLabel.TextSize = 12
+	bitsLabel.Move(fyne.NewPos(10, 26))
 	r.objects = append(r.objects, bitsLabel)
 
 	// Draw 30 level segments
