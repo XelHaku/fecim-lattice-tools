@@ -1,5 +1,10 @@
 /ralph-loop "Act as Dr. Tour and Dr. Shino—world-class experts in ferroelectric physics, UI/UX design, data visualization, and scientific software development—to meticulously scrutinize each screenshot one by one.
 
+QUICK START - DO THIS FIRST:
+1. Run: ls <local-path> to see all 67 screenshots
+2. Create HYPER_ANALYSIS_REPORT.md with initial header
+3. Begin Module 1 analysis immediately
+
 SCOPE: Focus ONLY on Modules 1-5 for now:
 - Module 1: Hysteresis (P-E curve visualization, Preisach model)
 - Module 2: Crossbar+ (MVM + Non-Idealities: Ideal, IR Drop, Sneak Paths, Drift)
@@ -108,10 +113,22 @@ AUTONOMOUS OVERNIGHT MODE:
 - Do NOT stop until ALL modules (1-5) are fully analyzed
 - If you complete one module, immediately proceed to the next
 - Do NOT ask for confirmation between modules - just continue
-- If you encounter an error, log it and continue with the next item
 - Work autonomously without waiting for user input
-- Continue working even if individual tasks fail
 - No pauses, no confirmations, no waiting - continuous execution
+
+ERROR RECOVERY (NEVER STOP ON ERRORS):
+- If a screenshot fails to load: log it, skip it, continue to next screenshot
+- If a test fails: log the failure, continue to next task
+- If a file write fails: retry once, then log and continue
+- If code analysis is unclear: document uncertainty and move on
+- If you cannot find expected files: log missing files and continue
+- NEVER let any single failure stop the entire process
+- Log all errors to HYPER_ANALYSIS_REPORT.md under "## Errors Encountered"
+
+CHECKPOINTING (SAVE PROGRESS FREQUENTLY):
+- After completing EACH screenshot analysis, append findings to HYPER_ANALYSIS_REPORT.md immediately
+- After completing EACH module, write a "## Module X COMPLETE" section
+- This ensures partial progress is saved even if something fails later
 
 OUTPUT LOCATION:
 Write ALL findings to: <local-path>
@@ -121,24 +138,27 @@ Write ALL findings to: <local-path>
 
 EXECUTION ORDER:
 Process systematically: Module 1 → 2 → 3 → 4 → 5 in order
-For each module complete this cycle:
-1. Take/analyze screenshots
-2. Verify physics and calculations
-3. Audit UI/UX design
-4. Inventory all interactive elements
-5. Write regression tests for existing functionality
-6. Write new unit tests
-7. Implement SAFE improvements ONLY:
-   - Cosmetic fixes (spacing, alignment, colors)
-   - Typo corrections in labels and text
-   - Obvious bugs with clear fixes
-   - DO NOT implement architectural changes
-   - DO NOT refactor working code
-   - DO NOT change core algorithms or physics models
-   - When in doubt, DOCUMENT the issue instead of fixing it
-8. Update documentation
-9. Run full test suite
-10. Proceed to next module
+
+For each module complete this SIMPLIFIED cycle:
+1. LIST all screenshots for this module (ls screenshots/*moduleXX*)
+2. ANALYZE each screenshot one by one:
+   - Read the image
+   - Document physics/UI/interactive elements findings
+   - Append to HYPER_ANALYSIS_REPORT.md immediately
+3. WRITE tests for core logic (skip GUI tests)
+4. IMPLEMENT only SAFE fixes:
+   - Typo corrections
+   - Obvious spacing/alignment issues
+   - DO NOT touch algorithms, physics, or architecture
+   - When in doubt, DOCUMENT instead of fixing
+5. Mark module COMPLETE in report and proceed
+
+SUCCESS CRITERIA (what "DONE" means):
+✓ All 67 screenshots analyzed and documented
+✓ HYPER_ANALYSIS_REPORT.md contains findings for all 5 modules
+✓ At least one new test file per module with testable logic
+✓ All existing tests still pass (`go test ./...`)
+✓ Each module has a "COMPLETE" marker in the report
 
 CRITICAL: DO NOT STOP EARLY
 - Do not summarize and stop
@@ -150,8 +170,12 @@ CRITICAL: DO NOT STOP EARLY
 - Only output "DONE HYPER ANALYSIS" when ALL modules 1-5 are fully analyzed, tested, and documented
 
 FALLBACK IF APPROACHING ITERATION LIMIT:
-- If you sense you're running low on iterations, prioritize completing analysis and documentation
-- Tests and safe fixes are secondary to having a complete written analysis
-- Ensure HYPER_ANALYSIS_REPORT.md is fully written before iterations run out
+- If you sense you're running low on iterations, prioritize in this order:
+  1. HIGHEST: Complete HYPER_ANALYSIS_REPORT.md with all screenshot analyses
+  2. HIGH: Write "## Module X COMPLETE" markers for finished modules
+  3. MEDIUM: Write at least basic tests for core physics functions
+  4. LOW: Implement safe fixes
+- A complete analysis document WITHOUT fixes is SUCCESS
+- An incomplete document WITH fixes is FAILURE
 
 Create a comprehensive, extensive document listing every issue found with specific recommendations for improvement, AND implement all necessary unit tests for the features analyzed." --max-iterations 1000 --completion-promise "DONE HYPER ANALYSIS"
