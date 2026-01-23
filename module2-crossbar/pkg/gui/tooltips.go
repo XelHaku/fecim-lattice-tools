@@ -113,6 +113,12 @@ func IRDropTooltip(row, col int, irAnalysis *crossbar.IRDropAnalysis, array *cro
 		severitySymbol = "✗"
 	}
 
+	// Calculate percentile rank (how close this cell is to the worst case)
+	percentileRank := 0.0
+	if irAnalysis.MaxIRDrop > 0 {
+		percentileRank = (dropPercent / (irAnalysis.MaxIRDrop * 100)) * 100
+	}
+
 	tooltip := fmt.Sprintf(
 		"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"+
 		"CELL [%d, %d] - IR DROP ANALYSIS\n"+
@@ -136,7 +142,7 @@ func IRDropTooltip(row, col int, irAnalysis *crossbar.IRDropAnalysis, array *cro
 		"Array Statistics:\n"+
 		"  Max IR drop:        %.2f%%\n"+
 		"  Avg IR drop:        %.2f%%\n"+
-		"  This cell rank:     %.1f%% from worst\n\n"+
+		"  This cell rank:     %.1f%% of worst\n\n"+
 		"Mitigation Strategies:\n"+
 		"  • Wider metal lines (2× width → 50%% drop)\n"+
 		"  • Hierarchical drivers\n"+
@@ -162,7 +168,7 @@ func IRDropTooltip(row, col int, irAnalysis *crossbar.IRDropAnalysis, array *cro
 		irAnalysis.MaxIRDrop*100,
 		irAnalysis.MaxIRDrop*100,
 		irAnalysis.AvgIRDrop*100,
-		(dropPercent / irAnalysis.MaxIRDrop / 100) * 100,
+		percentileRank,
 	)
 
 	return tooltip
