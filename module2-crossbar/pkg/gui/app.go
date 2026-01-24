@@ -11,6 +11,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
@@ -490,7 +491,10 @@ func (ca *CrossbarApp) recreateArray(size int, noise float64, adcBits int) {
 	var err error
 	ca.array, err = crossbar.NewArray(ca.config)
 	if err != nil {
-		ca.updateStatus(fmt.Sprintf("Error: %v", err))
+		ca.updateStatus("Error creating array")
+		if ca.window != nil {
+			dialog.ShowError(fmt.Errorf("failed to create crossbar array: %w", err), ca.window)
+		}
 		return
 	}
 

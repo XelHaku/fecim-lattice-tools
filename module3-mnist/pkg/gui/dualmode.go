@@ -69,8 +69,9 @@ type DualModeApp struct {
 	weightLevelsLabel *widget.Label
 
 	// Quick test
-	testButton      *widget.Button
-	testResultLabel *widget.Label
+	testButton       *widget.Button
+	testResultLabel  *widget.Label
+	testProgressBar  *widget.ProgressBar
 
 	// Test data
 	testImages [][]float64
@@ -110,8 +111,10 @@ func NewDualModeApp() *DualModeApp {
 	weightsPath := filepath.Join(app.dataDir, "pretrained_weights.json")
 	if _, err := os.Stat(weightsPath); err == nil {
 		if err := app.network.LoadWeights(weightsPath); err != nil {
-			fmt.Printf("Warning: Failed to load weights: %v\n", err)
+			mnistLog.Printf("Warning: Failed to load weights from %s: %v", weightsPath, err)
 		}
+	} else {
+		mnistLog.Printf("Note: No pretrained weights found at %s, using random initialization", weightsPath)
 	}
 
 	return app
@@ -434,8 +437,10 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 
 	presetRow := container.NewGridWithColumns(5, idealBtn, quantCliffBtn, noisyBtn, brokenBtn, tourBtn)
 
-	// Quick test
+	// Quick test with progress bar
 	app.testResultLabel = widget.NewLabel("")
+	app.testProgressBar = widget.NewProgressBar()
+	app.testProgressBar.Hide() // Hidden until test starts
 	app.testButton = widget.NewButton("Test (200)", func() {
 		mnistLog.Button("Test200")
 		app.runQuickTest()
@@ -449,7 +454,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 
 	// Controls header (compact, fixed height)
 	controlsHeader := container.NewVBox(
-		container.NewHBox(label, layout.NewSpacer(), app.testButton, app.testResultLabel),
+		container.NewHBox(label, layout.NewSpacer(), app.testButton, app.testProgressBar, app.testResultLabel),
 		levelsRow,
 		noiseRow,
 		selectsRow,
@@ -693,8 +698,12 @@ func (app *DualModeApp) loadRandomSample() {
 func (app *DualModeApp) loadTestData() {
 	images, labels, err := mnist.LoadMNIST(app.dataDir, false) // false = test set
 	if err != nil {
-		fmt.Printf("Failed to load MNIST test data: %v\n", err)
+		mnistLog.Printf("Failed to load MNIST test data: %v, using synthetic data", err)
 		app.testImages, app.testLabels = generateSyntheticData(200)
+		// Notify user that we're using synthetic data
+		fyne.Do(func() {
+			app.statusLabel.SetText("Using synthetic test data (MNIST not found)")
+		})
 		return
 	}
 
@@ -710,10 +719,15 @@ func (app *DualModeApp) loadTestData() {
 // runQuickTest runs inference on 200 samples and reports accuracy.
 func (app *DualModeApp) runQuickTest() {
 	app.testButton.Disable()
-	app.testResultLabel.SetText("Testing...")
+	app.testResultLabel.SetText("")
+	app.testProgressBar.Show()
+	app.testProgressBar.SetValue(0)
 
 	go func() {
 		if len(app.testImages) == 0 {
+			fyne.Do(func() {
+				app.testResultLabel.SetText("Loading test data...")
+			})
 			app.loadTestData()
 		}
 
@@ -726,6 +740,9 @@ func (app *DualModeApp) runQuickTest() {
 		cimCorrect := 0
 		agreements := 0
 
+		// Update progress every 10 samples to avoid UI overload
+		updateInterval := 10
+
 		for i := 0; i < n; i++ {
 			result := app.network.Infer(app.testImages[i])
 			if result.FPPrediction == app.testLabels[i] {
@@ -737,6 +754,16 @@ func (app *DualModeApp) runQuickTest() {
 			if result.Agree {
 				agreements++
 			}
+
+			// Update progress bar at intervals
+			if (i+1)%updateInterval == 0 || i == n-1 {
+				progress := float64(i+1) / float64(n)
+				current := i + 1
+				fyne.Do(func() {
+					app.testProgressBar.SetValue(progress)
+					app.testResultLabel.SetText(fmt.Sprintf("Testing %d/%d...", current, n))
+				})
+			}
 		}
 
 		fpAcc := float64(fpCorrect) / float64(n) * 100
@@ -744,6 +771,7 @@ func (app *DualModeApp) runQuickTest() {
 		agreeRate := float64(agreements) / float64(n) * 100
 
 		fyne.Do(func() {
+			app.testProgressBar.Hide()
 			app.testResultLabel.SetText(fmt.Sprintf(
 				"FP: %.1f%% | CIM: %.1f%% | Agreement: %.1f%% | Target: 87%%",
 				fpAcc, cimAcc, agreeRate))
@@ -904,7 +932,10 @@ func (app *DualModeApp) changeHiddenSize(size int) {
 
 	// Load weights
 	if err := app.network.LoadWeights(weightsPath); err != nil {
-		app.statusLabel.SetText(fmt.Sprintf("Error loading weights: %v", err))
+		app.statusLabel.SetText("Error loading weights")
+		if app.window != nil {
+			dialog.ShowError(fmt.Errorf("failed to load weights from %s: %w", weightsPath, err), app.window)
+		}
 		return
 	}
 

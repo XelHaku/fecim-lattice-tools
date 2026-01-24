@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/dialog"
 )
 
 // runMVM performs matrix-vector multiplication with animation.
@@ -72,10 +73,13 @@ func (ca *CrossbarApp) runMVMAnimated(input []float64) {
 	output, err := ca.array.MVM(input)
 	if err != nil {
 		fyne.Do(func() {
-			ca.updateStatus(fmt.Sprintf("COMPUTE | Error: %v", err))
+			ca.updateStatus("COMPUTE | Error during MVM")
 			ca.modeIndicator.SetMode(DemoModeIdle)
 			ca.conductanceHeatmap.ClearAnimation()
 			ca.runMVMButton.Enable()
+			if ca.window != nil {
+				dialog.ShowError(fmt.Errorf("MVM computation failed: %w", err), ca.window)
+			}
 		})
 		return
 	}

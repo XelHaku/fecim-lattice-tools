@@ -4,13 +4,19 @@ package gui
 import (
 	"image"
 	"image/color"
+	"image/draw"
 	"math"
+	"sync"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
 )
+
+// refreshMinInterval is the minimum time between heatmap refreshes (30 FPS max)
+const refreshMinInterval = 33 * time.Millisecond
 
 // Compile-time interface checks
 var _ desktop.Hoverable = (*CrossbarHeatmap)(nil)
@@ -43,6 +49,11 @@ type CrossbarHeatmap struct {
 	// Internal
 	raster   *canvas.Raster
 	cellSize float32
+
+	// Rate limiting for refresh (max 30 FPS)
+	refreshMu      sync.Mutex
+	lastRefresh    time.Time
+	refreshPending bool
 }
 
 // NewCrossbarHeatmap creates a new crossbar heatmap widget.
@@ -68,6 +79,48 @@ func NewCrossbarHeatmap(rows, cols int) *CrossbarHeatmap {
 	return h
 }
 
+// rateLimitedRefresh performs a refresh with rate limiting to prevent UI overload.
+// Maximum refresh rate is 30 FPS (refreshMinInterval between calls).
+func (h *CrossbarHeatmap) rateLimitedRefresh() {
+	h.refreshMu.Lock()
+
+	// Check if we can refresh immediately
+	now := time.Now()
+	elapsed := now.Sub(h.lastRefresh)
+
+	if elapsed >= refreshMinInterval {
+		// Enough time has passed, refresh immediately
+		h.lastRefresh = now
+		h.refreshPending = false
+		h.refreshMu.Unlock()
+		h.BaseWidget.Refresh() // Call actual Fyne refresh
+		return
+	}
+
+	// Too soon - schedule a delayed refresh if not already pending
+	if h.refreshPending {
+		h.refreshMu.Unlock()
+		return
+	}
+
+	h.refreshPending = true
+	delay := refreshMinInterval - elapsed
+	h.refreshMu.Unlock()
+
+	// Schedule delayed refresh
+	go func() {
+		time.Sleep(delay)
+		h.refreshMu.Lock()
+		h.refreshPending = false
+		h.lastRefresh = time.Now()
+		h.refreshMu.Unlock()
+
+		fyne.Do(func() {
+			h.BaseWidget.Refresh() // Call actual Fyne refresh
+		})
+	}()
+}
+
 // SetData updates the heatmap data.
 func (h *CrossbarHeatmap) SetData(data [][]float64) {
 	h.minVal = math.Inf(1)
@@ -89,13 +142,13 @@ func (h *CrossbarHeatmap) SetData(data [][]float64) {
 		h.maxVal = h.minVal + 1
 	}
 
-	h.Refresh()
+	h.rateLimitedRefresh()
 }
 
 // SetColormap changes the colormap (viridis, plasma, coolwarm, fecim).
 func (h *CrossbarHeatmap) SetColormap(name string) {
 	h.colormap = name
-	h.Refresh()
+	h.rateLimitedRefresh()
 }
 
 // SetSelection highlights a specific cell.
@@ -103,7 +156,7 @@ func (h *CrossbarHeatmap) SetSelection(row, col int) {
 	h.selectedRow = row
 	h.selectedCol = col
 	h.showSelection = row >= 0 && col >= 0
-	h.Refresh()
+	h.rateLimitedRefresh()
 }
 
 // ClearSelection removes cell selection highlight.
@@ -111,7 +164,7 @@ func (h *CrossbarHeatmap) ClearSelection() {
 	h.showSelection = false
 	h.selectedRow = -1
 	h.selectedCol = -1
-	h.Refresh()
+	h.rateLimitedRefresh()
 }
 
 // SetDimensions changes the dimensions of the heatmap and reinitializes data.
@@ -130,7 +183,7 @@ func (h *CrossbarHeatmap) SetDimensions(rows, cols int) {
 		h.data[i] = make([]float64, cols)
 	}
 
-	h.Refresh()
+	h.rateLimitedRefresh()
 }
 
 // CreateRenderer implements fyne.Widget.
@@ -207,19 +260,19 @@ func (h *CrossbarHeatmap) MouseOut() {
 func (h *CrossbarHeatmap) SetAnimPhase(phase int, progress float64) {
 	h.animPhase = phase
 	h.animProgress = progress
-	h.Refresh()
+	h.rateLimitedRefresh()
 }
 
 // SetInputHighlight highlights specific columns (for input voltage visualization).
 func (h *CrossbarHeatmap) SetInputHighlight(cols []int) {
 	h.highlightCols = cols
-	h.Refresh()
+	h.rateLimitedRefresh()
 }
 
 // SetOutputHighlight highlights specific rows (for output current visualization).
 func (h *CrossbarHeatmap) SetOutputHighlight(rows []int) {
 	h.highlightRows = rows
-	h.Refresh()
+	h.rateLimitedRefresh()
 }
 
 // ClearAnimation clears all animation state.
@@ -228,10 +281,10 @@ func (h *CrossbarHeatmap) ClearAnimation() {
 	h.animProgress = 0
 	h.highlightCols = nil
 	h.highlightRows = nil
-	h.Refresh()
+	h.rateLimitedRefresh()
 }
 
-// generateImage creates the heatmap image.
+// generateImage creates the heatmap image with optimized rendering.
 func (h *CrossbarHeatmap) generateImage(w, h_size int) image.Image {
 	img := image.NewRGBA(image.Rect(0, 0, w, h_size))
 
@@ -240,15 +293,29 @@ func (h *CrossbarHeatmap) generateImage(w, h_size int) image.Image {
 	cellH := float64(h_size-40) / float64(h.rows)
 	cellSize := math.Min(cellW, cellH)
 
-	// Fill background
+	// Fill background using draw.Draw (batch operation)
 	bgColor := color.RGBA{30, 30, 40, 255}
-	for y := 0; y < h_size; y++ {
-		for x := 0; x < w; x++ {
-			img.Set(x, y, bgColor)
-		}
+	draw.Draw(img, img.Bounds(), &image.Uniform{bgColor}, image.Point{}, draw.Src)
+
+	// Pre-calculate wave position for phase 2 animation
+	wavePos := 0
+	if h.animPhase == 2 {
+		wavePos = int(h.animProgress * float64(h.rows))
 	}
 
-	// Draw cells
+	// Build highlight column lookup map for O(1) access
+	highlightColMap := make(map[int]bool)
+	for _, col := range h.highlightCols {
+		highlightColMap[col] = true
+	}
+
+	// Build highlight row lookup map for O(1) access
+	highlightRowMap := make(map[int]bool)
+	for _, row := range h.highlightRows {
+		highlightRowMap[row] = true
+	}
+
+	// Draw cells using batch draw operations
 	for i := 0; i < h.rows; i++ {
 		for j := 0; j < h.cols; j++ {
 			// Normalize value
@@ -261,80 +328,60 @@ func (h *CrossbarHeatmap) generateImage(w, h_size int) image.Image {
 			x1 := int(20 + float64(j+1)*cellSize - 1)
 			y1 := int(20 + float64(i+1)*cellSize - 1)
 
-			// Draw cell
-			for y := y0; y < y1; y++ {
-				for x := x0; x < x1; x++ {
-					img.Set(x, y, cellColor)
-				}
-			}
+			// Draw cell using draw.Draw (batch operation)
+			cellRect := image.Rect(x0, y0, x1, y1)
+			draw.Draw(img, cellRect, &image.Uniform{cellColor}, image.Point{}, draw.Src)
 
-			// Draw selection highlight
+			// Draw selection highlight using draw.Draw for borders
 			if h.showSelection && i == h.selectedRow && j == h.selectedCol {
 				highlightColor := color.RGBA{255, 255, 0, 255}
-				// Draw border
-				for x := x0; x < x1; x++ {
-					img.Set(x, y0, highlightColor)
-					img.Set(x, y0+1, highlightColor)
-					img.Set(x, y1-1, highlightColor)
-					img.Set(x, y1-2, highlightColor)
-				}
-				for y := y0; y < y1; y++ {
-					img.Set(x0, y, highlightColor)
-					img.Set(x0+1, y, highlightColor)
-					img.Set(x1-1, y, highlightColor)
-					img.Set(x1-2, y, highlightColor)
-				}
+				highlightUniform := &image.Uniform{highlightColor}
+				// Top border (2px)
+				draw.Draw(img, image.Rect(x0, y0, x1, y0+2), highlightUniform, image.Point{}, draw.Src)
+				// Bottom border (2px)
+				draw.Draw(img, image.Rect(x0, y1-2, x1, y1), highlightUniform, image.Point{}, draw.Src)
+				// Left border (2px)
+				draw.Draw(img, image.Rect(x0, y0, x0+2, y1), highlightUniform, image.Point{}, draw.Src)
+				// Right border (2px)
+				draw.Draw(img, image.Rect(x1-2, y0, x1, y1), highlightUniform, image.Point{}, draw.Src)
 			}
 
-			// Animation overlays
+			// Animation overlays - apply blending only when needed
 			if h.animPhase > 0 {
 				var overlay color.RGBA
 				shouldOverlay := false
 
 				// Phase 1: Input - highlight active columns with cyan
-				if h.animPhase == 1 {
-					for _, col := range h.highlightCols {
-						if j == col {
-							overlay = color.RGBA{0, 255, 255, 100}
-							shouldOverlay = true
-							break
-						}
-					}
+				if h.animPhase == 1 && highlightColMap[j] {
+					overlay = color.RGBA{0, 255, 255, 100}
+					shouldOverlay = true
 				}
 
 				// Phase 2: Compute - wave animation
-				if h.animPhase == 2 {
-					wavePos := int(h.animProgress * float64(h.rows))
-					if i <= wavePos {
-						overlay = color.RGBA{255, 200, 0, 80}
-						shouldOverlay = true
-					}
+				if h.animPhase == 2 && i <= wavePos {
+					overlay = color.RGBA{255, 200, 0, 80}
+					shouldOverlay = true
 				}
 
 				// Phase 3: Output - highlight active rows with orange
-				if h.animPhase == 3 {
-					for _, row := range h.highlightRows {
-						if i == row {
-							overlay = color.RGBA{255, 150, 0, 100}
-							shouldOverlay = true
-							break
-						}
-					}
+				if h.animPhase == 3 && highlightRowMap[i] {
+					overlay = color.RGBA{255, 150, 0, 100}
+					shouldOverlay = true
 				}
 
-				// Apply overlay by blending
+				// Apply overlay using direct buffer access (faster than Set)
 				if shouldOverlay {
+					alpha := float64(overlay.A) / 255.0
+					invAlpha := 1.0 - alpha
+					stride := img.Stride
 					for y := y0; y < y1; y++ {
+						rowOffset := y * stride
 						for x := x0; x < x1; x++ {
-							orig := img.RGBAAt(x, y)
-							alpha := float64(overlay.A) / 255.0
-							blended := color.RGBA{
-								R: uint8(float64(orig.R)*(1-alpha) + float64(overlay.R)*alpha),
-								G: uint8(float64(orig.G)*(1-alpha) + float64(overlay.G)*alpha),
-								B: uint8(float64(orig.B)*(1-alpha) + float64(overlay.B)*alpha),
-								A: 255,
-							}
-							img.Set(x, y, blended)
+							pixOffset := rowOffset + x*4
+							img.Pix[pixOffset] = uint8(float64(img.Pix[pixOffset])*invAlpha + float64(overlay.R)*alpha)
+							img.Pix[pixOffset+1] = uint8(float64(img.Pix[pixOffset+1])*invAlpha + float64(overlay.G)*alpha)
+							img.Pix[pixOffset+2] = uint8(float64(img.Pix[pixOffset+2])*invAlpha + float64(overlay.B)*alpha)
+							// Alpha stays at 255
 						}
 					}
 				}

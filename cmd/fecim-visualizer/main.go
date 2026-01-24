@@ -39,6 +39,7 @@ import (
 	demo6gui "multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/gui"
 	"multilayer-ferroelectric-cim-visualizer/shared/logging"
 	sharedtheme "multilayer-ferroelectric-cim-visualizer/shared/theme"
+	"multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // Global logger for the main application
@@ -279,6 +280,49 @@ type DemoApp struct {
 	demo6 *demo6gui.EmbeddedEDAApp          // EDA Design Suite
 }
 
+// Preference keys for window state persistence
+const (
+	prefKeyWindowWidth  = "window_width"
+	prefKeyWindowHeight = "window_height"
+	prefKeyLastTab      = "last_tab"
+
+	// Default window dimensions
+	defaultWindowWidth  = 1400
+	defaultWindowHeight = 900
+)
+
+// loadWindowSize loads saved window dimensions from preferences
+func loadWindowSize(prefs fyne.Preferences) fyne.Size {
+	w := prefs.FloatWithFallback(prefKeyWindowWidth, defaultWindowWidth)
+	h := prefs.FloatWithFallback(prefKeyWindowHeight, defaultWindowHeight)
+
+	// Clamp to reasonable minimum size
+	if w < 800 {
+		w = 800
+	}
+	if h < 600 {
+		h = 600
+	}
+
+	return fyne.NewSize(float32(w), float32(h))
+}
+
+// saveWindowSize saves current window dimensions to preferences
+func saveWindowSize(prefs fyne.Preferences, size fyne.Size) {
+	prefs.SetFloat(prefKeyWindowWidth, float64(size.Width))
+	prefs.SetFloat(prefKeyWindowHeight, float64(size.Height))
+}
+
+// saveLastTab saves the currently selected tab index
+func saveLastTab(prefs fyne.Preferences, tabIndex int) {
+	prefs.SetInt(prefKeyLastTab, tabIndex)
+}
+
+// loadLastTab loads the last selected tab index
+func loadLastTab(prefs fyne.Preferences) int {
+	return prefs.IntWithFallback(prefKeyLastTab, 0)
+}
+
 func main() {
 	// Parse command-line flags
 	verbosityFlag := flag.String("verbosity", "off", "Logging verbosity: 0|off, 1|info, 2|debug, 3|trace")
@@ -298,9 +342,14 @@ func main() {
 	fyneApp := app.NewWithID("com.fecim.visualizer")
 	fyneApp.Settings().SetTheme(&sharedtheme.FeCIMTheme{})
 
-	// Create main window
+	// Load saved window size from preferences
+	prefs := fyneApp.Preferences()
+	savedSize := loadWindowSize(prefs)
+	log.Debug("Loaded window size from preferences: %.0fx%.0f", savedSize.Width, savedSize.Height)
+
+	// Create main window with saved size
 	window := fyneApp.NewWindow("FeCIM Visualization Suite - 6 World-Class Demos")
-	window.Resize(fyne.NewSize(1400, 900))
+	window.Resize(savedSize)
 
 	// Create demo instances with error handling
 	demo2, err := demo2gui.NewEmbeddedCrossbarApp()
@@ -376,6 +425,10 @@ func main() {
 
 	// Create recording state
 	recordingState := newRecordingState()
+
+	// Track current breakpoint for responsive layout (initialize based on saved window size)
+	currentBreakpoint := widgets.GetBreakpoint(savedSize.Width)
+	log.Debug("Initial breakpoint: %s (width: %.0f)", widgets.BreakpointName(currentBreakpoint), savedSize.Width)
 
 	// Create screenshot button
 	screenshotBtn := widget.NewButtonWithIcon("Screenshot", theme.MediaPhotoIcon(), func() {
@@ -479,16 +532,11 @@ func main() {
 		}
 	}
 
-	// Create close button
+	// Create close button (triggers close intercept for proper state saving)
 	closeBtn := widget.NewButtonWithIcon("", theme.CancelIcon(), func() {
 		log.Button("Close")
-		log.Info("Application closing...")
-		// Stop recording if active
-		if recordingState.IsRecording() {
-			recordingState.stopRecording()
-		}
-		// Close the application
-		fyneApp.Quit()
+		// Trigger the close intercept which handles state saving
+		window.Close()
 	})
 
 	// Track current demo for start/stop
@@ -567,11 +615,35 @@ func main() {
 	)
 
 	// Position buttons in top-right corner (will be updated on resize)
+	// Button sizing adapts to breakpoint (smaller on mobile)
 	updateButtonPositions := func() {
 		size := window.Canvas().Size()
-		btnWidth := float32(120)
 		btnHeight := float32(32)
 		spacing := float32(5)
+
+		// Responsive button width based on breakpoint
+		var btnWidth float32
+		switch currentBreakpoint {
+		case widgets.BreakpointSM:
+			// Small screens: icon-only buttons (hide text)
+			btnWidth = btnHeight // Square icon buttons
+			screenshotBtn.SetText("")
+			recordBtn.SetText("") // Will show icon or time during recording
+		case widgets.BreakpointMD:
+			// Medium screens: shortened labels
+			btnWidth = 80
+			if !recordingState.IsRecording() {
+				screenshotBtn.SetText("Shot")
+				recordBtn.SetText("Rec")
+			}
+		default:
+			// Large/XL screens: full labels
+			btnWidth = 120
+			if !recordingState.IsRecording() {
+				screenshotBtn.SetText("Screenshot")
+				recordBtn.SetText("Record")
+			}
+		}
 
 		closeBtn.Resize(fyne.NewSize(btnHeight, btnHeight))
 		closeBtn.Move(fyne.NewPos(size.Width-btnHeight-10, 5))
@@ -596,21 +668,74 @@ func main() {
 	window.SetContent(mainContent)
 	window.Canvas().SetOnTypedRune(nil) // Dummy to ensure canvas is initialized
 
-	// Update button positions on window resize
-	go func() {
-		lastSize := window.Canvas().Size()
-		for {
-			time.Sleep(100 * time.Millisecond)
-			currentSize := window.Canvas().Size()
-			if currentSize != lastSize {
-				lastSize = currentSize
-				fyne.Do(func() {
-					updateButtonPositions()
-					buttonOverlay.Refresh()
-				})
+	// Create resize detector to handle window resize events (replaces polling)
+	var lastSaveTime time.Time
+	resizeDetector := widgets.NewResizeDetector(func(size fyne.Size) {
+		// Update button positions
+		updateButtonPositions()
+		buttonOverlay.Refresh()
+
+		// Debounce: only save size every 500ms to avoid excessive writes
+		if time.Since(lastSaveTime) > 500*time.Millisecond {
+			saveWindowSize(prefs, size)
+			lastSaveTime = time.Now()
+			log.Debug("Window resized and saved: %.0fx%.0f", size.Width, size.Height)
+		}
+	})
+
+	// Create responsive detector for breakpoint-based layout changes
+	responsiveDetector := widgets.NewResponsiveDetector(func(newBreakpoint widgets.Breakpoint, size fyne.Size) {
+		currentBreakpoint = newBreakpoint
+		log.Debug("Breakpoint changed to %s (width: %.0f)", widgets.BreakpointName(newBreakpoint), size.Width)
+
+		// Update button layout for new breakpoint
+		updateButtonPositions()
+		buttonOverlay.Refresh()
+
+		// Could add more responsive behaviors here:
+		// - Adjust tab layout (tabs on side vs top)
+		// - Show/hide secondary panels
+		// - Change font sizes, etc.
+	})
+
+	// Add resize and responsive detectors to the main content stack
+	mainContent = container.NewStack(mainContent, resizeDetector, responsiveDetector)
+
+	// Set close intercept to save final state
+	window.SetCloseIntercept(func() {
+		log.Info("Application closing, saving state...")
+
+		// Save final window size
+		finalSize := window.Canvas().Size()
+		saveWindowSize(prefs, finalSize)
+		log.Debug("Final window size saved: %.0fx%.0f", finalSize.Width, finalSize.Height)
+
+		// Save current tab index
+		if tabs.Selected() != nil {
+			for i, tab := range tabs.Items {
+				if tab == tabs.Selected() {
+					saveLastTab(prefs, i)
+					log.Debug("Last tab saved: %d (%s)", i, tab.Text)
+					break
+				}
 			}
 		}
-	}()
+
+		// Stop recording if active
+		if recordingState.IsRecording() {
+			recordingState.stopRecording()
+		}
+
+		// Close the window
+		window.Close()
+	})
+
+	// Restore last selected tab
+	lastTabIndex := loadLastTab(prefs)
+	if lastTabIndex > 0 && lastTabIndex < len(tabs.Items) {
+		tabs.SelectIndex(lastTabIndex)
+		log.Debug("Restored last tab: %d", lastTabIndex)
+	}
 
 	// Run the application
 	window.ShowAndRun()
