@@ -39,7 +39,6 @@ import (
 	demo6gui "multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/gui"
 	"multilayer-ferroelectric-cim-visualizer/shared/logging"
 	sharedtheme "multilayer-ferroelectric-cim-visualizer/shared/theme"
-	"multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // Global logger for the main application
@@ -426,10 +425,6 @@ func main() {
 	// Create recording state
 	recordingState := newRecordingState()
 
-	// Track current breakpoint for responsive layout (initialize based on saved window size)
-	currentBreakpoint := widgets.GetBreakpoint(savedSize.Width)
-	log.Debug("Initial breakpoint: %s (width: %.0f)", widgets.BreakpointName(currentBreakpoint), savedSize.Width)
-
 	// Create screenshot button
 	screenshotBtn := widget.NewButtonWithIcon("Screenshot", theme.MediaPhotoIcon(), func() {
 		log.Button("Screenshot")
@@ -603,108 +598,22 @@ func main() {
 		}
 	}
 
-	// Put toolbar buttons on the right side of the tab bar (same row)
-	// We'll position them absolutely in the top-right corner
 	tabs.SetTabLocation(container.TabLocationTop)
 
-	// Create overlay container with buttons in top-right
-	buttonOverlay := container.NewWithoutLayout(
-		screenshotBtn,
-		recordBtn,
-		closeBtn,
+	// Create toolbar with buttons aligned right
+	toolbar := container.NewBorder(
+		nil, nil, nil,
+		container.NewHBox(screenshotBtn, recordBtn, closeBtn),
+		widget.NewLabel(""), // Spacer
 	)
 
-	// Get button width for current breakpoint (no side effects)
-	getButtonWidth := func() float32 {
-		switch currentBreakpoint {
-		case widgets.BreakpointSM:
-			return float32(32) // Square icon buttons
-		case widgets.BreakpointMD:
-			return float32(80) // Shortened labels
-		default:
-			return float32(120) // Full labels
-		}
-	}
-
-	// Update button labels based on breakpoint (only call when breakpoint changes)
-	updateButtonLabels := func() {
-		switch currentBreakpoint {
-		case widgets.BreakpointSM:
-			screenshotBtn.SetText("")
-			if !recordingState.IsRecording() {
-				recordBtn.SetText("")
-			}
-		case widgets.BreakpointMD:
-			screenshotBtn.SetText("Shot")
-			if !recordingState.IsRecording() {
-				recordBtn.SetText("Rec")
-			}
-		default:
-			screenshotBtn.SetText("Screenshot")
-			if !recordingState.IsRecording() {
-				recordBtn.SetText("Record")
-			}
-		}
-	}
-
-	// Position buttons in top-right corner (will be updated on resize)
-	// Only handles positioning, not text changes
-	updateButtonPositions := func() {
-		size := window.Canvas().Size()
-		btnHeight := float32(32)
-		spacing := float32(5)
-		btnWidth := getButtonWidth()
-
-		closeBtn.Resize(fyne.NewSize(btnHeight, btnHeight))
-		closeBtn.Move(fyne.NewPos(size.Width-btnHeight-10, 5))
-
-		recordBtn.Resize(fyne.NewSize(btnWidth, btnHeight))
-		recordBtn.Move(fyne.NewPos(size.Width-btnHeight-btnWidth-spacing-10, 5))
-
-		screenshotBtn.Resize(fyne.NewSize(btnWidth, btnHeight))
-		screenshotBtn.Move(fyne.NewPos(size.Width-btnHeight-2*btnWidth-2*spacing-10, 5))
-	}
-
-	// Initial labels and position
-	updateButtonLabels()
-	updateButtonPositions()
-
-	// Stack tabs with button overlay
-	mainContent := container.NewStack(
+	// Stack tabs with toolbar on top
+	mainContent := container.NewBorder(
+		toolbar, nil, nil, nil,
 		tabs,
-		buttonOverlay,
 	)
 
-	// Set window content and add resize callback
 	window.SetContent(mainContent)
-	window.Canvas().SetOnTypedRune(nil) // Dummy to ensure canvas is initialized
-
-	// Create resize detector to handle window resize events (replaces polling)
-	var lastSaveTime time.Time
-	resizeDetector := widgets.NewResizeDetector(func(size fyne.Size) {
-		// Update button positions (Move/Resize handle their own refresh)
-		updateButtonPositions()
-
-		// Debounce: only save size every 500ms to avoid excessive writes
-		if time.Since(lastSaveTime) > 500*time.Millisecond {
-			saveWindowSize(prefs, size)
-			lastSaveTime = time.Now()
-			log.Debug("Window resized and saved: %.0fx%.0f", size.Width, size.Height)
-		}
-	})
-
-	// Create responsive detector for breakpoint-based layout changes
-	responsiveDetector := widgets.NewResponsiveDetector(func(newBreakpoint widgets.Breakpoint, size fyne.Size) {
-		currentBreakpoint = newBreakpoint
-		log.Debug("Breakpoint changed to %s (width: %.0f)", widgets.BreakpointName(newBreakpoint), size.Width)
-
-		// Update button labels and layout for new breakpoint
-		updateButtonLabels()
-		updateButtonPositions()
-	})
-
-	// Add resize and responsive detectors to the main content stack
-	mainContent = container.NewStack(mainContent, resizeDetector, responsiveDetector)
 
 	// Set close intercept to save final state
 	window.SetCloseIntercept(func() {
