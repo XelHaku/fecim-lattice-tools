@@ -27,4 +27,4 @@ cmd/fecim-visualizer/logs/OpenLane/
 !/output/.gitkeep
 !/output/README.md
 !/output/*/
-cmd/fecim-visualizer/logs/2026-01-24_14-31-33-crossbar.log
+cmd/fecim-visualizer/logs/
