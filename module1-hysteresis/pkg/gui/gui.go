@@ -1297,6 +1297,7 @@ func (p *PEPlot) CreateRenderer() fyne.WidgetRenderer {
 type peplotRenderer struct {
 	plot    *PEPlot
 	objects []fyne.CanvasObject
+	cache   sharedwidgets.LayoutCache // Shared utility for safe layout
 }
 
 func (r *peplotRenderer) MinSize() fyne.Size {
@@ -1305,18 +1306,28 @@ func (r *peplotRenderer) MinSize() fyne.Size {
 
 func (r *peplotRenderer) Layout(size fyne.Size) {
 	sharedwidgets.DebugLayoutCall("peplotRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
 	r.layoutWithSize(size)
+	r.cache.MarkLayout(size)
 }
 
 func (r *peplotRenderer) Refresh() {
 	sharedwidgets.DebugRefreshCall("peplotRenderer", r.plot.Size())
-	r.layoutWithSize(r.plot.Size())
+	size := r.plot.Size()
+	// Always re-layout on Refresh for this dynamic widget (data changes)
+	r.layoutWithSize(size)
+	r.cache.MarkLayout(size)
 }
 
 func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
-	// Skip layout with invalid sizes
+	// Use minSize if provided size is invalid (for initial render)
 	if size.Width <= 0 || size.Height <= 0 {
-		return
+		size = r.plot.minSize
+		if size.Width <= 0 || size.Height <= 0 {
+			return
+		}
 	}
 
 	r.plot.mu.RLock()
@@ -1642,6 +1653,7 @@ func (l *LevelIndicator) CreateRenderer() fyne.WidgetRenderer {
 type levelRenderer struct {
 	indicator *LevelIndicator
 	objects   []fyne.CanvasObject
+	cache     sharedwidgets.LayoutCache // Shared utility for safe layout
 }
 
 func (r *levelRenderer) MinSize() fyne.Size {
@@ -1650,18 +1662,28 @@ func (r *levelRenderer) MinSize() fyne.Size {
 
 func (r *levelRenderer) Layout(size fyne.Size) {
 	sharedwidgets.DebugLayoutCall("levelRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
 	r.layoutWithSize(size)
+	r.cache.MarkLayout(size)
 }
 
 func (r *levelRenderer) Refresh() {
 	sharedwidgets.DebugRefreshCall("levelRenderer", r.indicator.Size())
-	r.layoutWithSize(r.indicator.Size())
+	size := r.indicator.Size()
+	// Always re-layout on Refresh for this dynamic widget (level changes)
+	r.layoutWithSize(size)
+	r.cache.MarkLayout(size)
 }
 
 func (r *levelRenderer) layoutWithSize(size fyne.Size) {
-	// Skip layout with invalid sizes
+	// Use minSize if provided size is invalid (for initial render)
 	if size.Width <= 0 || size.Height <= 0 {
-		return
+		size = r.indicator.minSize
+		if size.Width <= 0 || size.Height <= 0 {
+			return
+		}
 	}
 
 	r.indicator.mu.RLock()
@@ -1838,6 +1860,7 @@ func (c *CellVisualizer) CreateRenderer() fyne.WidgetRenderer {
 type cellRenderer struct {
 	cell    *CellVisualizer
 	objects []fyne.CanvasObject
+	cache   sharedwidgets.LayoutCache // Shared utility for safe layout
 }
 
 func (r *cellRenderer) MinSize() fyne.Size {
@@ -1846,18 +1869,28 @@ func (r *cellRenderer) MinSize() fyne.Size {
 
 func (r *cellRenderer) Layout(size fyne.Size) {
 	sharedwidgets.DebugLayoutCall("cellRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
 	r.layoutWithSize(size)
+	r.cache.MarkLayout(size)
 }
 
 func (r *cellRenderer) Refresh() {
 	sharedwidgets.DebugRefreshCall("cellRenderer", r.cell.Size())
-	r.layoutWithSize(r.cell.Size())
+	size := r.cell.Size()
+	// Always re-layout on Refresh for this dynamic widget (level changes)
+	r.layoutWithSize(size)
+	r.cache.MarkLayout(size)
 }
 
 func (r *cellRenderer) layoutWithSize(size fyne.Size) {
-	// Skip layout with invalid sizes
+	// Use minSize if provided size is invalid (for initial render)
 	if size.Width <= 0 || size.Height <= 0 {
-		return
+		size = r.cell.minSize
+		if size.Width <= 0 || size.Height <= 0 {
+			return
+		}
 	}
 
 	r.cell.mu.RLock()
@@ -2056,6 +2089,7 @@ func (m *ModeIndicator) CreateRenderer() fyne.WidgetRenderer {
 type modeRenderer struct {
 	indicator *ModeIndicator
 	objects   []fyne.CanvasObject
+	cache     sharedwidgets.LayoutCache // Shared utility for safe layout
 }
 
 func (r *modeRenderer) MinSize() fyne.Size {
@@ -2064,18 +2098,28 @@ func (r *modeRenderer) MinSize() fyne.Size {
 
 func (r *modeRenderer) Layout(size fyne.Size) {
 	sharedwidgets.DebugLayoutCall("modeRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
 	r.layoutWithSize(size)
+	r.cache.MarkLayout(size)
 }
 
 func (r *modeRenderer) Refresh() {
 	sharedwidgets.DebugRefreshCall("modeRenderer", r.indicator.Size())
-	r.layoutWithSize(r.indicator.Size())
+	size := r.indicator.Size()
+	// Always re-layout on Refresh for this dynamic widget (mode changes)
+	r.layoutWithSize(size)
+	r.cache.MarkLayout(size)
 }
 
 func (r *modeRenderer) layoutWithSize(size fyne.Size) {
-	// Skip layout with invalid sizes
+	// Use minSize if provided size is invalid (for initial render)
 	if size.Width <= 0 || size.Height <= 0 {
-		return
+		size = r.indicator.minSize
+		if size.Width <= 0 || size.Height <= 0 {
+			return
+		}
 	}
 
 	r.indicator.mu.RLock()

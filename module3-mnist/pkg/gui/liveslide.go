@@ -94,6 +94,7 @@ func (m *MNISTModeIndicator) CreateRenderer() fyne.WidgetRenderer {
 type mnistModeRenderer struct {
 	indicator *MNISTModeIndicator
 	objects   []fyne.CanvasObject
+	cache     sharedwidgets.LayoutCache // Shared utility for safe layout
 }
 
 func (r *mnistModeRenderer) MinSize() fyne.Size {
@@ -102,18 +103,28 @@ func (r *mnistModeRenderer) MinSize() fyne.Size {
 
 func (r *mnistModeRenderer) Layout(size fyne.Size) {
 	sharedwidgets.DebugLayoutCall("mnistModeRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
 	r.layoutWithSize(size)
+	r.cache.MarkLayout(size)
 }
 
 func (r *mnistModeRenderer) Refresh() {
 	sharedwidgets.DebugRefreshCall("mnistModeRenderer", r.indicator.Size())
-	r.layoutWithSize(r.indicator.Size())
+	size := r.indicator.Size()
+	// Always re-layout on Refresh for this dynamic widget (mode changes)
+	r.layoutWithSize(size)
+	r.cache.MarkLayout(size)
 }
 
 func (r *mnistModeRenderer) layoutWithSize(size fyne.Size) {
-	// Skip layout with invalid sizes
+	// Use minSize if provided size is invalid (for initial render)
 	if size.Width <= 0 || size.Height <= 0 {
-		return
+		size = r.indicator.minSize
+		if size.Width <= 0 || size.Height <= 0 {
+			return
+		}
 	}
 
 	r.indicator.mu.RLock()
@@ -457,6 +468,7 @@ func (p *PredictionDisplay) CreateRenderer() fyne.WidgetRenderer {
 type predictionRenderer struct {
 	display *PredictionDisplay
 	objects []fyne.CanvasObject
+	cache   sharedwidgets.LayoutCache // Shared utility for safe layout
 }
 
 func (r *predictionRenderer) MinSize() fyne.Size {
@@ -465,18 +477,28 @@ func (r *predictionRenderer) MinSize() fyne.Size {
 
 func (r *predictionRenderer) Layout(size fyne.Size) {
 	sharedwidgets.DebugLayoutCall("predictionRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
 	r.layoutWithSize(size)
+	r.cache.MarkLayout(size)
 }
 
 func (r *predictionRenderer) Refresh() {
 	sharedwidgets.DebugRefreshCall("predictionRenderer", r.display.Size())
-	r.layoutWithSize(r.display.Size())
+	size := r.display.Size()
+	// Always re-layout on Refresh for this dynamic widget (prediction changes)
+	r.layoutWithSize(size)
+	r.cache.MarkLayout(size)
 }
 
 func (r *predictionRenderer) layoutWithSize(size fyne.Size) {
-	// Skip layout with invalid sizes
+	// Use minSize if provided size is invalid (for initial render)
 	if size.Width <= 0 || size.Height <= 0 {
-		return
+		size = r.display.minSize
+		if size.Width <= 0 || size.Height <= 0 {
+			return
+		}
 	}
 
 	r.display.mu.RLock()

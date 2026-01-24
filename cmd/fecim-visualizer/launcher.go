@@ -128,17 +128,22 @@ func (r *demoCardRenderer) Layout(size fyne.Size) {
 func (r *demoCardRenderer) Refresh() {
 	sharedwidgets.DebugRefreshCall("demoCardRenderer", r.card.Size())
 	size := r.card.Size()
-	if !r.cache.ShouldLayout(size) {
-		return
+	// Always rebuild if objects are empty (first render) or size changed
+	if len(r.objects) == 0 || r.cache.ShouldLayout(size) {
+		r.layoutWithSize(size)
+		if size.Width > 0 && size.Height > 0 {
+			r.cache.MarkLayout(size)
+		}
 	}
-	r.layoutWithSize(size)
-	r.cache.MarkLayout(size)
 }
 
 func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
-	// Skip layout with invalid sizes
+	// Use minSize if provided size is invalid (for initial render)
 	if size.Width <= 0 || size.Height <= 0 {
-		return
+		size = r.card.minSize
+		if size.Width <= 0 || size.Height <= 0 {
+			return
+		}
 	}
 
 	r.objects = r.objects[:0]

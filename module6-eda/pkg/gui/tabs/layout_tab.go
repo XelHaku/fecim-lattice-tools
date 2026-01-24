@@ -242,12 +242,17 @@ func (c *clickableCell) Tapped(*fyne.PointEvent) {
 }
 
 type clickableCellRenderer struct {
-	cell *clickableCell
+	cell  *clickableCell
+	cache sharedwidgets.LayoutCache // Shared utility for safe layout
 }
 
 func (r *clickableCellRenderer) Layout(size fyne.Size) {
 	sharedwidgets.DebugLayoutCall("clickableCellRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
 	r.cell.content.Resize(size)
+	r.cache.MarkLayout(size)
 }
 
 func (r *clickableCellRenderer) MinSize() fyne.Size {
@@ -257,6 +262,8 @@ func (r *clickableCellRenderer) MinSize() fyne.Size {
 func (r *clickableCellRenderer) Refresh() {
 	sharedwidgets.DebugRefreshCall("clickableCellRenderer", r.cell.content.Size())
 	r.cell.content.Refresh()
+	// Mark current size to avoid redundant layout
+	r.cache.MarkLayout(r.cell.content.Size())
 }
 
 func (r *clickableCellRenderer) Objects() []fyne.CanvasObject {
