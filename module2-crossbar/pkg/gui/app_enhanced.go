@@ -218,13 +218,16 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 		}
 	}
 
-	// Create simple LEFT panel labels
+	// Create simple LEFT panel labels - disable wrapping to prevent MinSize changes
 	ca.eduTitleLabel = widget.NewLabelWithStyle("What You're Seeing", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	ca.eduTitleLabel.Wrapping = fyne.TextWrapOff
 	ca.eduContentLabel = widget.NewLabel("CROSSBAR MVM\n\nClick a button to start\na demonstration.")
-	ca.eduContentLabel.Wrapping = fyne.TextWrapWord
+	ca.eduContentLabel.Wrapping = fyne.TextWrapOff // Was TextWrapWord - causes MinSize changes
 	ca.keyStatLabel = widget.NewLabel("N² Operations")
 	ca.keyStatLabel.Alignment = fyne.TextAlignCenter
+	ca.keyStatLabel.Wrapping = fyne.TextWrapOff
 	ca.keyStatValue = widget.NewLabelWithStyle(fmt.Sprintf("%d MACs", ca.config.Rows*ca.config.Cols), fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	ca.keyStatValue.Wrapping = fyne.TextWrapOff
 
 	// Create simple RIGHT panel widgets
 	ca.runMVMButton = widget.NewButton("Run Enhanced MVM", ca.runEnhancedMVM)
@@ -235,6 +238,7 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 	exportButton := widget.NewButton("Export Data", ca.exportData)
 
 	ca.arraySizeLabel = widget.NewLabel("Array Size: 64x64")
+	ca.arraySizeLabel.Wrapping = fyne.TextWrapOff
 	ca.arraySizeSlider = widget.NewSlider(8, 128)
 	ca.arraySizeSlider.Step = 8
 	ca.arraySizeSlider.Value = 64
@@ -245,6 +249,7 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 	}
 
 	ca.noiseLabel = widget.NewLabel("Noise: 2.0%")
+	ca.noiseLabel.Wrapping = fyne.TextWrapOff
 	ca.noiseSlider = widget.NewSlider(0, 20)
 	ca.noiseSlider.Step = 0.5
 	ca.noiseSlider.Value = 2
@@ -254,6 +259,7 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 	}
 
 	ca.adcBitsLabel = widget.NewLabel("ADC Bits: 6")
+	ca.adcBitsLabel.Wrapping = fyne.TextWrapOff
 	ca.adcBitsSlider = widget.NewSlider(4, 10)
 	ca.adcBitsSlider.Step = 1
 	ca.adcBitsSlider.Value = 6
@@ -293,17 +299,20 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 	})
 	ca.colormapSelect.SetSelected("fecim")
 
-	// Create status labels
+	// Create status labels - disable wrapping to prevent MinSize changes on SetText
 	ca.statusLabel = widget.NewLabel("● IDLE | Ready for operations")
 	ca.statusLabel.TextStyle = fyne.TextStyle{Bold: true}
+	ca.statusLabel.Wrapping = fyne.TextWrapOff
 
 	ca.infoLabel = widget.NewLabel(fmt.Sprintf(
 		"Crossbar: %dx%d | Levels: 30 | Noise: %.1f%% | ADC: %d bits",
 		ca.config.Rows, ca.config.Cols, ca.config.NoiseLevel*100, ca.config.ADCBits,
 	))
+	ca.infoLabel.Wrapping = fyne.TextWrapOff
 
 	ca.hoverInfoLabel = widget.NewLabel("Hover over cells to see values")
 	ca.hoverInfoLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	ca.hoverInfoLabel.Wrapping = fyne.TextWrapOff
 
 	// Title and header
 	titleLabel := widget.NewLabel("FeCIM Crossbar Array Visualization")

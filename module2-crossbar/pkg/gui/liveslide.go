@@ -77,6 +77,9 @@ func (m *ModeIndicatorBox) SetMode(mode DemoMode) {
 	m.mu.Lock()
 	m.mode = mode
 	m.mu.Unlock()
+	if sharedwidgets.IsStartupStabilizing() {
+		return
+	}
 	lsDebug.Println("ModeIndicator: Calling Refresh")
 	fyne.Do(func() {
 		m.Refresh()

@@ -122,7 +122,6 @@ func (r *demoCardRenderer) Layout(size fyne.Size) {
 		return
 	}
 	r.layoutWithSize(size)
-	r.cache.MarkLayout(size)
 }
 
 func (r *demoCardRenderer) Refresh() {
@@ -295,6 +294,8 @@ func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
 		r.objects = append(r.objects, lineText)
 	}
 
+	// Mark cache with the effective size used
+	r.cache.MarkLayout(size)
 }
 
 func splitWords(s string) []string {

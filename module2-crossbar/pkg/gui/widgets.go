@@ -50,6 +50,9 @@ func NewColorLegend(minLabel, maxLabel, unit string, levels int) *ColorLegend {
 // SetColormap changes the colormap.
 func (l *ColorLegend) SetColormap(name string) {
 	l.colormap = name
+	if sharedwidgets.IsStartupStabilizing() {
+		return
+	}
 	fyne.Do(func() {
 		l.Refresh()
 	})
@@ -59,6 +62,9 @@ func (l *ColorLegend) SetColormap(name string) {
 func (l *ColorLegend) SetLabels(minLabel, maxLabel string) {
 	l.minLabel = minLabel
 	l.maxLabel = maxLabel
+	if sharedwidgets.IsStartupStabilizing() {
+		return
+	}
 	fyne.Do(func() {
 		l.Refresh()
 	})
@@ -303,6 +309,9 @@ func (m *MetricsPanel) UpdateMetrics(idealAcc, actualAcc, fecimE, gpuE float64, 
 	m.efficiency = gpuE / fecimE
 	m.macOps = macs
 	m.latency = lat
+	if sharedwidgets.IsStartupStabilizing() {
+		return
+	}
 	fyne.Do(func() {
 		m.Refresh()
 	})
@@ -420,6 +429,9 @@ func (b *ComparisonBadge) UpdateValues(fecimVal, gpuVal string, improvement stri
 	b.fecimValue = fecimVal
 	b.gpuValue = gpuVal
 	b.improvement = improvement
+	if sharedwidgets.IsStartupStabilizing() {
+		return
+	}
 	fyne.Do(func() {
 		b.Refresh()
 	})
@@ -506,6 +518,9 @@ func NewAccuracyWaterfall() *AccuracyWaterfall {
 // SetSteps updates the waterfall steps.
 func (w *AccuracyWaterfall) SetSteps(steps []WaterfallStep) {
 	w.steps = steps
+	if sharedwidgets.IsStartupStabilizing() {
+		return
+	}
 	fyne.Do(func() {
 		w.Refresh()
 	})
@@ -514,6 +529,9 @@ func (w *AccuracyWaterfall) SetSteps(steps []WaterfallStep) {
 // SetTarget sets the target accuracy line.
 func (w *AccuracyWaterfall) SetTarget(target float64) {
 	w.targetAccuracy = target
+	if sharedwidgets.IsStartupStabilizing() {
+		return
+	}
 	fyne.Do(func() {
 		w.Refresh()
 	})

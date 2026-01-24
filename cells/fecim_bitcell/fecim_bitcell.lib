@@ -1,0 +1,60 @@
+library(fecim_cells) {
+  technology (cmos) ;
+  delay_model : table_lookup ;
+  
+  time_unit : "1ns" ;
+  voltage_unit : "1V" ;
+  current_unit : "1mA" ;
+  capacitive_load_unit (1, pf) ;
+  leakage_power_unit : "1nW" ;
+  
+  operating_conditions(typical) {
+    process : 1.0 ;
+    temperature : 25 ;
+    voltage : 1.8 ;
+  }
+  default_operating_conditions : typical ;
+  
+  cell(fecim_bitcell) {
+    area : 1.2512 ;
+    cell_leakage_power : 0.0010 ;
+    
+    pin(WL) {
+      direction : input ;
+      capacitance : 0.0020 ;
+    }
+    
+    pin(BL) {
+      direction : output ;
+      function : "WL" ;
+      
+      timing() {
+        related_pin : "WL" ;
+        timing_sense : positive_unate ;
+        
+        cell_rise(scalar) {
+          values("0.100") ;
+        }
+        cell_fall(scalar) {
+          values("0.100") ;
+        }
+        rise_transition(scalar) {
+          values("0.050") ;
+        }
+        fall_transition(scalar) {
+          values("0.050") ;
+        }
+      }
+    }
+    
+    pin(VPWR) {
+      direction : inout ;
+      pg_type : primary_power ;
+    }
+    
+    pin(VGND) {
+      direction : inout ;
+      pg_type : primary_ground ;
+    }
+  }
+}

@@ -262,8 +262,11 @@ func (r *clickableCellRenderer) MinSize() fyne.Size {
 func (r *clickableCellRenderer) Refresh() {
 	sharedwidgets.DebugRefreshCall("clickableCellRenderer", r.cell.content.Size())
 	r.cell.content.Refresh()
-	// Mark current size to avoid redundant layout
-	r.cache.MarkLayout(r.cell.content.Size())
+	// Mark current size only if valid
+	size := r.cell.content.Size()
+	if size.Width > 0 && size.Height > 0 {
+		r.cache.MarkLayout(size)
+	}
 }
 
 func (r *clickableCellRenderer) Objects() []fyne.CanvasObject {

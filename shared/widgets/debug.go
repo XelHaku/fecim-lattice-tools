@@ -34,6 +34,12 @@ var (
 	// Track recent Refresh() calls to find the culprit
 	recentRefreshCalls []refreshCall
 	refreshCallsMu     sync.Mutex
+
+	// Startup stabilization - ignore minor resizes during first second
+	startupTime       = time.Now()
+	startupStable     = false
+	startupStableMu   sync.Mutex
+	startupWindowSize fyne.Size // First "real" window size after 0x0
 )
 
 type refreshCall struct {
@@ -147,6 +153,56 @@ func DebugRefreshCall(widgetName string, widgetSize fyne.Size) {
 	if DebugLayout {
 		DebugLog("%s Refresh() - widget size: %.1fx%.1f", widgetName, widgetSize.Width, widgetSize.Height)
 	}
+}
+
+// IsStartupStabilizing returns true if we're in the startup stabilization period
+// During this period, minor 1-2 pixel resizes should be ignored
+func IsStartupStabilizing() bool {
+	startupStableMu.Lock()
+	defer startupStableMu.Unlock()
+	return !startupStable
+}
+
+// ShouldSuppressResize returns true if a resize should be ignored during startup
+// This helps prevent Wayland resize oscillation during initialization
+func ShouldSuppressResize(oldSize, newSize fyne.Size) bool {
+	startupStableMu.Lock()
+	defer startupStableMu.Unlock()
+
+	// If already stable, don't suppress
+	if startupStable {
+		return false
+	}
+
+	// Check if we're past the stabilization window (1 second)
+	if time.Since(startupTime) > 1*time.Second {
+		startupStable = true
+		if DebugResize {
+			fmt.Printf("[RESIZE] Startup stabilization complete at %s\n", time.Now().Format("15:04:05.000"))
+		}
+		return false
+	}
+
+	// During startup, suppress minor resizes (1-2 pixels)
+	widthDiff := abs(newSize.Width - oldSize.Width)
+	heightDiff := abs(newSize.Height - oldSize.Height)
+
+	if widthDiff <= 2 && heightDiff <= 2 && oldSize.Width > 0 && oldSize.Height > 0 {
+		if DebugResize {
+			fmt.Printf("[RESIZE] Suppressing startup resize: %.0fx%.0f -> %.0fx%.0f (diff: %.0fx%.0f)\n",
+				oldSize.Width, oldSize.Height, newSize.Width, newSize.Height, widthDiff, heightDiff)
+		}
+		return true
+	}
+
+	return false
+}
+
+func abs(f float32) float32 {
+	if f < 0 {
+		return -f
+	}
+	return f
 }
 
 // DebugWindowResize tracks window resize events

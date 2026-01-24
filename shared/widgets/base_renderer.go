@@ -135,13 +135,15 @@ type LayoutCache struct {
 
 // ShouldLayout returns true if layout is needed (size changed or first layout).
 // Also validates that size is positive - returns false for invalid sizes.
+// Uses integer comparison to avoid floating-point precision issues on Wayland.
 func (c *LayoutCache) ShouldLayout(size fyne.Size) bool {
 	// Guard against invalid sizes (negative or zero) - critical for Wayland stability
 	if size.Width <= 0 || size.Height <= 0 {
 		return false
 	}
-	// Skip if size hasn't changed
-	if c.HasLayout && size.Width == c.LastSize.Width && size.Height == c.LastSize.Height {
+	// Skip if size hasn't changed (use integer comparison to avoid float drift)
+	// This prevents 1-pixel oscillation caused by float rounding differences
+	if c.HasLayout && int(size.Width) == int(c.LastSize.Width) && int(size.Height) == int(c.LastSize.Height) {
 		return false
 	}
 	return true
@@ -158,6 +160,12 @@ func (c *LayoutCache) MarkLayout(size fyne.Size) {
 // Use this at the start of Layout() to early-exit on invalid sizes.
 func ValidateSize(size fyne.Size) bool {
 	return size.Width > 0 && size.Height > 0
+}
+
+// RoundSize rounds a size to the nearest integer values.
+// This helps prevent floating-point drift that causes 1-pixel resize issues on Wayland.
+func RoundSize(size fyne.Size) fyne.Size {
+	return fyne.NewSize(float32(int(size.Width+0.5)), float32(int(size.Height+0.5)))
 }
 
 // SafeResize resizes a canvas object only if the size is valid.

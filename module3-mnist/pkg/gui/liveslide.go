@@ -107,7 +107,6 @@ func (r *mnistModeRenderer) Layout(size fyne.Size) {
 		return
 	}
 	r.layoutWithSize(size)
-	r.cache.MarkLayout(size)
 }
 
 func (r *mnistModeRenderer) Refresh() {
@@ -115,7 +114,6 @@ func (r *mnistModeRenderer) Refresh() {
 	size := r.indicator.Size()
 	// Always re-layout on Refresh for this dynamic widget (mode changes)
 	r.layoutWithSize(size)
-	r.cache.MarkLayout(size)
 }
 
 func (r *mnistModeRenderer) layoutWithSize(size fyne.Size) {
@@ -195,6 +193,9 @@ func (r *mnistModeRenderer) layoutWithSize(size fyne.Size) {
 	textWidth := float32(len(modeText)) * fontSize * 0.6
 	text.Move(fyne.NewPos((size.Width-textWidth)/2, (size.Height-fontSize)/2))
 	r.objects = append(r.objects, text)
+
+	// Mark cache with the effective size used
+	r.cache.MarkLayout(size)
 }
 
 func (r *mnistModeRenderer) Objects() []fyne.CanvasObject {
@@ -481,7 +482,6 @@ func (r *predictionRenderer) Layout(size fyne.Size) {
 		return
 	}
 	r.layoutWithSize(size)
-	r.cache.MarkLayout(size)
 }
 
 func (r *predictionRenderer) Refresh() {
@@ -489,7 +489,6 @@ func (r *predictionRenderer) Refresh() {
 	size := r.display.Size()
 	// Always re-layout on Refresh for this dynamic widget (prediction changes)
 	r.layoutWithSize(size)
-	r.cache.MarkLayout(size)
 }
 
 func (r *predictionRenderer) layoutWithSize(size fyne.Size) {
@@ -600,6 +599,9 @@ func (r *predictionRenderer) layoutWithSize(size fyne.Size) {
 	confLabelW := float32(40)
 	confLabel.Move(fyne.NewPos((size.Width-confLabelW)/2, meterY+meterHeight+4))
 	r.objects = append(r.objects, confLabel)
+
+	// Mark cache with the effective size used
+	r.cache.MarkLayout(size)
 }
 
 func (r *predictionRenderer) Objects() []fyne.CanvasObject {

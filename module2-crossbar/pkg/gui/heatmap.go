@@ -83,7 +83,13 @@ func NewCrossbarHeatmap(rows, cols int) *CrossbarHeatmap {
 
 // rateLimitedRefresh performs a refresh with rate limiting to prevent UI overload.
 // Maximum refresh rate is 30 FPS (refreshMinInterval between calls).
+// Also suppresses refreshes during startup stabilization period.
 func (h *CrossbarHeatmap) rateLimitedRefresh() {
+	// Skip refreshes during startup stabilization to prevent resize oscillation
+	if sharedwidgets.IsStartupStabilizing() {
+		return
+	}
+
 	h.refreshMu.Lock()
 
 	// Check if we can refresh immediately
