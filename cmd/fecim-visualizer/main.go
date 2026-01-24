@@ -347,17 +347,22 @@ func main() {
 	log.Info("FeCIM Visualizer starting with verbosity=%s", logging.VerbosityString(verbosity))
 
 	// Create Fyne app
+	fmt.Println("[STARTUP] Creating Fyne app...")
 	fyneApp := app.NewWithID("com.fecim.visualizer")
+	fmt.Println("[STARTUP] Setting theme...")
 	fyneApp.Settings().SetTheme(&sharedtheme.FeCIMTheme{})
 
 	// Load saved window size from preferences
 	prefs := fyneApp.Preferences()
 	savedSize := loadWindowSize(prefs)
 	log.Debug("Loaded window size from preferences: %.0fx%.0f", savedSize.Width, savedSize.Height)
+	fmt.Printf("[STARTUP] Loaded window size: %.0fx%.0f\n", savedSize.Width, savedSize.Height)
 
 	// Create main window with saved size
+	fmt.Println("[STARTUP] Creating window...")
 	window := fyneApp.NewWindow("FeCIM Lattice Tools")
 	window.Resize(savedSize)
+	fmt.Println("[STARTUP] Window created")
 
 	// Create demo instances with error handling
 	demo2, err := demo2gui.NewEmbeddedCrossbarApp()
@@ -368,13 +373,25 @@ func main() {
 		demo2 = nil
 	}
 
+	fmt.Println("[STARTUP] Creating demo1 (hysteresis)...")
+	d1 := demo1gui.NewEmbeddedApp()
+	fmt.Println("[STARTUP] Creating demo3 (MNIST)...")
+	d3 := demo3gui.NewEmbeddedDualModeApp()
+	fmt.Println("[STARTUP] Creating demo4 (circuits)...")
+	d4 := demo4gui.NewEmbeddedCircuitsApp()
+	fmt.Println("[STARTUP] Creating demo5 (comparison)...")
+	d5 := demo5gui.NewEmbeddedComparisonApp()
+	fmt.Println("[STARTUP] Creating demo6 (EDA)...")
+	d6 := demo6gui.NewEmbeddedEDAApp()
+	fmt.Println("[STARTUP] All demos created")
+
 	demos := &DemoApp{
-		demo1: demo1gui.NewEmbeddedApp(),
-		demo2: demo2,                             // Original single-view crossbar (may be nil on error)
-		demo3: demo3gui.NewEmbeddedDualModeApp(), // Full-featured MNIST with FP vs CIM
-		demo4: demo4gui.NewEmbeddedCircuitsApp(),
-		demo5: demo5gui.NewEmbeddedComparisonApp(),
-		demo6: demo6gui.NewEmbeddedEDAApp(),
+		demo1: d1,
+		demo2: demo2,
+		demo3: d3,
+		demo4: d4,
+		demo5: d5,
+		demo6: d6,
 	}
 
 	// Create tabs container (will be populated below)
@@ -405,20 +422,32 @@ func main() {
 	})
 
 	// Build content for each demo
+	fmt.Println("[STARTUP] Building demo1 content...")
 	demo1Content := demos.demo1.BuildContent(fyneApp, window)
+	fmt.Println("[STARTUP] demo1 content built")
 
 	// Handle potentially nil demo2 (initialization error)
 	var demo2Content fyne.CanvasObject
 	if demos.demo2 != nil {
+		fmt.Println("[STARTUP] Building demo2 content...")
 		demo2Content = demos.demo2.BuildContent(fyneApp, window)
+		fmt.Println("[STARTUP] demo2 content built")
 	} else {
 		demo2Content = container.NewCenter(widget.NewLabel("Crossbar demo failed to initialize. Check logs for details."))
 	}
 
+	fmt.Println("[STARTUP] Building demo3 content...")
 	demo3Content := demos.demo3.BuildContent(fyneApp, window)
+	fmt.Println("[STARTUP] demo3 content built")
+	fmt.Println("[STARTUP] Building demo4 content...")
 	demo4Content := demos.demo4.BuildContent(fyneApp, window)
+	fmt.Println("[STARTUP] demo4 content built")
+	fmt.Println("[STARTUP] Building demo5 content...")
 	demo5Content := demos.demo5.BuildContent(fyneApp, window)
+	fmt.Println("[STARTUP] demo5 content built")
+	fmt.Println("[STARTUP] Building demo6 content...")
 	demo6Content := demos.demo6.BuildContent(fyneApp, window)
+	fmt.Println("[STARTUP] demo6 content built")
 
 	// Create tabs - 6 demos total (plus home)
 	tabs = container.NewAppTabs(
@@ -686,6 +715,7 @@ func main() {
 	}
 
 	// Run the application
+	fmt.Println("[STARTUP] About to call ShowAndRun()...")
 	window.ShowAndRun()
 
 	// Cleanup all demos on exit

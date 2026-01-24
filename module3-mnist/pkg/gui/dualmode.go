@@ -132,14 +132,19 @@ func NewDualModeApp() *DualModeApp {
 
 // BuildContent creates the UI content for embedding.
 func (app *DualModeApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject {
+	fmt.Println("[MNIST] BuildContent: start")
 	app.fyneApp = fyneApp
 	app.window = parentWindow
 
 	// Create main layout
+	fmt.Println("[MNIST] BuildContent: calling createMainLayout...")
 	content := app.createMainLayout()
+	fmt.Println("[MNIST] BuildContent: createMainLayout done")
 
 	// Initialize weight heatmap
+	fmt.Println("[MNIST] BuildContent: calling updateWeightHeatmap...")
 	app.updateWeightHeatmap()
+	fmt.Println("[MNIST] BuildContent: done")
 
 	return content
 }
@@ -156,22 +161,28 @@ func (app *DualModeApp) Stop() {
 
 // createMainLayout builds the 4-zone layout per the plan.
 func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
+	fmt.Println("[MNIST] createMainLayout: start")
 	// Status label must be created first (used by callbacks in controls zone)
 	app.statusLabel = widget.NewLabel("Ready. Draw a digit or click 'Random Sample'.")
 
 	// Header
+	fmt.Println("[MNIST] createMainLayout: creating header...")
 	header := app.createHeader()
 
 	// Zone 1: Drawing canvas (top-left)
+	fmt.Println("[MNIST] createMainLayout: creating zone1 (drawing)...")
 	zone1 := app.createDrawingZone()
 
 	// Zone 2: Results (top-right)
+	fmt.Println("[MNIST] createMainLayout: creating zone2 (results)...")
 	zone2 := app.createResultsZone()
 
 	// Zone 3: Controls (bottom-left)
+	fmt.Println("[MNIST] createMainLayout: creating zone3 (controls)...")
 	zone3 := app.createControlsZone()
 
 	// Zone 4: Weight visualization (bottom-right)
+	fmt.Println("[MNIST] createMainLayout: creating zone4 (weights)...")
 	zone4 := app.createWeightZone()
 
 	// Status footer
@@ -179,17 +190,33 @@ func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
 
 	// Arrange zones using expandable splits to fill available space
 	// Left column: Drawing (top) + Controls (bottom)
+	fmt.Println("[MNIST] createMainLayout: creating leftSplit...")
 	leftSplit := container.NewVSplit(zone1, zone3)
-	leftSplit.SetOffset(0.35) // 35% drawing, 65% controls
+	// Note: SetOffset deferred to avoid fyne.Do() deadlock during startup
 
 	// Right column: Results (top) + Weights (bottom)
+	fmt.Println("[MNIST] createMainLayout: creating rightSplit...")
 	rightSplit := container.NewVSplit(zone2, zone4)
-	rightSplit.SetOffset(0.55) // 55% results, 45% weights
+	// Note: SetOffset deferred to avoid fyne.Do() deadlock during startup
 
 	// Main horizontal split
+	fmt.Println("[MNIST] createMainLayout: creating mainSplit...")
 	mainSplit := container.NewHSplit(leftSplit, rightSplit)
-	mainSplit.SetOffset(0.35) // 35% left, 65% right
+	// Note: SetOffset deferred to avoid fyne.Do() deadlock during startup
 
+	// Defer SetOffset calls to after widget creation to avoid deadlock
+	fmt.Println("[MNIST] createMainLayout: deferring SetOffset calls...")
+	go func() {
+		// Small delay to let Fyne initialize
+		time.Sleep(100 * time.Millisecond)
+		fyne.Do(func() {
+			leftSplit.SetOffset(0.35)  // 35% drawing, 65% controls
+			rightSplit.SetOffset(0.55) // 55% results, 45% weights
+			mainSplit.SetOffset(0.35)  // 35% left, 65% right
+		})
+	}()
+
+	fmt.Println("[MNIST] createMainLayout: creating border...")
 	mainContent := container.NewBorder(
 		header,
 		footer,
@@ -198,9 +225,11 @@ func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
 	)
 
 	// Mark as initialized and trigger initial setup
+	fmt.Println("[MNIST] createMainLayout: calling changeHiddenSize...")
 	app.initialized = true
 	app.changeHiddenSize(128) // Initialize with default hidden size
 
+	fmt.Println("[MNIST] createMainLayout: returning")
 	return mainContent
 }
 
@@ -533,51 +562,66 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 
 // createWeightZone creates the weight visualization zone (Zone 4).
 func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
+	fmt.Println("[MNIST] createWeightZone: start")
 	label := widget.NewLabel("Weights")
 	label.TextStyle = fyne.TextStyle{Bold: true}
 
 	// Layer selector as horizontal radio
+	// NOTE: Don't set callback initially - SetSelected triggers callback which uses fyne.Do() and deadlocks during startup
+	fmt.Println("[MNIST] createWeightZone: creating radio group...")
 	layerSelect := widget.NewRadioGroup(
 		[]string{"Layer1 (784x128)", "Layer2 (128x10)"},
-		func(s string) {
-			if s == "Layer1 (784x128)" {
-				app.weightLayer = 0
-			} else {
-				app.weightLayer = 1
-			}
-			app.updateWeightHeatmap()
-			app.updateWeightComparison()
-		},
+		nil, // No callback initially to avoid fyne.Do() deadlock during startup
 	)
 	layerSelect.Horizontal = true
+	fmt.Println("[MNIST] createWeightZone: setting selected...")
 	layerSelect.SetSelected("Layer1 (784x128)")
+	// Now set the callback after initial selection
+	layerSelect.OnChanged = func(s string) {
+		if s == "Layer1 (784x128)" {
+			app.weightLayer = 0
+		} else {
+			app.weightLayer = 1
+		}
+		app.updateWeightHeatmap()
+		app.updateWeightComparison()
+	}
+	fmt.Println("[MNIST] createWeightZone: radio done")
 
 	// Info labels (combined into one)
+	fmt.Println("[MNIST] createWeightZone: creating labels...")
 	app.weightDimLabel = widget.NewLabel("")
 	app.weightRangeLabel = widget.NewLabel("")
 	app.weightLevelsLabel = widget.NewLabel("")
 
 	// Create heatmap raster (quantized weights)
+	fmt.Println("[MNIST] createWeightZone: creating heatmap...")
 	app.weightHeatmap = canvas.NewRaster(app.drawWeightHeatmap)
 	app.weightHeatmap.SetMinSize(fyne.NewSize(256, 128))
 
 	// Create FP vs Quantized comparison widget
+	fmt.Println("[MNIST] createWeightZone: creating comparison widget...")
 	app.weightComparisonWidget = NewWeightComparisonWidget()
 
 	// Create dual heatmap (side-by-side FP vs Quantized)
+	fmt.Println("[MNIST] createWeightZone: creating dual heatmap...")
 	app.dualWeightHeatmap = NewDualWeightHeatmap()
 
+	fmt.Println("[MNIST] createWeightZone: creating zoom button...")
 	zoomBtn := widget.NewButtonWithIcon("", theme.ZoomFitIcon(), func() {
 		app.showZoomedHeatmap()
 	})
+	fmt.Println("[MNIST] createWeightZone: done with widgets")
 
 	// Header with controls
+	fmt.Println("[MNIST] createWeightZone: creating header container...")
 	header := container.NewVBox(
 		container.NewHBox(label, layout.NewSpacer(), layerSelect, zoomBtn),
 		container.NewHBox(app.weightDimLabel, app.weightRangeLabel, app.weightLevelsLabel),
 	)
 
 	// Create tabbed view for different weight visualizations
+	fmt.Println("[MNIST] createWeightZone: creating tabs...")
 	quantizedTab := container.NewMax(app.weightHeatmap)
 	comparisonTab := container.NewMax(app.weightComparisonWidget)
 	sideBySideTab := container.NewMax(app.dualWeightHeatmap)
@@ -588,6 +632,7 @@ func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
 		container.NewTabItem("Side-by-Side", sideBySideTab),
 	)
 
+	fmt.Println("[MNIST] createWeightZone: returning...")
 	return container.NewBorder(
 		header,
 		nil, nil, nil,

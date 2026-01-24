@@ -85,9 +85,13 @@ echo "Scheduling commit and push in $HOURS hour(s)..."
     sleep "$SECONDS_DELAY"
     cd "$(dirname "$0")" || exit 1
     git add -A
-    git commit -m "Auto-commit after $HOURS hour delay"
-    git push
-    echo "Commit and push completed at $(date)"
+    if ! git diff --cached --quiet; then
+        git commit -m "Auto-commit after $HOURS hour delay at $(date '+%Y-%m-%d %H:%M:%S')"
+        git push
+        echo "Commit and push completed at $(date)"
+    else
+        echo "No changes to commit at $(date)"
+    fi
 ) &
 
 echo "Scheduled! Process running in background (PID: $!)"
