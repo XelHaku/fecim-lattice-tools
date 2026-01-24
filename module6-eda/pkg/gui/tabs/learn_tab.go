@@ -1,6 +1,6 @@
 // pkg/gui/tabs/learn_tab.go
 // Learning Center tab for FeCIM Design Suite
-// Explains OpenLane flow, FeCIM design workflow, and provides educational resources
+// Explains OpenLane flow and where the FeCIM Array Builder fits in
 
 package tabs
 
@@ -16,13 +16,12 @@ import (
 func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 	// Topic selector
 	topics := []string{
-		"🏠 Overview",
-		"🔬 What is FeCIM?",
-		"🛠️ OpenLane Flow",
-		"⚡ Our Workflow",
-		"📐 HDL Generation",
-		"🏗️ Architecture",
-		"📚 References",
+		"1. Overview",
+		"2. OpenLane Flow",
+		"3. Where We Fit In",
+		"4. What We Generate",
+		"5. Cell Types",
+		"6. References",
 	}
 
 	topicSelector := widget.NewList(
@@ -49,16 +48,14 @@ func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 		case 0:
 			content = makeOverviewContent()
 		case 1:
-			content = makeFeCIMContent()
+			content = makeOpenLaneFlowContent()
 		case 2:
-			content = makeOpenLaneContent()
+			content = makeWhereWeFitContent()
 		case 3:
-			content = makeWorkflowContent()
+			content = makeWhatWeGenerateContent()
 		case 4:
-			content = makeHDLContent()
+			content = makeCellTypesContent()
 		case 5:
-			content = makeArchitectureContent()
-		case 6:
 			content = makeReferencesContent()
 		default:
 			content = makeOverviewContent()
@@ -74,7 +71,7 @@ func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 
 	// Layout with sidebar
 	sidebar := container.NewBorder(
-		widget.NewLabelWithStyle("📚 Topics", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle("Topics", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		nil, nil, nil,
 		topicSelector,
 	)
@@ -82,12 +79,12 @@ func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 
 	// Main layout
 	split := container.NewHSplit(sidebar, contentScroll)
-	split.SetOffset(0.2)
+	split.SetOffset(0.22)
 
 	// Header
 	header := container.NewVBox(
-		widget.NewLabelWithStyle("FeCIM Design Suite - Learning Center", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-		widget.NewLabel("Learn about EDA, OpenLane, and FeCIM chip design"),
+		widget.NewLabelWithStyle("FeCIM Array Builder - Learning Center", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("Understanding OpenLane and where our tool fits in"),
 		widget.NewSeparator(),
 	)
 
@@ -95,563 +92,498 @@ func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 }
 
 func makeOverviewContent() fyne.CanvasObject {
-	title := widget.NewLabelWithStyle("Welcome to the FeCIM Design Suite", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	title := widget.NewLabelWithStyle("What This Tool Does", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
-	intro := widget.NewLabel(`This suite bridges the gap between AI models and physical silicon.
+	intro := widget.NewLabel(`Module 6 is an ARRAY BUILDER that generates EDA files
+for integrating FeCIM crossbar arrays into the OpenLane flow.
 
-What This Tool Does:
-━━━━━━━━━━━━━━━━━━━━
-• Compiles neural network weights to FeCIM hardware
-• Generates industry-standard HDL (Verilog/DEF)
-• Visualizes crossbar array layouts
-• Exports to open-source EDA tools
+WHAT WE DO:
+-----------
+  * Generate LEF files (cell abstracts)
+  * Generate Liberty files (timing - placeholder values)
+  * Generate Verilog netlists (behavioral models)
+  * Generate DEF files (physical placement)
+  * Export OpenLane configuration
 
-The Problem We Solve:
-━━━━━━━━━━━━━━━━━━━━
-"There is no 'OpenROAD for Analog.' You cannot click a button
-and get a routed FeFET crossbar array."
+WHAT WE DON'T DO:
+-----------------
+  * We do NOT provide validated FeFET device models
+  * We do NOT generate production-ready layouts
+  * We do NOT characterize real timing values
+  * We do NOT fabricate chips
 
-Until now.
+PURPOSE:
+--------
+This is an EDUCATIONAL tool that demonstrates how
+FeCIM arrays could integrate with open-source EDA.
+All timing values are placeholders - real values
+require SPICE characterization with validated models.
 
-This tool provides the missing link between:
-  📊 AI Models (weights, tensors)
-     ↓
-  💾 Physical Memory (FeFET conductances)
-     ↓
-  🔲 Silicon Layout (GDSII masks)
-
-Navigation:
-━━━━━━━━━━━
-Select a topic from the sidebar to learn about:
-• FeCIM technology and 30-level quantization
-• The OpenLane ASIC design flow
-• Our specific workflow for FeCIM arrays
-• How to generate and validate HDL
-• Architecture choices (Passive vs 1T1R)`)
+DISCLAIMER:
+-----------
+This project is not affiliated with or endorsed by
+external research institution, Dr. external research group, or any foundry.`)
 	intro.Wrapping = fyne.TextWrapWord
 
 	return container.NewVBox(title, widget.NewSeparator(), intro)
 }
 
-func makeFeCIMContent() fyne.CanvasObject {
-	title := widget.NewLabelWithStyle("What is Ferroelectric Compute-in-Memory?", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+func makeOpenLaneFlowContent() fyne.CanvasObject {
+	title := widget.NewLabelWithStyle("The OpenLane RTL-to-GDSII Flow", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
-	content := widget.NewLabel(`FeCIM = Ferroelectric Compute-in-Memory
+	content := widget.NewLabel(`OpenLane is an open-source flow that takes hardware
+descriptions and produces manufacturable chip layouts.
 
-The Key Innovation:
-━━━━━━━━━━━━━━━━━━
-"Compute in memory where the same device does the memory
-AND the computation." — Dr. external research group
+THE COMPLETE FLOW:
+==================
 
-Traditional Computing:
-  Memory ←→ CPU ←→ Memory  (data shuttling = slow, power-hungry)
+  STAGE 1: SYNTHESIS (Yosys)
+  --------------------------
+  Input:  Verilog code (behavioral description)
+  Output: Gate-level netlist (standard cells)
+  Tool:   Yosys
 
-FeCIM Computing:
-  Memory = CPU  (computation happens IN the memory array)
+  Example: "assign out = a & b;"
+        -> sky130_fd_sc_hd__and2_1
 
-The 30-Level Advantage:
-━━━━━━━━━━━━━━━━━━━━━━
-Unlike binary memory (0/1), FeCIM supports 30 analog states:
+            |
+            v
 
-  Level 0  ████░░░░░░░░░░░░░░░░  Low conductance (1 μS)
-  Level 15 ████████████░░░░░░░░  Medium (50 μS)
-  Level 29 ████████████████████  High conductance (100 μS)
+  STAGE 2: FLOORPLANNING
+  ----------------------
+  Input:  Netlist + constraints
+  Output: Die area, I/O pin locations
+  Tool:   OpenROAD init_floorplan
 
-This enables:
-  • 4.91 bits per cell (log₂(30) = 4.91)
-  • Efficient neural network weight storage
-  • In-memory matrix-vector multiplication
+  Defines the chip boundary and where
+  external connections will be placed.
 
-The Crossbar Array:
-━━━━━━━━━━━━━━━━━━━
-       Bit Lines (BL)
-         ↓   ↓   ↓   ↓
-    WL→ [●] [●] [●] [●]  ← Each cell stores one weight
-    WL→ [●] [●] [●] [●]     as a conductance value
-    WL→ [●] [●] [●] [●]
-    WL→ [●] [●] [●] [●]
-         ↓   ↓   ↓   ↓
-        Output Currents (I = G × V)
+            |
+            v
 
-Matrix-Vector Multiply in O(1):
-  I_out[j] = Σ G[i,j] × V_in[i]
+  STAGE 3: PLACEMENT (RePlAce + OpenDP)
+  -------------------------------------
+  Input:  Floorplan + netlist
+  Output: X,Y coordinates for every cell
+  Tool:   OpenROAD place_cells
 
-  All multiplications happen simultaneously by Ohm's law!
+  Positions cells to minimize wire length
+  while meeting timing constraints.
 
-Dr. Tour's Key Specifications:
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  • Discrete Levels: 30 (not 2!)
-  • Energy vs NAND: 10,000,000× better
-  • Energy vs DRAM: 1,000× better
-  • Technology Readiness: TRL 4 (lab validated)`)
+            |
+            v
+
+  STAGE 4: CLOCK TREE SYNTHESIS (TritonCTS)
+  -----------------------------------------
+  Input:  Placed design + clock constraints
+  Output: Balanced clock distribution
+  Tool:   OpenROAD cts
+
+  Note: FeCIM arrays often don't need this
+  (no synchronous clock in the memory array).
+
+            |
+            v
+
+  STAGE 5: ROUTING (TritonRoute)
+  ------------------------------
+  Input:  Placed cells + netlist
+  Output: Metal wire connections
+  Tool:   OpenROAD route
+
+  Draws actual metal paths between cells
+  on multiple metal layers.
+
+            |
+            v
+
+  STAGE 6: SIGNOFF & GDSII
+  ------------------------
+  Input:  Routed design
+  Output: GDSII file (factory-ready)
+  Tools:  Magic (DRC), Netgen (LVS)
+
+  Verifies design rules and extracts
+  the final manufacturing format.
+
+REFERENCES:
+-----------
+  * OpenLane Docs: openlane.readthedocs.io
+  * OpenLane Paper: WOSET 2020
+  * OpenROAD: openroad.readthedocs.io`)
 	content.Wrapping = fyne.TextWrapWord
 
 	return container.NewVBox(title, widget.NewSeparator(), content)
 }
 
-func makeOpenLaneContent() fyne.CanvasObject {
-	title := widget.NewLabelWithStyle("The OpenLane ASIC Design Flow", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+func makeWhereWeFitContent() fyne.CanvasObject {
+	title := widget.NewLabelWithStyle("Where the FeCIM Array Builder Fits In", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
-	content := widget.NewLabel(`OpenLane: Open-Source RTL-to-GDSII Flow
+	content := widget.NewLabel(`Our tool generates files that plug into OpenLane
+at specific points in the flow.
 
-What is OpenLane?
-━━━━━━━━━━━━━━━━━
-OpenLane automates the journey from code to manufacturable chip:
+THE STANDARD OPENLANE FLOW:
+===========================
 
-  Verilog Code → Netlist → Placed Cells → Routed Wires → GDSII
+  [Verilog]
+      |
+      v
+  +-------------+
+  | SYNTHESIS   |  <-- Yosys converts RTL to gates
+  +-------------+
+      |
+      v
+  +-------------+
+  | FLOORPLAN   |  <-- Define die area
+  +-------------+
+      |
+      v
+  +-------------+
+  | PLACEMENT   |  <-- Position cells
+  +-------------+
+      |
+      v
+  +-------------+
+  | ROUTING     |  <-- Connect with wires
+  +-------------+
+      |
+      v
+  [GDSII]
 
-The 5 Main Stages:
-━━━━━━━━━━━━━━━━━━
 
-┌─────────────────────────────────────────────────────────┐
-│  STAGE A: SYNTHESIS (Yosys)                             │
-│  ───────────────────────────────                        │
-│  Input:  Verilog HDL (your design description)          │
-│  Output: Netlist of standard cells                      │
-│  Tool:   Yosys (open-source synthesis)                  │
-│                                                         │
-│  Example: "assign out = ~in;" → sky130_fd_sc_hd__inv_2  │
-└─────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────┐
-│  STAGE B: FLOORPLANNING                                 │
-│  ──────────────────────                                 │
-│  Input:  Netlist + die size constraints                 │
-│  Output: Die area, pin locations, power grid plan       │
-│                                                         │
-│  Key Decision: How big is the chip? Where are the IOs?  │
-└─────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────┐
-│  STAGE C: PLACEMENT (RePlAce + OpenDP)                  │
-│  ─────────────────────────────────────                  │
-│  Input:  Floorplan + netlist                            │
-│  Output: Each cell has X,Y coordinates                  │
-│                                                         │
-│  Goal: Minimize wire length, meet timing                │
-└─────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────┐
-│  STAGE D: CLOCK TREE SYNTHESIS (TritonCTS)              │
-│  ─────────────────────────────────────────              │
-│  Input:  Placed design + clock constraints              │
-│  Output: Balanced clock distribution network            │
-│                                                         │
-│  Note: FeCIM arrays may skip this (no global clock)     │
-└─────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────┐
-│  STAGE E: ROUTING (TritonRoute)                         │
-│  ──────────────────────────────                         │
-│  Input:  Placed cells + netlist                         │
-│  Output: Metal interconnect paths                       │
-│                                                         │
-│  Handles: DRC (design rules), antenna effects           │
-└─────────────────────────────────────────────────────────┘
-                          ↓
-┌─────────────────────────────────────────────────────────┐
-│  OUTPUT: GDSII (Factory-Ready Layout)                   │
-│  ────────────────────────────────────                   │
-│  The "PDF" of chip design - sent to the foundry         │
-└─────────────────────────────────────────────────────────┘
+WHERE WE INJECT OUR FILES:
+==========================
 
-Our Integration Point:
-━━━━━━━━━━━━━━━━━━━━━━
-We generate the PLACEMENT (DEF file) directly because:
-• FeCIM arrays are regular structures (not random logic)
-• Standard place-and-route doesn't understand crossbars
-• We need precise control over cell positions
+  [Our LEF]  -----> Defines cell geometry
+                    (size, pin locations)
 
-Our Output → OpenLane:
-  lattice.v     (Verilog netlist)
-  placement.def (Pre-placed cells)
-  config.tcl    (OpenLane configuration)`)
+  [Our LIB]  -----> Defines timing
+                    (PLACEHOLDER values!)
+
+  [Our Verilog] --> Used by synthesis
+                    (behavioral model only)
+
+  [Our DEF]  -----> PRE-PLACED cells
+                    (skips auto-placement)
+
+  [Our Config] ---> OpenLane settings
+
+
+THE KEY INSIGHT:
+================
+Standard OpenLane doesn't understand crossbar arrays.
+Auto-placement would scatter our cells randomly.
+
+We provide a DEF file with FIXED positions so cells
+stay in the regular grid structure that FeCIM needs:
+
+   BL[0] BL[1] BL[2] BL[3]
+     |     |     |     |
+WL[0]-*-----*-----*-----*-
+     |     |     |     |
+WL[1]-*-----*-----*-----*-
+     |     |     |     |
+WL[2]-*-----*-----*-----*-
+     |     |     |     |
+
+This regular structure enables:
+  * Matrix-vector multiply by Kirchhoff's law
+  * Predictable IR-drop modeling
+  * Uniform sneak path analysis
+
+
+WHAT OPENLANE STILL DOES:
+=========================
+  * Routing (connecting our pre-placed cells)
+  * DRC checking
+  * Final GDSII generation
+
+We provide the WHAT (cells + positions).
+OpenLane figures out the HOW (wires + verification).`)
 	content.Wrapping = fyne.TextWrapWord
 
 	return container.NewVBox(title, widget.NewSeparator(), content)
 }
 
-func makeWorkflowContent() fyne.CanvasObject {
-	title := widget.NewLabelWithStyle("FeCIM Design Workflow", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+func makeWhatWeGenerateContent() fyne.CanvasObject {
+	title := widget.NewLabelWithStyle("What Files We Generate", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
-	content := widget.NewLabel(`The Complete FeCIM Design Flow
+	content := widget.NewLabel(`The Array Builder generates several EDA file formats.
+Each serves a specific purpose in the OpenLane flow.
 
-Our 4-Step Process:
-━━━━━━━━━━━━━━━━━━━
+FILE 1: LEF (Library Exchange Format)
+=====================================
+Purpose: Defines cell GEOMETRY (abstract view)
 
-STEP 1: COMPILE (Tab 1 - Compiler)
-─────────────────────────────────
-  Input:  Neural network weights (JSON/numpy)
+  VERSION 5.8 ;
+  MACRO fecim_bitcell
+    CLASS CORE ;
+    SIZE 0.460 BY 2.720 ;        <- Cell dimensions
+    PIN WL
+      DIRECTION INPUT ;
+      PORT LAYER met1 ;          <- Pin on metal 1
+        RECT 0 1.2 0.14 1.48 ;
+      END
+    END WL
+    PIN BL
+      DIRECTION INOUT ;
+      PORT LAYER met2 ;          <- Pin on metal 2
+    END BL
+  END fecim_bitcell
 
-  Process:
-    1. Load weight matrix
-    2. Find weight range [min, max]
-    3. Quantize to 30 levels (symmetric)
-    4. Map levels to conductance (1-100 μS)
-    5. Calculate programming voltages
+Note: This is an ABSTRACT - no transistors drawn.
+Real layout requires Magic VLSI or KLayout design.
 
-  Output: CrossbarMapping structure
-    • Cell assignments (row, col, weight, level, G)
-    • Compilation statistics (PSNR, utilization)
 
-STEP 2: VISUALIZE (Tab 2 - Layout)
-──────────────────────────────────
-  Input:  CrossbarMapping from Step 1
+FILE 2: Liberty (.lib) Timing Library
+=====================================
+Purpose: Defines cell TIMING for synthesis
 
-  Display:
-    • Color-coded conductance grid
-    • Click cells for details
-    • Verify quantization quality
+  library(fecim_lib) {
+    cell(fecim_bitcell) {
+      pin(WL) {
+        direction : input;
+        capacitance : 0.002;     <- PLACEHOLDER!
+      }
+      timing() {
+        rise_transition : 0.1;   <- PLACEHOLDER!
+      }
+    }
+  }
 
-  Purpose: Sanity check before HDL generation
+WARNING: All timing values are PLACEHOLDERS.
+Real characterization needs SPICE simulation
+with validated FeFET device models.
 
-STEP 3: GENERATE HDL (Tab: HDL)
-───────────────────────────────
-  Input:  CrossbarMapping + Architecture choice
 
-  Outputs:
-    ┌─────────────────────────────────────────┐
-    │ lattice.v (Verilog Netlist)             │
-    │ ─────────────────────────               │
-    │ module fecim_crossbar (                 │
-    │     input  wire [N-1:0] WL,             │
-    │     inout  wire [M-1:0] BL,             │
-    │     input  wire [M-1:0] SL,  // 1T1R    │
-    │     ...                                 │
-    │ );                                      │
-    │     fecim_bit #(.LEVEL(15)) R_0_0 (...);│
-    │     ...                                 │
-    │ endmodule                               │
-    └─────────────────────────────────────────┘
+FILE 3: Verilog Netlist
+=======================
+Purpose: Structural description for synthesis
 
-    ┌─────────────────────────────────────────┐
-    │ placement.def (Physical Layout)         │
-    │ ──────────────────────────              │
-    │ VERSION 5.8 ;                           │
-    │ DESIGN fecim_crossbar ;                 │
-    │ UNITS DISTANCE MICRONS 1000 ;           │
-    │ DIEAREA ( 0 0 ) ( 31840 40880 ) ;       │
-    │ COMPONENTS 16 ;                         │
-    │   - R_0_0 fecim_bit + FIXED (x y) N ;   │
-    │   ...                                   │
-    │ END COMPONENTS                          │
-    └─────────────────────────────────────────┘
+  module fecim_array_4x4 (
+    input  [3:0] WL,
+    inout  [3:0] BL
+  );
+    fecim_bitcell cell_0_0 (.WL(WL[0]), .BL(BL[0]));
+    fecim_bitcell cell_0_1 (.WL(WL[0]), .BL(BL[1]));
+    // ... 16 cells total
+  endmodule
 
-STEP 4: EXPORT & VALIDATE (Tab 5 - Export)
-──────────────────────────────────────────
-  Validation:
-    $ yosys -p 'read_verilog lattice.v; hierarchy -check'
-    → "Successfully finished Verilog frontend"
+Note: This is BEHAVIORAL only - cells are black boxes.
+The actual FeFET physics are NOT modeled here.
 
-  Export Formats:
-    • JSON   (full mapping data)
-    • CSV    (cell assignments table)
-    • SPICE  (ngspice netlist for simulation)
-    • DEF    (physical placement)
-    • TCL    (OpenLane configuration)
 
-Continuing to OpenLane:
-━━━━━━━━━━━━━━━━━━━━━━━
-After export, run OpenLane with our pre-placed design:
+FILE 4: DEF (Design Exchange Format)
+====================================
+Purpose: Physical PLACEMENT of cells
 
-  $ cd OpenLane
-  $ ./flow.tcl -design fecim_crossbar \
-               -init_design_config ../generated/config.tcl
+  VERSION 5.8 ;
+  DESIGN fecim_array_4x4 ;
+  UNITS DISTANCE MICRONS 1000 ;
+  DIEAREA ( 0 0 ) ( 31840 40880 ) ;
 
-OpenLane will:
-  1. Skip synthesis (we provide netlist)
-  2. Skip placement (we provide DEF)
-  3. Run routing (connect the cells)
-  4. Generate final GDSII`)
+  COMPONENTS 16 ;
+    - cell_0_0 fecim_bitcell + FIXED ( 10000 10000 ) N ;
+    - cell_0_1 fecim_bitcell + FIXED ( 10460 10000 ) N ;
+    // ... with X,Y in database units (nm)
+  END COMPONENTS
+
+The FIXED keyword tells OpenLane:
+"Don't move these cells - I placed them deliberately."
+
+
+FILE 5: OpenLane Config
+=======================
+Purpose: Configure the OpenLane flow
+
+  {
+    "DESIGN_NAME": "fecim_array_4x4",
+    "EXTRA_LEFS": ["fecim_bitcell.lef"],
+    "EXTRA_LIBS": ["fecim_bitcell.lib"],
+    "FP_DEF_TEMPLATE": "fecim_array_4x4.def"
+  }
+
+Tells OpenLane to use our custom cells and
+start with our pre-placed DEF file.`)
 	content.Wrapping = fyne.TextWrapWord
 
 	return container.NewVBox(title, widget.NewSeparator(), content)
 }
 
-func makeHDLContent() fyne.CanvasObject {
-	title := widget.NewLabelWithStyle("HDL Generation Details", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+func makeCellTypesContent() fyne.CanvasObject {
+	title := widget.NewLabelWithStyle("Cell Types: Passive vs 1T1R", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
-	content := widget.NewLabel(`Understanding Our HDL Output
+	content := widget.NewLabel(`The Array Builder supports two crossbar architectures.
 
-Verilog Netlist Structure:
-━━━━━━━━━━━━━━━━━━━━━━━━━━
+PASSIVE CROSSBAR
+================
+Structure:
+       BL[0]  BL[1]  BL[2]
+         |      |      |
+  WL[0]--*------*------*--
+         |      |      |
+  WL[1]--*------*------*--
+         |      |      |
 
-// Module declaration with array dimensions
-module fecim_crossbar (
-    input  wire [ROWS-1:0] WL,   // Word Lines (row select)
-    inout  wire [COLS-1:0] BL,   // Bit Lines (data)
-    input  wire [COLS-1:0] SL,   // Source Lines (1T1R only)
-    input  wire VDD,             // Power
-    input  wire VSS              // Ground
-);
-    // Parameters embedded in module
-    parameter ROWS = 4;
-    parameter COLS = 4;
-    parameter LEVELS = 30;
-    parameter ARCHITECTURE = "1T1R";
+  * = FeFET device (no select transistor)
 
-    // Cell instances with quantization level
-    fecim_bit #(.LEVEL(15)) R_0_0 (
-        .WL  (WL[0]),
-        .BL  (BL[0]),
-        .SL  (SL[0]),   // 1T1R architecture
-        .VDD (VDD),
-        .VSS (VSS)
-    );
-    // ... more cells ...
-endmodule
+Ports: WL[], BL[], VDD, VSS
+Cell Size: 0.46 x 2.72 um (SKY130 site)
 
-Cell Naming Convention:
-━━━━━━━━━━━━━━━━━━━━━━
-  R_{row}_{col}
+Advantages:
+  + Simple structure
+  + Dense packing (smaller cells)
+  + Lower fabrication complexity
 
-  Examples:
-    R_0_0  → Cell at row 0, column 0
-    R_3_7  → Cell at row 3, column 7
+Disadvantages:
+  - SNEAK PATH CURRENTS
+  - Read accuracy degrades with array size
+  - Limited to small arrays (~32x32)
 
-  This matches across: Verilog, DEF, and SPICE
 
-DEF File Structure:
-━━━━━━━━━━━━━━━━━━━
-VERSION 5.8 ;
-DESIGN fecim_crossbar ;
-UNITS DISTANCE MICRONS 1000 ;     // 1000 DBU = 1 μm
+1T1R (1 Transistor + 1 Resistor)
+================================
+Structure:
+       BL[0]  BL[1]  SL[0]  SL[1]
+         |      |      |      |
+  WL[0]--T------T------+------+--
+         |      |      |      |
+         R      R      |      |
+         |      |      |      |
+  WL[1]--T------T------+------+--
+         |      |      |      |
+         R      R      |      |
 
-DIEAREA ( 0 0 ) ( Xmax Ymax ) ;   // Die boundary
+  T = Select transistor (gate on WL)
+  R = FeFET memory element
 
-COMPONENTS N ;                     // N cells
-    - R_0_0 fecim_bit + FIXED ( X Y ) N ;
-    // X, Y in database units (multiply by 1000)
-    // N = North orientation
-END COMPONENTS
+Ports: WL[], BL[], SL[], VDD, VSS
+Cell Size: 0.92 x 2.72 um (2x passive width)
 
-PINS M ;                          // M I/O pins
-    - WL[0] + NET WL[0] + DIRECTION INPUT ...
-    - BL[0] + NET BL[0] + DIRECTION INOUT ...
-    - SL[0] + NET SL[0] + DIRECTION INPUT ...  // 1T1R
-END PINS
+Advantages:
+  + No sneak paths (transistor isolates cells)
+  + Scales to large arrays (128x128+)
+  + Better read accuracy
 
-NETS K ;                          // K signal nets
-    - WL[0] ( PIN WL[0] ) ( R_0_0 WL ) ( R_0_1 WL ) ...
-    - BL[0] ( PIN BL[0] ) ( R_0_0 BL ) ( R_1_0 BL ) ...
-END NETS
+Disadvantages:
+  - Larger cell area (2x)
+  - More complex routing (SL lines)
+  - Higher fabrication complexity
 
-END DESIGN
 
-Coordinate System:
-━━━━━━━━━━━━━━━━━━
-  Cell pitch (passive): 0.46 μm = 460 DBU
-  Cell pitch (1T1R):    0.92 μm = 920 DBU
-  Row height:           2.72 μm = 2720 DBU
+THE SNEAK PATH PROBLEM
+======================
+In passive arrays, reading cell (0,0):
 
-  Origin offset: (10 μm, 10 μm) from die corner
+  Apply V to WL[0], ground BL[0]
 
-  Cell R_i_j placement:
-    X = 10000 + j × CellPitch
-    Y = 10000 + i × RowHeight
+  INTENDED path:  WL[0] -> Cell(0,0) -> BL[0]
 
-Validation Commands:
-━━━━━━━━━━━━━━━━━━━━
-  # Check Verilog syntax
-  $ yosys -p 'read_verilog lattice.v; hierarchy -check'
+  SNEAK path:     WL[0] -> Cell(0,1) -> BL[1]
+                        -> Cell(1,1) -> WL[1]
+                        -> Cell(1,0) -> BL[0]
 
-  # View in KLayout
-  $ klayout placement.def
+This parasitic current corrupts the read signal.
+Error grows as N^2 for NxN arrays.
 
-  # Simulate in ngspice (after SPICE export)
-  $ ngspice crossbar.sp`)
-	content.Wrapping = fyne.TextWrapWord
 
-	return container.NewVBox(title, widget.NewSeparator(), content)
-}
+RECOMMENDATION
+==============
+  Array Size    |  Recommended
+  --------------|---------------
+  <= 16x16      |  Passive
+  32x32         |  Either (depends on accuracy needs)
+  >= 64x64      |  1T1R
 
-func makeArchitectureContent() fyne.CanvasObject {
-	title := widget.NewLabelWithStyle("Crossbar Architecture: Passive vs 1T1R", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
-	content := widget.NewLabel(`Choosing the Right Architecture
-
-Two Options:
-━━━━━━━━━━━━
-
-┌─────────────────────────────────────────────────────────┐
-│  PASSIVE CROSSBAR                                       │
-│  ────────────────                                       │
-│       BL[0]  BL[1]                                      │
-│         │      │                                        │
-│  WL[0]──●──────●──                                      │
-│         │      │                                        │
-│  WL[1]──●──────●──                                      │
-│         │      │                                        │
-│                                                         │
-│  Ports: WL[], BL[], VDD, VSS                           │
-│  Cell:  fecim_bit (0.46 μm × 2.72 μm)                  │
-│                                                         │
-│  ✓ Simple structure                                     │
-│  ✓ Dense packing                                        │
-│  ✓ Good for small arrays (≤32×32)                      │
-│  ✗ Sneak path currents                                  │
-│  ✗ Read accuracy degrades with size                     │
-└─────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────┐
-│  1T1R (1 Transistor 1 Resistor)                         │
-│  ──────────────────────────────                         │
-│       BL[0]  BL[1]  SL[0]  SL[1]                        │
-│         │      │      │      │                          │
-│  WL[0]──┼──────┼──────┼──────┼──                        │
-│         │      │      │      │                          │
-│  WL[1]──┼──────┼──────┼──────┼──                        │
-│         │      │      │      │                          │
-│                                                         │
-│  Ports: WL[], BL[], SL[], VDD, VSS                     │
-│  Cell:  fecim_1t1r (0.92 μm × 2.72 μm)                 │
-│                                                         │
-│  ✓ Sneak path mitigation                                │
-│  ✓ Scales to large arrays (128×128+)                   │
-│  ✓ Better read accuracy                                 │
-│  ✗ Larger cell size (2× pitch)                          │
-│  ✗ Additional routing (SL lines)                        │
-└─────────────────────────────────────────────────────────┘
-
-The Sneak Path Problem:
-━━━━━━━━━━━━━━━━━━━━━━━
-In passive arrays, current can flow through unintended paths:
-
-  Reading cell (0,0):
-    Apply V to WL[0], ground BL[0]
-
-    Intended: WL[0] → Cell(0,0) → BL[0]
-
-    Sneak:    WL[0] → Cell(0,1) → BL[1] → Cell(1,1) → ...
-
-  Result: Parasitic current corrupts the read signal
-  Impact: Error ∝ N² for N×N arrays
-
-1T1R Solution:
-━━━━━━━━━━━━━━
-  • Each cell has a select transistor
-  • Transistor gate connected to WL
-  • When WL is LOW → transistor OFF → cell isolated
-  • Source Line (SL) provides controlled current path
-
-  Reading cell (0,0):
-    WL[0] = HIGH, others LOW
-    → Only row 0 transistors are ON
-    → All other cells are isolated
-    → No sneak paths!
-
-Recommendation:
-━━━━━━━━━━━━━━━
-  ┌──────────────┬─────────────────────────┐
-  │ Array Size   │ Recommended             │
-  ├──────────────┼─────────────────────────┤
-  │ ≤ 32×32      │ Passive (simpler)       │
-  │ 64×64        │ Either (app dependent)  │
-  │ ≥ 128×128    │ 1T1R (accuracy needed)  │
-  └──────────────┴─────────────────────────┘
-
-Physical Files:
-━━━━━━━━━━━━━━━
-  Passive:
-    cells/fecim_bit.stub.lef
-    generated/fecim_bit.v
-
-  1T1R:
-    cells/fecim_1t1r.stub.lef
-    generated/fecim_1t1r.v`)
+REFERENCES
+==========
+  * Sneak paths: RSC Nanoscale Advances 2020
+  * 1T1R for CIM: IEEE JSSC multiple papers
+  * IR-drop: Science China 2025`)
 	content.Wrapping = fyne.TextWrapWord
 
 	return container.NewVBox(title, widget.NewSeparator(), content)
 }
 
 func makeReferencesContent() fyne.CanvasObject {
-	title := widget.NewLabelWithStyle("References & Resources", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	title := widget.NewLabelWithStyle("References", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
-	content := widget.NewLabel(`Scientific Foundation & Learning Resources
+	content := widget.NewLabel(`All claims in this tool are backed by published research.
 
-Core Physics Papers:
-━━━━━━━━━━━━━━━━━━━━
-• Shin et al. (2025) "Flash In2Se3 for Neuromorphic Computing"
-  - Validates 30-state analog memory
-  - Published by Tour Group, external research institution
+OPENLANE / EDA
+==============
+[1] "OpenLANE: The Open-Source Digital ASIC Flow"
+    WOSET 2020
+    https://woset-workshop.github.io/PDFs/2020/a21.pdf
+    -> Our DEF/Verilog formats follow this spec
 
-• Tour Group publications on HfO2-ZrO2 superlattices
-  - Ferroelectric switching dynamics
-  - Endurance and retention characteristics
+[2] OpenLane Documentation
+    https://openlane.readthedocs.io/
+    -> Configuration variables we generate
 
-EDA Tool Documentation:
-━━━━━━━━━━━━━━━━━━━━━━━
-• OpenLane Documentation
-  https://openlane.readthedocs.io/
+[3] LEF/DEF 5.8 Specification
+    Si2/OpenAccess Coalition
+    -> File format standards we follow
 
-• Yosys Manual
-  https://yosyshq.readthedocs.io/
 
-• Magic VLSI
-  http://opencircuitdesign.com/magic/
+SKYWATER PDK
+============
+[4] SkyWater SKY130 Process Design Kit
+    https://skywater-pdk.readthedocs.io/
+    -> Cell dimensions: 0.46um site, 2.72um height
+    -> Metal layer specs for pin placement
 
-• ngspice Manual
-  https://ngspice.sourceforge.io/docs.html
+[5] SKY130 Standard Cells
+    https://github.com/google/skywater-pdk
+    -> LEF/Liberty format examples
 
-• KLayout Documentation
-  https://www.klayout.de/doc.html
 
-Open PDKs:
-━━━━━━━━━━
-• SkyWater SKY130 (130nm)
-  https://github.com/google/skywater-pdk
-  - Free, extensive documentation
-  - No FeFET models (we add our own)
+FECIM DEVICE PHYSICS
+====================
+[6] Shin et al. "Flash In2Se3 for Neuromorphic Computing"
+    Advanced Electronic Materials, 2025
+    -> 30 discrete analog states
 
-• GlobalFoundries GF180MCU (180nm)
-  https://github.com/google/gf180mcu-pdk
-  - High voltage support (good for FeFET)
+[7] Tour Group HfO2-ZrO2 Superlattice Research
+    external research institution
+    -> Ferroelectric switching dynamics
 
-• IHP SG13G2 (130nm)
-  https://github.com/IHP-GmbH/IHP-Open-PDK
-  - Has RRAM/memristor support
-  - Current Tiny Tapeout target
+[8] "Roadmap on Ferroelectric Hafnia/Zirconia"
+    APL Materials, 2023
+    -> HfO2/ZrO2 material properties
 
-Learning Paths:
-━━━━━━━━━━━━━━━
-Beginner:
-  1. Read docs/eda/eda.eli5.md (EDA Explained Like I'm 5)
-  2. Complete Tab 1 tutorial (compile sample weights)
-  3. Visualize in Tab 2 (understand the grid)
-  4. Generate HDL (see the output)
 
-Intermediate:
-  1. Read docs/eda/eda.guide.zero_to_asic.md
-  2. Understand the OpenLane flow
-  3. Install ngspice, run simulations
-  4. Explore passive vs 1T1R trade-offs
+CIM ARCHITECTURE
+================
+[9] "Sneak Path Solutions for Crossbar Arrays"
+    RSC Nanoscale Advances, 2020
+    -> Passive vs 1T1R trade-offs
 
-Advanced:
-  1. Read docs/eda/eda.research.meta-study.md
-  2. Understand NeuroSim vs CiMLoop comparison
-  3. Design custom FeFET models
-  4. Contribute to open-source PDK extensions
+[10] "Optimizing Hardware-Software Co-Design"
+     Science China, 2025
+     -> IR-drop and non-ideality analysis
 
-Community:
-━━━━━━━━━━
-• Zero to ASIC Course (Matt Venn)
-  https://www.zerotoasiccourse.com/
+[11] NeuroSim (Georgia Tech)
+     -> Circuit-level CIM modeling methodology
 
-• Tiny Tapeout
-  https://tinytapeout.com/
 
-• Open Silicon Discord
-  (Central hub for open-source chip design)
+DISCLAIMER
+==========
+This project is NOT affiliated with or endorsed by:
+  * external research institution
+  * Dr. external research group or Tour Lab
+  * SkyWater Technology
+  * Google
+  * Any foundry or research institution
 
-Project Documentation:
-━━━━━━━━━━━━━━━━━━━━━━
-All documentation is in docs/eda/:
-  • plan-demo6.md        - Implementation roadmap
-  • eda.eli5.md          - Beginner-friendly EDA guide
-  • eda.opensource.ecosystem.md - Tool analysis
-  • architecture-1t1r-review.md - Dr. Shin review
-  • cell-geometry-decision.md   - Design decisions
-  • REFERENCES.md        - Full bibliography`)
+All references are to publicly available
+published research. We implement SIMULATIONS
+based on this published data, not validated
+against actual hardware.
+
+For the full reference list with DOIs and
+paper links, see: docs/eda/REFERENCES.md`)
 	content.Wrapping = fyne.TextWrapWord
 
 	// Add a visual separator
