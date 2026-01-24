@@ -682,9 +682,8 @@ func main() {
 	// Create resize detector to handle window resize events (replaces polling)
 	var lastSaveTime time.Time
 	resizeDetector := widgets.NewResizeDetector(func(size fyne.Size) {
-		// Update button positions
+		// Update button positions (Move/Resize handle their own refresh)
 		updateButtonPositions()
-		buttonOverlay.Refresh()
 
 		// Debounce: only save size every 500ms to avoid excessive writes
 		if time.Since(lastSaveTime) > 500*time.Millisecond {
@@ -702,7 +701,6 @@ func main() {
 		// Update button labels and layout for new breakpoint
 		updateButtonLabels()
 		updateButtonPositions()
-		buttonOverlay.Refresh()
 	})
 
 	// Add resize and responsive detectors to the main content stack
