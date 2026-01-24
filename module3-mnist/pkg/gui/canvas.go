@@ -12,6 +12,15 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+// BrushSize represents predefined brush sizes.
+type BrushSize int
+
+const (
+	BrushThin   BrushSize = iota // 1.0 radius
+	BrushMedium                  // 1.5 radius
+	BrushThick                   // 2.5 radius
+)
+
 // DigitCanvas provides an interactive 28x28 drawing area for MNIST digits.
 type DigitCanvas struct {
 	widget.BaseWidget
@@ -22,21 +31,68 @@ type DigitCanvas struct {
 	// Drawing state
 	isDrawing   bool
 	brushRadius float64
+	brushSize   BrushSize
 
 	// Rendering
 	raster *canvas.Raster
 
+	// Pixel count tracking
+	activePixels int // Count of pixels with value > 0.1
+
 	// Callback when digit changes
 	OnDigitChanged func(pixels []float64)
+
+	// Callback for pixel count updates
+	OnPixelCountChanged func(count int, total int)
 }
 
 // NewDigitCanvas creates a new digit drawing canvas.
 func NewDigitCanvas() *DigitCanvas {
 	dc := &DigitCanvas{
 		brushRadius: 1.5,
+		brushSize:   BrushMedium,
 	}
 	dc.ExtendBaseWidget(dc)
 	return dc
+}
+
+// SetBrushSize changes the brush size.
+func (dc *DigitCanvas) SetBrushSize(size BrushSize) {
+	dc.brushSize = size
+	switch size {
+	case BrushThin:
+		dc.brushRadius = 1.0
+	case BrushMedium:
+		dc.brushRadius = 1.5
+	case BrushThick:
+		dc.brushRadius = 2.5
+	}
+}
+
+// GetBrushSize returns the current brush size.
+func (dc *DigitCanvas) GetBrushSize() BrushSize {
+	return dc.brushSize
+}
+
+// GetActivePixelCount returns the number of active (drawn) pixels.
+func (dc *DigitCanvas) GetActivePixelCount() int {
+	return dc.activePixels
+}
+
+// updatePixelCount recalculates the active pixel count.
+func (dc *DigitCanvas) updatePixelCount() {
+	count := 0
+	for i := 0; i < 28; i++ {
+		for j := 0; j < 28; j++ {
+			if dc.pixels[i][j] > 0.1 {
+				count++
+			}
+		}
+	}
+	dc.activePixels = count
+	if dc.OnPixelCountChanged != nil {
+		dc.OnPixelCountChanged(count, 784)
+	}
 }
 
 // Clear resets the canvas to blank.
@@ -46,9 +102,11 @@ func (dc *DigitCanvas) Clear() {
 			dc.pixels[i][j] = 0
 		}
 	}
+	dc.activePixels = 0
 	fyne.Do(func() {
 		dc.Refresh()
 	})
+	dc.updatePixelCount()
 	dc.notifyChange()
 }
 
@@ -70,6 +128,7 @@ func (dc *DigitCanvas) SetPixels(pixels []float64) {
 			dc.pixels[i][j] = pixels[i*28+j]
 		}
 	}
+	dc.updatePixelCount()
 	fyne.Do(func() {
 		dc.Refresh()
 	})
@@ -84,8 +143,9 @@ func (dc *DigitCanvas) CreateRenderer() fyne.WidgetRenderer {
 }
 
 // MinSize returns the minimum size for the digit canvas.
+// Enlarged to 280x280 for better drawing experience (Dr. Tour recommendation).
 func (dc *DigitCanvas) MinSize() fyne.Size {
-	return fyne.NewSize(200, 200) // Smaller minimum, scales with window
+	return fyne.NewSize(280, 280) // Larger canvas for easier digit drawing
 }
 
 // generateImage creates the canvas image.
@@ -268,6 +328,7 @@ func (dc *DigitCanvas) draw(pos fyne.Position) {
 	fyne.Do(func() {
 		dc.Refresh()
 	})
+	dc.updatePixelCount()
 	dc.notifyChange()
 }
 

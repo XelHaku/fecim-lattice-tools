@@ -160,6 +160,12 @@ func DebugRefreshCall(widgetName string, widgetSize fyne.Size) {
 func IsStartupStabilizing() bool {
 	startupStableMu.Lock()
 	defer startupStableMu.Unlock()
+
+	// Check if we're past the stabilization window (1 second)
+	if !startupStable && time.Since(startupTime) > 1*time.Second {
+		startupStable = true
+	}
+
 	return !startupStable
 }
 

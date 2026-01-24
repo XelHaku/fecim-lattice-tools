@@ -229,3 +229,47 @@ func TestAllDemosReady(t *testing.T) {
 		t.Errorf("Expected 6 ready demos, got %d", readyCount)
 	}
 }
+
+func TestDrawPreviewThumbnail(t *testing.T) {
+	// Use Fyne test app for proper widget testing
+	app := test.NewApp()
+	defer app.Quit()
+	_ = app // Ensure test app is initialized
+
+	accentColor := struct{ R, G, B, A uint8 }{0, 212, 255, 255}
+
+	// Test preview thumbnail generation for all 6 demos
+	for demoNum := 1; demoNum <= 6; demoNum++ {
+		objects := drawPreviewThumbnail(demoNum, 10, 10, 100, 70, accentColor)
+
+		// Each preview should generate multiple canvas objects
+		if len(objects) < 3 {
+			t.Errorf("Demo %d preview has too few objects: %d", demoNum, len(objects))
+		}
+
+		// First object should be background rectangle
+		if objects[0] == nil {
+			t.Errorf("Demo %d preview has nil background", demoNum)
+		}
+	}
+}
+
+func TestDrawPreviewThumbnailEdgeCases(t *testing.T) {
+	app := test.NewApp()
+	defer app.Quit()
+	_ = app
+
+	accentColor := struct{ R, G, B, A uint8 }{0, 212, 255, 255}
+
+	// Test with different sizes
+	objects := drawPreviewThumbnail(1, 0, 0, 50, 50, accentColor)
+	if len(objects) == 0 {
+		t.Error("Preview should generate objects even with small size")
+	}
+
+	// Test with larger size
+	objects = drawPreviewThumbnail(2, 100, 100, 200, 150, accentColor)
+	if len(objects) == 0 {
+		t.Error("Preview should generate objects with larger size")
+	}
+}

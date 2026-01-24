@@ -15,6 +15,8 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+// Note: math is used for glow circle calculations
+
 // ComparisonResult holds the results of FP vs CIM comparison.
 type ComparisonResult struct {
 	FPPrediction    int
@@ -90,7 +92,7 @@ func (cc *ComparisonCard) Clear() {
 
 // MinSize returns the minimum size for the widget.
 func (cc *ComparisonCard) MinSize() fyne.Size {
-	return fyne.NewSize(500, 280)
+	return fyne.NewSize(500, 320) // Increased height for larger digits
 }
 
 // CreateRenderer implements fyne.Widget.
@@ -116,13 +118,13 @@ func (cc *ComparisonCard) generateImage(w, h int) image.Image {
 		w = 500
 	}
 	if h < 10 {
-		h = 220
+		h = 260
 	}
 
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
 
-	// Background
-	bgColor := color.RGBA{25, 30, 45, 255}
+	// Background - darker for contrast
+	bgColor := color.RGBA{20, 25, 40, 255}
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
 			img.Set(x, y, bgColor)
@@ -134,146 +136,176 @@ func (cc *ComparisonCard) generateImage(w, h int) image.Image {
 	cc.mu.RUnlock()
 
 	if result == nil {
-		// Draw idle state
+		// Draw idle state with hint
 		drawSimpleText(img, "Waiting for inference...", w/2-80, h/2-8, color.RGBA{100, 100, 120, 255})
+		drawSimpleText(img, "Draw a digit or click Random", w/2-100, h/2+12, color.RGBA{80, 80, 100, 255})
 		return img
 	}
 
-	// Layout constants
-	padding := 15
+	// Layout constants - optimized for larger digits
+	padding := 12
 	cardWidth := (w - 3*padding) / 2
-	cardHeight := h - 80 // Leave room for bottom info
+	cardHeight := h - 70 // Leave room for bottom info
+
+	// Determine match state for styling
+	matchColor := color.RGBA{50, 200, 120, 255}   // Green for match
+	mismatchColor := color.RGBA{220, 80, 80, 255} // Red for mismatch
 
 	// === FP Card (Left) ===
 	fpX := padding
 	fpY := padding
+	fpAccent := color.RGBA{100, 150, 255, 255} // Blue
 	cc.drawPredictionCard(img, fpX, fpY, cardWidth, cardHeight,
 		"FP (Float32)", "Ideal AI",
 		result.FPPrediction, result.FPConfidence,
-		color.RGBA{100, 150, 255, 255}, // Blue
-		result.FPProbabilities)
+		fpAccent, result.FPProbabilities)
 
 	// === CIM Card (Right) ===
 	cimX := padding*2 + cardWidth
 	cimY := padding
+	cimAccent := color.RGBA{100, 255, 180, 255} // Green
 	cc.drawPredictionCard(img, cimX, cimY, cardWidth, cardHeight,
 		"CIM (30 Levels)", "Hardware",
 		result.CIMPrediction, result.CIMConfidence,
-		color.RGBA{100, 255, 180, 255}, // Green
-		result.CIMProbabilities)
+		cimAccent, result.CIMProbabilities)
 
 	// === Match/Mismatch indicator (center, between cards) ===
 	centerX := w / 2
 	indicatorY := cardHeight/2 + padding
 
 	if result.Match {
-		// Green checkmark circle
-		cc.drawCircle(img, centerX, indicatorY, 15, color.RGBA{50, 180, 100, 255})
-		drawSimpleText(img, "=", centerX-3, indicatorY-4, color.RGBA{255, 255, 255, 255})
+		// Green success indicator
+		cc.drawCircle(img, centerX, indicatorY, 18, matchColor)
 	} else {
-		// Red X circle
-		cc.drawCircle(img, centerX, indicatorY, 15, color.RGBA{200, 80, 80, 255})
-		drawSimpleText(img, "x", centerX-3, indicatorY-4, color.RGBA{255, 255, 255, 255})
+		// Red warning indicator
+		cc.drawCircle(img, centerX, indicatorY, 18, mismatchColor)
 	}
 
 	// === Bottom info section ===
-	infoY := cardHeight + padding + 10
+	infoY := cardHeight + padding + 5
 
-	// Energy comparison
-	energyText := fmt.Sprintf("Energy: FP=%.0f nJ | CIM=%.1f nJ | %.0fx savings",
-		result.EnergyGPU, result.EnergyFeCIM, result.EnergyRatio)
-	drawSimpleText(img, energyText, padding, infoY, color.RGBA{180, 180, 200, 255})
+	// Match/Mismatch banner
+	bannerColor := matchColor
+	bannerText := "MATCH"
+	if !result.Match {
+		bannerColor = mismatchColor
+		bannerText = "MISMATCH"
+	}
+	drawSimpleText(img, bannerText, padding, infoY, bannerColor)
+
+	// Energy savings (key insight)
+	energyText := fmt.Sprintf("| %.0fx energy savings", result.EnergyRatio)
+	drawSimpleText(img, energyText, padding+70, infoY, color.RGBA{0, 200, 255, 255})
+
+	// Confidence comparison
+	infoY += 15
+	confText := fmt.Sprintf("Confidence: FP=%.1f%% | CIM=%.1f%% | Delta=%.1f%%",
+		result.FPConfidence*100, result.CIMConfidence*100, result.ConfidenceDelta*100)
+	drawSimpleText(img, confText, padding, infoY, color.RGBA{160, 160, 180, 255})
 
 	// Second-best predictions
 	infoY += 15
 	fpSecond, fpSecondConf := cc.getSecondBest(result.FPProbabilities)
 	cimSecond, cimSecondConf := cc.getSecondBest(result.CIMProbabilities)
-
 	secondText := fmt.Sprintf("2nd best: FP=%d (%.1f%%) | CIM=%d (%.1f%%)",
 		fpSecond, fpSecondConf*100, cimSecond, cimSecondConf*100)
-	drawSimpleText(img, secondText, padding, infoY, color.RGBA{140, 140, 160, 255})
-
-	// Confidence delta indicator
-	if result.ConfidenceDelta > 0.05 {
-		infoY += 15
-		deltaText := fmt.Sprintf("Confidence gap: %.1f%% - quantization impact visible",
-			result.ConfidenceDelta*100)
-		drawSimpleText(img, deltaText, padding, infoY, color.RGBA{255, 200, 100, 255})
-	}
+	drawSimpleText(img, secondText, padding, infoY, color.RGBA{120, 120, 140, 255})
 
 	return img
 }
 
-// drawPredictionCard draws a single prediction card.
+// drawPredictionCard draws a single prediction card (legacy).
 func (cc *ComparisonCard) drawPredictionCard(img *image.RGBA, x, y, w, h int,
 	title, subtitle string, prediction int, confidence float64, accentColor color.RGBA, probs []float64) {
+	cc.drawPredictionCardEnhanced(img, x, y, w, h, title, subtitle, prediction, confidence, accentColor, probs, 3)
+}
 
-	// Card background
-	cardBg := color.RGBA{35, 40, 55, 255}
+// drawPredictionCardEnhanced draws a prediction card with configurable digit scale.
+func (cc *ComparisonCard) drawPredictionCardEnhanced(img *image.RGBA, x, y, w, h int,
+	title, subtitle string, prediction int, confidence float64, accentColor color.RGBA, probs []float64, digitScale int) {
+
+	// Card background with subtle gradient
 	for cx := x; cx < x+w; cx++ {
 		for cy := y; cy < y+h; cy++ {
-			img.Set(cx, cy, cardBg)
+			// Subtle vertical gradient
+			gradientFactor := float64(cy-y) / float64(h)
+			r := uint8(30 + gradientFactor*10)
+			g := uint8(35 + gradientFactor*10)
+			b := uint8(50 + gradientFactor*10)
+			img.Set(cx, cy, color.RGBA{r, g, b, 255})
 		}
 	}
 
-	// Border (accent color)
+	// Thicker border (accent color) - 2px
 	for cx := x; cx < x+w; cx++ {
 		img.Set(cx, y, accentColor)
+		img.Set(cx, y+1, accentColor)
 		img.Set(cx, y+h-1, accentColor)
+		img.Set(cx, y+h-2, accentColor)
 	}
 	for cy := y; cy < y+h; cy++ {
 		img.Set(x, cy, accentColor)
+		img.Set(x+1, cy, accentColor)
 		img.Set(x+w-1, cy, accentColor)
+		img.Set(x+w-2, cy, accentColor)
 	}
 
 	// Title
-	titleY := y + 8
+	titleY := y + 10
 	drawSimpleText(img, title, x+10, titleY, accentColor)
 
 	// Subtitle
-	subtitleY := titleY + 12
+	subtitleY := titleY + 14
 	drawSimpleText(img, subtitle, x+10, subtitleY, color.RGBA{120, 120, 140, 255})
 
-	// Large prediction digit
-	digitY := subtitleY + 20
+	// LARGE prediction digit (centered)
+	digitHeight := 7 * digitScale
+	digitWidth := 5 * digitScale
+	digitY := subtitleY + 18
+	digitX := x + (w-digitWidth)/2
+
 	digitText := fmt.Sprintf("%d", prediction)
 	if prediction < 0 {
 		digitText = "?"
 	}
-	// Draw large digit (scaled up)
-	cc.drawLargeDigit(img, x+w/2-20, digitY, digitText, accentColor)
+	cc.drawScaledDigit(img, digitX, digitY, digitText, accentColor, digitScale)
 
-	// Confidence bar
-	barY := digitY + 55
-	barX := x + 10
-	barWidth := w - 20
-	barHeight := 12
+	// Confidence bar - wider and more prominent
+	barY := digitY + digitHeight + 12
+	barX := x + 15
+	barWidth := w - 30
+	barHeight := 16
 
 	// Background
 	for bx := barX; bx < barX+barWidth; bx++ {
 		for by := barY; by < barY+barHeight; by++ {
-			img.Set(bx, by, color.RGBA{50, 50, 70, 255})
+			img.Set(bx, by, color.RGBA{40, 45, 60, 255})
 		}
 	}
 
-	// Fill
+	// Fill with gradient
 	fillWidth := int(float64(barWidth) * confidence)
 	for bx := barX; bx < barX+fillWidth; bx++ {
 		for by := barY; by < barY+barHeight; by++ {
-			img.Set(bx, by, accentColor)
+			// Vertical gradient on fill
+			t := float64(by-barY) / float64(barHeight)
+			r := uint8(float64(accentColor.R) * (1 - t*0.3))
+			g := uint8(float64(accentColor.G) * (1 - t*0.3))
+			b := uint8(float64(accentColor.B) * (1 - t*0.3))
+			img.Set(bx, by, color.RGBA{r, g, b, 255})
 		}
 	}
 
-	// Confidence text
-	confY := barY + barHeight + 5
+	// Confidence percentage text (larger)
+	confY := barY + barHeight + 8
 	confText := fmt.Sprintf("%.1f%%", confidence*100)
-	drawSimpleText(img, confText, x+w/2-20, confY, color.RGBA{200, 200, 220, 255})
+	drawScaledText(img, confText, x+w/2-len(confText)*7, confY, 2, color.RGBA{220, 220, 240, 255})
 
 	// Mini probability distribution (bottom of card)
 	if len(probs) == 10 {
-		probY := confY + 20
+		probY := confY + 22
 		probBarWidth := (w - 30) / 10
-		probBarMaxH := h - (probY - y) - 15
+		probBarMaxH := h - (probY - y) - 12
 
 		for i, p := range probs {
 			probBarX := x + 15 + i*probBarWidth
@@ -282,16 +314,144 @@ func (cc *ComparisonCard) drawPredictionCard(img *image.RGBA, x, y, w, h int,
 				probBarH = 1
 			}
 
-			probBarY := y + h - 10 - probBarH
+			probBarY := y + h - 8 - probBarH
 
-			barColor := color.RGBA{80, 80, 100, 255}
+			barColor := color.RGBA{60, 65, 85, 255}
 			if i == prediction {
 				barColor = accentColor
 			}
 
 			for bx := probBarX; bx < probBarX+probBarWidth-2; bx++ {
-				for by := probBarY; by < y+h-10; by++ {
+				for by := probBarY; by < y+h-8; by++ {
 					img.Set(bx, by, barColor)
+				}
+			}
+		}
+	}
+}
+
+// drawGlowCircle draws a circle with a glow effect.
+func (cc *ComparisonCard) drawGlowCircle(img *image.RGBA, cx, cy, r int, c color.RGBA) {
+	// Outer glow (larger, faded)
+	for dy := -r - 5; dy <= r+5; dy++ {
+		for dx := -r - 5; dx <= r+5; dx++ {
+			dist := math.Sqrt(float64(dx*dx + dy*dy))
+			if dist > float64(r) && dist <= float64(r+5) {
+				// Fade based on distance
+				alpha := uint8(80 * (1 - (dist-float64(r))/5))
+				px := cx + dx
+				py := cy + dy
+				if px >= 0 && px < img.Bounds().Dx() && py >= 0 && py < img.Bounds().Dy() {
+					// Blend with background
+					bg := img.RGBAAt(px, py)
+					blended := color.RGBA{
+						R: uint8((int(bg.R)*(255-int(alpha)) + int(c.R)*int(alpha)) / 255),
+						G: uint8((int(bg.G)*(255-int(alpha)) + int(c.G)*int(alpha)) / 255),
+						B: uint8((int(bg.B)*(255-int(alpha)) + int(c.B)*int(alpha)) / 255),
+						A: 255,
+					}
+					img.Set(px, py, blended)
+				}
+			}
+		}
+	}
+
+	// Main circle
+	cc.drawCircle(img, cx, cy, r, c)
+}
+
+// drawLargeCheckmark draws a checkmark symbol.
+func (cc *ComparisonCard) drawLargeCheckmark(img *image.RGBA, cx, cy int, c color.RGBA) {
+	white := color.RGBA{255, 255, 255, 255}
+	// Draw a checkmark using lines
+	// Short leg: from bottom-left going up-right
+	for i := 0; i < 8; i++ {
+		x := cx - 8 + i
+		y := cy + 2 - i
+		for dx := -1; dx <= 1; dx++ {
+			for dy := -1; dy <= 1; dy++ {
+				px, py := x+dx, y+dy
+				if px >= 0 && px < img.Bounds().Dx() && py >= 0 && py < img.Bounds().Dy() {
+					img.Set(px, py, white)
+				}
+			}
+		}
+	}
+	// Long leg: from middle going up-right
+	for i := 0; i < 12; i++ {
+		x := cx + i
+		y := cy - 6 + i
+		for dx := -1; dx <= 1; dx++ {
+			for dy := -1; dy <= 1; dy++ {
+				px, py := x+dx, y+dy
+				if px >= 0 && px < img.Bounds().Dx() && py >= 0 && py < img.Bounds().Dy() {
+					img.Set(px, py, white)
+				}
+			}
+		}
+	}
+}
+
+// drawLargeX draws an X symbol for mismatch.
+func (cc *ComparisonCard) drawLargeX(img *image.RGBA, cx, cy int, c color.RGBA) {
+	white := color.RGBA{255, 255, 255, 255}
+	// Draw X using two diagonal lines
+	for i := -10; i <= 10; i++ {
+		// Line 1: top-left to bottom-right
+		x1, y1 := cx+i, cy+i
+		// Line 2: top-right to bottom-left
+		x2, y2 := cx+i, cy-i
+
+		for dx := -1; dx <= 1; dx++ {
+			for dy := -1; dy <= 1; dy++ {
+				px1, py1 := x1+dx, y1+dy
+				px2, py2 := x2+dx, y2+dy
+				if px1 >= 0 && px1 < img.Bounds().Dx() && py1 >= 0 && py1 < img.Bounds().Dy() {
+					img.Set(px1, py1, white)
+				}
+				if px2 >= 0 && px2 < img.Bounds().Dx() && py2 >= 0 && py2 < img.Bounds().Dy() {
+					img.Set(px2, py2, white)
+				}
+			}
+		}
+	}
+}
+
+// drawScaledDigit draws a single digit with configurable scale.
+func (cc *ComparisonCard) drawScaledDigit(img *image.RGBA, x, y int, digit string, c color.RGBA, scale int) {
+	patterns := map[rune][]string{
+		'0': {"01110", "10001", "10001", "10001", "10001", "10001", "01110"},
+		'1': {"00100", "01100", "00100", "00100", "00100", "00100", "01110"},
+		'2': {"01110", "10001", "00001", "00110", "01000", "10000", "11111"},
+		'3': {"01110", "10001", "00001", "00110", "00001", "10001", "01110"},
+		'4': {"00010", "00110", "01010", "10010", "11111", "00010", "00010"},
+		'5': {"11111", "10000", "11110", "00001", "00001", "10001", "01110"},
+		'6': {"01110", "10000", "10000", "11110", "10001", "10001", "01110"},
+		'7': {"11111", "00001", "00010", "00100", "01000", "01000", "01000"},
+		'8': {"01110", "10001", "10001", "01110", "10001", "10001", "01110"},
+		'9': {"01110", "10001", "10001", "01111", "00001", "00001", "01110"},
+		'?': {"01110", "10001", "00001", "00110", "00100", "00000", "00100"},
+	}
+
+	for _, ch := range digit {
+		pattern, ok := patterns[ch]
+		if !ok {
+			continue
+		}
+
+		for dy, row := range pattern {
+			for dx, pixel := range row {
+				if pixel == '1' {
+					// Draw scaled pixel
+					for sy := 0; sy < scale; sy++ {
+						for sx := 0; sx < scale; sx++ {
+							px := x + dx*scale + sx
+							py := y + dy*scale + sy
+							if px >= 0 && px < img.Bounds().Dx() && py >= 0 && py < img.Bounds().Dy() {
+								img.Set(px, py, c)
+							}
+						}
+					}
 				}
 			}
 		}

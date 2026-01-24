@@ -69,9 +69,9 @@ type DualModeApp struct {
 	weightLevelsLabel *widget.Label
 
 	// Quick test
-	testButton       *widget.Button
-	testResultLabel  *widget.Label
-	testProgressBar  *widget.ProgressBar
+	testButton      *widget.Button
+	testResultLabel *widget.Label
+	testProgressBar *widget.ProgressBar
 
 	// Test data
 	testImages [][]float64
@@ -95,6 +95,16 @@ type DualModeApp struct {
 	energyWidget         *EnergyWidget         // P1.3: Energy tracking
 	comparisonCard       *ComparisonCard       // P1.2: Enhanced FP vs CIM comparison
 	dualProbabilityChart *DualProbabilityChart // P1.2: Probability divergence chart
+
+	// P2 Enhancements: Animation & Quick Demo
+	inferencePhaseLabel *widget.Label  // Shows current inference phase
+	quickDemoRunning    bool           // True when quick demo is active
+	quickDemoStopChan   chan struct{}  // Channel to stop quick demo
+	animationEnabled    bool           // Enable/disable inference animation
+
+	// P2 Enhancement: Weight Comparison
+	weightComparisonWidget *WeightComparisonWidget
+	dualWeightHeatmap      *DualWeightHeatmap
 }
 
 // NewDualModeApp creates a new dual-mode MNIST application.
@@ -199,8 +209,20 @@ func (app *DualModeApp) createHeader() fyne.CanvasObject {
 	title := widget.NewLabel("MNIST FeCIM | 784→128→10 | 30 Levels | 87%")
 	title.TextStyle = fyne.TextStyle{Bold: true}
 
-	// Info buttons
+	// Quick Demo button - prominent call to action
+	quickDemoBtn := widget.NewButton("Quick Demo", func() {
+		mnistLog.Button("QuickDemo")
+		if app.quickDemoRunning {
+			app.StopQuickDemo()
+		} else {
+			app.StartQuickDemo()
+		}
+	})
+	quickDemoBtn.Importance = widget.WarningImportance // Orange/yellow - stands out
+
+	// Guided Tour button
 	tourBtn := widget.NewButton("Tour", func() {
+		mnistLog.Button("GuidedTour")
 		if app.tour == nil {
 			app.tour = NewGuidedTour(app)
 		}
@@ -208,6 +230,7 @@ func (app *DualModeApp) createHeader() fyne.CanvasObject {
 	})
 	tourBtn.Importance = widget.HighImportance
 
+	// Info buttons
 	why30Btn := widget.NewButton("Why 30?", func() {
 		ShowWhy30LevelsDialog(app.window)
 	})
@@ -225,6 +248,8 @@ func (app *DualModeApp) createHeader() fyne.CanvasObject {
 	})
 
 	buttonRow := container.NewHBox(
+		quickDemoBtn,
+		widget.NewSeparator(),
 		tourBtn,
 		why30Btn,
 		realityBtn,
@@ -243,6 +268,28 @@ func (app *DualModeApp) createDrawingZone() fyne.CanvasObject {
 	app.digitCanvas = NewDigitCanvas()
 	app.digitCanvas.OnDigitChanged = app.onDigitChanged
 
+	// Pixel count display
+	pixelCountLabel := widget.NewLabel("Pixels: 0/784")
+	pixelCountLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	app.digitCanvas.OnPixelCountChanged = func(count, total int) {
+		fyne.Do(func() {
+			pixelCountLabel.SetText(fmt.Sprintf("Pixels: %d/%d", count, total))
+		})
+	}
+
+	// Brush size selector
+	brushSelect := widget.NewSelect([]string{"Thin", "Medium (Recommended)", "Thick"}, func(s string) {
+		switch s {
+		case "Thin":
+			app.digitCanvas.SetBrushSize(BrushThin)
+		case "Medium (Recommended)":
+			app.digitCanvas.SetBrushSize(BrushMedium)
+		case "Thick":
+			app.digitCanvas.SetBrushSize(BrushThick)
+		}
+	})
+	brushSelect.SetSelected("Medium (Recommended)")
+
 	clearBtn := widget.NewButton("Clear", func() {
 		mnistLog.Button("Clear")
 		app.digitCanvas.Clear()
@@ -254,11 +301,16 @@ func (app *DualModeApp) createDrawingZone() fyne.CanvasObject {
 		app.loadRandomSample()
 	})
 
-	buttons := container.NewHBox(clearBtn, randomBtn)
+	// Top row: label + pixel count + buttons
+	topRow := container.NewHBox(label, layout.NewSpacer(), pixelCountLabel, clearBtn, randomBtn)
+
+	// Bottom row: brush selector
+	brushRow := container.NewHBox(widget.NewLabel("Brush:"), brushSelect)
 
 	return container.NewVBox(
-		container.NewHBox(label, layout.NewSpacer(), buttons),
+		topRow,
 		container.NewCenter(app.digitCanvas),
+		brushRow,
 	)
 }
 
@@ -494,6 +546,7 @@ func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
 				app.weightLayer = 1
 			}
 			app.updateWeightHeatmap()
+			app.updateWeightComparison()
 		},
 	)
 	layerSelect.Horizontal = true
@@ -504,31 +557,73 @@ func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
 	app.weightRangeLabel = widget.NewLabel("")
 	app.weightLevelsLabel = widget.NewLabel("")
 
-	// Create heatmap raster
+	// Create heatmap raster (quantized weights)
 	app.weightHeatmap = canvas.NewRaster(app.drawWeightHeatmap)
 	app.weightHeatmap.SetMinSize(fyne.NewSize(256, 128))
+
+	// Create FP vs Quantized comparison widget
+	app.weightComparisonWidget = NewWeightComparisonWidget()
+
+	// Create dual heatmap (side-by-side FP vs Quantized)
+	app.dualWeightHeatmap = NewDualWeightHeatmap()
 
 	zoomBtn := widget.NewButtonWithIcon("", theme.ZoomFitIcon(), func() {
 		app.showZoomedHeatmap()
 	})
 
-	// Use Border layout with Max to fill available space
+	// Header with controls
 	header := container.NewVBox(
 		container.NewHBox(label, layout.NewSpacer(), layerSelect, zoomBtn),
 		container.NewHBox(app.weightDimLabel, app.weightRangeLabel, app.weightLevelsLabel),
 	)
 
+	// Create tabbed view for different weight visualizations
+	quantizedTab := container.NewMax(app.weightHeatmap)
+	comparisonTab := container.NewMax(app.weightComparisonWidget)
+	sideBySideTab := container.NewMax(app.dualWeightHeatmap)
+
+	weightTabs := container.NewAppTabs(
+		container.NewTabItem("Quantized", quantizedTab),
+		container.NewTabItem("FP vs Quant", comparisonTab),
+		container.NewTabItem("Side-by-Side", sideBySideTab),
+	)
+
 	return container.NewBorder(
 		header,
 		nil, nil, nil,
-		container.NewMax(app.weightHeatmap), // Expand to fill available space
+		weightTabs,
 	)
+}
+
+// updateWeightComparison updates the FP vs Quantized comparison widgets.
+func (app *DualModeApp) updateWeightComparison() {
+	fpW1, fpW2, _, _ := app.network.GetFPWeights()
+	quantW1, quantW2, _, _ := app.network.GetQuantWeights()
+
+	// Update comparison widget based on selected layer
+	if app.weightComparisonWidget != nil {
+		if app.weightLayer == 0 {
+			app.weightComparisonWidget.SetWeights(fpW1, quantW1)
+		} else {
+			app.weightComparisonWidget.SetWeights(fpW2, quantW2)
+		}
+	}
+
+	// Update dual heatmap
+	if app.dualWeightHeatmap != nil {
+		app.dualWeightHeatmap.SetWeights(fpW1, fpW2, quantW1, quantW2)
+		app.dualWeightHeatmap.SetLayer(app.weightLayer)
+	}
 }
 
 // onDigitChanged handles canvas drawing updates.
 func (app *DualModeApp) onDigitChanged(pixels []float64) {
 	app.lastPixels = pixels
-	app.runInference(pixels)
+	if app.animationEnabled {
+		go app.runInferenceAnimated(pixels)
+	} else {
+		app.runInference(pixels)
+	}
 }
 
 // runInference runs dual-path inference and updates the UI.
@@ -615,6 +710,241 @@ func (app *DualModeApp) runInference(pixels []float64) {
 			app.energyWidget.RecordInference()
 		}
 	})
+}
+
+// runInferenceAnimated performs inference with visual animation phases.
+// This shows the data flow through the network for educational purposes.
+func (app *DualModeApp) runInferenceAnimated(pixels []float64) {
+	// Phase 1: Input Processing (150ms)
+	fyne.Do(func() {
+		if app.inferencePhaseLabel != nil {
+			app.inferencePhaseLabel.SetText("Phase 1: Processing input (784 pixels)...")
+		}
+		app.statusLabel.SetText("INFERENCE | Phase 1: Input → 784 neurons")
+	})
+	time.Sleep(150 * time.Millisecond)
+
+	// Phase 2: Layer 1 MVM (200ms)
+	fyne.Do(func() {
+		if app.inferencePhaseLabel != nil {
+			app.inferencePhaseLabel.SetText("Phase 2: Layer 1 MVM (784×128 = 100,352 MACs)...")
+		}
+		app.statusLabel.SetText("INFERENCE | Phase 2: MVM 784→128 (100,352 parallel MACs)")
+	})
+	time.Sleep(200 * time.Millisecond)
+
+	// Phase 3: Layer 2 MVM (150ms)
+	fyne.Do(func() {
+		if app.inferencePhaseLabel != nil {
+			app.inferencePhaseLabel.SetText("Phase 3: Layer 2 MVM (128×10 = 1,280 MACs)...")
+		}
+		app.statusLabel.SetText("INFERENCE | Phase 3: MVM 128→10 (1,280 parallel MACs)")
+	})
+	time.Sleep(150 * time.Millisecond)
+
+	// Phase 4: Result - run actual inference and display
+	result := app.network.Infer(pixels)
+	quantWeights, _, _, _ := app.network.GetQuantWeights()
+
+	fyne.Do(func() {
+		if app.inferencePhaseLabel != nil {
+			app.inferencePhaseLabel.SetText("Complete! 101,632 MACs in ~5µs")
+		}
+
+		// Update all displays (same as runInference)
+		app.updateResultDisplays(result, quantWeights)
+
+		// Show dramatic match/mismatch feedback
+		if result.Agree {
+			app.statusLabel.SetText(fmt.Sprintf("MATCH | FP: %d | CIM: %d | Confidence: %.1f%% | 10,000x energy savings",
+				result.FPPrediction, result.CIMPrediction, result.CIMConfidence*100))
+		} else {
+			app.statusLabel.SetText(fmt.Sprintf("MISMATCH | FP: %d vs CIM: %d | Check hardware config!",
+				result.FPPrediction, result.CIMPrediction))
+		}
+	})
+}
+
+// updateResultDisplays updates all UI elements with inference results.
+// Extracted from runInference to avoid duplication.
+func (app *DualModeApp) updateResultDisplays(result *core.InferenceResult, quantWeights [][]float64) {
+	// Update FP results (legacy)
+	app.fpPredLabel.SetText(fmt.Sprintf("Prediction: %d (%.1f%%)", result.FPPrediction, result.FPConfidence*100))
+	app.fpConfBar.SetValue(result.FPConfidence)
+
+	// Update CIM results (legacy)
+	app.cimPredLabel.SetText(fmt.Sprintf("Prediction: %d (%.1f%%)", result.CIMPrediction, result.CIMConfidence*100))
+	app.cimConfBar.SetValue(result.CIMConfidence)
+
+	// Update agreement (legacy)
+	if result.Agree {
+		app.agreementLabel.SetText("PREDICTIONS MATCH")
+	} else {
+		app.agreementLabel.SetText(fmt.Sprintf("DISAGREEMENT (KL=%.3f)", result.Disagreement))
+	}
+
+	// Update probability bars (legacy)
+	for i := 0; i < 10; i++ {
+		app.fpProbBars[i].SetValue(result.FPProbabilities[i])
+		app.cimProbBars[i].SetValue(result.CIMProbabilities[i])
+	}
+
+	// Update energy (legacy)
+	gpuEnergy := result.EnergyUsed * 10000
+	app.energyLabel.SetText(fmt.Sprintf("Energy: %.2f uJ (FeCIM) vs %.0f mJ (GPU) = %.0fx savings",
+		result.EnergyUsed, gpuEnergy/1000, 10000.0))
+
+	// P1 Enhancements
+	if app.quantizationWidget != nil && len(quantWeights) > 0 {
+		app.quantizationWidget.SetNumLevels(app.network.GetNumLevels())
+		app.quantizationWidget.UpdateWithWeights(quantWeights, 5)
+	}
+
+	if app.comparisonCard != nil {
+		compResult := &ComparisonResult{
+			FPPrediction:     result.FPPrediction,
+			FPConfidence:     result.FPConfidence,
+			FPProbabilities:  result.FPProbabilities,
+			CIMPrediction:    result.CIMPrediction,
+			CIMConfidence:    result.CIMConfidence,
+			CIMProbabilities: result.CIMProbabilities,
+			Match:            result.Agree,
+			ConfidenceDelta:  result.FPConfidence - result.CIMConfidence,
+			EnergyFeCIM:      result.EnergyUsed * 1e6,
+			EnergyGPU:        result.EnergyUsed * 1e6 * 10000,
+			EnergyRatio:      10000.0,
+		}
+		if compResult.ConfidenceDelta < 0 {
+			compResult.ConfidenceDelta = -compResult.ConfidenceDelta
+		}
+		app.comparisonCard.SetResult(compResult)
+	}
+
+	if app.dualProbabilityChart != nil {
+		app.dualProbabilityChart.SetProbabilities(
+			result.FPProbabilities,
+			result.CIMProbabilities,
+			result.FPPrediction,
+			result.CIMPrediction,
+		)
+	}
+
+	if app.energyWidget != nil {
+		app.energyWidget.RecordInference()
+	}
+}
+
+// StartQuickDemo runs an automated 30-second demonstration of FeCIM's key insight.
+// Shows: Ideal (30 levels) → Success → Break (2 levels) → Failure → Restore
+func (app *DualModeApp) StartQuickDemo() {
+	if app.quickDemoRunning {
+		return
+	}
+
+	app.quickDemoRunning = true
+	app.quickDemoStopChan = make(chan struct{})
+	app.animationEnabled = true
+
+	go func() {
+		defer func() {
+			app.quickDemoRunning = false
+			app.animationEnabled = false
+		}()
+
+		// Step 1: Introduction (2s)
+		fyne.Do(func() {
+			app.statusLabel.SetText("QUICK DEMO | Step 1/5: Welcome to FeCIM - Watch the magic of 30 analog levels!")
+		})
+		if app.waitOrStop(2 * time.Second) {
+			return
+		}
+
+		// Step 2: Load sample and show ideal prediction (3s)
+		fyne.Do(func() {
+			app.applyPresetWithMode(30, 0.01, 8, 8, false)
+			app.statusLabel.SetText("QUICK DEMO | Step 2/5: Loading test digit with 30 levels (ideal)...")
+		})
+		if app.waitOrStop(500 * time.Millisecond) {
+			return
+		}
+		fyne.Do(func() {
+			app.loadRandomSample()
+		})
+		if app.waitOrStop(2500 * time.Millisecond) {
+			return
+		}
+
+		// Step 3: Show success with 30 levels (3s)
+		fyne.Do(func() {
+			app.statusLabel.SetText("QUICK DEMO | Step 3/5: 30 LEVELS = HIGH ACCURACY! FP and CIM predictions match.")
+		})
+		if app.waitOrStop(3 * time.Second) {
+			return
+		}
+
+		// Step 4: Break it with 2 levels (4s)
+		fyne.Do(func() {
+			app.statusLabel.SetText("QUICK DEMO | Step 4/5: Now watch what happens with only 2 levels (binary)...")
+		})
+		if app.waitOrStop(1 * time.Second) {
+			return
+		}
+		fyne.Do(func() {
+			app.applyPresetWithMode(2, 0.01, 8, 8, false)
+		})
+		if app.waitOrStop(500 * time.Millisecond) {
+			return
+		}
+		// Re-run inference with same digit
+		if len(app.lastPixels) > 0 {
+			fyne.Do(func() {
+				app.runInference(app.lastPixels)
+			})
+		}
+		if app.waitOrStop(2500 * time.Millisecond) {
+			return
+		}
+
+		// Step 5: Show failure explanation (3s)
+		fyne.Do(func() {
+			app.statusLabel.SetText("QUICK DEMO | Step 5/5: 2 LEVELS = FAILURE! Binary weights cannot represent the network.")
+		})
+		if app.waitOrStop(3 * time.Second) {
+			return
+		}
+
+		// Restore ideal settings (2s)
+		fyne.Do(func() {
+			app.applyPresetWithMode(30, 0.01, 8, 8, false)
+			app.statusLabel.SetText("DEMO COMPLETE | Key insight: 30 levels enable 87% accuracy with 10,000x energy savings!")
+		})
+		if app.waitOrStop(500 * time.Millisecond) {
+			return
+		}
+		// Re-run inference with restored settings
+		if len(app.lastPixels) > 0 {
+			fyne.Do(func() {
+				app.runInference(app.lastPixels)
+			})
+		}
+	}()
+}
+
+// StopQuickDemo stops the running quick demo.
+func (app *DualModeApp) StopQuickDemo() {
+	if app.quickDemoRunning && app.quickDemoStopChan != nil {
+		close(app.quickDemoStopChan)
+	}
+}
+
+// waitOrStop waits for duration or returns true if demo was stopped.
+func (app *DualModeApp) waitOrStop(d time.Duration) bool {
+	select {
+	case <-app.quickDemoStopChan:
+		return true
+	case <-time.After(d):
+		return false
+	}
 }
 
 // resetResults clears the result displays.
@@ -918,6 +1248,9 @@ func (app *DualModeApp) updateWeightHeatmap() {
 		app.weightRangeLabel.SetText(fmt.Sprintf("Range: [%.3f, %.3f]", wMin, wMax))
 		app.weightLevelsLabel.SetText(fmt.Sprintf("Distinct levels: %d (FeCIM max: 30)", len(distinctMap)))
 	}
+
+	// Also update FP vs Quantized comparison
+	app.updateWeightComparison()
 }
 
 // changeHiddenSize changes the network hidden layer size.

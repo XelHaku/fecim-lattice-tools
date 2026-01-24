@@ -44,60 +44,48 @@ func NewGuidedTour(app *DualModeApp) *GuidedTour {
 
 	gt.steps = []TourStep{
 		{
-			Title:       "Step 1/7: Welcome to FeCIM Demo",
-			Description: "This neural network classifies handwritten digits.\n\nBut instead of running on a GPU, it runs on a ferroelectric crossbar chip.\n\nFeCIM hardware achieves 87% accuracy with 30 analog levels.\n\nLet's see how it works!",
+			Title:       "Step 1/5: Welcome to FeCIM",
+			Description: "This neural network classifies handwritten digits using ferroelectric compute-in-memory.\n\nKey Innovation: 30 analog conductance levels per cell (~5 bits/cell)\n\nTarget: 87% accuracy with 10,000x less energy than a GPU!\n\nLet's see it in action...",
 			Action:      func() { gt.app.applyPreset(30, 0.01, 8, 8) },
-			Duration:    5 * time.Second,
+			Duration:    4 * time.Second,
 		},
 		{
-			Title:       "Step 2/7: Draw a Digit",
-			Description: "Draw a digit (0-9) on the canvas on the left.\n\nMake it clear, like writing on a whiteboard.\n\nOr click 'Random Sample' to load a test digit.",
+			Title:       "Step 2/5: Draw & Classify",
+			Description: "Loading a test digit...\n\nWatch both paths run simultaneously:\n• FP (Float32): Ideal digital computation\n• CIM (30 Levels): Real hardware simulation\n\nBoth should predict the SAME digit!",
 			Action: func() {
 				gt.app.loadRandomSample()
 			},
 			Duration: 4 * time.Second,
 		},
 		{
-			Title:       "Step 3/7: FeCIM Classifies It",
-			Description: "The network runs in TWO modes simultaneously:\n\n• Digital (FP): Ideal floating-point computation\n• FeCIM (Analog): Realistic hardware simulation\n\nNotice how both predict the same digit, but FeCIM has slightly lower confidence due to analog noise.",
-			Action:      func() {},
-			Duration:    5 * time.Second,
-		},
-		{
-			Title:       "Step 4/7: The 30 Analog Levels",
-			Description: "Look at the weight heatmap (bottom-right).\n\nEach crossbar cell stores ONE of 30 conductance states:\n• Blue = negative weight\n• White = zero\n• Red = positive weight\n\nThis is the key innovation: 30 levels vs binary (2 levels)!",
-			Action:      func() {},
-			Duration:    5 * time.Second,
-		},
-		{
-			Title:       "Step 5/7: What If We Only Had 2 Levels?",
-			Description: "Watch what happens when we reduce to binary weights...\n\nThe accuracy COLLAPSES to ~50% (worse than random guessing!)\n\nLook at the heatmap: only blue and red, no gradients.\nBinary weights cannot represent this network.",
+			Title:       "Step 3/5: BREAK IT - Binary Weights",
+			Description: "Now watch what happens with only 2 levels (binary)...\n\nAccuracy COLLAPSES to ~50%!\n\nLook at the weight heatmap: only blue and red.\nBinary weights cannot represent this neural network.\n\nThis is why 30 levels matter!",
 			Action: func() {
 				gt.app.applyPreset(2, 0.01, 8, 8)
 				time.Sleep(500 * time.Millisecond)
 				gt.app.runQuickTest()
 			},
-			Duration: 6 * time.Second,
+			Duration: 5 * time.Second,
 		},
 		{
-			Title:       "Step 6/7: What About Noise?",
-			Description: "Real hardware has noise from:\n• Read circuits\n• Device variation\n• Temperature effects\n\nWith 30 levels but HIGH noise (0.15), accuracy drops to ~70%.\n\nNoise mitigation is key to achieving good accuracy!",
+			Title:       "Step 4/5: BREAK IT - High Noise",
+			Description: "What about noise? Real hardware has:\n• Read circuit noise\n• Device variation\n• Temperature effects\n\nWith HIGH noise (0.15), accuracy drops to ~70%.\nNoise mitigation is crucial!",
 			Action: func() {
 				gt.app.applyPreset(30, 0.15, 6, 8)
 				time.Sleep(500 * time.Millisecond)
 				gt.app.runQuickTest()
 			},
-			Duration: 6 * time.Second,
+			Duration: 5 * time.Second,
 		},
 		{
-			Title:       "Step 7/7: FeCIM's Sweet Spot",
-			Description: "With 30 levels and low noise, we achieve 87% accuracy!\n\nThe sweet spot: enough precision to represent the network,\nlow enough noise to be manufacturable.\n\nAnd it uses 10,000x less energy than a GPU!",
+			Title:       "Step 5/5: FeCIM Sweet Spot",
+			Description: "Restoring optimal settings...\n\n30 levels + low noise = 87% accuracy!\n\nThe magic formula:\n• Enough precision to represent the network\n• Low enough noise to be manufacturable\n• 10,000x more energy-efficient than GPU\n\nExplore the presets to learn more!",
 			Action: func() {
 				gt.app.applyPreset(30, 0.01, 8, 8)
 				time.Sleep(500 * time.Millisecond)
 				gt.app.runQuickTest()
 			},
-			Duration: 6 * time.Second,
+			Duration: 5 * time.Second,
 		},
 	}
 
@@ -210,27 +198,32 @@ func (gt *GuidedTour) finishTour() {
 			gt.tourDialog.Hide()
 		}
 
-		// Show completion dialog
+		// Show completion dialog with key insights
 		completionContent := container.NewVBox(
-			widget.NewLabel("Tour Complete!"),
+			widget.NewLabelWithStyle("Tour Complete!", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 			widget.NewSeparator(),
-			widget.NewLabel("Key Takeaways:"),
-			widget.NewLabel("• 30 analog levels enable 87% accuracy"),
-			widget.NewLabel("• Binary (2 levels) fails completely (~50%)"),
-			widget.NewLabel("• Noise must be controlled for accuracy"),
-			widget.NewLabel("• FeCIM uses 10,000x less energy than GPU"),
+			widget.NewLabelWithStyle("Key Insights:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+			widget.NewLabel(""),
+			widget.NewLabel("1. 30 analog levels → 87% accuracy"),
+			widget.NewLabel("2. Binary (2 levels) → 50% (fails!)"),
+			widget.NewLabel("3. High noise → 70% (degraded)"),
+			widget.NewLabel("4. Energy: 10,000x better than GPU"),
+			widget.NewLabel(""),
 			widget.NewSeparator(),
-			widget.NewLabel("Now explore the presets yourself!"),
+			widget.NewLabelWithStyle("Next Steps:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+			widget.NewLabel("• Try the 'Tour' preset (Dr. Tour's architecture)"),
+			widget.NewLabel("• Click 'Why 30?' for physics details"),
+			widget.NewLabel("• Explore failure modes with presets"),
 		)
 
-		completionDialog := dialog.NewCustom("Tour Complete!", "Close", completionContent, gt.app.window)
+		completionDialog := dialog.NewCustom("Tour Complete!", "Start Exploring", completionContent, gt.app.window)
 		completionDialog.Show()
 	})
 
 	// Reset to ideal settings
 	gt.app.applyPreset(30, 0.01, 8, 8)
 	fyne.Do(func() {
-		gt.app.statusLabel.SetText("Tour complete! Explore the presets.")
+		gt.app.statusLabel.SetText("Tour complete! Try the presets: Ideal, QuantCliff, Noisy, BrokenADC, Tour")
 	})
 }
 

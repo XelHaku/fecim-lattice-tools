@@ -421,8 +421,12 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	)
 
 	// === CENTER PANEL - Main visualizations (2 columns) ===
+	// Dr. Tour recommendation: Show explicit energy numbers with units
 	row1 := container.NewGridWithColumns(2,
-		widget.NewCard("Energy per MAC Operation", "1000× difference", ca.energyRace),
+		widget.NewCard("Energy per MAC Operation",
+			fmt.Sprintf("CPU: %d pJ | GPU: %d pJ | FeCIM: %.1f pJ",
+				int(cpuEnergyPJPerMAC), int(gpuEnergyPJPerMAC), fecimEnergyPJPerMAC),
+			ca.energyRace),
 		widget.NewCard("Memory Wall Problem", "Data movement = waste", ca.memoryWall),
 	)
 	row2 := container.NewGridWithColumns(2,
@@ -476,18 +480,31 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 }
 
 // createVerifiedClaimsWidget creates a compact verified/claimed section.
+// Dr. Tour recommendation: Show explicit energy numbers with units and citations
 func (ca *ComparisonApp) createVerifiedClaimsWidget() fyne.CanvasObject {
 	verifiedLabel := widget.NewLabelWithStyle("VERIFIED:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	verifiedItems := widget.NewLabel("• 30 analog levels\n• 87% MNIST accuracy\n• CMOS compatible\n• Non-volatile")
 
+	// Explicit energy numbers with units (Dr. Tour recommendation)
+	energyLabel := widget.NewLabelWithStyle("ENERGY/MAC (pJ):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	energyItems := widget.NewLabel(fmt.Sprintf(
+		"• CPU+DRAM: %d pJ ✓\n• GPU+HBM: %d pJ ✓\n• FeCIM: ~%.1f pJ (TRL4)",
+		int(cpuEnergyPJPerMAC), int(gpuEnergyPJPerMAC), fecimEnergyPJPerMAC))
+
 	claimedLabel := widget.NewLabelWithStyle("CLAIMED (not verified):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	claimedItems := widget.NewLabel("• 1000× less energy vs DRAM\n• 80-90% DC savings")
+	claimedItems := widget.NewLabel(fmt.Sprintf(
+		"• %d× less vs CPU\n• %d× less vs GPU\n• 80-90%% DC savings",
+		int(cpuEnergyPJPerMAC/fecimEnergyPJPerMAC),
+		int(gpuEnergyPJPerMAC/fecimEnergyPJPerMAC)))
 
 	trlLabel := widget.NewLabelWithStyle("Status: TRL 4 (Lab only)", fyne.TextAlignCenter, fyne.TextStyle{Bold: true, Italic: true})
 
 	return container.NewVBox(
 		verifiedLabel,
 		verifiedItems,
+		widget.NewSeparator(),
+		energyLabel,
+		energyItems,
 		widget.NewSeparator(),
 		claimedLabel,
 		claimedItems,
