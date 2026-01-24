@@ -122,7 +122,6 @@ func (r *demoCardRenderer) Layout(size fyne.Size) {
 		return
 	}
 	r.layoutWithSize(size)
-	r.cache.MarkLayout(size)
 }
 
 func (r *demoCardRenderer) Refresh() {

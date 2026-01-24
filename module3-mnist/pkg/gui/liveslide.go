@@ -107,7 +107,6 @@ func (r *mnistModeRenderer) Layout(size fyne.Size) {
 		return
 	}
 	r.layoutWithSize(size)
-	r.cache.MarkLayout(size)
 }
 
 func (r *mnistModeRenderer) Refresh() {
@@ -115,7 +114,6 @@ func (r *mnistModeRenderer) Refresh() {
 	size := r.indicator.Size()
 	// Always re-layout on Refresh for this dynamic widget (mode changes)
 	r.layoutWithSize(size)
-	r.cache.MarkLayout(size)
 }
 
 func (r *mnistModeRenderer) layoutWithSize(size fyne.Size) {
@@ -481,7 +479,6 @@ func (r *predictionRenderer) Layout(size fyne.Size) {
 		return
 	}
 	r.layoutWithSize(size)
-	r.cache.MarkLayout(size)
 }
 
 func (r *predictionRenderer) Refresh() {
@@ -489,7 +486,6 @@ func (r *predictionRenderer) Refresh() {
 	size := r.display.Size()
 	// Always re-layout on Refresh for this dynamic widget (prediction changes)
 	r.layoutWithSize(size)
-	r.cache.MarkLayout(size)
 }
 
 func (r *predictionRenderer) layoutWithSize(size fyne.Size) {

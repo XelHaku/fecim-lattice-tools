@@ -61,6 +61,11 @@ func (v *VectorBarChart) SetValues(values []float64) {
 		v.maxVal = v.minVal + 1
 	}
 
+	// Skip refresh during startup stabilization to prevent resize oscillation
+	if sharedwidgets.IsStartupStabilizing() {
+		return
+	}
+
 	fyne.Do(func() {
 		v.Refresh()
 	})
@@ -69,6 +74,9 @@ func (v *VectorBarChart) SetValues(values []float64) {
 // SetLabels sets the bar labels.
 func (v *VectorBarChart) SetLabels(labels []string) {
 	v.labels = labels
+	if sharedwidgets.IsStartupStabilizing() {
+		return
+	}
 	fyne.Do(func() {
 		v.Refresh()
 	})
@@ -77,6 +85,9 @@ func (v *VectorBarChart) SetLabels(labels []string) {
 // SetUnit sets the Y-axis unit label.
 func (v *VectorBarChart) SetUnit(unit string) {
 	v.unit = unit
+	if sharedwidgets.IsStartupStabilizing() {
+		return
+	}
 	fyne.Do(func() {
 		v.Refresh()
 	})

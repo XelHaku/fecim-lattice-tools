@@ -1,4 +1,10 @@
-// pkg/export/array_verilog.go
+// Structural Verilog netlist generator for FeCIM crossbar arrays
+//
+// References:
+// [1] IEEE Std 1364-2005 - Verilog HDL Structural Modeling
+//
+// This generates a STRUCTURAL netlist (instantiation list) of FeCIM bitcells.
+// The bitcell itself uses a placeholder behavioral model (see cell_verilog.go).
 package export
 
 import (
@@ -9,7 +15,8 @@ import (
 )
 
 // GenerateArrayVerilog generates a structural Verilog netlist for a FeCIM crossbar array
-// Instantiates individual bitcells in a row×col grid pattern
+// This instantiates the FeCIM bitcells in a grid pattern with WL/BL connections
+// Format: Verilog HDL Structural [Ref 1]
 func GenerateArrayVerilog(cfg config.ArrayConfig) string {
 	var sb strings.Builder
 	

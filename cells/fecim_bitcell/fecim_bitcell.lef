@@ -1,0 +1,55 @@
+VERSION 5.8 ;
+BUSBITCHARS "[]" ;
+DIVIDERCHAR "/" ;
+
+MACRO fecim_bitcell
+  CLASS CORE ;
+  ORIGIN 0 0 ;
+  SIZE 0.460 BY 2.720 ;
+  SYMMETRY X Y ;
+  SITE unithd ;
+  
+  PIN WL
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER met1 ;
+      RECT 0.000 1.200 0.100 1.400 ;
+    END
+  END WL
+  
+  PIN BL
+    DIRECTION OUTPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER met1 ;
+      RECT 0.360 1.200 0.460 1.400 ;
+    END
+  END BL
+  
+  PIN VPWR
+    DIRECTION INOUT ;
+    USE POWER ;
+    PORT
+      LAYER met1 ;
+      RECT 0.000 2.620 0.460 2.720 ;
+    END
+  END VPWR
+  
+  PIN VGND
+    DIRECTION INOUT ;
+    USE GROUND ;
+    PORT
+      LAYER met1 ;
+      RECT 0.000 0.000 0.460 0.100 ;
+    END
+  END VGND
+  
+  OBS
+    LAYER met1 ;
+    RECT 0.100 0.100 0.360 2.620 ;
+  END
+  
+END fecim_bitcell
+
+END LIBRARY

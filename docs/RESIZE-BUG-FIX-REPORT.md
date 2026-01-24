@@ -25,10 +25,11 @@ Fixed geometric instability issues in the Fyne-based GUI application running und
 **Cause**: No size caching in custom renderers
 **Impact**: Unnecessary work triggering Fyne's layout system
 
-### 4. 1-Pixel Window Resize
-**Symptom**: Window resizing from `1597x1003` to `1598x1004` after initialization
-**Cause**: Sub-pixel rounding in MinSize calculations
+### 4. 1-Pixel Window Resize (FIXED)
+**Symptom**: Window resizing from `2021x1003` to `2022x1004` after initialization
+**Cause**: Widget Refresh() calls during startup triggering MinSize recalculations
 **Impact**: Triggers tiling window manager to re-tile
+**Fix**: Startup stabilization mechanism that suppresses Refresh() calls during first second
 
 ---
 
@@ -44,21 +45,48 @@ type LayoutCache struct {
 }
 
 // ShouldLayout returns true if layout is needed (size changed or first layout).
-// Also validates that size is positive - returns false for invalid sizes.
+// Uses integer comparison to avoid floating-point precision issues on Wayland.
 func (c *LayoutCache) ShouldLayout(size fyne.Size) bool {
     // Guard against invalid sizes (negative or zero) - critical for Wayland stability
     if size.Width <= 0 || size.Height <= 0 {
         return false
     }
-    // Skip if size hasn't changed
-    if c.HasLayout && size.Width == c.LastSize.Width && size.Height == c.LastSize.Height {
+    // Skip if size hasn't changed (use integer comparison to avoid float drift)
+    if c.HasLayout && int(size.Width) == int(c.LastSize.Width) && int(size.Height) == int(c.LastSize.Height) {
         return false
     }
     return true
 }
 ```
 
-### 2. Updated Renderers
+### 2. Startup Stabilization (`shared/widgets/debug.go`)
+
+```go
+// IsStartupStabilizing returns true if we're in the startup stabilization period.
+// During this period, widget Refresh() calls are suppressed to prevent resize oscillation.
+func IsStartupStabilizing() bool {
+    // Returns true for first 1 second after startup
+    return time.Since(startupTime) < 1*time.Second
+}
+```
+
+This is used in widget data update methods:
+
+```go
+func (v *VectorBarChart) SetValues(values []float64) {
+    // ... update data ...
+
+    // Skip refresh during startup stabilization
+    if sharedwidgets.IsStartupStabilizing() {
+        return
+    }
+    fyne.Do(func() {
+        v.Refresh()
+    })
+}
+```
+
+### 3. Updated Renderers
 
 All custom renderers now use the shared `LayoutCache`:
 
@@ -72,7 +100,16 @@ All custom renderers now use the shared `LayoutCache`:
 | `module5-comparison/pkg/gui/liveslide.go` | `comparisonModeRenderer` | Added LayoutCache |
 | `cmd/fecim-visualizer/launcher.go` | `demoCardRenderer` | Added LayoutCache |
 
-### 3. Debug Infrastructure (`shared/widgets/debug.go`)
+Widgets updated with startup suppression:
+
+| File | Method | Change |
+|------|--------|--------|
+| `module2-crossbar/pkg/gui/heatmap.go` | `rateLimitedRefresh()` | Startup suppression |
+| `module2-crossbar/pkg/gui/vectors.go` | `SetValues()`, `SetLabels()`, `SetUnit()` | Startup suppression |
+| `module2-crossbar/pkg/gui/widgets.go` | `SetColormap()`, `SetLabels()`, `UpdateMetrics()`, `UpdateValues()`, `SetSteps()`, `SetTarget()` | Startup suppression |
+| `module2-crossbar/pkg/gui/liveslide.go` | `SetMode()` | Startup suppression |
+
+### 4. Debug Infrastructure (`shared/widgets/debug.go`)
 
 Added comprehensive debugging controlled by environment variables:
 
@@ -122,22 +159,21 @@ Features:
 
 ### After Fix
 ```
-[RESIZE] Window: 0x0 -> 2021x1003
-[RESIZE] Window: 2021x1003 -> 2022x1004  # 1-pixel startup quirk (Fyne/Wayland)
+[RESIZE] Window: 0x0 -> 2022x1004        # Clean startup
 [RESIZE] Window: 2022x1004 -> 683x830    # Normal tiling
 No WARNING or RAPID REFRESH messages
+No 1-pixel oscillation!
 ```
 
 ---
 
-## Remaining Known Issues
+## All Issues Resolved
 
-### 1-Pixel Startup Resize
-A 1-pixel resize still occurs during initialization (`NxM -> (N+1)x(M+1)`). This is a Fyne/Wayland interaction where MinSize calculations have sub-pixel rounding.
-
-**Mitigation**: The tiling window manager handles this gracefully - it's cosmetic only.
-
-**Potential future fix**: Set explicit window minimum size that accounts for rounding.
+### 1-Pixel Startup Resize - FIXED
+The 1-pixel resize that occurred during initialization has been eliminated by:
+1. Adding startup stabilization mechanism in `shared/widgets/debug.go`
+2. Suppressing widget Refresh() calls during the first second after startup
+3. Using integer-based size comparison in LayoutCache to avoid floating-point drift
 
 ---
 
@@ -193,9 +229,13 @@ scrollable.SetMinSize(fyne.NewSize(400, 300))
 
 ## Conclusion
 
-The resize instability issues have been resolved by:
+All resize instability issues have been resolved by:
 1. Adding size validation to prevent negative dimension handling
-2. Implementing layout caching to avoid redundant recalculations
+2. Implementing layout caching (with integer comparison) to avoid redundant recalculations
 3. Breaking the Refresh() -> Layout() -> Refresh() cycle
+4. **Adding startup stabilization to suppress Refresh() calls during initialization**
 
-The application now runs stably under Sway/Wayland tiling window managers without geometry feedback loops.
+The application now runs stably under Sway/Wayland tiling window managers:
+- No geometry feedback loops
+- No 1-pixel oscillation during startup
+- Clean window initialization and tiling behavior

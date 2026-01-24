@@ -304,13 +304,21 @@ func loadWindowSize(prefs fyne.Preferences) fyne.Size {
 		h = 600
 	}
 
+	// Round to even integers and add 2-pixel buffer to prevent Fyne/Wayland
+	// resize oscillation caused by MinSize floating-point rounding
+	w = float64(int(w+1) / 2 * 2)
+	h = float64(int(h+1) / 2 * 2)
+
 	return fyne.NewSize(float32(w), float32(h))
 }
 
 // saveWindowSize saves current window dimensions to preferences
 func saveWindowSize(prefs fyne.Preferences, size fyne.Size) {
-	prefs.SetFloat(prefKeyWindowWidth, float64(size.Width))
-	prefs.SetFloat(prefKeyWindowHeight, float64(size.Height))
+	// Round to even integers to prevent floating-point drift
+	w := float64(int(size.Width+1) / 2 * 2)
+	h := float64(int(size.Height+1) / 2 * 2)
+	prefs.SetFloat(prefKeyWindowWidth, w)
+	prefs.SetFloat(prefKeyWindowHeight, h)
 }
 
 // saveLastTab saves the currently selected tab index

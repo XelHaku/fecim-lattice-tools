@@ -1310,15 +1310,13 @@ func (r *peplotRenderer) Layout(size fyne.Size) {
 		return
 	}
 	r.layoutWithSize(size)
-	r.cache.MarkLayout(size)
 }
 
 func (r *peplotRenderer) Refresh() {
 	sharedwidgets.DebugRefreshCall("peplotRenderer", r.plot.Size())
-	size := r.plot.Size()
 	// Always re-layout on Refresh for this dynamic widget (data changes)
-	r.layoutWithSize(size)
-	r.cache.MarkLayout(size)
+	// layoutWithSize handles size validation and cache marking internally
+	r.layoutWithSize(r.plot.Size())
 }
 
 func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
@@ -1601,6 +1599,9 @@ func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 	markerInner.Resize(fyne.NewSize(6, 6))
 	markerInner.Move(fyne.NewPos(markerX-3, markerY-3))
 	r.objects = append(r.objects, markerInner)
+
+	// Mark cache with the effective size used
+	r.cache.MarkLayout(size)
 }
 
 func (r *peplotRenderer) Objects() []fyne.CanvasObject {
@@ -1666,7 +1667,6 @@ func (r *levelRenderer) Layout(size fyne.Size) {
 		return
 	}
 	r.layoutWithSize(size)
-	r.cache.MarkLayout(size)
 }
 
 func (r *levelRenderer) Refresh() {
@@ -1674,7 +1674,6 @@ func (r *levelRenderer) Refresh() {
 	size := r.indicator.Size()
 	// Always re-layout on Refresh for this dynamic widget (level changes)
 	r.layoutWithSize(size)
-	r.cache.MarkLayout(size)
 }
 
 func (r *levelRenderer) layoutWithSize(size fyne.Size) {
@@ -1808,6 +1807,9 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 			r.objects = append(r.objects, label)
 		}
 	}
+
+	// Mark cache with the effective size used
+	r.cache.MarkLayout(size)
 }
 
 func (r *levelRenderer) Objects() []fyne.CanvasObject {
@@ -1873,7 +1875,6 @@ func (r *cellRenderer) Layout(size fyne.Size) {
 		return
 	}
 	r.layoutWithSize(size)
-	r.cache.MarkLayout(size)
 }
 
 func (r *cellRenderer) Refresh() {
@@ -1881,7 +1882,6 @@ func (r *cellRenderer) Refresh() {
 	size := r.cell.Size()
 	// Always re-layout on Refresh for this dynamic widget (level changes)
 	r.layoutWithSize(size)
-	r.cache.MarkLayout(size)
 }
 
 func (r *cellRenderer) layoutWithSize(size fyne.Size) {
@@ -2102,7 +2102,6 @@ func (r *modeRenderer) Layout(size fyne.Size) {
 		return
 	}
 	r.layoutWithSize(size)
-	r.cache.MarkLayout(size)
 }
 
 func (r *modeRenderer) Refresh() {
@@ -2110,7 +2109,6 @@ func (r *modeRenderer) Refresh() {
 	size := r.indicator.Size()
 	// Always re-layout on Refresh for this dynamic widget (mode changes)
 	r.layoutWithSize(size)
-	r.cache.MarkLayout(size)
 }
 
 func (r *modeRenderer) layoutWithSize(size fyne.Size) {

@@ -1,4 +1,17 @@
 // pkg/export/liberty.go
+// Liberty timing file generator for FeCIM bitcell
+//
+// References:
+// [1] Liberty Timing Format - Synopsys standard for timing libraries
+//     https://people.eecs.berkeley.edu/~alanmi/publications/other/liberty07_03.pdf
+// [2] SkyWater SKY130 PDK: https://skywater-pdk.readthedocs.io/
+//
+// ⚠️ CRITICAL DISCLAIMER: ALL TIMING VALUES ARE PLACEHOLDERS
+// Real Liberty files require:
+// 1. SPICE characterization with FeFET compact model
+// 2. Timing arc extraction (setup, hold, propagation delays)
+// 3. Power analysis across process corners
+// 4. Temperature/voltage derating tables
 package export
 
 import (
@@ -7,7 +20,10 @@ import (
 )
 
 // GenerateLiberty generates a Liberty (.lib) timing file for the FeCIM bitcell
-// Liberty files provide timing, power, and electrical characteristics for synthesis tools
+// This is required by synthesis and STA tools (OpenROAD, OpenLane)
+// Format: Liberty Timing Format [Ref 1]
+//
+// ⚠️ WARNING: Generated timing values are PLACEHOLDERS requiring characterization
 func GenerateLiberty(cfg config.CellConfig) string {
 	area := cfg.Width * cfg.Height
 	
