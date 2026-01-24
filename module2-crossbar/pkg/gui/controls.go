@@ -10,6 +10,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"multilayer-ferroelectric-cim-visualizer/shared/logging"
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // Package-level logger for crossbar GUI
@@ -107,6 +108,7 @@ func NewControlPanel() *ControlPanel {
 	cp.ColormapSelect = widget.NewSelect(
 		[]string{"fecim", "viridis", "plasma", "coolwarm"},
 		func(s string) {
+			sharedwidgets.DebugInteraction(fmt.Sprintf("Crossbar ColormapSelect changed to '%s'", s))
 			log.Selection("Colormap", s)
 			if cp.OnColormapChanged != nil {
 				cp.OnColormapChanged(s)
@@ -119,6 +121,7 @@ func NewControlPanel() *ControlPanel {
 	cp.DemoModeSelect = widget.NewSelect(
 		[]string{"Manual", "Auto Demo", "Step-by-Step"},
 		func(s string) {
+			sharedwidgets.DebugInteraction(fmt.Sprintf("Crossbar DemoModeSelect changed to '%s'", s))
 			log.Selection("DemoMode", s)
 			if cp.OnDemoModeChanged != nil {
 				cp.OnDemoModeChanged(s)

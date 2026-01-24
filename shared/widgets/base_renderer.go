@@ -125,3 +125,47 @@ Safe Layout Pattern Checklist:
 [ ] MinSize() returns a constant or cached value, not computed from layout
 `
 }
+
+// LayoutCache tracks the last layout size to avoid redundant layout operations.
+// Use this in renderers to prevent layout cascade bugs.
+type LayoutCache struct {
+	LastSize fyne.Size
+	HasLayout bool
+}
+
+// ShouldLayout returns true if layout is needed (size changed or first layout).
+// Also validates that size is positive - returns false for invalid sizes.
+func (c *LayoutCache) ShouldLayout(size fyne.Size) bool {
+	// Guard against invalid sizes (negative or zero) - critical for Wayland stability
+	if size.Width <= 0 || size.Height <= 0 {
+		return false
+	}
+	// Skip if size hasn't changed
+	if c.HasLayout && size.Width == c.LastSize.Width && size.Height == c.LastSize.Height {
+		return false
+	}
+	return true
+}
+
+// MarkLayout marks the layout as done with the given size.
+// Call this after successfully performing layout.
+func (c *LayoutCache) MarkLayout(size fyne.Size) {
+	c.LastSize = size
+	c.HasLayout = true
+}
+
+// ValidateSize returns true if the size is valid for layout (positive dimensions).
+// Use this at the start of Layout() to early-exit on invalid sizes.
+func ValidateSize(size fyne.Size) bool {
+	return size.Width > 0 && size.Height > 0
+}
+
+// SafeResize resizes a canvas object only if the size is valid.
+// Returns true if resize was performed.
+func SafeResize(obj fyne.CanvasObject, size fyne.Size) bool {
+	if size.Width <= 0 || size.Height <= 0 {
+		return false
+	}
+	obj.Resize(size)
+	return true
+}

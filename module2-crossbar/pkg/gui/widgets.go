@@ -186,10 +186,19 @@ type colorLegendRenderer struct {
 	maxText    *canvas.Text
 	unitText   *canvas.Text
 	tickLabels []*canvas.Text // Labels for intermediate tick values
+	cache      sharedwidgets.LayoutCache // Shared utility for safe layout
+	// Cache label values to avoid redundant refreshes
+	lastMinLabel string
+	lastMaxLabel string
+	lastUnit     string
 }
 
 func (r *colorLegendRenderer) Layout(size fyne.Size) {
 	sharedwidgets.DebugLayoutCall("colorLegendRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
+	r.cache.MarkLayout(size)
 	r.raster.Resize(size)
 	r.maxText.Move(fyne.NewPos(38, 25))
 	r.unitText.Move(fyne.NewPos(0, 5))
@@ -215,15 +224,31 @@ func (r *colorLegendRenderer) MinSize() fyne.Size {
 
 func (r *colorLegendRenderer) Refresh() {
 	sharedwidgets.DebugRefreshCall("colorLegendRenderer", r.legend.Size())
-	r.minText.Text = r.legend.minLabel
-	r.maxText.Text = r.legend.maxLabel
-	r.unitText.Text = r.legend.unit
-	r.raster.Refresh()
-	r.minText.Refresh()
-	r.maxText.Refresh()
-	r.unitText.Refresh()
-	for _, label := range r.tickLabels {
-		label.Refresh()
+	// Only refresh text if values actually changed
+	needsRefresh := false
+	if r.legend.minLabel != r.lastMinLabel {
+		r.minText.Text = r.legend.minLabel
+		r.lastMinLabel = r.legend.minLabel
+		needsRefresh = true
+	}
+	if r.legend.maxLabel != r.lastMaxLabel {
+		r.maxText.Text = r.legend.maxLabel
+		r.lastMaxLabel = r.legend.maxLabel
+		needsRefresh = true
+	}
+	if r.legend.unit != r.lastUnit {
+		r.unitText.Text = r.legend.unit
+		r.lastUnit = r.legend.unit
+		needsRefresh = true
+	}
+	if needsRefresh {
+		r.raster.Refresh()
+		r.minText.Refresh()
+		r.maxText.Refresh()
+		r.unitText.Refresh()
+		for _, label := range r.tickLabels {
+			label.Refresh()
+		}
 	}
 }
 
@@ -661,10 +686,15 @@ func (w *AccuracyWaterfall) generateImage(width, height int) image.Image {
 // waterfallRenderer is a custom renderer for AccuracyWaterfall with labels.
 type waterfallRenderer struct {
 	waterfall *AccuracyWaterfall
+	cache     sharedwidgets.LayoutCache // Shared utility for safe layout
 }
 
 func (r *waterfallRenderer) Layout(size fyne.Size) {
 	sharedwidgets.DebugLayoutCall("waterfallRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
+	r.cache.MarkLayout(size)
 	r.waterfall.raster.Resize(size)
 
 	// Layout Y-axis labels

@@ -11,6 +11,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/compiler"
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // MakeCompilerTab creates the array builder tab UI
@@ -70,6 +71,7 @@ func MakeCompilerTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 	resultsLabel.Wrapping = fyne.TextWrapWord
 
 	generateButton := widget.NewButton("GENERATE DESIGN", func() {
+		sharedwidgets.DebugInteraction("Compiler GENERATE DESIGN button pressed")
 		// Parse config
 		rows, errR := strconv.Atoi(rowsEntry.Text)
 		cols, errC := strconv.Atoi(colsEntry.Text)

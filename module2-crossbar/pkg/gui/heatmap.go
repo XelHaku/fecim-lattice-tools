@@ -533,11 +533,16 @@ func clamp(v, min, max float64) float64 {
 type heatmapRenderer struct {
 	heatmap *CrossbarHeatmap
 	raster  *canvas.Raster
+	cache   sharedwidgets.LayoutCache // Shared utility for safe layout
 }
 
 func (r *heatmapRenderer) Layout(size fyne.Size) {
 	sharedwidgets.DebugLayoutCall("heatmapRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
 	r.raster.Resize(size)
+	r.cache.MarkLayout(size)
 }
 
 func (r *heatmapRenderer) MinSize() fyne.Size {
@@ -546,6 +551,7 @@ func (r *heatmapRenderer) MinSize() fyne.Size {
 
 func (r *heatmapRenderer) Refresh() {
 	sharedwidgets.DebugRefreshCall("heatmapRenderer", r.heatmap.Size())
+	// Only refresh if data has actually changed - the heatmap controls this via its rate limiter
 	r.raster.Refresh()
 }
 

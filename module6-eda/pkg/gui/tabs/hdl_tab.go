@@ -17,6 +17,7 @@ import (
 
 	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/compiler"
 	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/export"
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // MakeHDLTab creates the HDL generation tab with split view
@@ -37,11 +38,14 @@ func MakeHDLTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 	statusLabel.TextStyle = fyne.TextStyle{Italic: true}
 
 	// Architecture selection
-	archSelect := widget.NewSelect([]string{"Passive", "1T1R"}, nil)
+	archSelect := widget.NewSelect([]string{"Passive", "1T1R"}, func(value string) {
+		sharedwidgets.DebugInteraction(fmt.Sprintf("HDL archSelect changed to '%s'", value))
+	})
 	archSelect.SetSelected("Passive")
 
 	// Generate button
 	generateButton := widget.NewButtonWithIcon("Generate HDL", theme.MediaPlayIcon(), func() {
+		sharedwidgets.DebugInteraction("HDL Generate button pressed")
 		if appState.CurrentMapping == nil {
 			dialog.ShowError(fmt.Errorf("no compiled mapping available - compile weights first"), w)
 			return
@@ -76,6 +80,7 @@ func MakeHDLTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 
 	// Export to files button
 	exportButton := widget.NewButtonWithIcon("Export to Files", theme.DocumentSaveIcon(), func() {
+		sharedwidgets.DebugInteraction("HDL Export button pressed")
 		if appState.CurrentMapping == nil {
 			dialog.ShowError(fmt.Errorf("no compiled mapping available - compile weights first"), w)
 			return

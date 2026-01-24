@@ -4,6 +4,55 @@ MODULE 6: FECIM EDA DESIGN SUITE - COMPLETE PLAN
 ═══════════════════════════════════════════════════════════════════════════════
 
 PURPOSE: Generate fabrication-ready files for OpenLane/SKY130
+VERSION: 0.2.0 (Updated 2026-01-24 with OpenLane v2.0 validation)
+STATUS: Implementation plan with placeholder values pending characterization
+
+═══════════════════════════════════════════════════════════════════════════════
+REFERENCES & CITATIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+[1] OpenLane v2.0 Documentation
+    https://openlane.readthedocs.io/en/latest/reference/configuration.html
+    Configuration variables validated 2026-01-24
+
+[2] SkyWater SKY130 Process Design Kit
+    https://skywater-pdk.readthedocs.io/
+    Open-source 130nm process, standard cell height: 2.72 μm
+
+[3] LEF/DEF 5.8 Specification
+    Si2/OpenAccess Coalition - Library Exchange Format
+
+[4] Liberty Timing Format
+    Synopsys standard for timing libraries
+
+[5] Yosys Open SYnthesis Suite
+    https://yosyshq.net/yosys/ - Verilog validation tool
+
+═══════════════════════════════════════════════════════════════════════════════
+ASSUMPTIONS & LIMITATIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ CRITICAL DISCLAIMERS:
+
+1. PLACEHOLDER TIMING VALUES: All Liberty timing parameters are estimates
+   requiring FeFET characterization via SPICE simulation
+
+2. BEHAVIORAL MODEL: Cell Verilog is pass-through only, does NOT model
+   actual FeFET physics (polarization states, hysteresis, retention)
+
+3. NO PHYSICAL LAYOUT: LEF defines abstract view only. Actual Magic layout
+   required for real GDS generation and DRC/LVS validation
+
+4. CELL DIMENSIONS: 0.46 × 2.72 μm based on SKY130 unithd site [Ref 2]
+   Actual FeFET cell may require different dimensions
+
+5. FEFET CLAIMS: 30-level programmability and performance characteristics
+   require literature citations and/or experimental validation
+
+This plan demonstrates EDA tooling methodology. Real FeFET integration
+requires additional characterization and validation work.
+
+═══════════════════════════════════════════════════════════════════════════════
 
 7 TABS:
 ├── Tab 1: Cell Builder      → Design fecim_bitcell (LEF/LIB/V)
@@ -72,16 +121,17 @@ package config
 
 type CellConfig struct {
     Name         string   // fecim_bitcell
-    Width        float64  // 0.46 μm
-    Height       float64  // 2.72 μm
+    Width        float64  // 0.46 μm (SKY130 unithd site width) [Ref 2]
+    Height       float64  // 2.72 μm (SKY130 standard cell height) [Ref 2]
     CellType     string   // passive or 1t1r
-    Technology   string   // sky130
+    Technology   string   // sky130 (SkyWater 130nm PDK)
     
-    // Timing (placeholder values)
-    RiseTime     float64  // 0.1 ns
-    FallTime     float64  // 0.1 ns
-    InputCap     float64  // 0.002 pF
-    LeakagePower float64  // 0.001 nW
+    // ⚠️ PLACEHOLDER TIMING VALUES - Require FeFET characterization
+    // Real values need: SPICE simulation + Liberty characterization
+    RiseTime     float64  // 0.1 ns (PLACEHOLDER)
+    FallTime     float64  // 0.1 ns (PLACEHOLDER)
+    InputCap     float64  // 0.002 pF (PLACEHOLDER)
+    LeakagePower float64  // 0.001 nW (PLACEHOLDER)
 }
 
 type ArrayConfig struct {
@@ -279,11 +329,21 @@ package export
 import "fmt"
 
 func GenerateCellVerilog(cfg config.CellConfig) string {
-    return fmt.Sprintf(`// FeCIM Bitcell - Behavioral Model (Placeholder)
+    return fmt.Sprintf(`// ═══════════════════════════════════════════════════════════════
+// FeCIM Bitcell - PLACEHOLDER Behavioral Model
+// ═══════════════════════════════════════════════════════════════
+// ⚠️ CRITICAL LIMITATION ⚠️
+// This is a PLACEHOLDER pass-through model that does NOT represent
+// actual FeFET physics. Real implementation requires:
+//   - Polarization state modeling (P+ / P-)
+//   - Threshold voltage hysteresis
+//   - Retention time effects  
+//   - SPICE compact model or Verilog-A implementation
+//
 // Technology: %s
 // Type: %s
-// Size: %.3f x %.3f um
-// NOTE: This is a placeholder. Real FeFET behavior requires SPICE model.
+// Size: %.3f x %.3f um (SKY130 compatible dimensions)
+// Reference: See plan-demo6.md for citations and limitations
 
 module %s (
     input  wire WL,     // Word Line
@@ -2927,24 +2987,45 @@ PURPOSE: One-click complete flow
 OPENLANE CONFIG GENERATOR (pkg/export/openlane_config.go):
 
 func GenerateOpenLaneConfig(cfg ArrayConfig) string {
+    // References:
+    // [1] OpenLane v2.0 Configuration: https://openlane.readthedocs.io/en/latest/reference/configuration.html
+    // [2] FP_DEF_TEMPLATE: Floorplan template for pre-placed macros
+    // [3] SYNTH_ELABORATE_ONLY: Structural netlist elaboration without logic mapping
+    
     designName := fmt.Sprintf("fecim_crossbar_%dx%d", cfg.Rows, cfg.Cols)
     
-    dieWidth := cfg.Cols*460 + 2000
-    dieHeight := cfg.Rows*2720 + 2000
+    // Convert to microns for DIE_AREA
+    dieWidth := float64(cfg.Cols*460 + 2000) / 1000.0
+    dieHeight := float64(cfg.Rows*2720 + 2000) / 1000.0
     
     config := map[string]interface{}{
+        // Design identification
         "DESIGN_NAME": designName,
+        "DESIGN_IS_CORE": 0,  // This is a macro, not a full chip core
+        
+        // Verilog files
         "VERILOG_FILES": fmt.Sprintf("dir::output/%s.v", designName),
-        "CLOCK_PORT": "",
-        "CLOCK_PERIOD": 10.0,
+        "VERILOG_FILES_BLACKBOX": "dir::cells/fecim_bitcell/fecim_bitcell.v",
+        
+        // Clock configuration (crossbar has no clock)
+        "RUN_CTS": 0,  // Skip Clock Tree Synthesis
+        
+        // Floorplanning with pre-placed cells
         "FP_SIZING": "absolute",
-        "DIE_AREA": fmt.Sprintf("0 0 %d %d", dieWidth, dieHeight),
+        "DIE_AREA": fmt.Sprintf("0 0 %.3f %.3f", dieWidth, dieHeight),
+        "FP_DEF_TEMPLATE": fmt.Sprintf("dir::output/%s.def", designName),  // Pre-placed DEF template [Ref 2]
+        
+        // Custom cell library
         "EXTRA_LEFS": "dir::cells/fecim_bitcell/fecim_bitcell.lef",
         "EXTRA_LIBS": "dir::cells/fecim_bitcell/fecim_bitcell.lib",
-        "VERILOG_FILES_BLACKBOX": "dir::cells/fecim_bitcell/fecim_bitcell.v",
+        "EXTRA_GDS_FILES": "dir::cells/fecim_bitcell/fecim_bitcell.gds",
+        
+        // Placement strategy for pre-placed macros
+        "PL_SKIP_INITIAL_PLACEMENT": 1,  // Skip automatic placement [Ref 1]
         "PL_TARGET_DENSITY": 0.6,
-        "PLACEMENT_CURRENT_DEF": fmt.Sprintf("dir::output/%s.def", designName),
-        "PL_SKIP_INITIAL_PLACEMENT": true,
+        
+        // Synthesis: elaborate structural netlist only
+        "SYNTH_ELABORATE_ONLY": 1,  // No logic mapping for structural Verilog [Ref 3]
     }
     
     data, _ := json.MarshalIndent(config, "", "  ")
@@ -3122,6 +3203,168 @@ After implementation, verify:
 " --max-iterations 100 --completion-promise "Module 6 complete: 7 tabs implemented, cell library generates, Yosys validates, Export All works"
 ```
 
+═══════════════════════════════════════════════════════════════════════════════
+VALIDATION CHECKLIST
+═══════════════════════════════════════════════════════════════════════════════
+
+Before claiming "OpenLane integration complete":
+
+GENERATED FILES:
+□ LEF syntax validated (check_lef or manual inspection)
+□ Liberty syntax validated (liberty_parser if available)
+□ Verilog passes yosys syntax check
+□ DEF syntax validated (check_def or manual inspection)
+
+OPENLANE FLOW:
+□ Config loads without errors
+□ Synthesis (elaborate-only) completes
+□ Floorplan accepts FP_DEF_TEMPLATE
+□ Placement respects pre-placed cells
+□ Routing completes (warnings acceptable)
+□ GDS generated and viewable in KLayout
+
+KNOWN ACCEPTABLE WARNINGS:
+□ Timing violations (due to placeholder Liberty values)
+□ No clock tree (RUN_CTS = 0 for crossbar)
+
+REQUIRED FUTURE WORK:
+□ Design actual FeFET cell in Magic (.mag file)
+□ Extract real SPICE netlist with parasitic
+□ Characterize Liberty timing via SPICE simulation
+□ Implement Verilog-A behavioral model with FeFET physics
+□ Validate with test chip fabrication
+
+═══════════════════════════════════════════════════════════════════════════════
+BIBLIOGRAPHY & REFERENCES
+═══════════════════════════════════════════════════════════════════════════════
+
+EDA TOOLS & SPECIFICATIONS:
+
+[1] OpenLane Development Team. "OpenLane Documentation - Flow Configuration."
+    https://openlane.readthedocs.io/en/latest/reference/configuration.html
+    Accessed: 2026-01-24
+    Used for: FP_DEF_TEMPLATE, SYNTH_ELABORATE_ONLY, placement variables
+
+[2] SkyWater Technology Foundry. "SKY130 Process Design Kit."
+    https://skywater-pdk.readthedocs.io/
+    Version: 2024.01+
+    Used for: Standard cell dimensions (0.46 × 2.72 μm unithd site)
+
+[3] Si2/OpenAccess Coalition. "LEF/DEF 5.8 Language Reference."
+    Library Exchange Format and Design Exchange Format specifications
+    Used for: LEF MACRO definitions, DEF COMPONENTS placement
+
+[4] Synopsys. "Liberty Timing Format Reference Manual."
+    Industry standard for cell timing characterization
+    Used for: Liberty .lib file structure (placeholder values)
+
+[5] YosysHQ. "Yosys Open SYnthesis Suite."
+    https://yosyshq.net/yosys/
+    Used for: Verilog syntax validation
+
+[6] OpenROAD Project. "OpenROAD Documentation."
+    https://openroad.readthedocs.io/
+    Used for: Placement and routing backend (via OpenLane)
+
+FERROELECTRIC TECHNOLOGY:
+
+[TODO] Add specific FeFET citations for:
+- 30-level programmability claims
+- HfO₂-ZrO₂ material system characteristics
+- 10+ year retention time specifications
+- Conductance range (1-100 μS) justification
+
+Action: Conduct literature review of recent HfO₂-based FeFET papers (2020-2026)
+
+PROJECT IMPLEMENTATION:
+
+[7] This Implementation:
+    github.com/XelHaku/ironlattice-vis/tree/main/module6-eda
+    Module 6: FeCIM Design Suite
+    Status: Proof-of-concept with placeholder FeFET characteristics
+
+[8] Plan Document:
+    docs/eda/plan-demo6.md
+    Version: 0.2.0
+    Last updated: 2026-01-24
+    Validation: docs/eda/openlane-validation-report.md
+
+═══════════════════════════════════════════════════════════════════════════════
+KNOWN ISSUES & FUTURE WORK
+═══════════════════════════════════════════════════════════════════════════════
+
+CURRENT LIMITATIONS:
+
+1. NO PHYSICAL LAYOUT:
+   - Only LEF abstract view provided
+   - Missing: Actual Magic .mag cell layout
+   - Impact: Cannot generate real GDS for fabrication
+
+2. PLACEHOLDER TIMING:
+   - All Liberty values are estimates
+   - Missing: SPICE characterization across PVT corners
+   - Impact: Timing analysis results are meaningless
+
+3. SIMPLIFIED BEHAVIORAL MODEL:
+   - Verilog cell is pass-through only
+   - Missing: FeFET physics (polarization, hysteresis, retention)
+   - Impact: Functional simulation does not represent real device
+
+4. NO COMPACT MODEL:
+   - Missing: SPICE model for FeFET element
+   - Missing: Verilog-A behavioral model
+   - Impact: Cannot run analog verification or mixed-signal simulation
+
+REQUIRED NEXT STEPS:
+
+□ Phase 1: Literature Review
+  - Identify validated FeFET characteristics from published papers
+  - Obtain or derive compact SPICE model parameters
+  - Cite all performance claims
+
+□ Phase 2: Physical Design
+  - Design FeFET cell in Magic VLSI
+  - Run DRC/LVS with SKY130 PDK
+  - Extract parasitic-aware SPICE netlist
+
+□ Phase 3: Characterization
+  - Simulate FeFET cell across process corners
+  - Generate Liberty timing library
+  - Validate against test silicon (if available)
+
+□ Phase 4: Behavioral Modeling
+  - Implement Verilog-A model with FeFET physics
+  - Validate against SPICE simulation
+  - Create functional verification testbench
+
+□ Phase 5: Full Integration
+  - Run complete OpenLane flow with real characterized data
+  - Verify GDS output
+  - Prepare for tape-out or research publication
+
+═══════════════════════════════════════════════════════════════════════════════
+DOCUMENT METADATA
+═══════════════════════════════════════════════════════════════════════════════
+
+Title:        Module 6 FeCIM EDA Design Suite - Complete Implementation Plan
+Version:      0.2.0
+Date:         2026-01-24
+Status:       Implementation plan with validated OpenLane integration methodology
+Author:       XelHaku
+Repository:   github.com/XelHaku/ironlattice-vis
+Validation:   OpenLane v2.0 documentation cross-referenced and corrected
+
+REVISION HISTORY:
+- v0.1.0: Initial plan with 7-tab architecture
+- v0.2.0: Added citations, fixed PLACEMENT_CURRENT_DEF → FP_DEF_TEMPLATE,
+          added disclaimers for placeholder values, validated against official docs
+
+═══════════════════════════════════════════════════════════════════════════════
+
+**This plan demonstrates EDA tooling methodology for FeCIM integration.**
+**Placeholder FeFET values require citations and/or experimental validation.**
+**See bibliography for all referenced specifications and tools.**
+
 ---
 
-**This is the complete Module 6. Copy. Paste. Run. Ship.** 🦁
+**End of Plan** 🦁

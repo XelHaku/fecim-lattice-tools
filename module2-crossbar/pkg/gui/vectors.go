@@ -191,15 +191,22 @@ func (v *VectorBarChart) generateImage(w, h int) image.Image {
 
 // vectorBarChartRenderer is a custom renderer for VectorBarChart with Y-axis labels.
 type vectorBarChartRenderer struct {
-	chart    *VectorBarChart
-	content  fyne.CanvasObject
-	maxLabel *widget.Label
-	minLabel *widget.Label
+	chart       *VectorBarChart
+	content     fyne.CanvasObject
+	maxLabel    *widget.Label
+	minLabel    *widget.Label
+	cache       sharedwidgets.LayoutCache // Shared utility for safe layout
+	lastMaxText string                    // Cache to avoid redundant SetText calls
+	lastMinText string
 }
 
 func (r *vectorBarChartRenderer) Layout(size fyne.Size) {
 	sharedwidgets.DebugLayoutCall("vectorBarChartRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
 	r.content.Resize(size)
+	r.cache.MarkLayout(size)
 }
 
 func (r *vectorBarChartRenderer) MinSize() fyne.Size {
@@ -208,14 +215,19 @@ func (r *vectorBarChartRenderer) MinSize() fyne.Size {
 
 func (r *vectorBarChartRenderer) Refresh() {
 	sharedwidgets.DebugRefreshCall("vectorBarChartRenderer", r.chart.Size())
-	// Update Y-axis labels with current min/max values and unit
+	// Update Y-axis labels with current min/max values and unit - only if changed
 	unit := r.chart.unit
-	if unit == "" {
-		unit = ""
-	}
 	if r.chart.maxVal != 0 || r.chart.minVal != 0 {
-		r.maxLabel.SetText(fmt.Sprintf("%.2f%s", r.chart.maxVal, unit))
-		r.minLabel.SetText(fmt.Sprintf("%.2f%s", r.chart.minVal, unit))
+		maxText := fmt.Sprintf("%.2f%s", r.chart.maxVal, unit)
+		minText := fmt.Sprintf("%.2f%s", r.chart.minVal, unit)
+		if maxText != r.lastMaxText {
+			r.maxLabel.SetText(maxText)
+			r.lastMaxText = maxText
+		}
+		if minText != r.lastMinText {
+			r.minLabel.SetText(minText)
+			r.lastMinText = minText
+		}
 	}
 	r.content.Refresh()
 }

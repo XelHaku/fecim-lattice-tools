@@ -39,6 +39,7 @@ import (
 	demo6gui "multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/gui"
 	"multilayer-ferroelectric-cim-visualizer/shared/logging"
 	sharedtheme "multilayer-ferroelectric-cim-visualizer/shared/theme"
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // Global logger for the main application
@@ -547,6 +548,7 @@ func main() {
 	// Handle tab changes - start/stop simulations as needed
 	tabs.OnSelected = func(tab *container.TabItem) {
 		log.TabChange(tab.Text)
+		sharedwidgets.DebugInteraction(fmt.Sprintf("Tab changed to '%s'", tab.Text))
 
 		// Stop previous demo
 		switch currentDemo {
@@ -621,6 +623,23 @@ func main() {
 	)
 
 	window.SetContent(mainContent)
+
+	// Start window resize tracking for debugging (if FYNE_DEBUG_RESIZE is set)
+	if sharedwidgets.DebugResize {
+		go func() {
+			var lastSize fyne.Size
+			ticker := time.NewTicker(100 * time.Millisecond)
+			defer ticker.Stop()
+			for range ticker.C {
+				currentSize := window.Canvas().Size()
+				if currentSize.Width != lastSize.Width || currentSize.Height != lastSize.Height {
+					sharedwidgets.DebugWindowResize(currentSize)
+					lastSize = currentSize
+				}
+			}
+		}()
+		log.Info("Resize debugging enabled - set FYNE_DEBUG_RESIZE=1")
+	}
 
 	// Set close intercept to save final state
 	window.SetCloseIntercept(func() {

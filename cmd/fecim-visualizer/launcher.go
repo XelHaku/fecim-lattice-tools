@@ -109,6 +109,7 @@ func (c *DemoCard) CreateRenderer() fyne.WidgetRenderer {
 type demoCardRenderer struct {
 	card    *DemoCard
 	objects []fyne.CanvasObject
+	cache   sharedwidgets.LayoutCache // Shared utility for safe layout
 }
 
 func (r *demoCardRenderer) MinSize() fyne.Size {
@@ -116,15 +117,22 @@ func (r *demoCardRenderer) MinSize() fyne.Size {
 }
 
 func (r *demoCardRenderer) Layout(size fyne.Size) {
-	// Layout positions objects - use the passed size parameter
 	sharedwidgets.DebugLayoutCall("demoCardRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
 	r.layoutWithSize(size)
+	r.cache.MarkLayout(size)
 }
 
 func (r *demoCardRenderer) Refresh() {
-	// Refresh uses current widget size
 	sharedwidgets.DebugRefreshCall("demoCardRenderer", r.card.Size())
-	r.layoutWithSize(r.card.Size())
+	size := r.card.Size()
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
+	r.layoutWithSize(size)
+	r.cache.MarkLayout(size)
 }
 
 func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {

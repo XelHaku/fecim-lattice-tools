@@ -110,10 +110,86 @@ func DebugLayoutCall(widgetName string, size fyne.Size) bool {
 
 // DebugRefreshCall logs a Refresh() call.
 func DebugRefreshCall(widgetName string, widgetSize fyne.Size) {
-	if !DebugLayout {
+	if !DebugLayout && !DebugResize {
 		return
 	}
-	DebugLog("%s Refresh() - widget size: %.1fx%.1f", widgetName, widgetSize.Width, widgetSize.Height)
+
+	now := time.Now()
+
+	// Track recent refresh calls
+	if DebugResize {
+		refreshCallsMu.Lock()
+		call := refreshCall{
+			widget:    widgetName,
+			timestamp: now,
+			stack:     getShortStack(),
+		}
+		recentRefreshCalls = append(recentRefreshCalls, call)
+		// Keep only last 20 calls
+		if len(recentRefreshCalls) > 20 {
+			recentRefreshCalls = recentRefreshCalls[1:]
+		}
+
+		// Check for rapid refresh on same widget (potential loop)
+		rapidCount := 0
+		for _, c := range recentRefreshCalls {
+			if c.widget == widgetName && now.Sub(c.timestamp) < 100*time.Millisecond {
+				rapidCount++
+			}
+		}
+		if rapidCount > 15 {
+			fmt.Printf("[RESIZE-BUG] RAPID REFRESH: %s called %d times in 100ms!\n", widgetName, rapidCount)
+			fmt.Printf("[RESIZE-BUG] Stack: %s\n", call.stack)
+		}
+		refreshCallsMu.Unlock()
+	}
+
+	if DebugLayout {
+		DebugLog("%s Refresh() - widget size: %.1fx%.1f", widgetName, widgetSize.Width, widgetSize.Height)
+	}
+}
+
+// DebugWindowResize tracks window resize events
+func DebugWindowResize(newSize fyne.Size) {
+	if !DebugResize {
+		return
+	}
+
+	windowResizeMu.Lock()
+	defer windowResizeMu.Unlock()
+
+	if lastWindowSize.Width != newSize.Width || lastWindowSize.Height != newSize.Height {
+		fmt.Printf("[RESIZE] Window: %.0fx%.0f -> %.0fx%.0f\n",
+			lastWindowSize.Width, lastWindowSize.Height, newSize.Width, newSize.Height)
+
+		// Print recent refresh calls that might have caused this
+		refreshCallsMu.Lock()
+		if len(recentRefreshCalls) > 0 {
+			fmt.Printf("[RESIZE] Recent refresh calls before resize:\n")
+			for _, c := range recentRefreshCalls {
+				fmt.Printf("  - %s at %s\n", c.widget, c.timestamp.Format("15:04:05.000"))
+				if c.stack != "" {
+					fmt.Printf("    Stack: %s\n", c.stack)
+				}
+			}
+		}
+		refreshCallsMu.Unlock()
+
+		lastWindowSize = newSize
+	}
+}
+
+// DebugInteraction logs user interactions that might trigger resize
+func DebugInteraction(action string) {
+	if !DebugResize {
+		return
+	}
+	fmt.Printf("[INTERACTION] %s at %s\n", action, time.Now().Format("15:04:05.000"))
+
+	// Clear recent refresh calls to track what happens after this interaction
+	refreshCallsMu.Lock()
+	recentRefreshCalls = nil
+	refreshCallsMu.Unlock()
 }
 
 // DebugMinSizeCall logs a MinSize() call.
@@ -152,4 +228,38 @@ func CenterInSize(innerSize, outerSize fyne.Size) fyne.Position {
 		(outerSize.Width-innerSize.Width)/2,
 		(outerSize.Height-innerSize.Height)/2,
 	)
+}
+
+// WrapSelectCallback wraps a Select OnChanged callback with debug logging.
+// Use this to track which dropdown interactions trigger resize bugs.
+func WrapSelectCallback(name string, original func(string)) func(string) {
+	return func(value string) {
+		DebugInteraction(fmt.Sprintf("Select[%s] changed to '%s'", name, value))
+		if original != nil {
+			original(value)
+		}
+	}
+}
+
+// WrapButtonCallback wraps a Button OnTapped callback with debug logging.
+func WrapButtonCallback(name string, original func()) func() {
+	return func() {
+		DebugInteraction(fmt.Sprintf("Button[%s] tapped", name))
+		if original != nil {
+			original()
+		}
+	}
+}
+
+// WrapSliderCallback wraps a Slider OnChanged callback with debug logging.
+func WrapSliderCallback(name string, original func(float64)) func(float64) {
+	return func(value float64) {
+		if DebugResize {
+			// Only log slider changes in verbose mode since they're frequent
+			fmt.Printf("[INTERACTION] Slider[%s] changed to %.2f at %s\n", name, value, time.Now().Format("15:04:05.000"))
+		}
+		if original != nil {
+			original(value)
+		}
+	}
 }

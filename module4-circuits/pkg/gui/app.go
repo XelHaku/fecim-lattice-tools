@@ -21,6 +21,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"multilayer-ferroelectric-cim-visualizer/module4-circuits/pkg/peripherals"
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // Constants
@@ -270,6 +271,7 @@ func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 
 	// Update view based on selection using Hide/Show (avoids layout cascades)
 	viewSelector.OnChanged = func(view string) {
+		sharedwidgets.DebugInteraction(fmt.Sprintf("circuits viewSelector changed to '%s'", view))
 		if view == currentView {
 			return
 		}

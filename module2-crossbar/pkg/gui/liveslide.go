@@ -104,6 +104,7 @@ func (m *ModeIndicatorBox) CreateRenderer() fyne.WidgetRenderer {
 type modeIndicatorBoxRenderer struct {
 	indicator *ModeIndicatorBox
 	objects   []fyne.CanvasObject
+	cache     sharedwidgets.LayoutCache // Shared utility for safe layout
 }
 
 func (r *modeIndicatorBoxRenderer) MinSize() fyne.Size {
@@ -112,12 +113,21 @@ func (r *modeIndicatorBoxRenderer) MinSize() fyne.Size {
 
 func (r *modeIndicatorBoxRenderer) Layout(size fyne.Size) {
 	sharedwidgets.DebugLayoutCall("modeIndicatorBoxRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
 	r.layoutWithSize(size)
+	r.cache.MarkLayout(size)
 }
 
 func (r *modeIndicatorBoxRenderer) Refresh() {
 	sharedwidgets.DebugRefreshCall("modeIndicatorBoxRenderer", r.indicator.Size())
-	r.layoutWithSize(r.indicator.Size())
+	size := r.indicator.Size()
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
+	r.layoutWithSize(size)
+	r.cache.MarkLayout(size)
 }
 
 func (r *modeIndicatorBoxRenderer) layoutWithSize(size fyne.Size) {

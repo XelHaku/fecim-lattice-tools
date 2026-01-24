@@ -168,6 +168,7 @@ func (m *ComparisonModeIndicator) CreateRenderer() fyne.WidgetRenderer {
 type comparisonModeRenderer struct {
 	indicator *ComparisonModeIndicator
 	objects   []fyne.CanvasObject
+	cache     sharedwidgets.LayoutCache // Shared utility for safe layout
 }
 
 func (r *comparisonModeRenderer) MinSize() fyne.Size {
@@ -176,12 +177,21 @@ func (r *comparisonModeRenderer) MinSize() fyne.Size {
 
 func (r *comparisonModeRenderer) Layout(size fyne.Size) {
 	sharedwidgets.DebugLayoutCall("comparisonModeRenderer", size)
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
 	r.layoutWithSize(size)
+	r.cache.MarkLayout(size)
 }
 
 func (r *comparisonModeRenderer) Refresh() {
 	sharedwidgets.DebugRefreshCall("comparisonModeRenderer", r.indicator.Size())
-	r.layoutWithSize(r.indicator.Size())
+	size := r.indicator.Size()
+	if !r.cache.ShouldLayout(size) {
+		return
+	}
+	r.layoutWithSize(size)
+	r.cache.MarkLayout(size)
 }
 
 func (r *comparisonModeRenderer) layoutWithSize(size fyne.Size) {

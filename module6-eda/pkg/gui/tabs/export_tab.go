@@ -12,6 +12,7 @@ import (
 
 	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/export"
 	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/validate"
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // MakeExportTab creates the export tab UI
@@ -67,6 +68,7 @@ func MakeExportTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 
 	// Validate button logic
 	validateButton := widget.NewButton("VALIDATE (Yosys)", func() {
+		sharedwidgets.DebugInteraction("Export VALIDATE button pressed")
 		if lastVerilogPath == "" {
 			dialog.ShowError(fmt.Errorf("please export Verilog first"), w)
 			return
@@ -86,6 +88,7 @@ func MakeExportTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 
 	// Export button
 	exportButton := widget.NewButton("EXPORT FILES", func() {
+		sharedwidgets.DebugInteraction("Export EXPORT FILES button pressed")
 		if appState.CurrentMapping == nil {
 			dialog.ShowError(fmt.Errorf("compile weights first (Tab 1)"), w)
 			return
