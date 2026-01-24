@@ -158,6 +158,85 @@ This tool implements simulation models based on published research. It is **not 
 
 ---
 
+## 7. Tour Group Publications (external research institution)
+
+*Papers from Dr. external research group's research group at external research institution directly relevant to FeCIM technology.*
+
+### 7.1 2D Ferroelectric Neuromorphic Devices
+
+* **In₂Se₃ Synthesized by FWF Method for Neuromorphic Computing**
+  * *Authors:* Jaeho Shin, Jingon Jang, Chi Hun Choi, Jaegyu Kim, Lucas Eddy, Phelecia Scotland, Lane W. Martin, Yimo Han, James M. Tour
+  * *Journal:* Advanced Electronic Materials, 2025, Vol. 11, Issue 5, Article 2400603
+  * *Published:* [View](https://advanced.onlinelibrary.wiley.com/doi/full/10.1002/aelm.202400603)
+  * *Preprint:* [ChemRxiv](https://chemrxiv.org/engage/chemrxiv/article-details/659ef4cee9ebbb4db9de84cb)
+  * *Key Findings:*
+    - Gram-scale synthesis of α-In₂Se₃ crystals using flash-within-flash (FWF) Joule heating
+    - 2D ferroelectric semiconductor FET as artificial synaptic device platform
+    - Modulates polarization via gate electrical pulses for synaptic behavior
+    - Non-volatile memory with ON/OFF states due to ferroelectric characteristics
+    - Robust reliability under repeated electrical pulses
+  * *How we use it:* Foundation for 30-level quantization and synaptic weight programming models.
+
+### 7.2 Flash Joule Heating Technology
+
+* **Flash-within-Flash Joule Heating (FWF) for Sustainable Synthesis**
+  * *Authors:* Tour Group, external research institution
+  * *Journal:* Nature Chemistry, August 2024
+  * *Source:* [Rice News](https://news.rice.edu/news/2024/new-twist-synthesis-technique-developed-rice-promises-sustainable-manufacturing)
+  * *Key Findings:*
+    - Gram-scale production of compounds in seconds
+    - 50% reduction in energy, water, and greenhouse gas emissions
+    - Ideal for semiconductor materials: MoSe₂, WSe₂, α-In₂Se₃
+    - Enables synthesis regardless of precursor conductance
+  * *How we use it:* Referenced for understanding material synthesis pathways.
+
+### 7.3 IronLattice Startup (Tour Lab Spinout)
+
+* **IronLattice: Superlattice-Based Ferroelectric CIM**
+  * *Source:* [Rice Innovation One Small Step Grant, 2025](https://news.rice.edu/news/2025/rice-innovation-awards-fourth-cycle-one-small-step-grants)
+  * *Status:* external research institution spinout, $50,000 grant recipient
+  * *Technology:*
+    - Superlattice-based ferroelectric device
+    - Analog, nonvolatile in-memory computation for AI workloads
+    - Claims: "millions × lower energy and million × faster than NAND"
+  * *How we use it:* Validates commercial potential of FeCIM technology.
+
+### 7.4 COSM 2025 Presentation
+
+* **"Breakthrough: Radical New AI Hardware Design That Nvidia Can't Ignore"**
+  * *Speaker:* external research group
+  * *Event:* [COSM 2025, Scottsdale, Arizona](https://cosm.tech/speaker/jim-tour/)
+  * *Topics:*
+    - Compute-in-memory (CiM) technology overview
+    - Elimination of data-transfer bottleneck
+    - Energy and processing time savings
+    - IronLattice technology demonstration
+  * *Video:* Available on COSM YouTube channel
+
+### 7.5 Collaborations
+
+* **Yimo Han Lab (external research institution)**
+  * *Focus:* 2D ferroelectric materials, electron microscopy
+  * *Publications:* [Han Lab](https://hanlab.blogs.rice.edu/publications/)
+  * *Collaboration:* Co-author on In₂Se₃ neuromorphic computing paper
+  * *Related Work:* Van der Waals ferroelectric materials mapping ([Nature Communications](https://www.nature.com/articles/s41467-023-42110-y))
+
+### 7.6 Related Superlattice FeFET Research
+
+*Note: These papers are from collaborating institutions, not Tour Group directly.*
+
+* **BEOL-Compatible Superlattice FeFET Analog Synapse**
+  * *Authors:* Aabrar et al. (Georgia Tech, Shimeng Yu group)
+  * *Journal:* IEEE TED, 2022. [View](https://ieeexplore.ieee.org/document/9691825/)
+  * *Finding:* Superlattice FE/DE/FE gate-stack for improved linearity/symmetry of weight updates.
+
+* **A Thousand State Superlattice FeFET Analog Weight Cell**
+  * *Authors:* Georgia Tech
+  * *Event:* IEEE VLSI Symposium 2022
+  * *Finding:* Up to 1,000 conductance states demonstrated.
+
+---
+
 ## What We Don't Claim
 
 1. **No affiliation** with external research institution, Tour Lab, or any cited institution
