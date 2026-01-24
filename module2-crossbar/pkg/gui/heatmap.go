@@ -13,6 +13,8 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
+
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // refreshMinInterval is the minimum time between heatmap refreshes (30 FPS max)
@@ -531,6 +533,7 @@ type heatmapRenderer struct {
 }
 
 func (r *heatmapRenderer) Layout(size fyne.Size) {
+	sharedwidgets.DebugLayoutCall("heatmapRenderer", size)
 	r.raster.Resize(size)
 }
 
@@ -539,6 +542,7 @@ func (r *heatmapRenderer) MinSize() fyne.Size {
 }
 
 func (r *heatmapRenderer) Refresh() {
+	sharedwidgets.DebugRefreshCall("heatmapRenderer", r.heatmap.Size())
 	r.raster.Refresh()
 }
 

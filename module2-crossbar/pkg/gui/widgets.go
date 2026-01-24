@@ -11,6 +11,8 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // ColorLegend displays a vertical color legend for heatmaps.
@@ -183,6 +185,7 @@ type colorLegendRenderer struct {
 }
 
 func (r *colorLegendRenderer) Layout(size fyne.Size) {
+	sharedwidgets.DebugLayoutCall("colorLegendRenderer", size)
 	r.raster.Resize(size)
 	r.maxText.Move(fyne.NewPos(38, 25))
 	r.unitText.Move(fyne.NewPos(0, 5))
@@ -207,6 +210,7 @@ func (r *colorLegendRenderer) MinSize() fyne.Size {
 }
 
 func (r *colorLegendRenderer) Refresh() {
+	sharedwidgets.DebugRefreshCall("colorLegendRenderer", r.legend.Size())
 	r.minText.Text = r.legend.minLabel
 	r.maxText.Text = r.legend.maxLabel
 	r.unitText.Text = r.legend.unit
@@ -648,6 +652,7 @@ type waterfallRenderer struct {
 }
 
 func (r *waterfallRenderer) Layout(size fyne.Size) {
+	sharedwidgets.DebugLayoutCall("waterfallRenderer", size)
 	r.waterfall.raster.Resize(size)
 
 	// Layout Y-axis labels
@@ -703,6 +708,7 @@ func (r *waterfallRenderer) MinSize() fyne.Size {
 }
 
 func (r *waterfallRenderer) Refresh() {
+	sharedwidgets.DebugRefreshCall("waterfallRenderer", r.waterfall.Size())
 	// Update bar labels based on current steps
 	w := r.waterfall
 

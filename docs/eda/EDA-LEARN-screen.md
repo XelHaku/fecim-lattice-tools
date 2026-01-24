@@ -289,4 +289,57 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
 
 ---
 
+## 11. Advanced Integration Workflows (2026 Strategy)
+
+Based on 2025-2026 ecosystem developments, here are the validated workflows for connecting this tool to professional EDA:
+
+### 11.1 Enhanced Python-to-SPICE Workflow
+*Leveraging ngspice 43+ and OpenVAF-reloaded*
+
+1.  **Configure**: User defines crossbar parameters in GUI
+2.  **Generate**: Tool exports `.spice` netlist containing:
+    *   Standard transistor models (SKY130/GF180) for drivers
+    *   Pre-compiled `.osdi` FeFET models (via OpenVAF)
+3.  **Simulate**: Invoke `ngspice` with OSDI support enabled
+4.  **Analyze**: Parse raw output with Python (NumPy/Matplotlib) for accuracy plotting
+
+### 11.2 Enhanced Python-to-GDSII Workflow
+*Leveraging GDSFactory 9.x*
+
+```python
+# Concept: Procedural layout generation
+import gdsfactory as gf
+
+@gf.cell
+def fefet_crossbar(rows: int, cols: int, pitch: float):
+    c = gf.Component()
+    # 1. Place FeFET cells at pitch interval
+    # 2. Route Bitlines (Metal 1) vertical
+    # 3. Route Wordlines (Metal 2) horizontal
+    # 4. Built-in DRC checking
+    return c
+```
+
+### 11.3 New CIM Modeling Integration
+*The full architecture exploration loop*
+
+1.  **Architecture Exploration**: Export YAML → **CiMLoop** (Energy/Area estimation)
+2.  **Co-Design**: Hardware-software mapping → **CINM Compiler**
+3.  **Detailed Simulation**: Physics verification → **FAST Simulator**
+4.  **Physical Design**: Layout → **GDSFactory** → **OpenLane** (as Macro)
+
+### 11.4 Recommended Tool Stack (2026)
+
+| Stage | Primary Tool | Alternative |
+|-------|--------------|-------------|
+| **Architecture** | CiMLoop | NeuroSim |
+| **Logic Design** | Yosys | Verilator |
+| **Analog Sim** | ngspice + OpenVAF | Xyce |
+| **Layout** | GDSFactory | KLayout (Python) |
+| **Place & Route** | OpenROAD | OpenLane 2.0 |
+| **Verification** | Magic + Netgen | KLayout DRC |
+| **Fabrication** | IHP SG13G2 Shuttle | Tiny Tapeout |
+
+---
+
 *Last updated: 2026-01-23*

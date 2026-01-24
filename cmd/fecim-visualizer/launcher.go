@@ -128,6 +128,11 @@ func (r *demoCardRenderer) Refresh() {
 }
 
 func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
+	// Skip layout with invalid sizes
+	if size.Width <= 0 || size.Height <= 0 {
+		return
+	}
+
 	r.objects = r.objects[:0]
 	info := r.card.info
 

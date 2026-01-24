@@ -62,6 +62,7 @@ type resizeDetectorRenderer struct {
 // Layout is called when the widget needs to be laid out.
 // This is where we detect resize events.
 func (r *resizeDetectorRenderer) Layout(size fyne.Size) {
+	DebugLayoutCall("resizeDetectorRenderer", size)
 	// Resize the internal rectangle to fill the container
 	r.rect.Resize(size)
 
@@ -83,6 +84,7 @@ func (r *resizeDetectorRenderer) MinSize() fyne.Size {
 
 // Refresh refreshes the renderer.
 func (r *resizeDetectorRenderer) Refresh() {
+	DebugRefreshCall("resizeDetectorRenderer", r.detector.Size())
 	r.rect.Refresh()
 }
 
@@ -194,6 +196,7 @@ type responsiveDetectorRenderer struct {
 
 // Layout is called when the widget needs to be laid out.
 func (r *responsiveDetectorRenderer) Layout(size fyne.Size) {
+	DebugLayoutCall("responsiveDetectorRenderer", size)
 	r.rect.Resize(size)
 
 	// Check if breakpoint has changed
@@ -218,6 +221,7 @@ func (r *responsiveDetectorRenderer) MinSize() fyne.Size {
 
 // Refresh refreshes the renderer.
 func (r *responsiveDetectorRenderer) Refresh() {
+	DebugRefreshCall("responsiveDetectorRenderer", r.detector.Size())
 	r.rect.Refresh()
 }
 

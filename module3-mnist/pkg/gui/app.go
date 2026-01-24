@@ -424,23 +424,34 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 		),
 	)
 
-	// Content container (will be swapped based on button selection)
-	contentContainer = container.NewMax(mainSplit)
+	// Content views - pre-created to avoid layout cascades on Wayland/Sway
+	drawView := container.NewMax(mainSplit)
+	metricsView := container.NewMax(metricsSplit)
 
-	// Setup view switching logic
+	// Content container using Stack - all views layered, visibility toggled
+	contentContainer = container.NewStack(drawView, metricsView)
+
+	// Track current view to avoid redundant updates
+	currentView := -1
+
+	// Setup view switching logic using Hide/Show (avoids layout cascades)
 	updateView := func(view int) {
+		if view == currentView {
+			return // No change needed
+		}
+		currentView = view
+
 		if view == 0 {
 			drawBtn.Importance = widget.HighImportance
 			metricsBtn.Importance = widget.MediumImportance
-			contentContainer.Objects[0] = container.NewMax(mainSplit)
+			metricsView.Hide()
+			drawView.Show()
 		} else {
 			drawBtn.Importance = widget.MediumImportance
 			metricsBtn.Importance = widget.HighImportance
-			contentContainer.Objects[0] = container.NewMax(metricsSplit)
+			drawView.Hide()
+			metricsView.Show()
 		}
-		drawBtn.Refresh()
-		metricsBtn.Refresh()
-		contentContainer.Refresh()
 	}
 
 	drawBtn.OnTapped = func() { updateView(0) }

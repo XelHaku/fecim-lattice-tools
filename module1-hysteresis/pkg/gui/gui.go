@@ -23,6 +23,7 @@ import (
 
 	"multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/ferroelectric"
 	"multilayer-ferroelectric-cim-visualizer/shared/logging"
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // Package-level logger for hysteresis GUI
@@ -1303,14 +1304,21 @@ func (r *peplotRenderer) MinSize() fyne.Size {
 }
 
 func (r *peplotRenderer) Layout(size fyne.Size) {
+	sharedwidgets.DebugLayoutCall("peplotRenderer", size)
 	r.layoutWithSize(size)
 }
 
 func (r *peplotRenderer) Refresh() {
+	sharedwidgets.DebugRefreshCall("peplotRenderer", r.plot.Size())
 	r.layoutWithSize(r.plot.Size())
 }
 
 func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
+	// Skip layout with invalid sizes
+	if size.Width <= 0 || size.Height <= 0 {
+		return
+	}
+
 	r.plot.mu.RLock()
 	defer r.plot.mu.RUnlock()
 
@@ -1641,14 +1649,21 @@ func (r *levelRenderer) MinSize() fyne.Size {
 }
 
 func (r *levelRenderer) Layout(size fyne.Size) {
+	sharedwidgets.DebugLayoutCall("levelRenderer", size)
 	r.layoutWithSize(size)
 }
 
 func (r *levelRenderer) Refresh() {
+	sharedwidgets.DebugRefreshCall("levelRenderer", r.indicator.Size())
 	r.layoutWithSize(r.indicator.Size())
 }
 
 func (r *levelRenderer) layoutWithSize(size fyne.Size) {
+	// Skip layout with invalid sizes
+	if size.Width <= 0 || size.Height <= 0 {
+		return
+	}
+
 	r.indicator.mu.RLock()
 	level := r.indicator.level
 	r.indicator.mu.RUnlock()
@@ -1830,14 +1845,21 @@ func (r *cellRenderer) MinSize() fyne.Size {
 }
 
 func (r *cellRenderer) Layout(size fyne.Size) {
+	sharedwidgets.DebugLayoutCall("cellRenderer", size)
 	r.layoutWithSize(size)
 }
 
 func (r *cellRenderer) Refresh() {
+	sharedwidgets.DebugRefreshCall("cellRenderer", r.cell.Size())
 	r.layoutWithSize(r.cell.Size())
 }
 
 func (r *cellRenderer) layoutWithSize(size fyne.Size) {
+	// Skip layout with invalid sizes
+	if size.Width <= 0 || size.Height <= 0 {
+		return
+	}
+
 	r.cell.mu.RLock()
 	level := r.cell.level
 	r.cell.mu.RUnlock()
@@ -2041,14 +2063,21 @@ func (r *modeRenderer) MinSize() fyne.Size {
 }
 
 func (r *modeRenderer) Layout(size fyne.Size) {
+	sharedwidgets.DebugLayoutCall("modeRenderer", size)
 	r.layoutWithSize(size)
 }
 
 func (r *modeRenderer) Refresh() {
+	sharedwidgets.DebugRefreshCall("modeRenderer", r.indicator.Size())
 	r.layoutWithSize(r.indicator.Size())
 }
 
 func (r *modeRenderer) layoutWithSize(size fyne.Size) {
+	// Skip layout with invalid sizes
+	if size.Width <= 0 || size.Height <= 0 {
+		return
+	}
+
 	r.indicator.mu.RLock()
 	isWrite := r.indicator.isWrite
 	r.indicator.mu.RUnlock()

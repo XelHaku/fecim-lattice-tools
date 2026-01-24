@@ -12,6 +12,8 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // ComparisonMode represents the current demo mode.
@@ -171,14 +173,21 @@ func (r *comparisonModeRenderer) MinSize() fyne.Size {
 }
 
 func (r *comparisonModeRenderer) Layout(size fyne.Size) {
+	sharedwidgets.DebugLayoutCall("comparisonModeRenderer", size)
 	r.layoutWithSize(size)
 }
 
 func (r *comparisonModeRenderer) Refresh() {
+	sharedwidgets.DebugRefreshCall("comparisonModeRenderer", r.indicator.Size())
 	r.layoutWithSize(r.indicator.Size())
 }
 
 func (r *comparisonModeRenderer) layoutWithSize(size fyne.Size) {
+	// Skip layout with invalid sizes
+	if size.Width <= 0 || size.Height <= 0 {
+		return
+	}
+
 	r.indicator.mu.RLock()
 	mode := r.indicator.mode
 	r.indicator.mu.RUnlock()

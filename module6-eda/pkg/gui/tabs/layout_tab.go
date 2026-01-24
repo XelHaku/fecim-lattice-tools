@@ -11,6 +11,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/compiler"
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // MakeLayoutTab creates the layout visualization tab
@@ -243,6 +244,7 @@ type clickableCellRenderer struct {
 }
 
 func (r *clickableCellRenderer) Layout(size fyne.Size) {
+	sharedwidgets.DebugLayoutCall("clickableCellRenderer", size)
 	r.cell.content.Resize(size)
 }
 
@@ -251,6 +253,7 @@ func (r *clickableCellRenderer) MinSize() fyne.Size {
 }
 
 func (r *clickableCellRenderer) Refresh() {
+	sharedwidgets.DebugRefreshCall("clickableCellRenderer", r.cell.content.Size())
 	r.cell.content.Refresh()
 }
 

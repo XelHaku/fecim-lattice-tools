@@ -75,8 +75,14 @@ func (app *TabbedCrossbarApp) Run() {
 }
 
 func (app *TabbedCrossbarApp) createMainLayout() fyne.CanvasObject {
-	// Create view selector buttons (replaces nested tabs to save space)
-	var contentContainer *fyne.Container
+	// Pre-load all content views (avoids layout cascades on Wayland/Sway)
+	idealContent := app.idealTab.Content()
+	irdropContent := app.irdropTab.Content()
+	sneakContent := app.sneakTab.Content()
+	driftContent := app.driftTab.Content()
+
+	// All content in a Stack - we'll hide/show instead of swapping
+	allViews := []fyne.CanvasObject{idealContent, irdropContent, sneakContent, driftContent}
 
 	// Button group for view selection
 	idealBtn := widget.NewButton("Conductance", func() {})
@@ -84,42 +90,40 @@ func (app *TabbedCrossbarApp) createMainLayout() fyne.CanvasObject {
 	sneakBtn := widget.NewButton("Sneak Paths", func() {})
 	driftBtn := widget.NewButton("Input/Output", func() {})
 
+	// Track current view to avoid redundant updates
+	currentView := -1
+
 	updateView := func(view int) {
-		// Update button styles to show active view
-		if view == 0 {
-			idealBtn.Importance = widget.HighImportance
-			irDropBtn.Importance = widget.MediumImportance
-			sneakBtn.Importance = widget.MediumImportance
-			driftBtn.Importance = widget.MediumImportance
-			app.statusLabel.SetText("Ideal MVM - No non-idealities")
-			contentContainer.Objects[0] = app.idealTab.Content()
-		} else if view == 1 {
-			idealBtn.Importance = widget.MediumImportance
-			irDropBtn.Importance = widget.HighImportance
-			sneakBtn.Importance = widget.MediumImportance
-			driftBtn.Importance = widget.MediumImportance
-			app.statusLabel.SetText("IR Drop - Voltage drop along metal lines")
-			contentContainer.Objects[0] = app.irdropTab.Content()
-		} else if view == 2 {
-			idealBtn.Importance = widget.MediumImportance
-			irDropBtn.Importance = widget.MediumImportance
-			sneakBtn.Importance = widget.HighImportance
-			driftBtn.Importance = widget.MediumImportance
-			app.statusLabel.SetText("Sneak Paths - Parasitic current paths")
-			contentContainer.Objects[0] = app.sneakTab.Content()
-		} else if view == 3 {
-			idealBtn.Importance = widget.MediumImportance
-			irDropBtn.Importance = widget.MediumImportance
-			sneakBtn.Importance = widget.MediumImportance
-			driftBtn.Importance = widget.HighImportance
-			app.statusLabel.SetText("Drift - Conductance change over time")
-			contentContainer.Objects[0] = app.driftTab.Content()
+		if view == currentView {
+			return // No change needed
 		}
-		idealBtn.Refresh()
-		irDropBtn.Refresh()
-		sneakBtn.Refresh()
-		driftBtn.Refresh()
-		contentContainer.Refresh()
+		currentView = view
+
+		// Hide all views first
+		for _, v := range allViews {
+			v.Hide()
+		}
+
+		// Show selected view and update buttons
+		allViews[view].Show()
+
+		// Update button importance (without calling Refresh - Fyne handles it)
+		buttons := []*widget.Button{idealBtn, irDropBtn, sneakBtn, driftBtn}
+		statusTexts := []string{
+			"Ideal MVM - No non-idealities",
+			"IR Drop - Voltage drop along metal lines",
+			"Sneak Paths - Parasitic current paths",
+			"Drift - Conductance change over time",
+		}
+
+		for i, btn := range buttons {
+			if i == view {
+				btn.Importance = widget.HighImportance
+			} else {
+				btn.Importance = widget.MediumImportance
+			}
+		}
+		app.statusLabel.SetText(statusTexts[view])
 	}
 
 	idealBtn.OnTapped = func() { updateView(0) }
@@ -147,10 +151,10 @@ func (app *TabbedCrossbarApp) createMainLayout() fyne.CanvasObject {
 		widget.NewSeparator(),
 	)
 
-	// Content container (will be swapped based on button selection)
-	contentContainer = container.NewMax(app.idealTab.Content())
+	// Content container using Stack - all views layered, visibility toggled
+	contentContainer := container.NewStack(allViews...)
 
-	// Set initial view
+	// Set initial view (shows first, hides others)
 	updateView(0)
 
 	return container.NewBorder(

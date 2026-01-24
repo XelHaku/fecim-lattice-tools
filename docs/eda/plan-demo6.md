@@ -544,6 +544,29 @@ func ExportSPICE(mapping *compiler.CrossbarMapping, path string, vdd float64) er
 
 ---
 
+## Integration Context
+
+Understanding where this tool fits in the larger ecosystem is critical.
+
+### 1. Standard Digital Flow (OpenLane)
+*The rigorous path for standard digital logic (RISC-V, Accelerators).*
+
+1.  **Logic Synthesis (Yosys):** Translates Verilog RTL → Standard Cell Gates (NAND/NOR).
+2.  **Physical Design (OpenROAD):** Places gates, builds clock tree, routes wires.
+3.  **Flow Control (OpenLane):** Orchestrates DRC, LVS, and tape-out file generation.
+
+*Status: **Production Ready** for CMOS. Gaps: Cannot route analog crossbars.*
+
+### 2. Proposed FeCIM Integration Flow
+*How Module 6 bridges the gap.*
+
+1.  **Architecture:** Neural Network → **CiMLoop** (Architecture Validation).
+2.  **Layout Generation:** **Module 6** → GDSFactory Script → `.gds` Macro.
+3.  **Simulation:** **Module 6** → `.spice` Netlist + OpenVAF Models → **ngspice**.
+4.  **Final Integration:** The generated `.gds` macro is instantiated as a "Black Box" in **OpenLane** for digital controller integration.
+
+---
+
 ## 6-Tab Architecture
 
 ```text

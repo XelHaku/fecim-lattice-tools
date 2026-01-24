@@ -11,6 +11,8 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // VectorBarChart displays a vector as a bar chart.
@@ -190,6 +192,7 @@ type vectorBarChartRenderer struct {
 }
 
 func (r *vectorBarChartRenderer) Layout(size fyne.Size) {
+	sharedwidgets.DebugLayoutCall("vectorBarChartRenderer", size)
 	r.content.Resize(size)
 }
 
@@ -198,6 +201,7 @@ func (r *vectorBarChartRenderer) MinSize() fyne.Size {
 }
 
 func (r *vectorBarChartRenderer) Refresh() {
+	sharedwidgets.DebugRefreshCall("vectorBarChartRenderer", r.chart.Size())
 	// Update Y-axis labels with current min/max values and unit
 	unit := r.chart.unit
 	if unit == "" {

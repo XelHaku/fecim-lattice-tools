@@ -243,7 +243,7 @@ func (ca *CircuitsApp) Run() {
 
 // createMainLayout builds the main application layout with tabs.
 func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
-	// Create tab contents
+	// Create tab contents (pre-loaded to avoid layout cascades on Wayland/Sway)
 	writeTabContent := ca.createWriteTab()
 	readTabContent := ca.createReadTab()
 	computeTabContent := ca.createComputeTab()
@@ -251,34 +251,49 @@ func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 	timingTabContent := ca.createTimingTab()
 	specsTabContent := ca.createSpecsTab()
 
+	// All views for Hide/Show toggling
+	viewNames := []string{"WRITE", "READ", "COMPUTE", "COMPARISON", "TIMING", "SPECS"}
+	allViews := []fyne.CanvasObject{
+		writeTabContent, readTabContent, computeTabContent,
+		comparisonTabContent, timingTabContent, specsTabContent,
+	}
+
 	// View selector dropdown (replaces nested tabs to save space)
-	viewSelector := widget.NewSelect(
-		[]string{"WRITE", "READ", "COMPUTE", "COMPARISON", "TIMING", "SPECS"},
-		nil,
-	)
+	viewSelector := widget.NewSelect(viewNames, nil)
 	viewSelector.SetSelected("WRITE")
 
-	// Content container
-	contentContainer := container.NewMax(writeTabContent)
+	// Content container using Stack - all views layered, visibility toggled
+	contentContainer := container.NewStack(allViews...)
 
-	// Update view based on selection
+	// Track current view
+	currentView := ""
+
+	// Update view based on selection using Hide/Show (avoids layout cascades)
 	viewSelector.OnChanged = func(view string) {
-		switch view {
-		case "WRITE":
-			contentContainer.Objects[0] = writeTabContent
-		case "READ":
-			contentContainer.Objects[0] = readTabContent
-		case "COMPUTE":
-			contentContainer.Objects[0] = computeTabContent
-		case "COMPARISON":
-			contentContainer.Objects[0] = comparisonTabContent
-		case "TIMING":
-			contentContainer.Objects[0] = timingTabContent
-		case "SPECS":
-			contentContainer.Objects[0] = specsTabContent
+		if view == currentView {
+			return
 		}
-		contentContainer.Refresh()
+		currentView = view
+
+		// Hide all views, then show selected
+		for i, v := range allViews {
+			if viewNames[i] == view {
+				v.Show()
+			} else {
+				v.Hide()
+			}
+		}
 	}
+
+	// Initialize: show first view, hide others
+	for i, v := range allViews {
+		if i == 0 {
+			v.Show()
+		} else {
+			v.Hide()
+		}
+	}
+	currentView = "WRITE"
 
 	// Header with inline view selector
 	titleLabel := widget.NewLabel("FeCIM Peripheral Circuits Visualizer")

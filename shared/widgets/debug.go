@@ -48,8 +48,9 @@ func DebugLayoutCall(widgetName string, size fyne.Size) bool {
 	now := time.Now()
 	if last, ok := lastLayoutTime[key]; ok {
 		elapsed := now.Sub(last)
-		// If we're getting layout calls faster than 10ms, something might be wrong
-		if elapsed < 10*time.Millisecond && count > 10 {
+		// If we're getting layout calls faster than 10ms with count > 50, something might be wrong
+		// Higher threshold (50) ignores normal startup initialization which can call Layout many times
+		if elapsed < 10*time.Millisecond && count > 50 {
 			fmt.Printf("[LAYOUT] WARNING: %s Layout() called %d times in rapid succession (%.2fms)\n",
 				widgetName, count, float64(elapsed.Nanoseconds())/1e6)
 			return true

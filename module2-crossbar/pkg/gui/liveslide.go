@@ -119,6 +119,11 @@ func (r *modeIndicatorBoxRenderer) Refresh() {
 }
 
 func (r *modeIndicatorBoxRenderer) layoutWithSize(size fyne.Size) {
+	// Skip layout with invalid sizes
+	if size.Width <= 0 || size.Height <= 0 {
+		return
+	}
+
 	r.indicator.mu.RLock()
 	mode := r.indicator.mode
 	r.indicator.mu.RUnlock()

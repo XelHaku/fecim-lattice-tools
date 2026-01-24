@@ -4,6 +4,7 @@ package gui
 
 import (
 	"fmt"
+	"image/color"
 	"strings"
 	"sync"
 	"time"
@@ -12,7 +13,8 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
-	"image/color"
+
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // MNISTMode represents the current demo mode.
@@ -97,14 +99,21 @@ func (r *mnistModeRenderer) MinSize() fyne.Size {
 }
 
 func (r *mnistModeRenderer) Layout(size fyne.Size) {
+	sharedwidgets.DebugLayoutCall("mnistModeRenderer", size)
 	r.layoutWithSize(size)
 }
 
 func (r *mnistModeRenderer) Refresh() {
+	sharedwidgets.DebugRefreshCall("mnistModeRenderer", r.indicator.Size())
 	r.layoutWithSize(r.indicator.Size())
 }
 
 func (r *mnistModeRenderer) layoutWithSize(size fyne.Size) {
+	// Skip layout with invalid sizes
+	if size.Width <= 0 || size.Height <= 0 {
+		return
+	}
+
 	r.indicator.mu.RLock()
 	mode := r.indicator.mode
 	r.indicator.mu.RUnlock()
@@ -439,14 +448,21 @@ func (r *predictionRenderer) MinSize() fyne.Size {
 }
 
 func (r *predictionRenderer) Layout(size fyne.Size) {
+	sharedwidgets.DebugLayoutCall("predictionRenderer", size)
 	r.layoutWithSize(size)
 }
 
 func (r *predictionRenderer) Refresh() {
+	sharedwidgets.DebugRefreshCall("predictionRenderer", r.display.Size())
 	r.layoutWithSize(r.display.Size())
 }
 
 func (r *predictionRenderer) layoutWithSize(size fyne.Size) {
+	// Skip layout with invalid sizes
+	if size.Width <= 0 || size.Height <= 0 {
+		return
+	}
+
 	r.display.mu.RLock()
 	pred := r.display.prediction
 	conf := r.display.confidence

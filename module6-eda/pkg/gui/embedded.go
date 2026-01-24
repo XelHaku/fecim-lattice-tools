@@ -25,7 +25,7 @@ func NewEmbeddedEDAApp() *EmbeddedEDAApp {
 
 // BuildContent creates the UI content for embedding in the main app
 func (app *EmbeddedEDAApp) BuildContent(fyneApp fyne.App, window fyne.Window) fyne.CanvasObject {
-	// Create tab contents
+	// Create tab contents (pre-loaded to avoid layout cascades on Wayland/Sway)
 	compilerContent := tabs.MakeCompilerTab(app.state, window)
 	layoutContent := tabs.MakeLayoutTab(app.state)
 	hdlContent := tabs.MakeHDLTab(app.state, window)       // Phase 3: HDL Generation
@@ -34,36 +34,49 @@ func (app *EmbeddedEDAApp) BuildContent(fyneApp fyne.App, window fyne.Window) fy
 	exportContent := tabs.MakeExportTab(app.state, window)
 	learnContent := tabs.MakeLearnTab(app.state, window)   // Learning Center with OpenLane docs
 
+	// All views for Hide/Show toggling
+	viewNames := []string{"Compiler", "Layout", "HDL", "Explorer", "Simulate", "Export", "Learn"}
+	allViews := []fyne.CanvasObject{
+		compilerContent, layoutContent, hdlContent,
+		explorerContent, simulateContent, exportContent, learnContent,
+	}
+
 	// View selector (replaces nested tabs to save space)
-	viewSelector := widget.NewSelect(
-		[]string{"Compiler", "Layout", "HDL", "Explorer", "Simulate", "Export", "Learn"},
-		nil,
-	)
+	viewSelector := widget.NewSelect(viewNames, nil)
 	viewSelector.SetSelected("Compiler")
 
-	// Content container
-	contentContainer := container.NewMax(compilerContent)
+	// Content container using Stack - all views layered, visibility toggled
+	contentContainer := container.NewStack(allViews...)
 
-	// Update view based on selection
+	// Track current view
+	currentView := ""
+
+	// Update view based on selection using Hide/Show (avoids layout cascades)
 	viewSelector.OnChanged = func(view string) {
-		switch view {
-		case "Compiler":
-			contentContainer.Objects[0] = compilerContent
-		case "Layout":
-			contentContainer.Objects[0] = layoutContent
-		case "HDL":
-			contentContainer.Objects[0] = hdlContent
-		case "Explorer":
-			contentContainer.Objects[0] = explorerContent
-		case "Simulate":
-			contentContainer.Objects[0] = simulateContent
-		case "Export":
-			contentContainer.Objects[0] = exportContent
-		case "Learn":
-			contentContainer.Objects[0] = learnContent
+		if view == currentView {
+			return
 		}
-		contentContainer.Refresh()
+		currentView = view
+
+		// Hide all views, then show selected
+		for i, v := range allViews {
+			if viewNames[i] == view {
+				v.Show()
+			} else {
+				v.Hide()
+			}
+		}
 	}
+
+	// Initialize: show first view, hide others
+	for i, v := range allViews {
+		if i == 0 {
+			v.Show()
+		} else {
+			v.Hide()
+		}
+	}
+	currentView = "Compiler"
 
 	// Header with inline view selector
 	banner := widget.NewLabel("PREVIEW: Bridge to open-source EDA tools (ngspice, KLayout, CiMLoop)")
