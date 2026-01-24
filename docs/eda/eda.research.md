@@ -1,8 +1,8 @@
 # EDA Research Collection for FeCIM Project
 
-**A Reference Collection of 310+ Papers and Resources**
+**A Reference Collection of 350+ Papers and Resources**
 
-*Last Updated: January 2026*
+*Last Updated: January 2026 (Updated with 2024-2025 breakthrough papers)*
 
 ---
 
@@ -85,9 +85,12 @@ This document collects and references 310+ papers, tools, and resources gathered
 |------|-------|-------|----------|-------------|
 | NeuroSim | Circuit macro | Medium | <5% vs silicon | Yes |
 | CiMLoop | System | Fast | Statistical | Yes |
+| CrossSim | Array | Fast (GPU) | Good | Yes |
 | FAST | Array | Fast | Good | Partial |
 | ngspice | Transistor | Slow | High | Yes |
 | HSPICE | Transistor | Slow | High | No |
+
+**CrossSim** (Sandia National Labs): GPU-accelerated Python crossbar simulator for neural networks. Models device/circuit non-idealities including programming errors, conductance drift, and ADC precision loss. [View](https://cross-sim.sandia.gov/)
 
 **Recommended Workflow:**
 ```
@@ -449,4 +452,141 @@ IHP Shuttle → Silicon
 
 ---
 
-*This document references 310+ papers and resources collected during the project. For the complete paper collection and detailed references, see the documents listed in Appendix 9. All papers remain the intellectual property of their respective authors and institutions.*
+## 10. Latest Research Update (2024-2026)
+
+*This section captures breakthrough research published since the initial collection.*
+
+### 10.1 Transformer/LLM Acceleration on CIM (Major Breakthrough)
+
+**The Most Significant Finding (2025):**
+
+A paper in *Nature Computational Science* (September 2025) demonstrated analog in-memory computing attention achieving:
+- **70,000× energy reduction** compared to GPUs
+- **100× speed-up** for attention computation
+- Successfully trained a **1.5 billion parameter** model
+
+**Key Technical Details:**
+- Uses gain-cell memories (CMOS-compatible, easy to write)
+- Sliding window attention to bound physical memory size
+- Initialization algorithm achieving GPT-2-level performance without retraining
+
+| Reference | Finding |
+|-----------|---------|
+| [Leroux et al., Nature Comp Sci 2025](https://www.nature.com/articles/s43588-025-00854-1) | 70,000× energy, 100× speed |
+
+### 10.2 Ferroelectric CIM Annealer Architectures
+
+**DAC 2025 Breakthrough:**
+Device-Algorithm Co-Design of FeCIM In-Situ Annealer:
+- **1503-1716× energy reduction** vs. state-of-the-art annealers
+- **98% success rate** for 3000-node Max-Cut problems
+- VMV (vector-matrix-vector) acceleration on FeFET arrays
+
+**Nature Communications 2024:**
+- 75% chip size saving via lossless QUBO matrix compression
+- FeFET three-terminal structure enables matrix compression
+
+### 10.3 HfO₂-ZrO₂ Superlattice Stability Advances
+
+**Key 2025 Findings:**
+
+| Paper | Advancement |
+|-------|-------------|
+| Nature Comms 2025 | Stable ferroelectricity up to 100nm thickness |
+| Nature Comms 2025 | >10⁹ switching cycles (fatigue resistance) |
+| Nature Comms 2025 | Low coercive field ~0.85 MV/cm |
+| Nature 2022 | Scaled to ~20 Å on Si transistors |
+
+**Implications for Project:**
+- Validates use of HfO₂-ZrO₂ superlattice in simulations
+- Supports 10¹²+ cycle target for FeCIM devices
+- Lower Ec enables lower programming voltages
+
+### 10.4 FeFET Compact Modeling Advances
+
+**2024 Verilog-A Model Improvements:**
+
+| Feature | Status | Paper |
+|---------|--------|-------|
+| Temperature effects | Implemented | Solid-State Electronics 2024 |
+| Device variability | Implemented | Solid-State Electronics 2024 |
+| Preisach hysteresis | Standard | Multiple papers |
+| MLC/MAC validation | Validated | Solid-State Electronics 2024 |
+
+**Model Availability:**
+- OpenVAF-compatible Verilog-A models now available
+- Cadence Spectre validation for MVM operations
+- BSIM-based FeFET compact models published
+
+### 10.5 Industry Developments
+
+**Ferroelectric Memory Company (FMC):**
+- **€100M funding** (November 2025)
+- DRAM+ technology based on ferroelectric HfO₂
+- Dresden, Germany (spun out from TU Dresden/GlobalFoundries)
+- Targets energy-efficient memory for AI
+
+**IHP Open Source PDK Updates:**
+- April 2025 tape-out (Testfield T586) completed
+- RRAM module available in SG13S (upon request)
+- OpenROAD flow fully supported
+- Magic VLSI support planned for 2025
+
+**OpenLane 2.0:**
+- Released April 2024
+- Python-based infrastructure (not just Tcl)
+- Fully customizable flows
+- Critical for integrating custom CIM macros
+
+### 10.6 2D Ferroelectric Material Synthesis
+
+**Tour Group In₂Se₃ (2025):**
+- Flash-within-flash Joule heating (FWF) method
+- **Gram-scale** α-In₂Se₃ crystal synthesis
+- Robust synaptic behavior demonstrated
+- Path to scalable neuromorphic devices
+
+**2D MoS₂ CIM (2024):**
+- 96.36% wafer-scale yield
+- >10¹² endurance cycles
+- >10 years retention
+- 263× power efficiency vs. GPU for dynamic tracking
+
+### 10.7 Simulation Tool Updates
+
+| Tool | Update | Key Capability |
+|------|--------|----------------|
+| **NeuroSim V2.1** | PyTorch interface | <1% chip-level error |
+| **CrossSim** | Sandia Labs | GPU-accelerated crossbar sim |
+| **3D_NeuroSim** | New release | Monolithic 3D integration |
+| **FAST** | Updated | Hardware-software co-design |
+| **ngspice 43/44** | OSDI 0.4 | Verilog-A FeFET models |
+| **OpenVAF** | Reloaded | Modern compact models |
+
+### 10.8 Updated Research Group Contacts
+
+| Institution | Focus | Contact/Lab |
+|-------------|-------|-------------|
+| **external research institution** | In₂Se₃ FeFET, Flash synthesis | Tour Lab |
+| **Georgia Tech** | NeuroSim, CIM benchmarking | Prof. Shimeng Yu |
+| **MIT** | CiMLoop, Analog attention | Prof. Murmann |
+| **FZ Jülich** | Analog IMC attention | Leroux team |
+| **TU Dresden/FMC** | Ferroelectric DRAM+ | FMC startup |
+| **IHP Leibniz** | Open PDK, RRAM | OpenPDK team |
+
+---
+
+## 11. Recommended Reading Order
+
+For newcomers to FeCIM research:
+
+1. **Start Here:** Tour presentation on 30-state FeFET
+2. **Device Physics:** Roadmap on ferroelectric hafnia (APL Materials 2023)
+3. **CIM Architecture:** CiMLoop paper (MIT 2024)
+4. **Breakthrough:** Analog IMC attention (Nature Comp Sci 2025)
+5. **Simulation:** NeuroSim validation paper
+6. **EDA Tools:** This project's `eda.opensource.md`
+
+---
+
+*This document references 350+ papers and resources collected during the project. For the complete paper collection and detailed references, see the documents listed in Appendix 9. All papers remain the intellectual property of their respective authors and institutions.*

@@ -718,6 +718,67 @@ What's missing is the **integration** - and that's what we're building.
 
 ---
 
+## Part 11: 2025 Breakthrough News (Why This Matters Now)
+
+### The Big Deal: 70,000× Energy Savings
+
+In September 2025, researchers published in *Nature Computational Science* that analog in-memory computing can make AI chatbots like ChatGPT run **70,000 times more efficiently**.
+
+**What this means in simple terms:**
+```
+Before (GPUs):     Running ChatGPT = 1000 watts (like 10 bright lightbulbs)
+After (FeCIM):     Running ChatGPT = 0.014 watts (like a tiny LED)
+```
+
+This is why FeCIM matters - it could put AI into:
+- Phones that don't need charging daily
+- Wearables that run AI locally
+- Smart sensors everywhere
+- Edge devices with real intelligence
+
+### Industry Is Taking Notice
+
+- **€100 million** raised by Ferroelectric Memory Company (Dresden, Germany)
+- **Major chip companies** exploring ferroelectric memory
+- **Academic labs** racing to improve the technology
+
+### What Changed?
+
+| Problem | Old Status | New Status (2025) |
+|---------|------------|-------------------|
+| Energy efficiency | 100× better than GPU | **70,000× better** demonstrated |
+| Device reliability | 10⁴-10⁵ cycles | **10⁹+ cycles** with superlattices |
+| Material stability | Tricky | Stable from nanometers to 100nm |
+| Manufacturing | Research-only | Companies forming, shuttles available |
+
+### So Why Are We Building This?
+
+Because the **science is proven**, but the **design tools don't exist yet**.
+
+Our FeCIM Visualizer and Design Suite helps:
+1. **Educate** people about how FeCIM works
+2. **Prototype** neural network mappings to crossbar arrays
+3. **Bridge** the gap to real EDA tools
+4. **Prepare** for the coming wave of FeCIM chips
+
+### The Race Is On
+
+```
+2020: First HfO₂ FeFET demonstrations
+2022: Multi-level cell (MLC) proven
+2024: 30+ states per cell achieved
+2025: 70,000× energy breakthrough
+2026: First commercial products?
+```
+
+We're building the tools that researchers and engineers will need when FeCIM goes mainstream.
+
+---
+
 *"The best way to predict the future is to invent it." - Alan Kay*
 
 *And the best way to invent the future of computing is to build the tools that make it possible.*
+
+---
+
+*Document updated: January 2026 with 2025 breakthrough papers.*

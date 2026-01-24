@@ -78,6 +78,86 @@ This tool implements simulation models based on published research. It is **not 
 
 ---
 
+## 6. Latest Research (2024-2026)
+
+*Recently published papers extending the state of the art.*
+
+### 6.1 Ferroelectric CIM Architectures
+
+* **Device-Algorithm Co-Design of FeCIM Annealer:** Qian Y, et al., *DAC 2025*. [View](https://dl.acm.org/doi/10.1109/DAC63849.2025.11133307)
+  * *Finding:* 1503-1716× energy reduction vs. state-of-the-art for 3000-node Max-Cut; 98% success rate.
+
+* **C-Nash: Nash Equilibrium Solver:** *DAC 2024*. [View](https://dl.acm.org/doi/10.1145/3649329.3655988)
+  * *Finding:* First FeCIM architecture handling mixed strategy Nash Equilibrium.
+
+* **Ferroelectric CIM Annealer:** *Nature Communications 2024*. [View](https://www.nature.com/articles/s41467-024-46640-x)
+  * *Finding:* 75% chip size saving with lossless QUBO matrix compression.
+
+* **In-Memory Ferroelectric Differentiator:** *Nature Communications 2025*. [View](https://www.nature.com/articles/s41467-025-58359-4)
+  * *Finding:* 40×40 FeCap array for differential computation.
+
+### 6.2 Transformer/LLM on CIM
+
+* **Analog IMC Attention Mechanism:** Leroux et al., *Nature Computational Science 2025*. [View](https://www.nature.com/articles/s43588-025-00854-1)
+  * *Finding:* **70,000× energy reduction** and **100× speed-up** vs. GPUs for attention; 1.5B parameter model.
+
+* **Efficient Memristor Accelerator for Transformers:** *Scientific Reports 2024*. [View](https://www.nature.com/articles/s41598-024-75021-z)
+  * *Finding:* Self-attention acceleration on memristor crossbar.
+
+### 6.3 HfO₂-ZrO₂ Superlattice Advances
+
+* **Enhanced Ferroelectric Stability in Epitaxial Superlattices:** *Nature Communications 2025*. [View](https://www.nature.com/articles/s41467-025-61758-2)
+  * *Finding:* Stable ferroelectricity up to 100nm; >10⁹ cycles; coercive field ~0.85 MV/cm.
+
+* **Tailored Coercive Field and Temperature Reliability:** Lehninger, *Adv. Physics Research 2023*. [View](https://advanced.onlinelibrary.wiley.com/doi/full/10.1002/apxr.202200108)
+  * *Finding:* Enhanced polarization and improved high-temperature retention.
+
+* **Ultrathin Ferroic HfO₂-ZrO₂ Gate Stack:** *Nature 2022*. [View](https://www.nature.com/articles/s41586-022-04425-6)
+  * *Finding:* Scaled to ~20 Å; direct integration onto Si transistors.
+
+* **Roadmap on Ferroelectric Hafnia/Zirconia:** *APL Materials 2023*. [View](https://pubs.aip.org/aip/apm/article/11/8/089201/2908480/Roadmap-on-ferroelectric-hafnia-and-zirconia-based)
+  * *Finding:* Comprehensive review of HfO₂/ZrO₂ challenges and opportunities.
+
+### 6.4 FeFET Compact Modeling
+
+* **Temperature and Variability-Aware FeFET Model:** *Solid-State Electronics 2024*. [View](https://www.sciencedirect.com/science/article/abs/pii/S0038110124001035)
+  * *Finding:* Preisach-based Verilog-A model with temperature and variability effects; validated for MLC and MAC.
+
+* **Multidomain FeFET Compact Model:** *IEEE TED 2021*. [View](https://ieeexplore.ieee.org/document/9336322/)
+  * *Finding:* Nucleation-growth dynamics; charge trapping; channel percolation.
+
+### 6.5 Simulation Tools (2024-2025 Updates)
+
+* **NeuroSim V1.5/V2.1:** Georgia Tech. [View](https://www.frontiersin.org/journals/artificial-intelligence/articles/10.3389/frai.2021.659060/full)
+  * *Update:* PyTorch interface; chip-level error <1% after calibration.
+
+* **CrossSim:** Sandia National Labs. [View](https://cross-sim.sandia.gov/)
+  * *Finding:* GPU-accelerated crossbar simulator; device/circuit non-ideality modeling.
+
+* **3D_NeuroSim V1.0:** [View](https://github.com/neurosim/3D_NeuroSim_V1.0)
+  * *Finding:* Monolithic and heterogeneous 3D integration support.
+
+### 6.6 Industry & Fabrication
+
+* **Ferroelectric Memory Company (FMC) €100M Funding:** *Bloomberg 2025*. [View](https://www.bloomberg.com/news/articles/2025-11-13/memory-chip-startup-raises-100-million-for-energy-saving-tech)
+  * *Finding:* Dresden startup commercializing DRAM+ based on ferroelectric HfO₂.
+
+* **IHP Open Source PDK:** [View](https://github.com/IHP-GmbH/IHP-Open-PDK)
+  * *Update:* April 2025 tape-out (T586); OpenROAD flow supported; RRAM module available in SG13S.
+
+* **OpenLane 2.0 Release:** Efabless, April 2024. [View](https://www.globenewswire.com/news-release/2024/04/18/2865597/0/en/Efabless-Announces-the-Release-of-the-OpenLane-2-Development-Platform-Transforming-Custom-Silicon-Design-Flows.html)
+  * *Finding:* Python-based infrastructure; fully customizable flows.
+
+### 6.7 2D Ferroelectric Materials
+
+* **In₂Se₃ for Neuromorphic Computing:** Shin, Tour et al., *Adv. Electronic Materials 2025*. [View](https://advanced.onlinelibrary.wiley.com/doi/full/10.1002/aelm.202400603)
+  * *Finding:* Flash-within-flash synthesis; gram-scale α-In₂Se₃; robust synaptic behavior.
+
+* **Fully Ferroelectric-Gated 2D CIM:** *Science Advances 2024*. [View](https://www.science.org/doi/10.1126/sciadv.adp0174)
+  * *Finding:* 96.36% wafer-scale yield; >10¹² endurance; 99.8% tracking accuracy.
+
+---
+
 ## What We Don't Claim
 
 1. **No affiliation** with external research institution, Tour Lab, or any cited institution

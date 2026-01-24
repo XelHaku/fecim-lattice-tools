@@ -1087,3 +1087,80 @@ This section provides additional papers organized by specialized topics to suppo
 | **Stanford** | Memristor arrays | Prof. Wong |
 | **POSTECH** | ECRAM; analog AI | Neuromorphic team |
 | **Intel** | Loihi neuromorphic | Intel Labs |
+| **FZ Jülich** | Analog IMC attention | Leroux team (Nature Comp Sci 2025) |
+| **TU Dresden/FMC** | Ferroelectric DRAM+ | €100M funding (2025) |
+| **external research institution** | In₂Se₃ FeFET synthesis | Tour Lab |
+
+---
+
+## 20. 2025 Breakthrough Papers (Critical Updates)
+
+*This section highlights the most impactful recent publications that significantly advance the field.*
+
+### 20.1 Analog IMC Attention for LLMs (Major Breakthrough)
+
+**Reference:** Leroux et al., "Analog in-memory computing attention mechanism for fast and energy-efficient large language models," *Nature Computational Science*, September 2025. [View](https://www.nature.com/articles/s43588-025-00854-1)
+
+**Key Results:**
+- **70,000× energy reduction** compared to GPUs for attention computation
+- **100× speed-up** for attention operations
+- Successfully trained **1.5 billion parameter** model
+- Uses gain-cell memories (CMOS-compatible)
+- Sliding window attention bounds physical memory size
+
+**Implications for FeCIM:**
+This paper validates that analog in-memory computing can accelerate the most compute-intensive operations in LLMs. The techniques are directly applicable to FeFET-based crossbars.
+
+### 20.2 FeCIM Annealer for Combinatorial Optimization
+
+**Reference:** Qian Y, et al., "Device-Algorithm Co-Design of Ferroelectric Compute-in-Memory In-Situ Annealer," *DAC 2025*. [View](https://dl.acm.org/doi/10.1109/DAC63849.2025.11133307)
+
+**Key Results:**
+- **1503-1716× energy reduction** vs. state-of-the-art annealers
+- **98% success rate** for 3000-node Max-Cut problems
+- Vector-matrix-vector (VMV) multiplication acceleration
+- 75% chip size saving via lossless QUBO matrix compression
+
+### 20.3 HfO₂-ZrO₂ Superlattice Stability
+
+**Reference:** "Enhancing ferroelectric stability: wide-range of adaptive control in epitaxial HfO₂/ZrO₂ superlattices," *Nature Communications 2025*. [View](https://www.nature.com/articles/s41467-025-61758-2)
+
+**Key Results:**
+- Stable ferroelectricity from ultra-thin to **100nm** thickness
+- Fatigue resistance exceeding **10⁹ switching cycles**
+- Low coercive field of **~0.85 MV/cm**
+- Validates long-term reliability of HfO₂-ZrO₂ for CIM
+
+### 20.4 In₂Se₃ Gram-Scale Synthesis
+
+**Reference:** Shin, Tour et al., "In₂Se₃ Synthesized by the FWF Method for Neuromorphic Computing," *Advanced Electronic Materials 2025*. [View](https://advanced.onlinelibrary.wiley.com/doi/full/10.1002/aelm.202400603)
+
+**Key Results:**
+- Flash-within-flash Joule heating enables **gram-scale** α-In₂Se₃ synthesis
+- Robust synaptic behavior demonstrated
+- Path to scalable 2D ferroelectric neuromorphic devices
+
+### 20.5 Industry Momentum: FMC €100M Funding
+
+**Reference:** Bloomberg, November 2025. [View](https://www.bloomberg.com/news/articles/2025-11-13/memory-chip-startup-raises-100-million-for-energy-saving-tech)
+
+**Key Points:**
+- **Ferroelectric Memory Company (FMC)** raised €100M
+- Dresden, Germany (TU Dresden/GlobalFoundries spinout)
+- DRAM+ technology based on ferroelectric HfO₂
+- Targets energy-efficient memory for AI applications
+- Technology compatible with modern CMOS processes
+
+---
+
+## 21. Document Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0 | 2024-01 | Initial creation |
+| 2.0 | 2025-01 | Added 2025-2026 updates; post-Efabless era |
+| 2.1 | 2026-01 | Added breakthrough papers section; FMC funding; analog attention results |
+
+---
+
+*This document is maintained as part of the FeCIM Lattice Tools project. All referenced papers and tools remain the intellectual property of their respective authors and institutions. This is educational documentation, not an endorsement of any technology or company.*
