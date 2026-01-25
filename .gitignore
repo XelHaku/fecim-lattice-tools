@@ -28,3 +28,4 @@ cmd/fecim-visualizer/logs/OpenLane/
 !/output/README.md
 !/output/*/
 cmd/fecim-visualizer/logs/
+module5-comparison/pkg/gui/logs/
