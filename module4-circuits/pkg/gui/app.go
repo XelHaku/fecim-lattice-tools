@@ -1,10 +1,11 @@
 // Package gui provides Fyne-based GUI components for peripheral circuit visualization.
-// Module 4: Peripheral Circuits - Complete revamp with 6 tabs
-// Write, Read, Compute, Comparison, Timing, Specifications
+// Module 4: Peripheral Circuits - Unified 3-view design
+// OPERATIONS (Write/Read/Compute modes), COMPARISON (benchmarks), REFERENCE (timing diagrams + specs)
 package gui
 
 import (
 	"fmt"
+	"image/color"
 	"math/rand"
 	"sync"
 
@@ -16,6 +17,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"multilayer-ferroelectric-cim-visualizer/module4-circuits/pkg/peripherals"
+	sharedtheme "multilayer-ferroelectric-cim-visualizer/shared/theme"
 	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
@@ -117,8 +119,62 @@ type CircuitsApp struct {
 	specSummaryLabel     *widget.Label
 	specStatusLabel      *widget.Label
 
+	// Tab 7: Reference (unified TIMING + SPECS)
+	refTimingSection fyne.CanvasObject
+	refSpecsSection  fyne.CanvasObject
+
 	// Main tabs
 	mainTabs *container.AppTabs
+
+	// ============================================================================
+	// UNIFIED OPERATIONS VIEW (tab_operations.go)
+	// ============================================================================
+	currentMode           OperationMode
+	operationsStatusLabel *widget.Label
+	operationsModeHelp    *widget.Label
+
+	// Shared array section
+	sharedArrayCanvas    *canvas.Raster
+	sharedCellInfoLabel  *widget.Label
+	sharedArrayInfoLabel *widget.Label
+	sharedArrayCellSize  int // For click detection
+	sharedArrayOffsetX   int
+	sharedArrayOffsetY   int
+
+	// Write mode panel widgets (ops prefix to distinguish from legacy)
+	writeConfigPanel      *fyne.Container
+	opsWriteLevelSlider   *widget.Slider
+	opsWriteLevelLabel    *widget.Label
+	opsWriteDigitalLabel  *widget.Label
+	opsWriteDACLabel      *widget.Label
+	opsWriteFeFETLabel    *widget.Label
+	opsWritePulseCanvas   *canvas.Raster
+
+	// Read mode panel widgets
+	readConfigPanel        *fyne.Container
+	opsReadVoltageSlider   *widget.Slider
+	opsReadVoltageLabel    *widget.Label
+	opsReadZoneCanvas      *canvas.Raster
+	opsReadResultsLabel    *widget.Label
+
+	// Compute mode panel widgets
+	computeConfigPanel       *fyne.Container
+	opsComputeInputs         []*widget.Entry
+	opsComputeVoltageLabels  []*widget.Label
+	opsComputeOutputLabels   []*widget.Label
+	opsComputeMathLabel      *widget.Label
+
+	// Operations action buttons
+	opsProgramBtn       *widget.Button
+	opsProgramRandomBtn *widget.Button
+	opsReadBtn          *widget.Button
+	opsVerifyBtn        *widget.Button
+	opsComputeBtn       *widget.Button
+	opsAnimateBtn       *widget.Button
+	opsResetBtn         *widget.Button
+	opsWriteButtons     *fyne.Container
+	opsReadButtons      *fyne.Container
+	opsComputeButtons   *fyne.Container
 }
 
 // NewCircuitsApp creates and initializes the circuits demo application.
@@ -142,7 +198,7 @@ func NewCircuitsApp() *CircuitsApp {
 
 	// Create Fyne app
 	ca.fyneApp = app.NewWithID("com.fecim.circuits-demo")
-	ca.fyneApp.Settings().SetTheme(&feCIMTheme{})
+	ca.fyneApp.Settings().SetTheme(&sharedtheme.FeCIMTheme{})
 
 	// Initialize peripheral components
 	ca.dac = peripherals.DefaultDAC()
@@ -185,34 +241,30 @@ func (ca *CircuitsApp) Run() {
 	ca.window.ShowAndRun()
 }
 
-// createMainLayout builds the main application layout with tabs.
+// createMainLayout builds the main application layout with 3 views.
 func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 	// Create tab contents (pre-loaded to avoid layout cascades on Wayland/Sway)
-	writeTabContent := ca.createWriteTab()
-	readTabContent := ca.createReadTab()
-	computeTabContent := ca.createComputeTab()
-	comparisonTabContent := ca.createComparisonTab()
-	timingTabContent := ca.createTimingTab()
-	specsTabContent := ca.createSpecsTab()
+	operationsContent := ca.createOperationsView()     // NEW: from tab_operations.go
+	comparisonContent := ca.createComparisonTab()       // KEEP: from tab_comparison.go
+	referenceContent := ca.createReferenceTab()         // NEW: from tab_reference.go
 
 	// All views for Hide/Show toggling
-	viewNames := []string{"WRITE", "READ", "COMPUTE", "COMPARISON", "TIMING", "SPECS"}
+	viewNames := []string{"OPERATIONS", "COMPARISON", "REFERENCE"}
 	allViews := []fyne.CanvasObject{
-		writeTabContent, readTabContent, computeTabContent,
-		comparisonTabContent, timingTabContent, specsTabContent,
+		operationsContent, comparisonContent, referenceContent,
 	}
 
-	// View selector dropdown (replaces nested tabs to save space)
+	// View selector dropdown
 	viewSelector := widget.NewSelect(viewNames, nil)
-	viewSelector.SetSelected("WRITE")
+	viewSelector.SetSelected("OPERATIONS")
 
-	// Content container using Stack - all views layered, visibility toggled
+	// Content container using Stack
 	contentContainer := container.NewStack(allViews...)
 
 	// Track current view
 	currentView := ""
 
-	// Update view based on selection using Hide/Show (avoids layout cascades)
+	// Update view based on selection
 	viewSelector.OnChanged = func(view string) {
 		sharedwidgets.DebugInteraction(fmt.Sprintf("circuits viewSelector changed to '%s'", view))
 		if view == currentView {
@@ -229,8 +281,10 @@ func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 			}
 		}
 
-		// Refresh timing canvases when TIMING tab is shown
-		if view == "TIMING" {
+		// Refresh canvases when specific views shown
+		if view == "OPERATIONS" {
+			ca.refreshSharedArray()
+		} else if view == "REFERENCE" {
 			ca.refreshTimingDiagrams()
 		}
 	}
@@ -243,7 +297,7 @@ func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 			v.Hide()
 		}
 	}
-	currentView = "WRITE"
+	currentView = "OPERATIONS"
 
 	// Header with inline view selector
 	titleLabel := widget.NewLabel("FeCIM Peripheral Circuits Visualizer")
@@ -255,7 +309,7 @@ func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 		widget.NewLabel("View:"),
 		viewSelector,
 		layout.NewSpacer(),
-		widget.NewLabel("DAC -> FeFET -> TIA -> ADC | 30 Levels"),
+		widget.NewLabel("3 Views | DAC -> FeFET -> TIA -> ADC"),
 	)
 
 	header := container.NewVBox(
@@ -264,7 +318,7 @@ func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 	)
 
 	// Footer
-	footerLabel := widget.NewLabel("FeCIM Ferroelectric Compute-in-Memory | Based on Dr. Tour's Research | Standard CMOS Compatible")
+	footerLabel := widget.NewLabel("FeCIM Ferroelectric Compute-in-Memory | Based on Dr. Tour's Research")
 	footerLabel.Alignment = fyne.TextAlignCenter
 
 	footer := container.NewVBox(
@@ -274,3 +328,74 @@ func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 
 	return container.NewBorder(header, footer, nil, nil, contentContainer)
 }
+
+// ============================================================================
+// HELPER METHODS FOR UI COMPONENTS
+// ============================================================================
+
+// createLabeledBox creates a styled box with title and value text (static value)
+func (ca *CircuitsApp) createLabeledBox(title, value string, bgColor color.Color) *fyne.Container {
+	titleLbl := widget.NewLabel(title)
+	titleLbl.TextStyle = fyne.TextStyle{Bold: true}
+	titleLbl.Alignment = fyne.TextAlignCenter
+
+	valueLbl := widget.NewLabel(value)
+	valueLbl.Alignment = fyne.TextAlignCenter
+
+	bg := canvas.NewRectangle(bgColor)
+	bg.SetMinSize(fyne.NewSize(100, 60))
+	bg.CornerRadius = 5
+
+	content := container.NewVBox(titleLbl, valueLbl)
+
+	return container.NewStack(bg, container.NewCenter(content))
+}
+
+// createLabeledBoxWithLabel creates a styled box with title and a widget.Label for dynamic updates
+func (ca *CircuitsApp) createLabeledBoxWithLabel(title string, valueLbl *widget.Label, bgColor color.Color) *fyne.Container {
+	titleLbl := widget.NewLabel(title)
+	titleLbl.TextStyle = fyne.TextStyle{Bold: true}
+	titleLbl.Alignment = fyne.TextAlignCenter
+
+	valueLbl.Alignment = fyne.TextAlignCenter
+
+	bg := canvas.NewRectangle(bgColor)
+	bg.SetMinSize(fyne.NewSize(100, 60))
+	bg.CornerRadius = 5
+
+	content := container.NewVBox(titleLbl, valueLbl)
+
+	return container.NewStack(bg, container.NewCenter(content))
+}
+
+// ============================================================================
+// REFRESH METHODS FOR LEGACY COMPATIBILITY
+// ============================================================================
+
+// refreshWriteArray refreshes the write mode array canvas (legacy)
+func (ca *CircuitsApp) refreshWriteArray() {
+	if ca.writeArrayCanvas != nil {
+		fyne.Do(func() {
+			ca.writeArrayCanvas.Refresh()
+		})
+	}
+}
+
+// refreshWritePulse refreshes the write pulse visualization (legacy)
+func (ca *CircuitsApp) refreshWritePulse() {
+	if ca.writePulseCanvas != nil {
+		fyne.Do(func() {
+			ca.writePulseCanvas.Refresh()
+		})
+	}
+}
+
+// refreshReadZone refreshes the read zone visualization (legacy)
+func (ca *CircuitsApp) refreshReadZone() {
+	if ca.readZoneCanvas != nil {
+		fyne.Do(func() {
+			ca.readZoneCanvas.Refresh()
+		})
+	}
+}
+

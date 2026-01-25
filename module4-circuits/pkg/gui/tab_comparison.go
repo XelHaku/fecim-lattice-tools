@@ -3,13 +3,14 @@ package gui
 import (
 	"fmt"
 	"image"
-	"image/color"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+
+	sharedtheme "multilayer-ferroelectric-cim-visualizer/shared/theme"
 )
 
 // ============================================================================
@@ -78,9 +79,9 @@ func (ca *CircuitsApp) createCompArchSection() fyne.CanvasObject {
 
 func (ca *CircuitsApp) drawCompArch(w, h int) image.Image {
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
-	bgColor := color.RGBA{0, 40, 80, 255}
-	labelColor := color.RGBA{255, 255, 255, 255}
-	arrowColor := color.RGBA{255, 200, 100, 255}
+	bgColor := sharedtheme.ColorBackground
+	labelColor := sharedtheme.ColorText
+	arrowColor := sharedtheme.ColorWarning
 
 	// Background
 	for y := 0; y < h; y++ {
@@ -97,10 +98,10 @@ func (ca *CircuitsApp) drawCompArch(w, h int) image.Image {
 	cpuX, cpuY := 30, 12
 	dramX := cpuX + boxW + 70
 
-	drawRect(img, cpuX, cpuY, boxW, boxH, colorCPU)
+	drawRect(img, cpuX, cpuY, boxW, boxH, sharedtheme.ColorError)
 	drawSimpleText(img, "CPU", cpuX+25, cpuY+boxH/2-3, labelColor)
 
-	drawRect(img, dramX, cpuY, boxW, boxH, color.RGBA{180, 80, 80, 255})
+	drawRect(img, dramX, cpuY, boxW, boxH, sharedtheme.ColorError)
 	drawSimpleText(img, "DRAM", dramX+20, cpuY+boxH/2-3, labelColor)
 
 	// Arrow between CPU and DRAM
@@ -118,10 +119,10 @@ func (ca *CircuitsApp) drawCompArch(w, h int) image.Image {
 
 	// Row 2: GPU + HBM section
 	gpuY := sectionH + 8
-	drawRect(img, cpuX, gpuY, boxW, boxH, colorGPU)
+	drawRect(img, cpuX, gpuY, boxW, boxH, sharedtheme.ColorSuccess)
 	drawSimpleText(img, "GPU", cpuX+25, gpuY+boxH/2-3, labelColor)
 
-	drawRect(img, dramX, gpuY, boxW, boxH, color.RGBA{80, 180, 80, 255})
+	drawRect(img, dramX, gpuY, boxW, boxH, sharedtheme.ColorSuccess)
 	drawSimpleText(img, "HBM", dramX+25, gpuY+boxH/2-3, labelColor)
 
 	// Arrow between GPU and HBM
@@ -139,15 +140,15 @@ func (ca *CircuitsApp) drawCompArch(w, h int) image.Image {
 	// Row 3: FeFET CIM section (unified)
 	fefetY := 2*sectionH + 5
 	fefetW := dramX + boxW - cpuX
-	drawRect(img, cpuX, fefetY, fefetW, boxH, colorFeFET)
+	drawRect(img, cpuX, fefetY, fefetW, boxH, sharedtheme.ColorPrimary)
 	drawSimpleText(img, "FeFET CIM", cpuX+fefetW/2-35, fefetY+boxH/2-10, labelColor)
-	drawSimpleText(img, "No Data Movement", cpuX+fefetW/2-55, fefetY+boxH/2+5, color.RGBA{0, 255, 200, 255})
+	drawSimpleText(img, "No Data Movement", cpuX+fefetW/2-55, fefetY+boxH/2+5, sharedtheme.ColorAccent)
 
 	// Right side labels
 	rightX := w - 90
-	drawSimpleText(img, "Von Neumann", rightX, cpuY+boxH/2-3, colorCPU)
-	drawSimpleText(img, "Near Memory", rightX, gpuY+boxH/2-3, colorGPU)
-	drawSimpleText(img, "In Memory", rightX, fefetY+boxH/2-3, colorFeFET)
+	drawSimpleText(img, "Von Neumann", rightX, cpuY+boxH/2-3, sharedtheme.ColorError)
+	drawSimpleText(img, "Near Memory", rightX, gpuY+boxH/2-3, sharedtheme.ColorSuccess)
+	drawSimpleText(img, "In Memory", rightX, fefetY+boxH/2-3, sharedtheme.ColorPrimary)
 
 	return img
 }
@@ -160,10 +161,10 @@ func (ca *CircuitsApp) createCompTimingSection() fyne.CanvasObject {
 
 func (ca *CircuitsApp) drawCompTiming(w, h int) image.Image {
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
-	bgColor := color.RGBA{0, 40, 80, 255}
-	axisColor := color.RGBA{200, 200, 200, 255}
-	labelColor := color.RGBA{255, 255, 255, 255}
-	valueColor := color.RGBA{200, 200, 150, 255}
+	bgColor := sharedtheme.ColorBackground
+	axisColor := sharedtheme.ColorAxis
+	labelColor := sharedtheme.ColorText
+	valueColor := sharedtheme.ColorWarning
 
 	// Background
 	for y := 0; y < h; y++ {
@@ -181,8 +182,8 @@ func (ca *CircuitsApp) drawCompTiming(w, h int) image.Image {
 	// CPU bar (500ns - full width)
 	cpuY := 15
 	cpuW := maxBarW
-	drawSimpleText(img, "CPU", 10, cpuY+8, colorCPU)
-	drawRect(img, marginLeft, cpuY, cpuW, barH, colorCPU)
+	drawSimpleText(img, "CPU", 10, cpuY+8, sharedtheme.ColorError)
+	drawRect(img, marginLeft, cpuY, cpuW, barH, sharedtheme.ColorError)
 	drawSimpleText(img, "500ns", marginLeft+cpuW+5, cpuY+8, valueColor)
 
 	// GPU bar (50ns - 10% width)
@@ -191,8 +192,8 @@ func (ca *CircuitsApp) drawCompTiming(w, h int) image.Image {
 	if gpuW < 30 {
 		gpuW = 30
 	}
-	drawSimpleText(img, "GPU", 10, gpuY+8, colorGPU)
-	drawRect(img, marginLeft, gpuY, gpuW, barH, colorGPU)
+	drawSimpleText(img, "GPU", 10, gpuY+8, sharedtheme.ColorSuccess)
+	drawRect(img, marginLeft, gpuY, gpuW, barH, sharedtheme.ColorSuccess)
 	drawSimpleText(img, "50ns", marginLeft+gpuW+5, gpuY+8, valueColor)
 
 	// FeFET bar (20ns - 4% width)
@@ -201,12 +202,12 @@ func (ca *CircuitsApp) drawCompTiming(w, h int) image.Image {
 	if fefetW < 20 {
 		fefetW = 20
 	}
-	drawSimpleText(img, "FeFET", 5, fefetY+8, colorFeFET)
-	drawRect(img, marginLeft, fefetY, fefetW, barH, colorFeFET)
+	drawSimpleText(img, "FeFET", 5, fefetY+8, sharedtheme.ColorPrimary)
+	drawRect(img, marginLeft, fefetY, fefetW, barH, sharedtheme.ColorPrimary)
 	drawSimpleText(img, "20ns", marginLeft+fefetW+5, fefetY+8, valueColor)
 
 	// Speedup annotation
-	drawSimpleText(img, "25x faster!", w-80, fefetY+8, color.RGBA{0, 255, 200, 255})
+	drawSimpleText(img, "25x faster!", w-80, fefetY+8, sharedtheme.ColorAccent)
 
 	// X-axis
 	axisY := h - 25
@@ -246,10 +247,10 @@ func (ca *CircuitsApp) createCompEnergySection() fyne.CanvasObject {
 
 func (ca *CircuitsApp) drawCompEnergy(w, h int) image.Image {
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
-	bgColor := color.RGBA{0, 40, 80, 255}
-	axisColor := color.RGBA{200, 200, 200, 255}
-	labelColor := color.RGBA{255, 255, 255, 255}
-	valueColor := color.RGBA{200, 200, 150, 255}
+	bgColor := sharedtheme.ColorBackground
+	axisColor := sharedtheme.ColorAxis
+	labelColor := sharedtheme.ColorText
+	valueColor := sharedtheme.ColorWarning
 
 	// Background
 	for y := 0; y < h; y++ {
@@ -267,8 +268,8 @@ func (ca *CircuitsApp) drawCompEnergy(w, h int) image.Image {
 	// CPU bar (64,000 pJ - full width)
 	cpuY := 20
 	cpuW := maxBarW
-	drawSimpleText(img, "CPU", 10, cpuY+8, colorCPU)
-	drawRect(img, marginLeft, cpuY, cpuW, barH, colorCPU)
+	drawSimpleText(img, "CPU", 10, cpuY+8, sharedtheme.ColorError)
+	drawRect(img, marginLeft, cpuY, cpuW, barH, sharedtheme.ColorError)
 	drawSimpleText(img, "64000 pJ", marginLeft+cpuW+5, cpuY+8, valueColor)
 
 	// GPU bar (6,400 pJ - 10% width)
@@ -277,8 +278,8 @@ func (ca *CircuitsApp) drawCompEnergy(w, h int) image.Image {
 	if gpuW < 30 {
 		gpuW = 30
 	}
-	drawSimpleText(img, "GPU", 10, gpuY+8, colorGPU)
-	drawRect(img, marginLeft, gpuY, gpuW, barH, colorGPU)
+	drawSimpleText(img, "GPU", 10, gpuY+8, sharedtheme.ColorSuccess)
+	drawRect(img, marginLeft, gpuY, gpuW, barH, sharedtheme.ColorSuccess)
 	drawSimpleText(img, "6400 pJ", marginLeft+gpuW+5, gpuY+8, valueColor)
 
 	// FeFET bar (3.2 pJ - tiny, need minimum visible)
@@ -287,12 +288,12 @@ func (ca *CircuitsApp) drawCompEnergy(w, h int) image.Image {
 	if fefetW < 8 {
 		fefetW = 8 // Minimum visible
 	}
-	drawSimpleText(img, "FeFET", 5, fefetY+8, colorFeFET)
-	drawRect(img, marginLeft, fefetY, fefetW, barH, colorFeFET)
+	drawSimpleText(img, "FeFET", 5, fefetY+8, sharedtheme.ColorPrimary)
+	drawRect(img, marginLeft, fefetY, fefetW, barH, sharedtheme.ColorPrimary)
 	drawSimpleText(img, "3.2 pJ", marginLeft+fefetW+5, fefetY+8, valueColor)
 
 	// Energy savings annotation (conservative claim per CLAUDE.md accuracy policy)
-	drawSimpleText(img, "10-100x savings", w-120, fefetY+8, color.RGBA{0, 255, 200, 255})
+	drawSimpleText(img, "10-100x savings", w-120, fefetY+8, sharedtheme.ColorAccent)
 
 	// X-axis
 	axisY := h - 30
@@ -304,7 +305,7 @@ func (ca *CircuitsApp) drawCompEnergy(w, h int) image.Image {
 	drawSimpleText(img, "Energy per 8x8 MVM", w/2-60, axisY+12, labelColor)
 
 	// Scale note (log scale would be better but linear for illustration)
-	drawSimpleText(img, "[Linear scale - FeFET bar scaled up for visibility]", 10, h-12, color.RGBA{120, 120, 140, 255})
+	drawSimpleText(img, "[Linear scale - FeFET bar scaled up for visibility]", 10, h-12, sharedtheme.ColorTextDim)
 
 	return img
 }
@@ -410,7 +411,7 @@ func (ca *CircuitsApp) onScaleUpComparison() {
 	ca.compArraySize = currentSize
 
 	// Calculate scaled values
-	scaleFactor := float64(currentSize * currentSize) / 64.0 // 64 = 8x8 baseline
+	scaleFactor := float64(currentSize*currentSize) / 64.0 // 64 = 8x8 baseline
 
 	cpuTime := int(500 * scaleFactor)
 	gpuTime := int(50 * scaleFactor)

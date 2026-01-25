@@ -64,6 +64,14 @@ var (
 	// UI structure
 	ColorSeparator = color.RGBA{0, 90, 160, 255}   // Separator/border lines
 	ColorShadow    = color.RGBA{0, 20, 40, 128}    // Subtle shadows
+
+	// Additional visualization colors (for timing diagrams and reference views)
+	ColorDarkBG        = color.RGBA{0, 40, 80, 255}    // Very dark background - darker than ColorBackground
+	ColorCyan          = color.RGBA{0, 212, 255, 255}  // Bright cyan - same as ColorPrimary
+	ColorTextSecondary = color.RGBA{160, 180, 200, 255} // Secondary text - same as ColorTextDim
+	ColorOrange        = color.RGBA{255, 200, 87, 255}  // Orange - similar to ColorWarning
+	ColorGreen         = color.RGBA{87, 204, 153, 255}  // Green - same as ColorSuccess
+	ColorPurple        = color.RGBA{200, 120, 255, 255} // Purple - for additional signal states
 )
 
 // FeCIMTheme implements fyne.Theme for consistent FeCIM branding

@@ -528,7 +528,7 @@ func CellComparisonTable() fyne.CanvasObject {
 	objects := []fyne.CanvasObject{}
 
 	// Table dimensions - increased row height for better readability
-	colWidths := []float32{100, 100, 100, 100} // Property, Passive, 1T1R, Winner
+	colWidths := []float32{110, 120, 120, 90} // Property, Passive, 1T1R, Winner
 	rowHeight := float32(28)
 	startX := float32(10)
 	startY := float32(10)
@@ -567,7 +567,7 @@ func CellComparisonTable() fyne.CanvasObject {
 		}
 
 		rowBg := canvas.NewRectangle(bgColor)
-		rowBg.Resize(fyne.NewSize(400, rowHeight))
+		rowBg.Resize(fyne.NewSize(440, rowHeight))
 		rowBg.Move(fyne.NewPos(x, y))
 		objects = append(objects, rowBg)
 
@@ -614,7 +614,7 @@ func CellComparisonTable() fyne.CanvasObject {
 		hLine := canvas.NewLine(colorArrow)
 		hLine.StrokeWidth = 1
 		hLine.Position1 = fyne.NewPos(x, y+rowHeight)
-		hLine.Position2 = fyne.NewPos(x+400, y+rowHeight)
+		hLine.Position2 = fyne.NewPos(x+440, y+rowHeight)
 		objects = append(objects, hLine)
 	}
 
@@ -622,12 +622,12 @@ func CellComparisonTable() fyne.CanvasObject {
 	border := canvas.NewRectangle(color.RGBA{0, 0, 0, 0})
 	border.StrokeColor = colorArrow
 	border.StrokeWidth = 2
-	border.Resize(fyne.NewSize(400, float32(len(rows))*rowHeight))
+	border.Resize(fyne.NewSize(440, float32(len(rows))*rowHeight))
 	border.Move(fyne.NewPos(startX, startY))
 	objects = append(objects, border)
 
 	cont := container.NewWithoutLayout(objects...)
-	cont.Resize(fyne.NewSize(420, 200))
+	cont.Resize(fyne.NewSize(460, 210))
 
 	return cont
 }
@@ -648,9 +648,9 @@ func OperationModesVisual() fyne.CanvasObject {
 	objects = append(objects, title)
 
 	// Box dimensions
-	boxW := float32(140)
-	boxH := float32(110)
-	spacing := float32(15)
+	boxW := float32(180)
+	boxH := float32(120)
+	spacing := float32(20)
 	startX := float32(10)
 	startY := float32(40)
 
@@ -688,13 +688,13 @@ func OperationModesVisual() fyne.CanvasObject {
 		descText := canvas.NewText(mode.description, colorBgDark)
 		descText.TextSize = 10
 		// Center description horizontally (approximate)
-		descX := mode.x + 8
+		descX := mode.x + (boxW - float32(len(mode.description)*6)) / 2
 		descText.Move(fyne.NewPos(descX, startY+50))
 		objects = append(objects, descText)
 	}
 
 	// Central FeCIM circle position
-	circleX := float32(210)  // Center of the diagram
+	circleX := float32(300)  // Center of the diagram
 	circleY := float32(165)  // Below the boxes
 	circleRadius := float32(20)
 
@@ -744,7 +744,7 @@ func OperationModesVisual() fyne.CanvasObject {
 
 	// Container with fixed size
 	cont := container.NewWithoutLayout(objects...)
-	cont.Resize(fyne.NewSize(560, 260))
+	cont.Resize(fyne.NewSize(620, 280))
 
 	return cont
 }

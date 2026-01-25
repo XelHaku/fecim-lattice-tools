@@ -6,9 +6,21 @@ package tabs
 
 import (
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 )
+
+// sizedContainer wraps a canvas object with a minimum size requirement
+// This ensures VBox/VScroll properly allocates space for the child
+func sizedContainer(child fyne.CanvasObject, width, height float32) fyne.CanvasObject {
+	// Create a transparent spacer rectangle that enforces minimum size
+	spacer := canvas.NewRectangle(nil) // nil = transparent
+	spacer.SetMinSize(fyne.NewSize(width, height))
+	// Stack the child on top of the spacer
+	child.Resize(fyne.NewSize(width, height))
+	return container.NewStack(spacer, child)
+}
 
 // MakeLearnTab creates the learning center tab with educational content
 func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
@@ -109,15 +121,11 @@ func makeIntroContent() fyne.CanvasObject {
 	intro := widget.NewLabel(`Module 6 is an ARRAY BUILDER that generates EDA files for integrating FeCIM crossbar arrays into the OpenLane flow. This is an educational tool that demonstrates how FeCIM arrays could integrate with open-source EDA. All timing values are placeholders - real values require SPICE characterization with validated models.`)
 	intro.Wrapping = fyne.TextWrapWord
 
-	// Larger operation modes visual - wrapped in padded container
-	modesVisual := OperationModesVisual()
-	modesContainer := container.NewPadded(modesVisual)
-	modesContainer.Resize(fyne.NewSize(640, 300))
+	// Operation modes visual with enforced minimum size
+	modesContainer := sizedContainer(OperationModesVisual(), 640, 300)
 
-	// OpenLane flow diagram - wrapped in padded container
-	flowDiagram := OpenLaneFlowDiagram()
-	flowContainer := container.NewPadded(flowDiagram)
-	flowContainer.Resize(fyne.NewSize(800, 340))
+	// OpenLane flow diagram with enforced minimum size
+	flowContainer := sizedContainer(OpenLaneFlowDiagram(), 800, 340)
 
 	// Stages Explained section
 	stagesTitle := widget.NewLabelWithStyle("The Stages Explained", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
@@ -188,10 +196,8 @@ func makeCrossbarContent() fyne.CanvasObject {
 - SNEAK PATH CURRENTS | - Limited to small arrays (~32x32)`)
 	passiveDesc.Wrapping = fyne.TextWrapWord
 
-	// Wrap passive diagram in padded container
-	passiveDiagram := IsometricCrossbar(3, 3, true)
-	passiveDiagramContainer := container.NewPadded(passiveDiagram)
-	passiveDiagramContainer.Resize(fyne.NewSize(620, 440))
+	// Passive diagram with enforced minimum size
+	passiveDiagramContainer := sizedContainer(IsometricCrossbar(3, 3, true), 620, 440)
 
 	oneToneRTitle := widget.NewLabelWithStyle("1T1R (1 Transistor + 1 Resistor)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	oneToneRDesc := widget.NewLabel(`Ports: WL[], BL[], SL[], VDD, VSS | Cell Size: 0.92 x 2.72 um (2x width)
@@ -199,15 +205,11 @@ func makeCrossbarContent() fyne.CanvasObject {
 - Larger cell area (2x) | - More complex routing`)
 	oneToneRDesc.Wrapping = fyne.TextWrapWord
 
-	// Wrap 1T1R diagram in padded container
-	oneToneRDiagram := Isometric1T1RCrossbar(3, 3)
-	oneToneRDiagramContainer := container.NewPadded(oneToneRDiagram)
-	oneToneRDiagramContainer.Resize(fyne.NewSize(620, 440))
+	// 1T1R diagram with enforced minimum size
+	oneToneRDiagramContainer := sizedContainer(Isometric1T1RCrossbar(3, 3), 620, 440)
 
-	// Comparison table - wrapped in padded container
-	comparisonTable := CellComparisonTable()
-	comparisonContainer := container.NewPadded(comparisonTable)
-	comparisonContainer.Resize(fyne.NewSize(480, 230))
+	// Comparison table with enforced minimum size
+	comparisonContainer := sizedContainer(CellComparisonTable(), 480, 230)
 
 	// Sneak path explanation (clean prose, no ASCII)
 	sneakPathTitle := widget.NewLabelWithStyle("The Sneak Path Problem", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})

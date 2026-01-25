@@ -53,3 +53,62 @@ All implementations follow proper thread safety:
 1. **WRITE tab**: Clearer voltage mapping with monospace alignment
 2. **COMPUTE tab**: Better handling of large arrays (16+, 32+ columns)
 3. **READ tab**: Functional bulk operations with progress feedback
+
+## Phase 6: Theme Migration to Shared (2026-01-25)
+
+### Implemented Changes
+
+#### 1. Deleted Local Theme (module4-circuits/pkg/gui/theme.go)
+- Removed entire local theme file with 66 lines
+- Local theme had duplicate color definitions that should use shared theme
+
+#### 2. Updated App Initialization (app.go)
+- Added import: `sharedtheme "multilayer-ferroelectric-cim-visualizer/shared/theme"`
+- Changed theme assignment from `&feCIMTheme{}` to `&sharedtheme.FeCIMTheme{}`
+- Lines modified: 6-20, 145
+
+#### 3. Updated Tab Files Color References
+Files updated with shared theme color imports:
+- **tab_comparison.go**: Added sharedtheme import, replaced all colorCPU/colorGPU/colorFeFET references
+  - colorCPU → sharedtheme.ColorError (red for CPU)
+  - colorGPU → sharedtheme.ColorSuccess (green for GPU)
+  - colorFeFET → sharedtheme.ColorPrimary (cyan for FeFET)
+  
+- **tab_write.go**: Added sharedtheme import, updated data path box colors
+  - colorPrimary → sharedtheme.ColorPrimary (DIGITAL box)
+  - colorDAC → sharedtheme.ColorAccent (DAC box)
+  - colorArrayCell → sharedtheme.ColorInfo (FeFET box)
+  
+- **tab_read.go**: Added sharedtheme import, updated data path box colors
+  - colorArrayCell → sharedtheme.ColorInfo (FeFET box)
+  - colorTIA → sharedtheme.ColorAccent (TIA box)
+  - colorADC → sharedtheme.ColorSuccess (ADC box)
+  - colorPrimary → sharedtheme.ColorPrimary (DIGITAL box)
+
+### Color Mapping Reference
+| Local Color | Shared Theme | Purpose |
+|-------------|--------------|---------|
+| colorPrimary (cyan) | sharedtheme.ColorPrimary | Main accent, FeFET in comparisons |
+| colorArrayCell | sharedtheme.ColorInfo | FeFET cells in data paths |
+| colorDAC | sharedtheme.ColorAccent | DAC/TIA peripheral boxes |
+| colorTIA | sharedtheme.ColorAccent | DAC/TIA peripheral boxes |
+| colorADC | sharedtheme.ColorSuccess | ADC peripheral boxes |
+| colorCPU | sharedtheme.ColorError | CPU in comparison charts |
+| colorGPU | sharedtheme.ColorSuccess | GPU in comparison charts |
+| colorFeFET | sharedtheme.ColorPrimary | FeFET in comparison charts |
+| bgColor (dark blue) | sharedtheme.ColorBackground | Background color |
+
+### Verification
+- Build succeeds: `go build ./module4-circuits/...`
+- No compilation errors
+- All color references successfully migrated
+- Theme consistency maintained across all tabs
+
+### Benefits
+1. **Consistency**: All demos now use same color palette from shared/theme
+2. **Maintainability**: Single source of truth for theme colors
+3. **Reduced duplication**: Removed 66 lines of duplicate theme code
+4. **Future-proof**: Theme changes in shared/theme automatically apply to Module 4
+
+### Next Steps
+The individual tab files (tab_write.go, tab_read.go, etc.) can now be consolidated into a unified operations view in subsequent tasks.

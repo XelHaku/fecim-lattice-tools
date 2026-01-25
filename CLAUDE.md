@@ -10,7 +10,9 @@
 | Fix an error | `docs/development/scriptReference.md#error-resolution-guide` |
 | Add a feature | `docs/development/scriptReference.md#decision-trees` |
 | Check thread safety | `docs/development/scriptReference.md#thread-safety-guide` |
-| Run tests | See [Testing](#testing) below |
+| Fix Fyne GUI issues | `docs/development/FYNE_NOTES.md` |
+| Run/understand tests | `docs/development/TESTING.md` |
+| Review UI analysis | `docs/development/HYPER_ANALYSIS_REPORT.md` |
 
 ## Overview
 

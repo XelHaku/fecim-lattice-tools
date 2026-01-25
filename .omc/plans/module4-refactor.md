@@ -1,16 +1,43 @@
 # Module 4 Circuits Refactoring Plan
 
 **Created**: 2026-01-25
-**Status**: READY FOR REVIEW (Revision 2)
+**Status**: READY FOR EXECUTION (Revision 3)
 **Complexity**: MEDIUM-HIGH
-**Estimated Files**: 11 new files from 1 monolithic file
+**Estimated Files**: 8 files (consolidated from 11)
+
+---
+
+## 0. MAJOR CHANGE: View Consolidation (NEW)
+
+**User Requirement**: "The less views the better" - consolidate 6 views → 3 views
+
+| Current (6 views) | New (3 views) |
+|-------------------|---------------|
+| WRITE | → |
+| READ | → **OPERATIONS** (combined) |
+| COMPUTE | → |
+| COMPARISON | → **COMPARISON** (unchanged) |
+| TIMING | → |
+| SPECS | → **REFERENCE** (combined) |
+
+### New Architecture
+
+**View 1: OPERATIONS** - Combined WRITE/READ/COMPUTE with mode selector
+- Mode toggle: [WRITE] [READ] [COMPUTE]
+- Shared array (always visible, left panel)
+- Mode-specific config and data path (right panel)
+
+**View 2: COMPARISON** - FeFET vs CPU/GPU (keep as-is)
+
+**View 3: REFERENCE** - Combined TIMING + SPECS
+- Sub-sections for timing diagrams and specifications
 
 ---
 
 ## 1. Requirements Summary
 
 ### Primary Objective
-Refactor the monolithic `app.go` (3129 lines) into a well-organized multi-file structure while fixing the critical timing diagram rendering bug.
+Consolidate 6 views into 3 views AND refactor monolithic app.go into organized files.
 
 ### Current State
 - **Location**: `<local-path>`
@@ -38,23 +65,27 @@ The loop iterates 101 times (0-100) but `plotW` may be 500+ pixels, creating gap
 
 ---
 
-## 2. Target File Structure
+## 2. Target File Structure (REVISED)
 
 ```
 module4-circuits/pkg/gui/
-├── app.go           # CircuitsApp struct, initialization, Run(), createMainLayout() (~200 lines)
-├── theme.go         # feCIMTheme implementation, color constants (~90 lines)
-├── tab_write.go     # Write tab: createWriteTab and all write methods (~680 lines, 339-1017)
-├── tab_read.go      # Read tab: createReadTab and all read methods (~450 lines, 1019-1467)
-├── tab_compute.go   # Compute tab: createComputeTab and all compute methods (~420 lines, 1469-1889)
-├── tab_comparison.go # Comparison tab: createComparisonTab methods (~355 lines, 1891-2246)
-├── tab_timing.go    # Timing tab: createTimingTab, timing diagram FIXES (~470 lines, 2248-2719)
-├── tab_specs.go     # Specs tab: createSpecsTab methods (~280 lines, 2721-2999)
-├── font.go          # fontPatterns map, drawSimpleText, drawScaledText (~130 lines, 3001-3129)
-├── helpers.go       # drawRect, min, max utilities (~50 lines)
-├── drawing.go       # drawThickHorizontalLine helper for timing diagrams (~30 lines, NEW)
-└── embedded.go      # EmbeddedCircuitsApp (unchanged, 99 lines)
+├── app.go              # CircuitsApp struct, init, Run(), createMainLayout() (~250 lines)
+├── theme.go            # DELETE - use shared/theme instead
+├── tab_operations.go   # NEW: Combined WRITE/READ/COMPUTE with mode selector (~1000 lines)
+├── tab_comparison.go   # Comparison tab (unchanged, apply theme) (~370 lines)
+├── tab_reference.go    # NEW: Combined TIMING + SPECS (~600 lines)
+├── font.go             # fontPatterns, drawSimpleText (~130 lines)
+├── helpers.go          # drawRect, min, max, section headers, ComponentBox (~150 lines)
+├── drawing.go          # drawThickHorizontalLine, drawArrow (~100 lines)
+└── embedded.go         # EmbeddedCircuitsApp (unchanged)
 ```
+
+**Key Changes:**
+- DELETE `theme.go` - use `shared/theme` instead
+- DELETE `tab_write.go`, `tab_read.go`, `tab_compute.go` - consolidated into `tab_operations.go`
+- DELETE `tab_timing.go`, `tab_specs.go` - consolidated into `tab_reference.go`
+- NEW `tab_operations.go` - unified WRITE/READ/COMPUTE with mode selector
+- NEW `tab_reference.go` - unified TIMING + SPECS
 
 ---
 
