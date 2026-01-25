@@ -38,10 +38,10 @@ var (
 // =============================================================================
 
 // OpenLaneFlowDiagram creates a visual pipeline diagram
-func OpenLaneFlowDiagram(showOurContribution bool) fyne.CanvasObject {
+func OpenLaneFlowDiagram() fyne.CanvasObject {
 	// Diagram dimensions - INCREASED 40%
-	boxW := float32(120)
-	boxH := float32(55)
+	boxW := float32(140)
+	boxH := float32(65)
 	spacing := float32(25)
 	startX := float32(30)
 	startY := float32(50)
@@ -56,13 +56,11 @@ func OpenLaneFlowDiagram(showOurContribution bool) fyne.CanvasObject {
 	objects = append(objects, title)
 
 	// Subtitle
-	if showOurContribution {
-		subtitle := canvas.NewText("CYAN = Our Array Builder files inject here", colorBoxOurs)
-		subtitle.TextSize = 13
-		subtitle.TextStyle = fyne.TextStyle{Bold: true}
-		subtitle.Move(fyne.NewPos(startX, 30))
-		objects = append(objects, subtitle)
-	}
+	subtitle := canvas.NewText("CYAN = Our Array Builder files inject here", colorBoxOurs)
+	subtitle.TextSize = 13
+	subtitle.TextStyle = fyne.TextStyle{Bold: true}
+	subtitle.Move(fyne.NewPos(startX, 30))
+	objects = append(objects, subtitle)
 
 	// Pipeline stages - row 1
 	stages := []struct {
@@ -92,16 +90,14 @@ func OpenLaneFlowDiagram(showOurContribution bool) fyne.CanvasObject {
 	}...)
 
 	// Mark which stages we contribute to
-	if showOurContribution {
-		stages[0].isOurs = true  // Verilog - we provide
-		stages[2].isOurs = true  // Floorplan - our LEF
-		stages[3].isOurs = true  // Placement - our DEF (FIXED)
-	}
+	stages[0].isOurs = true  // Verilog - we provide
+	stages[2].isOurs = true  // Floorplan - our LEF
+	stages[3].isOurs = true  // Placement - our DEF (FIXED)
 
 	// Draw stages
 	for i, stage := range stages {
 		boxColor := colorBoxStandard
-		if stage.isOurs && showOurContribution {
+		if stage.isOurs {
 			boxColor = colorBoxOurs
 		}
 
@@ -150,30 +146,28 @@ func OpenLaneFlowDiagram(showOurContribution bool) fyne.CanvasObject {
 		}
 	}
 
-	// Add "Our Files" labels if showing contribution
-	if showOurContribution {
-		// LEF label
-		lefLabel := canvas.NewText("Our LEF", colorHighlight)
-		lefLabel.TextSize = 10
-		lefLabel.Move(fyne.NewPos(stages[2].x+10, stages[2].y-15))
-		objects = append(objects, lefLabel)
+	// Add "Our Files" labels
+	// LEF label
+	lefLabel := canvas.NewText("Our LEF", colorHighlight)
+	lefLabel.TextSize = 10
+	lefLabel.Move(fyne.NewPos(stages[2].x+10, stages[2].y-15))
+	objects = append(objects, lefLabel)
 
-		// DEF label
-		defLabel := canvas.NewText("Our DEF (FIXED)", colorHighlight)
-		defLabel.TextSize = 10
-		defLabel.Move(fyne.NewPos(stages[3].x+5, stages[3].y-15))
-		objects = append(objects, defLabel)
+	// DEF label
+	defLabel := canvas.NewText("Our DEF (FIXED)", colorHighlight)
+	defLabel.TextSize = 10
+	defLabel.Move(fyne.NewPos(stages[3].x+5, stages[3].y-15))
+	objects = append(objects, defLabel)
 
-		// Verilog label
-		vLabel := canvas.NewText("Our Verilog", colorHighlight)
-		vLabel.TextSize = 10
-		vLabel.Move(fyne.NewPos(stages[0].x+5, stages[0].y-15))
-		objects = append(objects, vLabel)
-	}
+	// Verilog label
+	vLabel := canvas.NewText("Our Verilog", colorHighlight)
+	vLabel.TextSize = 10
+	vLabel.Move(fyne.NewPos(stages[0].x+5, stages[0].y-15))
+	objects = append(objects, vLabel)
 
 	// Container with fixed size - INCREASED
 	cont := container.NewWithoutLayout(objects...)
-	cont.Resize(fyne.NewSize(620, 250))
+	cont.Resize(fyne.NewSize(720, 300))
 
 	return cont
 }
@@ -229,7 +223,7 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 	objects := []fyne.CanvasObject{}
 
 	// Isometric projection parameters - INCREASED 40%
-	cellSize := float32(42)
+	cellSize := float32(52)
 	isoAngle := float32(30 * math.Pi / 180) // 30 degrees
 	cosA := float32(math.Cos(float64(isoAngle)))
 	sinA := float32(math.Sin(float64(isoAngle)))
@@ -239,7 +233,7 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 	startY := float32(60)
 
 	// Layer separation (Z height) - INCREASED
-	layerGap := float32(55)
+	layerGap := float32(70)
 
 	// Convert grid coordinates to isometric
 	toIso := func(gridX, gridY, z float32) (float32, float32) {
@@ -357,7 +351,7 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 	objects = append(objects, feText)
 
 	cont := container.NewWithoutLayout(objects...)
-	cont.Resize(fyne.NewSize(420, 310))
+	cont.Resize(fyne.NewSize(540, 400))
 
 	return cont
 }
@@ -367,14 +361,14 @@ func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
 	objects := []fyne.CanvasObject{}
 
 	// Isometric projection parameters
-	cellSize := float32(42)
+	cellSize := float32(52)
 	isoAngle := float32(30 * math.Pi / 180)
 	cosA := float32(math.Cos(float64(isoAngle)))
 	sinA := float32(math.Sin(float64(isoAngle)))
 
 	startX := float32(180)
 	startY := float32(60)
-	layerGap := float32(55)
+	layerGap := float32(70)
 
 	toIso := func(gridX, gridY, z float32) (float32, float32) {
 		x := startX + (gridX-gridY)*cellSize*cosA
@@ -520,7 +514,7 @@ func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
 	objects = append(objects, feText)
 
 	cont := container.NewWithoutLayout(objects...)
-	cont.Resize(fyne.NewSize(420, 310))
+	cont.Resize(fyne.NewSize(540, 400))
 
 	return cont
 }
@@ -654,8 +648,8 @@ func OperationModesVisual() fyne.CanvasObject {
 	objects = append(objects, title)
 
 	// Box dimensions
-	boxW := float32(110)
-	boxH := float32(90)
+	boxW := float32(140)
+	boxH := float32(110)
 	spacing := float32(15)
 	startX := float32(10)
 	startY := float32(40)
@@ -750,7 +744,7 @@ func OperationModesVisual() fyne.CanvasObject {
 
 	// Container with fixed size
 	cont := container.NewWithoutLayout(objects...)
-	cont.Resize(fyne.NewSize(420, 200))
+	cont.Resize(fyne.NewSize(560, 260))
 
 	return cont
 }
@@ -763,7 +757,7 @@ func OperationModesVisual() fyne.CanvasObject {
 func FileFormatCard(title, format, content string) fyne.CanvasObject {
 	// Header - LARGER
 	headerBg := canvas.NewRectangle(colorBoxOurs)
-	headerBg.Resize(fyne.NewSize(340, 32))
+	headerBg.Resize(fyne.NewSize(380, 36))
 	headerBg.CornerRadius = 6
 
 	titleText := canvas.NewText(title+" (."+format+")", colorBgDark)
@@ -773,8 +767,8 @@ func FileFormatCard(title, format, content string) fyne.CanvasObject {
 
 	// Content area - LARGER
 	contentBg := canvas.NewRectangle(color.RGBA{0, 25, 50, 255})
-	contentBg.Resize(fyne.NewSize(340, 140))
-	contentBg.Move(fyne.NewPos(0, 32))
+	contentBg.Resize(fyne.NewSize(380, 160))
+	contentBg.Move(fyne.NewPos(0, 36))
 	contentBg.CornerRadius = 4
 
 	// Code content with monospace style
@@ -783,11 +777,11 @@ func FileFormatCard(title, format, content string) fyne.CanvasObject {
 	codeLabel.TextStyle = fyne.TextStyle{Monospace: true}
 
 	codeContainer := container.NewPadded(codeLabel)
-	codeContainer.Move(fyne.NewPos(4, 36))
-	codeContainer.Resize(fyne.NewSize(332, 132))
+	codeContainer.Move(fyne.NewPos(4, 40))
+	codeContainer.Resize(fyne.NewSize(372, 152))
 
 	card := container.NewWithoutLayout(headerBg, titleText, contentBg, codeContainer)
-	card.Resize(fyne.NewSize(340, 175))
+	card.Resize(fyne.NewSize(380, 200))
 
 	return card
 }
