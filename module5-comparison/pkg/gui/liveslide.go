@@ -328,42 +328,45 @@ func (e *ComparisonEducationalPanel) updateForMode() {
 	switch mode {
 	case PresentationModeInvestor:
 		e.SetContent("Scenario Summary",
-			"THE PITCH\n\n"+
-				"$711B market by 2030\n"+
-				"100× energy reduction\n"+
-				"CMOS compatible fab\n"+
-				"Proven research team\n\n"+
-				"PHASE 1: NAND Replacement\n"+
-				"Drop-in compatible\n"+
-				"Low adoption risk\n\n"+
-				"TRL 4 → TRL 9 path clear")
+			"THE OPPORTUNITY\n\n"+
+				"$721B addressable market by 2030\n"+
+				"1000× claimed energy reduction\n"+
+				"CMOS-compatible fabrication\n"+
+				"Proven research pedigree\n\n"+
+				"COMMERCIALIZATION STRATEGY\n"+
+				"Phase 1: NAND replacement\n"+
+				"  → Drop-in compatible design\n"+
+				"  → Minimal integration risk\n\n"+
+				"Clear TRL 4 → TRL 9 pathway")
 
 	case PresentationModeEngineer:
 		e.SetContent("Technical Deep-Dive",
-			"PHYSICS\n\n"+
-				"HfO2-ZrO2 superlattice\n"+
-				"Pr ≈ 25 µC/cm²\n"+
-				"Ec ≈ 1 MV/cm\n"+
-				"30 analog levels\n\n"+
-				"CROSSBAR ARRAY\n"+
-				"MVM in O(1) time\n"+
-				"Kirchhoff's law\n"+
-				"I = G × V summation\n\n"+
-				"NON-IDEALITIES\n"+
-				"IR drop, sneak paths\n"+
-				"Conductance drift")
+			"FERROELECTRIC PHYSICS\n\n"+
+				"HfO₂-ZrO₂ superlattice structure\n"+
+				"Remanent polarization: 15-34 µC/cm²\n"+
+				"Coercive field: 1.0-1.5 MV/cm\n"+
+				"30 discrete analog levels\n\n"+
+				"CROSSBAR ARCHITECTURE\n"+
+				"Matrix-vector multiply: O(1) time\n"+
+				"Physical parallelism via Kirchhoff's law\n"+
+				"Current summation: I = Σ(Gᵢⱼ × Vⱼ)\n\n"+
+				"ENGINEERING CHALLENGES\n"+
+				"IR voltage drop mitigation\n"+
+				"Sneak path current management\n"+
+				"Long-term conductance stability")
 
 	default:
-		e.SetContent("Why CIM Wins",
-			"THE MEMORY WALL\n\n"+
-				"Traditional CPUs/GPUs:\n"+
-				"Data moves between\n"+
-				"memory and processor.\n"+
-				"This wastes energy.\n\n"+
-				"Compute-in-Memory:\n"+
-				"Computation happens\n"+
-				"WHERE data lives.\n"+
-				"No movement = no waste.")
+		e.SetContent("Why Compute-in-Memory Wins",
+			"THE MEMORY WALL PROBLEM\n\n"+
+				"Von Neumann Architecture:\n"+
+				"  • Data shuttles between\n"+
+				"    separate memory and CPU\n"+
+				"  • Energy dominated by data movement\n"+
+				"  • Bandwidth bottleneck limits performance\n\n"+
+				"Compute-in-Memory Solution:\n"+
+				"  • Computation occurs at storage location\n"+
+				"  • Eliminates data movement overhead\n"+
+				"  • Massive parallel operations via physics")
 	}
 }
 
@@ -398,31 +401,35 @@ func (e *ComparisonEducationalPanel) updateForPhase() {
 
 	case AutoDemoPhaseMarket:
 		title = "Market Opportunity"
-		content = "$711B BY 2030\n\n" +
+		content = "$721B BY 2030\n\n" +
 			"NAND Flash: $98B\n" +
 			"DRAM: $220B\n" +
 			"AI Semiconductor: $403B\n\n" +
-			"FeCIM addresses ALL THREE"
+			"FeCIM addresses all three segments"
 
 	case AutoDemoPhaseCompetitive:
 		title = "Competitive Position"
-		content = "VS COMPETITION\n\n" +
-			"Google TPU: Not in-memory\n" +
-			"Intel Loihi: Non-CMOS\n" +
-			"IBM Analog AI: Research only\n\n" +
-			"FeCIM: ✓ In-memory\n" +
-			"       ✓ CMOS fab\n" +
-			"       ✓ Scalable"
+		content = "COMPETITIVE LANDSCAPE\n\n" +
+			"Google TPU v5: Von Neumann arch\n" +
+			"Intel Loihi 2: Exotic fabrication\n" +
+			"IBM Analog AI: Research phase\n\n" +
+			"FeCIM ADVANTAGES:\n" +
+			"  ✓ True compute-in-memory\n" +
+			"  ✓ Standard CMOS process\n" +
+			"  ✓ Production scalability"
 
 	case AutoDemoPhaseStrategy:
 		title = "Phased Strategy"
-		content = "COMMERCIALIZATION\n\n" +
-			"Phase 1: NAND replacement\n" +
-			"  → Drop-in compatible\n\n" +
-			"Phase 2: DRAM displacement\n" +
-			"  → No refresh needed\n\n" +
-			"Phase 3: Full CIM\n" +
-			"  → 80-90% energy savings"
+		content = "COMMERCIALIZATION ROADMAP\n\n" +
+			"Phase 1: NAND Replacement\n" +
+			"  → Drop-in compatible interface\n" +
+			"  → Leverage existing infrastructure\n\n" +
+			"Phase 2: DRAM Displacement\n" +
+			"  → Non-volatile, zero refresh power\n" +
+			"  → Higher density potential\n\n" +
+			"Phase 3: Full Compute-in-Memory\n" +
+			"  → 80-90% claimed energy savings\n" +
+			"  → Transform datacenter economics"
 
 	case AutoDemoPhaseCalculator:
 		title = "Real Impact"
@@ -437,21 +444,24 @@ func (e *ComparisonEducationalPanel) updateForPhase() {
 	e.SetContent(title, content)
 }
 
-// SetComparison sets comparison explanation.
+// SetComparison sets comparison explanation with calculated ratios.
 func (e *ComparisonEducationalPanel) SetComparison(cpuRatio, gpuRatio float64) {
-	content := "THE MEMORY WALL\n\n" +
-		"Traditional CPUs/GPUs:\n" +
-		"  Data moves between\n" +
-		"  memory and processor.\n" +
-		"  This wastes energy.\n\n" +
-		"Compute-in-Memory:\n" +
-		"  Computation happens\n" +
-		"  WHERE data lives.\n" +
-		"  No movement = no waste.\n\n" +
-		fmt.Sprintf("FeCIM vs CPU: %.0f× less power*\n", cpuRatio) +
-		fmt.Sprintf("FeCIM vs GPU: %.0f× less power*\n", gpuRatio) +
-		"\n* If claims hold (TRL 4)"
-	e.SetContent("Why CIM Wins", content)
+	content := "THE MEMORY WALL PROBLEM\n\n" +
+		"Von Neumann Architecture:\n" +
+		"  • Data shuttles between\n" +
+		"    separate memory and CPU\n" +
+		"  • Energy dominated by movement\n" +
+		"  • Bandwidth bottleneck\n\n" +
+		"Compute-in-Memory Solution:\n" +
+		"  • Computation at storage location\n" +
+		"  • Eliminates data movement\n" +
+		"  • Physics-based parallelism\n\n" +
+		"CLAIMED ADVANTAGES:\n" +
+		fmt.Sprintf("  • %.0f× less power vs CPU*\n", cpuRatio) +
+		fmt.Sprintf("  • %.0f× less power vs GPU*\n", gpuRatio) +
+		"\n* Based on Dr. Tour's claims (TRL 4)\n" +
+		"  Independent verification pending"
+	e.SetContent("Why Compute-in-Memory Wins", content)
 }
 
 // MinSize returns the minimum size.

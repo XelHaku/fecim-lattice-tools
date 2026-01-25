@@ -6,10 +6,12 @@ import (
 	"image/color"
 	"math"
 	"math/rand"
+	"path/filepath"
 	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
@@ -455,6 +457,45 @@ func (ca *CrossbarApp) runEnhancedMVM() {
 	go ca.runEnhancedMVMAnimated(input)
 }
 
+// runEnhancedMVMInstant performs instant MVM (no animation) for initial data population
+func (ca *CrossbarApp) runEnhancedMVMInstant() {
+	debug.Println("runEnhancedMVMInstant: Starting instant MVM for initial load")
+
+	// Create random input
+	input := make([]float64, ca.config.Cols)
+	for i := range input {
+		input[i] = rand.Float64()
+	}
+
+	ca.stateMu.Lock()
+	ca.lastInput = input
+	ca.stateMu.Unlock()
+
+	ca.mvmVis.SetInput(input)
+
+	// Perform enhanced MVM with all non-idealities
+	opts := crossbar.DefaultMVMOptions()
+	mvmResult, err := ca.array.MVMWithNonIdealities(input, opts)
+	if err != nil {
+		debug.Printf("runEnhancedMVMInstant: Error: %v", err)
+		ca.updateStatus(fmt.Sprintf("Error: %v", err))
+		return
+	}
+
+	ca.stateMu.Lock()
+	ca.lastOutput = mvmResult.ActualOutput
+	ca.lastMVMResult = mvmResult
+	ca.stateMu.Unlock()
+
+	ca.mvmVis.SetOutput(mvmResult.ActualOutput)
+
+	// Update all visualizations (synchronously)
+	ca.updateEnhancedWidgets(mvmResult)
+
+	ca.updateStatus("Ready | Initial MVM complete. All analysis tabs populated.")
+	debug.Println("runEnhancedMVMInstant: Complete")
+}
+
 // runEnhancedMVMAnimated performs the enhanced MVM with all analysis.
 func (ca *CrossbarApp) runEnhancedMVMAnimated(input []float64) {
 	// Phase 1: Input voltages applied (300ms)
@@ -518,11 +559,28 @@ func (ca *CrossbarApp) runEnhancedMVMAnimated(input []float64) {
 	// Update all visualizations
 	fyne.Do(func() {
 		ca.conductanceHeatmap.ClearAnimation()
+		ca.updateEnhancedWidgets(mvmResult)
+		ca.updateStatus(fmt.Sprintf("COMPUTE | Complete: %d MACs, %.2f pJ, %.0f× better than GPU",
+			mvmResult.MACOperations, mvmResult.TotalEnergy, mvmResult.EnergyEfficiency))
+		ca.modeIndicator.SetMode(DemoModeIdle)
+		ca.runMVMButton.Enable()
+	})
 
-		// Update metrics panel
-		// Estimate baseline accuracy (for demo purposes, use 90%)
-		baselineAcc := 90.0
-		actualAcc := baselineAcc - mvmResult.AccuracyLoss
+	debug.Println("runEnhancedMVM: Complete")
+}
+
+// updateEnhancedWidgets updates all enhanced visualization widgets with MVM results
+func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
+	// Protected read of lastInput
+	ca.stateMu.RLock()
+	input := ca.lastInput
+	ca.stateMu.RUnlock()
+
+	// Update metrics panel
+	// Estimate baseline accuracy (for demo purposes, use 90%)
+	baselineAcc := 90.0
+	actualAcc := baselineAcc - mvmResult.AccuracyLoss
+	if ca.metricsPanel != nil {
 		ca.metricsPanel.UpdateMetrics(
 			baselineAcc,
 			actualAcc,
@@ -531,15 +589,19 @@ func (ca *CrossbarApp) runEnhancedMVMAnimated(input []float64) {
 			mvmResult.MACOperations,
 			mvmResult.Latency,
 		)
+	}
 
-		// Update comparison badge
+	// Update comparison badge
+	if ca.comparisonBadge != nil {
 		ca.comparisonBadge.UpdateValues(
 			fmt.Sprintf("%.2f pJ", mvmResult.TotalEnergy),
 			fmt.Sprintf("%.0f pJ", mvmResult.GPUEquivalentEnergy),
 			fmt.Sprintf("%.0f× better", mvmResult.EnergyEfficiency),
 		)
+	}
 
-		// Update accuracy waterfall
+	// Update accuracy waterfall
+	if ca.accuracyWaterfall != nil {
 		degradation, _ := ca.array.ComputeAccuracyDegradation(input, baselineAcc)
 		if degradation != nil {
 			steps := make([]WaterfallStep, len(degradation.Degradations))
@@ -560,8 +622,10 @@ func (ca *CrossbarApp) runEnhancedMVMAnimated(input []float64) {
 			}
 			ca.accuracyWaterfall.SetSteps(steps)
 		}
+	}
 
-		// Update before/after toggle
+	// Update before/after toggle
+	if ca.beforeAfterToggle != nil {
 		idealMatrix := ca.array.GetConductanceMatrix()
 		// For actual, apply a slight variation (simulated)
 		actualMatrix := make([][]float64, len(idealMatrix))
@@ -574,38 +638,43 @@ func (ca *CrossbarApp) runEnhancedMVMAnimated(input []float64) {
 			}
 		}
 		ca.beforeAfterToggle.SetData(idealMatrix, actualMatrix)
+	}
 
-		// Update IR drop heatmap
-		if mvmResult.IRDropAnalysis != nil {
-			ca.lastIRDropAnalysis = mvmResult.IRDropAnalysis // Store for hover/tap info
-			irMap := mvmResult.IRDropAnalysis.GetIRDropMap()
-			ca.irDropHeatmap.SetData(irMap)
-			ca.irDropHeatmap.SetSelection(
-				mvmResult.IRDropAnalysis.WorstCaseCell[0],
-				mvmResult.IRDropAnalysis.WorstCaseCell[1],
-			)
-		}
+	// Update IR drop heatmap
+	if mvmResult.IRDropAnalysis != nil {
+		ca.stateMu.Lock()
+		ca.lastIRDropAnalysis = mvmResult.IRDropAnalysis
+		ca.stateMu.Unlock()
 
-		// Update sneak path heatmap
-		if mvmResult.SneakPathAnalysis != nil {
-			ca.lastSneakAnalysis = mvmResult.SneakPathAnalysis // Store for hover/tap info
-			sneakMap := mvmResult.SneakPathAnalysis.GetSneakMap()
-			// Apply sqrt for better visibility
-			for i := range sneakMap {
-				for j := range sneakMap[i] {
-					sneakMap[i][j] = math.Sqrt(sneakMap[i][j])
-				}
+		irMap := mvmResult.IRDropAnalysis.GetIRDropMap()
+		debug.Printf("IR Drop data: %d×%d, max=%.6f", len(irMap), len(irMap[0]), mvmResult.IRDropAnalysis.MaxIRDrop)
+		ca.irDropHeatmap.SetData(irMap)
+		ca.irDropHeatmap.SetSelection(
+			mvmResult.IRDropAnalysis.WorstCaseCell[0],
+			mvmResult.IRDropAnalysis.WorstCaseCell[1],
+		)
+	} else {
+		debug.Println("Warning: IRDropAnalysis is nil")
+	}
+
+	// Update sneak path heatmap
+	if mvmResult.SneakPathAnalysis != nil {
+		ca.stateMu.Lock()
+		ca.lastSneakAnalysis = mvmResult.SneakPathAnalysis
+		ca.stateMu.Unlock()
+
+		sneakMap := mvmResult.SneakPathAnalysis.GetSneakMap()
+		debug.Printf("Sneak data: %d×%d, maxSneak=%.6f", len(sneakMap), len(sneakMap[0]), mvmResult.SneakPathAnalysis.MaxSneakRatio)
+		// Apply sqrt for better visibility
+		for i := range sneakMap {
+			for j := range sneakMap[i] {
+				sneakMap[i][j] = math.Sqrt(sneakMap[i][j])
 			}
-			ca.sneakPathHeatmap.SetData(sneakMap)
 		}
-
-		ca.updateStatus(fmt.Sprintf("COMPUTE | Complete: %d MACs, %.2f pJ, %.0f× better than GPU",
-			mvmResult.MACOperations, mvmResult.TotalEnergy, mvmResult.EnergyEfficiency))
-		ca.modeIndicator.SetMode(DemoModeIdle)
-		ca.runMVMButton.Enable()
-	})
-
-	debug.Println("runEnhancedMVM: Complete")
+		ca.sneakPathHeatmap.SetData(sneakMap)
+	} else {
+		debug.Println("Warning: SneakPathAnalysis is nil")
+	}
 }
 
 // exportData exports array weights and analysis to files.
@@ -619,6 +688,9 @@ func (ca *CrossbarApp) exportData() {
 		return
 	}
 
+	// Convert to absolute path for dialog
+	absWeightsPath, _ := filepath.Abs(weightsPath)
+
 	// Export analysis JSON
 	if ca.lastMVMResult != nil {
 		analysisPath := fmt.Sprintf("crossbar_analysis_%s.json", timestamp)
@@ -627,8 +699,21 @@ func (ca *CrossbarApp) exportData() {
 			return
 		}
 		ca.updateStatus(fmt.Sprintf("Exported: %s, %s", weightsPath, analysisPath))
+
+		// Convert to absolute path for dialog
+		absAnalysisPath, _ := filepath.Abs(analysisPath)
+
+		// Show success dialog with file paths
+		fyne.Do(func() {
+			ca.showExportSuccessDialog([]string{absWeightsPath, absAnalysisPath})
+		})
 	} else {
 		ca.updateStatus(fmt.Sprintf("Exported: %s (run MVM for analysis)", weightsPath))
+
+		// Show success dialog with single file path
+		fyne.Do(func() {
+			ca.showExportSuccessDialog([]string{absWeightsPath})
+		})
 	}
 }
 
@@ -837,6 +922,26 @@ func (ca *CrossbarApp) getAccuracyStatus(accuracy float64) string {
 		return "⚠ Below target - optimization needed"
 	}
 	return "✗ Significant optimization required"
+}
+
+// showExportSuccessDialog displays a success dialog with export file paths
+func (ca *CrossbarApp) showExportSuccessDialog(filePaths []string) {
+	if ca.window == nil {
+		return
+	}
+
+	var message string
+	if len(filePaths) == 1 {
+		message = fmt.Sprintf("File exported successfully:\n\n%s", filePaths[0])
+	} else {
+		message = "Files exported successfully:\n\n"
+		for _, path := range filePaths {
+			message += fmt.Sprintf("• %s\n", path)
+		}
+	}
+
+	// Simple information dialog with OK button
+	dialog.ShowInformation("Export Complete", message, ca.window)
 }
 
 // onBreakpointChangeEnhanced handles responsive layout adjustments for enhanced mode.

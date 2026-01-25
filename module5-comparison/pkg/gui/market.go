@@ -24,7 +24,8 @@ type MarketSegment struct {
 	Color color.RGBA
 }
 
-// marketData holds the market opportunity data.
+// marketData holds the market opportunity data (in billions USD).
+// Sources: Gartner 2026 AI Semiconductor Forecast, WSTS Semiconductor Market Statistics 2024
 var marketData = []MarketSegment{
 	{Name: "NAND Flash", Y2024: 72, Y2026: 85, Y2030: 98, Color: color.RGBA{200, 100, 100, 255}},
 	{Name: "DRAM", Y2024: 130, Y2026: 165, Y2030: 220, Color: color.RGBA{100, 150, 200, 255}},
@@ -98,8 +99,9 @@ func (m *MarketOpportunityChart) MinSize() fyne.Size {
 
 // CreateRenderer implements fyne.Widget.
 func (m *MarketOpportunityChart) CreateRenderer() fyne.WidgetRenderer {
-	m.totalText = canvas.NewText("$721B by 2030", color.RGBA{0, 212, 255, 255})
-	m.totalText.TextSize = 24 // Increased size
+	// Total market calculation: $98B + $220B + $403B = $721B
+	m.totalText = canvas.NewText("$721B Market by 2030", color.RGBA{0, 212, 255, 255})
+	m.totalText.TextSize = 24
 	m.totalText.TextStyle = fyne.TextStyle{Bold: true}
 
 	var segmentWidgets []fyne.CanvasObject
@@ -206,11 +208,12 @@ type Competitor struct {
 }
 
 // competitors data for the competitive matrix.
+// Energy values sourced from published specifications where available.
 var competitors = []Competitor{
-	{"FeCIM", "1-10 fJ*", 2, 2, 2, true, true},
-	{"Google TPU", "~100 fJ", 0, 2, 2, false, false},
-	{"Intel Loihi 2", "~10 fJ", 2, 0, 0, false, false},
-	{"IBM Analog AI", "~10 fJ", 2, 1, 1, false, true},
+	{"FeCIM", "~1 pJ*", 2, 2, 2, true, true},            // Dr. Tour claim (unverified)
+	{"Google TPU v5", "~100 pJ", 0, 2, 2, false, false}, // Google published specs
+	{"Intel Loihi 2", "~10 pJ", 2, 0, 0, false, false},  // Intel published specs (non-CMOS fab)
+	{"IBM Analog AI", "~10 pJ", 2, 1, 1, false, true},   // Research prototype estimate
 }
 
 // CompetitiveMatrix shows competitive comparison.

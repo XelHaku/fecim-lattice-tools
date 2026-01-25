@@ -11,12 +11,14 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // SneakTab provides sneak path analysis visualization.
 type SneakTab struct {
 	simulator   *crossbar.SneakPathAnalyzer
 	heatmap     *fyne.Container
+	legend      *sharedwidgets.ColorLegend
 	statsLabel  *widget.Label
 	statusLabel *widget.Label
 	arraySize   int
@@ -53,10 +55,17 @@ func (t *SneakTab) Content() fyne.CanvasObject {
 	// Heatmap container
 	t.heatmap = container.NewWithoutLayout()
 	t.heatmap.Resize(fyne.NewSize(400, 400))
+
+	// Color legend (vertical) - blue to yellow for sneak current
+	t.legend = sharedwidgets.NewColorLegend(0, 1, "µA", true, sharedwidgets.BlueToYellowColor)
+
 	t.updateHeatmap()
 
 	heatmapScroll := container.NewScroll(t.heatmap)
 	heatmapScroll.SetMinSize(fyne.NewSize(350, 350))
+
+	// Add legend to left of heatmap
+	heatmapWithLegend := container.NewBorder(nil, nil, t.legend, nil, heatmapScroll)
 
 	// Stats panel
 	t.updateStats()
@@ -121,7 +130,7 @@ func (t *SneakTab) Content() fyne.CanvasObject {
 			widget.NewLabelWithStyle("Sneak Current Map (X = target)", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 			t.statusLabel,
 			nil, nil,
-			heatmapScroll,
+			heatmapWithLegend,
 		),
 		rightPanel,
 	)
@@ -150,6 +159,11 @@ func (t *SneakTab) updateHeatmap() {
 	}
 	if maxSneak == 0 {
 		maxSneak = 1
+	}
+
+	// Update legend range (convert to µA)
+	if t.legend != nil {
+		t.legend.SetRange(0, maxSneak*1e6)
 	}
 
 	colorPrimary := color.RGBA{0, 212, 255, 255}

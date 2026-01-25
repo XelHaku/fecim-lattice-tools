@@ -755,33 +755,33 @@ func OperationModesVisual() fyne.CanvasObject {
 
 // FileFormatCard creates a styled card showing file format examples
 func FileFormatCard(title, format, content string) fyne.CanvasObject {
-	// Header - LARGER
+	// Header - INCREASED HEIGHT for better readability
 	headerBg := canvas.NewRectangle(colorBoxOurs)
-	headerBg.Resize(fyne.NewSize(380, 36))
+	headerBg.Resize(fyne.NewSize(360, 40))
 	headerBg.CornerRadius = 6
 
 	titleText := canvas.NewText(title+" (."+format+")", colorBgDark)
 	titleText.TextSize = 14
 	titleText.TextStyle = fyne.TextStyle{Bold: true}
-	titleText.Move(fyne.NewPos(12, 6))
+	titleText.Move(fyne.NewPos(12, 10))
 
-	// Content area - LARGER
+	// Content area - INCREASED HEIGHT for better code visibility
 	contentBg := canvas.NewRectangle(color.RGBA{0, 25, 50, 255})
-	contentBg.Resize(fyne.NewSize(380, 160))
-	contentBg.Move(fyne.NewPos(0, 36))
+	contentBg.Resize(fyne.NewSize(360, 180))
+	contentBg.Move(fyne.NewPos(0, 40))
 	contentBg.CornerRadius = 4
 
-	// Code content with monospace style
+	// Code content with monospace style and better line spacing
 	codeLabel := widget.NewLabel(content)
 	codeLabel.Wrapping = fyne.TextWrapOff
 	codeLabel.TextStyle = fyne.TextStyle{Monospace: true}
 
 	codeContainer := container.NewPadded(codeLabel)
-	codeContainer.Move(fyne.NewPos(4, 40))
-	codeContainer.Resize(fyne.NewSize(372, 152))
+	codeContainer.Move(fyne.NewPos(8, 44))
+	codeContainer.Resize(fyne.NewSize(344, 172))
 
 	card := container.NewWithoutLayout(headerBg, titleText, contentBg, codeContainer)
-	card.Resize(fyne.NewSize(380, 200))
+	card.Resize(fyne.NewSize(360, 224))
 
 	return card
 }

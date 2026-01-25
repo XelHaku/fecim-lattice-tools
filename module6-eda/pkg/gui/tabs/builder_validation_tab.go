@@ -6,22 +6,25 @@ package tabs
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 
 	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/config"
 	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/export"
+	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/openlane"
 	"multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/validation"
 )
 
 // MakeBuilderValidationTab creates a unified tab combining cell/array configuration,
 // preview (Verilog/DEF/Layout), validation, and export functionality
-func MakeBuilderValidationTab(cfg *config.ArrayConfig) fyne.CanvasObject {
+func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.CanvasObject {
 	// ========== CELL CONFIG SECTION ==========
 	nameEntry := widget.NewEntry()
 	nameEntry.SetText("fecim_bitcell")
@@ -168,11 +171,80 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig) fyne.CanvasObject {
 		})
 	}
 
+	// ========== OPENLANE STATUS SECTION ==========
+	dockerStatus := widget.NewLabel("Checking...")
+	pdkStatus := widget.NewLabel("Checking...")
+	placementResult := widget.NewLabel("Not validated")
+
+	// Check OpenLane status on startup
+	go func() {
+		manager := openlane.NewManager()
+		mode := manager.DetectMode()
+
+		fyne.Do(func() {
+			if mode == openlane.ModeDocker {
+				if manager.IsDockerImagePulled() {
+					dockerStatus.SetText("✓ Docker image ready")
+				} else {
+					dockerStatus.SetText("○ Docker image not pulled")
+				}
+			} else if mode == openlane.ModeNative {
+				dockerStatus.SetText("✓ Native tools detected")
+			} else {
+				dockerStatus.SetText("✗ OpenLane not available")
+			}
+
+			if manager.IsPDKInstalled() {
+				pdkStatus.SetText("✓ SKY130A PDK ready")
+			} else {
+				pdkStatus.SetText("○ PDK not installed (run: volare enable --pdk sky130 sky130A)")
+			}
+		})
+	}()
+
+	// Pull Docker Image button (only shown when needed)
+	pullImageBtn := widget.NewButton("Pull OpenLane Image", func() {
+		go func() {
+			fyne.Do(func() {
+				dockerStatus.SetText("Pulling image...")
+			})
+			addLog("=== Pulling OpenLane Docker Image ===")
+			addLog("This may take several minutes...")
+
+			manager := openlane.NewManager()
+			err := manager.PullDockerImage(func(msg string) {
+				addLog(msg)
+			})
+			if err != nil {
+				fyne.Do(func() {
+					dockerStatus.SetText("✗ Pull failed: " + err.Error())
+				})
+				addLog("ERROR: " + err.Error())
+			} else {
+				fyne.Do(func() {
+					dockerStatus.SetText("✓ Docker image ready")
+				})
+				addLog("Docker image pulled successfully")
+			}
+		}()
+	})
+
+	// Placement validation checkbox
+	enablePlacementCheck := widget.NewCheck("Enable OpenLane Placement Check", nil)
+
 	// ========== STATUS ==========
 	statusLabel := widget.NewLabel("Ready")
 
 	// ========== GENERATE ALL BUTTON ==========
-	generateAllBtn := widget.NewButton("Generate All", func() {
+	var generateAllBtn *widget.Button
+	var validateAllBtn *widget.Button
+	var exportPackageBtn *widget.Button
+
+	generateAllBtn = widget.NewButton("Generate All", func() {
+		generateAllBtn.Disable()
+		validateAllBtn.Disable()
+		exportPackageBtn.Disable()
+		generateAllBtn.SetText("Generating...")
 		go func() {
 			fyne.Do(func() {
 				statusLabel.SetText("Generating...")
@@ -242,13 +314,21 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig) fyne.CanvasObject {
 
 			fyne.Do(func() {
 				statusLabel.SetText("All files generated")
+				generateAllBtn.Enable()
+				validateAllBtn.Enable()
+				exportPackageBtn.Enable()
+				generateAllBtn.SetText("Generate All")
 			})
 			addLog("Generation complete!")
 		}()
 	})
 
 	// ========== VALIDATE ALL BUTTON ==========
-	validateAllBtn := widget.NewButton("Validate All", func() {
+	validateAllBtn = widget.NewButton("Validate All", func() {
+		validateAllBtn.Disable()
+		generateAllBtn.Disable()
+		exportPackageBtn.Disable()
+		validateAllBtn.SetText("Validating...")
 		go func() {
 			fyne.Do(func() {
 				statusLabel.SetText("Validating...")
@@ -314,19 +394,72 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig) fyne.CanvasObject {
 				addLog("PASSED")
 			}
 
+			// OpenLane Placement validation (if enabled and available)
+			if enablePlacementCheck.Checked {
+				addLog("\n=== OpenLane Placement Validation ===")
+				manager := openlane.NewManager()
+				mode := manager.DetectMode()
+
+				if mode == openlane.ModeNone {
+					fyne.Do(func() { placementResult.SetText("SKIP - No OpenLane") })
+					addLog("SKIPPED: OpenLane not available")
+				} else {
+					defPath := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.def", cfg.Rows, cfg.Cols)
+
+					addLog(fmt.Sprintf("Mode: %s", mode))
+					addLog(fmt.Sprintf("DEF: %s", defPath))
+
+					config := openlane.DefaultConfig()
+					result, err := validation.RunPlacementCheck(defPath, manager, config)
+					if err != nil {
+						fyne.Do(func() { placementResult.SetText("ERROR") })
+						addLog(fmt.Sprintf("ERROR: %v", err))
+						allPassed = false
+					} else if result.Passed {
+						fyne.Do(func() { placementResult.SetText("PASS") })
+						addLog(result.RawOutput)
+						addLog("PASSED")
+					} else {
+						fyne.Do(func() { placementResult.SetText("FAIL") })
+						addLog(result.RawOutput)
+						addLog(fmt.Sprintf("FAILED: %d violations", result.ViolationCount))
+						for _, v := range result.Violations {
+							addLog(fmt.Sprintf("  - %s: %s", v.Issue, v.Message))
+						}
+						allPassed = false
+					}
+				}
+			}
+
 			// Summary
 			if allPassed {
-				fyne.Do(func() { statusLabel.SetText("All validations passed") })
+				fyne.Do(func() {
+					statusLabel.SetText("All validations passed")
+					validateAllBtn.Enable()
+					generateAllBtn.Enable()
+					exportPackageBtn.Enable()
+					validateAllBtn.SetText("Validate All")
+				})
 				addLog("\n=== ALL VALIDATIONS PASSED ===")
 			} else {
-				fyne.Do(func() { statusLabel.SetText("Some validations failed") })
+				fyne.Do(func() {
+					statusLabel.SetText("Some validations failed")
+					validateAllBtn.Enable()
+					generateAllBtn.Enable()
+					exportPackageBtn.Enable()
+					validateAllBtn.SetText("Validate All")
+				})
 				addLog("\n=== SOME VALIDATIONS FAILED ===")
 			}
 		}()
 	})
 
 	// ========== EXPORT PACKAGE BUTTON ==========
-	exportPackageBtn := widget.NewButton("Export Package", func() {
+	exportPackageBtn = widget.NewButton("Export Package", func() {
+		exportPackageBtn.Disable()
+		generateAllBtn.Disable()
+		validateAllBtn.Disable()
+		exportPackageBtn.SetText("Exporting...")
 		go func() {
 			fyne.Do(func() {
 				statusLabel.SetText("Exporting package...")
@@ -390,8 +523,21 @@ Date: %s
 `, designName, time.Now().Format("2006-01-02"), designName, designName, designName)
 			os.WriteFile(outputDir+"/README.md", []byte(readme), 0644)
 
+			// Convert to absolute path for dialog
+			absOutputDir, _ := filepath.Abs(outputDir)
+
 			fyne.Do(func() {
 				statusLabel.SetText("Package exported to " + outputDir)
+				exportPackageBtn.Enable()
+				generateAllBtn.Enable()
+				validateAllBtn.Enable()
+				exportPackageBtn.SetText("Export Package")
+
+				// Show success dialog with export directory path
+				if window != nil {
+					message := fmt.Sprintf("Package exported successfully to:\n\n%s\n\nContents:\n• Cell library (LEF/LIB/V)\n• Verilog netlist\n• DEF placement\n• OpenLane config\n• README", absOutputDir)
+					dialog.ShowInformation("Export Complete", message, window)
+				}
 			})
 			addLog("\nExport complete: " + outputDir)
 		}()
@@ -473,13 +619,28 @@ Date: %s
 		widget.NewLabel("Yosys:"), yosysResult,
 		widget.NewLabel(" | DEF:"), defResult,
 		widget.NewLabel(" | Cross:"), crossResult,
+		widget.NewLabel(" | Placement:"), placementResult,
+	)
+
+	// OpenLane status panel
+	openLanePanel := container.NewVBox(
+		widget.NewLabelWithStyle("OpenLane Status", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		container.NewHBox(widget.NewLabel("Docker:"), dockerStatus),
+		container.NewHBox(widget.NewLabel("PDK:"), pdkStatus),
+		pullImageBtn,
+		enablePlacementCheck,
 	)
 
 	// Bottom section with validation
 	validationSection := container.NewVBox(
 		widget.NewSeparator(),
-		widget.NewLabelWithStyle("Validation Results", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		validationRow,
+		container.NewHSplit(
+			container.NewVBox(
+				widget.NewLabelWithStyle("Validation Results", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+				validationRow,
+			),
+			openLanePanel,
+		),
 		container.NewScroll(logOutput),
 	)
 

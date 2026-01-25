@@ -23,6 +23,9 @@ func ExportCSV(design *compiler.ArrayDesign, path string) error {
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
 
+	// Filter cells to export
+	cellsToExport := filterActiveCells(design)
+
 	// Determine if this is compute mode with weights
 	hasWeights := design.Config.Mode == compiler.ModeCompute &&
 		design.Config.ComputeConfig != nil &&
@@ -40,7 +43,7 @@ func ExportCSV(design *compiler.ArrayDesign, path string) error {
 	}
 
 	// Data rows
-	for _, cell := range design.Cells {
+	for _, cell := range cellsToExport {
 		var record []string
 		if hasWeights {
 			record = []string{

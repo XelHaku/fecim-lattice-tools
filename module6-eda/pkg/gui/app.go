@@ -28,38 +28,23 @@ func CreateMainWindow(app fyne.App) fyne.Window {
 	}
 
 	// Create tab contents
-	cellBuilderContent := tabs.MakeCellBuilderTab()                   // Tab 1
-	arrayBuilderContent := tabs.MakeArrayBuilderTab(arrayConfig)     // Tab 2
-	verilogContent := tabs.MakeVerilogExportTab(arrayConfig)         // Tab 3
-	defContent := tabs.MakeDEFExportTab(arrayConfig)                 // Tab 4
-	validationContent := tabs.MakeValidationTab(arrayConfig)         // Tab 5
-	learnContent := tabs.MakeLearnTab(&tabs.AppState{}, w)           // Tab 6 (existing)
-	exportAllContent := tabs.MakeExportAllTab(arrayConfig)           // Tab 7
+	builderContent := tabs.MakeBuilderValidationTab(arrayConfig, w)  // Tab 1
+	learnContent := tabs.MakeLearnTab(nil, w)                        // Tab 2
 
 	// View names for selector
 	viewNames := []string{
-		"1. Cell Builder",
-		"2. Array Builder",
-		"3. Verilog Export",
-		"4. DEF Export",
-		"5. Validation",
-		"6. Learn",
-		"7. Export All",
+		"1. Builder & Validation",
+		"2. Learn",
 	}
 	
 	allViews := []fyne.CanvasObject{
-		cellBuilderContent,
-		arrayBuilderContent,
-		verilogContent,
-		defContent,
-		validationContent,
+		builderContent,
 		learnContent,
-		exportAllContent,
 	}
 
 	// View selector dropdown
 	viewSelector := widget.NewSelect(viewNames, nil)
-	viewSelector.SetSelected("1. Cell Builder")
+	viewSelector.SetSelected("1. Builder & Validation")
 
 	// Content container using Stack
 	contentContainer := container.NewStack(allViews...)
@@ -92,7 +77,7 @@ func CreateMainWindow(app fyne.App) fyne.Window {
 			v.Hide()
 		}
 	}
-	currentView = "1. Cell Builder"
+	currentView = "1. Builder & Validation"
 
 	// Header with inline view selector
 	banner := widget.NewLabel("Generate fabrication-ready files for OpenLane/SKY130")

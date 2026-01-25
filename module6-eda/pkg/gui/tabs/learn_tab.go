@@ -22,19 +22,26 @@ func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 	topicSelector := widget.NewList(
 		func() int { return len(topics) },
 		func() fyne.CanvasObject {
-			return widget.NewLabel("Template")
+			label := widget.NewLabel("Template")
+			label.Wrapping = fyne.TextWrapWord
+			return label
 		},
 		func(id widget.ListItemID, obj fyne.CanvasObject) {
-			obj.(*widget.Label).SetText(topics[id])
+			label := obj.(*widget.Label)
+			label.SetText(topics[id])
+			// Add visual hierarchy with bold text for better readability
+			if id == 0 || id == 1 || id == 2 {
+				label.TextStyle = fyne.TextStyle{Bold: true}
+			}
 		},
 	)
 	topicSelector.OnSelected = func(id widget.ListItemID) {
 		// Will be connected to content display
 	}
 
-	// Content area
+	// Content area - increased width for better card layout
 	contentScroll := container.NewScroll(makeIntroContent())
-	contentScroll.SetMinSize(fyne.NewSize(600, 500))
+	contentScroll.SetMinSize(fyne.NewSize(750, 500))
 
 	// Connect topic selector to content
 	topicSelector.OnSelected = func(id widget.ListItemID) {
@@ -58,17 +65,20 @@ func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 	// Select first topic by default
 	topicSelector.Select(0)
 
-	// Layout with sidebar
+	// Layout with sidebar - increased width and better spacing
+	sidebarTitle := widget.NewLabelWithStyle("Topics", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	sidebarSpacer := widget.NewLabel("") // Add spacing after title
+	sidebarSpacer.Resize(fyne.NewSize(1, 8))
+
 	sidebar := container.NewBorder(
-		widget.NewLabelWithStyle("Topics", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		container.NewVBox(sidebarTitle, sidebarSpacer),
 		nil, nil, nil,
 		topicSelector,
 	)
-	sidebar.Resize(fyne.NewSize(180, 500))
 
-	// Main layout
+	// Main layout - wider sidebar (240px instead of 180px)
 	split := container.NewHSplit(sidebar, contentScroll)
-	split.SetOffset(0.22)
+	split.SetOffset(0.25) // Wider sidebar: 25% instead of 22%
 
 	// Header
 	header := container.NewVBox(
@@ -245,14 +255,24 @@ func makeCrossbarContent() fyne.CanvasObject {
 func makeFilesContent() fyne.CanvasObject {
 	title := widget.NewLabelWithStyle("EDA Files We Generate", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
-	// 2x2 file cards grid
+	// 2x2 file cards grid with spacing for better readability
 	lefCard := LEFPreviewCard()
 	defCard := DEFPreviewCard()
 	verilogCard := VerilogPreviewCard()
 	libertyCard := LibertyPreviewCard()
 
-	cardsRow1 := container.NewHBox(lefCard, defCard)
-	cardsRow2 := container.NewHBox(verilogCard, libertyCard)
+	spacerH1 := widget.NewLabel("")
+	spacerH1.Resize(fyne.NewSize(10, 1))
+	spacerH2 := widget.NewLabel("")
+	spacerH2.Resize(fyne.NewSize(10, 1))
+
+	cardsRow1 := container.NewHBox(lefCard, spacerH1, defCard)
+
+	// Vertical spacer between card rows
+	spacerV := widget.NewLabel("")
+	spacerV.Resize(fyne.NewSize(1, 12))
+
+	cardsRow2 := container.NewHBox(verilogCard, spacerH2, libertyCard)
 
 	// File purposes section (clean prose)
 	purposesTitle := widget.NewLabelWithStyle("File Purposes", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
@@ -277,6 +297,7 @@ Important: LEF is abstract with no real layout. Liberty timing values need SPICE
 		title,
 		widget.NewSeparator(),
 		cardsRow1,
+		spacerV,
 		cardsRow2,
 		widget.NewSeparator(),
 		purposesTitle,

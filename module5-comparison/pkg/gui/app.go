@@ -123,9 +123,9 @@ func NewComparisonApp() *ComparisonApp {
 	ca.fecimSpec = EnergySpec{
 		Name:          "FeCIM",
 		EnergyFJ:      fecimEnergyPJPerMAC * 1000, // 1,000 fJ/MAC
-		Source:        "Dr. Tour's presentation (NOT independently verified)",
+		Source:        "Dr. Tour COSM 2025 (NOT independently verified)",
 		Verified:      false,
-		SourceDetails: "Claimed: 'under 1 picojoule'. TRL 4 - lab only.",
+		SourceDetails: "Claimed: 'under 1 picojoule per MAC'. TRL 4 - laboratory validation only.",
 	}
 
 	debug.Println("NewComparisonApp: Initialization complete")
@@ -300,6 +300,9 @@ func (ca *ComparisonApp) updateStatusForMode() {
 		newText = "Mode: Technical Briefing"
 	case PresentationModeEngineer:
 		newText = "Mode: Technical Deep-Dive"
+	case PresentationModeManual:
+		// In manual mode, preserve the current status text (don't override calculation status)
+		return
 	}
 
 	// Use caching to avoid redundant SetText calls that trigger layout recalculations
@@ -386,8 +389,17 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	}
 
 	// Calculate button
-	calcBtn := widget.NewButton("Calculate", func() {
-		ca.updateCalculations()
+	var calcBtn *widget.Button
+	calcBtn = widget.NewButton("Calculate", func() {
+		calcBtn.Disable()
+		calcBtn.SetText("Calculating...")
+		go func() {
+			ca.updateCalculations()
+			fyne.Do(func() {
+				calcBtn.Enable()
+				calcBtn.SetText("Calculate")
+			})
+		}()
 	})
 	calcBtn.Importance = widget.HighImportance
 
@@ -450,12 +462,15 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	)
 
 	// === FOOTER ===
+	disclaimerLabel := widget.NewLabel("Technology Readiness Level 4 | Laboratory Validation | Energy claims pending independent verification")
+	disclaimerLabel.TextStyle = fyne.TextStyle{Italic: true}
+
 	footer := container.NewHBox(
 		ca.modeIndicator,
 		widget.NewSeparator(),
 		ca.statusLabel,
 		layout.NewSpacer(),
-		widget.NewLabel("TRL 4 | Lab Validation Only | Sources in footnotes"),
+		disclaimerLabel,
 	)
 
 	// === MAIN LAYOUT ===
@@ -565,24 +580,32 @@ func (ca *ComparisonApp) updateCalculations() {
 	go func() {
 		time.Sleep(500 * time.Millisecond)
 		fyne.Do(func() {
-			ca.modeIndicator.SetMode(ComparisonModeIdle)
+			if ca.modeIndicator != nil {
+				ca.modeIndicator.SetMode(ComparisonModeIdle)
+			}
 		})
 	}()
 }
 
-// getWorkloadMACs returns MACs for the current workload.
+// getWorkloadMACs returns MACs per inference for common neural network workloads.
+// Sources: Published architecture specifications and measured inference costs.
 func (ca *ComparisonApp) getWorkloadMACs() int {
 	switch ca.currentWorkload {
 	case "MNIST":
-		return 101632 // 784*128 + 128*10
+		// Simple 2-layer MLP: 784 input → 128 hidden → 10 output
+		return 101632 // (784×128) + (128×10)
 	case "ResNet-50":
-		return 4000000000 // ~4B MACs
+		// Deep residual network for image classification
+		return 4000000000 // ~4 GMACs
 	case "BERT-Base":
-		return 11000000000 // ~11B MACs
+		// Transformer for NLP (sequence length 512)
+		return 11000000000 // ~11 GMACs
 	case "GPT-2":
-		return 35000000000 // ~35B MACs
+		// Large language model (117M parameters)
+		return 35000000000 // ~35 GMACs
 	case "LLM-70B":
-		return 140000000000000 // ~140T MACs
+		// Llama-2-70B or similar large model
+		return 140000000000000 // ~140 TMACs
 	default:
 		return 101632
 	}

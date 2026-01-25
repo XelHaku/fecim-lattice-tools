@@ -150,6 +150,7 @@ func mapWeights(config *ArrayConfig) (*ArrayDesign, error) {
 		Stats: DesignStats{
 			TotalCells:     config.ArrayRows * config.ArrayCols,
 			ActiveCells:    numWeights,
+			UsedCells:      numWeights, // Deprecated: kept for backward compatibility
 			AreaMM2:        totalAreaMM2,
 			PowerMW:        0.1, // Estimate active power
 			QuantMSE:       mse,

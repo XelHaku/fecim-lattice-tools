@@ -12,15 +12,12 @@ import (
 
 // EmbeddedEDAApp is the embeddable version of the EDA app
 type EmbeddedEDAApp struct {
-	state   *tabs.AppState
 	content fyne.CanvasObject
 }
 
 // NewEmbeddedEDAApp creates a new embedded EDA app instance
 func NewEmbeddedEDAApp() *EmbeddedEDAApp {
-	return &EmbeddedEDAApp{
-		state: &tabs.AppState{},
-	}
+	return &EmbeddedEDAApp{}
 }
 
 // CreateModuleContent creates the embedded module6 content
@@ -36,15 +33,10 @@ func CreateModuleContent(window fyne.Window) fyne.CanvasObject {
 		CellHeight:   2.72,
 	}
 
-	// Create 7 tabs matching new architecture
+	// Create 2 tabs - consolidated architecture
 	return container.NewAppTabs(
-		container.NewTabItem("1. Cell Builder", tabs.MakeCellBuilderTab()),
-		container.NewTabItem("2. Array Builder", tabs.MakeArrayBuilderTab(arrayConfig)),
-		container.NewTabItem("3. Verilog Export", tabs.MakeVerilogExportTab(arrayConfig)),
-		container.NewTabItem("4. DEF Export", tabs.MakeDEFExportTab(arrayConfig)),
-		container.NewTabItem("5. Validation", tabs.MakeValidationTab(arrayConfig)),
-		container.NewTabItem("6. Learn", tabs.MakeLearnTab(nil, window)),
-		container.NewTabItem("7. Export All", tabs.MakeExportAllTab(arrayConfig)),
+		container.NewTabItem("1. Builder & Validation", tabs.MakeBuilderValidationTab(arrayConfig, window)),
+		container.NewTabItem("2. Learn", tabs.MakeLearnTab(nil, window)),
 	)
 }
 

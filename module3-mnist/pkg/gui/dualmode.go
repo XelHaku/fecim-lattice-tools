@@ -25,6 +25,30 @@ import (
 	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
+// Constants for MNIST network configuration
+const (
+	// Network architecture
+	MNISTInputSize   = 784 // 28x28 pixel images
+	MNISTHiddenSize  = 128 // Default hidden layer size
+	MNISTOutputSize  = 10  // Digits 0-9
+	MNISTTotalMACs   = 101632 // Total multiply-accumulate operations per inference
+
+	// FeCIM hardware parameters
+	FeCIMDefaultLevels = 30    // Standard 30-level quantization
+	FeCIMDefaultNoise  = 0.01  // 1% standard deviation (typical production)
+	FeCIMDefaultADC    = 8     // 8-bit ADC resolution
+	FeCIMDefaultDAC    = 8     // 8-bit DAC resolution
+
+	// Energy efficiency
+	FeCIMEnergyPerMAC = 50e-15  // 50 fJ/MAC (femtojoules)
+	GPUEnergyPerMAC   = 500e-12 // 500 pJ/MAC (with DRAM access)
+	EnergyRatioGPU    = 10000   // GPU uses 10,000x more energy
+
+	// Accuracy targets
+	TargetHardwareAccuracy = 0.87 // 87% measured on real FeCIM hardware
+	TargetFP32Accuracy     = 0.98 // 98% theoretical with Float32
+)
+
 // Package-level logger for MNIST GUI (named mnistLog to avoid conflict with app.go's debug logger)
 var mnistLog *logging.Logger
 
@@ -121,11 +145,11 @@ type DualModeApp struct {
 func NewDualModeApp() *DualModeApp {
 	app := &DualModeApp{
 		dataDir:         findDataDir(),
-		currentQATLevel: 30, // Default QAT level
+		currentQATLevel: FeCIMDefaultLevels, // Default QAT level (30)
 	}
 
 	// Create network
-	app.network = core.NewDualModeNetwork(784, 128, 10)
+	app.network = core.NewDualModeNetwork(MNISTInputSize, MNISTHiddenSize, MNISTOutputSize)
 
 	// Load pretrained weights (default 30-level QAT weights)
 	weightsPath := filepath.Join(app.dataDir, "pretrained_weights.json")
@@ -236,7 +260,7 @@ func (app *DualModeApp) Stop() {
 func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
 	fmt.Println("[MNIST] createMainLayout: start")
 	// Status label must be created first (used by callbacks in controls zone)
-	app.statusLabel = widget.NewLabel("Ready. Draw a digit or click 'Random Sample'.")
+	app.statusLabel = widget.NewLabel("Ready. Draw a digit or click 'Random' to load a test sample from the MNIST dataset.")
 
 	// Header
 	fmt.Println("[MNIST] createMainLayout: creating header...")
@@ -311,7 +335,9 @@ func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
 
 // createHeader creates the title and info header.
 func (app *DualModeApp) createHeader() fyne.CanvasObject {
-	title := widget.NewLabel("MNIST FeCIM | 784→128→10 | 30 Levels | 87%")
+	title := widget.NewLabel(fmt.Sprintf("MNIST FeCIM | %d→%d→%d | %d Levels | %.0f%% Target",
+		MNISTInputSize, MNISTHiddenSize, MNISTOutputSize,
+		FeCIMDefaultLevels, TargetHardwareAccuracy*100))
 	title.TextStyle = fyne.TextStyle{Bold: true}
 
 	// Quick Demo button - prominent call to action
@@ -459,10 +485,10 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 
 	// Levels slider (2-31, covers all QAT-trained levels)
 	levelsTitle := widget.NewLabel("Levels:")
-	app.levelsLabel = widget.NewLabel("30")
+	app.levelsLabel = widget.NewLabel(fmt.Sprintf("%d", FeCIMDefaultLevels))
 	app.levelsSlider = widget.NewSlider(2, 31)
 	app.levelsSlider.Step = 1
-	app.levelsSlider.Value = 30
+	app.levelsSlider.Value = float64(FeCIMDefaultLevels)
 	app.levelsSlider.OnChanged = func(v float64) {
 		mnistLog.SliderChange("Levels", v)
 		levels := int(v)
@@ -480,16 +506,16 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	}
 	levelsRow := container.NewBorder(nil, nil,
 		container.NewHBox(levelsTitle, widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
-			dialog.ShowInformation("Quantization Levels", "Number of discrete conductance states in the ferroelectric device.\n30 levels = ~4.9 bits of precision (FeCIM standard).p", app.window)
+			dialog.ShowInformation("Quantization Levels", "Number of discrete conductance states in the ferroelectric device.\n\n30 levels = ~4.9 bits per cell (FeCIM standard)\n\nPhysics: HZO ferroelectric material exhibits ~30 stable polarization states due to domain wall pinning at crystal defects.", app.window)
 		})),
 		app.levelsLabel, app.levelsSlider)
 
 	// Noise slider
 	noiseTitle := widget.NewLabel("Noise:")
-	app.noiseLabel = widget.NewLabel("0.01")
+	app.noiseLabel = widget.NewLabel(fmt.Sprintf("%.2f", FeCIMDefaultNoise))
 	app.noiseSlider = widget.NewSlider(0.0, 0.20)
 	app.noiseSlider.Step = 0.01
-	app.noiseSlider.Value = 0.01
+	app.noiseSlider.Value = FeCIMDefaultNoise
 	app.noiseSlider.OnChanged = func(v float64) {
 		mnistLog.SliderChange("Noise", v)
 		app.noiseLabel.SetText(fmt.Sprintf("%.2f", v))
@@ -500,7 +526,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	}
 	noiseRow := container.NewBorder(nil, nil,
 		container.NewHBox(noiseTitle, widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
-			dialog.ShowInformation("Read Noise", "Gaussian noise added to analog read operations.\nSimulates thermal noise and device variability.\n0.01 = 1% noise (standard).", app.window)
+			dialog.ShowInformation("Read Noise", "Gaussian noise added to analog read operations.\n\nSimulates:\n• Thermal (Johnson) noise in sense amplifiers\n• Device-to-device variability\n• Cycle-to-cycle retention drift\n\n0.01 = 1% standard deviation (typical for production hardware)", app.window)
 		})),
 		app.noiseLabel, app.noiseSlider)
 
@@ -515,7 +541,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 			app.runInference(app.lastPixels)
 		}
 	})
-	app.adcSelect.SetSelected("8")
+	app.adcSelect.SetSelected(fmt.Sprintf("%d", FeCIMDefaultADC))
 
 	app.dacSelect = widget.NewSelect(bitOptions, func(s string) {
 		mnistLog.Selection("DAC", s)
@@ -526,7 +552,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 			app.runInference(app.lastPixels)
 		}
 	})
-	app.dacSelect.SetSelected("8")
+	app.dacSelect.SetSelected(fmt.Sprintf("%d", FeCIMDefaultDAC))
 
 	app.hiddenSelect = widget.NewSelect([]string{"64", "128", "256"}, func(s string) {
 		mnistLog.Selection("Hidden", s)
@@ -543,14 +569,29 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	)
 
 	// Preset buttons (first row: standard presets)
-	idealBtn := widget.NewButton("Ideal", func() { mnistLog.Button("Preset:Ideal"); app.applyPresetWithMode(30, 0.01, 8, 8, false) })
-	quantCliffBtn := widget.NewButton("QuantCliff", func() { mnistLog.Button("Preset:QuantCliff"); app.applyPresetWithMode(2, 0.01, 8, 8, false) })
-	noisyBtn := widget.NewButton("Noisy", func() { mnistLog.Button("Preset:Noisy"); app.applyPresetWithMode(30, 0.15, 6, 8, false) })
-	brokenBtn := widget.NewButton("BrokenADC", func() { mnistLog.Button("Preset:BrokenADC"); app.applyPresetWithMode(30, 0.01, 3, 8, false) })
+	idealBtn := widget.NewButton("Ideal", func() {
+		mnistLog.Button("Preset:Ideal")
+		app.applyPresetWithMode(FeCIMDefaultLevels, FeCIMDefaultNoise, FeCIMDefaultADC, FeCIMDefaultDAC, false)
+	})
+	quantCliffBtn := widget.NewButton("QuantCliff", func() {
+		mnistLog.Button("Preset:QuantCliff")
+		app.applyPresetWithMode(2, FeCIMDefaultNoise, FeCIMDefaultADC, FeCIMDefaultDAC, false)
+	})
+	noisyBtn := widget.NewButton("Noisy", func() {
+		mnistLog.Button("Preset:Noisy")
+		app.applyPresetWithMode(FeCIMDefaultLevels, 0.15, 6, FeCIMDefaultDAC, false)
+	})
+	brokenBtn := widget.NewButton("BrokenADC", func() {
+		mnistLog.Button("Preset:BrokenADC")
+		app.applyPresetWithMode(FeCIMDefaultLevels, FeCIMDefaultNoise, 3, FeCIMDefaultDAC, false)
+	})
 
 	// Tour Mode button (single-layer 784→10, matching Dr. Tour's architecture)
 	// Achieved 83% accuracy with 30-level quantization (Tour claimed 87% with 88% theoretical max)
-	tourBtn := widget.NewButton("Tour", func() { mnistLog.Button("Preset:Tour"); app.applyPresetWithMode(30, 0.01, 8, 8, true) })
+	tourBtn := widget.NewButton("Tour", func() {
+		mnistLog.Button("Preset:Tour")
+		app.applyPresetWithMode(FeCIMDefaultLevels, FeCIMDefaultNoise, FeCIMDefaultADC, FeCIMDefaultDAC, true)
+	})
 	tourBtn.Importance = widget.HighImportance // Highlight this button
 
 	presetRow := container.NewGridWithColumns(5, idealBtn, quantCliffBtn, noisyBtn, brokenBtn, tourBtn)
@@ -568,7 +609,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	app.quantizationWidget = NewQuantizationWidget()
 
 	// P1.3: Energy Tracking Widget
-	app.energyWidget = NewEnergyWidget(784, 128, 10)
+	app.energyWidget = NewEnergyWidget(MNISTInputSize, MNISTHiddenSize, MNISTOutputSize)
 
 	// Controls header (compact, fixed height)
 	controlsHeader := container.NewVBox(
@@ -634,7 +675,11 @@ func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
 	// Create heatmap raster (quantized weights)
 	fmt.Println("[MNIST] createWeightZone: creating heatmap...")
 	app.weightHeatmap = canvas.NewRaster(app.drawWeightHeatmap)
-	app.weightHeatmap.SetMinSize(fyne.NewSize(256, 128))
+	app.weightHeatmap.SetMinSize(fyne.NewSize(600, 400))
+
+	// Create color legend for weight heatmap (blue-white-red)
+	fmt.Println("[MNIST] createWeightZone: creating color legend...")
+	weightLegend := sharedwidgets.NewColorLegend(-1.0, 1.0, "", true, sharedwidgets.BlueWhiteRedColor)
 
 	// Create FP vs Quantized comparison widget
 	fmt.Println("[MNIST] createWeightZone: creating comparison widget...")
@@ -654,12 +699,19 @@ func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
 	fmt.Println("[MNIST] createWeightZone: creating header container...")
 	header := container.NewVBox(
 		container.NewHBox(label, layout.NewSpacer(), layerSelect, zoomBtn),
-		container.NewHBox(app.weightDimLabel, app.weightRangeLabel, app.weightLevelsLabel),
+		container.NewHBox(
+			app.weightDimLabel,
+			widget.NewSeparator(),
+			app.weightRangeLabel,
+			widget.NewSeparator(),
+			app.weightLevelsLabel,
+		),
 	)
 
 	// Create tabbed view for different weight visualizations
 	fmt.Println("[MNIST] createWeightZone: creating tabs...")
-	quantizedTab := container.NewMax(app.weightHeatmap)
+	// Add legend to the left of the heatmap
+	quantizedTab := container.NewBorder(nil, nil, weightLegend, nil, app.weightHeatmap)
 	comparisonTab := container.NewMax(app.weightComparisonWidget)
 	sideBySideTab := container.NewMax(app.dualWeightHeatmap)
 
@@ -738,9 +790,9 @@ func (app *DualModeApp) runInference(pixels []float64) {
 		}
 
 		// Update energy (legacy)
-		gpuEnergy := result.EnergyUsed * 10000 // Estimated 10,000x for GPU
+		gpuEnergy := result.EnergyUsed * EnergyRatioGPU
 		app.energyLabel.SetText(fmt.Sprintf("Energy: %.2f uJ (FeCIM) vs %.0f mJ (GPU) = %.0fx savings",
-			result.EnergyUsed, gpuEnergy/1000, 10000.0))
+			result.EnergyUsed, gpuEnergy/1000, float64(EnergyRatioGPU)))
 
 		// Update status
 		app.statusLabel.SetText(fmt.Sprintf("FP: %d (%.1f%%) | CIM: %d (%.1f%%) | %s",
@@ -767,9 +819,9 @@ func (app *DualModeApp) runInference(pixels []float64) {
 				CIMProbabilities: result.CIMProbabilities,
 				Match:            result.Agree,
 				ConfidenceDelta:  result.FPConfidence - result.CIMConfidence,
-				EnergyFeCIM:      result.EnergyUsed * 1e6,         // Convert to nJ
-				EnergyGPU:        result.EnergyUsed * 1e6 * 10000, // 10,000x for GPU
-				EnergyRatio:      10000.0,
+				EnergyFeCIM:      result.EnergyUsed * 1e6,                     // Convert to nJ
+				EnergyGPU:        result.EnergyUsed * 1e6 * EnergyRatioGPU,    // GPU energy
+				EnergyRatio:      float64(EnergyRatioGPU),
 			}
 			if compResult.ConfidenceDelta < 0 {
 				compResult.ConfidenceDelta = -compResult.ConfidenceDelta
@@ -1042,7 +1094,7 @@ func (app *DualModeApp) resetResults() {
 		app.fpProbBars[i].SetValue(0)
 		app.cimProbBars[i].SetValue(0)
 	}
-	app.statusLabel.SetText("Ready. Draw a digit or click 'Random Sample'.")
+	app.statusLabel.SetText("Ready. Draw a digit or load a test sample to see FeCIM in action.")
 
 	// Clear P1 widgets
 	if app.quantizationWidget != nil {
@@ -1080,7 +1132,7 @@ func (app *DualModeApp) applyPresetWithMode(levels int, noise float64, adcBits, 
 
 		// Update status to indicate Tour Mode
 		if singleLayer {
-			app.statusLabel.SetText("Tour Mode: Single-layer (784→10) ~83% trained accuracy")
+			app.statusLabel.SetText("Tour Mode: Single-layer network (784→10) matching Dr. Tour's COSM 2025 architecture | Target: 87% accuracy")
 		}
 
 		app.updateWeightHeatmap()
@@ -1334,7 +1386,7 @@ func (app *DualModeApp) updateWeightHeatmap() {
 			}
 		}
 		rangeMsg := fmt.Sprintf("Range: [%.3f, %.3f]", wMin, wMax)
-		levelsMsg := fmt.Sprintf("Distinct levels: %d (FeCIM max: 30)", len(distinctMap))
+		levelsMsg := fmt.Sprintf("Levels: %d/30", len(distinctMap))
 		fyne.Do(func() {
 			app.weightRangeLabel.SetText(rangeMsg)
 			app.weightLevelsLabel.SetText(levelsMsg)

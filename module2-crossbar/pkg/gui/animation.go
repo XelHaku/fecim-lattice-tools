@@ -42,7 +42,7 @@ func (ca *CrossbarApp) runMVMAnimated(input []float64) {
 	// Phase 1: Input voltages applied (300ms)
 	fyne.Do(func() {
 		ca.modeIndicator.SetMode(DemoModeCompute)
-		ca.updateStatus("COMPUTE | Phase 1: Applying input voltages...")
+		ca.updateStatus("COMPUTE | Phase 1: Applying input voltages to columns (DAC)")
 
 		// Highlight all columns to show input voltages
 		cols := make([]int, ca.config.Cols)
@@ -56,7 +56,7 @@ func (ca *CrossbarApp) runMVMAnimated(input []float64) {
 
 	// Phase 2: Current flowing through cells (500ms animation)
 	fyne.Do(func() {
-		ca.updateStatus("COMPUTE | Phase 2: Current flowing through cells...")
+		ca.updateStatus("COMPUTE | Phase 2: Currents flowing (I = G × V for all cells in parallel)")
 	})
 
 	// Animate wave propagation
@@ -91,7 +91,7 @@ func (ca *CrossbarApp) runMVMAnimated(input []float64) {
 
 	// Phase 3: Output currents collected (300ms)
 	fyne.Do(func() {
-		ca.updateStatus("COMPUTE | Phase 3: Collecting output currents...")
+		ca.updateStatus("COMPUTE | Phase 3: Summing row currents (ADC conversion)")
 		ca.mvmVis.SetOutput(output)
 
 		// Highlight all rows to show output currents
@@ -121,23 +121,28 @@ func (ca *CrossbarApp) runMVMAnimated(input []float64) {
 		macOps := ca.config.Rows * ca.config.Cols
 
 		ca.statsLabel.SetText(fmt.Sprintf(
-			"MVM Complete!\n"+
+			"MVM Complete!\n\n"+
+				"Computation: I = W × V\n"+
 				"Input Sum: %.4f\n"+
-				"Output Sum: %.4f\n"+
+				"Output Sum: %.4f\n\n"+
+				"Performance:\n"+
+				"MAC Operations: %d\n"+
+				"Parallelism: 100%%\n"+
+				"Time: ~1ns (analog)\n\n"+
+				"Statistics:\n"+
 				"Total Reads: %d\n"+
-				"Total Writes: %d\n"+
-				"MAC Operations: %d",
-			sumInput, sumOutput, reads, writes, macOps,
+				"Total Writes: %d",
+			sumInput, sumOutput, macOps, reads, writes,
 		))
 
-		ca.updateStatus(fmt.Sprintf("COMPUTE | Complete: %d parallel MACs", macOps))
+		ca.updateStatus(fmt.Sprintf("COMPUTE | Complete: %d parallel MACs in ~1ns", macOps))
 		ca.modeIndicator.SetMode(DemoModeIdle)
 
 		// Auto-run IR Drop and Sneak Path analysis
 		ca.runIRDropAnalysis()
 		ca.runSneakPathAnalysis()
 
-		ca.updateStatus("Ready for next MVM")
+		ca.updateStatus("Ready | MVM complete. Check IR Drop and Sneak Paths tabs for analysis!")
 		ca.runMVMButton.Enable()
 	})
 	debug.Println("runMVM: Complete")

@@ -67,7 +67,7 @@ func (ca *CrossbarApp) analyzeIRDrop() {
 	// Update mode and educational panel
 	ca.modeIndicator.SetMode(DemoModeIRDrop)
 	ca.setEducationalContent("Non-Ideality: IR Drop", "IR DROP ANALYSIS\n\nWire resistance causes\nvoltage drop along lines.\n\nCells far from drivers\nsee reduced voltage.\n\nThis affects accuracy:\n• Worst at corners\n• Mitigate with drivers")
-	ca.updateStatus("IR DROP | Analyzing voltage drops...")
+	ca.updateStatus("IR DROP | Computing voltage distribution across array (wire resistance model)...")
 
 	// Protected read/write of lastInput
 	ca.stateMu.Lock()
@@ -118,7 +118,7 @@ func (ca *CrossbarApp) analyzeIRDrop() {
 	// Update key stat and log
 	ca.setKeyStatValue(fmt.Sprintf("Max: %.1f%% drop", analysis.MaxIRDrop*100))
 
-	ca.updateStatus(fmt.Sprintf("IR DROP | Complete: Max %.2f%% at [%d,%d]",
+	ca.updateStatus(fmt.Sprintf("IR DROP | Complete: Max voltage drop %.2f%% at corner cell [%d,%d]. Check heatmap!",
 		analysis.MaxIRDrop*100, analysis.WorstCaseCell[0], analysis.WorstCaseCell[1]))
 	ca.modeIndicator.SetMode(DemoModeIdle)
 }
@@ -128,7 +128,7 @@ func (ca *CrossbarApp) analyzeSneakPaths() {
 	// Update mode and educational panel
 	ca.modeIndicator.SetMode(DemoModeSneakPath)
 	ca.setEducationalContent("Non-Ideality: Sneak Paths", "SNEAK PATH ANALYSIS\n\nCurrent can flow through\nunintended paths in passive\ncrossbar arrays.\n\nMitigation strategies:\n• Selector devices\n• 1T1R architecture\n• Threshold switching")
-	ca.updateStatus("SNEAK | Analyzing parasitic paths...")
+	ca.updateStatus("SNEAK | Computing parasitic current paths for center cell...")
 
 	// Select center cell
 	selectedRow := ca.config.Rows / 2
@@ -184,15 +184,15 @@ func (ca *CrossbarApp) analyzeSneakPaths() {
 	// Update key stat and log
 	ca.setKeyStatValue(fmt.Sprintf("SNR: %.1f:1", snr))
 
-	ca.updateStatus(fmt.Sprintf("SNEAK | Complete: SNR %.1f:1 at [%d,%d]",
-		snr, selectedRow, selectedCol))
+	ca.updateStatus(fmt.Sprintf("SNEAK | Complete: Signal-to-Sneak ratio %.1f:1. %s",
+		snr, getImpactSummary(analysis.MaxSneakRatio)))
 	ca.modeIndicator.SetMode(DemoModeIdle)
 }
 
 // resetArray resets the array with new random weights.
 func (ca *CrossbarApp) resetArray() {
 	ca.modeIndicator.SetMode(DemoModeWrite)
-	ca.updateStatus("WRITE | Programming random weights...")
+	ca.updateStatus("WRITE | Programming random conductance values (30 levels per cell)...")
 
 	ca.programRandomWeights()
 	ca.updateConductanceDisplay()
@@ -205,13 +205,30 @@ func (ca *CrossbarApp) resetArray() {
 	ca.conductanceHeatmap.ClearSelection()
 	ca.irDropHeatmap.ClearSelection()
 	ca.sneakPathHeatmap.ClearSelection()
-	ca.statsLabel.SetText("Array reset with new random weights.\n\nSelect a cell or run an analysis.")
+	ca.statsLabel.SetText(fmt.Sprintf(
+		"Array Reset!\n\n"+
+			"New random weights programmed\n"+
+			"across all %d cells.\n\n"+
+			"Each cell randomly assigned\n"+
+			"to one of 30 discrete\n"+
+			"conductance levels.\n\n"+
+			"Ready for MVM operations!",
+		ca.config.Rows*ca.config.Cols,
+	))
 
 	// Update key stat
 	ca.setKeyStatValue(fmt.Sprintf("%d MACs", ca.config.Rows*ca.config.Cols))
 
-	ca.setEducationalContent("What You're Seeing", "CROSSBAR MVM\n\nClick a button to start\na demonstration.")
-	ca.updateStatus("● IDLE | Array reset with random weights")
+	ca.setEducationalContent("What You're Seeing", "Matrix-Vector Multiplication\n"+
+		"using FeFET crossbar arrays.\n\n"+
+		"Click 'Run MVM' to see the\n"+
+		"computation in action!\n\n"+
+		"The array computes I = W × V\n"+
+		"using physics (Ohm's Law)\n"+
+		"instead of digital logic.\n\n"+
+		"All operations happen in\n"+
+		"parallel - no sequential ALU!")
+	ca.updateStatus("Ready | Array reprogrammed with fresh random weights")
 	ca.modeIndicator.SetMode(DemoModeIdle)
 }
 
@@ -223,4 +240,14 @@ func getImpactAssessment(maxRatio float64) string {
 		return "⚠ Moderate sneak paths\n  Consider selector devices"
 	}
 	return "✗ Significant sneak paths\n  1T1R or selector required"
+}
+
+// getImpactSummary returns a one-line summary for status messages.
+func getImpactSummary(maxRatio float64) string {
+	if maxRatio < 0.01 {
+		return "Negligible parasitic currents - excellent!"
+	} else if maxRatio < 0.05 {
+		return "Moderate leakage - acceptable for many apps."
+	}
+	return "High sneak current - needs mitigation!"
 }

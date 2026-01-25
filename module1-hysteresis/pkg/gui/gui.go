@@ -101,6 +101,8 @@ type App struct {
 	wrdSettleE     float64 // Settle E-field (determines final level)
 	wrdStartLevel  int     // Level at start of write cycle
 	wrdDebugLog    *WriteReadDebugLog
+	wrdPrevP       float64 // Previous polarization for energy calculation (E·dP integration)
+	wrdCycleEnergy float64 // Energy for current write/read cycle
 
 	// Dr. Tour Demo Metrics (impressive stats!)
 	wrdTotalWrites   int     // Total write operations
@@ -229,7 +231,7 @@ func (a *App) saveDebugLog() {
 	// Create logs directory if it doesn't exist
 	logsDir := "logs"
 	if err := os.MkdirAll(logsDir, 0755); err != nil {
-		fmt.Printf("Error creating logs dir: %v\n", err)
+		log.Printf("Error creating logs dir: %v", err)
 		return
 	}
 
@@ -240,17 +242,17 @@ func (a *App) saveDebugLog() {
 	// Marshal to JSON
 	data, err := json.MarshalIndent(a.wrdDebugLog, "", "  ")
 	if err != nil {
-		fmt.Printf("Error marshaling debug log: %v\n", err)
+		log.Printf("Error marshaling debug log: %v", err)
 		return
 	}
 
 	// Write to file
 	if err := os.WriteFile(filename, data, 0644); err != nil {
-		fmt.Printf("Error writing debug log: %v\n", err)
+		log.Printf("Error writing debug log: %v", err)
 		return
 	}
 
-	fmt.Printf("Debug log saved to: %s\n", filename)
+	log.Info("Debug log saved: %s", filename)
 }
 
 // initDebugLog initializes the debug log
@@ -361,12 +363,9 @@ func (a *App) createUI() fyne.CanvasObject {
 	a.levelIndicator.SetMinSize(fyne.NewSize(80, 350))
 	// Wire up click callback for interactive mode
 	a.levelIndicator.OnLevelClicked = func(targetLevel int) {
-		fmt.Printf("[DEBUG] Level clicked: %d\n", targetLevel)
 		a.mu.Lock()
 		defer a.mu.Unlock()
-		fmt.Printf("[DEBUG] Current waveform: %d, interactivePhase: %d\n", a.waveform, a.interactivePhase)
 		if a.waveform == WaveformInteractive && a.interactivePhase == 0 {
-			fmt.Printf("[DEBUG] Starting interactive animation to level %d\n", targetLevel)
 			// Start animation to target level
 			a.interactiveTarget = targetLevel
 			a.interactivePhase = 1 // Start saturate phase
@@ -378,10 +377,6 @@ func (a *App) createUI() fyne.CanvasObject {
 				a.interactivePhase = 4 // Skip to sense phase for read
 			}
 			a.addLogEntry(fmt.Sprintf("%s → Level %d", action, targetLevel))
-			fmt.Printf("[DEBUG] Set interactivePhase to %d\n", a.interactivePhase)
-		} else {
-			fmt.Printf("[DEBUG] Not starting animation - waveform=%d (need %d), phase=%d (need 0)\n",
-				a.waveform, WaveformInteractive, a.interactivePhase)
 		}
 	}
 
@@ -584,13 +579,13 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			a.wrdTotalWrites = 0
 			a.wrdSuccessWrites = 0
 			a.wrdTotalEnergyfJ = 0
+			a.wrdCycleEnergy = 0
 			a.wrdBitsStored = 4.91 // log2(30)
 			// Initialize debug log (requires material to be set)
 			if a.material != nil {
 				a.initDebugLog()
 			}
 		case "Interactive":
-			fmt.Println("[DEBUG] Setting waveform to Interactive")
 			a.waveform = WaveformInteractive
 			a.autoMode = true
 			a.interactiveMode = true
@@ -599,7 +594,6 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			if a.eFieldSlider != nil {
 				a.eFieldSlider.Disable()
 			}
-			fmt.Printf("[DEBUG] Waveform set to %d (Interactive=%d)\n", a.waveform, WaveformInteractive)
 			// Clear log and show instructions
 			if a.logEntries == nil {
 				a.logEntries = make([]string, 0, 12)
@@ -1284,8 +1278,9 @@ func (a *App) simulationLoop() {
 						if abs(a.wrdReadLevel-a.wrdTargetLevel) <= 1 {
 							a.wrdSuccessWrites++
 						}
-						// Energy: ~10 fJ for write (FeFET switching), ~1 fJ for read
-						a.wrdTotalEnergyfJ += 10.0 + 1.0 // Write + Read
+						// Add accumulated energy for this cycle (calculated from E·dP integration)
+						a.wrdTotalEnergyfJ += a.wrdCycleEnergy
+						a.wrdCycleEnergy = 0 // Reset for next cycle
 
 						// Log this cycle for debugging
 						if a.wrdDebugLog != nil {
@@ -1364,6 +1359,7 @@ func (a *App) simulationLoop() {
 						}
 						a.wrdPhase = 0
 						a.wrdPhaseTimer = 0
+						a.wrdCycleEnergy = 0 // Reset energy accumulator for next cycle
 					}
 				}
 
@@ -1373,12 +1369,6 @@ func (a *App) simulationLoop() {
 				Ec := a.material.Ec
 				phaseDuration := 0.8 / a.frequency // Faster for interactive feel
 				rampRate := 3.0 * Emax * a.frequency
-
-				// Debug: show when we're in interactive mode with an active phase
-				if a.interactivePhase > 0 && int(a.simTime*10)%50 == 0 {
-					fmt.Printf("[DEBUG] Interactive: phase=%d, target=%d, E=%.2f\n",
-						a.interactivePhase, a.interactiveTarget, a.electricField/1e8)
-				}
 
 				if a.interactivePhase > 0 {
 					a.interactivePhaseTime += dt
@@ -1471,6 +1461,7 @@ func (a *App) simulationLoop() {
 		}
 
 		// Update physics
+		prevP := a.polarization
 		a.polarization = a.preisach.Update(a.electricField)
 		a.normalizedP = a.preisach.NormalizedPolarization()
 		a.discreteLevel = int(math.Round((a.normalizedP + 1) / 2 * 29))
@@ -1479,6 +1470,18 @@ func (a *App) simulationLoop() {
 		}
 		if a.discreteLevel > 29 {
 			a.discreteLevel = 29
+		}
+
+		// Calculate energy: integral of E·dP ≈ |E| * |ΔP|
+		// During write/read cycles, accumulate energy for the cycle
+		if a.waveform == WaveformWriteReadDemo && a.wrdPhase >= 0 && a.wrdPhase <= 3 {
+			deltaP := a.polarization - prevP
+			// Energy per unit volume: E·dP in J/m³
+			// Convert to fJ for a typical cell (assume 100nm x 100nm x 20nm = 2e-22 m³)
+			cellVolume := 2e-22 // m³
+			energyJ := math.Abs(a.electricField * deltaP) * cellVolume
+			energyfJ := energyJ * 1e15 // Convert J to fJ
+			a.wrdCycleEnergy += energyfJ
 		}
 
 		// Record history
@@ -2150,9 +2153,7 @@ func (l *LevelIndicator) SetLevel(level int) {
 
 // Tapped implements fyne.Tappable - allows clicking to select a level
 func (l *LevelIndicator) Tapped(e *fyne.PointEvent) {
-	fmt.Printf("[DEBUG] LevelIndicator.Tapped() called at position: %.1f, %.1f\n", e.Position.X, e.Position.Y)
 	if l.OnLevelClicked == nil {
-		fmt.Println("[DEBUG] OnLevelClicked callback is nil!")
 		return
 	}
 	// Calculate which level was clicked based on Y position

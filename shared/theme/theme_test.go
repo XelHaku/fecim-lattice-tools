@@ -33,24 +33,49 @@ func TestFeCIMThemeColors(t *testing.T) {
 			want:      ColorPrimary,
 		},
 		{
-			name:      "Button is lighter blue",
+			name:      "Button uses ColorButton",
 			colorName: theme.ColorNameButton,
-			want:      color.RGBA{0, 70, 130, 255},
+			want:      ColorButton,
 		},
 		{
-			name:      "InputBackground is darker blue",
+			name:      "InputBackground uses ColorInput",
 			colorName: theme.ColorNameInputBackground,
-			want:      color.RGBA{0, 40, 80, 255},
+			want:      ColorInput,
 		},
 		{
-			name:      "Separator is visible",
+			name:      "Separator uses ColorSeparator",
 			colorName: theme.ColorNameSeparator,
-			want:      color.RGBA{0, 80, 150, 255},
+			want:      ColorSeparator,
 		},
 		{
-			name:      "Foreground is light gray",
+			name:      "Foreground uses ColorText",
 			colorName: theme.ColorNameForeground,
-			want:      color.RGBA{230, 230, 230, 255},
+			want:      ColorText,
+		},
+		{
+			name:      "Success is green",
+			colorName: theme.ColorNameSuccess,
+			want:      ColorSuccess,
+		},
+		{
+			name:      "Error is red",
+			colorName: theme.ColorNameError,
+			want:      ColorError,
+		},
+		{
+			name:      "Warning is amber",
+			colorName: theme.ColorNameWarning,
+			want:      ColorWarning,
+		},
+		{
+			name:      "Hover uses ColorButtonHover",
+			colorName: theme.ColorNameHover,
+			want:      ColorButtonHover,
+		},
+		{
+			name:      "Placeholder uses ColorTextDim",
+			colorName: theme.ColorNamePlaceHolder,
+			want:      ColorTextDim,
 		},
 	}
 
@@ -123,10 +148,11 @@ func TestColorConstants(t *testing.T) {
 		t.Errorf("ColorBackground unexpected value: %v", ColorBackground)
 	}
 
-	// Verify all colors have full alpha
+	// Verify most colors have full alpha
 	colors := []color.RGBA{
 		ColorPrimary, ColorSecondary, ColorAccent, ColorWarning,
 		ColorBackground, ColorAxis, ColorPositive, ColorNegative,
+		ColorText, ColorSuccess, ColorError,
 	}
 
 	for i, c := range colors {
@@ -135,8 +161,47 @@ func TestColorConstants(t *testing.T) {
 		}
 	}
 
-	// Grid color should have partial alpha for transparency
-	if ColorGrid.A == 255 {
-		t.Errorf("ColorGrid should have partial alpha for transparency")
+	// Semi-transparent colors should have partial alpha
+	semiTransparent := []color.RGBA{ColorGrid, ColorInputDisabled, ColorShadow}
+	for i, c := range semiTransparent {
+		if c.A == 255 {
+			t.Errorf("Semi-transparent color %d should have partial alpha", i)
+		}
+	}
+}
+
+func TestUtilityFunctions(t *testing.T) {
+	// Test WithAlpha
+	testColor := color.RGBA{100, 150, 200, 255}
+	alphaColor := WithAlpha(testColor, 128)
+	alphaRGBA := alphaColor.(color.RGBA)
+	if alphaRGBA.R != 100 || alphaRGBA.G != 150 || alphaRGBA.B != 200 || alphaRGBA.A != 128 {
+		t.Errorf("WithAlpha failed: got %v, want RGBA{100,150,200,128}", alphaRGBA)
+	}
+
+	// Test GetContrastColor with dark background
+	darkBG := color.RGBA{0, 50, 100, 255}
+	if GetContrastColor(darkBG) != ColorText {
+		t.Errorf("GetContrastColor should return ColorText for dark background")
+	}
+
+	// Test GetContrastColor with light background
+	lightBG := color.RGBA{240, 244, 248, 255}
+	if GetContrastColor(lightBG) != ColorBackground {
+		t.Errorf("GetContrastColor should return ColorBackground for light background")
+	}
+}
+
+func TestColorHierarchy(t *testing.T) {
+	// Test that background hierarchy is correctly ordered (dark to light)
+	// Extract green channel as proxy for brightness in blue color scheme
+	bgGreen := ColorBackground.G
+	surfaceGreen := ColorSurface.G
+	inputGreen := ColorInput.G
+	surfaceAltGreen := ColorSurfaceAlt.G
+
+	if !(bgGreen < surfaceGreen && surfaceGreen < inputGreen && inputGreen < surfaceAltGreen) {
+		t.Errorf("Background hierarchy not ordered correctly: BG=%d, Surface=%d, Input=%d, SurfaceAlt=%d",
+			bgGreen, surfaceGreen, inputGreen, surfaceAltGreen)
 	}
 }

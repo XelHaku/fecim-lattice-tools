@@ -142,9 +142,9 @@ func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
 	fecimValueBox := container.NewGridWrap(fyne.NewSize(valueWidth, barHeight), e.fecimValue)
 	fecimRow := container.NewHBox(fecimLabelBox, e.fecimBar, fecimValueBox)
 
-	// Headline
-	e.headlineText = canvas.NewText("1000× LESS ENERGY", color.RGBA{0, 212, 255, 255})
-	e.headlineText.TextSize = 32 // Increased from 14
+	// Headline - emphasize the claimed energy advantage
+	e.headlineText = canvas.NewText("1000× LESS ENERGY*", color.RGBA{0, 212, 255, 255})
+	e.headlineText.TextSize = 32
 	e.headlineText.TextStyle = fyne.TextStyle{Bold: true}
 
 	// Scale note

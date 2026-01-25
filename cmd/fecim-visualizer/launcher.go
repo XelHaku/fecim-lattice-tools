@@ -29,7 +29,7 @@ func GetDemos() []DemoInfo {
 			Number:      1,
 			Title:       "Hysteresis",
 			Subtitle:    "P-E Curve Physics",
-			Description: "Explore the ferroelectric memory effect: how HZO superlattice stores 30 analog states through polarization switching",
+			Description: "Discover how ferroelectric materials remember: watch polarization flip between 30 discrete states to store multi-bit data in a single device",
 			Icon:        "~",
 			Ready:       true,
 		},
@@ -37,7 +37,7 @@ func GetDemos() []DemoInfo {
 			Number:      2,
 			Title:       "Crossbar+",
 			Subtitle:    "Compute-in-Memory Array",
-			Description: "See matrix-vector multiply in action with real non-idealities: IR drop, sneak paths, and conductance drift",
+			Description: "Watch matrix multiplication happen in hardware: see how crossbar arrays compute using Ohm's law, and explore real-world challenges like IR drop and sneak currents",
 			Icon:        "#",
 			Ready:       true,
 		},
@@ -45,7 +45,7 @@ func GetDemos() []DemoInfo {
 			Number:      3,
 			Title:       "MNIST",
 			Subtitle:    "Neural Network Demo",
-			Description: "Draw handwritten digits and watch FeCIM classify them at 87% accuracy (88% theoretical max)",
+			Description: "Draw your own digits and watch AI recognize them instantly: experience 87% accuracy on the classic handwriting benchmark, powered by analog computing",
 			Icon:        "9",
 			Ready:       true,
 		},
@@ -53,7 +53,7 @@ func GetDemos() []DemoInfo {
 			Number:      4,
 			Title:       "Circuits",
 			Subtitle:    "Peripheral Electronics",
-			Description: "Design the analog interface: DAC inputs, TIA sensing, ADC readout for CMOS integration",
+			Description: "Learn how analog meets digital: explore DACs that write voltage pulses, TIAs that measure tiny currents, and ADCs that read multi-level states",
 			Icon:        "V",
 			Ready:       true,
 		},
@@ -61,7 +61,7 @@ func GetDemos() []DemoInfo {
 			Number:      5,
 			Title:       "Comparison",
 			Subtitle:    "Technology Benchmarks",
-			Description: "Compare FeCIM vs NAND, DRAM, ReRAM, and competing CIM: 10M× energy savings, 1M× faster",
+			Description: "See why FeCIM matters: compare energy, speed, and density against NAND flash, DRAM, and other emerging memory technologies with interactive charts",
 			Icon:        "$",
 			Ready:       true,
 		},
@@ -69,7 +69,7 @@ func GetDemos() []DemoInfo {
 			Number:      6,
 			Title:       "EDA",
 			Subtitle:    "Chip Layout Tools",
-			Description: "Build crossbar arrays for OpenLane tapeout: GDS export, DRC checks, SPICE netlist generation",
+			Description: "Design your own chips: generate layouts from code, visualize placement, and export industry-standard formats for fabrication",
 			Icon:        "L",
 			Ready:       true,
 			WIP:         true,
@@ -292,7 +292,8 @@ func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
 	lineHeight := descSize + 4
 
 	// Calculate max lines based on available height
-	availableDescHeight := size.Height - headerHeight - 30
+	// Reserve space for: header (top) + description top padding (10) + hint text at bottom (20)
+	availableDescHeight := size.Height - headerHeight - borderWidth*2 - 10 - 20
 	maxLines := int(availableDescHeight / lineHeight)
 	if maxLines < 2 {
 		maxLines = 2
@@ -717,7 +718,7 @@ func CreateLauncherContent(onDemoSelected func(demoNum int)) fyne.CanvasObject {
 	grid := container.New(gridWrap, cards...)
 
 	// Key metrics in footer - split into two lines for readability
-	line1 := canvas.NewText("30 Analog States  |  87% MNIST Accuracy  |  10M× Lower Energy vs NAND  |  1000× vs DRAM  |  TRL 4", color.RGBA{0, 212, 255, 230})
+	line1 := canvas.NewText("30 Analog States per Cell  |  87% MNIST Accuracy  |  Up to 100× Energy Efficiency  |  10¹² Cycle Endurance  |  TRL 4", color.RGBA{0, 212, 255, 230})
 	line1.TextSize = 13
 	line1.Alignment = fyne.TextAlignCenter
 

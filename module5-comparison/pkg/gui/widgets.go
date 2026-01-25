@@ -334,7 +334,7 @@ func (d *DataCenterCalculator) SetResults(
 	d.fecimCostLabel.SetText(fmt.Sprintf("FeCIM: %s/month*", formatCost(fecimCost)))
 
 	savingsVsGPU := (gpuCost - fecimCost) / gpuCost * 100
-	d.savingsLabel.SetText(fmt.Sprintf("Savings vs GPU: %.0f%% (if claims hold)*", savingsVsGPU))
+	d.savingsLabel.SetText(fmt.Sprintf("Potential Savings vs GPU: %.0f%%*", savingsVsGPU))
 
 	fyne.Do(func() {
 		d.Refresh()
@@ -382,8 +382,8 @@ func (d *DataCenterCalculator) CreateRenderer() fyne.WidgetRenderer {
 		d.savingsLabel,
 	)
 
-	// Disclaimer
-	disclaimer := widget.NewLabel("* FeCIM estimates based on Dr. Tour's claims. NOT verified.")
+	// Disclaimer - clarity on verification status
+	disclaimer := widget.NewLabel("* FeCIM energy values based on Dr. Tour's COSM 2025 claims. Independent verification pending.")
 	disclaimer.TextStyle = fyne.TextStyle{Italic: true}
 
 	content := container.NewVBox(

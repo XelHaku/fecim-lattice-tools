@@ -288,13 +288,36 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 		ma.loadRandomTestDigit()
 	})
 
-	evalBtn := widget.NewButton("Evaluate", func() {
-		ma.evaluateNetwork()
+	var evalBtn *widget.Button
+	var loadTestBtn *widget.Button
+
+	evalBtn = widget.NewButton("Evaluate", func() {
+		evalBtn.Disable()
+		loadTestBtn.Disable()
+		evalBtn.SetText("Evaluating...")
+		go func() {
+			ma.evaluateNetwork()
+			fyne.Do(func() {
+				evalBtn.Enable()
+				loadTestBtn.Enable()
+				evalBtn.SetText("Evaluate")
+			})
+		}()
 	})
 	evalBtn.Importance = widget.HighImportance
 
-	loadTestBtn := widget.NewButton("Load Data", func() {
-		ma.loadTestData()
+	loadTestBtn = widget.NewButton("Load Data", func() {
+		loadTestBtn.Disable()
+		evalBtn.Disable()
+		loadTestBtn.SetText("Loading...")
+		go func() {
+			ma.loadTestData()
+			fyne.Do(func() {
+				loadTestBtn.Enable()
+				evalBtn.Enable()
+				loadTestBtn.SetText("Load Data")
+			})
+		}()
 	})
 
 	// Buttons in 2x2 grid for compactness

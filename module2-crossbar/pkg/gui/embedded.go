@@ -88,7 +88,8 @@ func (e *EmbeddedCrossbarApp) Start() {
 	if !e.hasRunInitialMVM {
 		e.hasRunInitialMVM = true
 		// Run enhanced MVM to populate IR drop, sneak path, and other analysis
-		e.runEnhancedMVM()
+		// Use instant (non-animated) version for initial load
+		e.runEnhancedMVMInstant()
 	}
 }
 

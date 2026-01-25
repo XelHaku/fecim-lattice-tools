@@ -268,30 +268,44 @@ func (e *EducationalPanel) SetMVMExplanation(phase int) {
 	var content string
 	switch phase {
 	case 1:
-		content = "MVM OPERATION\n\n" +
-			"1. Input voltages V applied\n" +
-			"   to column lines\n\n" +
-			"Each voltage drives current\n" +
-			"through ALL cells in column."
+		content = "MVM PHASE 1: Input\n\n" +
+			"DAC converts digital input\n" +
+			"to analog voltages V[0...N-1]\n\n" +
+			"Each voltage applied to\n" +
+			"one column (bitline).\n\n" +
+			"This drives current through\n" +
+			"ALL cells in that column\n" +
+			"simultaneously."
 	case 2:
-		content = "MVM OPERATION\n\n" +
-			"2. Current flows through\n" +
-			"   ALL cells simultaneously\n\n" +
-			"I = G × V (Ohm's Law)\n" +
-			"Each cell multiplies!"
+		content = "MVM PHASE 2: Multiply\n\n" +
+			"Current flows through every\n" +
+			"cell in parallel.\n\n" +
+			"Physics does the math:\n" +
+			"I_ij = G_ij × V_j\n\n" +
+			"Each cell performs one\n" +
+			"multiplication using\n" +
+			"Ohm's Law - no transistors!\n\n" +
+			"This is TRUE analog compute."
 	case 3:
-		content = "MVM OPERATION\n\n" +
-			"3. Row currents collected\n" +
-			"   = dot product result\n\n" +
-			"N² multiplications in\n" +
-			"ONE clock cycle!"
+		content = "MVM PHASE 3: Accumulate\n\n" +
+			"Row currents (wordlines)\n" +
+			"sum automatically via\n" +
+			"Kirchhoff's Current Law.\n\n" +
+			"I_row[i] = Σ(G_ij × V_j)\n\n" +
+			"ADC converts analog currents\n" +
+			"to digital output.\n\n" +
+			"Result: N² MACs in ~1ns!\n" +
+			"(vs. N² cycles in CPU)"
 	default:
 		content = "MVM OPERATION\n\n" +
-			"Matrix-Vector Multiplication:\n" +
+			"Matrix-Vector Multiply:\n" +
+			"Output = Weights × Input\n" +
 			"I = G × V\n\n" +
-			"The crossbar computes the\n" +
-			"entire matrix operation\n" +
-			"in a single step."
+			"The crossbar computes\n" +
+			"the entire matrix-vector\n" +
+			"product in ONE analog step.\n\n" +
+			"Speed: ~1ns (vs. µs in CPU)\n" +
+			"Energy: ~10pJ (vs. nJ in GPU)"
 	}
 	e.SetContent("Compute-in-Memory", content)
 }
@@ -299,37 +313,58 @@ func (e *EducationalPanel) SetMVMExplanation(phase int) {
 // SetIRDropExplanation sets content for IR drop analysis.
 func (e *EducationalPanel) SetIRDropExplanation() {
 	content := "IR DROP ANALYSIS\n\n" +
-		"Wire resistance causes\n" +
-		"voltage drop along lines.\n\n" +
-		"Cells far from drivers\n" +
-		"see reduced voltage.\n\n" +
-		"This affects accuracy:\n" +
-		"• Worst at corners\n" +
-		"• Mitigate with drivers"
+		"Problem: Metal wires have\n" +
+		"finite resistance (~1-10Ω/cell).\n\n" +
+		"Effect: Voltage drops as\n" +
+		"current flows along wires:\n" +
+		"V_drop = I × R_wire\n\n" +
+		"Impact: Cells far from drivers\n" +
+		"compute with lower voltage,\n" +
+		"reducing accuracy.\n\n" +
+		"Worst at: Array corners\n" +
+		"(longest wire paths)\n\n" +
+		"Mitigation:\n" +
+		"• Multiple voltage drivers\n" +
+		"• Lower wire resistance (Cu)\n" +
+		"• Smaller tile sizes"
 	e.SetContent("Non-Ideality: IR Drop", content)
 }
 
 // SetSneakPathExplanation sets content for sneak path analysis.
 func (e *EducationalPanel) SetSneakPathExplanation() {
 	content := "SNEAK PATH ANALYSIS\n\n" +
-		"Current can flow through\n" +
-		"unintended paths in passive\n" +
-		"crossbar arrays.\n\n" +
-		"Mitigation strategies:\n" +
-		"• Selector devices\n" +
-		"• 1T1R architecture\n" +
-		"• Threshold switching"
+		"Problem: In passive (0T1R)\n" +
+		"crossbars, current can flow\n" +
+		"through unselected cells.\n\n" +
+		"Effect: Parasitic currents\n" +
+		"reduce Signal-to-Noise Ratio.\n\n" +
+		"Example sneak path:\n" +
+		"WL[i] → Cell[i,j] → BL[j] ✓\n" +
+		"WL[i] → Cell[i,k] → BL[k]\n" +
+		"        → Cell[m,k] → BL[j] ✗\n\n" +
+		"Impact: 2-15% error in large\n" +
+		"arrays (worse as N increases)\n\n" +
+		"Solutions:\n" +
+		"• 1T1R (transistor switch)\n" +
+		"• Selector device (diode)\n" +
+		"• Self-rectifying FeFET"
 	e.SetContent("Non-Ideality: Sneak Paths", content)
 }
 
 // SetIdleExplanation sets content for idle state.
 func (e *EducationalPanel) SetIdleExplanation() {
-	content := "CROSSBAR MVM\n\n" +
-		"Compute in memory where\n" +
-		"the same device does memory\n" +
-		"and computation.\n\n" +
-		"Click a button to start\n" +
-		"a demonstration."
+	content := "FeFET CROSSBAR ARRAY\n\n" +
+		"Compute-in-Memory (CIM)\n" +
+		"where the same physical\n" +
+		"device stores weights AND\n" +
+		"performs computation.\n\n" +
+		"Key advantage: No data\n" +
+		"movement between memory\n" +
+		"and processor!\n\n" +
+		"Traditional: DRAM → CPU\n" +
+		"FeCIM: Compute WHERE stored\n\n" +
+		"Click 'Run MVM' to see\n" +
+		"analog computation in action!"
 	e.SetContent("What You're Seeing", content)
 }
 

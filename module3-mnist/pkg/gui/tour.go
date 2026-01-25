@@ -45,13 +45,13 @@ func NewGuidedTour(app *DualModeApp) *GuidedTour {
 	gt.steps = []TourStep{
 		{
 			Title:       "Step 1/5: Welcome to FeCIM",
-			Description: "This neural network classifies handwritten digits using ferroelectric compute-in-memory.\n\nKey Innovation: 30 analog conductance levels per cell (~5 bits/cell)\n\nTarget: 87% accuracy with 10,000x less energy than a GPU!\n\nLet's see it in action...",
+			Description: "This neural network classifies handwritten digits using ferroelectric compute-in-memory (FeCIM).\n\nKey Innovation: 30 analog conductance levels per cell (~4.9 bits/cell)\n\nPhysics: HfO₂-ZrO₂ (HZO) superlattice ferroelectric exhibits ~30 stable polarization states due to domain wall pinning at crystal defects.\n\nTarget: 87% accuracy with 10,000x less energy than GPU!\n\nLet's see it in action...",
 			Action:      func() { gt.app.applyPreset(30, 0.01, 8, 8) },
 			Duration:    4 * time.Second,
 		},
 		{
 			Title:       "Step 2/5: Draw & Classify",
-			Description: "Loading a test digit...\n\nWatch both paths run simultaneously:\n• FP (Float32): Ideal digital computation\n• CIM (30 Levels): Real hardware simulation\n\nBoth should predict the SAME digit!",
+			Description: "Loading a test digit from the MNIST dataset...\n\nWatch both inference paths run simultaneously:\n• FP (Float32): Ideal digital computation baseline\n• CIM (30 Levels): Real FeCIM hardware simulation\n\nBoth should predict the SAME digit when hardware is ideal!\n\nPhysics: Each crossbar cell stores a weight as polarization state. Matrix-vector multiplication happens in ONE analog step via Kirchhoff's Current Law.",
 			Action: func() {
 				gt.app.loadRandomSample()
 			},
@@ -59,7 +59,7 @@ func NewGuidedTour(app *DualModeApp) *GuidedTour {
 		},
 		{
 			Title:       "Step 3/5: BREAK IT - Binary Weights",
-			Description: "Now watch what happens with only 2 levels (binary)...\n\nAccuracy COLLAPSES to ~50%!\n\nLook at the weight heatmap: only blue and red.\nBinary weights cannot represent this neural network.\n\nThis is why 30 levels matter!",
+			Description: "Now watch what happens with only 2 levels (binary, like SRAM)...\n\nAccuracy COLLAPSES to ~50% (worse than random guessing!)\n\nPhysics: Binary weights {-1, +1} create severe quantization error. The 128-dimensional weight space collapses to 2 discrete values, destroying the network's ability to represent learned features.\n\nLook at the weight heatmap: only blue and red.\n\nThis is why 30 analog levels are critical!",
 			Action: func() {
 				gt.app.applyPreset(2, 0.01, 8, 8)
 				time.Sleep(500 * time.Millisecond)
@@ -69,7 +69,7 @@ func NewGuidedTour(app *DualModeApp) *GuidedTour {
 		},
 		{
 			Title:       "Step 4/5: BREAK IT - High Noise",
-			Description: "What about noise? Real hardware has:\n• Read circuit noise\n• Device variation\n• Temperature effects\n\nWith HIGH noise (0.15), accuracy drops to ~70%.\nNoise mitigation is crucial!",
+			Description: "What about noise? Real ferroelectric hardware faces:\n• Thermal (Johnson) noise in sense amplifiers\n• Device-to-device variation (~2.75%)\n• Cycle-to-cycle retention drift (~1.5%)\n• Temperature-dependent polarization fluctuations\n\nWith HIGH noise (15% std dev), accuracy drops to ~70%.\n\nPhysics: Gaussian noise corrupts the analog current during matrix-vector multiply, causing the ADC to read incorrect values. The '8' is misclassified as '3'.\n\nNoise mitigation is crucial!",
 			Action: func() {
 				gt.app.applyPreset(30, 0.15, 6, 8)
 				time.Sleep(500 * time.Millisecond)
@@ -79,7 +79,7 @@ func NewGuidedTour(app *DualModeApp) *GuidedTour {
 		},
 		{
 			Title:       "Step 5/5: FeCIM Sweet Spot",
-			Description: "Restoring optimal settings...\n\n30 levels + low noise = 87% accuracy!\n\nThe magic formula:\n• Enough precision to represent the network\n• Low enough noise to be manufacturable\n• 10,000x more energy-efficient than GPU\n\nExplore the presets to learn more!",
+			Description: "Restoring optimal settings...\n\n30 levels + 1% noise = 87% accuracy!\n\nThe optimal operating point:\n• 30 levels: Enough precision to represent the network\n• 1% noise: Low enough to be manufacturable at 28nm\n• 50 fJ/MAC: 10,000x more energy-efficient than GPU DRAM access (500 pJ/MAC)\n\nPhysics: This sweet spot balances quantization error vs. analog noise, achieving near-digital accuracy with analog efficiency.\n\nExplore the presets to learn more!",
 			Action: func() {
 				gt.app.applyPreset(30, 0.01, 8, 8)
 				time.Sleep(500 * time.Millisecond)
@@ -202,18 +202,19 @@ func (gt *GuidedTour) finishTour() {
 		completionContent := container.NewVBox(
 			widget.NewLabelWithStyle("Tour Complete!", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 			widget.NewSeparator(),
-			widget.NewLabelWithStyle("Key Insights:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+			widget.NewLabelWithStyle("Key Physics Insights:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 			widget.NewLabel(""),
-			widget.NewLabel("1. 30 analog levels → 87% accuracy"),
-			widget.NewLabel("2. Binary (2 levels) → 50% (fails!)"),
-			widget.NewLabel("3. High noise → 70% (degraded)"),
-			widget.NewLabel("4. Energy: 10,000x better than GPU"),
+			widget.NewLabel("1. 30 analog levels (HZO ferroelectric) → 87% accuracy"),
+			widget.NewLabel("2. Binary (2 levels, like SRAM) → 50% accuracy (fails!)"),
+			widget.NewLabel("3. High noise (15% σ/μ) → 70% accuracy (degraded)"),
+			widget.NewLabel("4. Energy: 50 fJ/MAC vs 500 pJ/MAC (GPU) = 10,000x better"),
 			widget.NewLabel(""),
 			widget.NewSeparator(),
 			widget.NewLabelWithStyle("Next Steps:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-			widget.NewLabel("• Try the 'Tour' preset (Dr. Tour's architecture)"),
-			widget.NewLabel("• Click 'Why 30?' for physics details"),
-			widget.NewLabel("• Explore failure modes with presets"),
+			widget.NewLabel("• Try the 'Tour' preset (Dr. Tour's COSM 2025 architecture)"),
+			widget.NewLabel("• Click 'Why 30?' to understand the physics"),
+			widget.NewLabel("• Click 'HW Reality' to see manufacturing constraints"),
+			widget.NewLabel("• Explore failure modes: QuantCliff, Noisy, BrokenADC"),
 		)
 
 		completionDialog := dialog.NewCustom("Tour Complete!", "Start Exploring", completionContent, gt.app.window)
@@ -223,7 +224,7 @@ func (gt *GuidedTour) finishTour() {
 	// Reset to ideal settings
 	gt.app.applyPreset(30, 0.01, 8, 8)
 	fyne.Do(func() {
-		gt.app.statusLabel.SetText("Tour complete! Try the presets: Ideal, QuantCliff, Noisy, BrokenADC, Tour")
+		gt.app.statusLabel.SetText("Tour complete! Now explore: Ideal (30-level baseline) | QuantCliff (binary failure) | Noisy (15% noise) | BrokenADC (3-bit) | Tour (Dr. Tour's architecture)")
 	})
 }
 

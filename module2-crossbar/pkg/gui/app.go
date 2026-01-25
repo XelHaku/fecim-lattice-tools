@@ -203,7 +203,7 @@ func (ca *CrossbarApp) RunWithLayout(enhanced bool) {
 	debug.Println("App: Updating conductance display")
 	ca.updateConductanceDisplay()
 	debug.Println("App: Updating status")
-	ca.updateStatus("Ready. Program weights and run MVM operations.")
+	ca.updateStatus("Ready | Array initialized with random weights. Click 'Run MVM' to start!")
 
 	debug.Println("App: ShowAndRun starting")
 	ca.window.ShowAndRun()
@@ -237,7 +237,15 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 
 	// Create simple LEFT panel labels
 	ca.eduTitleLabel = widget.NewLabelWithStyle("What You're Seeing", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	ca.eduContentLabel = widget.NewLabel("CROSSBAR MVM\n\nClick a button to start\na demonstration.")
+	ca.eduContentLabel = widget.NewLabel("Matrix-Vector Multiplication\n" +
+		"using FeFET crossbar arrays.\n\n" +
+		"Click 'Run MVM' to see the\n" +
+		"computation in action!\n\n" +
+		"The array computes I = W × V\n" +
+		"using physics (Ohm's Law)\n" +
+		"instead of digital logic.\n\n" +
+		"All operations happen in\n" +
+		"parallel - no sequential ALU!")
 	ca.eduContentLabel.Wrapping = fyne.TextWrapOff
 	ca.keyStatLabel = widget.NewLabel("N² Operations")
 	ca.keyStatLabel.Alignment = fyne.TextAlignCenter
@@ -291,21 +299,35 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		// Update educational content based on architecture
 		if s == "1T1R (Transistor)" {
 			ca.setEducationalContent("1T1R Architecture",
-				"1T1R = One Transistor + One FeFET\n\n"+
-					"✓ Transistor isolates cells\n"+
-					"✓ NO sneak paths\n"+
-					"✓ Industry standard\n"+
-					"✗ Lower density (50% area)\n\n"+
-					"Best for: High accuracy")
+				"1T1R = One Transistor per FeFET\n\n"+
+					"How it works:\n"+
+					"Transistor acts as controlled\n"+
+					"switch, isolating unselected cells.\n\n"+
+					"Advantages:\n"+
+					"✓ Zero sneak paths\n"+
+					"✓ Linear I-V characteristics\n"+
+					"✓ Industry standard (SRAM-like)\n\n"+
+					"Tradeoffs:\n"+
+					"✗ 50% area overhead\n"+
+					"✗ More complex fabrication\n\n"+
+					"Best for: High-precision inference\n"+
+					"(vision, language models)")
 		} else {
 			ca.setEducationalContent("0T1R Architecture",
-				"0T1R = Passive crossbar\n\n"+
-					"✓ Highest density\n"+
+				"0T1R = Passive Crossbar (no transistor)\n\n"+
+					"How it works:\n"+
+					"Direct connection between wires.\n"+
+					"FeFET is the only device.\n\n"+
+					"Advantages:\n"+
+					"✓ Highest density (4F² per cell)\n"+
 					"✓ Simpler fabrication\n"+
-					"✗ Sneak paths (2-15% error)\n"+
-					"✗ Needs self-rectifying cells\n\n"+
-					"FeFET advantage: natural\n"+
-					"rectification possible")
+					"✓ Lower cost\n\n"+
+					"Tradeoffs:\n"+
+					"✗ Sneak paths (2-15% SNR loss)\n"+
+					"✗ Requires selector device OR\n"+
+					"    self-rectifying FeFET\n\n"+
+					"FeFET advantage: Natural\n"+
+					"rectification in HfO₂-ZrO₂!")
 		}
 	})
 	ca.archSelect.SetSelected("1T1R (Transistor)")
@@ -343,36 +365,50 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		case "Conductance":
 			ca.setEducationalContent("Conductance Matrix",
 				"Each cell = one FeFET\n\n"+
-					"Color = conductance level\n"+
-					"(0-29 discrete states)\n\n"+
-					"This is your weight matrix W\n"+
-					"for neural network inference.")
+					"Conductance G (1-100 µS)\n"+
+					"stored as 30 discrete levels\n"+
+					"(~4.9 bits per cell)\n\n"+
+					"This is your weight matrix W.\n"+
+					"Brighter = higher conductance\n\n"+
+					"Click any cell to read its\n"+
+					"exact conductance value.")
 		case "IR Drop":
 			ca.setEducationalContent("IR Drop Analysis",
-				"Voltage drops along wires.\n\n"+
-					"Red = high drop (bad)\n"+
-					"Blue = low drop (good)\n\n"+
-					"Cells far from drivers\n"+
-					"see reduced voltage.\n\n"+
-					"Auto-computed after\n"+
-					"each MVM operation.")
+				"Wire resistance causes voltage\n"+
+					"drops along metal lines.\n\n"+
+					"Red = high voltage drop (>5%)\n"+
+					"Blue = low drop (<1%)\n\n"+
+					"Impact: Cells far from drivers\n"+
+					"compute with reduced voltage,\n"+
+					"causing accuracy degradation.\n\n"+
+					"Mitigation: Multiple distributed\n"+
+					"voltage drivers.\n\n"+
+					"Auto-computed after MVM.")
 		case "Sneak Paths":
 			ca.setEducationalContent("Sneak Path Analysis",
-				"Parasitic currents through\n"+
-					"unselected cells.\n\n"+
-					"Red = high sneak current\n"+
-					"Blue = low sneak current\n\n"+
-					"Bigger arrays = worse.\n"+
-					"Use selector devices\n"+
-					"to mitigate.")
+				"Unintended current paths\n"+
+					"through passive crossbars.\n\n"+
+					"Red = high parasitic current\n"+
+					"Blue = minimal leakage\n\n"+
+					"Impact: Reduces SNR, especially\n"+
+					"in large arrays (>128x128).\n\n"+
+					"Mitigation:\n"+
+					"• 1T1R architecture (transistor)\n"+
+					"• Selector devices (diode)\n"+
+					"• Self-rectifying FeFETs\n\n"+
+					"Auto-computed after MVM.")
 		case "Input/Output":
 			ca.setEducationalContent("MVM Vectors",
-				"Top: Input voltages (V)\n"+
-					"Bottom: Output currents (I)\n\n"+
-					"I = W × V\n"+
-					"(matrix-vector multiply)\n\n"+
-					"Click 'Run MVM' to see\n"+
-					"the computation.")
+				"Matrix-Vector Multiplication\n"+
+					"in a single analog step.\n\n"+
+					"Top: Input voltages V (DAC)\n"+
+					"Bottom: Output currents I (ADC)\n\n"+
+					"Physics: I = G × V (Ohm's Law)\n"+
+					"Result: I_row = Σ(G_ij × V_j)\n\n"+
+					"All N² multiply-accumulate\n"+
+					"operations happen in parallel\n"+
+					"in ~1ns (speed of light).\n\n"+
+					"Click 'Run MVM' to see it!")
 		}
 	}
 
@@ -565,7 +601,7 @@ func (ca *CrossbarApp) recreateArray(size int, noise float64, adcBits int) {
 	ca.updateConductanceDisplay()
 	ca.updateInfoLabel()
 	ca.setKeyStatValue(fmt.Sprintf("%d MACs", size*size))
-	ca.updateStatus(fmt.Sprintf("Array resized to %dx%d", size, size))
+	ca.updateStatus(fmt.Sprintf("Array resized to %dx%d (%d parallel MACs)", size, size, size*size))
 }
 
 // programRandomWeights fills the array with random weights quantized to 30 levels.

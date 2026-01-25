@@ -11,12 +11,14 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // IRDropTab provides IR drop analysis visualization.
 type IRDropTab struct {
 	simulator   *crossbar.IRDropSimulator
 	heatmap     *fyne.Container
+	legend      *sharedwidgets.ColorLegend
 	statsLabel  *widget.Label
 	statusLabel *widget.Label
 	arraySize   int
@@ -58,10 +60,17 @@ func (t *IRDropTab) Content() fyne.CanvasObject {
 	// Heatmap container
 	t.heatmap = container.NewWithoutLayout()
 	t.heatmap.Resize(fyne.NewSize(400, 400))
+
+	// Color legend (vertical)
+	t.legend = sharedwidgets.NewColorLegend(0, 1, "mV", true, sharedwidgets.GreenToRedColor)
+
 	t.updateHeatmap()
 
 	heatmapScroll := container.NewScroll(t.heatmap)
 	heatmapScroll.SetMinSize(fyne.NewSize(350, 350))
+
+	// Add legend to left of heatmap
+	heatmapWithLegend := container.NewBorder(nil, nil, t.legend, nil, heatmapScroll)
 
 	// Stats panel
 	t.updateStats()
@@ -115,7 +124,7 @@ func (t *IRDropTab) Content() fyne.CanvasObject {
 			widget.NewLabelWithStyle("IR Drop Heatmap", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 			t.statusLabel,
 			nil, nil,
-			heatmapScroll,
+			heatmapWithLegend,
 		),
 		rightPanel,
 	)
@@ -138,6 +147,11 @@ func (t *IRDropTab) updateHeatmap() {
 		maxDrop = 1
 	}
 
+	// Update legend range
+	if t.legend != nil {
+		t.legend.SetRange(0, maxDrop*1000) // Convert to mV
+	}
+
 	for i := 0; i < t.arraySize; i++ {
 		for j := 0; j < t.arraySize; j++ {
 			drop := t.simulator.IRDropMap[i][j]
@@ -154,17 +168,6 @@ func (t *IRDropTab) updateHeatmap() {
 			t.heatmap.Add(rect)
 		}
 	}
-
-	// Add legend
-	legend := canvas.NewText("Low IR Drop", color.RGBA{0, 200, 50, 255})
-	legend.TextSize = 10
-	legend.Move(fyne.NewPos(30, 5))
-	t.heatmap.Add(legend)
-
-	legend2 := canvas.NewText("High IR Drop", color.RGBA{255, 50, 50, 255})
-	legend2.TextSize = 10
-	legend2.Move(fyne.NewPos(150, 5))
-	t.heatmap.Add(legend2)
 
 	t.heatmap.Refresh()
 }

@@ -211,11 +211,14 @@ func TestDEFInstanceNamesMatchVerilog(t *testing.T) {
 	verilog := GenerateVerilogWithDefaults(mapping)
 	def := GenerateDEFWithDefaults(mapping)
 
+	// Filter to only check active cells (those that get exported)
+	cellsToExport := filterActiveCells(mapping)
+
 	// Extract instance names from both
 	// In Verilog: R_0_0, R_0_1, etc. in "fecim_bit #(...) R_0_0 ("
 	// In DEF: R_0_0 in "- R_0_0 fecim_bit"
 
-	for _, cell := range mapping.Cells {
+	for _, cell := range cellsToExport {
 		instanceName := "R_" + itoa(cell.Row) + "_" + itoa(cell.Col)
 
 		// Check Verilog has this instance
@@ -227,6 +230,16 @@ func TestDEFInstanceNamesMatchVerilog(t *testing.T) {
 		if !strings.Contains(def, instanceName) {
 			t.Errorf("DEF missing instance %s", instanceName)
 		}
+	}
+
+	// Verify instance counts match
+	verilogCount := strings.Count(verilog, "fecim_bit #(")
+	defCount := strings.Count(def, "- R_")
+	if verilogCount != defCount {
+		t.Errorf("Instance count mismatch: Verilog has %d, DEF has %d", verilogCount, defCount)
+	}
+	if verilogCount != len(cellsToExport) {
+		t.Errorf("Expected %d instances, but Verilog has %d", len(cellsToExport), verilogCount)
 	}
 }
 

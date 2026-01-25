@@ -332,6 +332,10 @@ func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 // ============================================================================
 
 func (ca *CircuitsApp) createWriteTab() fyne.CanvasObject {
+	// Header with description
+	headerLabel := widget.NewRichTextFromMarkdown("**WRITE MODE**: Program ferroelectric cells to specific conductance levels using precise voltage pulses from the charge pump and DAC. The DAC converts digital levels (0-29) to analog voltages (2.0V-5.0V), which are applied as pulses to modify the FeFET polarization state.")
+	headerLabel.Wrapping = fyne.TextWrapWord
+
 	// Configuration section
 	configSection := ca.createWriteConfigSection()
 
@@ -396,7 +400,7 @@ func (ca *CircuitsApp) createWriteTab() fyne.CanvasObject {
 	)
 
 	return container.NewBorder(
-		topRow,
+		container.NewVBox(headerLabel, widget.NewSeparator(), topRow),
 		container.NewVBox(widget.NewSeparator(), buttonBox),
 		nil,
 		nil,
@@ -442,10 +446,13 @@ func (ca *CircuitsApp) createWriteConfigSection() fyne.CanvasObject {
 		ca.mu.Unlock()
 	})
 	levelSelect.SetSelected("30")
+	quantHelp := widget.NewLabel("FeCIM uses 30 discrete analog states per cell (Dr. Tour, COSM 2025)")
+	quantHelp.TextStyle = fyne.TextStyle{Italic: true}
 
 	// Voltage range entries
 	vMinEntry := widget.NewEntry()
 	vMinEntry.SetText("2.0")
+	vMinEntry.SetPlaceHolder("Minimum write voltage (V) - must exceed coercive field")
 	vMinEntry.OnChanged = func(s string) {
 		var v float64
 		fmt.Sscanf(s, "%f", &v)
@@ -456,6 +463,7 @@ func (ca *CircuitsApp) createWriteConfigSection() fyne.CanvasObject {
 
 	vMaxEntry := widget.NewEntry()
 	vMaxEntry.SetText("5.0")
+	vMaxEntry.SetPlaceHolder("Maximum write voltage (V) - for full polarization")
 	vMaxEntry.OnChanged = func(s string) {
 		var v float64
 		fmt.Sscanf(s, "%f", &v)
@@ -467,6 +475,7 @@ func (ca *CircuitsApp) createWriteConfigSection() fyne.CanvasObject {
 	// Pulse width entry
 	pulseEntry := widget.NewEntry()
 	pulseEntry.SetText("50")
+	pulseEntry.SetPlaceHolder("Pulse duration in nanoseconds (typical FeFET: 10-100 ns)")
 	pulseEntry.OnChanged = func(s string) {
 		var pw float64
 		fmt.Sscanf(s, "%f", &pw)
@@ -487,6 +496,7 @@ func (ca *CircuitsApp) createWriteConfigSection() fyne.CanvasObject {
 			levelSelect,
 			widget.NewLabel("levels"),
 		),
+		quantHelp,
 		container.NewHBox(
 			widget.NewLabel("Voltage Range:"),
 			vMinEntry,
@@ -499,6 +509,7 @@ func (ca *CircuitsApp) createWriteConfigSection() fyne.CanvasObject {
 			pulseEntry,
 			widget.NewLabel("ns"),
 		),
+		widget.NewLabel("(Write pulse duration: shorter = faster but needs higher voltage)"),
 	)
 
 	return form
@@ -537,17 +548,20 @@ func (ca *CircuitsApp) createWriteCellSection() fyne.CanvasObject {
 	ca.writeColSelect.SetSelected("5")
 
 	// Target level slider
-	ca.writeLevelLabel = widget.NewLabel("Target Level: 15 / 30")
+	ca.writeLevelLabel = widget.NewLabel("Target Level: 15 / 30 (discrete conductance state)")
 	ca.writeLevelSlider = widget.NewSlider(0, float64(ca.quantLevels-1))
 	ca.writeLevelSlider.Value = 15
 	ca.writeLevelSlider.OnChanged = func(v float64) {
 		ca.mu.Lock()
 		ca.targetLevel = int(v)
 		ca.mu.Unlock()
-		ca.writeLevelLabel.SetText(fmt.Sprintf("Target Level: %d / %d", ca.targetLevel, ca.quantLevels))
+		ca.writeLevelLabel.SetText(fmt.Sprintf("Target Level: %d / %d (discrete conductance state)", ca.targetLevel, ca.quantLevels))
 		ca.updateWriteDataPath()
 		ca.refreshWritePulse()
 	}
+
+	levelHelp := widget.NewLabel("Each level represents a stable polarization state (~4.9 bits/cell)")
+	levelHelp.TextStyle = fyne.TextStyle{Italic: true}
 
 	return container.NewVBox(
 		container.NewHBox(
@@ -558,6 +572,7 @@ func (ca *CircuitsApp) createWriteCellSection() fyne.CanvasObject {
 		),
 		ca.writeLevelLabel,
 		ca.writeLevelSlider,
+		levelHelp,
 	)
 }
 
@@ -584,7 +599,10 @@ func (ca *CircuitsApp) createWriteDataPathSection() fyne.CanvasObject {
 
 	ca.updateWriteDataPath()
 
-	return ca.writeDataPath
+	helperText := widget.NewLabel("Data path: Digital level → DAC voltage conversion → FeFET polarization")
+	helperText.TextStyle = fyne.TextStyle{Italic: true}
+
+	return container.NewVBox(ca.writeDataPath, helperText)
 }
 
 func (ca *CircuitsApp) createLabeledBox(title, value string, bgColor color.Color) *fyne.Container {
@@ -633,7 +651,7 @@ func (ca *CircuitsApp) updateWriteDataPath() {
 	// Calculate voltage
 	voltage := vMin + float64(level)/float64(levels-1)*(vMax-vMin)
 
-	// Calculate conductance (1-100 uS range)
+	// Calculate conductance (1-100 µS range)
 	conductance := 1.0 + float64(level)/float64(levels-1)*99.0
 
 	// Binary representation
@@ -846,10 +864,13 @@ func (ca *CircuitsApp) drawWriteArray(w, h int) image.Image {
 			level := weights[r][c]
 			intensity := float64(level) / float64(levels-1)
 
+			// Check if this is the selected cell
+			isSelected := r == selectedRow && c == selectedCol
+
 			// Color based on level (blue to red)
 			var cr, cg, cb uint8
-			if r == selectedRow && c == selectedCol {
-				cr, cg, cb = 255, 200, 50
+			if isSelected {
+				cr, cg, cb = 255, 200, 50 // Bright yellow for selection
 			} else {
 				cr = uint8(intensity * 200)
 				cg = uint8(50 + (1-intensity)*100)
@@ -858,6 +879,20 @@ func (ca *CircuitsApp) drawWriteArray(w, h int) image.Image {
 
 			cellColor := color.RGBA{cr, cg, cb, 255}
 			drawRect(img, x0+2, y0+2, cellSize-4, cellSize-4, cellColor)
+
+			// Draw a thick white border around the selected cell for better visibility
+			if isSelected {
+				borderColor := color.RGBA{255, 255, 255, 255}
+				borderWidth := 3
+				// Top border
+				drawRect(img, x0, y0, cellSize, borderWidth, borderColor)
+				// Bottom border
+				drawRect(img, x0, y0+cellSize-borderWidth, cellSize, borderWidth, borderColor)
+				// Left border
+				drawRect(img, x0, y0, borderWidth, cellSize, borderColor)
+				// Right border
+				drawRect(img, x0+cellSize-borderWidth, y0, borderWidth, cellSize, borderColor)
+			}
 		}
 	}
 
@@ -886,7 +921,9 @@ func (ca *CircuitsApp) getMappingText() string {
 	ca.mu.RUnlock()
 
 	text := "LEVEL-TO-VOLTAGE MAPPING TABLE\n"
-	text += "================================\n\n"
+	text += "Shows how digital levels (0-29) map to programming voltages\n"
+	text += "and resulting FeFET conductance states.\n"
+	text += "================================================================\n\n"
 	text += "Level   Voltage   Conductance   Resistance\n"
 	text += "-----   -------   -----------   ----------\n"
 
@@ -927,14 +964,14 @@ func (ca *CircuitsApp) getMappingText() string {
 		seen[l] = true
 
 		voltage := vMin + float64(l)/float64(levels-1)*(vMax-vMin)
-		conductance := 1.0 + float64(l)/float64(levels-1)*99.0 // 1-100 uS
+		conductance := 1.0 + float64(l)/float64(levels-1)*99.0 // 1-100 µS
 		resistance := 1000.0 / conductance                     // kO
 
 		marker := "  "
 		if l == target {
 			marker = "> "
 		}
-		text += fmt.Sprintf("%s%2d      %5.2fV      %5.1f uS      %6.1f kO\n",
+		text += fmt.Sprintf("%s%2d      %5.2fV      %5.1f µS      %6.1f kΩ\n",
 			marker, l, voltage, conductance, resistance)
 	}
 
@@ -979,6 +1016,10 @@ func (ca *CircuitsApp) onProgramRandomArray() {
 // ============================================================================
 
 func (ca *CircuitsApp) createReadTab() fyne.CanvasObject {
+	// Header with description
+	headerLabel := widget.NewRichTextFromMarkdown("**READ MODE**: Sense the conductance state of ferroelectric cells using low voltage (0.5V) to avoid disturbing the stored data. The TIA (transimpedance amplifier) converts the cell current to voltage, which is then digitized by the ADC for output.")
+	headerLabel.Wrapping = fyne.TextWrapWord
+
 	// Configuration section
 	configSection := ca.createReadConfigSection()
 
@@ -1043,7 +1084,7 @@ func (ca *CircuitsApp) createReadTab() fyne.CanvasObject {
 	)
 
 	return container.NewBorder(
-		mainContent,
+		container.NewVBox(headerLabel, widget.NewSeparator(), mainContent),
 		container.NewVBox(widget.NewSeparator(), buttonBox),
 		nil,
 		nil,
@@ -1053,14 +1094,14 @@ func (ca *CircuitsApp) createReadTab() fyne.CanvasObject {
 
 func (ca *CircuitsApp) createReadConfigSection() fyne.CanvasObject {
 	// Read voltage slider
-	ca.readVoltageLabel = widget.NewLabel("Read Voltage: 0.5 V")
+	ca.readVoltageLabel = widget.NewLabel("Read Voltage: 0.5 V (non-destructive sensing)")
 	ca.readVoltageSlider = widget.NewSlider(0.1, 1.5)
 	ca.readVoltageSlider.Value = 0.5
 	ca.readVoltageSlider.OnChanged = func(v float64) {
 		ca.mu.Lock()
 		ca.readVoltage = v
 		ca.mu.Unlock()
-		ca.readVoltageLabel.SetText(fmt.Sprintf("Read Voltage: %.2f V", v))
+		ca.readVoltageLabel.SetText(fmt.Sprintf("Read Voltage: %.2f V (non-destructive sensing)", v))
 		ca.refreshReadZone()
 	}
 
@@ -1069,7 +1110,7 @@ func (ca *CircuitsApp) createReadConfigSection() fyne.CanvasObject {
 
 	dangerLabel := widget.NewLabel("DANGER: > 2.0V (will modify cell!)")
 
-	// ADC resolution select
+	// ADC resolution select with helper text
 	adcOptions := []string{"4", "5", "6", "7", "8", "10", "12"}
 	adcSelect := widget.NewSelect(adcOptions, func(s string) {
 		var bits int
@@ -1079,8 +1120,10 @@ func (ca *CircuitsApp) createReadConfigSection() fyne.CanvasObject {
 		ca.mu.Unlock()
 	})
 	adcSelect.SetSelected("8")
+	adcHelp := widget.NewLabel("(bits of precision for digitizing analog current)")
+	adcHelp.TextStyle = fyne.TextStyle{Italic: true}
 
-	// TIA gain select
+	// TIA gain select with helper text
 	tiaOptions := []string{"1", "10", "100"}
 	tiaSelect := widget.NewSelect(tiaOptions, func(s string) {
 		var gain float64
@@ -1090,6 +1133,8 @@ func (ca *CircuitsApp) createReadConfigSection() fyne.CanvasObject {
 		ca.mu.Unlock()
 	})
 	tiaSelect.SetSelected("10")
+	tiaHelp := widget.NewLabel("(Transimpedance: converts cell current to voltage)")
+	tiaHelp.TextStyle = fyne.TextStyle{Italic: true}
 
 	return container.NewVBox(
 		ca.readVoltageLabel,
@@ -1102,11 +1147,13 @@ func (ca *CircuitsApp) createReadConfigSection() fyne.CanvasObject {
 			adcSelect,
 			widget.NewLabel("bits"),
 		),
+		adcHelp,
 		container.NewHBox(
 			widget.NewLabel("TIA Gain:"),
 			tiaSelect,
 			widget.NewLabel("kOhm"),
 		),
+		tiaHelp,
 	)
 }
 
@@ -1170,6 +1217,9 @@ func (ca *CircuitsApp) createReadDataPathSection() fyne.CanvasObject {
 		digitalBox,
 	)
 
+	helperText := widget.NewLabel("Data path: FeFET current → TIA voltage conversion → ADC digitization → Level")
+	helperText.TextStyle = fyne.TextStyle{Italic: true}
+
 	// Calculation box
 	ca.readCalcLabel = widget.NewLabel(
 		"I = G × V = -- µS × -- V = -- µA\n" +
@@ -1182,8 +1232,7 @@ func (ca *CircuitsApp) createReadDataPathSection() fyne.CanvasObject {
 
 	return container.NewVBox(
 		ca.readDataPath,
-		widget.NewSeparator(),
-		widget.NewLabel("Calculation:"),
+		helperText,
 		widget.NewSeparator(),
 		widget.NewLabel("Calculation:"),
 		ca.readCalcLabel,
@@ -1417,6 +1466,10 @@ func (ca *CircuitsApp) onVerifyArray() {
 // ============================================================================
 
 func (ca *CircuitsApp) createComputeTab() fyne.CanvasObject {
+	// Header with description
+	headerLabel := widget.NewRichTextFromMarkdown("**COMPUTE MODE**: Perform matrix-vector multiplication in a single analog operation. Input voltages are applied to columns, multiplied by cell conductances (stored weights), and summed as currents in each row via Kirchhoff's law - computing all dot products in parallel.")
+	headerLabel.Wrapping = fyne.TextWrapWord
+
 	// Configuration section
 	configSection := ca.createComputeConfigSection()
 
@@ -1481,7 +1534,7 @@ func (ca *CircuitsApp) createComputeTab() fyne.CanvasObject {
 	)
 
 	return container.NewBorder(
-		mainContent,
+		container.NewVBox(headerLabel, widget.NewSeparator(), mainContent),
 		container.NewVBox(widget.NewSeparator(), buttonBox),
 		nil,
 		nil,
@@ -1835,6 +1888,10 @@ func (ca *CircuitsApp) onResetCompute() {
 // ============================================================================
 
 func (ca *CircuitsApp) createComparisonTab() fyne.CanvasObject {
+	// Header with description
+	headerLabel := widget.NewRichTextFromMarkdown("**COMPARISON**: Compare FeFET crossbar architecture against traditional von Neumann systems (CPU/GPU). FeFET performs computation in-memory using analog physics (Ohm's law), avoiding the memory bottleneck that limits conventional digital systems.")
+	headerLabel.Wrapping = fyne.TextWrapWord
+
 	// Architecture comparison
 	archSection := ca.createCompArchSection()
 
@@ -1876,7 +1933,7 @@ func (ca *CircuitsApp) createComparisonTab() fyne.CanvasObject {
 	)
 
 	return container.NewBorder(
-		nil,
+		container.NewVBox(headerLabel, widget.NewSeparator()),
 		container.NewVBox(widget.NewSeparator(), buttonBox),
 		nil,
 		nil,
@@ -2188,6 +2245,10 @@ func (ca *CircuitsApp) onRunComparison() {
 // ============================================================================
 
 func (ca *CircuitsApp) createTimingTab() fyne.CanvasObject {
+	// Header with description
+	headerLabel := widget.NewRichTextFromMarkdown("**TIMING DIAGRAMS**: View signal waveforms for write, read, and compute operations. Shows the precise timing relationships between clock, voltage pulses, current sensing, ADC conversion, and data output with nanosecond precision.")
+	headerLabel.Wrapping = fyne.TextWrapWord
+
 	// Operation selector
 	ca.timingOpSelect = widget.NewSelect([]string{"WRITE", "READ", "COMPUTE"}, func(s string) {
 		ca.refreshTimingDiagrams()
@@ -2213,7 +2274,7 @@ func (ca *CircuitsApp) createTimingTab() fyne.CanvasObject {
 	)
 
 	return container.NewBorder(
-		container.NewHBox(widget.NewLabel("OPERATION:"), ca.timingOpSelect),
+		container.NewVBox(headerLabel, widget.NewSeparator(), container.NewHBox(widget.NewLabel("OPERATION:"), ca.timingOpSelect)),
 		container.NewVBox(widget.NewSeparator(), buttonBox),
 		nil,
 		nil,
@@ -2657,6 +2718,10 @@ func (ca *CircuitsApp) refreshTimingDiagrams() {
 // ============================================================================
 
 func (ca *CircuitsApp) createSpecsTab() fyne.CanvasObject {
+	// Header with description
+	headerLabel := widget.NewRichTextFromMarkdown("**SPECIFICATIONS**: Detailed electrical and physical parameters for all peripheral components (DAC, ADC, TIA) and FeFET cells. Includes array configuration, conversion times, power consumption, and device characteristics.")
+	headerLabel.Wrapping = fyne.TextWrapWord
+
 	// Array configuration
 	arraySection := ca.createSpecArraySection()
 
@@ -2718,7 +2783,7 @@ func (ca *CircuitsApp) createSpecsTab() fyne.CanvasObject {
 	)
 
 	return container.NewBorder(
-		nil,
+		container.NewVBox(headerLabel, widget.NewSeparator()),
 		container.NewVBox(widget.NewSeparator(), buttonBox),
 		nil,
 		nil,
@@ -2755,15 +2820,21 @@ func (ca *CircuitsApp) createSpecDACSection() fyne.CanvasObject {
 	specs := `Count:             32 (one per column)
 Resolution:        8 bits (256 levels)
 Output Range:      0V to 1.0V (read), 2V to 5V (write)
-Conversion Time:   5 ns
-Power per DAC:     0.1 mW
-Total DAC Power:   3.2 mW
-INL:               < 0.5 LSB
-DNL:               < 0.5 LSB`
+Conversion Time:   5 ns (digital to analog latency)
+Power per DAC:     0.1 mW (static + dynamic)
+Total DAC Power:   3.2 mW (for 32 DACs)
+INL:               < 0.5 LSB (integral nonlinearity)
+DNL:               < 0.5 LSB (differential nonlinearity)
+Rise/Fall Time:    2-5 ns (signal edge transitions)`
+
+	helpText := widget.NewLabel("DAC converts digital level (0-29) to precise analog voltage for programming FeFET cells")
+	helpText.TextStyle = fyne.TextStyle{Italic: true}
 
 	return container.NewVBox(
 		container.NewHBox(widget.NewLabel("Resolution:"), ca.specDACBitsSelect, widget.NewLabel("bits")),
 		widget.NewLabel(specs),
+		widget.NewSeparator(),
+		helpText,
 	)
 }
 
@@ -2774,16 +2845,22 @@ func (ca *CircuitsApp) createSpecADCSection() fyne.CanvasObject {
 
 	specs := `Count:             32 (one per row)
 Resolution:        8 bits (256 levels)
-Input Range:       0V to 1.0V (after TIA)
-Conversion Time:   10 ns
-Power per ADC:     0.5 mW
-Total ADC Power:   16 mW
-ENOB:              7.5 bits
-SNR:               46 dB`
+Input Range:       0V to 1.0V (after TIA conversion)
+Conversion Time:   10 ns (analog to digital latency)
+Power per ADC:     0.5 mW (conversion energy)
+Total ADC Power:   16 mW (for 32 ADCs)
+ENOB:              7.5 bits (effective resolution with noise)
+SNR:               46 dB (signal-to-noise ratio)
+Sample Rate:       100 MSPS (samples per second)`
+
+	helpText := widget.NewLabel("ADC digitizes analog current from TIA, converting continuous values to discrete digital levels")
+	helpText.TextStyle = fyne.TextStyle{Italic: true}
 
 	return container.NewVBox(
 		container.NewHBox(widget.NewLabel("Resolution:"), ca.specADCBitsSelect, widget.NewLabel("bits")),
 		widget.NewLabel(specs),
+		widget.NewSeparator(),
+		helpText,
 	)
 }
 
@@ -2793,32 +2870,61 @@ func (ca *CircuitsApp) createSpecTIASection() fyne.CanvasObject {
 	ca.specTIAGainSelect.SetSelected("10")
 
 	specs := `Count:             32 (one per row)
-Gain (R_f):        10 kOhm
-Bandwidth:         100 MHz
-Input Current:     0 to 100 uA
-Output Voltage:    0 to 1.0 V
-Noise:             < 1 uA RMS`
+Gain (R_f):        10 kOhm (transimpedance gain)
+Bandwidth:         100 MHz (frequency response)
+Input Current:     0 to 100 µA (cell current range)
+Output Voltage:    0 to 1.0 V (V_out = I_in × R_f)
+Noise:             < 1 µA RMS (input-referred noise)
+Response Time:     ~2 ns (settling time)`
+
+	helpText := widget.NewLabel("TIA (Transimpedance Amplifier) converts tiny FeFET currents to measurable voltages for ADC")
+	helpText.TextStyle = fyne.TextStyle{Italic: true}
 
 	return container.NewVBox(
 		container.NewHBox(widget.NewLabel("Gain:"), ca.specTIAGainSelect, widget.NewLabel("kOhm")),
 		widget.NewLabel(specs),
+		widget.NewSeparator(),
+		helpText,
 	)
 }
 
 func (ca *CircuitsApp) createSpecFeFETSection() fyne.CanvasObject {
 	grid := container.NewGridWithColumns(2,
-		widget.NewLabelWithStyle("Material:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), widget.NewLabel("HfZrO2 (HZO)"),
-		widget.NewLabelWithStyle("Thickness:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), widget.NewLabel("10 nm"),
-		widget.NewLabelWithStyle("Levels:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), widget.NewLabel("30 discrete states"),
-		widget.NewLabelWithStyle("Conductance:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), widget.NewLabel("1 uS to 100 uS"),
-		widget.NewLabelWithStyle("Read Voltage:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), widget.NewLabel("0.5 V (safe zone)"),
-		widget.NewLabelWithStyle("Write Voltage:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), widget.NewLabel("2.0 V to 5.0 V"),
-		widget.NewLabelWithStyle("Write Time:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), widget.NewLabel("50 ns"),
-		widget.NewLabelWithStyle("Endurance:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), widget.NewLabel("10^12 cycles"),
-		widget.NewLabelWithStyle("Retention:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), widget.NewLabel("10 years"),
-		widget.NewLabelWithStyle("Cell Size:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), widget.NewLabel("~0.01 um^2"),
+		widget.NewLabelWithStyle("Material:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("HfZrO2 (HZO)"),
+
+		widget.NewLabelWithStyle("Thickness:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("10 nm (ferroelectric layer)"),
+
+		widget.NewLabelWithStyle("Levels:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("30 discrete states (~4.9 bits/cell)"),
+
+		widget.NewLabelWithStyle("Conductance:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("1 µS to 100 µS (programmable range)"),
+
+		widget.NewLabelWithStyle("Read Voltage:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("0.5 V (non-destructive, below write threshold)"),
+
+		widget.NewLabelWithStyle("Write Voltage:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("2.0 V to 5.0 V (exceeds coercive field Ec)"),
+
+		widget.NewLabelWithStyle("Write Time:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("50 ns (pulse duration for polarization switching)"),
+
+		widget.NewLabelWithStyle("Endurance:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("10^12 cycles (write/erase lifetime)"),
+
+		widget.NewLabelWithStyle("Retention:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("10 years (data persistence without power)"),
+
+		widget.NewLabelWithStyle("Cell Size:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("~0.01 µm² (width × height in silicon area)"),
 	)
-	return grid
+
+	helpText := widget.NewLabel("Note: Rise/fall times typically 2-10 ns; capacitance 0.1-10 pF; leakage < 1 nW per cell")
+	helpText.TextStyle = fyne.TextStyle{Italic: true}
+
+	return container.NewVBox(grid, widget.NewSeparator(), helpText)
 }
 
 func (ca *CircuitsApp) createSpecSummarySection() fyne.CanvasObject {
