@@ -462,15 +462,23 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	)
 
 	// === FOOTER ===
+	disclaimerIcon := widget.NewLabel("⚠")
+	disclaimerIcon.TextStyle = fyne.TextStyle{Bold: true}
+
 	disclaimerLabel := widget.NewLabel("Technology Readiness Level 4 | Laboratory Validation | Energy claims pending independent verification")
-	disclaimerLabel.TextStyle = fyne.TextStyle{Italic: true}
+	disclaimerLabel.TextStyle = fyne.TextStyle{Bold: true}
+
+	disclaimerContainer := container.NewHBox(
+		disclaimerIcon,
+		disclaimerLabel,
+	)
 
 	footer := container.NewHBox(
 		ca.modeIndicator,
 		widget.NewSeparator(),
 		ca.statusLabel,
 		layout.NewSpacer(),
-		disclaimerLabel,
+		disclaimerContainer,
 	)
 
 	// === MAIN LAYOUT ===

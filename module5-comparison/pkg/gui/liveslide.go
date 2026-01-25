@@ -482,7 +482,7 @@ func (e *ComparisonEducationalPanel) CreateRenderer() fyne.WidgetRenderer {
 
 	// Wrap contentLabel in scroll container to prevent resize loops from text wrapping
 	contentScroll := container.NewScroll(contentLabel)
-	contentScroll.SetMinSize(fyne.NewSize(190, 160))
+	contentScroll.SetMinSize(fyne.NewSize(240, 160))
 
 	box := container.NewVBox(
 		titleLabel,

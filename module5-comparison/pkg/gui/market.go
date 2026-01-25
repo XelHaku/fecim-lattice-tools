@@ -108,6 +108,28 @@ func (m *MarketOpportunityChart) CreateRenderer() fyne.WidgetRenderer {
 	maxVal := float32(450.0)
 	barHeight := float32(50)
 
+	// Create Y-axis with scale markers
+	yAxisLabel := widget.NewLabel("USD\n(Billions)")
+	yAxisLabel.Alignment = fyne.TextAlignCenter
+
+	// Y-axis scale markers: 0, 200B, 400B
+	scale400 := widget.NewLabel("400")
+	scale400.Alignment = fyne.TextAlignTrailing
+	scale200 := widget.NewLabel("200")
+	scale200.Alignment = fyne.TextAlignTrailing
+	scale0 := widget.NewLabel("0")
+	scale0.Alignment = fyne.TextAlignTrailing
+
+	yAxisScales := container.NewVBox(
+		scale400,
+		container.NewPadded(), // spacer
+		scale200,
+		container.NewPadded(), // spacer
+		scale0,
+	)
+
+	yAxis := container.NewHBox(yAxisLabel, yAxisScales)
+
 	for i, seg := range marketData {
 		shortName := seg.Name
 		if len(shortName) > 6 {
@@ -133,7 +155,7 @@ func (m *MarketOpportunityChart) CreateRenderer() fyne.WidgetRenderer {
 		segmentWidgets = append(segmentWidgets, segCol)
 	}
 
-	barsRow := container.NewHBox(segmentWidgets...)
+	barsRow := container.NewHBox(yAxis, container.NewHBox(segmentWidgets...))
 
 	citation := widget.NewLabel("Source: Gartner 2026 AI Semiconductor Forecast")
 	citation.TextStyle = fyne.TextStyle{Italic: true}
@@ -241,9 +263,9 @@ func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
 	header := container.NewGridWithColumns(5,
 		widget.NewLabel("Tech"),
 		widget.NewLabel("Energy"),
-		widget.NewLabel("Mem"),
-		widget.NewLabel("CMOS"),
-		widget.NewLabel("Scale"),
+		widget.NewLabel("Memory Type"),
+		widget.NewLabel("CMOS Compatible"),
+		widget.NewLabel("Scalable"),
 	)
 
 	rows := container.NewVBox()
@@ -273,7 +295,12 @@ func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
 		rows.Add(row)
 	}
 
-	content := container.NewVBox(header, rows)
+	// Add legend below the table
+	legend := widget.NewLabel("✓ = Yes | ⚠ = Partial | ✗ = No")
+	legend.TextStyle = fyne.TextStyle{Italic: true}
+	legend.Alignment = fyne.TextAlignCenter
+
+	content := container.NewVBox(header, rows, legend)
 	return widget.NewSimpleRenderer(content)
 }
 
