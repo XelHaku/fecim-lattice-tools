@@ -714,3 +714,17 @@ go build -o fecim-visualizer ./cmd/fecim-visualizer && ./fecim-visualizer
 | Real-time GUI | ❌ | ❌ | ❌ | ❌ | ✅ |
 | Energy estimation | ✅ | ✅ | ✅ | ❌ | ❌ |
 | Area estimation | ❌ | ✅ | ❌ | ❌ | ❌ |
+
+---
+
+## Related Documentation
+
+- **[Crossbar Physics](crossbar.physics.md)** - Physics fundamentals
+- **[Demo Guide](crossbar.demo.md)** - Run the visualization
+- **[ELI5 Explanation](crossbar.ELI5.md)** - Simple analogies
+- **[Research Papers](crossbar.research.md)** - Academic references
+
+---
+
+**Part of:** FeCIM Lattice Tools - Ferroelectric Compute-in-Memory Visualization Suite
+**Purpose:** Compare open-source CIM simulation tools and libraries

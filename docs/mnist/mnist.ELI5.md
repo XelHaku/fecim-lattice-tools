@@ -76,6 +76,29 @@ Your brain has neurons that:
 
 A neural network does the same with numbers!
 
+### The "Voting System" Expert Analogy
+
+Think of the chip as having **10 experts**, one for each digit (0-9):
+
+```
+                Your drawing
+                     │
+         ┌───────────┴───────────┐
+         ▼                       ▼
+    ┌─────────┐             ┌─────────┐
+    │Expert 0 │             │Expert 9 │
+    │"Is it 0?"│    ...     │"Is it 9?"│
+    └────┬────┘             └────┬────┘
+         │                       │
+         ▼                       ▼
+      Score: 2%              Score: 1%
+
+    Expert 7: "THAT'S DEFINITELY MINE!"
+      Score: 95%  ← WINNER!
+```
+
+Each expert looks at the image and gives a confidence score. The expert with the highest score wins!
+
 ### Our Simple Network
 
 ```
@@ -141,6 +164,37 @@ Before Training:            After Training:
   "7" → "2" (wrong!)          "7" → "7" (correct!)
   "5" → "0" (wrong!)          "5" → "5" (correct!)
 ```
+
+### Teaching the Chip to Read (Step-by-Step Learning)
+
+#### Step 1: Start Dumb
+
+At first, the chip's "experts" are just guessing randomly:
+```
+Show it a "5" → Chip says "3" (wrong!)
+Show it a "2" → Chip says "8" (wrong!)
+Show it a "7" → Chip says "1" (wrong!)
+```
+
+#### Step 2: Adjust the Weights
+
+When the chip is wrong, we adjust its internal settings:
+```
+"You said '3' but it was '5'!"
+→ Turn DOWN the pipes that voted for '3'
+→ Turn UP the pipes that should have voted for '5'
+```
+
+#### Step 3: Repeat 60,000 Times
+
+After seeing 60,000 handwritten digits:
+```
+Show it a "5" → Chip says "5" (correct!)
+Show it a "2" → Chip says "2" (correct!)
+Show it a "7" → Chip says "7" (correct!)
+```
+
+**The chip learned!** 🎉
 
 ### Training = Finding Good Weights
 
@@ -568,8 +622,20 @@ Traditional computers move data to a processor. FeCIM processes data WHERE IT'S 
 
 ---
 
+## One-Sentence Summary
+
+> **This demo shows a chip that learned to read handwritten numbers by adjusting its internal "pipe grid" after seeing 60,000 examples — Ferroelectric CIM hardware achieves 87% accuracy (88% theoretical max)!**
+
+---
+
 *"The same device does the memory and the computation."* — Dr. external research group
 
 ---
 
-*This document is part of the FeCIM Visualizer project. For research details, see `mnist.research.md`. For open-source tools, see `mnist.opensource.md`.*
+## Related Documentation
+
+- [MNIST Demo](mnist.demo.md) - Demo walkthrough and technical details
+- [MNIST Research](mnist.research.md) - Academic background and literature review
+- [MNIST Open Source](mnist.opensource.md) - Related projects and tools
+
+*This document is part of the FeCIM Visualizer project.*

@@ -24,10 +24,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   - Tab 6: Export (JSON, CSV, SPICE, Verilog, DEF)
   - Tab 7: Learn (OpenLane documentation)
 - **OpenLane integration documentation**
-  - `module6-eda/docs/INTEGRATION.md` - Complete integration guide
-  - `docs/OPENLANE_STUDY.md` - Validated findings from OpenLane source
-  - `docs/module6-openlane-integration.md` - Quick-start guide
-  - `docs/module6-technical-plan.md` - Implementation roadmap
+  - `docs/eda/eda.integration.md` - Complete integration guide
+  - `docs/eda/eda.demo.md` - Demo interface guide
+  - `docs/eda/OPENLANE_STUDY.md` - Validated findings from OpenLane source
+  - `docs/eda/module6-openlane-integration.md` - Quick-start guide
+  - `docs/eda/module6-technical-plan.md` - Implementation roadmap
 - **Working examples**
   - `examples/01-basic-8x8/` - Basic crossbar array generation
   - `examples/02-mnist-layer/` - Neural network layer mapping

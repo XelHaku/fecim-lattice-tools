@@ -198,6 +198,56 @@ Add them all up → Smooth hysteresis loop!
 
 ---
 
+## Part 5.5: Why the Loop EMERGES (Step by Step)
+
+When you slowly push and pull on these stubborn switches, something interesting happens:
+
+```
+                    PUSH HARD →
+
+        "Okay, I flipped!"
+              ╭───────╮
+             ╱    3    ╲
+            │           │
+       2   │           │   4
+           ●           ●
+          ╱             ╲
+    1 ───●───────────────●─── 5
+          ╲             ╱
+           ●           ●
+       8   │           │   6
+            │           │
+             ╲    7    ╱
+              ╰───────╯
+
+                    ← PULL HARD
+```
+
+**The loop EMERGES because each hysteron flips at different voltages:**
+1. Push a little → the "easy" hysterons start to flip (low threshold)
+2. Push harder → more hysterons flip (medium threshold)
+3. Push really hard → even the "stubborn" ones flip (high threshold)
+4. Stop pushing → all hysterons STAY where they are (memory!)
+5. Pull back → they DON'T flip immediately (different threshold going down!)
+6. Keep pulling → now they start flipping the other way
+7. Pull really hard → ALL flipped the other way
+8. Stop → they stay again!
+
+**The key insight:** Each hysteron has a GAP between its "flip up" and "flip down" voltage. This gap creates hysteresis!
+
+```
+One hysteron example:
+         Flip UP at +1.2V
+              │
+    ──────────┼──────────────  E
+              │         │
+              │    Flip DOWN at -0.8V
+              │         │
+    [───GAP───]  ← In this gap, it REMEMBERS its state!
+```
+
+---
+
 ## Part 6: Write vs Read (The Sticky Threshold)
 
 ### The Key Insight
@@ -509,13 +559,13 @@ $ fecim-hysteresis interactive
 
 ### Beginner
 
-- **This demo!** Run `go run ./cmd/hysteresis` in module1-hysteresis
-- **ELI5.module1.md** in the module directory
+- **This demo!** Run `./launch.sh` (or the unified app command)
+- **(this file)** - You're reading it!
 - **YouTube:** "Ferroelectric memory explained"
 
 ### Intermediate
 
-- **PHYSICS.md** in module1-hysteresis
+- **hysteresis.physics.md** for deep physics
 - **hysteresis.research.md** for paper references
 - **hysteresis.opensource.md** for tools
 
@@ -554,6 +604,31 @@ $ fecim-hysteresis interactive
 
 The fact that the path up is different from the path down means the system REMEMBERS which way you pushed it. That's the foundation of all non-volatile ferroelectric memory.
 
+### Summary for Kids
+
+| Concept | Simple Version |
+|---------|---------------|
+| Ferroelectric | A material with stubborn magnets inside |
+| Hysteresis | The magnets remember which way you pushed them |
+| 30 Levels | Like a 30-floor parking garage for data |
+| Non-volatile | Remembers even when unplugged (like a carved rock) |
+| Compute-in-Memory | Do math where the data lives (no commute!) |
+
+### Technical Note: What's Actually Running
+
+For the curious, here's what the demo actually computes:
+
+| What you see | What's really happening |
+|--------------|------------------------|
+| The loop shape | ~450 hysterons, each with different thresholds, summed together |
+| The smooth curve | Hysterons distributed as a 2D Gaussian around ±Ec |
+| The 30 levels | Simple formula: `Level = round((P/Ps + 1) × 14.5)` |
+| Memory effect | Each hysteron stays put between its thresholds |
+| WRITE/READ indicator | Compares `|E|` vs `Ec` in real-time |
+| Memory Log | Tracks phase transitions in Write/Read Demo mode |
+
+The physics is real — the loop is **emergent**, not drawn!
+
 ---
 
 ### Quick Reference Card
@@ -591,8 +666,52 @@ The fact that the path up is different from the path down means the system REMEM
 
 ---
 
+## Part 11: Running the Demo
+
+### Quick Start
+
+```bash
+# From project root
+./launch.sh
+# Or build and run
+go build -o fecim-visualizer ./cmd/fecim-visualizer && ./fecim-visualizer
+# Then select "Hysteresis" tab
+```
+
+### Things to Try
+
+#### 1. Sine Wave Mode (Default)
+- Watch the loop form automatically
+- See how P "lags behind" E — that's the memory!
+
+#### 2. Random Walk Mode
+- Select "Random Walk" from the waveform dropdown
+- Watch it pick random levels and ramp to them
+- This shows "store this, store that" — real memory operation!
+
+#### 3. Write/Read Demo Mode (Best for understanding!)
+- Select "Write/Read Demo" from the dropdown
+- Watch the 4-phase cycle:
+  - **WRITE**: Voltage goes HIGH (past Ec) → level changes
+  - **HOLD**: Voltage returns to ZERO → level STAYS! (memory!)
+  - **READ**: Small voltage pulse (below Ec) → level unchanged
+  - **DISPLAY**: Shows what was written vs what was read
+- The Memory Log shows each operation!
+
+#### 4. Manual Mode
+- Select "Manual" and drag the slider yourself
+- Stop halfway — see how the level "remembers" where you stopped
+- Try different materials — some have "stickier" magnets than others
+
+#### 5. Frequency Slider
+- Speed up or slow down ANY mode with the frequency slider
+- Slow = easier to see what's happening
+- Fast = more dramatic!
+
+---
+
 *"The memory is in the loop."*
 
 ---
 
-*This document is part of the FeCIM Visualizer project. For research details, see `hysteresis.research.md`. For open-source tools, see `hysteresis.opensource.md`.*
+*This document is part of the FeCIM Visualizer project. For deep physics, see [hysteresis.physics.md](hysteresis.physics.md). For research details, see [hysteresis.research.md](hysteresis.research.md). For open-source tools, see [hysteresis.opensource.md](hysteresis.opensource.md). For demo-specific documentation, see [hysteresis.demo.md](hysteresis.demo.md).*

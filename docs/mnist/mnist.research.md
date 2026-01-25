@@ -569,4 +569,13 @@ The MNIST demo effectively demonstrates:
 
 ---
 
+## Related Documentation
+
+- [MNIST Demo](mnist.demo.md) - Demo walkthrough and technical details
+- [MNIST ELI5](mnist.ELI5.md) - Simple explanations for beginners
+- [MNIST Open Source](mnist.opensource.md) - Related projects and tools
+- [Module Improvements Plan](mnist-module-improvements-plan.md) - Roadmap
+
+---
+
 *This meta-study synthesizes 40+ papers from the project's research collection. For full paper access, see `/docs/papers/by-topic/`.*

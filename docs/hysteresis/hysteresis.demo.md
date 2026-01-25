@@ -1,22 +1,21 @@
-# Demo 1: Ferroelectric Hysteresis Visualization
+# Hysteresis Demo Documentation
 
-**Ferroelectric CIM Visualizer - Ferroelectric P-E Curve**
+**FeCIM Visualizer - Ferroelectric P-E Curve Demo**
 
 > *"It's got 30 discrete states. So it's not 0-1-0-1."* — Dr. external research group
 
 **Complexity:** Beginner (Graphics only)
-**Status:** Active Development
 
 ---
 
 ## Overview
 
-Demo 1 provides an interactive visualization of ferroelectric hysteresis in HfO2-ZrO2 (HZO) superlattice materials. This demo illustrates the fundamental physics of ferroelectric memory cells that enable Ferroelectric CIM's compute-in-memory technology.
+The Hysteresis demo provides an interactive visualization of ferroelectric hysteresis in HfO2-ZrO2 (HZO) superlattice materials. This demo illustrates the fundamental physics of ferroelectric memory cells that enable FeCIM's compute-in-memory technology.
 
 ### What This Demo Shows
 
 1. **P-E Hysteresis Loop** — The characteristic polarization-electric field curve of ferroelectric materials
-2. **30 Discrete States** — How Ferroelectric CIM achieves multi-level cell (MLC) storage with ~4.9 bits/cell
+2. **30 Discrete States** — How FeCIM achieves multi-level cell (MLC) storage with ~4.9 bits/cell
 3. **Preisach Hysteresis Model** — Physics-accurate simulation of domain switching
 4. **Real-time Simulation** — Interactive control of electric field and waveforms
 5. **Write/Read Operations** — Demonstrates non-volatile memory behavior
@@ -26,24 +25,22 @@ Demo 1 provides an interactive visualization of ferroelectric hysteresis in HfO2
 ## Quick Start
 
 ```bash
-# Navigate to demo directory
-cd module1-hysteresis
+# From project root
+./launch.sh
 
-# Build and run (recommended)
-go run ./cmd/demo
+# Or build and run directly
+go build -o fecim-visualizer ./cmd/fecim-visualizer && ./fecim-visualizer
 
-# Or build executable
-go build -o hysteresis ./cmd/demo
-./hysteresis
+# Then select the "Hysteresis" tab
 ```
 
 ---
 
-## Visualization
+## UI Layout
 
 ```
 ┌───────────────────────────────────────────────────────────────────────────────────────────┐
-│  Ferroelectric CIM Ferroelectric Hysteresis Visualization                                       │
+│  FeCIM Ferroelectric Hysteresis Visualization                                             │
 │  "It's got 30 discrete states. So it's not 0-1-0-1." — Dr. external research group                     │
 ├───────────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                           │
@@ -74,9 +71,7 @@ go build -o hysteresis ./cmd/demo
 
 ---
 
-## Features
-
-### Waveform Modes
+## Waveform Modes
 
 | Mode | Description |
 |------|-------------|
@@ -87,7 +82,9 @@ go build -o hysteresis ./cmd/demo
 | **Random Walk** | Picks random target levels, demonstrates multi-level storage |
 | **Write/Read Demo** | Full memory operation cycle: WRITE → HOLD → READ |
 
-### GUI Controls
+---
+
+## GUI Controls
 
 - **E-field Slider**: Drag to control electric field (Manual mode)
 - **Waveform Dropdown**: Select input waveform type
@@ -97,7 +94,9 @@ go build -o hysteresis ./cmd/demo
 - **Pause/Resume Button**: Control simulation
 - **Reset Button**: Clear history and restart
 
-### Visual Indicators
+---
+
+## Visual Indicators
 
 - **Memory Cell**: Color-coded square showing current level (1-30)
 - **P-E Plot**: Real-time hysteresis curve with Ec/Pr markers
@@ -110,51 +109,17 @@ go build -o hysteresis ./cmd/demo
 
 ## Physics Model
 
-### Preisach Hysteresis Model (Mayergoyz Framework)
+For detailed physics, see [hysteresis.physics.md](hysteresis.physics.md).
 
-The demo implements the **Mayergoyz Preisach model** following classical hysteresis theory:
+### Quick Summary
+
+The demo implements the **Mayergoyz Preisach model**:
 
 ```
 P(E) = ∫∫ μ(α, β) γ_αβ dα dβ  →  Discretized: P = Σ μᵢ × γᵢ
 ```
 
-Where:
-- `μ(α, β)` — Preisach distribution function (2D Gaussian centered at ±Ec)
-- `γ_αβ` — Hysteron state (+1 or -1)
-- `α` — Up-switching threshold (hysteron switches to +1 when E ≥ α)
-- `β` — Down-switching threshold (hysteron switches to -1 when E ≤ β)
-
-### How Hysteresis Emerges
-
-Each hysteron is a bistable switch:
-```go
-if E >= Alpha { State = +1 }      // Switch UP
-else if E <= Beta { State = -1 }  // Switch DOWN
-// Between Beta and Alpha: State UNCHANGED (memory effect!)
-```
-
-**The loop is EMERGENT**, not drawn. The gap between α and β creates hysteresis.
-
-### 30-Level Discretization
-
-Continuous polarization mapped to discrete levels:
-```go
-discreteLevel = round((P/Ps + 1) / 2 * 29)  // 0 to 29
-```
-
-Linear spacing in polarization, not voltage thresholds.
-
-### Key Parameters (HZO Materials)
-
-| Parameter | Default HZO | Optimized | Ferroelectric CIM |
-|-----------|-------------|-----------|-------------|
-| Pr (µC/cm²) | 25 | 45 | 30 |
-| Ps (µC/cm²) | 30 | 50 | 35 |
-| Ec (MV/cm) | 1.2 | 0.8 | 1.0 |
-| τ (ns) | 1.0 | 0.5 | 10* |
-| Endurance | 10¹⁰ | 10¹² | 10¹¹ |
-
-*τ is defined but NOT used in real-time visualization (quasistatic approximation).
+**Key principle:** The hysteresis loop is EMERGENT from the sum of microscopic hysterons, not drawn.
 
 ### Write vs Read Operations
 
@@ -163,7 +128,17 @@ WRITE: |E| > Ec  → Polarization changes (crosses coercive field)
 READ:  |E| < Ec  → Polarization unchanged, state sensed non-destructively
 ```
 
-This is the fundamental principle of ferroelectric non-volatile memory.
+### Key Parameters (HZO Materials)
+
+| Parameter | Default HZO | Optimized | FeCIM |
+|-----------|-------------|-----------|-------|
+| Pr (µC/cm²) | 25 | 45 | 30 |
+| Ps (µC/cm²) | 30 | 50 | 35 |
+| Ec (MV/cm) | 1.2 | 0.8 | 1.0 |
+| τ (ns) | 1.0 | 0.5 | 10* |
+| Endurance | 10¹⁰ | 10¹² | 10¹¹ |
+
+*τ is defined but NOT used in real-time visualization (quasistatic approximation).
 
 ---
 
@@ -172,7 +147,7 @@ This is the fundamental principle of ferroelectric non-volatile memory.
 ```
 module1-hysteresis/
 ├── cmd/demo/
-│   └── main.go              # Entry point
+│   └── main.go              # Entry point (standalone mode)
 ├── pkg/
 │   ├── ferroelectric/       # Physics engine
 │   │   ├── preisach.go      # Basic Preisach model
@@ -180,36 +155,17 @@ module1-hysteresis/
 │   │   ├── material.go      # HZO material parameters
 │   │   └── render.go        # ASCII rendering utilities
 │   └── gui/
-│       └── gui.go           # Fyne GUI application
+│       ├── gui.go           # Standalone GUI application
+│       └── embedded.go      # Embeddable app for unified visualizer
 └── shaders/                 # (Reserved for future Vulkan mode)
 ```
 
-## Dependencies
-
-### GUI Framework
-
-| Package | Purpose |
-|---------|---------|
-| [fyne-io/fyne/v2](https://github.com/fyne-io/fyne) | Cross-platform native GUI |
-
 ---
 
-## The Story This Demo Tells
-
-This demo answers the question: **"How does the memory cell work?"**
-
-1. **Ferroelectric Effect** — Applying an electric field switches the polarization state
-2. **Hysteresis** — The P-E curve shows memory effect (polarization depends on history)
-3. **30 Discrete States** — By controlling voltage precisely, we can store 30 distinct levels
-4. **Non-Volatile** — Polarization persists without power (shown by remanent polarization Pr)
-5. **Fast Switching** — ~1 ns switching time enables high-speed operation
-
----
-
-## Tests
+## Testing
 
 ```bash
-# Run all tests
+# Run module tests
 cd module1-hysteresis
 go test ./...
 
@@ -242,11 +198,9 @@ sudo pacman -S mesa libxcursor libxrandr libxinerama libxi
 1. Mayergoyz, I.D. "Mathematical Models of Hysteresis" IEEE Trans. Mag. (1986)
 2. Böscke et al. "Ferroelectricity in HfO₂ Thin Films" APL (2011)
 3. Park et al. "Ferroelectricity in Doped Hafnium Oxide" Adv. Mater. (2015)
-4. Dr. external research group, "Ferroelectric CIM Presentation" (Nov 2024)
+4. Dr. external research group, "FeCIM Presentation" (Nov 2024)
 5. Bartic et al. "Preisach Model for Ferroelectric Capacitors" J. Appl. Phys. (2001)
 
 ---
 
-## License
-
-Part of the Ferroelectric CIM Visualizer project.
+*This document is part of the FeCIM Visualizer project. For beginner explanations, see [hysteresis.ELI5.md](hysteresis.ELI5.md). For deep physics, see [hysteresis.physics.md](hysteresis.physics.md). For research references, see [hysteresis.research.md](hysteresis.research.md).*

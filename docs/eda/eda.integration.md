@@ -367,14 +367,11 @@ library(fecim_bit) {
 
 ### 1. Generate FeCIM Files
 
+Launch the unified app and use the EDA tab to generate Verilog and DEF files from your design configuration.
+
 ```bash
-# Generate Verilog and DEF from weights
-go run ./cmd/eda-cli \
-  -input weights.json \
-  -rows 32 -cols 32 \
-  -output ./output \
-  -verilog=true \
-  -def=true
+./launch.sh
+# Select "EDA" tab → Configure → Export
 ```
 
 ### 2. Create OpenLane Design Directory
@@ -570,9 +567,15 @@ ls -la /path/to/fecim_bit.lef
 
 ---
 
-## Next Steps
+## Related Documentation
 
-1. **Create FeCIM cell library:** Design `fecim_bit.lef` and `fecim_bit.gds` in Magic
-2. **Generate timing models:** Create Liberty files with actual RC parasitics
-3. **Test integration:** Run full flow on small (8x8) crossbar
-4. **Validate with simulation:** Compare ngspice results with OpenSTA timing
+| Document | Description |
+|----------|-------------|
+| [eda.demo.md](./eda.demo.md) | FeCIM Design Suite interface guide |
+| [eda.opensource.md](./eda.opensource.md) | Open-source EDA ecosystem overview |
+| [SKY130.md](./SKY130.md) | SKY130 PDK integration specifics |
+| [README.md](./README.md) | Module 6 overview and disclaimers |
+
+---
+
+**Part of the FeCIM Lattice Tools educational suite**

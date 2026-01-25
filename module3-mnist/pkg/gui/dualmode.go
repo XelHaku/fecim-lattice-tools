@@ -22,6 +22,7 @@ import (
 	"multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/core"
 	"multilayer-ferroelectric-cim-visualizer/module3-mnist/pkg/mnist"
 	"multilayer-ferroelectric-cim-visualizer/shared/logging"
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // Package-level logger for MNIST GUI (named mnistLog to avoid conflict with app.go's debug logger)
@@ -111,6 +112,9 @@ type DualModeApp struct {
 	leftSplit  *container.Split
 	rightSplit *container.Split
 	mainSplit  *container.Split
+
+	// Adaptive layout for responsive design
+	adaptiveLayout *sharedwidgets.AdaptiveLayout
 }
 
 // NewDualModeApp creates a new dual-mode MNIST application.
@@ -156,7 +160,7 @@ func (app *DualModeApp) Start() {
 	// Initialize network display now that UI is ready (deferred from BuildContent to avoid fyne.Do() deadlock)
 	fmt.Println("[MNIST] Start: initializing network display...")
 
-	// Set layout offsets (deferred from createMainLayout to avoid deadlock)
+	// Set layout offsets (deferred from createMainLayout to avoid layout cascade)
 	fyne.Do(func() {
 		if app.leftSplit != nil {
 			app.leftSplit.SetOffset(0.35) // 35% drawing, 65% controls
@@ -227,7 +231,8 @@ func (app *DualModeApp) Stop() {
 	// Nothing to stop
 }
 
-// createMainLayout builds the 4-zone layout per the plan.
+// createMainLayout builds the 4-zone responsive layout.
+// Uses AdaptiveLayout to switch between desktop (splits) and mobile (tabs) layouts.
 func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
 	fmt.Println("[MNIST] createMainLayout: start")
 	// Status label must be created first (used by callbacks in controls zone)
@@ -256,31 +261,43 @@ func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
 	// Status footer
 	footer := app.statusLabel
 
-	// Arrange zones using expandable splits to fill available space
-	// Left column: Drawing (top) + Controls (bottom)
-	fmt.Println("[MNIST] createMainLayout: creating leftSplit...")
-	app.leftSplit = container.NewVSplit(zone1, zone3)
-	// Note: SetOffset deferred to avoid fyne.Do() deadlock during startup
+	// Create AdaptiveLayout for responsive design
+	fmt.Println("[MNIST] createMainLayout: creating adaptive layout...")
+	zones := []fyne.CanvasObject{zone1, zone2, zone3, zone4}
+	tabLabels := []string{"Draw", "Results", "Config", "Weights"}
+	app.adaptiveLayout = sharedwidgets.NewAdaptiveLayout(zones, tabLabels)
 
-	// Right column: Results (top) + Weights (bottom)
-	fmt.Println("[MNIST] createMainLayout: creating rightSplit...")
-	app.rightSplit = container.NewVSplit(zone2, zone4)
-	// Note: SetOffset deferred to avoid fyne.Do() deadlock during startup
+	// Set desktop layout builder - creates the split-based layout
+	// NOTE: SetOffset is called in Start() after UI is visible to avoid layout cascade
+	app.adaptiveLayout.SetDesktopLayout(func(zones []fyne.CanvasObject) fyne.CanvasObject {
+		// Left column: Drawing (top) + Controls (bottom)
+		leftSplit := container.NewVSplit(zones[0], zones[2])
 
-	// Main horizontal split
-	fmt.Println("[MNIST] createMainLayout: creating mainSplit...")
-	app.mainSplit = container.NewHSplit(app.leftSplit, app.rightSplit)
-	// Note: SetOffset deferred to avoid fyne.Do() deadlock during startup
+		// Right column: Results (top) + Weights (bottom)
+		rightSplit := container.NewVSplit(zones[1], zones[3])
 
-	// Defer SetOffset calls to after widget creation to avoid deadlock
-	fmt.Println("[MNIST] createMainLayout: offsets deferred to Start()...")
+		// Main horizontal split
+		mainSplit := container.NewHSplit(leftSplit, rightSplit)
+
+		// Store references for later access
+		app.leftSplit = leftSplit
+		app.rightSplit = rightSplit
+		app.mainSplit = mainSplit
+
+		return mainSplit
+	})
+
+	// Set breakpoint change callback for logging
+	app.adaptiveLayout.OnBreakpointChange = func(bp sharedwidgets.Breakpoint) {
+		mnistLog.Printf("Breakpoint changed to: %s", sharedwidgets.BreakpointName(bp))
+	}
 
 	fmt.Println("[MNIST] createMainLayout: creating border...")
 	mainContent := container.NewBorder(
 		header,
 		footer,
 		nil, nil,
-		app.mainSplit,
+		app.adaptiveLayout.Content(),
 	)
 
 	// Mark as initialized - but defer changeHiddenSize to Start() to avoid fyne.Do() deadlock
@@ -405,43 +422,19 @@ func (app *DualModeApp) createDrawingZone() fyne.CanvasObject {
 // createResultsZone creates the FP vs CIM results zone (Zone 2).
 // Enhanced with P1 widgets for better visualization.
 func (app *DualModeApp) createResultsZone() fyne.CanvasObject {
-	label := widget.NewLabel("Results")
-	label.TextStyle = fyne.TextStyle{Bold: true}
-
-	// FP results (legacy - kept for compatibility)
-	fpLabel := widget.NewLabel("FP")
-	fpLabel.TextStyle = fyne.TextStyle{Bold: true}
+	// Initialize legacy widgets (kept for compatibility with updateResultDisplays)
 	app.fpPredLabel = widget.NewLabel("-")
 	app.fpConfBar = widget.NewProgressBar()
-
-	// CIM results (legacy - kept for compatibility)
-	cimLabel := widget.NewLabel("CIM")
-	cimLabel.TextStyle = fyne.TextStyle{Bold: true}
 	app.cimPredLabel = widget.NewLabel("-")
 	app.cimConfBar = widget.NewProgressBar()
-
-	// Agreement
 	app.agreementLabel = widget.NewLabel("")
+	app.energyLabel = widget.NewLabel("Energy: -")
 
-	// Side by side (legacy compact view)
-	fpBox := container.NewVBox(fpLabel, app.fpPredLabel, app.fpConfBar)
-	cimBox := container.NewVBox(cimLabel, app.cimPredLabel, app.cimConfBar)
-	comparison := container.NewGridWithColumns(2, fpBox, cimBox)
-
-	// Probability distribution bars (legacy - 5 per row for 0-9)
-	probGrid := container.NewGridWithColumns(5)
+	// Initialize probability bars (legacy)
 	for i := 0; i < 10; i++ {
 		app.fpProbBars[i] = widget.NewProgressBar()
 		app.cimProbBars[i] = widget.NewProgressBar()
-		probGrid.Add(container.NewVBox(
-			widget.NewLabel(fmt.Sprintf("%d", i)),
-			app.fpProbBars[i],
-			app.cimProbBars[i],
-		))
 	}
-
-	// Energy
-	app.energyLabel = widget.NewLabel("Energy: -")
 
 	// P1.2: Enhanced Comparison Card
 	app.comparisonCard = NewComparisonCard()
@@ -449,29 +442,14 @@ func (app *DualModeApp) createResultsZone() fyne.CanvasObject {
 	// P1.2: Dual Probability Chart with divergence highlighting
 	app.dualProbabilityChart = NewDualProbabilityChart()
 
-	// Create tabbed view: Enhanced (new) vs Classic (legacy)
 	// Use Border layout so probability chart expands to fill space
-	enhancedTab := container.NewBorder(
+	resultsLayout := container.NewBorder(
 		app.comparisonCard, // Top: comparison card (fixed height)
 		nil, nil, nil,
 		container.NewMax(app.dualProbabilityChart), // Center: probability chart (expands)
 	)
 
-	classicTab := container.NewBorder(
-		container.NewVBox(
-			container.NewHBox(label, layout.NewSpacer(), app.agreementLabel, app.energyLabel),
-			comparison,
-		),
-		nil, nil, nil,
-		container.NewMax(container.NewVBox(probGrid)), // Probability grid expands
-	)
-
-	tabs := container.NewAppTabs(
-		container.NewTabItem("Enhanced", enhancedTab),
-		container.NewTabItem("Classic", classicTab),
-	)
-
-	return tabs
+	return resultsLayout
 }
 
 // createControlsZone creates the hardware control panel (Zone 3).

@@ -299,7 +299,7 @@ Where F includes:
 
 ### 4.1 Current Implementation Status
 
-**What's Implemented (module1-hysteresis):**
+**What's Implemented:**
 
 | Feature | File | Status |
 |---------|------|--------|
@@ -476,4 +476,4 @@ Where F includes:
 
 ---
 
-*This meta-study synthesizes 50+ papers from the project's research collection. For full paper access, see `/docs/papers/by-topic/01-ferroelectric-materials/`.*
+*This meta-study synthesizes 50+ papers from the project's research collection. For full paper access, see `/docs/papers/by-topic/01-ferroelectric-materials/`. For beginner explanations, see [hysteresis.ELI5.md](hysteresis.ELI5.md). For deep physics, see [hysteresis.physics.md](hysteresis.physics.md). For open-source tools, see [hysteresis.opensource.md](hysteresis.opensource.md).*

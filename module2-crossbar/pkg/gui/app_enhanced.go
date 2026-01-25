@@ -14,6 +14,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // createEnhancedMainLayout builds the main application layout with all new features.
@@ -414,21 +415,26 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 	)
 
 	// Layout with HSplit
-	leftCenterSplit := container.NewHSplit(leftPanel, ca.tabs)
-	leftCenterSplit.SetOffset(0.15)
+	ca.leftCenterSplit = container.NewHSplit(leftPanel, ca.tabs)
+	ca.leftCenterSplit.SetOffset(0.15)
 
-	mainSplit := container.NewHSplit(leftCenterSplit, rightPanel)
-	mainSplit.SetOffset(0.75)
+	ca.mainSplit = container.NewHSplit(ca.leftCenterSplit, rightPanel)
+	ca.mainSplit.SetOffset(0.75)
+
+	// Create responsive detector for breakpoint-based layout adjustments
+	ca.responsiveDetector = sharedwidgets.NewResponsiveDetector(ca.onBreakpointChangeEnhanced)
+	ca.currentBreakpoint = sharedwidgets.BreakpointXL // Default to desktop
 
 	mainContent := container.NewBorder(
 		header,
 		simpleFooter,
 		nil,
 		nil,
-		mainSplit,
+		ca.mainSplit,
 	)
 
-	return mainContent
+	// Stack with responsive detector overlay
+	return container.NewStack(mainContent, ca.responsiveDetector)
 }
 
 // runEnhancedMVM performs MVM with full non-ideality analysis and updates all widgets.
@@ -831,4 +837,42 @@ func (ca *CrossbarApp) getAccuracyStatus(accuracy float64) string {
 		return "⚠ Below target - optimization needed"
 	}
 	return "✗ Significant optimization required"
+}
+
+// onBreakpointChangeEnhanced handles responsive layout adjustments for enhanced mode.
+func (ca *CrossbarApp) onBreakpointChangeEnhanced(bp sharedwidgets.Breakpoint, size fyne.Size) {
+	ca.currentBreakpoint = bp
+
+	// Adjust split offsets based on breakpoint
+	// Enhanced mode has more content in the right panel, so adjust accordingly
+	switch bp {
+	case sharedwidgets.BreakpointSM, sharedwidgets.BreakpointMD:
+		// Small/Medium: Minimize side panels, maximize heatmap area
+		// Left panel: collapse to 5%
+		// Right panel: 15% (need a bit more for metrics)
+		if ca.leftCenterSplit != nil {
+			ca.leftCenterSplit.SetOffset(0.05) // 5% left
+		}
+		if ca.mainSplit != nil {
+			ca.mainSplit.SetOffset(0.85) // 85% left+center, 15% right
+		}
+
+	case sharedwidgets.BreakpointLG:
+		// Large: Balanced layout for laptops
+		if ca.leftCenterSplit != nil {
+			ca.leftCenterSplit.SetOffset(0.12) // 12% left
+		}
+		if ca.mainSplit != nil {
+			ca.mainSplit.SetOffset(0.8) // 80% left+center, 20% right
+		}
+
+	case sharedwidgets.BreakpointXL:
+		// Extra Large: Desktop - original comfortable layout
+		if ca.leftCenterSplit != nil {
+			ca.leftCenterSplit.SetOffset(0.15) // 15% left
+		}
+		if ca.mainSplit != nil {
+			ca.mainSplit.SetOffset(0.75) // 75% left+center, 25% right
+		}
+	}
 }

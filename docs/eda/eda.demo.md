@@ -38,29 +38,13 @@ The FeCIM Design Suite is a universal chip design tool supporting three distinct
 ## Quick Start
 
 ```bash
-# Build all binaries
-go build ./...
+# Launch unified app
+./launch.sh
 
-# Run tests
-go test ./... -v
-
-# Launch GUI
-go run ./cmd/eda-gui
-
-# CLI examples for each mode:
-
-# Storage mode - High-density non-volatile storage (no weights needed)
-go run ./cmd/eda-cli -mode storage -rows 256 -cols 256 -name storage_array
-
-# Memory mode - High-speed DRAM replacement (no weights needed)
-go run ./cmd/eda-cli -mode memory -rows 128 -cols 128 -name memory_array
-
-# Compute mode - AI accelerator with pre-trained weights
-go run ./cmd/eda-cli -mode compute -input weights.json -rows 64 -cols 64
-
-# Compute mode - Unprogrammed array (weights loaded later)
-go run ./cmd/eda-cli -mode compute -rows 64 -cols 64 -name cim_array
+# Then select "EDA" tab from the main interface
 ```
+
+The EDA demo is integrated into the unified FeCIM Visualizer application. Access it through the main tab interface.
 
 ## Architecture: 7-Tab Interface
 
@@ -235,139 +219,7 @@ The FeCIM Design Suite generates files compatible with OpenLane v1.0+ flow.
 "VERILOG_FILES_BLACKBOX": "/path/to/fecim_cell.v"
 ```
 
-See [docs/INTEGRATION.md](docs/INTEGRATION.md) for detailed OpenLane integration guide.
-
----
-
-## CLI Tool
-
-For automated/headless design generation:
-
-```bash
-# Storage mode - no weights needed
-go run ./cmd/eda-cli -mode storage -rows 256 -cols 256 -output ./storage_chip
-
-# Memory mode - no weights needed
-go run ./cmd/eda-cli -mode memory -rows 128 -cols 128 -output ./memory_chip
-
-# Compute mode with pre-trained weights
-go run ./cmd/eda-cli -mode compute -input weights.json -rows 64 -cols 64 -output ./ai_chip
-
-# Compute mode without weights (array programmed later)
-go run ./cmd/eda-cli -mode compute -rows 64 -cols 64 -output ./blank_cim
-
-# Full options example
-go run ./cmd/eda-cli \
-  -mode compute \
-  -input data/sample_weights_8x8.json \
-  -output ./output \
-  -name my_design \
-  -rows 8 \
-  -cols 8 \
-  -levels 30 \
-  -tech SKY130 \
-  -arch passive \
-  -vdd 1.8 \
-  -json=true \
-  -csv=true \
-  -spice=true \
-  -verilog=true \
-  -def=true
-```
-
-**CLI Options:**
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `-mode` | compute | Operation mode: storage, memory, or compute |
-| `-input` | (optional) | Input weights JSON file (compute mode only) |
-| `-output` | `.` | Output directory |
-| `-name` | fecim_crossbar | Design name for output files |
-| `-rows` | 128 | Array rows |
-| `-cols` | 128 | Array columns |
-| `-levels` | 30 | Conductance levels (FeCIM standard: 30) |
-| `-tech` | SKY130 | Technology: SKY130, GF180MCU, IHP_SG13G2 |
-| `-arch` | passive | Architecture: passive or 1T1R |
-| `-vdd` | 1.8 | Supply voltage for SPICE |
-| `-gmin` | 1.0 | Min conductance (μS) |
-| `-gmax` | 100.0 | Max conductance (μS) |
-| `-json` | true | Export JSON design file |
-| `-csv` | true | Export CSV cell assignments |
-| `-spice` | true | Export SPICE netlist |
-| `-verilog` | true | Export Verilog netlist |
-| `-def` | true | Export DEF placement |
-
----
-
-## Project Structure
-
-```
-module6-eda/
-├── cmd/
-│   ├── eda-gui/main.go        # GUI application entry point
-│   ├── eda-cli/main.go        # CLI tool for automation
-│   └── lattice-gen/main.go    # Lattice generator CLI
-├── pkg/
-│   ├── compiler/
-│   │   ├── types.go           # Core types:
-│   │   │                      #   - OperationMode (Storage/Memory/Compute)
-│   │   │                      #   - ArrayConfig, ArrayDesign
-│   │   │                      #   - CellAssignment, DesignStats
-│   │   ├── compiler.go        # Design generation:
-│   │   │                      #   - GenerateDesign() - new 3-mode API
-│   │   │                      #   - Compile() - legacy weight-only API
-│   │   └── compiler_test.go   # Unit tests for all modes
-│   ├── export/
-│   │   ├── verilog.go         # Verilog netlist generation
-│   │   ├── def.go             # DEF placement file generation
-│   │   ├── spice.go           # SPICE netlist generation
-│   │   ├── csv.go             # CSV export
-│   │   ├── json.go            # JSON export
-│   │   └── lattice_generator.go # Fractal cell placement algorithm
-│   └── gui/
-│       ├── app.go             # Main window
-│       ├── embedded.go        # Embedded version for unified GUI
-│       └── tabs/
-│           ├── compiler_tab.go
-│           ├── layout_tab.go
-│           ├── hdl_tab.go
-│           ├── export_tab.go
-│           └── learn_tab.go
-├── cells/
-│   ├── fecim_bit.stub.lef     # LEF stub (abstract cell view)
-│   └── fecim_1t1r.stub.lef    # 1T1R variant
-├── data/
-│   ├── sample_weights_8x8.json
-│   └── sample_weights_16x16.json
-├── docs/
-│   └── INTEGRATION.md         # OpenLane integration guide
-└── Makefile
-```
-
----
-
-## Sample Data
-
-Test with provided sample weights:
-
-```bash
-# 8x8 array
-go run ./cmd/eda-cli -input data/sample_weights_8x8.json -rows 8 -cols 8
-
-# 16x16 array
-go run ./cmd/eda-cli -input data/sample_weights_16x16.json -rows 16 -cols 16
-```
-
-**Sample weights format:**
-```json
-{
-  "weights": [
-    [0.5, -0.3, 0.8, ...],
-    [-0.2, 0.6, 0.1, ...],
-    ...
-  ]
-}
-```
+See [eda.integration.md](./eda.integration.md) for detailed OpenLane integration guide.
 
 ---
 
@@ -421,11 +273,11 @@ endmodule
 
 | Document | Description |
 |----------|-------------|
-| [INTEGRATION.md](docs/INTEGRATION.md) | OpenLane integration guide |
-| [plan-demo6.md](../docs/eda/plan-demo6.md) | Implementation plan with code templates |
-| [FeCIM-EDA-Strategy.md](../docs/eda/FeCIM-EDA-Strategy.md) | Project strategy |
-| [eda.opensource.md](../docs/eda/eda.opensource.md) | Open-source EDA ecosystem analysis |
-| [eda.eli5.md](../docs/eda/eda.eli5.md) | Beginner-friendly EDA explanation |
+| [eda.integration.md](./eda.integration.md) | OpenLane integration guide |
+| [plan-demo6.md](./plan-demo6.md) | Implementation plan with code templates |
+| [eda.opensource.md](./eda.opensource.md) | Open-source EDA ecosystem analysis |
+| [eda.eli5.md](./eda.eli5.md) | Beginner-friendly EDA explanation |
+| [README.md](./README.md) | Module 6 overview with disclaimers |
 
 ---
 
@@ -439,7 +291,6 @@ endmodule
 - [x] Verilog/DEF generation
 - [x] Multi-format export (JSON, CSV, SPICE)
 - [x] OpenLane documentation (Learn tab)
-- [x] CLI tool with mode selection
 
 ### In Progress
 - [ ] OpenLane flow integration testing
@@ -454,10 +305,12 @@ endmodule
 
 ---
 
-## Contributing
+## Related Resources
 
-This module is part of the FeCIM Visualizer educational suite. See the root [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.
+- [FeCIM Design Suite Examples](../../module6-eda/examples/) - Sample designs and test cases
+- [OpenLane Documentation](https://openlane.readthedocs.io/) - Official OpenLane resources
+- [SKY130 PDK Guide](./SKY130.md) - SkyWater 130nm process integration
 
-## License
+---
 
-MIT License - See [LICENSE](../LICENSE)
+**Part of the FeCIM Lattice Tools educational suite** - See [../../README.md](../../README.md) for project overview.

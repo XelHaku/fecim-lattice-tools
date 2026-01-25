@@ -1,6 +1,18 @@
-# Crossbar Array Physics: From Absolute Basics
+# Crossbar Array Physics: Deep Technical Reference
 
-Start here if you've never studied crossbar arrays or compute-in-memory before.
+**FeCIM Lattice Tools - Module 2: Compute-in-Memory Crossbar Arrays**
+
+> Start here for comprehensive physics understanding of crossbar arrays for ferroelectric compute-in-memory.
+
+---
+
+## Overview
+
+This document provides the deep technical foundation for understanding crossbar array physics, from basic principles to real-world non-idealities. It covers:
+- Matrix-Vector Multiplication (MVM) using Ohm's and Kirchhoff's laws
+- 30-level conductance quantization in ferroelectric devices
+- Non-idealities: IR drop, sneak paths, device variation, ADC quantization
+- Physics-accurate simulation methodology
 
 ---
 
@@ -64,7 +76,7 @@ A crossbar is a grid of horizontal and vertical wires with a **memory cell at ea
          ──●─────●─────●─────●──→ I₂ (Row 2 output)
            │     │     │     │
          ──●─────●─────●─────●──→ I₃ (Row 3 output)
-           
+
            ● = one memory cell (stores a weight)
 ```
 
@@ -124,13 +136,13 @@ Step 1: Apply inputs as VOLTAGES on columns
                   ↓      ↓      ↓
 
 Step 2: Current through each cell = G × V (Ohm's Law)
-                  
+
               ──●──────●──────●──→  Sum on row = y₀
                 │      │      │
                 G₀₀    G₀₁    G₀₂
                 ×      ×      ×
                 V₀     V₁     V₂
-                
+
 Step 3: Currents on each row sum automatically (Kirchhoff's Law)
 
          I_row0 = G₀₀×V₀ + G₀₁×V₁ + G₀₂×V₂ = y₀
@@ -164,7 +176,7 @@ Low conductance (small weight):      High conductance (large weight):
 ```
 
 For ferroelectric cells, we control conductance by:
-- Polarization state (Demo 1!) controls how conductive the channel is
+- Polarization state (from Demo 1!) controls how conductive the channel is
 - 30 analog states → 30 possible weight values per cell
 
 ### Weight Range
@@ -209,7 +221,7 @@ Want: Current through target cell only
                 │
               ──●── target
                 │
-                
+
 Got: Current "sneaks" through neighbors!
          │          │
       ───●──────────●───
@@ -292,14 +304,14 @@ Map one layer's weights to one crossbar:
 
 ```
 Neural network layer:              Crossbar array:
-                                   
+
      x₀  x₁  x₂  x₃               V₀  V₁  V₂  V₃
       │   │   │   │                │   │   │   │
       ↓   ↓   ↓   ↓                ↓   ↓   ↓   ↓
   ┌───┴───┴───┴───┴───┐         ──●───●───●───●──→ y₀
   │   FULLY CONNECTED │         ──●───●───●───●──→ y₁
   │      LAYER        │         ──●───●───●───●──→ y₂
-  └───┬───┬───┬───┬───┘            
+  └───┬───┬───┬───┬───┘
       ↓   ↓   ↓   ↓              Same structure!
      y₀  y₁  y₂  y₃
 ```
@@ -329,9 +341,47 @@ Handwritten digit recognition:
 
 ---
 
-## What Demo 2 Visualizes
+## Implementation in FeCIM Tools
 
-1. **MVM Animation** - Watch input voltages propagate, currents flow, outputs sum
-2. **Weight Grid** - Color-coded conductance values (the neural network weights)
-3. **Non-Ideality Toggles** - See how IR drop, sneak paths, variation affect results
-4. **Input/Output Display** - Compare ideal vs actual computation
+### Code Location
+
+All crossbar physics is implemented in:
+- `module2-crossbar/pkg/crossbar/array.go` - Core MVM
+- `module2-crossbar/pkg/crossbar/nonidealities.go` - IR drop, sneak paths
+- `module2-crossbar/pkg/crossbar/cell.go` - FeFET/FTJ cell model
+- `module2-crossbar/pkg/crossbar/enhanced.go` - Integrated simulation
+
+### Key Functions
+
+```go
+// Basic MVM
+array.MVM(input []float64) ([]float64, error)
+
+// MVM with all non-idealities
+array.MVMWithNonIdealities(input, options) (*MVMResult, error)
+
+// Program weights
+array.ProgramWeight(row, col int, weight float64) error
+array.ProgramMatrix(weights [][]float64) error
+```
+
+---
+
+## Related Documentation
+
+- **[Crossbar Demo Guide](crossbar.demo.md)** - How to run the visualization
+- **[Crossbar ELI5](crossbar.ELI5.md)** - Simple analogies and explanations
+- **[Research Papers](crossbar.research.md)** - Academic references
+- **[Open Source Context](crossbar.opensource.md)** - Relationship to other tools
+
+---
+
+## References
+
+See [crossbar.research.md](crossbar.research.md) for complete academic citations.
+
+---
+
+**Part of:** FeCIM Lattice Tools - Ferroelectric Compute-in-Memory Visualization Suite
+**Source:** Dr. external research group's HfO₂-ZrO₂ superlattice research (COSM 2025)
+**License:** See project root for details

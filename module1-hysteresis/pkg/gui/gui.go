@@ -462,20 +462,32 @@ func (a *App) createUI() fyne.CanvasObject {
 		layout.NewSpacer(),
 	)
 
-	// Main layout: Cell | Plot | Right Panel using HSplit for stability
-	// Inner split: Plot (left, 63% of remaining) | Right Panel (right, 37% of remaining)
-	innerSplit := container.NewHSplit(centerArea, rightArea)
-	innerSplit.SetOffset(0.63) // ~54/(54+32) = 0.63
+	// Adaptive layout: supports mobile (tabs) and desktop (splits)
+	// Zones: [0]=Cell, [1]=Plot+Level, [2]=Controls
+	zones := []fyne.CanvasObject{
+		cellContainer,
+		centerArea,
+		rightArea,
+	}
+	tabLabels := []string{"Memory Cell", "P-E Plot", "Controls"}
 
-	// Outer split: Cell (left, 14%) | Inner (right, 86%)
-	mainLayout := container.NewHSplit(cellContainer, innerSplit)
-	mainLayout.SetOffset(0.14)
+	adaptive := sharedwidgets.NewAdaptiveLayout(zones, tabLabels)
+	adaptive.SetDesktopLayout(func(zones []fyne.CanvasObject) fyne.CanvasObject {
+		// Desktop: Cell | Plot | Controls using HSplit
+		innerSplit := container.NewHSplit(zones[1], zones[2])
+		innerSplit.SetOffset(0.63) // Plot gets 63% of remaining space
+
+		outerSplit := container.NewHSplit(zones[0], innerSplit)
+		outerSplit.SetOffset(0.14) // Cell gets 14% of total width
+
+		return outerSplit
+	})
 
 	return container.NewBorder(
 		nil, // No header - cleaner look
 		statusBar,
 		nil, nil,
-		mainLayout,
+		adaptive.Content(),
 	)
 }
 

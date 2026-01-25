@@ -18,6 +18,7 @@ import (
 	"multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
 	"multilayer-ferroelectric-cim-visualizer/shared/logging"
 	sharedtheme "multilayer-ferroelectric-cim-visualizer/shared/theme"
+	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
 // Package-level logger using shared logging infrastructure
@@ -128,6 +129,12 @@ type CrossbarApp struct {
 
 	// First visit flag for auto-run MVM
 	hasRunInitialMVM bool
+
+	// Responsive layout support
+	responsiveDetector  *sharedwidgets.ResponsiveDetector
+	leftCenterSplit     *container.Split
+	mainSplit           *container.Split
+	currentBreakpoint   sharedwidgets.Breakpoint
 }
 
 // NewCrossbarApp creates and initializes the crossbar demo application.
@@ -478,11 +485,15 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 
 	// Use HSplit for proportional 3-column layout
 	// Left panel (15%) | Center tabs (70%) | Right panel (15%)
-	leftCenterSplit := container.NewHSplit(leftPanel, ca.tabs)
-	leftCenterSplit.SetOffset(0.15) // 15% left, 85% center+right
+	ca.leftCenterSplit = container.NewHSplit(leftPanel, ca.tabs)
+	ca.leftCenterSplit.SetOffset(0.15) // 15% left, 85% center+right
 
-	mainSplit := container.NewHSplit(leftCenterSplit, rightPanel)
-	mainSplit.SetOffset(0.8) // 80% left+center, 20% right
+	ca.mainSplit = container.NewHSplit(ca.leftCenterSplit, rightPanel)
+	ca.mainSplit.SetOffset(0.8) // 80% left+center, 20% right
+
+	// Create responsive detector for breakpoint-based layout adjustments
+	ca.responsiveDetector = sharedwidgets.NewResponsiveDetector(ca.onBreakpointChange)
+	ca.currentBreakpoint = sharedwidgets.BreakpointXL // Default to desktop
 
 	// Wrap with header and footer
 	mainContent := container.NewBorder(
@@ -490,10 +501,11 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		simpleFooter, // bottom
 		nil,          // left
 		nil,          // right
-		mainSplit,    // center - the split panels
+		ca.mainSplit, // center - the split panels
 	)
 
-	return mainContent
+	// Stack with responsive detector overlay
+	return container.NewStack(mainContent, ca.responsiveDetector)
 }
 
 // setupControlCallbacks connects control panel events to actions.
@@ -595,4 +607,41 @@ func (ca *CrossbarApp) updateInfoLabel() {
 		"Crossbar: %dx%d | Levels: 30 | Noise: %.1f%% | ADC: %d bits",
 		ca.config.Rows, ca.config.Cols, ca.config.NoiseLevel*100, ca.config.ADCBits,
 	))
+}
+
+// onBreakpointChange handles responsive layout adjustments.
+func (ca *CrossbarApp) onBreakpointChange(bp sharedwidgets.Breakpoint, size fyne.Size) {
+	ca.currentBreakpoint = bp
+
+	// Adjust split offsets based on breakpoint
+	switch bp {
+	case sharedwidgets.BreakpointSM, sharedwidgets.BreakpointMD:
+		// Small/Medium: Minimize side panels, maximize heatmap area
+		// Left panel: collapse to 5% (minimal educational info)
+		// Right panel: collapse to 10% (minimal controls)
+		if ca.leftCenterSplit != nil {
+			ca.leftCenterSplit.SetOffset(0.05) // 5% left, 95% center+right
+		}
+		if ca.mainSplit != nil {
+			ca.mainSplit.SetOffset(0.9) // 90% left+center, 10% right
+		}
+
+	case sharedwidgets.BreakpointLG:
+		// Large: Balanced layout for laptops
+		if ca.leftCenterSplit != nil {
+			ca.leftCenterSplit.SetOffset(0.12) // 12% left
+		}
+		if ca.mainSplit != nil {
+			ca.mainSplit.SetOffset(0.85) // 85% left+center, 15% right
+		}
+
+	case sharedwidgets.BreakpointXL:
+		// Extra Large: Desktop - original comfortable layout
+		if ca.leftCenterSplit != nil {
+			ca.leftCenterSplit.SetOffset(0.15) // 15% left
+		}
+		if ca.mainSplit != nil {
+			ca.mainSplit.SetOffset(0.8) // 80% left+center, 20% right
+		}
+	}
 }

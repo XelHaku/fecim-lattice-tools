@@ -1388,4 +1388,13 @@ Example:
 
 ---
 
+## Related Documentation
+
+- [MNIST Demo](mnist.demo.md) - Demo walkthrough and technical details
+- [MNIST ELI5](mnist.ELI5.md) - Simple explanations for beginners
+- [MNIST Research](mnist.research.md) - Academic background and literature review
+- [MNIST Open Source](mnist.opensource.md) - Related projects and tools
+
+---
+
 *This document is a living specification. Update as implementation progresses and new insights emerge.*

@@ -6,7 +6,6 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
 	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
@@ -707,11 +706,15 @@ func CreateLauncherContent(onDemoSelected func(demoNum int)) fyne.CanvasObject {
 		widget.NewSeparator(),
 	)
 
-	// Grid layout - 3 columns, 2 rows
-	grid := container.New(layout.NewGridLayoutWithRows(2),
-		container.New(layout.NewGridLayoutWithColumns(3), cards[0], cards[1], cards[2]),
-		container.New(layout.NewGridLayoutWithColumns(3), cards[3], cards[4], cards[5]),
+	// Responsive grid layout - wraps from 3 columns to 2 to 1 based on width
+	// Uses GridWrapLayout for automatic responsive behavior
+	gridWrap := sharedwidgets.NewGridWrapLayout(
+		320, // MinItemWidth - card minimum width
+		140, // ItemHeight - card height
+		16,  // RowSpacing
+		16,  // ColSpacing
 	)
+	grid := container.New(gridWrap, cards...)
 
 	// Key metrics in footer - split into two lines for readability
 	line1 := canvas.NewText("30 Analog States  |  87% MNIST Accuracy  |  10M× Lower Energy vs NAND  |  1000× vs DRAM  |  TRL 4", color.RGBA{0, 212, 255, 230})

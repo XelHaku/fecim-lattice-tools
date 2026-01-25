@@ -481,3 +481,17 @@ Our crossbar simulation module is well-aligned with literature best practices:
 | **Endurance** | Number of write cycles before degradation |
 | **Retention** | Time data remains valid without refresh |
 | **Write-Verify** | Programming scheme with read-back verification |
+
+---
+
+## Related Documentation
+
+- **[Crossbar Physics](crossbar.physics.md)** - Deep technical reference
+- **[Demo Guide](crossbar.demo.md)** - Interactive visualization guide
+- **[ELI5 Explanation](crossbar.ELI5.md)** - Simple analogies
+- **[Open Source Tools](crossbar.opensource.md)** - Other simulators
+
+---
+
+**Part of:** FeCIM Lattice Tools - Ferroelectric Compute-in-Memory Visualization Suite
+**Source:** Meta-study of 40+ research papers on crossbar arrays and CIM

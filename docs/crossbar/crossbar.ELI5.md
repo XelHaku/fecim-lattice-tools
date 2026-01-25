@@ -586,3 +586,17 @@ func Test30LevelQuantization(t *testing.T) {
 7. **Validation:** Test suite against analytical and published results
 
 **The goal:** Enable researchers and engineers to understand, design, and optimize ferroelectric CIM systems through accurate, visual, and interactive simulation.
+
+---
+
+## Related Documentation
+
+- **[Crossbar Physics](crossbar.physics.md)** - Deep technical reference on crossbar physics
+- **[Demo Guide](crossbar.demo.md)** - How to run the interactive visualization
+- **[Research Papers](crossbar.research.md)** - Academic citations and meta-study
+- **[Open Source Tools](crossbar.opensource.md)** - Comparison with other simulators
+
+---
+
+**Part of:** FeCIM Lattice Tools - Ferroelectric Compute-in-Memory Visualization Suite
+**Source:** Dr. external research group's HfO₂-ZrO₂ superlattice research (COSM 2025)

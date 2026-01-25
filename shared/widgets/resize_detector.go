@@ -202,10 +202,19 @@ func (r *responsiveDetectorRenderer) Layout(size fyne.Size) {
 	// Check if breakpoint has changed
 	newBreakpoint := GetBreakpoint(size.Width)
 
-	if !r.detector.initialized || newBreakpoint != r.detector.currentBreakpoint {
+	// On first layout, just initialize without firing callback
+	// This prevents refresh cascades during UI construction
+	if !r.detector.initialized {
 		r.detector.currentBreakpoint = newBreakpoint
 		r.detector.lastSize = size
 		r.detector.initialized = true
+		return // Don't fire callback on first initialization
+	}
+
+	// Only fire callback when breakpoint actually changes
+	if newBreakpoint != r.detector.currentBreakpoint {
+		r.detector.currentBreakpoint = newBreakpoint
+		r.detector.lastSize = size
 
 		// Fire the callback if set
 		if r.detector.OnBreakpointChange != nil {

@@ -1,4 +1,4 @@
-# Ferroelectric Physics: From Absolute Basics
+# Ferroelectric Physics: Deep Technical Reference
 
 Start here if you've never studied ferroelectrics before.
 
@@ -16,7 +16,7 @@ When positive and negative charges are separated, we call this a **dipole**:
 
 ```
      Before                After applying force
-   
+
      ⊕⊖                      ⊕─────⊖
    (neutral)              (dipole - charges separated)
 ```
@@ -82,7 +82,7 @@ P (polarization)
 │    /
 │   /
 ├──/─────→ E (field)
-│ 
+│
 Same path up and down!
 ```
 
@@ -102,7 +102,7 @@ Crystal structure shift (simplified):
     │ ⊕ │   │ ⊕ │ ──E→→   │ ⊕ │ ⊕ │ ⊕ │ ← Center atom
     │   │ ⊕ │   │         │   │   │   │    moved UP
     └───┴───┴───┘         └───┴───┴───┘
-    
+
     P = 0                  P > 0 (permanent!)
 ```
 
@@ -137,13 +137,13 @@ The output (P) doesn't just depend on the input (E)—it depends on the **histor
          │     │               │         (P when E=0, THE MEMORY!)
          ├─────┼───────────────┼────→ E
          │     │    ①          │
-    -Pr ─┼─────┼───────────────●        
+    -Pr ─┼─────┼───────────────●
          │     ╲               ╱
     -Ps ─┼─────────●           ●───────
          │          ╲         ╱
          │           ╰───────╯
                          ⑤
-              
+
               -Ec    0    +Ec
                      ↑
               COERCIVE FIELD
@@ -214,7 +214,7 @@ Ferroelectrics can be set to IN-BETWEEN values!
 
 **How?** By stopping at different points on the hysteresis curve using precisely controlled voltage pulses.
 
-**Why useful?** 
+**Why useful?**
 - Each cell stores 5 bits instead of 1 bit (log₂(30) ≈ 5)
 - For AI: Can represent neural network weights directly (analog compute)
 
@@ -323,7 +323,7 @@ Full major loop:              Minor loop:
      ╱         ╲                ╱ ╭←╯
     │           │              │  │ Turned back
     │     ●     │              │  ↓ early!
-     ╲         ╱                ╲   
+     ╲         ╱                ╲
       ╰───────╯                  ╰─
 ```
 
@@ -382,7 +382,7 @@ This section documents exactly what the code does — verified by source analysi
 
 ### Core Model: Mayergoyz Preisach
 
-The demo uses the **classical Preisach model** (not tanh approximation). The implementation is in `pkg/ferroelectric/preisach_advanced.go`.
+The demo uses the **classical Preisach model** (not tanh approximation). The implementation is in `module1-hysteresis/pkg/ferroelectric/preisach_advanced.go`.
 
 **Key insight:** The macroscopic P-E loop EMERGES from many microscopic hysterons, each with its own switching thresholds.
 
@@ -546,3 +546,7 @@ Where Tc = 723 K (~450°C) is the Curie temperature. Above Tc, the material lose
 | Square Wave | Fast switching dynamics |
 | Random Walk | Multi-level storage (30 states) |
 | Write/Read Demo | Complete memory operation cycle |
+
+---
+
+*This document is part of the FeCIM Visualizer project. For beginner explanations, see [hysteresis.ELI5.md](hysteresis.ELI5.md). For research references, see [hysteresis.research.md](hysteresis.research.md). For open-source tools, see [hysteresis.opensource.md](hysteresis.opensource.md).*

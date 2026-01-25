@@ -1,4 +1,4 @@
-# Demo 3: MNIST FeCIM Demo - 87% Hardware Target
+# MNIST FeCIM Demo - 87% Hardware Target
 
 > *"We're at 87% validation here... theoretical is 88%."*
 > — Dr. external research group, external research institution (Nov 2024)
@@ -18,10 +18,9 @@ This demo shows how a 784→128→10 neural network runs on ferroelectric crossb
 ## Quick Start
 
 ```bash
-# From the unified visualizer
-cd /path/to/multilayer-ferroelectric-cim-visualizer
-go build -o fecim-visualizer ./cmd/fecim-visualizer
-./fecim-visualizer
+# From the unified visualizer (recommended)
+cd /path/to/fecim-lattice-tools
+./launch.sh
 # Navigate to "3b. MNIST FP/CIM" tab
 
 # Or standalone demo
@@ -412,8 +411,7 @@ module3-mnist/
 │   ├── train_all_sizes.sh    # Train 64/128/256
 │   └── benchmark.sh          # Compare with literature
 │
-├── demo3.README.md           # This file
-└── ELI5.demo3.md             # Explain like I'm 5
+└── docs/ -> see docs/mnist/  # All documentation
 ```
 
 ---
@@ -490,6 +488,15 @@ wget http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz
 - Check if guided tour is running (click "End Tour")
 - Restart the application
 - Check terminal for error messages
+
+---
+
+## Related Documentation
+
+- [MNIST ELI5](mnist.ELI5.md) - Simple explanations for beginners
+- [MNIST Research](mnist.research.md) - Academic background and literature review
+- [MNIST Open Source](mnist.opensource.md) - Related projects and tools
+- [Module Improvements Plan](mnist-module-improvements-plan.md) - Roadmap
 
 ---
 

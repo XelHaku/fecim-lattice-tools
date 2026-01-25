@@ -1,116 +1,86 @@
-# Demo 2: Crossbar Array MVM Visualizer
+# Module 2: Crossbar Array Simulation
 
-**Complexity:** ⭐⭐ Intermediate (Compute + Graphics)  
-**Timeline:** 2-3 weeks  
-**Status:** Structure Ready
+**Ferroelectric Compute-in-Memory - Matrix-Vector Multiplication Visualization**
 
-## Goal
+---
 
-Animated visualization of Matrix-Vector Multiplication in a ferroelectric crossbar array:
-- Watch currents flow through the crossbar during computation
-- Toggle non-idealities (IR drop, sneak paths, device variation)
-- Click cells to program conductance values
-- Input pulse animation showing voltage propagation
+## Quick Start
 
-## Architecture
+```bash
+# From project root
+cd <local-path>
+
+# Run unified app and select "Crossbar" tab
+./launch.sh
+
+# OR run standalone
+cd module2-crossbar
+go build -o crossbar-gui ./cmd/crossbar-gui
+./crossbar-gui
+```
+
+---
+
+## Documentation
+
+All documentation has been consolidated into `docs/crossbar/`:
+
+### Start Here
+- **[Demo Guide](../docs/crossbar/crossbar.demo.md)** - How to run the visualization
+- **[ELI5 Explanation](../docs/crossbar/crossbar.ELI5.md)** - Simple water park analogy
+
+### Deep Dive
+- **[Physics Reference](../docs/crossbar/crossbar.physics.md)** - Complete technical details
+- **[Research Papers](../docs/crossbar/crossbar.research.md)** - Academic citations
+- **[Open Source Tools](../docs/crossbar/crossbar.opensource.md)** - Comparison with other simulators
+
+---
+
+## Code Structure
 
 ```
 module2-crossbar/
-├── cmd/crossbar/main.go       # Entry point
+├── cmd/crossbar-gui/          # Standalone application entry
 ├── pkg/
-│   ├── crossbar/              # Array modeling
-│   │   ├── array.go           # Crossbar structure
-│   │   ├── cell.go            # FeFET/FTJ cell
-│   │   └── wire.go            # Wire resistance
-│   ├── compute/               # Vulkan compute
-│   │   ├── mvm.go             # MVM kernel
-│   │   └── nonideal.go        # Non-ideality injection
-│   └── layers/                # Neural network layers
-└── shaders/
-    ├── mvm.comp               # MVM compute shader
-    ├── crossbar.vert          # Grid vertex shader
-    └── crossbar.frag          # Cell color shader
+│   ├── crossbar/              # Core simulation
+│   │   ├── array.go           # MVM implementation
+│   │   ├── nonidealities.go   # IR drop, sneak paths
+│   │   └── enhanced.go        # Integrated simulation
+│   └── gui/                   # Fyne-based GUI
+│       ├── app.go             # Main application
+│       ├── embedded.go        # Embeddable interface
+│       └── widgets.go         # Custom widgets
+└── README.md                  # This file
 ```
 
-## Key Features
+---
 
-### Matrix-Vector Multiply (MVM)
+## Features
 
-```
-Input Vector (Voltages)
-    V₀  V₁  V₂  V₃  V₄  V₅  V₆  V₇
-    ↓   ↓   ↓   ↓   ↓   ↓   ↓   ↓
-   ┌───┬───┬───┬───┬───┬───┬───┬───┐
-I₀ │▓▓▓│░░░│▓░░│░▓░│▓▓▓│░░░│▓░░│░▓░│→ Σ (output)
-I₁ │░▓░│▓░░│▓▓▓│░░░│░▓░│▓░░│░░░│▓▓▓│→ Σ
-I₂ │▓░░│░░░│░▓░│▓▓▓│░░░│▓▓▓│▓░░│░▓░│→ Σ
-   └───┴───┴───┴───┴───┴───┴───┴───┘
+- **30-level conductance quantization** - Matches Dr. Tour's FeCIM specification
+- **Interactive heatmaps** - Click cells to see detailed physics data
+- **Non-ideality modeling** - IR drop, sneak paths, device variation, ADC quantization
+- **Real-time metrics** - Accuracy, energy efficiency, performance
+- **Data export** - CSV and JSON formats for validation
 
-Cell color = conductance (▓=high, ░=low)
-Animation: Current flows row-by-row
-```
+---
 
-### Non-Idealities Modeled
-
-| Effect | Description | Toggle |
-|--------|-------------|--------|
-| **IR Drop** | Voltage attenuation along wires | [✓] |
-| **Sneak Path** | Parasitic current in passive arrays | [✓] |
-| **Device Variation** | Cell-to-cell conductance spread | [✓] |
-| **ADC Quantization** | Limited output precision | [✓] |
-
-## Vulkan Compute Pipeline
-
-This demo **introduces compute shaders** for parallel MVM:
-
-```glsl
-// mvm.comp
-layout(local_size_x = 64) in;
-
-layout(set = 0, binding = 0) readonly buffer Weights { float G[]; };
-layout(set = 0, binding = 1) readonly buffer Input { float V[]; };
-layout(set = 0, binding = 2) writeonly buffer Output { float I[]; };
-
-void main() {
-    uint row = gl_GlobalInvocationID.x;
-    float sum = 0.0;
-    for (uint col = 0; col < numCols; col++) {
-        sum += G[row * numCols + col] * V[col];
-    }
-    I[row] = sum;
-}
-```
-
-## Implementation Phases
-
-- [ ] Phase 1: Crossbar data structure + MVM logic
-- [ ] Phase 2: Vulkan compute pipeline setup
-- [ ] Phase 3: 2D grid visualization with cell colors
-- [ ] Phase 4: Current flow animation
-- [ ] Phase 5: Non-ideality toggles + interactive programming
-
-## Benchmarks (from Literature)
-
-| Architecture | MNIST Accuracy | Source |
-|--------------|----------------|--------|
-| 24×24 FE Memristor | 98.78% | ScienceDirect 2025 |
-| Multi-Level FeFET 28nm | 96.6% | Nature Comms 2023 |
-| FTJ Crossbar | 92% | SemiEngineering 2024 |
-| Ferroelectric CIM Target | 87% | Dr. Tour presentation |
-
-## Dependencies
-
-```go
-require (
-    github.com/bbredesen/go-vk
-    github.com/go-gl/glfw/v3.3/glfw
-    gonum.org/v1/gonum
-)
-```
-
-## Run
+## Tests
 
 ```bash
 cd module2-crossbar
-go run cmd/crossbar/main.go
+go test ./pkg/crossbar -v
 ```
+
+---
+
+## Related Modules
+
+- **[Module 1: Hysteresis](../module1-hysteresis/)** - P-E curves and ferroelectric switching
+- **[Module 3: MNIST](../module3-mnist/)** - Neural network digit recognition demo
+- **[Module 6: EDA](../module6-eda/)** - Circuit design and layout tools
+
+---
+
+**Part of:** FeCIM Lattice Tools
+**Source:** Dr. external research group's HfO₂-ZrO₂ superlattice research (COSM 2025)

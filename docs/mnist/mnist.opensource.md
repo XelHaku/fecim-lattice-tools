@@ -939,4 +939,13 @@ go build -o fecim-visualizer ./cmd/fecim-visualizer
 
 ---
 
-*This document is part of the FeCIM Visualizer project. For research details, see `mnist.research.md`. For beginner explanations, see `mnist.ELI5.md`.*
+## Related Documentation
+
+- [MNIST Demo](mnist.demo.md) - Demo walkthrough and technical details
+- [MNIST ELI5](mnist.ELI5.md) - Simple explanations for beginners
+- [MNIST Research](mnist.research.md) - Academic background and literature review
+- [Module Improvements Plan](mnist-module-improvements-plan.md) - Roadmap
+
+---
+
+*This document is part of the FeCIM Visualizer project.*

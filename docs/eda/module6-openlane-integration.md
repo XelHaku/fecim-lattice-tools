@@ -6,10 +6,11 @@
 
 ## Quick Links
 
-- **Detailed Integration Guide:** [module6-eda/docs/INTEGRATION.md](../module6-eda/docs/INTEGRATION.md)
+- **Detailed Integration Guide:** [eda.integration.md](./eda.integration.md)
+- **Demo Interface Guide:** [eda.demo.md](./eda.demo.md)
 - **Technical Plan:** [module6-technical-plan.md](module6-technical-plan.md)
 - **OpenLane Study Notes:** [OPENLANE_STUDY.md](OPENLANE_STUDY.md)
-- **Working Examples:** [module6-eda/examples/](../module6-eda/examples/)
+- **Working Examples:** [module6-eda/examples/](../../module6-eda/examples/)
 
 ---
 
@@ -200,12 +201,17 @@ cd module6-eda
 
 ## Further Reading
 
-- **Detailed Integration Guide:** [module6-eda/docs/INTEGRATION.md](../module6-eda/docs/INTEGRATION.md)
+- **Detailed Integration Guide:** [eda.integration.md](./eda.integration.md)
   - Full configuration variable reference
   - DEF format specification
   - Custom cell file structures (LEF, Liberty)
   - Interactive mode commands
   - Complete troubleshooting guide
+
+- **Demo Interface Guide:** [eda.demo.md](./eda.demo.md)
+  - 7-tab interface overview
+  - Quick start with unified app
+  - Usage examples and workflows
 
 - **OpenLane Study Notes:** [OPENLANE_STUDY.md](OPENLANE_STUDY.md)
   - Validated findings from OpenLane source code
