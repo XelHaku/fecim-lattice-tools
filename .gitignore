@@ -35,3 +35,5 @@ generated/
 *.log
 logs/
 **/*.log
+cmd/fecim-visualizer/logs/2026-01-23_19-16-14-mnist.log
+cmd/fecim-visualizer/logs/
