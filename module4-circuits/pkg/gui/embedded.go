@@ -76,6 +76,7 @@ func (e *EmbeddedCircuitsApp) Start() {
 	e.refreshWritePulse()
 	e.refreshReadZone()
 	e.refreshTimingDiagrams()
+	e.refreshSharedArray()
 	fyne.Do(func() {
 		if e.computeArrayCanvas != nil {
 			e.computeArrayCanvas.Refresh()

@@ -313,13 +313,8 @@ func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 	}
 	currentView = "OPERATIONS"
 
-	// Header with inline view selector
-	titleLabel := widget.NewLabel("FeCIM Peripheral Circuits Visualizer")
-	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
-
+	// Header with inline view selector (title moved to main navbar)
 	headerRow := container.NewHBox(
-		titleLabel,
-		layout.NewSpacer(),
 		widget.NewLabel("View:"),
 		viewSelector,
 		layout.NewSpacer(),

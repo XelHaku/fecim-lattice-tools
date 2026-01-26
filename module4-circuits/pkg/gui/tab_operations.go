@@ -583,28 +583,30 @@ func (ca *CircuitsApp) updateOperationsPanels() {
 	mode := ca.currentMode
 	ca.mu.RUnlock()
 
-	// Toggle panel visibility
+	// CRITICAL: Hide ALL panels first to prevent leftover UI
 	if ca.writeConfigPanel != nil {
-		if mode == ModeWrite {
-			ca.writeConfigPanel.Show()
-		} else {
-			ca.writeConfigPanel.Hide()
-		}
+		ca.writeConfigPanel.Hide()
 	}
-
 	if ca.readConfigPanel != nil {
-		if mode == ModeRead {
-			ca.readConfigPanel.Show()
-		} else {
-			ca.readConfigPanel.Hide()
-		}
+		ca.readConfigPanel.Hide()
+	}
+	if ca.computeConfigPanel != nil {
+		ca.computeConfigPanel.Hide()
 	}
 
-	if ca.computeConfigPanel != nil {
-		if mode == ModeCompute {
+	// THEN show only the selected panel
+	switch mode {
+	case ModeWrite:
+		if ca.writeConfigPanel != nil {
+			ca.writeConfigPanel.Show()
+		}
+	case ModeRead:
+		if ca.readConfigPanel != nil {
+			ca.readConfigPanel.Show()
+		}
+	case ModeCompute:
+		if ca.computeConfigPanel != nil {
 			ca.computeConfigPanel.Show()
-		} else {
-			ca.computeConfigPanel.Hide()
 		}
 	}
 
@@ -634,9 +636,9 @@ func (ca *CircuitsApp) updateModeHelp() {
 	var helpText string
 	switch mode {
 	case ModeWrite:
-		helpText = "WRITE: Program cells using DAC voltage pulses (2-5V). Select cell and target level, then PROGRAM."
+		helpText = "WRITE: Program cells using DAC voltage pulses (1.2-1.5V). Select cell and target level, then PROGRAM."
 	case ModeRead:
-		helpText = "READ: Sense cell conductance with low voltage (0.5V). TIA converts current to voltage for ADC."
+		helpText = "READ: Sense cell conductance with low voltage (≤0.5V). TIA converts current to voltage for ADC."
 	case ModeCompute:
 		helpText = "COMPUTE: Matrix-vector multiply in ~20ns. Input voltages x conductances, summed by KCL."
 	}
@@ -1476,27 +1478,30 @@ func (ca *CircuitsApp) updateOperationsButtons() {
 	mode := ca.currentMode
 	ca.mu.RUnlock()
 
+	// CRITICAL: Hide ALL button sets first to prevent leftover UI
 	if ca.opsWriteButtons != nil {
-		if mode == ModeWrite {
-			ca.opsWriteButtons.Show()
-		} else {
-			ca.opsWriteButtons.Hide()
-		}
+		ca.opsWriteButtons.Hide()
 	}
-
 	if ca.opsReadButtons != nil {
-		if mode == ModeRead {
-			ca.opsReadButtons.Show()
-		} else {
-			ca.opsReadButtons.Hide()
-		}
+		ca.opsReadButtons.Hide()
+	}
+	if ca.opsComputeButtons != nil {
+		ca.opsComputeButtons.Hide()
 	}
 
-	if ca.opsComputeButtons != nil {
-		if mode == ModeCompute {
+	// THEN show only the selected button set
+	switch mode {
+	case ModeWrite:
+		if ca.opsWriteButtons != nil {
+			ca.opsWriteButtons.Show()
+		}
+	case ModeRead:
+		if ca.opsReadButtons != nil {
+			ca.opsReadButtons.Show()
+		}
+	case ModeCompute:
+		if ca.opsComputeButtons != nil {
 			ca.opsComputeButtons.Show()
-		} else {
-			ca.opsComputeButtons.Hide()
 		}
 	}
 }
