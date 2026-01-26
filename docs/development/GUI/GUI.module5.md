@@ -13,10 +13,10 @@ Description: |
   published datasheets.
 
 Bugs:
-  - [ ] BUG-M5-001: Animation mutex lock ordering in animationLoop
-  - [ ] BUG-M5-002: Status label redundant SetText calls
-  - [ ] BUG-M5-003: Hero widget CreateRenderer called multiple times
-  - [ ] BUG-M5-004: Text caching to prevent resize loops
+  - [x] BUG-M5-001: Animation mutex lock ordering in animationLoop
+  - [x] BUG-M5-002: Status label redundant SetText calls
+  - [x] BUG-M5-003: Hero widget CreateRenderer called multiple times
+  - [x] BUG-M5-004: Text caching to prevent resize loops
 
 Screens:
   - Screen: MainWindow

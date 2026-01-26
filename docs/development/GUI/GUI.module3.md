@@ -6,9 +6,9 @@ Package: module3-mnist/pkg/gui
 ---
 
 Bugs:
-  - [ ] BUG-M3-001: Canvas mouse events may not use fyne.Do() consistently
-  - [ ] BUG-M3-002: Auto-demo loop cleanup - ticker and context not fully synchronized
-  - [ ] BUG-M3-003: Network weight loading failure handling incomplete
+  - [x] BUG-M3-001: Canvas mouse events may not use fyne.Do() consistently
+  - [x] BUG-M3-002: Auto-demo loop cleanup - ticker and context not fully synchronized
+  - [x] BUG-M3-003: Network weight loading failure handling incomplete
 
 Variants:
   - MNISTApp: Original single-mode MNIST demo (app.go)

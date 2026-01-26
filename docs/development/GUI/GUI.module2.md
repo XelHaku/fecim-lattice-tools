@@ -7,11 +7,11 @@ Description: "Interactive visualization of FeCIM crossbar array matrix-vector mu
 ---
 
 Bugs:
-  - [ ] BUG-M2-001: Potential race condition on lastInput/lastOutput without mutex protection in runMVMAnimated
-  - [ ] BUG-M2-002: Missing fyne.Do wrapper in updateConductanceDisplay call
-  - [ ] BUG-M2-003: Heatmap refresh during startup can cause layout oscillation (partially mitigated)
-  - [ ] BUG-M2-004: Educational content wrapping disabled but can still trigger MinSize changes
-  - [ ] BUG-M2-005: Auto-demo context cancellation may leak if Stop() not called
+  - [x] BUG-M2-001: Potential race condition on lastInput/lastOutput without mutex protection in runMVMAnimated
+  - [x] BUG-M2-002: Missing fyne.Do wrapper in updateConductanceDisplay call
+  - [x] BUG-M2-003: Heatmap refresh during startup can cause layout oscillation (partially mitigated)
+  - [x] BUG-M2-004: Educational content wrapping disabled but can still trigger MinSize changes
+  - [x] BUG-M2-005: Auto-demo context cancellation may leak if Stop() not called
 
 # Screens
 
@@ -58,7 +58,7 @@ Layout:
               Purpose: "Context-sensitive educational text"
               State: wrapping=off (prevents MinSize changes)
               Bindings: Updated by tabs.OnSelected, setEducationalContent()
-              Bug: BUG-4 (wrapping disabled but content changes can still trigger layout)
+              Bug: BUG-M2-004 (wrapping disabled but content changes can still trigger layout)
 
           - keyStatLabel:
               Type: widget.Label
@@ -94,7 +94,7 @@ Layout:
                       - OnCellTapped → onCellTapped (callbacks.go:34)
                       - OnCellHover → onCellHover (callbacks.go:58)
                       - Data updated by updateConductanceDisplay() (app.go:618)
-                    Bug: BUG-2 (updateConductanceDisplay at line 204 missing fyne.Do)
+                    Bug: BUG-M2-002 (updateConductanceDisplay at line 204 missing fyne.Do)
 
           - IRDropTab:
               Type: container.TabItem
@@ -437,7 +437,7 @@ Updates:
   - Updates statsLabel with results
   - Re-enables runMVMButton
 File: animation.go:16-149
-Bug: BUG-1 (lastInput write at line 31-32 should use stateMu.Lock, currently unprotected)
+Bug: BUG-M2-001 (lastInput write at line 31-32 should use stateMu.Lock, currently unprotected)
 
 ## Enhanced MVM Execution Flow
 Trigger: User clicks "Run Enhanced MVM" button
@@ -529,7 +529,7 @@ Updates:
   - Continues until context cancelled
   - Stopped by stopAutoDemoLoop() calling ca.autoCancel()
 File: animation.go:172-249
-Bug: BUG-5 (if Stop() not called, context may leak)
+Bug: BUG-M2-005 (if Stop() not called, context may leak)
 
 ## Refresh Rate Limiting Flow
 Trigger: Heatmap data updated

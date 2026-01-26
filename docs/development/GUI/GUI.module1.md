@@ -6,10 +6,10 @@ Package: multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/gui
 ---
 
 Bugs:
-  - [ ] BUG-M1-001: UI updates from goroutine without fyne.Do() wrapper in saveDebugLog (gui.go:279) - Low risk: only file I/O
+  - [x] BUG-M1-001: UI updates from goroutine without fyne.Do() wrapper in saveDebugLog (gui.go:279) - Low risk: only file I/O
   - [x] BUG-M1-002: Potential nil pointer access in initDebugLog when material not set - FIXED: has nil check
-  - [ ] BUG-M1-003: Missing mutex protection when accessing a.material in createUI (gui.go:331) - Low risk: init-time only
-  - [ ] BUG-M1-004: Animation loop refresh rate may cause drift without vsync sync (simulation.go:14)
+  - [x] BUG-M1-003: Missing mutex protection when accessing a.material in createUI (gui.go:331) - Low risk: init-time only
+  - [x] BUG-M1-004: Animation loop refresh rate may cause drift without vsync sync (simulation.go:14)
   - [x] BUG-M1-005: Slider value setting inside mutex lock in keyboard.go - FIXED: removed unnecessary mutex
   - [x] BUG-M1-006: LevelIndicator time-based pulse may not refresh properly - OK: simulation refreshes at 60 FPS
 
@@ -349,7 +349,7 @@ BugDetails:
       Ensure saveDebugLog never touches UI state, or wrap UI updates in fyne.Do.
       Current code only does file I/O, but log.Info calls may interact with GUI logger.
 
-  - id: BUG-002
+  - id: BUG-M1-002
     component: initDebugLog
     severity: Medium
     description: initDebugLog accesses a.material without checking for nil
@@ -364,7 +364,7 @@ BugDetails:
       materialName := a.material.Name
       ...
 
-  - id: BUG-003
+  - id: BUG-M1-003
     component: createUI
     severity: Medium
     description: Plot initialization accesses a.material.Ec without mutex protection
@@ -379,7 +379,7 @@ BugDetails:
       a.mu.RUnlock()
       a.plot = widgets.NewPEPlot(eMax, pMax, ...)
 
-  - id: BUG-004
+  - id: BUG-M1-004
     component: simulationLoop
     severity: Low
     description: 60 FPS ticker may drift over time without vsync sync

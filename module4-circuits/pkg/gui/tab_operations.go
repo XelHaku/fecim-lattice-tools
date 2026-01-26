@@ -946,7 +946,7 @@ func (ca *CircuitsApp) refreshOpsWritePulse() {
 func (ca *CircuitsApp) createReadModePanel() {
 	// Read voltage slider
 	ca.opsReadVoltageLabel = widget.NewLabel(fmt.Sprintf("Read Voltage: %.2f V", ca.readVoltage))
-	ca.opsReadVoltageSlider = widget.NewSlider(0.1, 1.5)
+	ca.opsReadVoltageSlider = widget.NewSlider(0.1, 0.5)  // Max 0.5V for non-disturbing read
 	ca.opsReadVoltageSlider.Value = ca.readVoltage
 	ca.opsReadVoltageSlider.OnChanged = func(v float64) {
 		ca.mu.Lock()
@@ -1012,7 +1012,7 @@ func (ca *CircuitsApp) createReadModePanel() {
 		widget.NewLabelWithStyle("READ PARAMETERS", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		ca.opsReadVoltageLabel,
 		ca.opsReadVoltageSlider,
-		widget.NewLabel("SAFE: < 1.0V | DANGER: > 2.0V"),
+		widget.NewLabel("SAFE: ≤0.5V (non-disturbing) | CAUTION: >0.5V may disturb polarization"),
 		container.NewHBox(
 			widget.NewLabel("TIA Gain:"), tiaSelect, widget.NewLabel("kOhm"),
 		),

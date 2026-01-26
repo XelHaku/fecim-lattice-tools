@@ -13,16 +13,17 @@ Last Updated: 2026-01-25
 ### Fixed Bugs
 - [x] BUG-M4-002: Array cell click coordinate calculation (FIXED: uses asymmetric margins)
 - [x] BUG-M4-003: computeInputRowContainer now initialized in app.go:143
+- [x] BUG-M4-005: Race condition in drawSharedArray (FIXED: currentMode read once under lock at line 253)
+- [x] BUG-M4-001: Operations panel visibility sync on mode change
+- [x] BUG-M4-004: Missing canvas refresh in Start() for shared array
 
 ### Open Bugs
-- [ ] BUG-M4-001: Operations panel visibility sync on mode change
-- [ ] BUG-M4-004: Missing canvas refresh in Start() for shared array
-- [ ] BUG-M4-005: Potential race condition in drawSharedArray during mode reads
+(none)
 
-### Physics Issues (NEW - from HZO_PARAMETERS.md research)
-- [ ] PHYS-001: WRITE voltage range incorrect (shows 2.0-5.0V, should be ±1.2-1.5V for 10nm HZO)
-- [ ] PHYS-002: READ voltage slider max too high (1.5V exceeds safe margin, should be ≤0.5V)
-- [ ] PHYS-003: COMPUTE voltage note "0-1V READ-safe" inaccurate (should be "0.3-0.5V")
+### Physics Issues (from HZO_PARAMETERS.md research) - ALL FIXED
+- [x] PHYS-001: WRITE voltage range corrected (1.2-1.5V for 10nm HZO)
+- [x] PHYS-002: READ voltage slider max fixed (now ≤0.5V)
+- [x] PHYS-003: COMPUTE voltage note updated ("0.3-0.5V COMPUTE-safe")
 
 ### UX Issues (NEW)
 - [ ] UX-001: COMPUTE button redundant (auto-compute already triggers on input change)
@@ -133,12 +134,12 @@ Border
 
 | Component | Type | Purpose | File:Line | State | Bindings | Bug |
 |-----------|------|---------|-----------|-------|----------|-----|
-| TappableArrayCanvas | Custom Widget | Clickable array with integrated DAC/ADC | tab_operations.go:36-128 | sharedArrayCanvas, sharedArrayCellSize, sharedArrayOffsetX/Y | Tapped() -> onArrayCellTapped() | BUG-002 |
+| TappableArrayCanvas | Custom Widget | Clickable array with integrated DAC/ADC | tab_operations.go:36-128 | sharedArrayCanvas, sharedArrayCellSize, sharedArrayOffsetX/Y | Tapped() -> onArrayCellTapped() | BUG-M4-002 |
 | operationsStatusLabel | Label | Dynamic status display | app.go:133 | Text updated by all actions | All action handlers | - |
 | operationsModeHelp | Label | Mode-specific help text | app.go:134 | Text set by updateModeHelp() | currentMode state | - |
 | sharedCellInfoLabel | Label | Selected cell info | app.go:138 | Text set by updateSharedCellInfo() | selectedRow, selectedCol, arrayWeights | - |
 | sharedArrayInfoLabel | Label | Array dimensions | app.go:139 | Text set on init | arrayRows, arrayCols, quantLevels | - |
-| computeInputRowContainer | VBox | Input entry row (COMPUTE mode only) | app.go:141-142 | Hidden by default, shown in COMPUTE | currentMode | BUG-003 |
+| computeInputRowContainer | VBox | Input entry row (COMPUTE mode only) | app.go:141-142 | Hidden by default, shown in COMPUTE | currentMode | BUG-M4-003 |
 
 **Data Flow**:
 
@@ -865,9 +866,9 @@ for c := 0; c < min(8, cols); c++ {
 
 3. **Auto-Compute**: COMPUTE mode automatically recalculates MVM whenever inputs change. No need to press COMPUTE button explicitly (though button still works for manual refresh).
 
-4. **Click Detection Complexity**: Array click detection must account for asymmetric margins due to integrated DAC/ADC boxes. See BUG-002 for details.
+4. **Click Detection Complexity**: Array click detection must account for asymmetric margins due to integrated DAC/ADC boxes. See BUG-M4-002 for details.
 
-5. **Missing Field Warning**: computeInputRowContainer is used but not declared in app.go struct. See BUG-003 for fix.
+5. **Missing Field Warning**: computeInputRowContainer is used but not declared in app.go struct. See BUG-M4-003 for fix.
 
 6. **Bitmap Font**: Custom 5x7 pixel font for canvas text rendering, supporting alphanumeric + basic symbols. Defined in font.go with fontPatterns map.
 
