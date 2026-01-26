@@ -1,4 +1,4 @@
-// Command fecim-visualizer provides a unified GUI application with all FeCIM demos as tabs.
+// Command fecim-visualizer provides a unified GUI application with all FeCIM demos.
 //
 // This is the main entry point for FeCIM Lattice Tools.
 // It combines all 6 demos into a single application with tab navigation.
@@ -68,6 +68,7 @@ func (l *ForceMinSizeLayout) Layout(objects []fyne.CanvasObject, size fyne.Size)
 type RecordingState struct {
 	mu          sync.Mutex
 	isRecording bool
+	stopped     bool // Prevents double-close of stopChan
 	stopChan    chan struct{}
 	cmd         *exec.Cmd
 	stdin       io.WriteCloser
@@ -79,22 +80,22 @@ func newRecordingState() *RecordingState {
 	return &RecordingState{}
 }
 
-// sectionNameFromTab converts tab text to a filename-friendly section name
-func sectionNameFromTab(tabText string) string {
-	switch tabText {
+// sectionNameFromTab converts view name to a filename-friendly section name
+func sectionNameFromTab(viewName string) string {
+	switch viewName {
 	case "Home":
 		return "home"
-	case "1. Hysteresis":
+	case "FeCIM Hysteresis Simulation":
 		return "module01-hysteresis"
-	case "2. Crossbar+":
+	case "FeCIM Crossbar Array Visualization":
 		return "module02-crossbar"
-	case "3. MNIST":
+	case "FeCIM MNIST Neural Network":
 		return "module03-mnist"
-	case "4. Circuits":
+	case "FeCIM Peripheral Circuits Visualizer":
 		return "module04-circuits"
-	case "5. Comparison":
+	case "FeCIM: The Energy Revolution":
 		return "module05-comparison"
-	case "6. EDA (Work In Progress)":
+	case "FeCIM EDA Design Suite (Work In Progress)":
 		return "module06-eda"
 	default:
 		return "unknown"
@@ -155,6 +156,7 @@ func (rs *RecordingState) startRecording(window fyne.Window) error {
 	rs.outputFile = filepath.Join(recordingDir, fmt.Sprintf("fecim_recording_%s.mp4", timestamp))
 	rs.window = window
 	rs.stopChan = make(chan struct{})
+	rs.stopped = false // Reset stopped flag for new recording
 
 	// Get initial frame to determine size
 	img := window.Canvas().Capture()
@@ -263,8 +265,12 @@ func (rs *RecordingState) stopRecording() (string, error) {
 		return "", fmt.Errorf("not recording")
 	}
 
-	// Signal capture loop to stop
-	close(rs.stopChan)
+	// Prevent double-close of stopChan
+	if !rs.stopped && rs.stopChan != nil {
+		close(rs.stopChan)
+		rs.stopped = true
+		rs.stopChan = nil
+	}
 
 	// Close stdin to signal EOF to FFmpeg
 	if rs.stdin != nil {
@@ -413,30 +419,49 @@ func main() {
 		demo6: d6,
 	}
 
-	// Create tabs container (will be populated below)
-	var tabs *container.AppTabs
+	// View names for navigation (index matches view index)
+	viewNames := []string{
+		"Home",
+		"FeCIM Hysteresis Simulation",
+		"FeCIM Crossbar Array Visualization",
+		"FeCIM MNIST Neural Network",
+		"FeCIM Peripheral Circuits Visualizer",
+		"FeCIM: The Energy Revolution",
+		"FeCIM EDA Design Suite (Work In Progress)",
+	}
 
-	// Create launcher content with callback to switch tabs
+	// Track current view index and content stack
+	currentViewIndex := 0
+	var contentStack *fyne.Container
+	var views []fyne.CanvasObject
+	var onViewChange func(index int) // Callback for view changes
+
+	// selectView switches to the specified view index
+	selectView := func(index int) {
+		if index < 0 || index >= len(views) {
+			return
+		}
+		// Hide all views
+		for _, v := range views {
+			v.Hide()
+		}
+		// Show selected view
+		views[index].Show()
+		currentViewIndex = index
+		// Trigger view change callback
+		if onViewChange != nil {
+			onViewChange(index)
+		}
+		if contentStack != nil {
+			contentStack.Refresh()
+		}
+	}
+
+	// Create launcher content with callback to switch views
 	launcherContent := CreateLauncherContent(func(demoNum int) {
-		if tabs != nil {
-			// Map demo number to tab index
-			// Home=0, Demo1=1, Demo2=2, Demo3=3, Demo4=4, Demo5=5, Demo6=6
-			tabIndex := 0
-			switch demoNum {
-			case 1:
-				tabIndex = 1
-			case 2:
-				tabIndex = 2
-			case 3:
-				tabIndex = 3
-			case 4:
-				tabIndex = 4
-			case 5:
-				tabIndex = 5
-			case 6:
-				tabIndex = 6
-			}
-			tabs.SelectIndex(tabIndex)
+		// Map demo number to view index (demoNum 1-6 maps to index 1-6)
+		if demoNum >= 1 && demoNum <= 6 {
+			selectView(demoNum)
 		}
 	})
 
@@ -468,18 +493,26 @@ func main() {
 	demo6Content := demos.demo6.BuildContent(fyneApp, window)
 	fmt.Println("[STARTUP] demo6 content built")
 
-	// Create tabs - 6 demos total (plus home)
-	fmt.Println("[STARTUP] Creating tabs...")
-	tabs = container.NewAppTabs(
-		container.NewTabItem("Home", launcherContent),
-		container.NewTabItem("1. Hysteresis", container.NewMax(demo1Content)),
-		container.NewTabItem("2. Crossbar+", container.NewMax(demo2Content)),
-		container.NewTabItem("3. MNIST", container.NewMax(demo3Content)),
-		container.NewTabItem("4. Circuits", container.NewMax(demo4Content)),
-		container.NewTabItem("5. Comparison", container.NewMax(demo5Content)),
-		container.NewTabItem("6. EDA (Work In Progress)", container.NewMax(demo6Content)),
-	)
-	fmt.Println("[STARTUP] Tabs created")
+	// Create views - 6 demos total (plus home)
+	fmt.Println("[STARTUP] Creating views...")
+	views = []fyne.CanvasObject{
+		launcherContent,
+		container.NewMax(demo1Content),
+		container.NewMax(demo2Content),
+		container.NewMax(demo3Content),
+		container.NewMax(demo4Content),
+		container.NewMax(demo5Content),
+		container.NewMax(demo6Content),
+	}
+	// Hide all views except Home initially
+	for i, v := range views {
+		if i != 0 {
+			v.Hide()
+		}
+	}
+	// Create stack container with all views
+	contentStack = container.NewStack(views...)
+	fmt.Println("[STARTUP] Views created")
 	fmt.Println("[STARTUP] Creating recording state...")
 
 	// Create recording state
@@ -489,11 +522,8 @@ func main() {
 	// Create screenshot button
 	screenshotBtn := widget.NewButtonWithIcon("Screenshot", theme.MediaPhotoIcon(), func() {
 		log.Button("Screenshot")
-		// Get current section name from selected tab
-		sectionName := "home"
-		if tabs.Selected() != nil {
-			sectionName = sectionNameFromTab(tabs.Selected().Text)
-		}
+		// Get current section name from selected view
+		sectionName := sectionNameFromTab(viewNames[currentViewIndex])
 		filename := takeScreenshot(window, sectionName)
 		if filename != "" {
 			log.Debug("Screenshot saved: %s", filename)
@@ -583,10 +613,7 @@ func main() {
 					case <-screenshotTicker.C:
 						// Take screenshot on main thread
 						fyne.Do(func() {
-							sectionName := "recording"
-							if tabs.Selected() != nil {
-								sectionName = sectionNameFromTab(tabs.Selected().Text)
-							}
+							sectionName := sectionNameFromTab(viewNames[currentViewIndex])
 							takeScreenshot(window, sectionName)
 						})
 					}
@@ -602,13 +629,27 @@ func main() {
 		window.Close()
 	})
 
+	// Create home button to navigate to Home view
+	homeBtn := widget.NewButtonWithIcon("", theme.HomeIcon(), func() {
+		log.Button("Home")
+		selectView(0)
+	})
+
+	// Create current module label (left-justified in toolbar)
+	currentModuleLabel := widget.NewLabel("Home")
+	currentModuleLabel.TextStyle = fyne.TextStyle{Bold: true}
+
 	// Track current demo for start/stop
 	currentDemo := 0
 
-	// Handle tab changes - start/stop simulations as needed
-	tabs.OnSelected = func(tab *container.TabItem) {
-		log.TabChange(tab.Text)
-		sharedwidgets.DebugInteraction(fmt.Sprintf("Tab changed to '%s'", tab.Text))
+	// Handle view changes - start/stop simulations as needed
+	onViewChange = func(index int) {
+		viewName := viewNames[index]
+		log.TabChange(viewName)
+		sharedwidgets.DebugInteraction(fmt.Sprintf("View changed to '%s'", viewName))
+
+		// Update current module label
+		currentModuleLabel.SetText(viewName)
 
 		// Stop previous demo
 		switch currentDemo {
@@ -634,55 +675,45 @@ func main() {
 			demos.demo6.Stop()
 		}
 
-		// Start new demo
-		switch tab.Text {
-		case "1. Hysteresis":
-			currentDemo = 1
+		// Start new demo (index 0=Home, 1-6=demos)
+		currentDemo = index
+		switch index {
+		case 1:
 			log.Debug("Starting demo1 (Hysteresis)")
 			demos.demo1.Start()
-		case "2. Crossbar+":
-			currentDemo = 2
+		case 2:
 			log.Debug("Starting demo2 (Crossbar+)")
 			if demos.demo2 != nil {
 				demos.demo2.Start()
 			}
-		case "3. MNIST":
-			currentDemo = 3
+		case 3:
 			log.Debug("Starting demo3 (MNIST)")
 			demos.demo3.Start()
-		case "4. Circuits":
-			currentDemo = 4
+		case 4:
 			log.Debug("Starting demo4 (Circuits)")
 			demos.demo4.Start()
-		case "5. Comparison":
-			currentDemo = 5
+		case 5:
 			log.Debug("Starting demo5 (Comparison)")
 			demos.demo5.Start()
-		case "6. EDA (Work In Progress)":
-			currentDemo = 6
+		case 6:
 			log.Debug("Starting demo6 (EDA)")
 			demos.demo6.Start()
-		default:
-			currentDemo = 0
 		}
 	}
 
-	// NOTE: SetTabLocation commented out - deadlocks during startup
-	// tabs.SetTabLocation(container.TabLocationTop)
-
-	// Create toolbar with buttons aligned right
+	// Create toolbar with module label left, buttons aligned right
 	fmt.Println("[STARTUP] Creating toolbar...")
 	toolbar := container.NewBorder(
-		nil, nil, nil,
-		container.NewHBox(screenshotBtn, recordBtn, recordTimeLabel, closeBtn),
-		widget.NewLabel(""), // Spacer
+		nil, nil,
+		currentModuleLabel, // Left side: current module name
+		container.NewHBox(homeBtn, screenshotBtn, recordBtn, recordTimeLabel, closeBtn), // Right side: buttons
 	)
 
-	// Stack tabs with toolbar on top
+	// Stack content with toolbar on top
 	fmt.Println("[STARTUP] Creating main content...")
 	mainContent := container.NewBorder(
 		toolbar, nil, nil, nil,
-		tabs,
+		contentStack,
 	)
 
 	// Wrap in ForceMinSize container to prevent Wayland resize loops
@@ -702,15 +733,15 @@ func main() {
 			window.SetContent(rootContainer)
 			fmt.Println("[STARTUP] Window content set")
 
-			// Restore last selected tab after content is set
-			fmt.Println("[STARTUP] Restoring last tab...")
-			lastTabIndex := loadLastTab(prefs)
-			if lastTabIndex > 0 && lastTabIndex < len(tabs.Items) {
-				fmt.Printf("[STARTUP] Selecting tab index %d...\n", lastTabIndex)
-				tabs.SelectIndex(lastTabIndex)
-				log.Debug("Restored last tab: %d", lastTabIndex)
+			// Restore last selected view after content is set
+			fmt.Println("[STARTUP] Restoring last view...")
+			lastViewIndex := loadLastTab(prefs)
+			if lastViewIndex > 0 && lastViewIndex < len(views) {
+				fmt.Printf("[STARTUP] Selecting view index %d...\n", lastViewIndex)
+				selectView(lastViewIndex)
+				log.Debug("Restored last view: %d", lastViewIndex)
 			}
-			fmt.Println("[STARTUP] Tab restored")
+			fmt.Println("[STARTUP] View restored")
 		})
 	}()
 	fmt.Println("[STARTUP] Placeholder content set")
@@ -741,21 +772,25 @@ func main() {
 		saveWindowSize(prefs, finalSize)
 		log.Debug("Final window size saved: %.0fx%.0f", finalSize.Width, finalSize.Height)
 
-		// Save current tab index
-		if tabs.Selected() != nil {
-			for i, tab := range tabs.Items {
-				if tab == tabs.Selected() {
-					saveLastTab(prefs, i)
-					log.Debug("Last tab saved: %d (%s)", i, tab.Text)
-					break
-				}
-			}
-		}
+		// Save current view index
+		saveLastTab(prefs, currentViewIndex)
+		log.Debug("Last view saved: %d (%s)", currentViewIndex, viewNames[currentViewIndex])
 
 		// Stop recording if active
 		if recordingState.IsRecording() {
 			recordingState.stopRecording()
 		}
+
+		// Stop all demos to clean up resources (e.g., auto demo contexts)
+		log.Debug("Stopping all demos before window close...")
+		demos.demo1.Stop()
+		if demos.demo2 != nil {
+			demos.demo2.Stop()
+		}
+		demos.demo3.Stop()
+		demos.demo4.Stop()
+		demos.demo5.Stop()
+		demos.demo6.Stop()
 
 		// Close the window
 		window.Close()
