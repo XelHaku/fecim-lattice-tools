@@ -116,7 +116,7 @@ type CircuitsApp struct {
 	specADCBitsSelect    *widget.Select
 	specTIAGainSelect    *widget.Select
 	specSummaryLabels    []*widget.Label
-	specSummaryLabel     *widget.Label
+	specSummaryLabel     *fyne.Container
 	specStatusLabel      *widget.Label
 
 	// Tab 7: Reference (unified TIMING + SPECS)

@@ -659,3 +659,97 @@ When a method holds a read lock (`RLock`) but needs to mutate shared state:
 - ✅ No race conditions detected
 
 **Impact:** Multiple goroutines can now safely call `Infer()` concurrently without data races on the RNG.
+
+## Module 3 Weight Matrix Hover Tooltips (2026-01-25)
+
+### Enhancement Implemented
+Added interactive hover tooltips to Module 3 weight matrix visualization showing exact weight values at cursor position.
+
+### Technical Approach
+1. Created `HoverableHeatmap` widget implementing `desktop.Hoverable` interface
+2. Wrapper pattern: wraps existing `canvas.Raster` while adding hover functionality
+3. Dynamic tooltip positioning at cursor location (+10px offset)
+4. Proper cleanup on MouseOut to prevent tooltip accumulation
+
+### Key Implementation Details
+- **Tooltip format**: "Weight[row,col] = value" with 4 decimal places
+- **Coordinate calculation**: Mouse position mapped to matrix indices via widget size
+- **Bounds checking**: Prevents out-of-range access
+- **State preservation**: Original `weightHeatmap` field kept for backward compatibility
+- **Zoom window**: Also uses hoverable heatmap for consistent UX
+
+### Code Structure
+```go
+type HoverableHeatmap struct {
+    widget.BaseWidget
+    raster  *canvas.Raster    // Underlying display
+    tooltip *widget.PopUp      // Active tooltip
+    app     *DualModeApp       // Access to network data
+}
+```
+
+### Integration Points
+- Modified `createWeightZone()` to instantiate HoverableHeatmap
+- Updated `showZoomedHeatmap()` for hover in zoom window
+- Added `fyne.io/fyne/v2/driver/desktop` import for Hoverable interface
+
+### Build & Test Results
+- ✅ `go build ./module3-mnist/...` succeeds
+- ✅ All module3 tests pass
+- ✅ Backward compatibility maintained
+
+### Best Practices Applied
+1. Thread-safe UI updates via `fyne.Do()`
+2. Nil checks before accessing tooltip
+3. Proper widget lifecycle (MouseIn → MouseMoved → MouseOut)
+4. Reusable widget pattern for zoom window
+
+
+## Code Organization - Module 4 Refactoring (2026-01-25)
+
+Successfully refactored `tab_operations.go` (1770 lines) into 4 smaller, focused files:
+
+### File Structure
+- **tab_operations.go** (775 lines) - Core shared functionality
+  - TappableArrayCanvas widget
+  - Unified operations view creation
+  - Mode selector and shared array section
+  - drawSharedArray with integrated DAC/ADC visualization
+  - Mode switching logic
+  - Button management
+  
+- **tab_operations_write.go** (325 lines) - Write mode
+  - createWriteModePanel
+  - updateOpsWriteDataPath
+  - drawOpsWritePulse (programming pulse waveform)
+  - onOpsProgram, onOpsProgramRandom action handlers
+  
+- **tab_operations_read.go** (355 lines) - Read mode
+  - createReadModePanel
+  - drawOpsReadZone (voltage zone visualization)
+  - onOpsRead, onOpsVerify action handlers
+  
+- **tab_operations_compute.go** (417 lines) - Compute mode
+  - createComputeModePanel
+  - computeAndUpdateAll (MVM computation)
+  - updateOpsComputeMath
+  - onOpsCompute, onOpsAnimate, onOpsReset action handlers
+
+### Key Patterns
+1. **Package declaration**: All files use `package gui`
+2. **Import management**: Each file imports only what it needs
+3. **No API changes**: All functions remain unexported, maintaining encapsulation
+4. **Logical grouping**: Functions grouped by mode (write/read/compute)
+5. **Shared functionality**: Core operations (mode switching, array display) remain in main file
+
+### Benefits
+- Improved maintainability (each file < 500 lines)
+- Clear separation of concerns by operation mode
+- Easier to navigate and modify specific modes
+- No impact on existing functionality or tests
+
+### Verification
+- ✅ Build successful: `go build ./module4-circuits/...`
+- ✅ Tests pass: `go test ./module4-circuits/...`
+- ✅ Main visualizer builds: `go build ./cmd/fecim-visualizer`
+- ✅ All files under 500 lines

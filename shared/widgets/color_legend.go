@@ -22,8 +22,9 @@ type ColorLegend struct {
 	units    string
 	vertical bool
 
-	// Colormap function (normalized 0-1 to color)
-	colorFunc func(float64) color.RGBA
+	// Colormap support
+	colormapName string
+	colorFunc    func(float64) color.RGBA
 
 	// Visual components
 	raster   *canvas.Raster
@@ -42,18 +43,11 @@ func NewColorLegend(minValue, maxValue float64, units string, vertical bool, col
 		colorFunc: colorFunc,
 	}
 
-	// Create labels
-	minText := fmt.Sprintf("Low\n%.3f", minValue)
-	maxText := fmt.Sprintf("High\n%.3f", maxValue)
-	if units != "" {
-		minText = fmt.Sprintf("Low\n%.3f %s", minValue, units)
-		maxText = fmt.Sprintf("High\n%.3f %s", maxValue, units)
-	}
-
-	cl.minLabel = widget.NewLabel(minText)
+	// Create labels with numeric values
+	cl.minLabel = widget.NewLabel(cl.formatLabel(minValue))
 	cl.minLabel.TextStyle = fyne.TextStyle{Monospace: true}
 	cl.minLabel.Alignment = fyne.TextAlignCenter
-	cl.maxLabel = widget.NewLabel(maxText)
+	cl.maxLabel = widget.NewLabel(cl.formatLabel(maxValue))
 	cl.maxLabel.TextStyle = fyne.TextStyle{Monospace: true}
 	cl.maxLabel.Alignment = fyne.TextAlignCenter
 
@@ -61,21 +55,49 @@ func NewColorLegend(minValue, maxValue float64, units string, vertical bool, col
 	return cl
 }
 
+// NewColorLegendWithColormap creates a ColorLegend using a named colormap.
+func NewColorLegendWithColormap(minValue, maxValue float64, units string, vertical bool, colormapName string) *ColorLegend {
+	colorFunc := GetColormapFunc(colormapName)
+	cl := NewColorLegend(minValue, maxValue, units, vertical, colorFunc)
+	cl.colormapName = colormapName
+	return cl
+}
+
+// formatLabel formats a numeric value for display.
+func (cl *ColorLegend) formatLabel(value float64) string {
+	if cl.units != "" {
+		// Check if value is integer-like
+		if value == float64(int(value)) {
+			return fmt.Sprintf("%d %s", int(value), cl.units)
+		}
+		return fmt.Sprintf("%.2f %s", value, cl.units)
+	}
+	if value == float64(int(value)) {
+		return fmt.Sprintf("%d", int(value))
+	}
+	return fmt.Sprintf("%.2f", value)
+}
+
 // SetRange updates the min/max values and refreshes the legend.
 func (cl *ColorLegend) SetRange(minValue, maxValue float64) {
 	cl.minValue = minValue
 	cl.maxValue = maxValue
 
-	minText := fmt.Sprintf("Low\n%.3f", minValue)
-	maxText := fmt.Sprintf("High\n%.3f", maxValue)
-	if cl.units != "" {
-		minText = fmt.Sprintf("Low\n%.3f %s", minValue, cl.units)
-		maxText = fmt.Sprintf("High\n%.3f %s", maxValue, cl.units)
-	}
-
 	fyne.Do(func() {
-		cl.minLabel.SetText(minText)
-		cl.maxLabel.SetText(maxText)
+		cl.minLabel.SetText(cl.formatLabel(minValue))
+		cl.maxLabel.SetText(cl.formatLabel(maxValue))
+		cl.Refresh()
+	})
+}
+
+// SetColormap changes the colormap by name.
+func (cl *ColorLegend) SetColormap(name string) {
+	cl.colormapName = name
+	cl.colorFunc = GetColormapFunc(name)
+	if IsStartupStabilizing() {
+		return
+	}
+	fyne.Do(func() {
 		cl.Refresh()
 	})
 }
@@ -86,13 +108,73 @@ func (cl *ColorLegend) CreateRenderer() fyne.WidgetRenderer {
 
 	var content fyne.CanvasObject
 	if cl.vertical {
-		// Vertical layout: max label at top, gradient bar, min label at bottom
-		cl.raster.SetMinSize(fyne.NewSize(40, 150))
-		content = container.NewVBox(
-			cl.maxLabel,
-			container.NewPadded(cl.raster),
-			cl.minLabel,
-		)
+		// Vertical layout with numeric labels overlaid on gradient
+		cl.raster.SetMinSize(fyne.NewSize(60, 180))
+
+		// Position max label at top, min label at bottom
+		maxLabelText := canvas.NewText(cl.formatLabel(cl.maxValue), color.White)
+		maxLabelText.TextSize = 11
+		maxLabelText.Alignment = fyne.TextAlignLeading
+
+		minLabelText := canvas.NewText(cl.formatLabel(cl.minValue), color.White)
+		minLabelText.TextSize = 11
+		minLabelText.Alignment = fyne.TextAlignLeading
+
+		// Create intermediate labels if widget is tall enough
+		// Labels at 0, 10, 20, max (assuming range is roughly 0-30 for FeCIM)
+		intermediateLabels := []fyne.CanvasObject{}
+
+		// Only add intermediate labels if height > 100px
+		if cl.raster.MinSize().Height > 100 {
+			// Add labels at reasonable intervals
+			labelValues := []float64{}
+
+			// Always include 0, 10, 20 if they're in range
+			for labelVal := 0.0; labelVal <= cl.maxValue; labelVal += 10 {
+				if labelVal >= cl.minValue && labelVal <= cl.maxValue {
+					labelValues = append(labelValues, labelVal)
+				}
+			}
+
+			// Ensure max is included
+			if len(labelValues) == 0 || labelValues[len(labelValues)-1] != cl.maxValue {
+				labelValues = append(labelValues, cl.maxValue)
+			}
+
+			// Create text objects for intermediate labels
+			for _, labelVal := range labelValues {
+				if labelVal == cl.minValue || labelVal == cl.maxValue {
+					continue // Skip min/max as they're handled separately
+				}
+
+				labelText := canvas.NewText(cl.formatLabel(labelVal), color.White)
+				labelText.TextSize = 10
+				labelText.Alignment = fyne.TextAlignLeading
+				intermediateLabels = append(intermediateLabels, labelText)
+			}
+		}
+
+		// Use BorderLayout to position labels
+		if len(intermediateLabels) > 0 {
+			// With intermediate labels, use custom container
+			labelContainer := container.NewVBox(append([]fyne.CanvasObject{
+				container.NewHBox(maxLabelText),
+			}, append(intermediateLabels, container.NewHBox(minLabelText))...)...)
+
+			content = container.NewBorder(
+				nil, nil,
+				labelContainer, nil,
+				cl.raster,
+			)
+		} else {
+			// Original layout without intermediate labels
+			content = container.NewBorder(
+				container.NewHBox(maxLabelText),
+				container.NewHBox(minLabelText),
+				nil, nil,
+				cl.raster,
+			)
+		}
 	} else {
 		// Horizontal layout: min label, gradient bar, max label
 		cl.raster.SetMinSize(fyne.NewSize(150, 30))
@@ -229,4 +311,80 @@ func clampFloat(v, min, max float64) float64 {
 		return max
 	}
 	return v
+}
+
+// GetColormapFunc returns the colormap function for a given name.
+func GetColormapFunc(name string) func(float64) color.RGBA {
+	switch name {
+	case "viridis":
+		return ViridisColor
+	case "plasma":
+		return PlasmaColor
+	case "coolwarm":
+		return BlueWhiteRedColor
+	case "fecim":
+		return FeCIMColor
+	case "diverging":
+		return BlueWhiteRedColor
+	default:
+		return ViridisColor
+	}
+}
+
+// PlasmaColor returns a Plasma colormap color for normalized value t [0,1].
+func PlasmaColor(t float64) color.RGBA {
+	r := 0.05 + t*0.89
+	g := 0.03 + t*0.95*t
+	b := 0.53 - t*0.40
+
+	return color.RGBA{
+		R: uint8(clampFloat(r, 0, 1) * 255),
+		G: uint8(clampFloat(g, 0, 1) * 255),
+		B: uint8(clampFloat(b, 0, 1) * 255),
+		A: 255,
+	}
+}
+
+// FeCIMColor returns a 30-level inspired colormap for normalized value t [0,1].
+func FeCIMColor(t float64) color.RGBA {
+	if t < 0.2 {
+		s := t * 5
+		return color.RGBA{
+			R: uint8(60 + s*20),
+			G: uint8(s * 100),
+			B: uint8(120 + s*80),
+			A: 255,
+		}
+	} else if t < 0.4 {
+		s := (t - 0.2) * 5
+		return color.RGBA{
+			R: uint8(80 - s*50),
+			G: uint8(100 + s*155),
+			B: uint8(200 - s*50),
+			A: 255,
+		}
+	} else if t < 0.6 {
+		s := (t - 0.4) * 5
+		return color.RGBA{
+			R: uint8(30 + s*180),
+			G: uint8(255 - s*55),
+			B: uint8(150 - s*50),
+			A: 255,
+		}
+	} else if t < 0.8 {
+		s := (t - 0.6) * 5
+		return color.RGBA{
+			R: uint8(210 + s*45),
+			G: uint8(200 - s*100),
+			B: uint8(100 - s*60),
+			A: 255,
+		}
+	}
+	s := (t - 0.8) * 5
+	return color.RGBA{
+		R: uint8(255),
+		G: uint8(100 - s*50),
+		B: uint8(40 + s*20),
+		A: 255,
+	}
 }

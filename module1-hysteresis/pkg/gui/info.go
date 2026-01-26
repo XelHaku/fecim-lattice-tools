@@ -7,6 +7,8 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
 	"multilayer-ferroelectric-cim-visualizer/module1-hysteresis/pkg/gui/widgets"
@@ -25,23 +27,55 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 		widget.NewLabelWithStyle("P:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		a.pLabel,
 	)
-	levelRow := container.NewHBox(
-		widget.NewLabelWithStyle("Level:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		a.levelLabel,
-	)
-	a.stateLabel.Alignment = fyne.TextAlignCenter
 
-	// Material params - compact grid
+	// Material params - compact grid with tooltips
 	matParamsLabel := widget.NewLabelWithStyle("Material", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	matParams := widget.NewLabel(fmt.Sprintf(
-		"Pr=%.0f Ps=%.0f Ec=%.2f",
-		a.material.Pr*100, a.material.Ps*100,
-		a.material.Ec/1e8,
-	))
-	matParams.Wrapping = fyne.TextWrapWord
+
+	// Ec tooltip button
+	ecTooltipBtn := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+		dialog.ShowInformation("Coercive Field (Ec)",
+			"The electric field magnitude required to switch the ferroelectric polarization direction.\n\n"+
+				"For HfO₂-ZrO₂ superlattice: Ec ≈ 1.0-1.5 MV/cm.\n\n"+
+				"When |E| > Ec, domains switch → WRITE operation.", a.mainWindow)
+	})
+	ecTooltipBtn.Importance = widget.LowImportance
+
+	// Pr tooltip button
+	prTooltipBtn := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+		dialog.ShowInformation("Remanent Polarization (Pr)",
+			"The polarization that remains when E=0 after switching.\n\n"+
+				"Pr enables non-volatile storage without power.\n\n"+
+				"For HfO₂-ZrO₂: Pr ≈ 15-34 µC/cm².", a.mainWindow)
+	})
+	prTooltipBtn.Importance = widget.LowImportance
+
+	// 30 Levels tooltip button
+	levelsTooltipBtn := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+		dialog.ShowInformation("30 Analog Levels",
+			"FeCIM uses 30 discrete analog states per cell.\n\n"+
+				"30 levels = ~4.9 bits/cell vs 1 bit for binary memory.\n\n"+
+				"Each level is a stable polarization state.", a.mainWindow)
+	})
+	levelsTooltipBtn.Importance = widget.LowImportance
+
+	matParams := container.NewHBox(
+		widget.NewLabel(fmt.Sprintf("Pr=%.0f", a.material.Pr*100)),
+		prTooltipBtn,
+		widget.NewLabel(fmt.Sprintf("Ps=%.0f", a.material.Ps*100)),
+		widget.NewLabel(fmt.Sprintf("Ec=%.2f", a.material.Ec/1e8)),
+		ecTooltipBtn,
+	)
 
 	enduranceLabel := widget.NewLabel(fmt.Sprintf("Endurance: %.0e", a.material.EnduranceCycles))
 	enduranceLabel.Wrapping = fyne.TextWrapWord
+
+	// Create level row with tooltip
+	levelRow := container.NewHBox(
+		widget.NewLabelWithStyle("Level:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		a.levelLabel,
+		levelsTooltipBtn,
+	)
+	a.stateLabel.Alignment = fyne.TextAlignCenter
 
 	// Wake-up/Fatigue display - compact
 	a.cyclesLabel = widget.NewLabel("0")

@@ -43,9 +43,9 @@ type CrossbarApp struct {
 	sneakPathHeatmap   *CrossbarHeatmap
 
 	// Color legends for each heatmap
-	condLegend  *ColorLegend
-	irLegend    *ColorLegend
-	sneakLegend *ColorLegend
+	condLegend  *sharedwidgets.ColorLegend
+	irLegend    *sharedwidgets.ColorLegend
+	sneakLegend *sharedwidgets.ColorLegend
 
 	controlPanel   *ControlPanel
 	statsPanel     *StatsPanel

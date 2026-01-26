@@ -192,7 +192,7 @@ func (t *DriftTab) updateChart() {
 
 	// Labels
 	yLabel := canvas.NewText(fmt.Sprintf("%.1e", maxDrift), color.White)
-	yLabel.TextSize = 9
+	yLabel.TextSize = 10
 	yLabel.Move(fyne.NewPos(5, 10))
 	t.driftChart.Add(yLabel)
 
