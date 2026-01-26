@@ -135,6 +135,14 @@ type DualModeApp struct {
 
 	// Adaptive layout for responsive design
 	adaptiveLayout *sharedwidgets.AdaptiveLayout
+
+	// Expert Mode
+	expertMode           bool
+	simplePresets        *fyne.Container
+	expertOnlyControls   *fyne.Container
+	expertModeToggle     *widget.Check
+	brushRow             *fyne.Container  // For hiding brush selector in simple mode
+	expertHeaderButtons  *fyne.Container  // For HW Reality, Failures buttons
 }
 
 // NewDualModeApp creates a new dual-mode MNIST application.
@@ -165,6 +173,11 @@ func (app *DualModeApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window)
 	fmt.Println("[MNIST] BuildContent: start")
 	app.fyneApp = fyneApp
 	app.window = parentWindow
+
+	// Load Expert Mode preference
+	if fyneApp != nil {
+		app.expertMode = fyneApp.Preferences().BoolWithFallback("mnist.expertMode", false)
+	}
 
 	// Create main layout
 	fmt.Println("[MNIST] BuildContent: calling createMainLayout...")
@@ -251,6 +264,48 @@ func (app *DualModeApp) Stop() {
 	// Nothing to stop
 }
 
+// setExpertMode toggles between Simple and Expert modes.
+func (app *DualModeApp) setExpertMode(enabled bool) {
+	app.expertMode = enabled
+
+	// Save preference
+	if app.fyneApp != nil {
+		app.fyneApp.Preferences().SetBool("mnist.expertMode", enabled)
+	}
+
+	fyne.Do(func() {
+		if enabled {
+			// Expert Mode: show all controls
+			if app.simplePresets != nil {
+				app.simplePresets.Hide()
+			}
+			if app.expertOnlyControls != nil {
+				app.expertOnlyControls.Show()
+			}
+			if app.brushRow != nil {
+				app.brushRow.Show()
+			}
+			if app.expertHeaderButtons != nil {
+				app.expertHeaderButtons.Show()
+			}
+		} else {
+			// Simple Mode: hide expert controls
+			if app.expertOnlyControls != nil {
+				app.expertOnlyControls.Hide()
+			}
+			if app.simplePresets != nil {
+				app.simplePresets.Show()
+			}
+			if app.brushRow != nil {
+				app.brushRow.Hide()
+			}
+			if app.expertHeaderButtons != nil {
+				app.expertHeaderButtons.Hide()
+			}
+		}
+	})
+}
+
 // createMainLayout builds the 4-zone responsive layout.
 // Uses AdaptiveLayout to switch between desktop (splits) and mobile (tabs) layouts.
 func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
@@ -331,9 +386,7 @@ func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
 
 // createHeader creates the title and info header.
 func (app *DualModeApp) createHeader() fyne.CanvasObject {
-	title := widget.NewLabel(fmt.Sprintf("MNIST FeCIM | %d→%d→%d | %d Levels | %.0f%% Target",
-		MNISTInputSize, MNISTHiddenSize, MNISTOutputSize,
-		FeCIMDefaultLevels, TargetHardwareAccuracy*100))
+	title := widget.NewLabel("FeCIM MNIST: 30 Levels = 87% Accuracy")
 	title.TextStyle = fyne.TextStyle{Bold: true}
 
 	// Quick Demo button - prominent call to action
@@ -374,14 +427,30 @@ func (app *DualModeApp) createHeader() fyne.CanvasObject {
 		ShowAboutDialog(app.window)
 	})
 
+	// Expert Mode toggle
+	app.expertModeToggle = widget.NewCheck("Expert", func(checked bool) {
+		app.setExpertMode(checked)
+	})
+	app.expertModeToggle.Checked = app.expertMode
+
+	// Expert-only header buttons (hidden in simple mode)
+	app.expertHeaderButtons = container.NewHBox(
+		realityBtn,
+		failuresBtn,
+	)
+	if !app.expertMode {
+		app.expertHeaderButtons.Hide()
+	}
+
 	buttonRow := container.NewHBox(
 		quickDemoBtn,
 		widget.NewSeparator(),
 		tourBtn,
 		why30Btn,
-		realityBtn,
-		failuresBtn,
+		app.expertHeaderButtons,
 		aboutBtn,
+		widget.NewSeparator(),
+		app.expertModeToggle,
 	)
 
 	return container.NewHBox(title, layout.NewSpacer(), buttonRow)
@@ -432,12 +501,15 @@ func (app *DualModeApp) createDrawingZone() fyne.CanvasObject {
 	topRow := container.NewHBox(label, layout.NewSpacer(), pixelCountLabel, clearBtn, randomBtn)
 
 	// Bottom row: brush selector
-	brushRow := container.NewHBox(widget.NewLabel("Brush:"), brushSelect)
+	app.brushRow = container.NewHBox(widget.NewLabel("Brush:"), brushSelect)
+	if !app.expertMode {
+		app.brushRow.Hide()
+	}
 
 	return container.NewVBox(
 		topRow,
 		container.NewCenter(app.digitCanvas),
-		brushRow,
+		app.brushRow,
 	)
 }
 

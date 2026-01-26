@@ -118,6 +118,15 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 		mnistLog.Button("Preset:QuantCliff")
 		app.applyPresetWithMode(2, FeCIMDefaultNoise, FeCIMDefaultADC, FeCIMDefaultDAC, false)
 	})
+
+	// Hardware 87% preset - realistic production hardware (Dr. Tour's COSM 2025 target)
+	hw87Btn := widget.NewButton("Hardware 87%", func() {
+		mnistLog.Button("Preset:HW87")
+		// Realistic production config: 30 levels, 3% noise, 6-bit ADC, single layer
+		app.applyPresetWithMode(FeCIMDefaultLevels, 0.03, 6, FeCIMDefaultDAC, true)
+	})
+	hw87Btn.Importance = widget.HighImportance // Highlight alongside Tour button
+
 	noisyBtn := widget.NewButton("Noisy", func() {
 		mnistLog.Button("Preset:Noisy")
 		app.applyPresetWithMode(FeCIMDefaultLevels, 0.15, 6, FeCIMDefaultDAC, false)
@@ -135,11 +144,6 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	})
 	tourBtn.Importance = widget.HighImportance // Highlight this button
 
-	// Preset buttons - use 2 rows for better spacing (3+2)
-	presetRow1 := container.NewGridWithColumns(3, idealBtn, quantCliffBtn, noisyBtn)
-	presetRow2 := container.NewGridWithColumns(2, brokenBtn, tourBtn)
-	presetRow := container.NewVBox(presetRow1, presetRow2)
-
 	// Quick test with progress bar
 	app.testResultLabel = widget.NewLabel("")
 	app.testProgressBar = widget.NewProgressBar()
@@ -149,13 +153,32 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 		app.runQuickTest()
 	})
 
-	// Controls header (compact, fixed height)
+	// Simple Mode presets (shown by default)
+	app.simplePresets = container.NewGridWithColumns(3, idealBtn, hw87Btn, noisyBtn)
+
+	// Expert-only controls (hidden by default)
+	expertPresetRow := container.NewGridWithColumns(3, quantCliffBtn, brokenBtn, tourBtn)
+	testRow := container.NewHBox(app.testButton, app.testProgressBar, app.testResultLabel)
+	app.expertOnlyControls = container.NewVBox(
+		selectsRow,
+		expertPresetRow,
+		testRow,
+	)
+
+	// Set initial visibility based on Expert Mode
+	if !app.expertMode {
+		app.expertOnlyControls.Hide()
+	} else {
+		app.simplePresets.Hide()
+	}
+
+	// Controls layout with header
 	controlsHeader := container.NewVBox(
-		container.NewHBox(label, layout.NewSpacer(), app.testButton, app.testProgressBar, app.testResultLabel),
+		container.NewHBox(label, layout.NewSpacer()),
 		levelsRow,
 		noiseRow,
-		selectsRow,
-		presetRow,
+		app.simplePresets,      // Simple mode presets
+		app.expertOnlyControls, // Expert-only controls
 	)
 
 	return controlsHeader
