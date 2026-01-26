@@ -154,7 +154,7 @@ func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 	}{
 		{color.RGBA{255, 150, 0, 255}, "Ec"},
 		{color.RGBA{0, 200, 150, 255}, "Pr"},
-		{r.plot.ColorWarning, "Current"},
+		{r.plot.ColorWarning, "Pos"},
 	}
 	for _, item := range legendItems {
 		// Color box - increased from 14 to 16 for better visibility

@@ -51,22 +51,18 @@ func (a *App) simulationLoop() {
 
 				a.manualPhaseTime += dt
 
-				currentLevel := a.discreteLevel + 1 // 1-indexed (1-30)
-				targetLevel := a.manualTargetLevel  // 1-indexed (1-30)
+				startLevel := a.manualStartLevel   // Captured at animation start
+				targetLevel := a.manualTargetLevel // 1-indexed (1-30)
 
-				// Calculate write field based on direction
-				// Higher level = more positive P = need positive E
-				// Lower level = more negative P = need negative E
+				// For hysteresis physics: apply 2*Ec (strong field) to fully switch
+				// Direction determines sign, wait for level to approach target
 				var writeE float64
-				if targetLevel > currentLevel {
-					// Going UP: positive field proportional to jump size
-					// Level 30 needs full +Emax, smaller jumps need less
-					ratio := float64(targetLevel-1) / 29.0 // 0 to 1 for levels 1-30
-					writeE = Ec * (1.0 + ratio*1.0)        // Ec to 2*Ec
-				} else if targetLevel < currentLevel {
-					// Going DOWN: negative field proportional to jump size
-					ratio := float64(30-targetLevel) / 29.0 // 0 to 1 for levels 30-1
-					writeE = -Ec * (1.0 + ratio*1.0)        // -Ec to -2*Ec
+				if targetLevel > startLevel {
+					// Going UP: apply strong positive field
+					writeE = 2.0 * Ec // Full positive saturation field
+				} else if targetLevel < startLevel {
+					// Going DOWN: apply strong negative field
+					writeE = -2.0 * Ec // Full negative saturation field
 				} else {
 					// Already at target
 					writeE = 0
@@ -85,9 +81,15 @@ func (a *App) simulationLoop() {
 					} else {
 						a.electricField -= step
 					}
-					// Move to hold phase once we reach target E and spend enough time
-					if a.manualPhaseTime > phaseDuration*0.6 && math.Abs(a.electricField-writeE) < 0.01*Emax {
-						a.manualPhase = 2
+					// Move to hold phase when:
+					// 1. We've applied the field long enough AND reached target E
+					// 2. OR the actual level has reached/passed the target
+					currentLevel := a.discreteLevel + 1
+					reachedTarget := (targetLevel > startLevel && currentLevel >= targetLevel) ||
+						(targetLevel < startLevel && currentLevel <= targetLevel)
+
+					if reachedTarget || (a.manualPhaseTime > phaseDuration*0.6 && math.Abs(a.electricField-writeE) < 0.01*Emax) {
+						a.manualPhase = 2 // Go to HOLD
 						a.manualPhaseTime = 0
 					}
 
@@ -366,8 +368,21 @@ func (a *App) updateUI(eField, pol float64, level int, eHist, pHist []float64) {
 	fyne.Do(func() {
 		// Update labels
 		a.eFieldLabel.SetText(fmt.Sprintf("E-field: %.3f MV/cm", eField/1e8))
-		a.pLabel.SetText(fmt.Sprintf("P: %.2f µC/cm²", pol*100))
-		a.levelLabel.SetText(fmt.Sprintf("Level: %d/30", level+1))
+		a.pLabel.SetText(fmt.Sprintf("%.2f µC/cm²", pol*100))
+		a.levelLabel.SetText(fmt.Sprintf("%d/30", level+1))
+
+		// Update state descriptor
+		var stateText string
+		if level < 10 {
+			stateText = "Negative P"
+		} else if level > 19 {
+			stateText = "Positive P"
+		} else {
+			stateText = "Intermediate"
+		}
+		if a.stateLabel != nil {
+			a.stateLabel.SetText(stateText)
+		}
 
 		// Update wake-up/fatigue labels (Dr. Tour recommendation)
 		cycles, degradation, wakeup := a.preisach.GetFatigueState()
@@ -392,8 +407,13 @@ func (a *App) updateUI(eField, pol float64, level int, eHist, pHist []float64) {
 		a.modeIndicator.SetWrite(isWrite)
 		a.modeIndicator.Refresh()
 
-		// Update slider position for auto modes
-		if a.autoMode {
+		// Update slider to match current E-field (only if not being manually controlled)
+		// During Manual animation, the slider reflects the animated E-field
+		// Normalize by Ec for display (-2 to +2 range)
+		a.mu.RLock()
+		shouldUpdateSlider := a.waveform != WaveformManual || a.manualAnimating
+		a.mu.RUnlock()
+		if shouldUpdateSlider {
 			a.eFieldSlider.SetValue(eField / a.material.Ec)
 		}
 

@@ -17,7 +17,8 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	a.eFieldSlider.Step = 0.01
 	a.eFieldSlider.Value = 0
 	a.eFieldSlider.OnChanged = func(v float64) {
-		if a.waveform == WaveformManual {
+		// Only accept slider input when in Manual mode AND not animating
+		if a.waveform == WaveformManual && !a.manualAnimating {
 			a.mu.Lock()
 			a.electricField = v * a.material.Ec
 			a.mu.Unlock()
@@ -198,7 +199,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		trailLabel,
 		trailSlider,
 		container.NewHBox(a.pauseBtn, resetBtn, eli5Btn),
-		widget.NewLabel("Click level bar →"),
+		widget.NewLabel("← Click level bar"),
 	)
 }
 

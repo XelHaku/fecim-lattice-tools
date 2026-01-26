@@ -14,58 +14,87 @@ import (
 
 // createInfoPanel creates the state and material information panel
 func (a *App) createInfoPanel() fyne.CanvasObject {
-	a.pLabel = widget.NewLabel("P: 0.00 µC/cm²")
-	a.levelLabel = widget.NewLabel("Level: 15/30")
+	a.pLabel = widget.NewLabel("0.00 µC/cm²")
+	a.levelLabel = widget.NewLabel("15/30")
+	a.stateLabel = widget.NewLabel("Intermediate")
 	a.modeIndicator = widgets.NewModeIndicator()
-	a.modeIndicator.SetMinSize(fyne.NewSize(180, 60))
+	a.modeIndicator.SetMinSize(fyne.NewSize(180, 50))
 
-	// State display - compact
-	stateGrid := container.NewGridWithColumns(2,
-		widget.NewLabel("P:"), a.pLabel,
-		widget.NewLabel("Level:"), a.levelLabel,
+	// State display - horizontal layout for compactness
+	pRow := container.NewHBox(
+		widget.NewLabelWithStyle("P:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		a.pLabel,
 	)
+	levelRow := container.NewHBox(
+		widget.NewLabelWithStyle("Level:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		a.levelLabel,
+	)
+	a.stateLabel.Alignment = fyne.TextAlignCenter
 
-	// Material params - single line
+	// Material params - compact grid
+	matParamsLabel := widget.NewLabelWithStyle("Material", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	matParams := widget.NewLabel(fmt.Sprintf(
-		"Pr=%.0f Ps=%.0f Ec=%.2f  End: %.0e",
+		"Pr=%.0f Ps=%.0f Ec=%.2f",
 		a.material.Pr*100, a.material.Ps*100,
 		a.material.Ec/1e8,
-		a.material.EnduranceCycles,
 	))
-	matParams.Wrapping = fyne.TextWrapOff
+	matParams.Wrapping = fyne.TextWrapWord
 
-	// Wake-up/Fatigue display
+	enduranceLabel := widget.NewLabel(fmt.Sprintf("Endurance: %.0e", a.material.EnduranceCycles))
+	enduranceLabel.Wrapping = fyne.TextWrapWord
+
+	// Wake-up/Fatigue display - compact
 	a.cyclesLabel = widget.NewLabel("0")
 	a.wakeupLabel = widget.NewLabel("80%")
 	a.fatigueLabel = widget.NewLabel("0.0%")
 
+	cyclingLabel := widget.NewLabelWithStyle("Cycling Stats", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	fatigueRow := container.NewHBox(
 		widget.NewLabel("Cyc:"), a.cyclesLabel,
 		widget.NewLabel("Wake:"), a.wakeupLabel,
 		widget.NewLabel("Fat:"), a.fatigueLabel,
 	)
 
+	// Divider
+	divider := widget.NewSeparator()
+
 	return container.NewVBox(
-		stateGrid,
+		levelRow,
+		container.NewCenter(a.stateLabel),
+		divider,
+		pRow,
+		divider,
 		a.modeIndicator,
+		divider,
+		matParamsLabel,
 		matParams,
+		enduranceLabel,
+		divider,
+		cyclingLabel,
 		fatigueRow,
 	)
 }
 
 // createSlidePanel creates the explanation panel
 func (a *App) createSlidePanel() fyne.CanvasObject {
-	a.slideTitle = widget.NewLabel("") // Keep for compatibility
+	a.slideTitle = widget.NewLabelWithStyle("What's Happening", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	a.slideText = widget.NewLabel(a.getSlideText())
 	a.slideText.Wrapping = fyne.TextWrapWord
-	return a.slideText
+	return container.NewVBox(
+		a.slideTitle,
+		a.slideText,
+	)
 }
 
 // createLogPanel creates the memory operations log panel
 func (a *App) createLogPanel() fyne.CanvasObject {
+	logTitle := widget.NewLabelWithStyle("Memory Log", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	a.logText = widget.NewLabel("Waiting...")
 	a.logText.Wrapping = fyne.TextWrapWord
-	return a.logText
+	return container.NewVBox(
+		logTitle,
+		a.logText,
+	)
 }
 
 // getSlideText returns the contextual explanation text based on current waveform mode
@@ -179,13 +208,7 @@ func (a *App) getSlideText() string {
 				"Next target coming...", status, accuracy,
 				wrdTotalWrites, successRate, wrdTotalEnergyfJ/1000)
 		}
-		// Add Dr. Tour footer
-		return phaseExplanation + "\n\n═══════════════════\n" +
-			"FeCIM ADVANTAGE:\n" +
-			"• 30 levels = 4.9 bits/cell\n" +
-			"• 10M× better than NAND\n" +
-			"• 1000× better than DRAM\n" +
-			"• CMOS compatible"
+		return phaseExplanation
 
 	default:
 		return "Select a waveform mode\nto see explanation."

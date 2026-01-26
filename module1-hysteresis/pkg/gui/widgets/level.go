@@ -4,7 +4,6 @@ package widgets
 import (
 	"fmt"
 	"image/color"
-	"math"
 	"sync"
 	"time"
 
@@ -30,6 +29,10 @@ type LevelIndicator struct {
 	// Target level highlighting (for Write/Read Demo)
 	targetLevel     int
 	highlightTarget bool
+
+	// Animation state for pulsing highlight
+	pulseAnim     *fyne.Animation
+	pulseProgress float32 // 0.0 to 1.0, used for pulsing effect
 }
 
 // NewLevelIndicator creates a new level indicator
@@ -56,11 +59,51 @@ func (l *LevelIndicator) SetLevel(level int) {
 	l.mu.Unlock()
 }
 
-// SetTargetLevel sets the target level to highlight (for Write/Read Demo)
+// SetTargetLevel sets the target level to highlight (for Write/Read Demo).
+// When highlight is true, starts a pulsing animation that auto-refreshes.
 func (l *LevelIndicator) SetTargetLevel(level int, highlight bool) {
 	l.mu.Lock()
+	wasHighlighting := l.highlightTarget
 	l.targetLevel = level
 	l.highlightTarget = highlight
+	l.mu.Unlock()
+
+	// Manage animation lifecycle
+	if highlight && !wasHighlighting {
+		// Start pulsing animation
+		l.startPulseAnimation()
+	} else if !highlight && wasHighlighting {
+		// Stop pulsing animation
+		l.stopPulseAnimation()
+	}
+}
+
+// startPulseAnimation starts the continuous pulse animation for target highlight.
+func (l *LevelIndicator) startPulseAnimation() {
+	// Stop any existing animation first
+	l.stopPulseAnimation()
+
+	// Create a looping animation at ~30 FPS equivalent (completes full cycle in 600ms)
+	// The animation callback updates pulseProgress and triggers refresh
+	l.pulseAnim = fyne.NewAnimation(600*time.Millisecond, func(progress float32) {
+		l.mu.Lock()
+		l.pulseProgress = progress
+		l.mu.Unlock()
+		l.Refresh()
+	})
+	l.pulseAnim.RepeatCount = fyne.AnimationRepeatForever
+	l.pulseAnim.AutoReverse = true
+	l.pulseAnim.Start()
+}
+
+// stopPulseAnimation stops the pulse animation.
+func (l *LevelIndicator) stopPulseAnimation() {
+	if l.pulseAnim != nil {
+		l.pulseAnim.Stop()
+		l.pulseAnim = nil
+	}
+	l.mu.Lock()
+	l.pulseProgress = 0
 	l.mu.Unlock()
 }
 
@@ -156,6 +199,7 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 	level := r.indicator.level
 	targetLevel := r.indicator.targetLevel
 	highlightTarget := r.indicator.highlightTarget
+	pulseProgress := r.indicator.pulseProgress
 	r.indicator.mu.RUnlock()
 
 	r.objects = r.objects[:0]
@@ -163,6 +207,7 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 	// Suppress unused variable warnings (vars used later in drawing loop)
 	_ = targetLevel
 	_ = highlightTarget
+	_ = pulseProgress
 
 	// Allow level indicator to expand to match plot height
 	// Only constrain width to keep it compact
@@ -220,8 +265,9 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 	// levelBottom = where level 1 (-Ps) should be = centerY + levelRangeH/2
 	levelTop := centerY - levelRangeH/2
 
-	// Color constants used in gradient
-	colorWarning := color.RGBA{255, 230, 109, 255}
+	// Color constants
+	colorCurrent := color.RGBA{50, 255, 100, 255}  // Green for current level
+	colorTarget := color.RGBA{255, 220, 0, 255}    // Yellow for target
 	colorAxis := color.RGBA{150, 180, 200, 255}
 
 	for i := 0; i < 30; i++ {
@@ -230,12 +276,12 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 		// y = levelTop + (29-i) * segH
 		y := levelTop + float32(29-i)*segH
 
-		// Color gradient
+		// Color gradient (blue to red)
 		t := float64(i) / 29.0
 		var segColor color.RGBA
 		if i == level {
-			// Current level - bright yellow highlight with glow
-			segColor = colorWarning
+			// Current level - bright GREEN
+			segColor = colorCurrent
 		} else if t < 0.5 {
 			t2 := t * 2
 			segColor = color.RGBA{
@@ -254,28 +300,28 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 			}
 		}
 
-		// Target level gets pulsing border (if highlighted)
+		// Target level gets pulsing YELLOW border (if highlighted)
 		if highlightTarget && i == (targetLevel-1) {
-			// Pulsing effect using time-based alpha
-			pulseAlpha := uint8(100 + 100*math.Sin(float64(time.Now().UnixMilli())/200.0))
+			// Pulsing effect using animation-driven pulseProgress (0.0 to 1.0)
+			// Convert to alpha: pulses between 100 and 255
+			pulseAlpha := uint8(100 + 155*pulseProgress)
 
-			// Outer pulse glow
-			targetGlow := canvas.NewRectangle(color.RGBA{255, 200, 0, pulseAlpha})
+			// Outer pulse glow - yellow
+			targetGlow := canvas.NewRectangle(color.RGBA{colorTarget.R, colorTarget.G, 0, pulseAlpha})
 			targetGlow.Resize(fyne.NewSize(barW+10, segH+8))
 			targetGlow.Move(fyne.NewPos(marginW-5, y-4))
 			r.objects = append(r.objects, targetGlow)
 
-			// Inner pulse border
-			targetBorder := canvas.NewRectangle(color.RGBA{255, 230, 0, 255})
+			// Inner border - solid yellow
+			targetBorder := canvas.NewRectangle(colorTarget)
 			targetBorder.Resize(fyne.NewSize(barW+4, segH+2))
 			targetBorder.Move(fyne.NewPos(marginW-2, y-1))
 			r.objects = append(r.objects, targetBorder)
 		}
 
-		// Current level gets extra emphasis
+		// Current level gets GREEN glow
 		if i == level {
-			// Glow effect
-			glow := canvas.NewRectangle(color.RGBA{colorWarning.R, colorWarning.G, colorWarning.B, 100})
+			glow := canvas.NewRectangle(color.RGBA{colorCurrent.R, colorCurrent.G, colorCurrent.B, 100})
 			glow.Resize(fyne.NewSize(barW+6, segH+4))
 			glow.Move(fyne.NewPos(marginW-3, y-2))
 			r.objects = append(r.objects, glow)
@@ -291,7 +337,7 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 			labelColor := colorAxis
 			fontSize := float32(11)
 			if i == level {
-				labelColor = colorWarning
+				labelColor = colorCurrent // Green for current level
 				fontSize = 12
 			}
 			label := canvas.NewText(fmt.Sprintf("%d", i+1), labelColor)

@@ -94,6 +94,7 @@ type App struct {
 	// Manual mode click-to-level animation (merged from Interactive mode)
 	manualAnimating   bool    // True when animating to clicked level
 	manualTargetLevel int     // Target level from click
+	manualStartLevel  int     // Level at animation start (prevents feedback loop)
 	manualPhase       int     // 0=idle, 1=saturate, 2=settle, 3=hold
 	manualPhaseTime   float64 // Time in current phase
 
@@ -106,6 +107,7 @@ type App struct {
 	eFieldLabel    *widget.Label
 	pLabel         *widget.Label
 	levelLabel     *widget.Label
+	stateLabel     *widget.Label // State description (Negative P, Intermediate, Positive P)
 	materialSelect *widget.Select
 	waveformSelect *widget.Select
 	statusLabel    *widget.Label
@@ -193,6 +195,7 @@ type PhaseDataPoint struct {
 }
 
 // saveDebugLog saves the debug log to a JSON file
+// THREAD-SAFE: No UI updates - only file I/O operations. Safe to call from goroutines without fyne.Do().
 func (a *App) saveDebugLog() {
 	if a.wrdDebugLog == nil || len(a.wrdDebugLog.Cycles) == 0 {
 		return
@@ -323,6 +326,9 @@ func (a *App) run() error {
 }
 
 func (a *App) createUI() fyne.CanvasObject {
+	// SAFETY: No mutex needed - createUI() called from run() before simulation goroutine starts (line 319).
+	// No concurrent access to a.material exists during UI initialization.
+
 	// Create cell visualizer (THE memory cell!) - prominent size
 	a.cellViz = widgets.NewCellVisualizer()
 	a.cellViz.SetMinSize(fyne.NewSize(180, 200))
@@ -341,6 +347,7 @@ func (a *App) createUI() fyne.CanvasObject {
 		if a.waveform == WaveformManual && !a.manualAnimating {
 			// Start animation to target level
 			a.manualTargetLevel = targetLevel
+			a.manualStartLevel = a.discreteLevel + 1 // Capture starting level (1-indexed)
 			a.manualAnimating = true
 			a.manualPhase = 1 // Start saturate phase
 			a.manualPhaseTime = 0
@@ -374,22 +381,28 @@ func (a *App) createUI() fyne.CanvasObject {
 		container.NewCenter(cellUnderline),
 	)
 
-	// Left column: Cell at top, then scrollable info panels below
+	// Fixed header: Cell visualization and basic level display
+	cellDisplay := container.NewVBox(
+		cellHeader,
+		container.NewCenter(a.cellViz),
+	)
+
+	// Scrollable content: all information panels with spacing
 	leftScrollableContent := container.NewVBox(
-		container.NewPadded(info),
-		container.NewPadded(slidePanel),
-		container.NewPadded(logPanel),
+		info,
+		widget.NewSeparator(),
+		slidePanel,
+		widget.NewSeparator(),
+		logPanel,
 	)
 	leftScroll := container.NewScroll(leftScrollableContent)
+	leftScroll.SetMinSize(fyne.NewSize(200, 0))
 
-	// Cell container with info panels below
+	// Left column: Fixed cell at top, scrollable info below
 	leftColumn := container.NewBorder(
-		container.NewVBox(
-			cellHeader,
-			container.NewCenter(a.cellViz),
-		),
+		cellDisplay,
 		nil, nil, nil,
-		leftScroll,
+		container.NewPadded(leftScroll),
 	)
 
 	// Right column: Controls only (compact)
