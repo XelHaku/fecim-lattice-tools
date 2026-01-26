@@ -199,8 +199,8 @@ func NewCircuitsApp() *CircuitsApp {
 		quantLevels: FeCIMLevels,
 		dacBits:     DefaultDACBits,
 		adcBits:     DefaultADCBits,
-		vMin:        2.0,
-		vMax:        5.0,
+		vMin:        1.2,  // Minimum write voltage (just above Vc for 10nm HZO)
+		vMax:        1.5,  // Maximum write voltage
 		pulseWidth:  50.0,
 		readVoltage: 0.5,
 		tiaGain:     10.0,
