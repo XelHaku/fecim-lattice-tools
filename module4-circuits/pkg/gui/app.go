@@ -134,12 +134,13 @@ type CircuitsApp struct {
 	operationsModeHelp    *widget.Label
 
 	// Shared array section
-	sharedArrayCanvas    *canvas.Raster
-	sharedCellInfoLabel  *widget.Label
-	sharedArrayInfoLabel *widget.Label
-	sharedArrayCellSize  int // For click detection
-	sharedArrayOffsetX   int
-	sharedArrayOffsetY   int
+	sharedArrayCanvas        *canvas.Raster
+	sharedCellInfoLabel      *widget.Label
+	sharedArrayInfoLabel     *widget.Label
+	sharedArrayCellSize      int // For click detection
+	sharedArrayOffsetX       int
+	sharedArrayOffsetY       int
+	computeInputRowContainer *fyne.Container // Input row shown above array in COMPUTE mode
 
 	// Write mode panel widgets (ops prefix to distinguish from legacy)
 	writeConfigPanel      *fyne.Container

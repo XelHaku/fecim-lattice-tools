@@ -224,8 +224,13 @@ func (ca *CircuitsApp) createSharedArraySection() fyne.CanvasObject {
 
 	titleLabel := widget.NewLabelWithStyle("CROSSBAR ARRAY", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 
+	// Create placeholder container for compute input row (will be populated later)
+	ca.computeInputRowContainer = container.NewVBox()
+	ca.computeInputRowContainer.Hide() // Initially hidden
+
 	return container.NewVBox(
 		titleLabel,
+		ca.computeInputRowContainer, // Input row appears here in COMPUTE mode
 		tappableArray,
 		legendLabel,
 		ca.sharedCellInfoLabel,
@@ -582,6 +587,15 @@ func (ca *CircuitsApp) updateOperationsPanels() {
 			ca.computeConfigPanel.Show()
 		} else {
 			ca.computeConfigPanel.Hide()
+		}
+	}
+
+	// Toggle input row visibility in array section
+	if ca.computeInputRowContainer != nil {
+		if mode == ModeCompute {
+			ca.computeInputRowContainer.Show()
+		} else {
+			ca.computeInputRowContainer.Hide()
 		}
 	}
 
@@ -1183,7 +1197,6 @@ func (ca *CircuitsApp) createComputeModePanel() {
 	)
 	ca.opsComputeMathLabel.TextStyle = fyne.TextStyle{Monospace: true}
 
-	// Input section
 	// Create Random Bits button
 	randomBitsBtn := widget.NewButton("RANDOM BITS", func() {
 		ca.mu.Lock()
@@ -1195,7 +1208,7 @@ func (ca *CircuitsApp) createComputeModePanel() {
 		ca.computeAndUpdateAll()
 	})
 
-	// Compact input section
+	// Compact input section header (will be shown above array)
 	inputHeader := container.NewHBox(
 		widget.NewLabelWithStyle("INPUT VECTOR (0-255)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		layout.NewSpacer(),
@@ -1205,20 +1218,22 @@ func (ca *CircuitsApp) createComputeModePanel() {
 	physicsNote := widget.NewLabel("0-1V READ-safe (below Ec)")
 	physicsNote.TextStyle = fyne.TextStyle{Italic: true}
 
-	inputSection := container.NewVBox(
+	// Populate the input row container that will appear above the array
+	ca.computeInputRowContainer.Objects = []fyne.CanvasObject{
+		widget.NewSeparator(),
 		inputHeader,
 		inputRow,
 		physicsNote,
-	)
+		widget.NewSeparator(),
+	}
 
 	// Output section
-	// Ideal crossbar disclaimer (moved from removed section)
+	// Ideal crossbar disclaimer
 	idealDisclaimer := widget.NewLabel(
 		"IDEAL CROSSBAR: No IR drop or sneak paths (see Module 2)")
 	idealDisclaimer.TextStyle = fyne.TextStyle{Italic: true}
 
 	outputSection := container.NewVBox(
-		widget.NewSeparator(),
 		widget.NewLabelWithStyle("OUTPUT VECTOR", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabel("I_row -> TIA (10k) -> ADC (5-bit):"),
 		outputGrid,
@@ -1242,7 +1257,6 @@ func (ca *CircuitsApp) createComputeModePanel() {
 	)
 
 	ca.computeConfigPanel = container.NewVBox(
-		inputSection,
 		outputSection,
 		mathSection,
 		perfSection,
