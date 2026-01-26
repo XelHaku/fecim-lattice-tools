@@ -25,9 +25,9 @@ Deep research on Compute-in-Memory (CIM) technology:
 | `docs/hysteresis/hysteresis.physics.md` | 552 | P-E loops, Preisach model, hysteron math |
 | `docs/project/02-curriculum/CURRICULUM.md` | 408 | 9-area doctoral curriculum overview |
 | `docs/project/02-curriculum/CURRICULUM_DETAILED.md` | 657 | Full technical implementation guide |
-| `docs/project/03-technical/HZO_PARAMETERS.md` | 181 | DOI-cited material parameters |
-| `docs/hysteresis/hysteresis.research.md` | 480 | 50+ paper meta-study |
-| `docs/papers/by-topic/PAPERS_NEEDED.md` | 205 | 67 papers tracked with status |
+| `docs/project/03-technical/HZO_PARAMETERS.md` | 180 | DOI-cited material parameters |
+| `docs/hysteresis/hysteresis.research.md` | 479 | 50+ paper meta-study |
+| `docs/papers/by-topic/PAPERS_NEEDED.md` | 204 | 67 papers tracked with status |
 
 **Research Findings (8 parts, ~100KB total):**
 - `docs/project/05-research/findings/part1.md` - part8.md

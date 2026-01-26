@@ -40,6 +40,7 @@ import (
 	demo6gui "multilayer-ferroelectric-cim-visualizer/module6-eda/pkg/gui"
 	"multilayer-ferroelectric-cim-visualizer/shared/logging"
 	sharedtheme "multilayer-ferroelectric-cim-visualizer/shared/theme"
+	"multilayer-ferroelectric-cim-visualizer/shared/utils"
 	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
@@ -201,8 +202,10 @@ func (rs *RecordingState) startRecording(window fyne.Window) error {
 
 	rs.isRecording = true
 
-	// Start capture goroutine
-	go rs.captureLoop(width, height)
+	// Start capture goroutine with panic recovery
+	utils.SafeGo("captureLoop", func() {
+		rs.captureLoop(width, height)
+	})
 
 	fmt.Println("Recording started:", rs.outputFile)
 	return nil
@@ -530,12 +533,12 @@ func main() {
 			// Show brief notification in window title
 			originalTitle := window.Title()
 			window.SetTitle("Screenshot saved: " + filename)
-			go func() {
+			utils.SafeGo("screenshot-notification", func() {
 				time.Sleep(2 * time.Second)
 				fyne.Do(func() {
 					window.SetTitle(originalTitle)
 				})
-			}()
+			})
 		}
 	})
 
@@ -569,12 +572,12 @@ func main() {
 			// Show brief notification
 			originalTitle := window.Title()
 			window.SetTitle("Recording saved: " + outputFile)
-			go func() {
+			utils.SafeGo("recording-saved-notification", func() {
 				time.Sleep(2 * time.Second)
 				fyne.Do(func() {
 					window.SetTitle(originalTitle)
 				})
-			}()
+			})
 		} else {
 			log.Debug("Starting recording...")
 			// Start recording
@@ -583,12 +586,12 @@ func main() {
 				// Show error in title briefly
 				originalTitle := window.Title()
 				window.SetTitle("Recording error: " + err.Error())
-				go func() {
+				utils.SafeGo("recording-error-notification", func() {
 					time.Sleep(2 * time.Second)
 					fyne.Do(func() {
 						window.SetTitle(originalTitle)
 					})
-				}()
+				})
 				return
 			}
 			recordBtn.SetText("Stop")
@@ -596,7 +599,7 @@ func main() {
 			recordTimeLabel.Show()
 			// Start timer to show real-time datetime with milliseconds and take screenshots
 			recordingTimerStop = make(chan struct{})
-			go func() {
+			utils.SafeGo("recording-timer", func() {
 				displayTicker := time.NewTicker(50 * time.Millisecond) // Update display ~20 times per second
 				screenshotTicker := time.NewTicker(5 * time.Second)    // Screenshot every 5 seconds
 				defer displayTicker.Stop()
@@ -618,7 +621,7 @@ func main() {
 						})
 					}
 				}
-			}()
+			})
 		}
 	}
 
@@ -726,7 +729,7 @@ func main() {
 	window.SetContent(container.NewCenter(loadingLabel))
 
 	// Defer setting actual content until after main loop starts
-	go func() {
+	utils.SafeGo("startup-content-loader", func() {
 		time.Sleep(200 * time.Millisecond)
 		fyne.Do(func() {
 			fmt.Println("[STARTUP] Setting actual window content...")
@@ -743,12 +746,12 @@ func main() {
 			}
 			fmt.Println("[STARTUP] View restored")
 		})
-	}()
+	})
 	fmt.Println("[STARTUP] Placeholder content set")
 
 	// Start window resize tracking for debugging (if FYNE_DEBUG_RESIZE is set)
 	if sharedwidgets.DebugResize {
-		go func() {
+		utils.SafeGo("resize-debugger", func() {
 			var lastSize fyne.Size
 			ticker := time.NewTicker(100 * time.Millisecond)
 			defer ticker.Stop()
@@ -759,7 +762,7 @@ func main() {
 					lastSize = currentSize
 				}
 			}
-		}()
+		})
 		log.Info("Resize debugging enabled - set FYNE_DEBUG_RESIZE=1")
 	}
 

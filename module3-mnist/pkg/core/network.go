@@ -73,6 +73,9 @@ type DualModeNetwork struct {
 
 	// Mutex for thread-safe operations
 	mu sync.RWMutex
+
+	// Separate mutex for RNG access to prevent races under RLock
+	rngMu sync.Mutex
 }
 
 // InferenceResult holds results from dual-path inference.
@@ -561,6 +564,18 @@ func (net *DualModeNetwork) IsSingleLayer() bool {
 	return net.Config.SingleLayer
 }
 
+// safeNoise applies Gaussian noise with thread-safe RNG access.
+// This prevents data races when multiple goroutines hold RLock on the network.
+func (net *DualModeNetwork) safeNoise(data []float64, noiseLevel float64) []float64 {
+	if noiseLevel <= 0 {
+		return data
+	}
+	net.rngMu.Lock()
+	result := AddGaussianNoise(data, noiseLevel, net.rng)
+	net.rngMu.Unlock()
+	return result
+}
+
 // Infer runs dual-path inference (FP + CIM) and returns comparison results.
 func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 	net.mu.RLock()
@@ -589,7 +604,7 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 		dacInput := quantizeDAC(input, net.Config.DACBits)
 		cimOutput = net.forwardCIM(dacInput, net.QuantSingleLayerWeights, net.QuantSingleLayerBias)
 		cimOutput = quantizeADC(cimOutput, net.Config.ADCBits)
-		cimOutput = AddGaussianNoise(cimOutput, net.Config.NoiseLevel, net.rng)
+		cimOutput = net.safeNoise(cimOutput, net.Config.NoiseLevel)
 		cimProbs = softmax(cimOutput)
 		cimHidden = nil // No hidden layer in Tour mode
 
@@ -613,13 +628,13 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 		// Layer 1: Use QUANTIZED weights (30-level FeCIM quantization)
 		cimHidden = net.forwardCIM(dacInput, net.QuantWeights1, net.QuantBias1)
 		cimHidden = quantizeADC(cimHidden, net.Config.ADCBits)
-		cimHidden = AddGaussianNoise(cimHidden, net.Config.NoiseLevel, net.rng)
+		cimHidden = net.safeNoise(cimHidden, net.Config.NoiseLevel)
 		cimHidden = relu(cimHidden)
 
 		// Layer 2: Use QUANTIZED weights (30-level FeCIM quantization)
 		cimOutput = net.forwardCIM(cimHidden, net.QuantWeights2, net.QuantBias2)
 		cimOutput = quantizeADC(cimOutput, net.Config.ADCBits)
-		cimOutput = AddGaussianNoise(cimOutput, net.Config.NoiseLevel, net.rng)
+		cimOutput = net.safeNoise(cimOutput, net.Config.NoiseLevel)
 		cimProbs = softmax(cimOutput)
 
 		// Energy: two layers
@@ -721,12 +736,12 @@ func (net *DualModeNetwork) InferCIMOnly(input []float64) (prediction int, confi
 
 	hidden := net.forwardCIM(dacInput, net.FPWeights1, net.FPBias1)
 	hidden = quantizeADC(hidden, net.Config.ADCBits)
-	hidden = AddGaussianNoise(hidden, net.Config.NoiseLevel, net.rng)
+	hidden = net.safeNoise(hidden, net.Config.NoiseLevel)
 	hidden = relu(hidden)
 
 	output := net.forwardCIM(hidden, net.FPWeights2, net.FPBias2)
 	output = quantizeADC(output, net.Config.ADCBits)
-	output = AddGaussianNoise(output, net.Config.NoiseLevel, net.rng)
+	output = net.safeNoise(output, net.Config.NoiseLevel)
 	probs = softmax(output)
 	prediction = argmax(probs)
 	confidence = probs[prediction]

@@ -16,6 +16,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"multilayer-ferroelectric-cim-visualizer/module2-crossbar/pkg/crossbar"
+	"multilayer-ferroelectric-cim-visualizer/shared/utils"
 	sharedwidgets "multilayer-ferroelectric-cim-visualizer/shared/widgets"
 )
 
@@ -454,8 +455,10 @@ func (ca *CrossbarApp) runEnhancedMVM() {
 
 	ca.mvmVis.SetInput(input)
 
-	// Run animated MVM in goroutine
-	go ca.runEnhancedMVMAnimated(input)
+	// Run animated MVM in goroutine with panic recovery
+	utils.SafeGo("runEnhancedMVMAnimated", func() {
+		ca.runEnhancedMVMAnimated(input)
+	})
 }
 
 // runEnhancedMVMInstant performs instant MVM (no animation) for initial data population

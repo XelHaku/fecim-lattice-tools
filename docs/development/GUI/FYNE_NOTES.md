@@ -115,3 +115,59 @@ button.OnTapped = func() {
 - [Fyne Documentation](https://docs.fyne.io/)
 - [Layout Guide](https://docs.fyne.io/explore/layouts.html)
 - [Container API](https://docs.fyne.io/explore/container.html)
+
+---
+
+## FeCIM-Specific Patterns
+
+### CrossbarHeatmap Rate Limiting
+
+- `refreshMinInterval = 33ms` (30 FPS max)
+- Uses `refreshMu` mutex for throttling
+- Call `rateLimitedRefresh()` instead of `Refresh()` for frequent updates
+- Check `sharedwidgets.IsStartupStabilizing()` during initialization
+
+### Responsive Layout System
+
+- **ResponsiveDetector**: Monitors window size, triggers breakpoint callbacks
+- **AdaptiveLayout**: Reparents content between mobile (tabs) and desktop (split)
+- **ResponsiveSplit**: Adjustable split with offset for better proportions
+- **Breakpoint**: 600px default for mobile/desktop switch
+
+### Embedded App Lifecycle
+
+```go
+type EmbeddedApp interface {
+    BuildContent() fyne.CanvasObject  // Called once at creation
+    Start()                           // Called when tab becomes visible
+    Stop()                            // Called when tab becomes hidden
+}
+```
+
+- `BuildContent` must return synchronously
+- `Start`/`Stop` manage simulation goroutines
+
+### Custom Widget Patterns
+
+- **ColorLegend**: Shows value-to-color mapping for heatmaps
+- **ModeIndicatorBox**: Visual indicator with different states
+- **BeforeAfterToggle**: Two-state mode switcher for comparisons
+
+### Animation Patterns
+
+- `SetAnimPhase(0.0-1.0)` for progressive animations
+- Use `time.Ticker` for animation loops (not `time.Sleep` in loops)
+- Always wrap animation callbacks in `fyne.Do()`
+
+### Common Pitfalls
+
+1. **ForceMinSizeLayout** - Required for Wayland tiling WMs to report correct min size
+2. **TextWrapOff** - Prevents MinSize oscillation in responsive layouts
+3. **GridWrap vs VBox** - Use GridWrap for fixed-size containers
+4. **Slider.OnChanged** - Fires during programmatic `SetValue`, guard against recursion
+
+### Performance Tips
+
+- **LayoutCache**: Reuse layout calculations across similar operations
+- Rate limit `Refresh()` to 30 FPS max
+- Use `sharedwidgets.IsStartupStabilizing()` to skip updates during app startup

@@ -295,28 +295,43 @@ func (a *AdaptiveLayout) GetZone(index int) fyne.CanvasObject {
 // SetZone replaces a zone at the given index.
 func (a *AdaptiveLayout) SetZone(index int, zone fyne.CanvasObject) {
 	a.mu.Lock()
-	defer a.mu.Unlock()
 
 	if index < 0 || index >= len(a.zones) {
+		a.mu.Unlock()
 		return
 	}
 
 	a.zones[index] = zone
 
+	// Capture what we need while holding the lock
+	isMobile := a.isMobile
+	var mc *container.AppTabs
+	var cc *fyne.Container
+	needMobileRefresh := false
+	needDesktopRefresh := false
+
 	// Update in current container
-	if a.isMobile {
+	if isMobile {
 		if index < len(a.mobileContainer.Items) {
 			a.mobileContainer.Items[index].Content = container.NewMax(zone)
-			mc := a.mobileContainer
-			fyne.Do(func() {
-				mc.Refresh()
-			})
+			mc = a.mobileContainer
+			needMobileRefresh = true
 		}
 	} else if a.desktopLayoutBuilder != nil {
 		// Rebuild desktop layout
 		a.desktopContainer = a.desktopLayoutBuilder(a.zones)
 		a.contentContainer.Objects = []fyne.CanvasObject{a.desktopContainer}
-		cc := a.contentContainer
+		cc = a.contentContainer
+		needDesktopRefresh = true
+	}
+	a.mu.Unlock()
+
+	// Refresh outside lock to prevent deadlock
+	if needMobileRefresh && mc != nil {
+		fyne.Do(func() {
+			mc.Refresh()
+		})
+	} else if needDesktopRefresh && cc != nil {
 		fyne.Do(func() {
 			cc.Refresh()
 		})
