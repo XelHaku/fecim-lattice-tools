@@ -364,7 +364,7 @@ func (a *App) createUI() fyne.CanvasObject {
 			a.manualTargetLevel = targetLevel
 			a.manualStartLevel = a.discreteLevel + 1 // Capture starting level (1-indexed)
 			a.manualAnimating = true
-			a.manualPhase = 1 // Start saturate phase
+			a.manualPhase = 0 // Start at RESET phase (saturate opposite direction first)
 			a.manualPhaseTime = 0
 			a.addLogEntry(fmt.Sprintf("WRITE → Level %d", targetLevel))
 		}

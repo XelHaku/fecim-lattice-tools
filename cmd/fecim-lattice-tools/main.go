@@ -363,7 +363,7 @@ func loadLastTab(prefs fyne.Preferences) int {
 
 func main() {
 	// Parse command-line flags
-	verbosityFlag := flag.String("verbosity", "off", "Logging verbosity: 0|off, 1|info, 2|debug, 3|trace")
+	verbosityFlag := flag.String("verbosity", "info", "Logging verbosity: 0|off, 1|info, 2|debug, 3|trace")
 	flag.Parse()
 
 	// Set global verbosity level
@@ -758,15 +758,11 @@ func main() {
 			window.SetContent(rootContainer)
 			fmt.Println("[STARTUP] Window content set")
 
-			// Restore last selected view after content is set
-			fmt.Println("[STARTUP] Restoring last view...")
-			lastViewIndex := loadLastTab(prefs)
-			if lastViewIndex > 0 && lastViewIndex < len(views) {
-				fmt.Printf("[STARTUP] Selecting view index %d...\n", lastViewIndex)
-				selectView(lastViewIndex)
-				log.Debug("Restored last view: %d", lastViewIndex)
-			}
-			fmt.Println("[STARTUP] View restored")
+			// Always start at Home tab (index 0)
+			fmt.Println("[STARTUP] Starting at Home tab...")
+			selectView(0)
+			log.Debug("Started at Home tab (index 0)")
+			fmt.Println("[STARTUP] Home tab selected")
 		})
 	})
 	fmt.Println("[STARTUP] Placeholder content set")

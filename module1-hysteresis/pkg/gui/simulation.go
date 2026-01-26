@@ -919,5 +919,5 @@ func (a *App) calibrateLevels() {
 	a.polarization = 0
 	a.calibrated = true
 
-	log.Info("Level calibration complete for material: %s", a.material.Name)
+	log.Printf("Level calibration complete for material: %s", a.material.Name)
 }

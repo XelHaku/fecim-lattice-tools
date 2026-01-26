@@ -1,0 +1,319 @@
+# FeCIM Lattice Tools - Physics Configuration
+# =============================================
+#
+# This file contains all physical parameters for ferroelectric CIM simulation.
+# Edit this file to experiment with different materials and hardware configurations.
+#
+# References:
+#   - Dr. external research group, COSM 2025 presentation
+#   - Park et al., Adv. Mater. 2015 (HZO ferroelectricity)
+#   - Cheema et al., Nature 2020 (superlattice enhancement)
+#   - Samsung Nature 2025 (25-100x energy advantage)
+
+# =============================================================================
+# GLOBAL CONSTANTS
+# =============================================================================
+constants:
+  fecim_levels: 30              # Discrete analog states ("30 discrete states" - Dr. Tour)
+  bits_per_cell: 4.91           # log2(30) = 4.91 bits/cell
+  boltzmann_ev: 8.617e-5        # Boltzmann constant (eV/K)
+  epsilon_0: 8.854e-12          # Vacuum permittivity (F/m)
+  room_temperature: 300         # Standard room temperature (K)
+
+# =============================================================================
+# MATERIALS
+# =============================================================================
+# Three-tier system:
+#   default_hzo: Baseline standard HZO from literature
+#   fecim_hzo: Dr. Tour's FeCIM demonstrated values (conservative)
+#   literature_superlattice: Best academic results (Cheema 2020)
+
+materials:
+  default_hzo:
+    name: "HZO (Si-doped)"
+    description: "Standard Si-doped HfO2-ZrO2 from literature"
+    reference: "Park et al., Adv. Mater. 27, 1811 (2015)"
+
+    # Polarization parameters
+    pr_c_m2: 0.25               # Remanent polarization (C/m²) = 25 µC/cm²
+    ps_c_m2: 0.30               # Saturation polarization (C/m²) = 30 µC/cm²
+
+    # Field parameters
+    ec_v_m: 1.2e8               # Coercive field (V/m) = 1.2 MV/cm
+
+    # Dielectric properties
+    epsilon_hf: 30              # High-frequency permittivity
+    epsilon_lf: 38              # Low-frequency permittivity
+    loss_tangent: 0.02          # Dielectric loss (tan δ)
+
+    # Film geometry
+    thickness_m: 10.0e-9        # Film thickness = 10 nm
+    area_m2: 100.0e-12          # Cell area = 100 nm² (10nm x 10nm)
+
+    # Switching dynamics
+    tau_s: 1.0e-9               # Switching time constant = 1 ns
+    tau0_s: 1.0e-13             # Attempt frequency inverse
+    activation_energy_ev: 0.7   # Activation energy for switching
+    kai_exponent: 2.0           # KAI model exponent (2D domain growth)
+
+    # Temperature properties
+    curie_temp_k: 723           # Curie temperature ~450°C
+    temp_coeff_ec: -2.0e5       # dEc/dT (V/m/K)
+    temp_coeff_pr: -5.0e-5      # dPr/dT (C/m²/K)
+
+    # Reliability
+    endurance_cycles: 1.0e10    # Endurance limit
+    retention_time_s: 3.15e9    # 100 years at 85°C
+    imprint_field_v_m: 1.0e6    # Imprint field shift
+
+  fecim_hzo:
+    name: "FeCIM HZO"
+    description: "Dr. Tour's FeCIM - DEMONSTRATED values only"
+    reference: "Dr. external research group, COSM 2025"
+
+    # Polarization (estimated - not disclosed)
+    pr_c_m2: 0.30               # 30 µC/cm² (estimated)
+    ps_c_m2: 0.35               # 35 µC/cm² (estimated)
+
+    # Field parameters (estimated)
+    ec_v_m: 1.0e8               # 1.0 MV/cm (estimated)
+
+    # Dielectric properties (estimated)
+    epsilon_hf: 32
+    epsilon_lf: 40
+    loss_tangent: 0.01          # Low loss
+
+    # Film geometry
+    thickness_m: 10.0e-9        # 10 nm
+    area_m2: 2.025e-15          # 45nm pitch = 45nm x 45nm
+    cell_pitch_nm: 45           # Cell pitch
+
+    # Switching dynamics
+    tau_s: 10.0e-9              # 10 ns (from Tour's slides, not 1ns)
+    tau0_s: 1.0e-13
+    activation_energy_ev: 0.6
+    kai_exponent: 2.0
+
+    # Temperature properties
+    curie_temp_k: 723
+    temp_coeff_ec: -1.8e5
+    temp_coeff_pr: -4.0e-5
+
+    # Reliability - DEMONSTRATED values only
+    endurance_cycles: 1.0e9     # 10^9 DEMONSTRATED (10^12 is TARGET)
+    retention_time_s: 1.0e7     # ~116 days DEMONSTRATED
+    imprint_field_v_m: 1.0e6
+
+  fecim_hzo_target:
+    name: "FeCIM HZO (TARGET)"
+    description: "Dr. Tour's FeCIM - ASPIRATIONAL targets (NOT demonstrated)"
+    reference: "Dr. external research group, COSM 2025"
+
+    # Same as fecim_hzo except reliability targets
+    pr_c_m2: 0.30
+    ps_c_m2: 0.35
+    ec_v_m: 1.0e8
+    epsilon_hf: 32
+    epsilon_lf: 40
+    loss_tangent: 0.01
+    thickness_m: 10.0e-9
+    area_m2: 2.025e-15
+    cell_pitch_nm: 45
+    tau_s: 1.0e-9               # TARGET: 1ns (demonstrated ~10ns)
+    tau0_s: 1.0e-13
+    activation_energy_ev: 0.6
+    kai_exponent: 2.0
+    curie_temp_k: 723
+    temp_coeff_ec: -1.8e5
+    temp_coeff_pr: -4.0e-5
+    endurance_cycles: 1.0e12    # TARGET - not yet achieved
+    retention_time_s: 3.15e9    # TARGET - 100 years (not demonstrated)
+    imprint_field_v_m: 1.0e6
+
+  literature_superlattice:
+    name: "Literature Superlattice"
+    description: "Best academic HfO2/ZrO2 superlattice results"
+    reference: "Cheema et al., Nature 580, 478 (2020)"
+
+    # Enhanced polarization
+    pr_c_m2: 0.45               # 45 µC/cm² (superlattice enhanced)
+    ps_c_m2: 0.50               # 50 µC/cm²
+
+    # Reduced coercive field (negative capacitance effect)
+    ec_v_m: 0.8e8               # 0.8 MV/cm
+
+    # Dielectric properties
+    epsilon_hf: 35
+    epsilon_lf: 50
+    loss_tangent: 0.015
+
+    # Film geometry
+    thickness_m: 10.0e-9
+    area_m2: 100.0e-12
+
+    # Faster switching
+    tau_s: 0.5e-9               # 0.5 ns
+    tau0_s: 1.0e-13
+    activation_energy_ev: 0.5   # Lower barrier
+    kai_exponent: 2.5
+
+    # Higher thermal stability
+    curie_temp_k: 773           # ~500°C
+    temp_coeff_ec: -1.5e5
+    temp_coeff_pr: -3.0e-5
+
+    # Literature best-case reliability
+    endurance_cycles: 1.0e12
+    retention_time_s: 1.0e10
+    imprint_field_v_m: 0.5e6
+
+# =============================================================================
+# CROSSBAR ARRAY CONFIGURATION
+# =============================================================================
+crossbar:
+  # Default array dimensions
+  default_rows: 128
+  default_cols: 128
+
+  # Quantization
+  quantization_levels: 30       # Same as fecim_levels
+  adc_bits: 8                   # ADC resolution
+  dac_bits: 8                   # DAC resolution
+
+  # Conductance range (Siemens)
+  conductance_min_s: 1.0e-6     # 1 µS (Gmin)
+  conductance_max_s: 100.0e-6   # 100 µS (Gmax)
+  conductance_ratio: 100        # Gmax/Gmin = on/off ratio
+
+  # Non-idealities
+  device_variation: 0.05        # Device-to-device σ (5%)
+  read_noise: 0.02              # Read noise σ (2%)
+  write_noise: 0.03             # Write noise σ (3%)
+
+  # Line resistance (for IR drop simulation)
+  word_line_resistance_ohm: 10  # Word line R per segment
+  bit_line_resistance_ohm: 10   # Bit line R per segment
+
+  # Sneak path parameters
+  sneak_path_enabled: true
+  sneak_conductance_ratio: 0.01 # Leakage/on ratio
+
+# =============================================================================
+# TRAINING CONFIGURATION
+# =============================================================================
+training:
+  # Learning parameters
+  learning_rate: 0.01
+  weight_decay: 1.0e-4          # L2 regularization
+  momentum: 0.9
+
+  # Batch settings
+  default_batch_size: 32
+  gradient_clip: 1.0
+
+  # Hardware-aware constraints
+  weight_clip_min: 0.0          # Minimum weight (maps to Gmin)
+  weight_clip_max: 1.0          # Maximum weight (maps to Gmax)
+  update_noise_sigma: 0.01      # Noise in weight updates
+  asymmetry_ratio: 1.0          # Potentiation/depression asymmetry (1.0 = symmetric)
+
+  # Quantization-aware training
+  quantize_forward: true        # Quantize in forward pass
+  quantize_backward: false      # Full precision gradients
+  straight_through: true        # STE for quantization gradients
+
+# =============================================================================
+# ENERGY PARAMETERS
+# =============================================================================
+energy:
+  # Per-operation energy (Joules)
+  read_energy_j: 1.0e-15        # ~1 fJ per read
+  write_energy_j: 10.0e-15      # ~10 fJ per write
+  mac_energy_j: 5.0e-15         # ~5 fJ per MAC operation
+
+  # Comparison baselines
+  nand_write_energy_j: 500.0e-15    # ~500 fJ (25-100x worse)
+  dram_access_energy_j: 5000.0e-15  # ~5 pJ (1000x worse)
+  sram_access_energy_j: 50.0e-15    # ~50 fJ
+
+  # Leakage
+  standby_power_w_per_cell: 1.0e-12 # ~1 pW standby
+
+# =============================================================================
+# TIMING PARAMETERS
+# =============================================================================
+timing:
+  # Operation latencies (seconds)
+  read_latency_s: 10.0e-9       # 10 ns read
+  write_latency_s: 100.0e-9     # 100 ns write (program-verify)
+  mac_latency_s: 10.0e-9        # 10 ns per MAC
+
+  # Programming parameters
+  pulse_width_s: 10.0e-9        # 10 ns programming pulse
+  verify_delay_s: 5.0e-9        # 5 ns verify delay
+  max_program_cycles: 10        # Max program-verify iterations
+
+# =============================================================================
+# PREISACH MODEL PARAMETERS
+# =============================================================================
+preisach:
+  # Grid resolution
+  grid_size: 30                 # Hysteron grid (NxN)
+
+  # Distribution parameters (as fraction of Ec)
+  alpha_sigma_ratio: 0.20       # σ_α / Ec = 20%
+  beta_sigma_ratio: 0.20        # σ_β / Ec = 20%
+  correlation: 0.5              # α-β correlation
+
+  # Fatigue model
+  fatigue_rate: 1.0e-10         # Degradation per cycle
+  wakeup_cycles: 100            # Cycles for wake-up
+  initial_wakeup: 0.8           # Initial wake-up factor
+
+# =============================================================================
+# CALIBRATION PARAMETERS
+# =============================================================================
+calibration:
+  # Binary search calibration
+  iterations: 15                # Binary search iterations
+  field_min_ratio: 0.5          # Min field = 0.5 * Ec
+  field_max_ratio: 2.5          # Max field = 2.5 * Ec
+
+  # Adaptive calibration
+  adjustment_rate: 0.06         # 6% of Ec per level error
+
+  # Tolerances
+  level_tolerance: 1            # Accept ±1 level as success
+
+# =============================================================================
+# SIMULATION PARAMETERS
+# =============================================================================
+simulation:
+  # Time stepping
+  frame_rate_hz: 60             # UI update rate
+  dt_s: 0.0167                  # Time step (1/60 s)
+
+  # History
+  max_history_points: 500       # P-E plot trail length
+
+  # Default waveform parameters
+  default_frequency_hz: 0.5     # Default frequency for waveforms
+  default_amplitude_ratio: 2.0  # Default E amplitude = 2 * Ec
+
+# =============================================================================
+# MNIST DEMO PARAMETERS
+# =============================================================================
+mnist:
+  # Network architecture
+  input_size: 784               # 28x28 pixels
+  hidden_sizes: [128, 64]       # Hidden layer sizes
+  output_size: 10               # 10 digit classes
+
+  # Training
+  epochs: 10
+  batch_size: 64
+  learning_rate: 0.001
+
+  # Expected accuracy
+  baseline_accuracy: 0.966      # 96.6% (Nature Communications 2023)
+  tour_claimed_accuracy: 0.87   # 87% (Dr. Tour, unverified)
