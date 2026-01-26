@@ -888,10 +888,14 @@ func (ma *MNISTApp) stopAutoDemoLoop() {
 	}
 
 	ma.autoDemo = false
+	// Cancel context first to signal goroutine
 	if ma.autoDemoCancel != nil {
 		ma.autoDemoCancel()
 		ma.autoDemoCancel = nil
 	}
+	// Brief sleep to allow goroutine to see cancellation
+	time.Sleep(10 * time.Millisecond)
+	// Then stop ticker
 	if ma.autoDemoTimer != nil {
 		ma.autoDemoTimer.Stop()
 		ma.autoDemoTimer = nil

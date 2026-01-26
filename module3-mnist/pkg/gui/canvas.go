@@ -96,6 +96,8 @@ func (dc *DigitCanvas) updatePixelCount() {
 }
 
 // Clear resets the canvas to blank.
+// Note: fyne.Do() is used defensively - it's a no-op when already on the main thread
+// (e.g., from button callbacks), but ensures safety if called from other contexts.
 func (dc *DigitCanvas) Clear() {
 	for i := 0; i < 28; i++ {
 		for j := 0; j < 28; j++ {
@@ -122,6 +124,8 @@ func (dc *DigitCanvas) GetPixels() []float64 {
 }
 
 // SetPixels sets the canvas from a 784-element array.
+// Note: fyne.Do() is used defensively - it's a no-op when already on the main thread
+// (e.g., from button callbacks), but ensures safety if called from goroutines.
 func (dc *DigitCanvas) SetPixels(pixels []float64) {
 	for i := 0; i < 28 && i*28 < len(pixels); i++ {
 		for j := 0; j < 28 && i*28+j < len(pixels); j++ {
@@ -296,6 +300,8 @@ func (dc *DigitCanvas) MouseUp(e *desktop.MouseEvent) {
 }
 
 // draw paints pixels at the given position.
+// Note: This is always called from Fyne event handlers (Tapped, Dragged, MouseDown),
+// which are dispatched on the main thread, so no fyne.Do() wrapper is needed.
 func (dc *DigitCanvas) draw(pos fyne.Position) {
 	size := dc.Size()
 	cellW := size.Width / 28.0
@@ -325,9 +331,7 @@ func (dc *DigitCanvas) draw(pos fyne.Position) {
 		}
 	}
 
-	fyne.Do(func() {
-		dc.Refresh()
-	})
+	dc.Refresh()
 	dc.updatePixelCount()
 	dc.notifyChange()
 }

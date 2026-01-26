@@ -12,7 +12,10 @@ func TestQuantizeWeights_30Levels(t *testing.T) {
 		{-0.8, -0.3, 0.2, 0.7, 0.9},
 	}
 
-	quantized := QuantizeWeights(fpWeights, 30)
+	quantized, err := QuantizeWeights(fpWeights, 30)
+	if err != nil {
+		t.Fatalf("QuantizeWeights failed: %v", err)
+	}
 
 	// Check: quantized values are in [-1, 1]
 	for i := range quantized {
@@ -59,7 +62,10 @@ func TestQuantizeWeights_2Levels(t *testing.T) {
 		{-1.0, -0.5, 0.0, 0.5, 1.0},
 	}
 
-	quantized := QuantizeWeights(fpWeights, 2)
+	quantized, err := QuantizeWeights(fpWeights, 2)
+	if err != nil {
+		t.Fatalf("QuantizeWeights failed: %v", err)
+	}
 
 	// Check: only 2 distinct values
 	distinct := make(map[float64]bool)
@@ -83,20 +89,29 @@ func TestQuantizeWeights_2Levels(t *testing.T) {
 
 func TestQuantizeWeights_EdgeCases(t *testing.T) {
 	// Test empty input
-	empty := QuantizeWeights([][]float64{}, 30)
+	empty, err := QuantizeWeights([][]float64{}, 30)
+	if err != nil {
+		t.Fatalf("QuantizeWeights failed: %v", err)
+	}
 	if len(empty) != 0 {
 		t.Error("Expected empty output for empty input")
 	}
 
 	// Test single element
-	single := QuantizeWeights([][]float64{{0.5}}, 30)
+	single, err := QuantizeWeights([][]float64{{0.5}}, 30)
+	if err != nil {
+		t.Fatalf("QuantizeWeights failed: %v", err)
+	}
 	if len(single) != 1 || len(single[0]) != 1 {
 		t.Error("Single element quantization failed")
 	}
 
 	// Test all zeros
 	zeros := [][]float64{{0.0, 0.0, 0.0}}
-	quantizedZeros := QuantizeWeights(zeros, 30)
+	quantizedZeros, err := QuantizeWeights(zeros, 30)
+	if err != nil {
+		t.Fatalf("QuantizeWeights failed: %v", err)
+	}
 	for i := range quantizedZeros {
 		for j := range quantizedZeros[i] {
 			if quantizedZeros[i][j] != 0.0 {
@@ -108,7 +123,10 @@ func TestQuantizeWeights_EdgeCases(t *testing.T) {
 
 func TestQuantizeBias(t *testing.T) {
 	bias := []float64{-0.5, 0.0, 0.5}
-	quantized := QuantizeBias(bias, 10)
+	quantized, err := QuantizeBias(bias, 10)
+	if err != nil {
+		t.Fatalf("QuantizeBias failed: %v", err)
+	}
 
 	if len(quantized) != len(bias) {
 		t.Errorf("Length mismatch: got %d, expected %d", len(quantized), len(bias))
@@ -126,7 +144,10 @@ func TestComputeQuantizationStats(t *testing.T) {
 	original := [][]float64{
 		{-1.0, -0.5, 0.0, 0.5, 1.0},
 	}
-	quantized := QuantizeWeights(original, 30)
+	quantized, err := QuantizeWeights(original, 30)
+	if err != nil {
+		t.Fatalf("QuantizeWeights failed: %v", err)
+	}
 
 	stats := ComputeQuantizationStats(original, quantized)
 

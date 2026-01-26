@@ -1480,13 +1480,31 @@ func (app *DualModeApp) tryLoadQATWeights(targetLevel int) {
 
 	// Check if the file exists
 	if _, err := os.Stat(weightsPath); os.IsNotExist(err) {
-		// No level-specific weights, keep current
+		// No level-specific weights, notify user
+		fyne.Do(func() {
+			if app.statusLabel != nil {
+				app.statusLabel.SetText(fmt.Sprintf("Warning: No QAT weights found for %d levels at %s", targetLevel, weightsPath))
+			}
+			if app.window != nil {
+				dialog.ShowInformation("Weights Not Found",
+					fmt.Sprintf("QAT weights for %d levels not found.\n\nUsing existing weights instead.\n\nExpected path: %s", targetLevel, weightsPath),
+					app.window)
+			}
+		})
 		return
 	}
 
 	// Load the new weights
 	if err := app.network.LoadWeights(weightsPath); err != nil {
-		// Failed to load, keep current
+		// Failed to load, notify user
+		fyne.Do(func() {
+			if app.statusLabel != nil {
+				app.statusLabel.SetText(fmt.Sprintf("Error: Failed to load QAT weights for %d levels: %v", targetLevel, err))
+			}
+			if app.window != nil {
+				dialog.ShowError(fmt.Errorf("Failed to load QAT weights for %d levels: %w", targetLevel, err), app.window)
+			}
+		})
 		return
 	}
 
@@ -1494,9 +1512,11 @@ func (app *DualModeApp) tryLoadQATWeights(targetLevel int) {
 	app.currentQATLevel = targetLevel
 
 	// Update status
-	if app.statusLabel != nil {
-		app.statusLabel.SetText(fmt.Sprintf("Loaded QAT weights for %d levels", targetLevel))
-	}
+	fyne.Do(func() {
+		if app.statusLabel != nil {
+			app.statusLabel.SetText(fmt.Sprintf("Loaded QAT weights for %d levels", targetLevel))
+		}
+	})
 }
 
 // showZoomedHeatmap opens a new window with a larger view of the weight heatmap.

@@ -3,6 +3,7 @@
 package gui
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -50,7 +51,9 @@ func NewEmbeddedMNISTApp() *EmbeddedMNISTApp {
 	// Try to load pretrained weights
 	weightsPath := filepath.Join(ma.dataDir, "pretrained_weights.json")
 	if _, err := os.Stat(weightsPath); err == nil {
-		_ = ma.network.LoadWeights(weightsPath)
+		if err := ma.network.LoadWeights(weightsPath); err != nil {
+			fmt.Printf("Warning: failed to load pretrained weights from %s: %v\n", weightsPath, err)
+		}
 	}
 
 	return &EmbeddedMNISTApp{MNISTApp: ma}

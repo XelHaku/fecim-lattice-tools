@@ -3,7 +3,10 @@
 // to demonstrate the impact of 30-level ferroelectric quantization.
 package core
 
-import "math"
+import (
+	"fmt"
+	"math"
+)
 
 // FeCIMLevels is the number of discrete conductance levels in FeCIM hardware.
 // This is the key physical constraint from Dr. Tour's research.
@@ -11,18 +14,18 @@ const FeCIMLevels = 30
 
 // QuantizeWeights quantizes FP weights to N discrete levels
 // using symmetric range [-W_max, +W_max] with linear mapping.
-func QuantizeWeights(fpWeights [][]float64, levels int) [][]float64 {
+func QuantizeWeights(fpWeights [][]float64, levels int) ([][]float64, error) {
 	if levels < 2 {
-		panic("levels must be >= 2")
+		return nil, fmt.Errorf("quantize: levels must be >= 2, got %d", levels)
 	}
 
 	rows := len(fpWeights)
 	if rows == 0 {
-		return fpWeights
+		return fpWeights, nil
 	}
 	cols := len(fpWeights[0])
 	if cols == 0 {
-		return fpWeights
+		return fpWeights, nil
 	}
 
 	// 1. Find global max magnitude (symmetric)
@@ -36,7 +39,7 @@ func QuantizeWeights(fpWeights [][]float64, levels int) [][]float64 {
 	}
 
 	if wMax == 0 {
-		return fpWeights // All zeros
+		return fpWeights, nil // All zeros
 	}
 
 	// 2. Quantize to integer bins [0, levels-1]
@@ -65,18 +68,21 @@ func QuantizeWeights(fpWeights [][]float64, levels int) [][]float64 {
 		}
 	}
 
-	return quantized
+	return quantized, nil
 }
 
 // QuantizeBias quantizes bias vector to N discrete levels.
-func QuantizeBias(fpBias []float64, levels int) []float64 {
+func QuantizeBias(fpBias []float64, levels int) ([]float64, error) {
 	if len(fpBias) == 0 {
-		return fpBias
+		return fpBias, nil
 	}
 	// Wrap as 2D array for code reuse
 	wrapped := [][]float64{fpBias}
-	quantized := QuantizeWeights(wrapped, levels)
-	return quantized[0]
+	quantized, err := QuantizeWeights(wrapped, levels)
+	if err != nil {
+		return nil, err
+	}
+	return quantized[0], nil
 }
 
 // QuantizationStats returns quantization metrics for analysis.

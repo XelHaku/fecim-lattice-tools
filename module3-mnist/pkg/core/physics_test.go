@@ -21,7 +21,10 @@ func TestFeCIM30LevelPhysics(t *testing.T) {
 		{1.0, -0.95, -0.85, 0.95, 0.85, -0.75, 0.75, -0.65, 0.65, 0.0},
 	}
 
-	quantized := QuantizeWeights(weights, 30)
+	quantized, err := QuantizeWeights(weights, 30)
+	if err != nil {
+		t.Fatalf("QuantizeWeights failed: %v", err)
+	}
 
 	// Count distinct levels
 	distinct := make(map[float64]bool)
@@ -49,7 +52,10 @@ func TestLevelSpacingUniformity(t *testing.T) {
 		weights[0][i] = -1.0 + 2.0*float64(i)/99.0
 	}
 
-	quantized := QuantizeWeights(weights, 30)
+	quantized, err := QuantizeWeights(weights, 30)
+	if err != nil {
+		t.Fatalf("QuantizeWeights failed: %v", err)
+	}
 
 	// Collect distinct values
 	valueSet := make(map[float64]bool)
@@ -104,7 +110,10 @@ func TestQuantizationSymmetry(t *testing.T) {
 		{-1.0, -0.5, 0.0, 0.5, 1.0},
 	}
 
-	quantized := QuantizeWeights(weights, 30)
+	quantized, err := QuantizeWeights(weights, 30)
+	if err != nil {
+		t.Fatalf("QuantizeWeights failed: %v", err)
+	}
 
 	// Check symmetry: q(-x) should approximately equal -q(x)
 	tolerance := 0.001
@@ -139,7 +148,10 @@ func TestQuantizationCliff(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		quantized := QuantizeWeights(weights, tc.levels)
+		quantized, err := QuantizeWeights(weights, tc.levels)
+		if err != nil {
+			t.Fatalf("QuantizeWeights failed: %v", err)
+		}
 		stats := ComputeQuantizationStats(weights, quantized)
 
 		if stats.MSE > tc.maxExpectedMSE {
@@ -516,7 +528,7 @@ func BenchmarkQuantize30Levels(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		QuantizeWeights(weights, 30)
+		_, _ = QuantizeWeights(weights, 30) // levels=30 is always valid
 	}
 }
 
