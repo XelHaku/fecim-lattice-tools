@@ -28,14 +28,15 @@ The main application (`cmd/fecim-lattice-tools/main.go`) implements a **unified 
 │  ────────────────────────────────────────   │
 │  Fyne App                                   │
 │  ├─ Window (1400x900 default, resizable)   │
-│  └─ ContentStack (7 views)                  │
+│  └─ ContentStack (8 views)                  │
 │     ├─ View 0: Home/Launcher               │
 │     ├─ View 1: Module 1 (Hysteresis)       │
 │     ├─ View 2: Module 2 (Crossbar)         │
 │     ├─ View 3: Module 3 (MNIST)            │
 │     ├─ View 4: Module 4 (Circuits)         │
 │     ├─ View 5: Module 5 (Comparison)       │
-│     └─ View 6: Module 6 (EDA)              │
+│     ├─ View 6: Module 6 (EDA)              │
+│     └─ View 7: Module 7 (Documentation)    │
 │                                             │
 │  Features:                                  │
 │  ├─ Persistent window state                │
@@ -48,7 +49,7 @@ The main application (`cmd/fecim-lattice-tools/main.go`) implements a **unified 
 
 The launcher dynamically loads demo cards and manages lifecycle—modules only run when their tab is active.
 
-### The 6-Module Story
+### The 7-Module Story
 
 Each module demonstrates a layer in the FeCIM stack:
 
@@ -60,6 +61,7 @@ Each module demonstrates a layer in the FeCIM stack:
 | **4. Circuits** | Peripheral electronics | DAC/ADC/TIA circuit modeling | Schematic diagrams, waveforms | Stable |
 | **5. Comparison** | Technology benchmarks | Energy, speed, density metrics | Interactive comparison charts | Stable |
 | **6. EDA** | Chip design tools | Placement, routing (experimental) | Layout visualization | WIP |
+| **7. Documentation** | In-app docs viewer | N/A | Search, navigation, glossary | Stable |
 
 ---
 
@@ -114,6 +116,17 @@ Each module demonstrates a layer in the FeCIM stack:
     │ └─ gui/              │
     │    └─ embedded.go    │
     └──────────────────────┘
+            │
+    ┌───────▼──────────────┐
+    │ module7-docs         │
+    │ └─ gui/              │
+    │    ├─ embedded.go    │
+    │    ├─ navigation.go  │
+    │    ├─ search.go      │
+    │    ├─ layout.go      │
+    │    ├─ persistence.go │
+    │    └─ glossary_int...│
+    └──────────────────────┘
 ```
 
 **Key principle**: Each module is **independent**. Modules can use shared infrastructure (theme, logging, adaptive layouts) but don't depend on each other. This enables:
@@ -155,6 +168,7 @@ Each module has a concrete implementation:
 | Circuits | `EmbeddedCircuitsApp` | `module4-circuits/pkg/gui/embedded.go` |
 | Comparison | `EmbeddedComparisonApp` | `module5-comparison/pkg/gui/embedded.go` |
 | EDA | `EmbeddedEDAApp` | `module6-eda/pkg/gui/embedded.go` |
+| Documentation | `EmbeddedDocsApp` | `module7-docs/pkg/gui/embedded.go` |
 
 ### 2. Application Composition
 
@@ -852,6 +866,6 @@ When adding new features to the architecture:
 
 ---
 
-**Last Updated**: 2026-01-25
-**Architecture Version**: 3.0 (Unified Launcher)
-**Modules**: 6 (Hysteresis, Crossbar, MNIST, Circuits, Comparison, EDA)
+**Last Updated**: 2026-01-27
+**Architecture Version**: 3.1 (Unified Launcher + Docs)
+**Modules**: 7 (Hysteresis, Crossbar, MNIST, Circuits, Comparison, EDA, Documentation)

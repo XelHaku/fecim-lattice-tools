@@ -14,6 +14,7 @@ Welcome to the GUI module documentation. This directory contains comprehensive s
 | **Module 4: Circuits** | [GUI.module4.md](GUI.module4.md) | DAC/ADC/TIA peripheral circuit simulations |
 | **Module 5: Comparison** | [GUI.module5.md](GUI.module5.md) | Technology comparison analysis (FeCIM vs DRAM vs Flash) |
 | **Module 6: EDA Tools** | [GUI.module6.md](GUI.module6.md) | EDA workflow, placement, and layout visualization |
+| **Module 7: Documentation** | [GUI.module7.md](GUI.module7.md) | In-app documentation viewer with search and navigation |
 
 ### Framework & Architecture
 
@@ -257,6 +258,9 @@ go run ./module5-comparison/cmd/gui/main.go
 # Module 6: EDA
 go run ./module6-eda/cmd/gui/main.go
 
+# Module 7: Documentation
+# Note: No standalone entry - embedded only, accessed via toolbar icon
+
 # Or the unified launcher
 ./launch.sh
 ```
@@ -274,6 +278,12 @@ go run ./module6-eda/cmd/gui/main.go
 | `ModeIndicator` | `module1-hysteresis/pkg/gui/widgets` | WRITE/READ mode display |
 | `Heatmap` | `module2-crossbar/pkg/gui` | Crossbar conductance heatmap |
 | `CircuitDiagram` | `module4-circuits/pkg/gui` | DAC/ADC/TIA circuit rendering |
+| `SearchDialog` | `module7-docs/pkg/gui` | Full-text search with fuzzy matching |
+| `BreadcrumbWidget` | `module7-docs/pkg/gui` | Hierarchical path navigation |
+| `TableOfContentsWidget` | `module7-docs/pkg/gui` | Auto-generated document ToC |
+| `QuickAccessPanel` | `module7-docs/pkg/gui` | Recent & favorite documents |
+| `GlossaryPillsWidget` | `module7-docs/pkg/gui` | Detected glossary term buttons |
+| `RelatedDocsWidget` | `module7-docs/pkg/gui` | Related document suggestions |
 
 ### Standard Fyne Widgets Used
 
@@ -336,6 +346,6 @@ For questions about GUI documentation or implementation:
 
 ## Document Version
 
-- **Last Updated**: 2026-01-26
-- **Coverage**: Modules 1-6 (Hysteresis, Crossbar, MNIST, Circuits, Comparison, EDA)
+- **Last Updated**: 2026-01-27
+- **Coverage**: Modules 1-7 (Hysteresis, Crossbar, MNIST, Circuits, Comparison, EDA, Documentation)
 - **Status**: Active maintenance

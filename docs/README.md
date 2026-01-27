@@ -18,6 +18,7 @@
 | 4. Circuits | [circuits/](circuits/) | [ELI5](circuits/circuits.ELI5.md) |
 | 5. CIM Comparison | [cim/](cim/) | [ELI5](cim/cim.ELI5.md), [Honesty Audit](cim/HONESTY_AUDIT.md) |
 | 6. EDA | [eda/](eda/) | [ELI5](eda/eda.eli5.md), [README](eda/README.md) |
+| 7. Docs Viewer | - | Embedded documentation browser |
 
 ## Research & References
 

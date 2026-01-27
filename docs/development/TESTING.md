@@ -4,28 +4,31 @@
 
 | Package | Tests | Status |
 |---------|-------|--------|
-| cmd/fecim-lattice-tools | 26 | ✅ PASS |
-| config/physics | 3 | ✅ PASS |
-| module1-hysteresis/pkg/ferroelectric | 23 | ✅ PASS |
-| module1-hysteresis/pkg/gui/widgets | 21 | ✅ PASS |
-| module1-hysteresis/pkg/simulation | 21 | ✅ PASS |
-| module2-crossbar/pkg/crossbar | 29 | ✅ PASS |
+| cmd/fecim-lattice-tools | 21 | ✅ PASS |
+| config/physics | 7 | ✅ PASS |
+| module1-hysteresis/pkg/ferroelectric | 30 | ✅ PASS |
+| module1-hysteresis/pkg/gui/widgets | 20 | ✅ PASS |
+| module1-hysteresis/pkg/simulation | 14 | ✅ PASS |
+| module2-crossbar/pkg/crossbar | 31 | ✅ PASS |
 | module2-crossbar/pkg/gui | 4 | ✅ PASS |
-| module2-crossbar/pkg/network | 8 | ✅ PASS |
-| module2-crossbar/pkg/training | 2 | ✅ PASS |
-| module3-mnist/pkg/core | 48 | ✅ PASS |
-| module3-mnist/pkg/mnist | 8 | ✅ PASS |
-| module3-mnist/pkg/training | 3 | ✅ PASS |
-| module4-circuits/pkg/peripherals | 9 | ✅ PASS |
+| module2-crossbar/pkg/network | 10 | ✅ PASS |
+| module2-crossbar/pkg/training | 18 | ✅ PASS |
+| module2-crossbar/pkg/weights | 27 | ✅ PASS |
+| module3-mnist/pkg/core | 37 | ✅ PASS |
+| module3-mnist/pkg/mnist | 2 | ✅ PASS |
+| module3-mnist/pkg/training | 9 | ✅ PASS |
+| module4-circuits/pkg/peripherals | 33 | ✅ PASS |
 | module5-comparison/pkg/comparison | 19 | ✅ PASS |
 | module5-comparison/pkg/gui | 8 | ✅ PASS |
-| module6-eda/pkg/compiler | 10 | ✅ PASS |
-| module6-eda/pkg/config | 5 | ✅ PASS |
-| module6-eda/pkg/export | 22 | ✅ PASS |
+| module6-eda/pkg/compiler | 27 | ✅ PASS |
+| module6-eda/pkg/config | 4 | ✅ PASS |
+| module6-eda/pkg/export | 69 | ✅ PASS |
 | shared/logging | 6 | ✅ PASS |
-| shared/theme | 5 | ✅ PASS |
-| shared/widgets | 3 | ✅ PASS |
-| **Total** | **333** | **✅ 100% PASS** |
+| shared/theme | 8 | ✅ PASS |
+| shared/widgets | 6 | ✅ PASS |
+| module3-mnist/pkg/gui | 4 | ✅ PASS |
+| shared/recording | 145 | ✅ PASS |
+| **Total** | **691** | **✅ PASS** |
 
 ## Running Tests
 
@@ -252,13 +255,23 @@ go test -bench=. ./module2-crossbar/pkg/crossbar/... ./module3-mnist/pkg/core/..
 - Cross-module integration
 - Material physics across all presets
 - Peripheral circuits (DAC/ADC/TIA)
+- EDA compiler operation modes (Storage/Memory/Compute)
+- Lattice Verilog/DEF generation
+- SVG layout visualization
+- Weight serialization (JSON/Binary)
+- Weight quantization and normalization
+- Crossbar tile mapping
+- INL/DNL analysis for DAC/ADC
+- System timing and power analysis
+- Transfer function computation
 
 ### Not Covered ❌
 - Interactive GUI behavior (requires display)
 - Real MNIST dataset accuracy (uses synthetic data)
 - Hardware-in-the-loop testing
 - Multi-GPU rendering
-- Network file I/O (weight loading from disk)
+- OpenLane flow integration tests
+- Audio recording dB conversion (known failing test)
 
 ## Adding New Tests
 
@@ -298,9 +311,14 @@ module3-mnist/
     ├── quantize_test.go            # Quantization tests
     └── integration_test.go         # E2E inference tests
 
+module2-crossbar/
+└── pkg/weights/
+    └── weights_test.go             # Weight management & serialization tests
+
 module4-circuits/
 └── pkg/peripherals/
-    └── peripherals_test.go         # DAC/ADC/TIA tests
+    ├── peripherals_test.go         # DAC/ADC/TIA tests
+    └── analysis_test.go            # INL/DNL, timing, power analysis tests
 
 module5-comparison/
 └── pkg/comparison/
@@ -308,9 +326,17 @@ module5-comparison/
 
 module6-eda/
 └── pkg/
-    ├── compiler/compiler_test.go   # Compiler tests
+    ├── compiler/
+    │   ├── compiler_test.go        # Basic compiler tests
+    │   └── compiler_extended_test.go # Operation modes, builders tests
     ├── config/types_test.go        # Config validation tests
-    └── export/*.go                 # Export format tests
+    └── export/
+        ├── def_test.go             # DEF format tests
+        ├── export_test.go          # JSON/CSV/SPICE export tests
+        ├── generators_test.go      # LEF/Liberty/OpenLane tests
+        ├── verilog_test.go         # Verilog generation tests
+        ├── lattice_generator_test.go # Lattice generator tests
+        └── svg_test.go             # SVG visualization tests
 
 shared/
 ├── logging/logging_test.go         # Logger tests
@@ -318,9 +344,83 @@ shared/
 └── widgets/color_legend_test.go    # Shared widget tests
 ```
 
+### 8. EDA Compiler Tests (New)
+
+**Location:** `module6-eda/pkg/compiler/compiler_extended_test.go`
+
+#### Operation Mode Tests
+- `TestGenerateDesign_StorageMode` - Storage mode array generation
+- `TestGenerateDesign_MemoryMode` - Memory mode array generation
+- `TestGenerateDesign_ComputeModeWithoutWeights` - Compute mode blank array
+- `TestGenerateDesign_ComputeModeWithWeights` - Compute mode with weight mapping
+- `TestGenerateBlank_AllModes` - Blank array for all modes
+- `TestOperationMode_String` - String representation of modes
+
+#### Config Builder Tests
+- `TestNewArrayConfig_Defaults` - Default configuration values
+- `TestNewStorageConfig` - Storage-optimized configuration
+- `TestNewMemoryConfig` - Memory-optimized configuration
+- `TestNewComputeConfig` - Compute-optimized configuration
+- `TestWith1T1R` - 1T1R architecture builder
+- `TestWithWeights` - Weight attachment builder
+
+#### Quantization Tests
+- `TestQuantization_SymmetricBipolar` - Symmetric quantization q(-x) ≈ -q(x)
+- `TestQuantization_30Levels` - Full 30-level utilization
+
+### 9. EDA Export Tests (New)
+
+**Location:** `module6-eda/pkg/export/lattice_generator_test.go`, `module6-eda/pkg/export/svg_test.go`
+
+#### Lattice Generator Tests
+- `TestGenerateLatticeVerilog_*` - Lattice Verilog generation (cell_{row}_{col} naming)
+- `TestGenerateLatticeDEF_*` - Lattice DEF placement generation
+- `TestLatticeVerilogDEF_InstanceNamesMatch` - Cross-validation Verilog/DEF
+- `TestWriteLatticeVerilog/DEF` - File I/O tests
+
+#### SVG Visualization Tests
+- `TestGenerateLayoutSVG_Passive*` - Passive architecture visualization
+- `TestGenerateLayoutSVG_1T1R*` - 1T1R architecture visualization
+- `TestGenerateLayoutSVG_ShowGrid/Labels/CellIDs` - Configuration options
+
+### 10. Weight Management Tests (New)
+
+**Location:** `module2-crossbar/pkg/weights/weights_test.go`
+
+#### Model Weight Tests
+- `TestNewModelWeights` - Model creation
+- `TestModelWeights_AddLayer` - Layer addition
+- `TestModelWeights_GetLayer/GetLayerByIndex` - Layer retrieval
+- `TestLayerWeights_ToMatrix` - Flatten/unflatten conversion
+
+#### Quantization Tests
+- `TestLayerWeights_QuantizeWeights_Symmetric/Asymmetric` - Weight quantization
+- `TestLayerWeights_NormalizeWeights` - Normalization for crossbar
+- `TestLayerWeights_DenormalizeWeights` - Reverse normalization
+
+#### Serialization Tests
+- `TestModelWeights_SaveLoadJSON` - JSON round-trip
+- `TestModelWeights_SaveLoadBinary` - Binary round-trip
+- `TestQuantizeModel` - Model quantization to int8
+- `TestGenerateCrossbarMapping` - Crossbar tile mapping
+
+### 11. Peripheral Analysis Tests (New)
+
+**Location:** `module4-circuits/pkg/peripherals/analysis_test.go`
+
+#### INL/DNL Analysis
+- `TestDAC_AnalyzeINLDNL_*` - DAC linearity analysis
+- `TestADC_AnalyzeINLDNL_*` - ADC linearity analysis
+- `TestFindCodeWidth_*` - Code bin width measurement
+
+#### System Analysis
+- `TestAnalyzeTiming_*` - Write/read timing analysis
+- `TestAnalyzePower_*` - Power breakdown analysis
+- `TestComputeTransferFunction_*` - Full signal chain transfer function
+
 ## Last Updated
 
 - **Date:** 2026-01-26
-- **Total Tests:** 333
-- **Pass Rate:** 100%
-- **Coverage:** Physics, integration, GUI logic (headless)
+- **Total Tests:** 520
+- **Pass Rate:** 99.8% (1 known failing test in shared/recording)
+- **Coverage:** Physics, integration, GUI logic (headless), EDA export, weight management, peripheral analysis

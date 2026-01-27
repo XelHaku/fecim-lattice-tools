@@ -79,6 +79,7 @@ fecim-lattice-tools/
 ├── module4-circuits/           # Peripheral circuits (DAC/ADC/TIA)
 ├── module5-comparison/         # Technology comparison & market analysis
 ├── module6-eda/                # EDA design suite
+├── module7-docs/               # In-app documentation viewer
 ├── shared/                     # Shared theme, widgets, logging
 └── docs/
     ├── development/            # Developer documentation
@@ -164,6 +165,7 @@ Once running, the unified visualizer provides:
 - **Module 4:** Peripheral circuits (DAC/ADC/TIA simulation)
 - **Module 5:** Technology comparison (market positioning)
 - **Module 6:** EDA design suite (WIP)
+- **Module 7:** Documentation viewer (search, navigation, glossary)
 
 **Recording & Screenshots:**
 - Screenshot button: Captures current view as PNG

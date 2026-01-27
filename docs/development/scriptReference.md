@@ -177,7 +177,9 @@ cmd/fecim-lattice-tools
     ├── module2-crossbar/pkg/gui
     ├── module3-mnist/pkg/gui
     ├── module4-circuits/pkg/gui
-    └── module5-comparison/pkg/gui
+    ├── module5-comparison/pkg/gui
+    ├── module6-eda/pkg/gui
+    └── module7-docs/pkg/gui
 
 module3-mnist/pkg/core
     └── module2-crossbar/pkg/crossbar  (for quantization)
@@ -492,6 +494,15 @@ fecim-lattice-tools/
 │           ├── layout_tab.go      # Physical layout visualization
 │           └── state.go           # State management
 │
+├── module7-docs/                  # Documentation Viewer
+│   └── pkg/gui/
+│       ├── embedded.go            # EmbeddedDocsApp
+│       ├── navigation.go          # BreadcrumbWidget, TableOfContentsWidget, QuickAccessPanel
+│       ├── search.go              # SearchIndex, SearchDialog
+│       ├── layout.go              # Responsive LayoutManager
+│       ├── persistence.go         # DocsHistory (recent/favorites)
+│       └── glossary_integration.go # GlossaryPillsWidget, RelatedDocsWidget
+│
 ├── docs/                          # Documentation
 │   ├── eda/                       # EDA documentation
 │   ├── opensource/                # Open science resources
@@ -742,6 +753,31 @@ DefaultConfig = CompileConfig{
 | pkg/gui/tabs/layout_tab.go | Layout tab | Physical layout visualization |
 | pkg/gui/tabs/state.go | State management | Shared GUI state |
 
+### Module 7: Documentation (module7-docs/)
+
+| File | Type/Function | Purpose |
+|------|---------------|---------|
+| pkg/gui/embedded.go | `EmbeddedDocsApp` | Main documentation viewer app |
+| pkg/gui/embedded.go | `NewEmbeddedDocsApp()` | Constructor |
+| pkg/gui/embedded.go | `BuildContent()` | Build UI with tree, search, content |
+| pkg/gui/embedded.go | `Start()` / `Stop()` | Lifecycle methods |
+| pkg/gui/embedded.go | `loadDocument()` | Load and render markdown file |
+| pkg/gui/search.go | `SearchIndex` | Full-text search index with TF-IDF |
+| pkg/gui/search.go | `NewSearchIndex()` | Constructor, builds index |
+| pkg/gui/search.go | `Query()` | Fuzzy search with TF-IDF ranking |
+| pkg/gui/search.go | `SearchDialog` | Modal search dialog with keyboard nav |
+| pkg/gui/navigation.go | `BreadcrumbWidget` | Hierarchical path navigation |
+| pkg/gui/navigation.go | `TableOfContentsWidget` | Auto-generated ToC from headings |
+| pkg/gui/navigation.go | `QuickAccessPanel` | Recent & favorite documents |
+| pkg/gui/layout.go | `LayoutManager` | Responsive layout (Mobile/Tablet/Desktop/Wide) |
+| pkg/gui/persistence.go | `DocsHistory` | Recent/favorites persistence to JSON |
+| pkg/gui/persistence.go | `AddRecent()` | Add to LRU recent list |
+| pkg/gui/persistence.go | `ToggleFavorite()` | Add/remove from favorites |
+| pkg/gui/glossary_integration.go | `GlossaryPillsWidget` | Display detected glossary terms |
+| pkg/gui/glossary_integration.go | `DetectGlossaryTerms()` | Scan content for glossary terms |
+| pkg/gui/glossary_integration.go | `DocumentMetadataWidget` | Category, reading time, terms |
+| pkg/gui/glossary_integration.go | `RelatedDocsWidget` | Related document suggestions |
+
 ## Shared Utilities
 
 ### Theme (shared/theme/theme.go)
@@ -821,6 +857,8 @@ func (app *EmbeddedXxxApp) Stop() { ... }   // Called when tab deselected
 - `EmbeddedDualModeApp` - module3 (FP vs CIM side-by-side)
 - `EmbeddedCircuitsApp` - module4
 - `EmbeddedComparisonApp` - module5
+- `EmbeddedEDAApp` - module6
+- `EmbeddedDocsApp` - module7 (documentation viewer)
 
 ## Quick Function Lookups
 
@@ -846,6 +884,10 @@ func (app *EmbeddedXxxApp) Stop() { ... }   // Called when tab deselected
 | Export SPICE netlist | module6-eda/pkg/export/spice.go | `ExportSPICE()` |
 | FeCIM theme colors | shared/theme/theme.go | `ColorPrimary`, `ColorBackground` |
 | Create logger | shared/logging/logging.go | `NewLogger()` |
+| Search documentation | module7-docs/pkg/gui/search.go | `SearchIndex.Query()` |
+| Show search dialog | module7-docs/pkg/gui/search.go | `SearchDialog.Show()` |
+| Detect glossary terms | module7-docs/pkg/gui/glossary_integration.go | `DetectGlossaryTerms()` |
+| Find related docs | module7-docs/pkg/gui/glossary_integration.go | `FindRelated()` |
 
 ## Archived Demos
 
