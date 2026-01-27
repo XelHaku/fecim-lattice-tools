@@ -5,7 +5,9 @@ package gui
 import (
 	"fmt"
 	"math/rand"
+	"os"
 	"path/filepath"
+	"strconv"
 	"sync/atomic"
 
 	"fyne.io/fyne/v2"
@@ -388,8 +390,19 @@ func (app *DualModeApp) showTrainWeightsDialog() {
 func (app *DualModeApp) runTraining(levels, epochs, samples int, progressBar *widget.ProgressBar, statusLabel, epochLabel, accuracyLabel *widget.Label, stopTraining *atomic.Bool, onComplete func()) {
 	defer onComplete()
 
-	// Use local RNG for shuffling (global rand is already auto-seeded in Go 1.20+)
-	rng := rand.New(rand.NewSource(rand.Int63()))
+	// Use local RNG for shuffling
+	// For debugging: set FECIM_DEBUG_SEED=42 (or any integer) for reproducible training
+	var rng *rand.Rand
+	if seedStr := os.Getenv("FECIM_DEBUG_SEED"); seedStr != "" {
+		if seed, err := strconv.ParseInt(seedStr, 10, 64); err == nil {
+			rng = rand.New(rand.NewSource(seed))
+			mnistLog.Printf("Debug mode: using fixed seed %d for reproducible training", seed)
+		} else {
+			rng = rand.New(rand.NewSource(rand.Int63()))
+		}
+	} else {
+		rng = rand.New(rand.NewSource(rand.Int63()))
+	}
 
 	fyne.Do(func() {
 		statusLabel.SetText("Loading MNIST training data...")

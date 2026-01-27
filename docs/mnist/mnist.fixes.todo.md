@@ -127,11 +127,11 @@ func softmax(x []float64) []float64 {
 
 ## Medium Priority Issues
 
-### MED-001: Duplicate Code in runInference and updateResultDisplays
+### MED-001: Duplicate Code in runInference and updateResultDisplays ✅ FIXED
 - **File:** `pkg/gui/dualmode_inference.go:29-112` and `:169-234`
 - **Issue:** ~90% identical code between functions
 - **Fix:** Have `runInference` call `updateResultDisplays`
-- [ ] Refactor to remove duplication
+- [x] Refactor to remove duplication (2026-01-27)
 
 ### MED-002: Unused Exported Constant - DOCUMENTED
 - **File:** `pkg/gui/dualmode.go:29`
@@ -160,11 +160,11 @@ func softmax(x []float64) []float64 {
 - [x] Fix bug (2026-01-27)
 - [ ] Add test
 
-### MED-006: Non-Reproducible Training RNG
+### MED-006: Non-Reproducible Training RNG ✅ FIXED
 - **File:** `pkg/gui/dualmode_controls.go:391-392`
 - **Issue:** Local RNG seeded with random value, not reproducible
 - **Fix:** Consider fixed seed option for debugging
-- [ ] Add debug mode with fixed seed
+- [x] Add debug mode with fixed seed (2026-01-27) - set `FECIM_DEBUG_SEED=42` for reproducible training
 
 ### MED-007: Misleading forwardCIM Function ✅ FIXED
 - **File:** `pkg/core/network_inference.go:194-197`

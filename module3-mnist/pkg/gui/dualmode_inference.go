@@ -33,81 +33,14 @@ func (app *DualModeApp) runInference(pixels []float64) {
 	quantWeights, _, _, _ := app.network.GetQuantWeights()
 
 	fyne.Do(func() {
-		// Update FP results (legacy)
-		app.fpPredLabel.SetText(fmt.Sprintf("Prediction: %d (%.1f%%)", result.FPPrediction, result.FPConfidence*100))
-		app.fpConfBar.SetValue(result.FPConfidence)
-
-		// Update CIM results (legacy)
-		app.cimPredLabel.SetText(fmt.Sprintf("Prediction: %d (%.1f%%)", result.CIMPrediction, result.CIMConfidence*100))
-		app.cimConfBar.SetValue(result.CIMConfidence)
-
-		// Update agreement (legacy)
-		if result.Agree {
-			app.agreementLabel.SetText("PREDICTIONS MATCH")
-		} else {
-			app.agreementLabel.SetText(fmt.Sprintf("DISAGREEMENT (KL=%.3f)", result.Disagreement))
-		}
-
-		// Update probability bars (legacy)
-		for i := 0; i < 10; i++ {
-			app.fpProbBars[i].SetValue(result.FPProbabilities[i])
-			app.cimProbBars[i].SetValue(result.CIMProbabilities[i])
-		}
-
-		// Update energy (legacy) - UI-024 fix: clearer units and wording
-		gpuEnergy := result.EnergyUsed * EnergyRatioGPU
-		app.energyLabel.SetText(fmt.Sprintf("Energy: %.2f µJ (FeCIM) vs %.0f mJ (GPU) = %.0f× improvement",
-			result.EnergyUsed, gpuEnergy/1000, float64(EnergyRatioGPU)))
-
-		// Update status (UI-023 fix: clearer MISMATCH wording)
+		// Update status line (not in updateResultDisplays since it's specific to runInference)
 		app.statusLabel.SetText(fmt.Sprintf("FP: %d (%.1f%%) | CIM: %d (%.1f%%) | %s",
 			result.FPPrediction, result.FPConfidence*100,
 			result.CIMPrediction, result.CIMConfidence*100,
 			map[bool]string{true: "MATCH", false: "Prediction Mismatch"}[result.Agree]))
 
-		// === P1 ENHANCEMENTS ===
-
-		// P1.1: Update quantization visualization with sample weights
-		if app.quantizationWidget != nil && len(quantWeights) > 0 {
-			app.quantizationWidget.SetNumLevels(app.network.GetNumLevels())
-			app.quantizationWidget.UpdateWithWeights(quantWeights, 5) // Show 5 sample weights
-		}
-
-		// P1.2: Update enhanced comparison card
-		if app.comparisonCard != nil {
-			compResult := &ComparisonResult{
-				FPPrediction:     result.FPPrediction,
-				FPConfidence:     result.FPConfidence,
-				FPProbabilities:  result.FPProbabilities,
-				CIMPrediction:    result.CIMPrediction,
-				CIMConfidence:    result.CIMConfidence,
-				CIMProbabilities: result.CIMProbabilities,
-				Match:            result.Agree,
-				ConfidenceDelta:  result.FPConfidence - result.CIMConfidence,
-				EnergyFeCIM:      result.EnergyUsed * 1e6,                     // Convert to nJ
-				EnergyGPU:        result.EnergyUsed * 1e6 * EnergyRatioGPU,    // GPU energy
-				EnergyRatio:      float64(EnergyRatioGPU),
-			}
-			if compResult.ConfidenceDelta < 0 {
-				compResult.ConfidenceDelta = -compResult.ConfidenceDelta
-			}
-			app.comparisonCard.SetResult(compResult)
-		}
-
-		// P1.2: Update dual probability chart
-		if app.dualProbabilityChart != nil {
-			app.dualProbabilityChart.SetProbabilities(
-				result.FPProbabilities,
-				result.CIMProbabilities,
-				result.FPPrediction,
-				result.CIMPrediction,
-			)
-		}
-
-		// P1.3: Record inference in energy widget
-		if app.energyWidget != nil {
-			app.energyWidget.RecordInference()
-		}
+		// Update all result displays
+		app.updateResultDisplays(result, quantWeights)
 	})
 }
 
