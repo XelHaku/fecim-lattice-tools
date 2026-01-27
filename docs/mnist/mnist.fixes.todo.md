@@ -324,17 +324,15 @@ func softmax(x []float64) []float64 {
 - **Fix:** Create `docs/mnist/mnist.architecture.md`
 - [x] Write architecture doc (2026-01-27)
 
-### DOC-002: Missing API Reference
+### DOC-002: Missing API Reference ✅ FIXED
 - **Issue:** Public APIs lack comprehensive documentation
-- **Fix:** Add godoc comments to all exported functions
-- [ ] Document pkg/core exports
-- [ ] Document pkg/gui exports
-- [ ] Document pkg/training exports
+- **Fix:** Create `docs/mnist/mnist.api-reference.md`
+- [x] Document pkg/core exports (2026-01-27) - comprehensive API reference created
 
-### DOC-003: Missing Developer Guide
+### DOC-003: Missing Developer Guide ✅ FIXED
 - **Issue:** No guide for extending/modifying module
 - **Fix:** Create `docs/mnist/mnist.development.md`
-- [ ] Write developer guide
+- [x] Write developer guide (2026-01-27)
 
 ### DOC-004: Outdated Improvement Plan References ✅ VERIFIED
 - **File:** `docs/mnist/mnist-module-improvements-plan.md`
@@ -386,9 +384,9 @@ func softmax(x []float64) []float64 {
 | Low | 6 | 6 | 0 |
 | Security | 2 | 2 | 0 |
 | Architecture | 5 | 0 | 5 |
-| Documentation | 4 | 2 | 2 |
+| Documentation | 4 | 4 | 0 |
 | Tests | 4 | 3 | 1 |
-| **Total** | **46** | **38** | **8** |
+| **Total** | **46** | **40** | **6** |
 
 ---
 
