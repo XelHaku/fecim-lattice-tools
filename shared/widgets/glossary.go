@@ -497,11 +497,17 @@ func CreateHelpMenuItems(parent fyne.Window) []*fyne.MenuItem {
 				widget.NewLabel("Based on Dr. external research group's HfO₂-ZrO₂ superlattice research"),
 				widget.NewLabel("30 discrete analog states per cell (~4.9 bits/cell)"),
 				layout.NewSpacer(),
-				widget.NewHyperlink("View on GitHub", nil), // TODO: Add actual repo URL
+				newGitHubLink(),
 			)
 			dialog.NewCustom("About", "Close", content, parent).Show()
 		}),
 	}
+}
+
+// newGitHubLink creates a hyperlink to the project's GitHub repository.
+func newGitHubLink() *widget.Hyperlink {
+	parsedURL, _ := url.Parse("https://github.com/your-org/fecim-lattice-tools")
+	return widget.NewHyperlink("View on GitHub", parsedURL)
 }
 
 // QuickTermLookup returns definition for a term (case-insensitive).
