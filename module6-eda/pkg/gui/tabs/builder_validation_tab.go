@@ -111,14 +111,14 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	modeSelect.SetSelected(cfg.Mode)
 	updateModeHelp(cfg.Mode) // Initialize help text
 
-	// Layout image display - shows KLayout and OpenROAD generated PNGs
-	// === TWO IMAGE DISPLAYS (KLayout, OpenROAD) + YOSYS STATUS ===
+	// Layout image display - shows KLayout, OpenROAD, and Yosys generated images
+	// === THREE IMAGE DISPLAYS IN A ROW ===
 
 	// 1. KLayout image (physical layout from DEF/LEF)
 	klayoutImage := canvas.NewImageFromFile("")
 	klayoutImage.FillMode = canvas.ImageFillContain
-	klayoutImage.SetMinSize(fyne.NewSize(500, 400))
-	klayoutLabel := widget.NewLabelWithStyle("KLayout (Physical Layout)", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	klayoutImage.SetMinSize(fyne.NewSize(400, 350))
+	klayoutLabel := widget.NewLabelWithStyle("KLayout", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	klayoutStatus := widget.NewLabel("Not generated")
 	klayoutCard := widget.NewCard("", "", container.NewBorder(
 		container.NewVBox(klayoutLabel, klayoutStatus), nil, nil, nil,
@@ -128,27 +128,27 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	// 2. OpenROAD image (placement visualization)
 	openroadImage := canvas.NewImageFromFile("")
 	openroadImage.FillMode = canvas.ImageFillContain
-	openroadImage.SetMinSize(fyne.NewSize(500, 400))
-	openroadLabel := widget.NewLabelWithStyle("OpenROAD (Placement)", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	openroadImage.SetMinSize(fyne.NewSize(400, 350))
+	openroadLabel := widget.NewLabelWithStyle("OpenROAD", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	openroadStatus := widget.NewLabel("Not generated")
 	openroadCard := widget.NewCard("", "", container.NewBorder(
 		container.NewVBox(openroadLabel, openroadStatus), nil, nil, nil,
 		openroadImage,
 	))
 
-	// 3. Yosys schematic - outputs DOT file (not an image, but text graph)
-	yosysLabel := widget.NewLabelWithStyle("Yosys (Circuit Schematic)", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	yosysStatus := widget.NewLabel("Not generated")
-	yosysInfo := widget.NewLabel("Generates DOT file (Graphviz format).\nView with: xdot <file>.dot\nOr convert: dot -Tpng <file>.dot -o schematic.png")
-	yosysInfo.Wrapping = fyne.TextWrapWord
-	yosysCard := widget.NewCard("", "", container.NewVBox(yosysLabel, yosysStatus, yosysInfo))
-
-	// Dummy yosysImage for compatibility with existing code
+	// 3. Yosys schematic image (circuit diagram - PNG converted from DOT)
 	yosysImage := canvas.NewImageFromFile("")
+	yosysImage.FillMode = canvas.ImageFillContain
+	yosysImage.SetMinSize(fyne.NewSize(400, 350))
+	yosysLabel := widget.NewLabelWithStyle("Yosys Schematic", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	yosysStatus := widget.NewLabel("Not generated")
+	yosysCard := widget.NewCard("", "", container.NewBorder(
+		container.NewVBox(yosysLabel, yosysStatus), nil, nil, nil,
+		yosysImage,
+	))
 
-	// Horizontal layout: two large images side by side, Yosys info below
-	imageRow := container.NewGridWithColumns(2, klayoutCard, openroadCard)
-	layoutStack := container.NewVBox(imageRow, yosysCard)
+	// Horizontal layout: three images in a row
+	layoutStack := container.NewGridWithColumns(3, klayoutCard, openroadCard, yosysCard)
 
 	// Helper to update KLayout image from file
 	updateLayoutImage := func() {
@@ -164,15 +164,26 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		}
 	}
 
-	// Helper to update Yosys schematic status (DOT file, not image)
+	// Helper to update Yosys schematic image (PNG converted from DOT)
 	updateYosysImage := func() {
-		dotPath := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d_schematic.dot", cfg.Rows, cfg.Cols)
-		absPath, _ := filepath.Abs(dotPath)
+		// Try PNG first (converted from DOT by graphviz)
+		pngPath := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d_schematic.png", cfg.Rows, cfg.Cols)
+		absPath, _ := filepath.Abs(pngPath)
 		if fileExists(absPath) {
+			yosysImage.File = absPath
+			yosysImage.Resource = nil
 			fyne.Do(func() {
-				yosysStatus.SetText("Generated: " + filepath.Base(dotPath))
-				// DOT files can't be displayed as images - user needs xdot or graphviz
-				_ = yosysImage // Keep for compatibility
+				yosysStatus.SetText("Generated: " + filepath.Base(pngPath))
+				yosysImage.Refresh()
+			})
+			return
+		}
+		// Fallback: check if DOT file exists but PNG conversion failed
+		dotPath := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d_schematic.dot", cfg.Rows, cfg.Cols)
+		dotAbs, _ := filepath.Abs(dotPath)
+		if fileExists(dotAbs) {
+			fyne.Do(func() {
+				yosysStatus.SetText("DOT only (install graphviz)")
 			})
 		}
 	}

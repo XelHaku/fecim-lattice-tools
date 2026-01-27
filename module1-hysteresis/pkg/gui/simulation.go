@@ -120,6 +120,27 @@ func (a *App) loadCalibration() bool {
 	a.calibDownHigh = data.CalibDownHigh
 	a.lastErrorUp = data.LastErrorUp
 	a.lastErrorDown = data.LastErrorDown
+
+	// Initialize auxiliary arrays if they're nil (backward compatibility with older calibration files)
+	if len(a.calibUpLow) != a.numLevels {
+		ec := a.material.Ec
+		emax := ec * 2.5
+		a.calibUpLow = make([]float64, a.numLevels)
+		a.calibUpHigh = make([]float64, a.numLevels)
+		a.calibDownLow = make([]float64, a.numLevels)
+		a.calibDownHigh = make([]float64, a.numLevels)
+		for i := 0; i < a.numLevels; i++ {
+			a.calibUpLow[i] = ec * 0.5
+			a.calibUpHigh[i] = emax
+			a.calibDownLow[i] = -emax
+			a.calibDownHigh[i] = -ec * 0.5
+		}
+	}
+	if len(a.lastErrorUp) != a.numLevels {
+		a.lastErrorUp = make([]int, a.numLevels)
+		a.lastErrorDown = make([]int, a.numLevels)
+	}
+
 	a.calibrated = true
 
 	log.Printf("Calibration loaded for material: %s (%d levels, saved %s)", data.MaterialName, data.NumLevels, data.SavedAt)

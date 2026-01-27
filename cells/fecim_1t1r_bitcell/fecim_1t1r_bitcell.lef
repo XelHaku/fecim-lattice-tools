@@ -2,12 +2,27 @@ VERSION 5.8 ;
 BUSBITCHARS "[]" ;
 DIVIDERCHAR "/" ;
 
+# Minimal layer definition for standalone validation
+LAYER met1
+  TYPE ROUTING ;
+  DIRECTION HORIZONTAL ;
+  PITCH 0.46 ;
+  WIDTH 0.14 ;
+END met1
+
+# Site definition for 1T1R placement
+SITE fecim_1t1r_site
+  CLASS CORE ;
+  SIZE 0.920 BY 3.400 ;
+  SYMMETRY X Y ;
+END fecim_1t1r_site
+
 MACRO fecim_1t1r_bitcell
   CLASS CORE ;
   ORIGIN 0 0 ;
-  SIZE 0.920 BY 22.720 ;
+  SIZE 0.920 BY 3.400 ;
   SYMMETRY X Y ;
-  SITE unithd ;
+  SITE fecim_1t1r_site ;
 
   PIN WL
     DIRECTION INPUT ;

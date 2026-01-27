@@ -66,11 +66,18 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-too
 - **C compiler** (gcc/clang) for CGO
 - **OpenGL libraries**
 
+### Optional Dependencies
+
+- **Docker** — For Module 6 EDA tools (OpenLane/OpenROAD/KLayout)
+- **Graphviz** — For Yosys circuit schematic visualization (`sudo apt install graphviz`)
+
 ### Linux (Ubuntu/Debian)
 
 ```bash
 sudo apt-get update
 sudo apt-get install -y gcc libgl1-mesa-dev xorg-dev
+# Optional: for Module 6 Yosys schematic visualization
+sudo apt-get install -y graphviz
 go mod download
 ./launch.sh
 ```

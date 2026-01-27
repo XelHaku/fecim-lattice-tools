@@ -16,7 +16,7 @@ library(fecim_1t1r_cells) {
   default_operating_conditions : typical ;
 
   cell(fecim_1t1r_bitcell) {
-    area : 20.9024 ;
+    area : 3.1280 ;
     cell_leakage_power : 0.0010 ;
 
     pin(WL) {

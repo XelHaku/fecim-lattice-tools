@@ -1,7 +1,7 @@
 // FeCIM 1T1R Bitcell - Behavioral Model (Placeholder)
 // Technology: sky130
 // Type: 1T1R (1 Transistor + 1 Resistor)
-// Size: 0.660 x 22.720 um
+// Size: 0.460 x 2.720 um
 //
 // 1T1R Architecture:
 //   WL controls select transistor gate
