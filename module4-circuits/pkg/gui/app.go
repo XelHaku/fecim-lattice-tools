@@ -196,6 +196,21 @@ type CircuitsApp struct {
 	arch1T1RBtn    *widget.Button
 	arch2T1RBtn    *widget.Button
 	archToggle     *fyne.Container
+
+	// ============================================================================
+	// UNIFIED DEVICE SIMULATION VIEW (tab_unified.go)
+	// ============================================================================
+	deviceState *DeviceState
+
+	// Unified view DAC input widgets
+	unifiedDACEntries []*widget.Entry
+	unifiedDACLabels  []*widget.Label
+
+	// Unified view WL selector widgets
+	unifiedWLChecks []*widget.Check
+
+	// Unified view output labels
+	unifiedOutputLabels []*widget.Label
 }
 
 // NewCircuitsApp creates and initializes the circuits demo application.
@@ -266,9 +281,9 @@ func (ca *CircuitsApp) Run() {
 // createMainLayout builds the main application layout with 3 views.
 func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 	// Create tab contents (pre-loaded to avoid layout cascades on Wayland/Sway)
-	operationsContent := ca.createOperationsView() // NEW: from tab_operations.go
-	comparisonContent := ca.createComparisonTab()  // KEEP: from tab_comparison.go
-	referenceContent := ca.createReferenceTab()    // NEW: from tab_reference.go
+	operationsContent := ca.createUnifiedView()   // UNIFIED: from tab_unified.go (replaces tab_operations.go)
+	comparisonContent := ca.createComparisonTab() // KEEP: from tab_comparison.go
+	referenceContent := ca.createReferenceTab()   // KEEP: from tab_reference.go
 
 	// All views for Hide/Show toggling
 	viewNames := []string{"OPERATIONS", "COMPARISON", "REFERENCE"}
@@ -305,7 +320,7 @@ func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 
 		// Refresh canvases when specific views shown
 		if view == "OPERATIONS" {
-			ca.refreshSharedArray()
+			ca.refreshUnifiedArray()
 		} else if view == "REFERENCE" {
 			ca.refreshTimingDiagrams()
 		}

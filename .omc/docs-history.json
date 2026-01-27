@@ -5,5 +5,7 @@
     "<local-path>",
     "<local-path>"
   ],
-  "favorites": []
+  "favorites": [
+    "<local-path>"
+  ]
 }

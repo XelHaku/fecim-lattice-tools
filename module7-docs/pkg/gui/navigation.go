@@ -344,13 +344,6 @@ func (qap *QuickAccessPanel) refresh() {
 
 	}
 
-	// Show empty state if no items
-	if len(items) == 0 {
-		emptyLabel := canvas.NewText("No favorite docs", fecimTheme.ColorTextDim)
-		emptyLabel.TextSize = 12
-		items = append(items, emptyLabel)
-	}
-
 	qap.container = container.NewVBox(items...)
 	// Note: Don't call qap.Refresh() here - it causes infinite recursion
 	// CreateRenderer -> refresh -> Refresh -> CreateRenderer -> ...

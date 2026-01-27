@@ -245,36 +245,171 @@ This is used everywhere weights are programmed.
 
 ### 2. Hysteresis Model (Module 1)
 
-The Preisach model simulates ferroelectric polarization switching:
+Module 1 implements ferroelectric hysteresis simulation with two complementary models and comprehensive material support.
+
+#### Preisach Model Architecture
+
+**Classical Preisach Model** (`preisach.go`):
+- S-shaped switching with history tracking
+- Switching function: `P = Ps * tanh((E - Ec_eff) / delta)`
+- LIFO stack of turning points for minor loop closure
+
+**Advanced Mayergoyz Model** (`preisach_advanced.go`):
+- Full hysteron grid on Preisach plane (α > β region)
+- 2D Gaussian distribution `μ(α, β)` across 50×50 hysteron grid
+- Temperature-corrected coercive field: `Ec(T) = Ec0 * (1 - T/Tc)^0.5`
+- Domain switching via KAI model: `P(t) = Ps * (1 - exp(-(t/τ)^n))`
 
 ```go
-// module1-hysteresis/pkg/ferroelectric/preisach.go
+// module1-hysteresis/pkg/ferroelectric/preisach_advanced.go
 
 type MayergoyzPreisach struct {
-    material *HZOMaterial
-    hysterons map[string]*Hysteron  // Elementary hysteresis operators
-    levels   int                     // Discretization levels (30 for FeCIM)
+    material    *HZOMaterial
+    hysterons   [][]int8           // 50×50 grid of bistable units (±1)
+    distribution [][]float64       // 2D Gaussian weighting
+    gridSize    int                // Fixed at 50 (physics resolution)
+    levels      int                // User-selectable 2-256 (default 30)
 }
 
-// Material parameters from Nature Communications 2025
-type HZOMaterial struct {
-    Pr float64  // Remanent polarization (15-34 µC/cm²)
-    Ec float64  // Coercive field (1.0-1.5 MV/cm)
-    // ...
-}
-
-// SimulateStep applies electric field and returns new polarization
-func (p *MayergoyzPreisach) SimulateStep(eField float64) float64 {
-    // Update each hysteron based on field
-    // Sum contributions
+// Update applies electric field and returns new polarization
+func (p *MayergoyzPreisach) Update(E float64) float64 {
+    // For each hysteron: switch if |E| exceeds threshold
+    // Weight contributions by distribution μ(α, β)
+    // Apply temperature and fatigue corrections
     // Return total polarization
+}
+
+// DiscreteStates maps polarization to conductance levels
+func (p *MayergoyzPreisach) DiscreteStates(N int) []DiscreteState {
+    // Inverse tanh mapping: E ≈ Ec + δ * arctanh(P/Ps)
+    // Conductance: G = 1 µS + (normalizedP * 99 µS)
 }
 ```
 
+#### Material System
+
+Eight built-in materials with peer-reviewed parameters:
+
+| Material | Pr (µC/cm²) | Ec (MV/cm) | Endurance | Use Case |
+|----------|-------------|------------|-----------|----------|
+| **DefaultHZO** | 25 | 1.2 | 10¹⁰ | Si-doped baseline |
+| **FeCIMMaterial** | 30 | 1.0 | 10⁹ | Tour device (demonstrated) |
+| **FeCIMMaterialTarget** | 30 | 1.0 | 10¹² | Aspirational target |
+| **LiteratureSuperlattice** | 45 | 0.8 | 10¹⁰ | Cheema 2020 (NC benefit) |
+| **CryogenicHZO** | 75 | 1.5 | 10¹⁰ | 4K operation |
+| **HZOStandard32** | 20 | 1.2 | 10⁸ | 32-state benchmark |
+| **HZOFJT140** | 25 | 1.0 | 10⁸ | 140-state FTJ |
+| **AlScN** | 120 | 5.0 | 10⁸ | High-Pr alternative |
+
+```go
+// module1-hysteresis/pkg/ferroelectric/material.go
+
+type HZOMaterial struct {
+    Name            string
+    Pr              float64  // Remanent polarization (µC/cm²)
+    Ps              float64  // Saturation polarization (µC/cm²)
+    Ec              float64  // Coercive field (MV/cm)
+    Thickness       float64  // Film thickness (nm)
+    Tc              float64  // Curie temperature (K)
+    Tau0            float64  // Intrinsic switching time (ns)
+    EnduranceCycles float64  // Cycles to 10% Pr loss
+    RetentionSec    float64  // Retention time at RT (s)
+    ImrintField     float64  // Imprint bias (MV/cm)
+}
+
+// Physics methods
+func (m *HZOMaterial) CoerciveVoltage() float64           // Ec * Thickness
+func (m *HZOMaterial) SwitchingTime(T float64) float64    // Arrhenius: τ0 * exp(Ea/kB*T)
+func (m *HZOMaterial) CoerciveFieldAtTemp(T float64)      // Tc-scaled Ec
+func (m *HZOMaterial) EnduranceAtCycles(N float64)        // Stretched exponential
+func (m *HZOMaterial) RetentionAtTime(t, T float64)       // Temperature-accelerated loss
+```
+
+#### Modeled Physics Phenomena
+
+| Phenomenon | Implementation | Location |
+|------------|----------------|----------|
+| **Hysteresis loops** | Asymmetric ascending/descending branches | `preisach.go` |
+| **Minor loops** | LIFO history stack for turning points | `preisach.go` |
+| **Domain dynamics** | KAI model time-dependent switching | `preisach_advanced.go` |
+| **Temperature effects** | Tc-scaled Ec, Pr, τ | `material.go` |
+| **Wake-up** | Distribution enhancement (0.8 → 1.0) | `preisach_advanced.go` |
+| **Fatigue** | Stretched exponential: `Pr(N) = Pr0 * exp(-(N/N0)^β)` | `preisach_advanced.go` |
+| **Imprinting** | Preferential switching bias | `material.go` |
+
+#### Simulation Engine
+
+The simulation engine (`simulation/engine.go`) provides time-stepping:
+
+```go
+type Engine struct {
+    preisach    *MayergoyzPreisach
+    dt          float64              // Time step (default 1 ns)
+    maxHistory  int                  // Circular buffer size (1000)
+    mu          sync.RWMutex         // Thread safety
+}
+
+// Waveform types
+const (
+    WaveformManual   // Direct voltage control
+    WaveformSine     // V(t) = A * sin(2πft)
+    WaveformTriangle // Linear ramp -A to +A
+    WaveformSquare   // ±A pulse train
+)
+
+// RunRealtime executes simulation with UI callback
+func (e *Engine) RunRealtime(callback func(State), targetFPS int)
+```
+
+#### GUI Visualization Components
+
+Custom Fyne widgets for hysteresis visualization:
+
+| Widget | File | Purpose |
+|--------|------|---------|
+| **PEPlot** | `widgets/peplot.go` | Real-time P-E curve with Ec/Pr markers |
+| **CellVisualizer** | `widgets/cell.go` | Blue→White→Red polarization gradient |
+| **LevelIndicator** | `widgets/level.go` | 30-level clickable bar |
+| **ModeIndicator** | `widgets/mode.go` | WRITE (red) / READ (green) status |
+
+#### Write/Read Demo State Machine
+
+The GUI includes a 7-phase demo for FeCIM operations:
+
+```
+Phase 0: SATURATE   → Apply ±Emax to set initial state
+Phase 1: SETTLE     → Apply intermediate field for target level
+Phase 2: HOLD       → Maintain E for charge relaxation
+Phase 3: READ       → Return to E=0, capture level
+Phase 4: DISPLAY    → Hold for visual confirmation
+Phase 5: RETENTION  → Track drift at E=0 over time
+Phase 6: VERIFY     → Re-read to confirm write success
+```
+
+#### Calibration System
+
+Multi-temperature calibration with persistent storage:
+
+- **Key temperatures**: 233K (-40°C), 273K, 300K (RT), 373K, 423K (150°C)
+- **Algorithm**: Binary search with oscillation detection
+- **Storage**: `data/hysteresis_calibration.json` (schema v2)
+- **Migration**: Handles legacy v1 single-temp format
+
+#### Performance Characteristics
+
+| Metric | Value |
+|--------|-------|
+| **Hysteron grid** | 50×50 = 2,500 bistable units |
+| **Update complexity** | O(2,500) per time step |
+| **Memory usage** | ~500 KB (grid + distribution) |
+| **Frame rate** | 60 FPS with 30-100 physics steps/frame |
+| **Calibration** | O(30 × 10) binary searches |
+
 **Physics accuracy**:
-- Remanent polarization: 15-34 µC/cm² (verified from literature)
-- Coercive field: 1.0-1.5 MV/cm (verified)
-- Endurance: 10¹² cycles (target, shown in literature)
+- Remanent polarization: 15-75 µC/cm² (material-dependent, verified from literature)
+- Coercive field: 0.6-5.0 MV/cm (verified)
+- Endurance: 10⁸-10¹² cycles (material-dependent)
+- Bits per cell: 4.91 bits for 30 levels, configurable 1-8 bits
 
 ### 3. Crossbar Array Simulation (Module 2)
 

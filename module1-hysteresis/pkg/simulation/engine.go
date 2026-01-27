@@ -190,32 +190,57 @@ func (e *Engine) recordHistory() {
 }
 
 // SetVoltage manually sets the voltage (for WaveformManual mode).
+// Thread-safe: uses mutex to protect state modifications.
 func (e *Engine) SetVoltage(v float64) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
 	e.state.Voltage = v
 }
 
 // SetWaveform changes the voltage waveform type.
+// Thread-safe: uses mutex to protect state modifications.
 func (e *Engine) SetWaveform(w WaveformType) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
 	e.waveform = w
 }
 
 // SetFrequency changes the waveform frequency.
+// Thread-safe: uses mutex to protect state modifications.
 func (e *Engine) SetFrequency(f float64) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
 	e.frequency = f
 }
 
 // SetAmplitude changes the waveform amplitude.
+// Thread-safe: uses mutex to protect state modifications.
 func (e *Engine) SetAmplitude(a float64) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
 	e.amplitude = a
 }
 
-// State returns the current simulation state.
-func (e *Engine) State() *State {
-	return e.state
+// State returns a copy of the current simulation state.
+// Thread-safe: returns a copy to prevent data races.
+func (e *Engine) State() State {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	// Return a copy of the state to prevent race conditions
+	stateCopy := *e.state
+	// Deep copy the history slices
+	stateCopy.VoltageHistory = make([]float64, len(e.state.VoltageHistory))
+	copy(stateCopy.VoltageHistory, e.state.VoltageHistory)
+	stateCopy.PolHistory = make([]float64, len(e.state.PolHistory))
+	copy(stateCopy.PolHistory, e.state.PolHistory)
+	return stateCopy
 }
 
 // Reset clears the simulation state.
+// Thread-safe: uses mutex to protect state modifications.
 func (e *Engine) Reset() {
+	e.mu.Lock()
+	defer e.mu.Unlock()
 	e.model.Reset()
 	e.state = newState(e.state.MaxHistory)
 }
