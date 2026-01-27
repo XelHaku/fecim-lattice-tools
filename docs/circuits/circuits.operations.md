@@ -736,7 +736,7 @@ The mode help text dynamically updates based on architecture:
 
 | Issue | Severity | Details | Resolution |
 |-------|----------|---------|------------|
-| GUI DAC/ADC bits default | ⚠️ Minor | `app.go:29-30` defaults to 8-bit, but peripherals use 5-bit | No functional impact; peripherals use correct 5-bit |
+| ~~GUI DAC/ADC bits default~~ | ~~⚠️ Minor~~ | ~~`app.go:29-30` defaults to 8-bit~~ | ✅ **FIXED** - Now defaults to 5-bit |
 | Bit selector range | ℹ️ Info | UI allows 4-12 bit selection | Educational feature; 5-bit optimal for 30 levels |
 
 ### 9.3 TODOs (Future Enhancements)

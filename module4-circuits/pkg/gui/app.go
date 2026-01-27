@@ -26,8 +26,8 @@ const (
 	FeCIMLevels    = 30  // Always 30 levels for FeCIM
 	MaxArraySize   = 128 // Maximum array dimension
 	DefaultSize    = 8   // Default array size
-	DefaultDACBits = 8   // Default DAC resolution
-	DefaultADCBits = 8   // Default ADC resolution
+	DefaultDACBits = 5   // Default DAC resolution (matches peripherals.DefaultDAC)
+	DefaultADCBits = 5   // Default ADC resolution (matches peripherals.DefaultADC)
 )
 
 // CircuitsApp is the main application for the peripheral circuits demo.
