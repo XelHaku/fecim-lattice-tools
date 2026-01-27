@@ -13,23 +13,23 @@
 | Module | Folder | Start With |
 |--------|--------|------------|
 | 1. Hysteresis | [hysteresis/](hysteresis/) | [ELI5](hysteresis/hysteresis.ELI5.md), [Physics](hysteresis/hysteresis.physics.md) |
-| 2. Crossbar | [crossbar/](crossbar/) | [ELI5](crossbar/crossbar.ELI5.md), [Physics](crossbar/crossbar.physics.md) |
-| 3. MNIST | [mnist/](mnist/) | [ELI5](mnist/mnist.ELI5.md), [Demo](mnist/mnist.demo.md) |
-| 4. Circuits | [circuits/](circuits/) | [ELI5](circuits/circuits.ELI5.md) |
-| 5. CIM Comparison | [cim/](cim/) | [ELI5](cim/cim.ELI5.md), [Honesty Audit](cim/HONESTY_AUDIT.md) |
-| 6. EDA | [eda/](eda/) | [ELI5](eda/eda.eli5.md), [README](eda/README.md) |
+| 2. Crossbar | [crossbar-arrays/](crossbar-arrays/) | [ELI5](crossbar-arrays/crossbar.ELI5.md), [Physics](crossbar-arrays/crossbar.physics.md) |
+| 3. Neural Network | [neural-network/](neural-network/) | [ELI5](neural-network/mnist.ELI5.md), [Demo](neural-network/mnist.demo.md) |
+| 4. Peripheral Circuits | [peripheral-circuits/](peripheral-circuits/) | [ELI5](peripheral-circuits/circuits.ELI5.md) |
+| 5. Comparison | [comparison/](comparison/) | [ELI5](comparison/cim.ELI5.md), [Honesty Audit](comparison/HONESTY_AUDIT.md) |
+| 6. EDA Design Suite | [eda-design-suite/](eda-design-suite/) | [ELI5](eda-design-suite/eda.eli5.md) |
 | 7. Docs Viewer | - | Embedded documentation browser |
 
 ## Research & References
 
 | Topic | Location |
 |-------|----------|
-| Research papers | [papers/](papers/) |
+| Research papers | [research-papers/](research-papers/) |
 | Dr. Tour's research | [tour-group-ironlattice-research.md](tour-group-ironlattice-research.md) |
 | Material analysis | [superlattice-material-analysis.md](superlattice-material-analysis.md) |
 | Open source tools | [opensource-tools/](opensource-tools/) |
-| SKY130 PDK | [sky130-reference/](sky130-reference/) |
-| Video transcripts | [videos/](videos/) |
+| PDK reference | [pdk-reference/](pdk-reference/) |
+| Video transcripts | [video-transcripts/](video-transcripts/) |
 
 ## For Developers
 

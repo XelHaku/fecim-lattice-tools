@@ -20,7 +20,7 @@ Go-based lattice tool suite for Ferroelectric Compute-in-Memory (FeCIM) based on
 
 **Core concept**: 30 discrete analog states per cell (~4.9 bits/cell).
 
-> **Primary Source**: Dr. external research group, COSM 2025 - [Transcript](docs/videos/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md)
+> **Primary Source**: Dr. external research group, COSM 2025 - [Transcript](docs/video-transcripts/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md)
 
 ## Build & Run
 
@@ -68,7 +68,7 @@ shared/                   # Theme, widgets, logging
 
 ## Accuracy & Honesty Policy
 
-Scientific accuracy over marketing claims. Full audit: `docs/cim/HONESTY_AUDIT.md`.
+Scientific accuracy over marketing claims. Full audit: `docs/comparison/HONESTY_AUDIT.md`.
 
 ### Verified Claims (Peer-Reviewed)
 

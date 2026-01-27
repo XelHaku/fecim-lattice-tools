@@ -43,25 +43,16 @@ Screens:
           purpose: Manages responsive 3-panel layout
           components:
             - Sidebar (Border):
-                file: embedded.go:140-155
+                file: embedded.go:130-145
                 components:
                   - SidebarTitle (Label):
                       type: widget.Label
                       text: "Documentation"
                       style: Bold, centered
-                      file: embedded.go:148
-                  - VSplit:
-                      file: embedded.go:150-153
-                      top: QuickAccessPanel
-                      bottom: DocTree
-                  - QuickAccessPanel:
-                      type: QuickAccessPanel
-                      purpose: Favorite docs
-                      file: navigation.go
                   - DocTree (Tree):
                       type: widget.Tree
                       purpose: File tree navigation
-                      file: embedded.go:214-307
+                      file: embedded.go:200-290
             - MainContent (Border):
                 file: embedded.go:167-184
                 components:
@@ -157,14 +148,12 @@ DataFlow:
       - container.Refresh()
 
   - event: Toggle favorite
-    trigger: starBtn.OnTapped in tree or quickAccess
+    trigger: starBtn.OnTapped in tree
     flow:
       1. history.ToggleFavorite(path)
       2. Persist to JSON
-      3. Update quickAccess panel
-      4. Refresh tree to update star icon
+      3. Refresh tree to update star icon
     updates:
-      - quickAccess.ToggleFavorite()
       - tree.Refresh()
 
 SharedState:
@@ -220,13 +209,6 @@ CustomWidgets:
         - Clickable heading links
         - Visual current section indicator
         - Supports up to 3 heading levels
-
-  - QuickAccessPanel:
-      file: navigation.go
-      purpose: Shows favorite documents
-      features:
-        - Favorites: User-bookmarked documents
-        - Persisted across sessions
 
   - GlossaryPillsWidget:
       file: glossary_integration.go
