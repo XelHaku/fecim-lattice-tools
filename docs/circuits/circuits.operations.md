@@ -673,11 +673,18 @@ module4-circuits/
 │   │   └── updateModeHelp()            # Architecture-aware help text
 │   ├── helpers.go               # Drawing utilities (gradients, glow effects)
 │   └── drawing.go               # Timing diagram utilities
+│   ├── tab_operations_write.go  # WRITE mode panel
+│   │   ├── tab_operations_read.go   # READ mode panel
+│   │   └── tab_operations_compute.go # COMPUTE mode panel
+│   ├── helpers.go               # Drawing utilities (gradients, glow effects)
+│   └── drawing.go               # Timing diagram utilities
 └── pkg/peripherals/
-    ├── dac.go                   # 8-bit DAC model
-    ├── adc.go                   # 8-bit SAR ADC model
-    ├── tia.go                   # TIA for current sensing
-    └── chargepump.go            # Voltage boost circuit
+    ├── dac.go                   # 5-bit DAC model (32 levels, use 30)
+    ├── adc.go                   # 5-bit SAR ADC model (32 levels, use 30)
+    ├── tia.go                   # 10kΩ TIA for current sensing
+    ├── chargepump.go            # ±1.5V voltage boost circuit
+    ├── analysis.go              # Performance analysis utilities
+    └── peripherals_test.go      # Unit tests
 ```
 
 ### 8.2 Architecture Toggle (Implemented)
@@ -705,6 +712,49 @@ The mode help text dynamically updates based on architecture:
 - 1T1R READ: "Transistor isolates selected row"
 - 1T1R COMPUTE: "ALL transistors ON for full MVM"
 - Passive modes show sneak path error warnings (~5-20%)
+
+---
+
+## 9. Implementation Status & TODOs
+
+### 9.1 Feature Status
+
+| Feature | Status | Location | Notes |
+|---------|--------|----------|-------|
+| Architecture toggle (1T1R/0T1R) | ✅ Complete | `tab_operations.go:987-1040` | Fully functional with visual feedback |
+| MOSFET transistor drawing | ✅ Complete | `tab_operations.go:405-491` | Green glow=ON, gray=OFF |
+| Sneak path visualization | ✅ Complete | `tab_operations.go:306-333` | Faded red lines in passive mode |
+| Write pulse waveform | ✅ Complete | `tab_operations_write.go:179-284` | Shows Ec threshold |
+| Read zone diagram | ✅ Complete | `tab_operations_read.go:153-244` | Color-coded safety zones |
+| Compute MVM animation | ✅ Complete | `tab_operations_compute.go:340-390` | Step-by-step visualization |
+| TIA current conversion | ✅ Complete | `peripherals/tia.go` | 10kΩ gain, 100MHz BW |
+| Charge pump modeling | ✅ Complete | `peripherals/chargepump.go` | 2-stage Dickson, ±1.5V |
+| Timing diagrams | ✅ Complete | `tab_reference_timing.go` | WRITE/READ/COMPUTE waveforms |
+| INL/DNL modeling | ✅ Complete | `peripherals/dac.go`, `adc.go` | Nonlinearity simulation |
+
+### 9.2 Known Discrepancies
+
+| Issue | Severity | Details | Resolution |
+|-------|----------|---------|------------|
+| GUI DAC/ADC bits default | ⚠️ Minor | `app.go:29-30` defaults to 8-bit, but peripherals use 5-bit | No functional impact; peripherals use correct 5-bit |
+| Bit selector range | ℹ️ Info | UI allows 4-12 bit selection | Educational feature; 5-bit optimal for 30 levels |
+
+### 9.3 TODOs (Future Enhancements)
+
+| Priority | Feature | Description |
+|----------|---------|-------------|
+| LOW | Export functionality | UX-002: Export diagrams/data (noted in GUI.module4.md) |
+| LOW | Temperature model | Add temperature-dependent INL/DNL |
+| LOW | Process corners | Fast/slow/typical corner analysis |
+| LOW | Write-verify animation | Show iterative programming cycle |
+| LOW | Sneak path quantification | Display actual sneak current percentage |
+
+### 9.4 Code Quality Notes
+
+- **No TODO/FIXME comments** in codebase — all features complete
+- **Unit tests** present in `peripherals/peripherals_test.go`
+- **Thread safety** via `sync.RWMutex` in app state
+- **Fyne.Do()** used correctly for UI updates from goroutines
 
 ---
 
