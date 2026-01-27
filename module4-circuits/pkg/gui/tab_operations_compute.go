@@ -125,13 +125,19 @@ func (ca *CircuitsApp) createComputeModePanel() {
 		ca.opsComputeMathLabel,
 	)
 
-	// Performance info
+	// Performance info - HIGH-002 fix: Explain parallelism advantage
 	perfSection := container.NewVBox(
 		widget.NewSeparator(),
 		widget.NewLabelWithStyle("PERFORMANCE", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabel("DAC: 5ns | Array settle: 5ns | ADC: 10ns"),
 		widget.NewLabel("TOTAL: ~20ns for full MVM!"),
-		widget.NewLabel("GPU equivalent: ~1000 cycles"),
+		widget.NewSeparator(),
+		widget.NewLabelWithStyle("PARALLELISM (Array Size = MACs/cycle)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("• 64×64 array = 4,096 parallel MACs per cycle"),
+		widget.NewLabel("• 80×80 array = 6,400 parallel MACs per cycle"),
+		widget.NewLabel("• 128×128 array = 16,384 parallel MACs per cycle"),
+		widget.NewLabel("GPU needs N² sequential cycles for same operation!"),
+		widget.NewLabel("This is the core CIM advantage: O(1) vs O(N²)"),
 	)
 
 	ca.computeConfigPanel = container.NewVBox(

@@ -16,11 +16,7 @@ import (
 
 // createControlWidgets creates all control panel widgets (buttons, sliders, dropdowns).
 func (ca *CrossbarApp) createControlWidgets() {
-	// Primary action button - most prominent
-	ca.runMVMButton = widget.NewButton("▶ Run MVM", ca.runEnhancedMVM)
-	ca.runMVMButton.Importance = widget.HighImportance
-
-	// Secondary action buttons - smaller
+	// Reset button
 	ca.resetButton = widget.NewButton("Reset", ca.resetArray)
 	ca.resetButton.Importance = widget.MediumImportance
 
@@ -165,11 +161,6 @@ func (ca *CrossbarApp) createRightPanel(metricsScroll *container.Scroll) *contai
 	exportButton := widget.NewButton("Export", ca.exportData)
 	exportButton.Importance = widget.MediumImportance
 
-	// === PRIMARY ACTION - Most prominent ===
-	primaryAction := container.NewVBox(
-		ca.runMVMButton,
-	)
-
 	// === ARRAY CONFIG - Slider with label ===
 	arraySizeRow := container.NewBorder(
 		nil, nil,
@@ -206,8 +197,6 @@ func (ca *CrossbarApp) createRightPanel(metricsScroll *container.Scroll) *contai
 
 	// === ASSEMBLE CONTROLS ===
 	controlsBox := container.NewVBox(
-		primaryAction,
-		widget.NewSeparator(),
 		arraySizeRow,
 		widget.NewSeparator(),
 		archLabel,

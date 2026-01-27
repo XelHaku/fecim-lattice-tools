@@ -156,8 +156,15 @@ func (wcw *WeightComparisonWidget) updateStatsLabel() {
 		cols = len(wcw.fpWeights[0])
 	}
 
-	wcw.statsLabel.SetText(fmt.Sprintf("%s | %dx%d | Range: [%.3f, %.3f] | Mean Error: %.4f | Max Error: %.4f",
-		modeName, rows, cols, wcw.wMin, wcw.wMax, wcw.meanError, wcw.maxError))
+	// MED-003 fix: Add context about what error means
+	wRange := wcw.wMax - wcw.wMin
+	if wRange == 0 {
+		wRange = 1
+	}
+	errorPctOfRange := (wcw.meanError / wRange) * 100
+
+	wcw.statsLabel.SetText(fmt.Sprintf("%s | %dx%d | Mean Error: %.4f (~%.1f%% of weight range) | Max: %.4f | 30 levels ≈ near-ideal accuracy",
+		modeName, rows, cols, wcw.meanError, errorPctOfRange, wcw.maxError))
 }
 
 // MinSize returns the minimum size for the widget.

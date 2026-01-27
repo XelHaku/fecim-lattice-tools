@@ -110,7 +110,8 @@ func (ca *CircuitsApp) createReadModePanel() {
 		widget.NewLabelWithStyle("READ PARAMETERS", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		ca.opsReadVoltageLabel,
 		ca.opsReadVoltageSlider,
-		widget.NewLabel("SAFE: ≤0.5V (non-disturbing) | CAUTION: >0.5V may disturb polarization"),
+		widget.NewLabel("SAFE: ≤0.5V (empirical threshold) | CAUTION: >0.5V may disturb polarization"),
+		widget.NewLabel("Note: 0.5V threshold is simulation default; actual values are device-specific"),
 		container.NewHBox(
 			widget.NewLabel("TIA Gain:"), tiaSelect, widget.NewLabel("kOhm"),
 		),

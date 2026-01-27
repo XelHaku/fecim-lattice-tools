@@ -188,11 +188,17 @@ func (m *MarketOpportunityChart) CreateRenderer() fyne.WidgetRenderer {
 		layout.NewSpacer(),
 	)
 
-	// === DISCLAIMER ===
+	// === DISCLAIMER - HIGH-005 fix: Prominent market projection caveats ===
 	citation := canvas.NewText("Source: WSTS + Gartner Combined Market Forecasts (2025)", heroMutedColor)
 	citation.TextSize = 11
 	citation.TextStyle = fyne.TextStyle{Italic: true}
 	citation.Alignment = fyne.TextAlignCenter
+
+	// HIGH-005 fix: Add clear projection disclaimer
+	disclaimer := canvas.NewText("⚠️ Market projections are estimates only. FeCIM position assumes successful TRL 4→9 transition.", estimatedColor)
+	disclaimer.TextSize = 10
+	disclaimer.TextStyle = fyne.TextStyle{Bold: true}
+	disclaimer.Alignment = fyne.TextAlignCenter
 
 	// === ASSEMBLE ===
 	m.container = container.NewVBox(
@@ -202,6 +208,7 @@ func (m *MarketOpportunityChart) CreateRenderer() fyne.WidgetRenderer {
 		container.NewPadded(marketsRow),
 		layout.NewSpacer(),
 		container.NewCenter(citation),
+		container.NewCenter(disclaimer),
 	)
 
 	// Initialize cache values to force first update
@@ -382,11 +389,16 @@ func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
 	fablessNote.TextStyle = fyne.TextStyle{Italic: true}
 	fablessNote.Alignment = fyne.TextAlignCenter
 
-	// Disclaimer
-	disclaimer := canvas.NewText("* TRL 4 (Laboratory Validation) - Competitive position based on published research", estimatedColor)
-	disclaimer.TextSize = 10
-	disclaimer.TextStyle = fyne.TextStyle{Italic: true}
-	disclaimer.Alignment = fyne.TextAlignCenter
+	// Disclaimer - HIGH-005 fix: More prominent TRL caveat
+	trlDisclaimer := canvas.NewText("⚠️ TRL 4 (Laboratory Validation) - Competitive position based on published research only", estimatedColor)
+	trlDisclaimer.TextSize = 10
+	trlDisclaimer.TextStyle = fyne.TextStyle{Bold: true, Italic: true}
+	trlDisclaimer.Alignment = fyne.TextAlignCenter
+
+	productionNote := canvas.NewText("All checkmarks assume successful commercialization (not yet demonstrated at scale)", heroMutedColor)
+	productionNote.TextSize = 9
+	productionNote.TextStyle = fyne.TextStyle{Italic: true}
+	productionNote.Alignment = fyne.TextAlignCenter
 
 	content := container.NewVBox(
 		container.NewCenter(heroText),
@@ -396,7 +408,8 @@ func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
 		rows,
 		widget.NewSeparator(),
 		container.NewCenter(fablessNote),
-		container.NewCenter(disclaimer),
+		container.NewCenter(trlDisclaimer),
+		container.NewCenter(productionNote),
 	)
 	return widget.NewSimpleRenderer(content)
 }

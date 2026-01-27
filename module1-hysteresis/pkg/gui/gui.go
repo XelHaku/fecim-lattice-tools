@@ -114,6 +114,9 @@ type App struct {
 	lastErrorUp   []int     // Last error for each level (for oscillation detection)
 	lastErrorDown []int     // Last error for each level (for oscillation detection)
 
+	// Temperature-aware calibration (v2)
+	calibrationTemp  float64                   // Temperature of current active calibration (K)
+	tempCalibrations map[int]*TempCalibration  // Cache of calibrations at key temperatures (key: temp in K)
 
 	// UI components
 	plot           *widgets.PEPlot
@@ -300,23 +303,25 @@ func NewApp() *App {
 	preisach := ferroelectric.NewMayergoyzPreisach(mat, preisachGridSize)
 
 	return &App{
-		material:        mat,
-		preisach:        preisach,
-		materials:       materials,
-		matIndex:        0,
-		numLevels:       numLevels,
-		calibrationUp:   make([]float64, numLevels),
-		calibrationDown: make([]float64, numLevels),
-		maxHistory:     2000,
-		eHistory:       make([]float64, 0, 2000),
-		pHistory:       make([]float64, 0, 2000),
-		autoMode:       true,
-		waveform:       WaveformSine,
-		frequency:      0.5, // 0.5 Hz default
-		wrdTargetLevel: 28,  // Start high for dramatic first write
-		maxLogLines:    12,
-		logEntries:     make([]string, 0, 12),
-		lastLogPhase:   -1,
+		material:         mat,
+		preisach:         preisach,
+		materials:        materials,
+		matIndex:         0,
+		numLevels:        numLevels,
+		calibrationUp:    make([]float64, numLevels),
+		calibrationDown:  make([]float64, numLevels),
+		calibrationTemp:  300, // Default room temperature
+		tempCalibrations: make(map[int]*TempCalibration),
+		maxHistory:       2000,
+		eHistory:         make([]float64, 0, 2000),
+		pHistory:         make([]float64, 0, 2000),
+		autoMode:         true,
+		waveform:         WaveformSine,
+		frequency:        0.5, // 0.5 Hz default
+		wrdTargetLevel:   28,  // Start high for dramatic first write
+		maxLogLines:      12,
+		logEntries:       make([]string, 0, 12),
+		lastLogPhase:     -1,
 	}
 }
 
@@ -345,12 +350,13 @@ func (a *App) run() error {
 	// Start simulation loop
 	a.running = true
 
-	// Try to load saved calibration, or perform fresh calibration
+	// Try to load saved calibration, or perform fresh calibration at room temp
 	go func() {
 		time.Sleep(100 * time.Millisecond) // Let UI settle
 		a.mu.Lock()
 		if !a.loadCalibration() {
-			a.calibrateLevels()
+			// Calibrate at default room temperature (300K)
+			a.calibrateLevelsAtTemperature(300)
 			if err := a.saveCalibration(); err != nil {
 				log.Printf("Warning: failed to save calibration: %v", err)
 			}

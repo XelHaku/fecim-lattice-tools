@@ -12,44 +12,87 @@ import (
 	"fyne.io/fyne/v2"
 )
 
-// CalibrationData holds persistent calibration state
-type CalibrationData struct {
-	Version       int       `json:"version"`        // Schema version for future compatibility
-	MaterialName  string    `json:"material_name"`  // Material these calibrations are for
-	NumLevels     int       `json:"num_levels"`     // Number of discrete levels
-	CalibrationUp []float64 `json:"calibration_up"` // Ascending calibration values
-	CalibrationDown []float64 `json:"calibration_down"` // Descending calibration values
-	CalibUpLow    []float64 `json:"calib_up_low"`   // Binary search lower bounds (ascending)
-	CalibUpHigh   []float64 `json:"calib_up_high"`  // Binary search upper bounds (ascending)
-	CalibDownLow  []float64 `json:"calib_down_low"` // Binary search lower bounds (descending)
-	CalibDownHigh []float64 `json:"calib_down_high"`// Binary search upper bounds (descending)
-	LastErrorUp   []int     `json:"last_error_up"`  // Last error for oscillation detection
-	LastErrorDown []int     `json:"last_error_down"`// Last error for oscillation detection
-	SavedAt       string    `json:"saved_at"`       // Timestamp
+// TempCalibration holds calibration data for a specific temperature
+type TempCalibration struct {
+	Temperature     float64   `json:"temperature_k"`     // Temperature in Kelvin
+	CalibrationUp   []float64 `json:"calibration_up"`    // Ascending calibration values
+	CalibrationDown []float64 `json:"calibration_down"`  // Descending calibration values
+	CalibUpLow      []float64 `json:"calib_up_low"`      // Binary search lower bounds (ascending)
+	CalibUpHigh     []float64 `json:"calib_up_high"`     // Binary search upper bounds (ascending)
+	CalibDownLow    []float64 `json:"calib_down_low"`    // Binary search lower bounds (descending)
+	CalibDownHigh   []float64 `json:"calib_down_high"`   // Binary search upper bounds (descending)
+	LastErrorUp     []int     `json:"last_error_up"`     // Last error for oscillation detection
+	LastErrorDown   []int     `json:"last_error_down"`   // Last error for oscillation detection
 }
 
-const calibrationVersion = 1
+// CalibrationData holds persistent calibration state (v2: multi-temperature support)
+type CalibrationData struct {
+	Version      int                        `json:"version"`       // Schema version (2 = multi-temp)
+	MaterialName string                     `json:"material_name"` // Material these calibrations are for
+	NumLevels    int                        `json:"num_levels"`    // Number of discrete levels
+	Calibrations map[int]*TempCalibration   `json:"calibrations"`  // Key: temperature in Kelvin (rounded)
+	SavedAt      string                     `json:"saved_at"`      // Timestamp
+
+	// Legacy v1 fields (for migration, not used in v2)
+	CalibrationUp   []float64 `json:"calibration_up,omitempty"`
+	CalibrationDown []float64 `json:"calibration_down,omitempty"`
+	CalibUpLow      []float64 `json:"calib_up_low,omitempty"`
+	CalibUpHigh     []float64 `json:"calib_up_high,omitempty"`
+	CalibDownLow    []float64 `json:"calib_down_low,omitempty"`
+	CalibDownHigh   []float64 `json:"calib_down_high,omitempty"`
+	LastErrorUp     []int     `json:"last_error_up,omitempty"`
+	LastErrorDown   []int     `json:"last_error_down,omitempty"`
+}
+
+const calibrationVersion = 2
+
+// Key temperatures for automotive range calibration (Kelvin)
+var keyTemperatures = []float64{
+	233, // -40C (automotive cold)
+	273, // 0C
+	300, // 27C (room temp, default)
+	373, // 100C
+	423, // 150C (automotive hot)
+}
+
+// temperatureTolerance is the max distance from a cached calibration to interpolate
+const temperatureTolerance = 25.0 // Kelvin
 const calibrationFile = "data/hysteresis_calibration.json"
 
-// saveCalibration persists calibration data to disk
+// saveCalibration persists calibration data to disk (v2: multi-temperature)
 func (a *App) saveCalibration() error {
 	if a.material == nil || !a.calibrated {
 		return nil
 	}
 
+	// Build calibrations map from active calibration and cache
+	calibrations := make(map[int]*TempCalibration)
+
+	// Copy existing cached calibrations
+	for tempK, cal := range a.tempCalibrations {
+		calibrations[tempK] = cal
+	}
+
+	// Save current active calibration at its temperature
+	tempK := int(math.Round(a.calibrationTemp))
+	calibrations[tempK] = &TempCalibration{
+		Temperature:     a.calibrationTemp,
+		CalibrationUp:   append([]float64(nil), a.calibrationUp...),
+		CalibrationDown: append([]float64(nil), a.calibrationDown...),
+		CalibUpLow:      append([]float64(nil), a.calibUpLow...),
+		CalibUpHigh:     append([]float64(nil), a.calibUpHigh...),
+		CalibDownLow:    append([]float64(nil), a.calibDownLow...),
+		CalibDownHigh:   append([]float64(nil), a.calibDownHigh...),
+		LastErrorUp:     append([]int(nil), a.lastErrorUp...),
+		LastErrorDown:   append([]int(nil), a.lastErrorDown...),
+	}
+
 	data := CalibrationData{
-		Version:         calibrationVersion,
-		MaterialName:    a.material.Name,
-		NumLevels:       a.numLevels,
-		CalibrationUp:   a.calibrationUp,
-		CalibrationDown: a.calibrationDown,
-		CalibUpLow:      a.calibUpLow,
-		CalibUpHigh:     a.calibUpHigh,
-		CalibDownLow:    a.calibDownLow,
-		CalibDownHigh:   a.calibDownHigh,
-		LastErrorUp:     a.lastErrorUp,
-		LastErrorDown:   a.lastErrorDown,
-		SavedAt:         time.Now().Format(time.RFC3339),
+		Version:      calibrationVersion,
+		MaterialName: a.material.Name,
+		NumLevels:    a.numLevels,
+		Calibrations: calibrations,
+		SavedAt:      time.Now().Format(time.RFC3339),
 	}
 
 	// Ensure data directory exists
@@ -68,12 +111,13 @@ func (a *App) saveCalibration() error {
 		return fmt.Errorf("write calibration file: %w", err)
 	}
 
-	log.Printf("Calibration saved for material: %s (%d levels)", a.material.Name, a.numLevels)
+	log.Printf("Calibration saved for material: %s (%d levels, %d temperatures)", a.material.Name, a.numLevels, len(calibrations))
 	return nil
 }
 
 // loadCalibration loads calibration data from disk if valid for current material
 // Returns true if calibration was loaded successfully
+// Supports both v1 (single-temp) and v2 (multi-temp) formats
 func (a *App) loadCalibration() bool {
 	if a.material == nil {
 		return false
@@ -91,11 +135,7 @@ func (a *App) loadCalibration() bool {
 		return false
 	}
 
-	// Validate: version, material, and levels must match
-	if data.Version != calibrationVersion {
-		log.Printf("Calibration version mismatch (got %d, want %d), will recalibrate", data.Version, calibrationVersion)
-		return false
-	}
+	// Validate material and levels must match
 	if data.MaterialName != a.material.Name {
 		log.Printf("Calibration material mismatch (got %s, want %s), will recalibrate", data.MaterialName, a.material.Name)
 		return false
@@ -105,46 +145,252 @@ func (a *App) loadCalibration() bool {
 		return false
 	}
 
-	// Validate array lengths
-	if len(data.CalibrationUp) != a.numLevels || len(data.CalibrationDown) != a.numLevels {
-		log.Printf("Calibration array size mismatch, will recalibrate")
+	// Handle version migration
+	if data.Version == 1 {
+		// v1 format: single-temp calibration at 300K (room temp)
+		log.Printf("Migrating v1 calibration file to v2 format (treating as 300K)")
+
+		// Validate v1 array lengths
+		if len(data.CalibrationUp) != a.numLevels || len(data.CalibrationDown) != a.numLevels {
+			log.Printf("Calibration array size mismatch, will recalibrate")
+			return false
+		}
+
+		// Create TempCalibration from v1 data
+		tempCal := &TempCalibration{
+			Temperature:     300,
+			CalibrationUp:   data.CalibrationUp,
+			CalibrationDown: data.CalibrationDown,
+			CalibUpLow:      data.CalibUpLow,
+			CalibUpHigh:     data.CalibUpHigh,
+			CalibDownLow:    data.CalibDownLow,
+			CalibDownHigh:   data.CalibDownHigh,
+			LastErrorUp:     data.LastErrorUp,
+			LastErrorDown:   data.LastErrorDown,
+		}
+
+		// Initialize auxiliary arrays if needed (backward compat with older v1 files)
+		a.initializeTempCalibrationBounds(tempCal)
+
+		// Store in cache
+		a.tempCalibrations = make(map[int]*TempCalibration)
+		a.tempCalibrations[300] = tempCal
+		a.calibrationTemp = 300
+
+		// Load into active arrays
+		a.loadTempCalibration(tempCal)
+
+		log.Printf("Calibration migrated from v1: %s (%d levels at 300K, saved %s)", data.MaterialName, data.NumLevels, data.SavedAt)
+		return true
+	}
+
+	// v2 format: multi-temperature calibration
+	if data.Calibrations == nil || len(data.Calibrations) == 0 {
+		log.Printf("Empty calibrations map in v2 file, will recalibrate")
 		return false
 	}
 
-	// Load calibration data
-	a.calibrationUp = data.CalibrationUp
-	a.calibrationDown = data.CalibrationDown
-	a.calibUpLow = data.CalibUpLow
-	a.calibUpHigh = data.CalibUpHigh
-	a.calibDownLow = data.CalibDownLow
-	a.calibDownHigh = data.CalibDownHigh
-	a.lastErrorUp = data.LastErrorUp
-	a.lastErrorDown = data.LastErrorDown
+	// Load all temperature calibrations into cache
+	a.tempCalibrations = make(map[int]*TempCalibration)
+	for tempK, cal := range data.Calibrations {
+		if cal == nil {
+			continue
+		}
+		// Validate array lengths for each calibration
+		if len(cal.CalibrationUp) != a.numLevels || len(cal.CalibrationDown) != a.numLevels {
+			log.Printf("Calibration array size mismatch at %dK, skipping", tempK)
+			continue
+		}
+		// Initialize bounds if needed
+		a.initializeTempCalibrationBounds(cal)
+		a.tempCalibrations[tempK] = cal
+	}
 
-	// Initialize auxiliary arrays if they're nil (backward compatibility with older calibration files)
-	if len(a.calibUpLow) != a.numLevels {
+	if len(a.tempCalibrations) == 0 {
+		log.Printf("No valid calibrations in file, will recalibrate")
+		return false
+	}
+
+	// Load calibration for current temperature (interpolate or use nearest)
+	currentTemp := a.preisach.Temperature
+	a.loadCalibrationForTemperature(currentTemp)
+
+	log.Printf("Calibration loaded for material: %s (%d levels, %d temperatures, saved %s)", data.MaterialName, data.NumLevels, len(a.tempCalibrations), data.SavedAt)
+	return true
+}
+
+// initializeTempCalibrationBounds initializes auxiliary arrays if they're nil
+func (a *App) initializeTempCalibrationBounds(cal *TempCalibration) {
+	if len(cal.CalibUpLow) != a.numLevels {
 		ec := a.material.Ec
 		emax := ec * 2.5
+		cal.CalibUpLow = make([]float64, a.numLevels)
+		cal.CalibUpHigh = make([]float64, a.numLevels)
+		cal.CalibDownLow = make([]float64, a.numLevels)
+		cal.CalibDownHigh = make([]float64, a.numLevels)
+		for i := 0; i < a.numLevels; i++ {
+			cal.CalibUpLow[i] = ec * 0.5
+			cal.CalibUpHigh[i] = emax
+			cal.CalibDownLow[i] = -emax
+			cal.CalibDownHigh[i] = -ec * 0.5
+		}
+	}
+	if len(cal.LastErrorUp) != a.numLevels {
+		cal.LastErrorUp = make([]int, a.numLevels)
+		cal.LastErrorDown = make([]int, a.numLevels)
+	}
+}
+
+// loadTempCalibration loads a TempCalibration into the active calibration arrays
+func (a *App) loadTempCalibration(cal *TempCalibration) {
+	a.calibrationUp = append([]float64(nil), cal.CalibrationUp...)
+	a.calibrationDown = append([]float64(nil), cal.CalibrationDown...)
+	a.calibUpLow = append([]float64(nil), cal.CalibUpLow...)
+	a.calibUpHigh = append([]float64(nil), cal.CalibUpHigh...)
+	a.calibDownLow = append([]float64(nil), cal.CalibDownLow...)
+	a.calibDownHigh = append([]float64(nil), cal.CalibDownHigh...)
+	a.lastErrorUp = append([]int(nil), cal.LastErrorUp...)
+	a.lastErrorDown = append([]int(nil), cal.LastErrorDown...)
+	a.calibrationTemp = cal.Temperature
+	a.calibrated = true
+}
+
+// loadCalibrationForTemperature loads or interpolates calibration for the given temperature
+// MUST be called with a.mu held
+func (a *App) loadCalibrationForTemperature(tempK float64) {
+	// Check if we have an exact match (within 1K)
+	tempKRounded := int(math.Round(tempK))
+	if cal, ok := a.tempCalibrations[tempKRounded]; ok {
+		a.loadTempCalibration(cal)
+		log.Printf("Loaded exact calibration for %dK", tempKRounded)
+		return
+	}
+
+	// Find nearest calibrations for interpolation
+	lowerTemp, upperTemp, lowerCal, upperCal := a.findNearestCalibrations(tempK)
+
+	if lowerCal == nil && upperCal == nil {
+		// No calibrations available - should not happen if loaded correctly
+		log.Printf("No calibrations available for interpolation at %.0fK", tempK)
+		return
+	}
+
+	// If only one calibration available, use it directly
+	if lowerCal == nil {
+		a.loadTempCalibration(upperCal)
+		log.Printf("Using nearest calibration from %.0fK for %.0fK", upperTemp, tempK)
+		return
+	}
+	if upperCal == nil {
+		a.loadTempCalibration(lowerCal)
+		log.Printf("Using nearest calibration from %.0fK for %.0fK", lowerTemp, tempK)
+		return
+	}
+
+	// Interpolate between two calibrations
+	a.interpolateCalibrations(tempK, lowerTemp, upperTemp, lowerCal, upperCal)
+	log.Printf("Interpolated calibration for %.0fK from %.0fK and %.0fK", tempK, lowerTemp, upperTemp)
+}
+
+// findNearestCalibrations finds the two calibrations nearest to the given temperature
+// Returns (lowerTemp, upperTemp, lowerCal, upperCal) where lower < tempK < upper
+func (a *App) findNearestCalibrations(tempK float64) (float64, float64, *TempCalibration, *TempCalibration) {
+	var lowerTemp, upperTemp float64 = -1e9, 1e9
+	var lowerCal, upperCal *TempCalibration
+
+	for t, cal := range a.tempCalibrations {
+		temp := float64(t)
+		if temp <= tempK && temp > lowerTemp {
+			lowerTemp = temp
+			lowerCal = cal
+		}
+		if temp >= tempK && temp < upperTemp {
+			upperTemp = temp
+			upperCal = cal
+		}
+	}
+
+	// Handle edge cases
+	if lowerTemp < 0 {
+		lowerTemp = 0
+		lowerCal = nil
+	}
+	if upperTemp > 1e6 {
+		upperTemp = 0
+		upperCal = nil
+	}
+
+	return lowerTemp, upperTemp, lowerCal, upperCal
+}
+
+// interpolateCalibrations linearly interpolates between two calibrations
+// MUST be called with a.mu held
+func (a *App) interpolateCalibrations(tempK, lowerTemp, upperTemp float64, lowerCal, upperCal *TempCalibration) {
+	// Calculate interpolation factor (0 = use lowerCal, 1 = use upperCal)
+	t := (tempK - lowerTemp) / (upperTemp - lowerTemp)
+
+	// Initialize arrays if needed
+	if len(a.calibrationUp) != a.numLevels {
+		a.calibrationUp = make([]float64, a.numLevels)
+		a.calibrationDown = make([]float64, a.numLevels)
 		a.calibUpLow = make([]float64, a.numLevels)
 		a.calibUpHigh = make([]float64, a.numLevels)
 		a.calibDownLow = make([]float64, a.numLevels)
 		a.calibDownHigh = make([]float64, a.numLevels)
-		for i := 0; i < a.numLevels; i++ {
-			a.calibUpLow[i] = ec * 0.5
-			a.calibUpHigh[i] = emax
-			a.calibDownLow[i] = -emax
-			a.calibDownHigh[i] = -ec * 0.5
-		}
-	}
-	if len(a.lastErrorUp) != a.numLevels {
 		a.lastErrorUp = make([]int, a.numLevels)
 		a.lastErrorDown = make([]int, a.numLevels)
 	}
 
-	a.calibrated = true
+	// Interpolate field values for each level
+	for i := 0; i < a.numLevels; i++ {
+		a.calibrationUp[i] = lowerCal.CalibrationUp[i]*(1-t) + upperCal.CalibrationUp[i]*t
+		a.calibrationDown[i] = lowerCal.CalibrationDown[i]*(1-t) + upperCal.CalibrationDown[i]*t
 
-	log.Printf("Calibration loaded for material: %s (%d levels, saved %s)", data.MaterialName, data.NumLevels, data.SavedAt)
-	return true
+		// For bounds, use the more conservative (wider) bounds
+		a.calibUpLow[i] = math.Min(lowerCal.CalibUpLow[i], upperCal.CalibUpLow[i])
+		a.calibUpHigh[i] = math.Max(lowerCal.CalibUpHigh[i], upperCal.CalibUpHigh[i])
+		a.calibDownLow[i] = math.Min(lowerCal.CalibDownLow[i], upperCal.CalibDownLow[i])
+		a.calibDownHigh[i] = math.Max(lowerCal.CalibDownHigh[i], upperCal.CalibDownHigh[i])
+
+		// Reset error tracking for interpolated calibration
+		a.lastErrorUp[i] = 0
+		a.lastErrorDown[i] = 0
+	}
+
+	a.calibrationTemp = tempK
+	a.calibrated = true
+}
+
+// hasCalibrationNear checks if we have a calibration within tolerance of the given temperature
+func (a *App) hasCalibrationNear(tempK float64) bool {
+	for t := range a.tempCalibrations {
+		if math.Abs(float64(t)-tempK) <= temperatureTolerance {
+			return true
+		}
+	}
+	return false
+}
+
+// onTemperatureChanged handles temperature changes and triggers recalibration if needed
+// MUST be called with a.mu held
+func (a *App) onTemperatureChanged(newTemp float64) {
+	// Update Preisach model temperature
+	a.preisach.SetTemperature(newTemp)
+
+	// Check if we need new calibration or can use existing/interpolated
+	if a.hasCalibrationNear(newTemp) {
+		// Use existing or interpolate from cached calibrations
+		a.loadCalibrationForTemperature(newTemp)
+	} else {
+		// Need to calibrate for this temperature
+		log.Printf("Temperature %.0fK exceeds tolerance from cached calibrations, recalibrating...", newTemp)
+		a.calibrateLevelsAtTemperature(newTemp)
+
+		// Save updated calibration
+		if err := a.saveCalibration(); err != nil {
+			log.Printf("Warning: failed to save calibration: %v", err)
+		}
+	}
 }
 
 // simulationLoop runs the main simulation loop at ~60 FPS
@@ -1079,6 +1325,41 @@ func (a *App) updateUI(eField, pol float64, level int, eHist, pHist []float64) {
 	})
 }
 
+// calibrateLevelsAtTemperature performs calibration at a specific temperature.
+// Sets Preisach temperature before calibrating, stores result in cache.
+// MUST be called with a.mu held.
+func (a *App) calibrateLevelsAtTemperature(tempK float64) {
+	if a.preisach == nil || a.material == nil {
+		return
+	}
+
+	// Set Preisach temperature before calibrating
+	a.preisach.SetTemperature(tempK)
+	a.calibrationTemp = tempK
+
+	// Perform calibration
+	a.calibrateLevels()
+
+	// Store in cache
+	tempKRounded := int(math.Round(tempK))
+	if a.tempCalibrations == nil {
+		a.tempCalibrations = make(map[int]*TempCalibration)
+	}
+	a.tempCalibrations[tempKRounded] = &TempCalibration{
+		Temperature:     tempK,
+		CalibrationUp:   append([]float64(nil), a.calibrationUp...),
+		CalibrationDown: append([]float64(nil), a.calibrationDown...),
+		CalibUpLow:      append([]float64(nil), a.calibUpLow...),
+		CalibUpHigh:     append([]float64(nil), a.calibUpHigh...),
+		CalibDownLow:    append([]float64(nil), a.calibDownLow...),
+		CalibDownHigh:   append([]float64(nil), a.calibDownHigh...),
+		LastErrorUp:     append([]int(nil), a.lastErrorUp...),
+		LastErrorDown:   append([]int(nil), a.lastErrorDown...),
+	}
+
+	log.Printf("Level calibration complete for material: %s at %.0fK", a.material.Name, tempK)
+}
+
 // calibrateLevels performs a calibration sweep to map field→level relationship.
 // This mimics how real ferroelectric memory controllers characterize each device
 // and build lookup tables for programming. Called at startup and when material changes.
@@ -1091,29 +1372,52 @@ func (a *App) calibrateLevels() {
 		return
 	}
 
-	Ec := a.material.Ec
+	// Use temperature-corrected Ec from Preisach model
+	Ec := a.preisach.GetEffectiveEc()
+	if Ec == 0 {
+		// Fallback to material Ec if temperature correction returns 0
+		Ec = a.material.Ec
+	}
 	Emax := 2.5 * Ec // Go slightly beyond saturation
 	numLevels := a.numLevels
 	maxLevel := numLevels - 1
 
-	// Resize calibration arrays if needed
+	// Record calibration temperature
+	a.calibrationTemp = a.preisach.Temperature
+
+	// Resize calibration arrays if needed (check all arrays to handle partial initialization)
 	if len(a.calibrationUp) != numLevels {
 		a.calibrationUp = make([]float64, numLevels)
+	}
+	if len(a.calibrationDown) != numLevels {
 		a.calibrationDown = make([]float64, numLevels)
-		// Initialize bounds for adaptive calibration (binary search approach)
+	}
+	if len(a.calibUpLow) != numLevels {
 		a.calibUpLow = make([]float64, numLevels)
+	}
+	if len(a.calibUpHigh) != numLevels {
 		a.calibUpHigh = make([]float64, numLevels)
+	}
+	if len(a.calibDownLow) != numLevels {
 		a.calibDownLow = make([]float64, numLevels)
+	}
+	if len(a.calibDownHigh) != numLevels {
 		a.calibDownHigh = make([]float64, numLevels)
+	}
+	if len(a.lastErrorUp) != numLevels {
 		a.lastErrorUp = make([]int, numLevels)
+	}
+	if len(a.lastErrorDown) != numLevels {
 		a.lastErrorDown = make([]int, numLevels)
-		for i := 0; i < numLevels; i++ {
-			// Initial bounds: full range (will be narrowed by runtime feedback)
-			a.calibUpLow[i] = Ec * 0.5
-			a.calibUpHigh[i] = Emax
-			a.calibDownLow[i] = -Emax
-			a.calibDownHigh[i] = -Ec * 0.5
-		}
+	}
+
+	// Initialize bounds based on temperature-corrected Ec
+	for i := 0; i < numLevels; i++ {
+		// Initial bounds: full range (will be narrowed by runtime feedback)
+		a.calibUpLow[i] = Ec * 0.5
+		a.calibUpHigh[i] = Emax
+		a.calibDownLow[i] = -Emax
+		a.calibDownHigh[i] = -Ec * 0.5
 	}
 
 	// Helper function to test what level results from a given field
@@ -1249,6 +1553,4 @@ func (a *App) calibrateLevels() {
 	a.electricField = 0
 	a.polarization = 0
 	a.calibrated = true
-
-	log.Printf("Level calibration complete for material: %s", a.material.Name)
 }

@@ -16,8 +16,6 @@ import (
 func (ca *CrossbarApp) runEnhancedMVM() {
 	debug.Println("runEnhancedMVM: Starting")
 
-	ca.runMVMButton.Disable()
-
 	// Create random input
 	input := make([]float64, ca.config.Cols)
 	for i := range input {
@@ -135,7 +133,6 @@ func (ca *CrossbarApp) runEnhancedMVMAnimated(input []float64) {
 			ca.updateStatus(fmt.Sprintf("COMPUTE | Error: %v", err))
 			ca.modeIndicator.SetMode(DemoModeIdle)
 			ca.conductanceHeatmap.ClearAnimation()
-			ca.runMVMButton.Enable()
 		})
 		return
 	}
@@ -164,7 +161,6 @@ func (ca *CrossbarApp) runEnhancedMVMAnimated(input []float64) {
 		ca.updateStatus(fmt.Sprintf("COMPUTE | Complete: %d MACs, %.2f pJ, %.0f× better than GPU",
 			mvmResult.MACOperations, mvmResult.TotalEnergy, mvmResult.EnergyEfficiency))
 		ca.modeIndicator.SetMode(DemoModeIdle)
-		ca.runMVMButton.Enable()
 	})
 
 	debug.Println("runEnhancedMVM: Complete")

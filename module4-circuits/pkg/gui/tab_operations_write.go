@@ -89,12 +89,16 @@ func (ca *CircuitsApp) createWriteModePanel() {
 	ca.opsWritePulseCanvas = canvas.NewRaster(ca.drawOpsWritePulse)
 	ca.opsWritePulseCanvas.SetMinSize(fyne.NewSize(350, 120))
 
-	// Ec tooltip for write section
+	// Ec tooltip for write section - HIGH-003 fix: Add thickness-dependent context
 	ecWriteTooltipBtn := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
 		dialog.ShowInformation("Coercive Field (Ec)",
 			"The electric field required to switch ferroelectric polarization.\n\n"+
-				"For HfO₂-ZrO₂: Ec ≈ 1.0-1.5 MV/cm.\n\n"+
-				"Write voltage must exceed Ec to reprogram the cell.", ca.window)
+				"For HfO₂-ZrO₂: Ec ≈ 0.6-1.5 MV/cm (thickness-dependent)\n"+
+				"• Standard (10-20nm): 1.0-1.5 MV/cm → 2-5V switching\n"+
+				"• Ultra-thin (3.6nm): Sub-1V operation demonstrated\n"+
+				"  Source: ACS AMI 2024 (DOI: 10.1021/acsami.4c10002)\n\n"+
+				"Write voltage must exceed Ec to reprogram the cell.\n"+
+				"This simulation uses standard 2-5V range.", ca.window)
 	})
 	ecWriteTooltipBtn.Importance = widget.LowImportance
 
@@ -111,7 +115,7 @@ func (ca *CircuitsApp) createWriteModePanel() {
 			widget.NewLabel("Vmax:"), vMaxEntry, widget.NewLabel("V"),
 		),
 		container.NewHBox(
-			widget.NewLabel("Write voltage must exceed Ec (~1.5 MV/cm)"),
+			widget.NewLabel("Write voltage must exceed Ec (0.6-1.5 MV/cm, thickness-dependent)"),
 			ecWriteTooltipBtn,
 		),
 	)

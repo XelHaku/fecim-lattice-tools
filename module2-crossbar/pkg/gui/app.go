@@ -71,7 +71,6 @@ type CrossbarApp struct {
 	keyStatValue    *widget.Label
 
 	// Simple right panel widgets (replacing custom widgets)
-	runMVMButton     *widget.Button
 	resetButton      *widget.Button
 	arraySizeSelect  *widget.Select // Dropdown for array size
 	arraySizeLabel   *widget.Label  // Label for slider display
@@ -255,8 +254,6 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	ca.keyStatValue = widget.NewLabelWithStyle(fmt.Sprintf("%d MACs", ca.config.Rows*ca.config.Cols), fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 
 	// Create simple RIGHT panel widgets directly (no custom widgets)
-	ca.runMVMButton = widget.NewButton("▶ Run MVM", ca.runMVM)
-	ca.runMVMButton.Importance = widget.HighImportance
 	ca.resetButton = widget.NewButton("Reset", ca.resetArray)
 	ca.resetButton.Importance = widget.MediumImportance
 
@@ -442,13 +439,6 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 
 	// Right panel - improved layout with better spacing and grouping
 
-	// Action buttons group
-	actionLabel := widget.NewLabelWithStyle("Actions", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	actionsGroup := container.NewVBox(
-		actionLabel,
-		ca.runMVMButton,
-	)
-
 	// Export button
 	exportButton := widget.NewButton("Export", func() { ca.exportData() })
 	exportButton.Importance = widget.MediumImportance
@@ -471,8 +461,6 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 
 	// Combined controls with scroll for overflow
 	controlsBox := container.NewVBox(
-		actionsGroup,
-		widget.NewSeparator(),
 		arraySizeRow,
 		widget.NewSeparator(),
 		archLabel,

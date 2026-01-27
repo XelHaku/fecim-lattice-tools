@@ -10,9 +10,19 @@ import (
 )
 
 // ShowWhy30LevelsDialog displays information about the 30 analog levels.
+// CRIT-003 fix: Add verification status and peer-reviewed context
 func ShowWhy30LevelsDialog(window fyne.Window) {
 	content := container.NewVBox(
 		widget.NewLabelWithStyle("Why 30 Analog Levels?", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		widget.NewSeparator(),
+
+		// CRIT-003: Verification status section
+		widget.NewLabelWithStyle("⚠️ Verification Status", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("• Tour's 30-state claim: UNVERIFIED (COSM 2025, not peer-reviewed)"),
+		widget.NewLabel("• Peer-reviewed range: 32-140 states demonstrated"),
+		widget.NewLabel("  - 32 states: Oh et al., IEEE EDL 2017 (VERIFIED)"),
+		widget.NewLabel("  - 140 states: Song et al., Adv. Science 2024 (VERIFIED)"),
+		widget.NewLabel("• Conclusion: 30 states is PLAUSIBLE (within demonstrated range)"),
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("Physics Justification", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
@@ -23,22 +33,26 @@ func ShowWhy30LevelsDialog(window fyne.Window) {
 		widget.NewLabel("• Separation: 3σ noise margin between adjacent levels"),
 		widget.NewSeparator(),
 
-		widget.NewLabelWithStyle("Competitive Technology Comparison", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel("Technology     | Levels | Bits/Cell | Notes"),
+		widget.NewLabelWithStyle("Peer-Reviewed Technology Comparison", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("Technology     | Levels | Bits/Cell | Verification"),
 		widget.NewLabel("---------------|--------|-----------|------------------"),
-		widget.NewLabel("SRAM           | 2      | 1 bit     | Binary only"),
-		widget.NewLabel("Flash (NAND)   | 2-4    | 1-2 bits  | TLC/QLC, slow write"),
-		widget.NewLabel("ReRAM          | 4-16   | 2-4 bits  | High variability"),
-		widget.NewLabel("FeCIM (HZO)    | 30     | ~4.9 bits | 5-7x better than ReRAM"),
-		widget.NewLabel("Ideal (FP32)   | 2³²    | 32 bits   | Digital baseline"),
+		widget.NewLabel("SRAM           | 2      | 1 bit     | Industry standard"),
+		widget.NewLabel("Flash (NAND)   | 2-4    | 1-2 bits  | Industry standard"),
+		widget.NewLabel("ReRAM          | 4-16   | 2-4 bits  | Peer-reviewed"),
+		widget.NewLabel("FeFET (Oh 2017)| 32     | 5.0 bits  | IEEE EDL (VERIFIED)"),
+		widget.NewLabel("FeFET (Song'24)| 140    | 7.1 bits  | Adv. Science (VERIFIED)"),
+		widget.NewLabel("Tour FeCIM     | 30     | ~4.9 bits | COSM 2025 (UNVERIFIED)"),
 		widget.NewSeparator(),
 
-		widget.NewLabelWithStyle("Impact on MNIST Accuracy (784→128→10 network)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle("Impact on MNIST Accuracy (Peer-Reviewed Results)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabel("• 2 levels (binary): ~50% accuracy (worse than random!)"),
 		widget.NewLabel("• 4 levels (2-bit): ~65% accuracy"),
-		widget.NewLabel("• 8 levels (3-bit): ~75% accuracy"),
-		widget.NewLabel("• 30 levels (FeCIM): ~87% accuracy (measured hardware)"),
+		widget.NewLabel("• 7 levels (FeFET): 96.6% (Nature Commun. 2023 - VERIFIED)"),
+		widget.NewLabel("• 30 levels (Tour): ~87% (COSM 2025 - UNVERIFIED)"),
+		widget.NewLabel("• HZO-FTJ reservoir: 98.24% (ScienceDirect 2025 - VERIFIED)"),
 		widget.NewLabel("• Float32 (digital): ~98% accuracy (theoretical baseline)"),
+		widget.NewLabel(""),
+		widget.NewLabel("Note: Tour's 87% is BELOW peer-reviewed 98.24% by 11%"),
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("Why Not 64 Levels (6-bit ADC maximum)?", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),

@@ -16,9 +16,6 @@ import (
 func (ca *CrossbarApp) runMVM() {
 	debug.Println("runMVM: Starting")
 
-	// Disable button during computation
-	ca.runMVMButton.Disable()
-
 	// Create random input
 	debug.Printf("runMVM: Creating input vector of size %d", ca.config.Cols)
 	input := make([]float64, ca.config.Cols)
@@ -76,7 +73,6 @@ func (ca *CrossbarApp) runMVMAnimated(input []float64) {
 			ca.updateStatus("COMPUTE | Error during MVM")
 			ca.modeIndicator.SetMode(DemoModeIdle)
 			ca.conductanceHeatmap.ClearAnimation()
-			ca.runMVMButton.Enable()
 			if ca.window != nil {
 				dialog.ShowError(fmt.Errorf("MVM computation failed: %w", err), ca.window)
 			}
@@ -143,7 +139,6 @@ func (ca *CrossbarApp) runMVMAnimated(input []float64) {
 		ca.runSneakPathAnalysis()
 
 		ca.updateStatus("Ready | MVM complete. Check IR Drop and Sneak Paths tabs for analysis!")
-		ca.runMVMButton.Enable()
 	})
 	debug.Println("runMVM: Complete")
 }

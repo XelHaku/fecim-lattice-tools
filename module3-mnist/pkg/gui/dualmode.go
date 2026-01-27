@@ -391,7 +391,8 @@ func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
 
 // createHeader creates the title and info header.
 func (app *DualModeApp) createHeader() fyne.CanvasObject {
-	title := widget.NewLabel("FeCIM MNIST: 30 Levels = 87% Accuracy")
+	// CRIT-002 fix: Add peer-reviewed context to Tour's unverified 87% claim
+	title := widget.NewLabel("FeCIM MNIST Demo | Tour 2025: 87% | Peer-reviewed best: 98.24%")
 	title.TextStyle = fyne.TextStyle{Bold: true}
 
 	// Quick Demo button - prominent call to action

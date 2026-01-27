@@ -429,11 +429,17 @@ func ComprehensiveTooltip(row, col int, array *crossbar.Array, irAnalysis *cross
 	}
 
 	if mvmResult != nil {
+		// MED-004 fix: Add nuanced GPU comparison context
 		tooltip += fmt.Sprintf(
 			"🔹 MVM PERFORMANCE\n"+
 			"  Energy:            %.2f pJ\n"+
-			"  vs GPU:            %.0f× better\n"+
-			"  Latency:           %.1f ns\n",
+			"  vs GPU:            %.0f× better (per-MAC basis)\n"+
+			"  Latency:           %.1f ns (single cycle)\n\n"+
+			"⚠️ GPU COMPARISON CONTEXT:\n"+
+			"  • FeCIM advantage: per-operation latency + energy\n"+
+			"  • GPUs excel at batched operations (throughput)\n"+
+			"  • Fair comparison needs throughput AND efficiency\n"+
+			"  • FeCIM: O(1) cycles for MVM vs GPU: O(N²)\n",
 			mvmResult.TotalEnergy,
 			mvmResult.EnergyEfficiency,
 			mvmResult.Latency,

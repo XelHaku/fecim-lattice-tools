@@ -139,15 +139,22 @@ func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
 	e.heroText.TextStyle = fyne.TextStyle{Bold: true}
 	e.heroText.Alignment = fyne.TextAlignCenter
 
-	e.heroSubtext = canvas.NewText("DATA CENTER ENERGY REDUCTION", heroCyanColor)
+	e.heroSubtext = canvas.NewText("DATA CENTER ENERGY REDUCTION (PROJECTED)", heroCyanColor)
 	e.heroSubtext.TextSize = 28
 	e.heroSubtext.TextStyle = fyne.TextStyle{Bold: true}
 	e.heroSubtext.Alignment = fyne.TextAlignCenter
+
+	// Prominent TRL warning - CRIT-001 fix
+	trlWarning := canvas.NewText("Laboratory estimates only - not independently verified", heroAmberColor)
+	trlWarning.TextSize = 16
+	trlWarning.TextStyle = fyne.TextStyle{Bold: true, Italic: true}
+	trlWarning.Alignment = fyne.TextAlignCenter
 
 	heroSection := container.NewVBox(
 		layout.NewSpacer(),
 		container.NewCenter(e.heroText),
 		container.NewCenter(e.heroSubtext),
+		container.NewCenter(trlWarning),
 		layout.NewSpacer(),
 	)
 

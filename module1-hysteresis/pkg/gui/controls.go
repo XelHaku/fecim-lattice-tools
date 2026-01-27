@@ -104,10 +104,14 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		a.calibrated = false
 		a.mu.Unlock()
 
-		// Recalibrate for new material (background to not block UI)
+		// Recalibrate for new material at current temperature (background to not block UI)
 		go func() {
 			a.mu.Lock()
-			a.calibrateLevels()
+			// Clear old calibration cache for new material
+			a.tempCalibrations = make(map[int]*TempCalibration)
+			// Calibrate at current temperature
+			currentTemp := a.preisach.Temperature
+			a.calibrateLevelsAtTemperature(currentTemp)
 			if err := a.saveCalibration(); err != nil {
 				log.Printf("Warning: failed to save calibration: %v", err)
 			}
@@ -159,10 +163,14 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		bits := math.Log2(float64(n))
 		a.levelsLabel.SetText(fmt.Sprintf("Levels: %d (%.1f bits)", n, bits))
 
-		// Recalibrate in background (new quantization mapping)
+		// Recalibrate in background at current temperature (new quantization mapping)
 		go func() {
 			a.mu.Lock()
-			a.calibrateLevels()
+			// Clear old calibration cache for new level count
+			a.tempCalibrations = make(map[int]*TempCalibration)
+			// Calibrate at current temperature
+			currentTemp := a.preisach.Temperature
+			a.calibrateLevelsAtTemperature(currentTemp)
 			if err := a.saveCalibration(); err != nil {
 				log.Printf("Warning: failed to save calibration: %v", err)
 			}
@@ -229,15 +237,21 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	tempLabel := widget.NewLabel("T: 300 K (27°C)")
 	tempSlider.OnChanged = func(v float64) {
 		log.SliderChange("Temperature", v)
-		a.mu.Lock()
-		// Update Preisach model temperature
-		a.preisach.SetTemperature(v)
-		// Update plot markers with temperature-corrected Ec and Pr
-		effEc := a.preisach.GetEffectiveEc()
-		effPr := a.preisach.GetEffectivePr()
-		a.mu.Unlock()
-		// Update plot markers (outside lock to avoid potential deadlock)
-		a.plot.SetMaterialParams(effEc, effPr)
+
+		// Update temperature with calibration handling (runs in background if recalibration needed)
+		go func() {
+			a.mu.Lock()
+			a.onTemperatureChanged(v)
+			// Get plot markers with temperature-corrected Ec and Pr
+			effEc := a.preisach.GetEffectiveEc()
+			effPr := a.preisach.GetEffectivePr()
+			a.mu.Unlock()
+
+			// Update plot markers (outside lock, uses fyne.Do internally)
+			a.plot.SetMaterialParams(effEc, effPr)
+		}()
+
+		// Update label immediately (don't wait for calibration)
 		celsius := v - 273
 		tcRatio := v / a.material.CurieTemp * 100
 		tempLabel.SetText(fmt.Sprintf("T: %.0f K (%.0f°C) [%.0f%% Tc]", v, celsius, tcRatio))

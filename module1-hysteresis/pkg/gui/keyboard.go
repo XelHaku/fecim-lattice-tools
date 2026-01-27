@@ -44,8 +44,14 @@ func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 		if newTemp > 700 {
 			newTemp = 700
 		}
-		a.preisach.SetTemperature(newTemp)
 		a.mu.Unlock()
+
+		// Handle temperature change with calibration (runs in background)
+		go func() {
+			a.mu.Lock()
+			a.onTemperatureChanged(newTemp)
+			a.mu.Unlock()
+		}()
 		log.Info("Temperature increased to %.0f K", newTemp)
 
 	case fyne.KeyG:
@@ -56,8 +62,14 @@ func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 		if newTemp < 200 {
 			newTemp = 200
 		}
-		a.preisach.SetTemperature(newTemp)
 		a.mu.Unlock()
+
+		// Handle temperature change with calibration (runs in background)
+		go func() {
+			a.mu.Lock()
+			a.onTemperatureChanged(newTemp)
+			a.mu.Unlock()
+		}()
 		log.Info("Temperature decreased to %.0f K", newTemp)
 
 	case fyne.KeyF:
