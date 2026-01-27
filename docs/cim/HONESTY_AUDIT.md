@@ -56,9 +56,10 @@
 
 1. **COMPLETE**: ~~Remove "88% theoretical maximum"~~ (Already done in CLAUDE.md)
 2. **COMPLETE**: ~~Correct endurance from "target" to "demonstrated"~~ (Updated in this audit)
-3. **IMMEDIATE**: Remove "10M× vs NAND" claim entirely
-4. **SHORT-TERM**: Add citations for 22 uncited claims or mark as "assumed"
-5. **ONGOING**: Quarterly audits to track literature updates
+3. **COMPLETE**: ~~Remove 87% MNIST accuracy claim~~ (Removed from tool - unverified and below peer-reviewed benchmarks)
+4. **IMMEDIATE**: Remove "10M× vs NAND" claim entirely
+5. **SHORT-TERM**: Add citations for 22 uncited claims or mark as "assumed"
+6. **ONGOING**: Quarterly audits to track literature updates
 
 ---
 
@@ -319,7 +320,7 @@ Files reviewed (124 claims extracted):
 | Claim | Value | Status | Analysis |
 |-------|-------|--------|----------|
 | 30 analog states | 30 levels | **PLAUSIBLE** | Others demonstrated 32-140; Tour's specific device unverified |
-| 87% MNIST accuracy | 87% | **REMOVED FROM TOOL** | Removed - peer-reviewed achieves 96.6-98.24%; unverified claim should not constrain simulation |
+| 87% MNIST accuracy | 87% | **REMOVED FROM TOOL** | Tour claimed at COSM 2025 (unverified); peer-reviewed literature shows 96.6-98.24%. Removal rationale: (1) Unverified conference claim, (2) Below scientific state-of-art by 11%, (3) Simulation should reflect physics, not force arbitrary accuracy targets, (4) 30 analog states naturally produces accuracy based on device physics, not by constraint |
 | 10¹² cycle endurance | 10¹² | **NOW DEMONSTRATED BY OTHERS** | Tour stated as "target"; V:HfO₂ 2024 actually achieved it |
 | 10M× vs NAND energy | 10,000,000× | **REMOVED** | Samsung peer-reviewed shows 25-100×; Tour's claim unsupported |
 
@@ -366,12 +367,12 @@ The COSM (Conference on Science and Meaning):
 
 ### 7.3 Updated Comparison: Tour vs Peer-Reviewed
 
-| Metric | Tour (COSM 2025) | Peer-Reviewed Best | Gap |
-|--------|------------------|-------------------|-----|
-| Analog states | 30 | 140 (Song 2024) | Tour conservative |
-| MNIST accuracy | 87% | 98.24% (2025) | Tour 11% below |
-| Energy vs NAND | 10M× | 25-100× (Samsung) | **Tour overclaims 100,000×** |
-| Endurance | 10¹² (target) | 10¹² (V:HfO₂ 2024) | **Achieved by others** |
+| Metric | Tour (COSM 2025) | Peer-Reviewed Best | Gap | Status |
+|--------|------------------|-------------------|-----|--------|
+| Analog states | 30 | 140 (Song 2024) | Tour conservative | PLAUSIBLE |
+| MNIST accuracy | 87% | 98.24% (2025) | Tour 11% below | **REMOVED FROM TOOL** |
+| Energy vs NAND | 10M× | 25-100× (Samsung) | **Tour overclaims 100,000×** | REMOVED |
+| Endurance | 10¹² (target) | 10¹² (V:HfO₂ 2024) | **Achieved by others** | UPDATED |
 
 ### 7.4 Balanced Assessment
 
@@ -379,14 +380,14 @@ The COSM (Conference on Science and Meaning):
 - Distinguished career with real accomplishments
 - Rice Innovation grant ($50,000) verified
 - TRL 4 is honestly stated
-- Claims physically plausible (except energy)
+- Claims physically plausible (except energy and accuracy)
 - Commercial track record (Weebit Nano)
 
 **Negative:**
 - No peer-reviewed FeCIM publication from Tour's group
 - Energy claims lack any measurement data
 - COSM is promotional, not scientific
-- 87% MNIST is below state-of-art (11% gap)
+- 87% MNIST is below state-of-art (11% gap) - **NOW REMOVED FROM TOOL**
 - Comparison charts intentionally lack scales
 
 ### 7.5 Recommendation (Updated)
@@ -394,9 +395,11 @@ The COSM (Conference on Science and Meaning):
 **Treat Dr. Tour's claims as:**
 - Promising but unverified research direction
 - Promotional claims requiring peer review
-- Plausible for most metrics EXCEPT energy efficiency
+- Plausible for most metrics EXCEPT energy efficiency and accuracy targets
 
-**The energy claim should be REMOVED** - it's not just unverified, it's inconsistent with all peer-reviewed data by 100,000× margin.
+**Removed from tool:**
+1. **87% MNIST accuracy** - Unverified conference claim, 11% below peer-reviewed benchmarks (96.6-98.24%). Simulation should reflect actual physics, not arbitrary targets.
+2. **10M× energy efficiency** - Inconsistent with all peer-reviewed data by 100,000× margin; no measurement support.
 
 ---
 
@@ -415,13 +418,14 @@ The COSM (Conference on Science and Meaning):
 
 ### 8.2 Claims Requiring Immediate Action
 
-| Priority | Claim | Location | Action |
-|----------|-------|----------|--------|
-| **CRITICAL** | "10M× vs NAND" | CLAUDE.md, README.md | **REMOVE ENTIRELY** |
-| HIGH | "88% theoretical maximum" | README.md:222 | **REMOVE** (if still exists) |
-| HIGH | Endurance table | CLAUDE.md, devices.md | Update to "demonstrated" |
-| MEDIUM | DRAM energy "~200 pJ" | physics.md:45 | Clarify as "640 pJ/32-bit" |
-| MEDIUM | Drift v=0.001 | equations.md:407 | Mark as "ASSUMED" |
+| Priority | Claim | Location | Action | Status |
+|----------|-------|----------|--------|--------|
+| **CRITICAL** | "10M× vs NAND" | CLAUDE.md, README.md | **REMOVE ENTIRELY** | PENDING |
+| **CRITICAL** | "87% MNIST accuracy (Tour)" | CLAUDE.md | **REMOVED** | COMPLETE |
+| HIGH | "88% theoretical maximum" | README.md:222 | **REMOVE** (if still exists) | COMPLETE |
+| HIGH | Endurance table | CLAUDE.md, devices.md | Update to "demonstrated" | COMPLETE |
+| MEDIUM | DRAM energy "~200 pJ" | physics.md:45 | Clarify as "640 pJ/32-bit" | PENDING |
+| MEDIUM | Drift v=0.001 | equations.md:407 | Mark as "ASSUMED" | PENDING |
 
 ### 8.3 Claims Requiring Citation Addition
 
@@ -463,19 +467,21 @@ Scientific accuracy over marketing claims. Full audit: `docs/cim/HONESTY_AUDIT.m
 
 ### Unverified Claims (Conference/Promotional)
 
-| Claim | Status | Source |
-|-------|--------|--------|
-| 30 analog states (Tour device) | UNVERIFIED | COSM 2025 (not peer-reviewed) |
-| 87% MNIST accuracy (Tour) | REMOVED | Removed from tool - unverified claim below peer-reviewed 96.6-98.24% |
-| 10M× vs NAND energy | REMOVED | No measurement data exists |
+| Claim | Value | Status | Removal Rationale |
+|-------|-------|--------|-------------------|
+| 30 analog states (Tour device) | 30 | UNVERIFIED | COSM 2025 (not peer-reviewed) - but plausible, between verified 7-140 range |
+| 87% MNIST accuracy (Tour) | 87% | **REMOVED** | (1) Unverified COSM 2025 claim, (2) 11% below peer-reviewed benchmarks (96.6-98.24%), (3) Simulation should reflect physics not arbitrary targets |
+| 10M× vs NAND energy | 10M× | **REMOVED** | No measurement data; inconsistent with all peer-reviewed benchmarks (25-100×) by 100,000× margin |
 
 ### Notes
 
-- "Verified" = peer-reviewed publication with methodology
-- "Unverified" = conference claim or promotional material only
-- 30 states is ACHIEVABLE (32-140 demonstrated), but Tour's device is unverified
+- **"Verified"** = peer-reviewed publication with methodology
+- **"Unverified"** = conference claim or promotional material only
+- **"REMOVED"** = Previously claimed but no evidence; contradicts peer-reviewed literature or unverified when peer-reviewed alternatives exist
+- 30 states is ACHIEVABLE (32-140 demonstrated), but Tour's specific device is unverified and remains in documentation as plausible claim
+- 87% MNIST accuracy was REMOVED because: unverified conference claim + 11% below scientific state-of-art + simulation should derive accuracy from physics, not force targets
 - Dr. Tour is a legitimate scientist; his FeCIM claims await peer review
-- Energy claims require measurement data, not verbal assertions
+- Energy and accuracy claims require measurement data or peer review, not verbal assertions
 ```
 
 ---

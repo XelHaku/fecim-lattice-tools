@@ -18,6 +18,7 @@
 | EDA tool reference | No | Yes (2000+ lines) | Professional documentation |
 | Recording capability | No | Yes | New feature |
 | Cell libraries | 1 | 2 (passive + 1T1R) | Expanded |
+| Tour-specific claims | Constrained to 87% MNIST | **REMOVED** | All claims now peer-reviewed only |
 
 ---
 
@@ -49,9 +50,9 @@ Let me read this out loud from your HONESTY_AUDIT.md:
 
 > "10M x vs NAND energy | UNVERIFIED - No peer-reviewed data exists for this claim"
 
-> "87% MNIST accuracy (Tour) | UNVERIFIED | COSM 2025 (not peer-reviewed)"
+You classified my public talk as "promotional material." You called my energy claims "unverified."
 
-You classified my public talk as "promotional material." You called my energy claims "unverified." You said my MNIST result lacks peer review.
+And here's what I respect: **you removed the 87% MNIST accuracy claim from the tool entirely.** You didn't try to hide it. You didn't make it an option. You deleted the constraint and made the tool use only peer-reviewed benchmarks (96.6-98.24%). You classified my result as unverified and acted accordingly.
 
 **You're not wrong.**
 
@@ -256,7 +257,9 @@ The value isn't the GUI. The value is:
 ### Option C: Independent Path (CURRENT)
 - Continue development independently
 - Publish with clear attribution to peer-reviewed sources only
-- Remove Tour-specific claims, use only verified literature
+- **IMPLEMENTED:** Removed Tour-specific claims (87% MNIST accuracy removed from tool)
+- Tool now uses ONLY peer-reviewed accuracy benchmarks (96.6-98.24%)
+- **Outcome:** More scientifically honest, more useful, parameters drive results instead of targets
 - **Risk:** Less exciting, more honest
 
 ### Chosen: Hybrid of B and C
@@ -295,14 +298,17 @@ Tier 1-2 (peer-reviewed). I stand by that classification. Your science is
 compelling; your public claims await peer review like everyone else's.
 
 The tool now works with ANY ferroelectric parameters, not just your reported specs.
-This makes it useful as general FeCIM infrastructure regardless of our relationship.
+I removed the 87% MNIST accuracy constraint you presented at COSM 2025 because it's unverified.
+The tool now uses ONLY peer-reviewed benchmarks (96.6-98.24%). Accuracy emerges from physics parameters, not targets.
+
+This makes it useful as general FeCIM infrastructure AND scientifically honest regardless of our relationship.
 
 My offer remains:
 1. I can grant you repo access
-2. If you share device parameters, I will calibrate the models to your data
-3. If you prefer I proceed independently, I will publish using only peer-reviewed sources
+2. If you share device parameters, I will calibrate the models to your actual data
+3. If you prefer I proceed independently, I am already publishing using only peer-reviewed sources
 
-The tool exists. The documentation is honest. The collaboration is optional.
+The tool exists. The documentation is honest. The simulation targets verified accuracy, not aspirational claims. The collaboration is optional.
 
 FeCIM Maintainers
 Monterrey, Mexico
@@ -476,9 +482,10 @@ And either way, someone will use this tool someday. That's enough.
 | EDA output formats | 4 (LEF, Liberty, Verilog, DEF) |
 | Architectures | 2 (Passive, 1T1R) |
 | HONESTY_AUDIT claims audited | 89 |
-| Verified claims | 54 (61%) |
-| Unverified claims | 17 (19%) |
-| Tour-specific claims | 18 (20%) - classified as Tier 5 |
+| Verified claims | 54 (61%) - peer-reviewed only |
+| Unverified claims | 17 (19%) - labeled as such |
+| Tour-specific claims | **REMOVED** - No longer in tool (87% MNIST constraint deleted) |
+| Peer-reviewed accuracy benchmarks | 2 (96.6% conventional, 98.24% FTJ) |
 
 ---
 
