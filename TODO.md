@@ -1,422 +1,331 @@
-# Ferroelectric CIM-vis Strategic TODO
+# FeCIM Lattice Tools - TODO
 
-> **Mission:** Create world-class visualization demos to help Dr. external research group pitch Ferroelectric CIM to investors, engineers, and foundry partners.
->
-> **Source:** Dr. Tour's November 2024 presentation (ferroelectric-cim-transcript.md)
+**Mission**: Educational FeCIM visualization and simulation tool based on peer-reviewed HfO₂-ZrO₂ superlattice research.
 
----
-
-## STRATEGIC CONTEXT
-
-### Dr. Tour's Pitch Narrative
-
-```
-"There's no more busing information back and forth to memory.
-It's all done in the same device. Computation memory in the same device.
-This could lower the requirements in a data center by 80 to 90%."
-                                                    — Dr. external research group
-```
-
-### Phased Market Entry Strategy (Critical for Demos!)
-
-```
-PHASE 1               PHASE 2               PHASE 3
-┌─────────────┐      ┌─────────────┐      ┌─────────────────┐
-│  Replace    │  →   │  Replace    │  →   │  Full Compute-  │
-│  NAND Flash │      │  DRAM       │      │  in-Memory      │
-└─────────────┘      └─────────────┘      └─────────────────┘
-  Easy entry           No refresh           80-90% energy
-  No SW changes        1000× lower E        savings
-```
-
-### Target Audiences
-
-| Audience | What They Care About | Key Demos |
-|----------|---------------------|-----------|
-| **Investors** | ROI, market size ($711B by 2030), energy crisis | Demo 3, 8, Market |
-| **Engineers** | Physics accuracy, real-world issues | Demo 1, 2, 5, 7 |
-| **Foundries** | CMOS compatibility, process flow | Demo 4, Integration |
-| **Strategic Partners** | Competitive advantage, restricted access details | Demo 8, Comparison |
+**Last updated**: January 27, 2026
 
 ---
 
-## Ferroelectric CIM Key Specs (From Dr. Tour)
+## 1. Current Status
 
-| Metric | Target | Demo Status | Notes |
-|--------|--------|-------------|-------|
-| Discrete analog states | **30 levels** | ✅ All demos | "Not 0-1-0-1" |
-| MNIST accuracy | **87%** (Tour, unverified) | ✅ **95.8%** | Sim exceeds claim |
-| Energy vs NAND | 10,000,000× lower (Dr. Tour, unverified) | 🔲 Demo 8 | Peer-reviewed: 25-100× |
-| Energy vs DRAM | 1,000× lower | 🔲 Demo 8 | Zero refresh |
-| Speed vs NAND | 1,000,000× faster | 🔲 Demo 8 | 10ns switching |
-| Data center savings | **80-90%** | 🔲 Demo 8 | Headline metric |
-| P-E hysteresis | Square loop | ✅ Demo 1 | Preisach model |
-| CMOS compatible | Standard fab | ✅ Demo 4 | No exotic materials |
-| TRL | 4 → 9 | 📊 Progress | Lab validation |
-| Endurance target | 10^12 cycles | 🔲 | In progress |
+| Module | Purpose | Status | Tests | GUI |
+|--------|---------|--------|-------|-----|
+| **module1-hysteresis** | P-E hysteresis, Preisach model, 30 analog states | ✅ Complete | ✅ Passing | ✅ Fyne |
+| **module2-crossbar** | Matrix-vector multiplication, IR drop, sneak paths | ✅ Complete | ✅ Passing | ✅ Fyne |
+| **module3-mnist** | Neural network digit recognition | ✅ Complete | ✅ Passing | ✅ Fyne |
+| **module4-circuits** | DAC/ADC/TIA peripheral circuits | ✅ Complete | ✅ Passing | ✅ Fyne |
+| **module5-comparison** | Technology comparison framework | ✅ Complete | ✅ Passing | ✅ Fyne |
+| **module6-eda** | Verilog/DEF/LEF/Liberty generation | ✅ Complete | ✅ Passing | ✅ Fyne |
+| **docs/** | Scientific documentation (78 papers catalogued) | ✅ Complete | N/A | N/A |
 
----
-
-## 8-Demo Roadmap
-
-```
-THE FECIM STORY
-
-Demo 1        Demo 2        Demo 3        Demo 4
-"This is      "This is      "This is      "This is how
-how the       how we        what we       it fits in
-memory        compute       can build     a real chip"
-cell works"   in memory"    with it"
-
-     ↓             ↓             ↓             ↓
-┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐
-│   P-E   │   │Crossbar │   │  MNIST  │   │Peripheral│
-│Hysteresis│   │   MVM   │   │   87%   │   │ Circuits │
-│ 30 levels│   │ W × V=I │   │ accuracy│   │DAC/ADC/TIA│
-└─────────┘   └─────────┘   └─────────┘   └─────────┘
-     ↓             ↓             ↓             ↓
-  PHYSICS      COMPUTE     APPLICATION     SYSTEM
-
-Demo 5        Demo 6        Demo 7        Demo 8
-"1000×        "Scalable     "We handle    "Why Ferroelectric CIM
-cooler than   3D            real-world    wins vs everyone
-competition"  architecture" challenges"   else"
-
-     ↓             ↓             ↓             ↓
-┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐
-│ Thermal │   │Multi-   │   │ Non-    │   │Comparison│
-│   Map   │   │ Layer   │   │idealities│   │DRAM/GPU/ │
-│ 25°-85°C│   │  3D     │   │IR/Sneak │   │Ferroelectric CIM│
-└─────────┘   └─────────┘   └─────────┘   └─────────┘
-     ↓             ↓             ↓             ↓
- THERMAL      ARCHITECTURE   ENGINEERING   INVESTOR PITCH
-```
-
-### Demo Status
-
-| Demo | Name | Purpose | Audience | Status | GUI |
-|------|------|---------|----------|--------|-----|
-| 1 | Hysteresis | Memory cell physics | Everyone | ✅ | ✅ Fyne |
-| 2 | Crossbar MVM | Compute-in-memory | Engineers | ✅ | ✅ Fyne |
-| 3 | MNIST | AI application | Investors | ✅ 95.8% | ✅ Fyne |
-| 4 | Peripherals | Full system | Foundries | ✅ | ✅ Fyne |
-| 5 | Thermal | Heat analysis | Engineers | ✅ | 🔲 CLI |
-| 6 | Multi-Layer | 3D Architecture | Designers | 🔲 | 🔲 |
-| 7 | Non-Idealities | Real issues | Engineers | ✅ IR/Sneak | 🔲 |
-| 8 | Comparison | Why IL wins | Investors | 🔲 | 🔲 |
+**Project Health**:
+- Go files: 233
+- Test cases: 571 (all passing)
+- Generated outputs: Verilog, DEF, LEF, Liberty files (real synthesizable code)
+- Scientific Rigor Score: 4.0/5 (HONESTY_AUDIT v3.0)
+- Code coverage: ~85%
 
 ---
 
-## PHASE 4: HYPER IMPROVEMENTS (Current Focus)
+## 2. Pending Technical Work
 
-### Priority 1: Investor-Ready Demos
+### HIGH PRIORITY
 
-#### Demo 8: Technology Comparison (CRITICAL FOR PITCH)
+#### Add Citations for 12 Assumed Simulation Parameters
+**Status**: Pending | **Owner**: Contributors | **Priority**: HIGH
 
-**Purpose:** The slide Dr. Tour shows investors — why Ferroelectric CIM wins
+From HONESTY_AUDIT Section 6.2, the following parameters lack peer-reviewed sources:
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                    COMPUTE PERFORMANCE COMPARISON                 │
-├────────────────┬─────────────┬─────────────┬─────────────────────┤
-│    Metric      │  DRAM+CPU   │    GPU      │    Ferroelectric CIM      │
-├────────────────┼─────────────┼─────────────┼─────────────────────┤
-│ Time (MVM)     │   100 μs    │   10 μs     │      0.01 μs        │
-│ Energy/MAC     │   10 pJ     │   1 pJ      │      0.001 pJ       │
-│ Data Movement  │   O(n²)     │   O(n²)     │        0            │
-│ Memory Refresh │   Yes       │   Yes       │       None          │
-│ CMOS Compatible│   Yes       │   Yes       │       Yes           │
-└────────────────┴─────────────┴─────────────┴─────────────────────┘
-                                               ↑
-                                         10,000,000× better*
-                                         *Dr. Tour claim, unverified
-```
+| Parameter | Location | Value | Notes |
+|-----------|----------|-------|-------|
+| DRAM energy (32-bit) | physics.md:45 | 640 pJ | Needs explicit Horowitz 2014 citation |
+| Drift coefficients | equations.md:407 | Various | Needs FeFET-specific literature |
+| FeFET capacitance | equations.md:648 | 10-100 fF | Needs device physics reference |
+| FeFET switching current | equations.md:649 | 1-10 µA | Needs measurement data |
+| Nonlinearity coefficient k | mathematics.md:389 | 5-10 | Needs crossbar model reference |
+| Read disturb probability | mathematics.md:731 | 10^-6 | Needs endurance study reference |
 
-**Implement:**
-- [ ] Side-by-side animated comparison (3 columns)
-- [ ] Energy meter filling up (show 25-100× verified; note 10M× is unverified)
-- [ ] Time bar racing (show 1M× faster)
-- [ ] Data center savings calculator ($$$)
-- [ ] "If X data centers switch, save Y TWh/year"
+**Action**: Search 2024-2026 literature for device physics papers covering these parameters.
 
-#### Demo 8b: Competitive Matrix (From Dr. Tour's Slides)
+#### Vulkan Rendering Implementation
+**Status**: TODO stubs exist | **Owner**: Graphics dev | **Priority**: HIGH
 
-| Feature | Ferroelectric CIM | 3D NAND | ReRAM (Weebit) | PCRAM | Google TPU | Intel Loihi |
-|---------|-------------|---------|----------------|-------|------------|-------------|
-| Write/Read Energy | ✅ | ❌ | ✅ | 🟡 | ❌ | ✅ |
-| Write/Read Speed | ✅ | ❌ | ✅ | ❌ | ✅ | 🟡 |
-| Endurance | ✅ | ❌ | ❌ | 🟡 | ✅ | 🟡 |
-| CMOS Compatible | ✅ | ✅ | 🟡 | 🟡 | ✅ | 🟡 |
-| Memory/Logic Unified | ✅ | ❌ | 🟡 | 🟡 | ❌ | 🟡 |
-| 30+ Analog States | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ |
+Current rendering uses CPU-based pixel operations. Five TODO items in code:
 
-**Only Ferroelectric CIM has ✅ across ALL categories**
+| Location | Line | Description |
+|----------|------|-------------|
+| module1-hysteresis/pkg/render/render.go | 301 | Vulkan compute shader implementation |
+| module1-hysteresis/pkg/render/render.go | 349 | Vulkan initialization (device, queue, swapchain) |
+| module1-hysteresis/pkg/render/render.go | 363 | Vulkan render loop (command buffers) |
+| module1-hysteresis/pkg/render/render.go | 386 | Vulkan resource cleanup |
+| shared/widgets/glossary.go | 500 | Add actual GitHub repo URL |
 
----
+**Why**: 10-50x performance improvement for large crossbar visualizations (128x128+).
 
-### Priority 2: Engineer-Ready Demos
+**Approach**:
+- Use `go-vk` or `vgpu` bindings
+- Implement compute shaders for heatmap generation
+- Maintain CPU fallback for compatibility
 
-#### Demo 1-4: Add Fyne GUIs ✅ DONE
+#### Demo 6: Multi-layer 3D Visualization
+**Status**: Not started | **Owner**: Graphics dev | **Priority**: HIGH
 
-- [x] Demo 1: Hysteresis Fyne GUI (PEPlot, LevelIndicator)
-- [x] Demo 2: Crossbar Fyne GUI (Heatmap, IR Drop, Sneak Paths) + Live Slide upgrade
-- [x] Demo 3: MNIST Fyne GUI (DigitCanvas, LayerActivation, ConfusionMatrix) + Live Slide upgrade
-- [x] Demo 4: Peripherals Fyne GUI (Circuit diagrams, timing, power) + Live Slide upgrade
-- [ ] Demo 5: Thermal Fyne GUI (Heat map, 3D view)
+**Goal**: Visualize 3D stacked FeFET arrays (22nm BEOL-compatible, per CEA-Leti 2024).
 
-#### Demo 7: Non-Idealities (Show We Understand Real Challenges)
+**Features needed**:
+- Layer-by-layer rendering (up to 512 layers per Samsung roadmap)
+- Inter-layer connections (TSV visualization)
+- Heat flow between layers
+- Configurable stack depth (2, 4, 8, 16, 32 layers)
 
-**Already Implemented:**
-- [x] IR drop analysis with wire resistance
-- [x] Sneak path current analysis
-- [x] MVM with non-idealities comparison
-
-**Still Needed:**
-- [ ] Conductance drift over time simulation
-- [ ] Cycle-to-cycle variation (write noise)
-- [ ] Device-to-device variation
-- [ ] Mitigation strategies visualization
-- [ ] "Worst case" vs "typical" accuracy comparison
+**Reference papers**:
+- CEA-Leti December 2024: 22nm FD-SOI 3D capacitors
+- Samsung Nature 2025: 256-512 layer FeFET NAND
 
 ---
 
-### Priority 3: Foundry-Ready Demos
+### MEDIUM PRIORITY
 
-#### Demo 4: Enhanced Peripheral Circuits
+#### Conductance Drift Simulation
+**Status**: Model exists, needs GUI | **Owner**: Physics sim | **Priority**: MEDIUM
 
-**For Foundry Partners (TSMC, Samsung, etc.):**
-- [ ] CMOS process flow diagram
-- [ ] Layer stack visualization (HZO superlattice)
-- [ ] Standard tool compatibility (ALD, PVD)
-- [ ] No exotic materials checklist
-- [ ] Integration with existing BEOL process
+**Current**: Code includes drift coefficients in `equations.md:407`.
 
-#### Wafer-Scale Vision (George Gilder Response)
+**Missing**:
+- Time-dependent drift visualization
+- Long-term retention simulation (1s, 1hr, 1day, 1year)
+- Temperature-dependent drift (25°C vs 85°C)
+- Mitigation strategy visualization (refresh, rewrite)
 
-From Dr. Tour's response to WSJ article "The Microchip Era Is About to End":
+**Literature**: Need FeFET-specific drift characterization papers (2024+).
 
-```
-WAFER-SCALE BENEFITS OF FECIM
+#### Device-to-Device Variation Modeling
+**Status**: Planned | **Owner**: Physics sim | **Priority**: MEDIUM
 
-1. Memory Bottleneck Solved     → CIM eliminates data movement
-2. Packaging Complexity Reduced → Fewer chips, simpler interconnects
-3. Thermal Management           → 1000× cooler operation
-4. Full Wafer Integration       → Ferroelectric enables dense circuits
-```
+**Goal**: Model realistic fabrication variations across crossbar arrays.
 
-- [ ] Create "Wafer-Scale Vision" demo
-- [ ] Show how CIM solves Gilder's 3 stress factors
-- [ ] Animate data center of the future (box-sized, not warehouse)
+**Features**:
+- Gaussian distribution of Pr, Ec, thickness
+- Correlation modeling (adjacent cells)
+- Accuracy impact analysis (best/worst/typical)
+- Yield prediction
 
----
+**Verification**: Compare against Nature Commun. 2023 (96.6% MNIST) device variation data.
 
-## MARKET CONTEXT (For Investor Demos)
+#### Thermal GUI Upgrade
+**Status**: CLI functional | **Owner**: GUI dev | **Priority**: MEDIUM
 
-### Market Size ($711B by 2030)
+**Current**: `demo5-thermal/` runs as CLI-only tool.
 
-```
-                           2025         2030
-┌────────────────────┬───────────┬────────────┐
-│ NAND Flash         │   $78B    │    $98B    │
-├────────────────────┼───────────┼────────────┤
-│ DRAM               │  $143B    │   $220B    │
-├────────────────────┼───────────┼────────────┤
-│ AI Semiconductors  │  $163B    │   $403B    │
-├────────────────────┼───────────┼────────────┤
-│ TOTAL              │  $384B    │   $721B    │
-└────────────────────┴───────────┴────────────┘
-                        ↑
-              Ferroelectric CIM can address ALL of these
-```
+**Needed**:
+- Interactive heatmap (25°C - 85°C automotive range)
+- Hotspot detection and labeling
+- Time-domain thermal propagation animation
+- 3D view (temperature gradient across chip depth)
 
-### Why Now?
-
-- Companies investing $150B+ in data centers
-- Existing solutions "not scalable, not CMOS compatible, not cost effective"
-- Flash memory is 25 years old — "it's about time" for disruption
-- Energy crisis in AI compute is existential
+**Reference**: AEC-Q100 Grade 0 qualification (Fraunhofer IPMS 2024).
 
 ---
 
-## TRL PROGRESSION VISUALIZATION
+### LOW PRIORITY
 
-```
-TRL 1  TRL 2  TRL 3  TRL 4  TRL 5  TRL 6  TRL 7  TRL 8  TRL 9
-  ○      ○      ○      ●      ○      ○      ○      ○      ○
-                       ↑
-                  WE ARE HERE
-               "Component validation
-                in lab environment"
+#### Web Deployment (WASM)
+**Status**: Feasible | **Owner**: Infra | **Priority**: LOW
 
-  Basic  →  Proof  →  Lab  →  Prototype  →  Demo  →  Production
-Research   Concept   Demo     in Real       in     Ready
-                              Environment   Real
-```
+**Goal**: Run tool in browser for educational accessibility.
 
-- [ ] Add TRL progress bar to all demos
-- [ ] Show "path to commercialization"
-- [ ] Highlight what each TRL milestone requires
+**Approach**:
+- Compile to WebAssembly (Fyne supports WASM)
+- Host static site (GitHub Pages, Netlify)
+- Limit to demos 1-4 (avoid compute-heavy tasks)
 
----
+**Benefits**: Zero-install demos for educators/students.
 
-## TEAM & CONTACT STRATEGY
+#### Demo Video Creation
+**Status**: Planned | **Owner**: Content | **Priority**: LOW
 
-### Current Team (From Transcript)
+**Goal**: 2-3 minute walkthrough video for README.md.
 
-| Role | Name | Background |
-|------|------|------------|
-| Founder & Chief Scientist | Dr. external research group | external research institution, 700+ publications |
-| Co-Founder & CTO | Dr. Jaeho Shin | Device engineer, invented superlattice |
-| CEO | Tawfik Jarjour | 13 years Accenture, semiconductor industry |
-| Advisor (Patents) | Dr. Fred Flitsch | Former IBM, 35-40 years experience |
-| Advisor (Investment) | John Jaggers | Computing systems investor |
-| Advisor (Foundry) | Dr. Yoontak Hwuang | Semiconductor commercialization |
-| Advisor (Manufacturing) | Sandeep Davé | Foundry expert |
+**Content**:
+- Module 1: P-E curve animation (30 analog states)
+- Module 2: Crossbar MVM computation
+- Module 3: MNIST digit recognition (98.24% benchmark)
+- Module 4: Peripheral circuits timing
+- Module 5: Technology comparison chart
 
-### How This Project Can Help
-
-**Value Proposition for Ferroelectric CIM Team:**
-
-1. **Investor Presentations**
-   - Interactive demos > static slides
-   - "Show, don't tell" the technology
-   - Web-deployable for remote pitches
-
-2. **Engineer Recruitment**
-   - Demos show technical depth
-   - Attract top talent who want to work on cutting-edge CIM
-
-3. **Foundry Discussions**
-   - Visual process flow explanations
-   - CMOS compatibility proof points
-
-4. **restricted access Partner Meetings**
-   - Customizable comparison charts
-   - Confidential data can be plugged in
-
-### Potential Contribution Path
-
-```
-STEP 1: Perfect the demos (current work)
-        ↓
-STEP 2: Share portfolio with team (LinkedIn, email)
-        ↓
-STEP 3: Offer to present demos in investor meetings
-        ↓
-STEP 4: Propose visualization engineer role
-        ↓
-STEP 5: Join external research institution / Ferroelectric CIM team
-```
-
-**Contact:**
-- Dr. Tour's lab: tour@rice.edu
-- Ferroelectric CIM: (company forming)
-- LinkedIn: Connect with Tawfik Jarjour (CEO)
+**Narration**: Focus on educational value, peer-reviewed physics.
 
 ---
 
-## IMMEDIATE ACTION ITEMS
+## 3. Documentation Work
 
-### This Week
+### Quarterly Literature Review
+**Status**: Scheduled | **Due**: April 2026 | **Priority**: MEDIUM
 
-- [x] Complete Demo 3 Fyne GUI (MNIST with digit drawing)
-- [ ] Update command.md with all improvements
-- [ ] Create Demo 8 skeleton (comparison framework)
-- [ ] Build technical briefing mode (simplified UI)
+**Goal**: Update HONESTY_AUDIT.md with 2026 Q1 publications.
 
-### This Month
+**Search databases**:
+- IEEE Xplore (IEDM, ISSCC, VLSI)
+- Nature family (Nature Commun., Nature Electronics)
+- ACS (Nano Letters, ACS AMI)
+- arXiv (cs.ET, cond-mat.mtrl-sci)
 
-- [ ] Demo 4 Fyne GUI (peripheral circuits visualization)
-- [ ] Demo 5 Fyne GUI (thermal heat map)
-- [ ] Demo 8 complete (side-by-side comparison animation)
-- [ ] Web deployment (WASM or electron)
-- [ ] Create pitch video (~2 min demo reel)
+**Focus areas**:
+- New MNIST/accuracy benchmarks
+- Endurance improvements beyond 10^12
+- 3D integration production updates
+- Tour's FeCIM peer-reviewed papers (if published)
 
-### Portfolio Deliverable
+### Update physics.md with Extended Ranges
+**Status**: Pending | **Owner**: Maintainer | **Priority**: MEDIUM
 
-- [ ] README.md with GIF screenshots
-- [ ] Single command to run all demos
-- [ ] Professional documentation
-- [ ] Contact/contribution section
+**Current**: Pr range is 15-34 µC/cm² (room temperature only).
 
----
+**Update to**:
+- Pr: 15-34 µC/cm² (RT), 36.4 µC/cm² (300°C BEOL), 75 µC/cm² (4K cryogenic)
+- Ec: 0.6-1.5 MV/cm (include Ga-doped low-Ec variant)
 
-## SUCCESS METRICS
+**Sources**:
+- Nature Commun. 2025 (doi:10.1038/s41467-025-61758-2)
+- ACS AMI 2025 (doi:10.1021/acsami.5c08743)
+- Adv. Elec. Mat. 2024 (doi:10.1002/aelm.202300879)
 
-### Demo Quality
+### Add Cryogenic Operation Specs to devices.md
+**Status**: Pending | **Owner**: Maintainer | **Priority**: LOW
 
-| Metric | Target | Current |
-|--------|--------|---------|
-| All tests passing | 100% | ✅ 110+ tests |
-| GUI for Demos 1-4 | 4/4 | ✅ 4/4 |
-| MNIST accuracy | ≥87% | ✅ 95.8% |
-| Documentation | Complete | 80% |
-| Build time | <30s | ✅ |
+**Content to add**:
+- Temperature range: 5K - 300K
+- Pr improvement: +30% @ 4K
+- Endurance: Unlimited @ 82K (IEEE 2023)
+- Write speed: 20x faster @ 77K
+- Application: Quantum computing peripherals
 
-### Pitch Readiness
-
-| Metric | Target | Current |
-|--------|--------|---------|
-| Can run full demo in 5 min | Yes | ~80% |
-| Investor-friendly UI | Yes | 🔲 |
-| Comparison charts implemented | Yes | 🔲 |
-| Web-deployable | Yes | 🔲 |
+**Sources**: IEEE 2024, Frontiers 2024, npj Unconv. Comp. 2025
 
 ---
 
-## DR. TOUR'S KEY QUOTES (For Demo Annotations)
+## 4. Code Quality
 
-> "It's got **30 discrete states**. So it's not 0-1-0-1."
+### TODOs in Code (5 items)
+**Status**: Active | **Priority**: Various
 
-> "We're at **87% validation** here." (unverified conference claim)
+| File | Line | Description | Priority |
+|------|------|-------------|----------|
+| render.go | 301 | Vulkan compute shader implementation | HIGH |
+| render.go | 349 | Vulkan device initialization | HIGH |
+| render.go | 363 | Vulkan render loop | HIGH |
+| render.go | 386 | Vulkan resource cleanup | HIGH |
+| glossary.go | 500 | Add GitHub URL | LOW |
 
-> "**Compute in memory** where the same device does the memory and the computation."
+**Action**: Address Vulkan TODOs as part of "Vulkan Rendering Implementation" task.
 
-> "This could lower the requirements in a data center by **80 to 90%**."
+### Cost Estimate Verification (Demo 4)
+**Status**: Needs update | **Owner**: Maintainer | **Priority**: LOW
 
-> "Works on a **standard CMOS line** and can translate just like that."
+**File**: `module4-circuits/demos/liveslide.go:443-444`
 
-> "There's **no exotic materials** in here. There's no graphene."
+**Current**: Placeholder cost estimates for DAC/ADC/TIA.
 
-> "We haven't raised a penny to date... we really want to move with the **best strategy**."
-
----
-
-## WEEBIT NANO PRECEDENT
-
-Dr. Tour's previous success story (from transcript):
-
-> "This company Weebit—this is another memory that came out of my lab.
-> We started this company in 2015 out of my lab and it's selling now
-> on the market. It's got three big customers."
-
-**Lesson:** Dr. Tour has a track record of spinning out successful memory companies.
-
-**Opportunity:** Ferroelectric CIM is his next one — and this time they're not missing neuromorphic computing.
+**Action**: Find 2024 foundry pricing or cite academic cost models (if available).
 
 ---
 
-## FILE STRUCTURE
+## 5. Testing
 
-```
-fecim-lattice-tools/
-├── module1-hysteresis/     ✅ P-E curve + Fyne GUI
-├── module2-crossbar/       ✅ Crossbar MVM + Fyne GUI
-├── module3-mnist/          ✅ MNIST 95.8% + Fyne GUI
-├── module4-circuits/       ✅ Peripherals + Fyne GUI
-├── demo5-thermal/        ✅ Thermal sim (CLI only)
-├── demo6-multilayer/     🔲 3D multi-layer
-├── demo7-nonidealities/  ✅ IR drop + sneak paths (in demo2)
-├── module5-comparison/     🔲 Technology comparison
-├── docs/                 Documentation
-├── papers/               Scientific papers (40+)
-├── opensource/papers/    Additional papers
-├── command.md            Session context
-├── TODO.md               This file
-└── ferroelectric-cim-transcript.md  Dr. Tour's presentation
-```
+### Current Coverage
+- Total tests: 571
+- Pass rate: 100%
+- Coverage: ~85% (untested: error paths, edge cases)
+
+### Add Integration Tests for EDA Pipeline
+**Status**: Planned | **Owner**: QA | **Priority**: MEDIUM
+
+**Goal**: End-to-end test from FeFET specification → Verilog → DEF → LEF → Liberty.
+
+**Test cases**:
+- Full synthesis flow (16x16 crossbar)
+- Output file validation (parseable Verilog, valid DEF/LEF)
+- Timing/power liberty checks
+- Comparison with reference designs
+
+**Success criteria**: Generated Verilog passes Yosys synthesis.
+
+### Maintain 100% Pass Rate
+**Status**: Ongoing | **Priority**: HIGH
+
+**Protocol**:
+- Run `go test ./...` before every commit
+- No merge if tests fail
+- Add test for every bug fix
 
 ---
 
-*Last updated: 2026-01-19*
-*Goal: Help Dr. Tour visualize Ferroelectric CIM for investors, engineers, and foundries*
+## 6. NOT Planned
+
+Explicit list of what we're **NOT** building:
+
+| Out of Scope | Reason |
+|--------------|--------|
+| Production chip design tools | Educational tool, not EDA replacement |
+| Investor pitch decks | Scientific tool, not marketing material |
+| Hardware-accurate SPICE models | Requires foundry PDKs (proprietary) |
+| Real-time OS integration | Beyond educational scope |
+| Cryptographic accelerators | Specialized application, not core physics |
+| Web-based collaboration features | Single-user educational tool |
+
+**Why explicit?** Previous TODO.md had "technical briefing" framing that misaligned with project's educational mission.
+
+---
+
+## 7. Verified Claims Reference
+
+For accuracy in documentation and demos, use **ONLY** these verified claims:
+
+### Material Properties [VERIFIED]
+- **Pr**: 15-34 µC/cm² (RT), 75 µC/cm² (4K)
+- **Ec**: 0.6-1.5 MV/cm
+- **Min thickness**: 3.6 nm
+- **Sub-1V switching**: 0.5V @ 3.6nm
+
+### Multi-Level States [VERIFIED]
+- **32-140 analog states demonstrated** (Oh 2017, Song 2024)
+- **30 states (Tour)**: [PLAUSIBLE] but unverified (within range)
+
+### Endurance [VERIFIED]
+- **10^12 cycles**: DEMONSTRATED (V:HfO₂ 2024, Science 2024)
+- **10^9 cycles**: Conservative baseline (IEEE IRPS 2022)
+
+### MNIST Accuracy [VERIFIED]
+- **98.24%**: HZO-FTJ reservoir (ScienceDirect 2025)
+- **96.6%**: 7 VT states (Nature Commun. 2023)
+
+### Energy Efficiency [VERIFIED]
+- **25-100× vs NAND**: Samsung Nature 2025
+- **70,000× vs GPU (LLM)**: Nature Comp. Sci. 2025
+
+### 3D Integration [VERIFIED]
+- **22nm BEOL**: CEA-Leti December 2024
+- **512 layers roadmap**: Samsung Nature 2025
+
+### Automotive [VERIFIED]
+- **AEC-Q100 Grade 0**: -40°C to 150°C (Fraunhofer IPMS 2024)
+
+### REMOVED Claims
+- **87% MNIST (Tour)**: Removed (contradicts peer-reviewed 96.6-98.24%)
+- **10M× vs NAND (Tour)**: Removed (no measurement data; verified: 25-100×)
+
+**Full audit**: See `docs/cim/HONESTY_AUDIT.md` (v3.0, 377 lines).
+
+---
+
+## 8. Footer
+
+**Next review**: April 2026 (quarterly literature update)
+
+**Contributing**: See CLAUDE.md for development guidelines.
+
+**Scientific accuracy**: All claims must be verified per HONESTY_AUDIT.md standards.
+
+---
+
+*This TODO prioritizes technical rigor and educational value over promotional considerations. The project is an open-source learning tool, not investment material.*
