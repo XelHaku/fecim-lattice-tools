@@ -2,6 +2,7 @@
 package gui
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"time"
@@ -290,4 +291,159 @@ func abs(x int) int {
 		return -x
 	}
 	return x
+}
+
+// ============================================================================
+// PERIPHERAL COMPONENT DRAWING HELPERS
+// Single source of truth for DAC, TIA, ADC visualization across all modes
+// ============================================================================
+
+// PeripheralStyle defines the visual style for a peripheral component
+type PeripheralStyle struct {
+	TopColor    color.RGBA
+	BottomColor color.RGBA
+	BorderColor color.RGBA
+	TextColor   color.RGBA
+	Highlighted bool
+	Dimmed      bool
+}
+
+// DACStyle returns the style for a DAC box
+func DACStyle(highlighted, dimmed bool) PeripheralStyle {
+	style := PeripheralStyle{
+		TopColor:    color.RGBA{130, 90, 190, 255},
+		BottomColor: color.RGBA{80, 50, 140, 255},
+		BorderColor: color.RGBA{170, 140, 220, 255},
+		TextColor:   color.RGBA{255, 255, 255, 255},
+		Highlighted: highlighted,
+		Dimmed:      dimmed,
+	}
+	if highlighted {
+		style.TopColor = color.RGBA{255, 255, 120, 255}
+		style.BottomColor = color.RGBA{220, 200, 80, 255}
+		style.BorderColor = color.RGBA{255, 255, 180, 255}
+	}
+	if dimmed {
+		style.TopColor = color.RGBA{80, 60, 120, 200}
+		style.BottomColor = color.RGBA{50, 35, 90, 200}
+		style.BorderColor = color.RGBA{100, 80, 140, 200}
+		style.TextColor = color.RGBA{180, 180, 180, 255}
+	}
+	return style
+}
+
+// TIAStyle returns the style for a TIA box
+func TIAStyle(highlighted, dimmed bool) PeripheralStyle {
+	style := PeripheralStyle{
+		TopColor:    color.RGBA{190, 140, 70, 255},
+		BottomColor: color.RGBA{140, 100, 40, 255},
+		BorderColor: color.RGBA{220, 180, 100, 255},
+		TextColor:   color.RGBA{255, 255, 255, 255},
+		Highlighted: highlighted,
+		Dimmed:      dimmed,
+	}
+	if highlighted {
+		style.TopColor = color.RGBA{255, 220, 100, 255}
+		style.BottomColor = color.RGBA{220, 180, 60, 255}
+		style.BorderColor = color.RGBA{255, 240, 150, 255}
+	}
+	if dimmed {
+		style.TopColor = color.RGBA{120, 90, 50, 200}
+		style.BottomColor = color.RGBA{90, 65, 30, 200}
+		style.BorderColor = color.RGBA{140, 110, 70, 200}
+		style.TextColor = color.RGBA{180, 180, 180, 255}
+	}
+	return style
+}
+
+// ADCStyle returns the style for an ADC box
+func ADCStyle(highlighted, dimmed bool) PeripheralStyle {
+	style := PeripheralStyle{
+		TopColor:    color.RGBA{70, 170, 130, 255},
+		BottomColor: color.RGBA{40, 120, 90, 255},
+		BorderColor: color.RGBA{130, 210, 170, 255},
+		TextColor:   color.RGBA{255, 255, 255, 255},
+		Highlighted: highlighted,
+		Dimmed:      dimmed,
+	}
+	if highlighted {
+		style.TopColor = color.RGBA{100, 255, 170, 255}
+		style.BottomColor = color.RGBA{70, 200, 130, 255}
+		style.BorderColor = color.RGBA{150, 255, 200, 255}
+	}
+	if dimmed {
+		style.TopColor = color.RGBA{50, 110, 85, 200}
+		style.BottomColor = color.RGBA{30, 80, 60, 200}
+		style.BorderColor = color.RGBA{85, 140, 115, 200}
+		style.TextColor = color.RGBA{180, 180, 180, 255}
+	}
+	return style
+}
+
+// drawPeripheralBox draws a peripheral component box with label
+func drawPeripheralBox(img *image.RGBA, x, y, w, h int, style PeripheralStyle, text string) {
+	drawGradientRect(img, x, y, w, h, style.TopColor, style.BottomColor)
+	drawRectBorder(img, x, y, w, h, style.BorderColor)
+
+	// Center text in box
+	textX := x + w/2 - len(text)*3
+	textY := y + h/2 - 3
+	drawSimpleText(img, text, textX, textY, style.TextColor)
+}
+
+// drawDACColumn draws a DAC box above a column with voltage display
+func drawDACColumn(img *image.RGBA, x, y, w, h int, voltage float64, label string, highlighted, dimmed bool) {
+	style := DACStyle(highlighted, dimmed)
+	vText := fmt.Sprintf("%.2f", voltage)
+	drawPeripheralBox(img, x, y, w, h, style, vText)
+
+	// Draw label above
+	if label != "" {
+		labelColor := color.RGBA{140, 170, 255, 255}
+		if dimmed {
+			labelColor = color.RGBA{100, 120, 180, 200}
+		}
+		drawSimpleText(img, label, x+w/2-len(label)*3, y-12, labelColor)
+	}
+}
+
+// drawTIAADCRow draws TIA+ADC boxes to the right of a row with current/level display
+func drawTIAADCRow(img *image.RGBA, x, y, tiaW, adcW, h int, current float64, level int, label string, highlighted, dimmed bool, tia interface{ Convert(float64) float64 }, adc interface{ Convert(float64) int }) {
+	// TIA box
+	tiaStyle := TIAStyle(highlighted, dimmed)
+	tiaV := 0.0
+	if tia != nil {
+		tiaV = tia.Convert(current * 1e-6) // uA to A
+	}
+	tiaText := fmt.Sprintf("%.2fV", tiaV)
+	drawPeripheralBox(img, x, y, tiaW, h, tiaStyle, tiaText)
+
+	// ADC box (to the right of TIA)
+	adcStyle := ADCStyle(highlighted, dimmed)
+	adcLevel := level
+	if adc != nil && tia != nil {
+		adcLevel = adc.Convert(tiaV)
+	}
+	adcText := fmt.Sprintf("L%d", adcLevel)
+	drawPeripheralBox(img, x+tiaW+2, y, adcW, h, adcStyle, adcText)
+
+	// Draw label to the right
+	if label != "" {
+		labelColor := color.RGBA{255, 190, 140, 255}
+		if dimmed {
+			labelColor = color.RGBA{180, 140, 110, 200}
+		}
+		drawSimpleText(img, label, x+tiaW+adcW+8, y+h/2-3, labelColor)
+	}
+}
+
+// drawPeripheralLabels draws the "DAC" and "TIA+ADC" labels at fixed positions
+func drawPeripheralLabels(img *image.RGBA, dacLabelX, dacLabelY, adcLabelX, adcLabelY int, showDAC, showADC bool) {
+	if showDAC {
+		drawSimpleText(img, "DAC", dacLabelX, dacLabelY, color.RGBA{170, 140, 220, 255})
+	}
+	if showADC {
+		drawSimpleText(img, "TIA", adcLabelX, adcLabelY, color.RGBA{220, 180, 100, 255})
+		drawSimpleText(img, "ADC", adcLabelX+30, adcLabelY, color.RGBA{130, 210, 170, 255})
+	}
 }

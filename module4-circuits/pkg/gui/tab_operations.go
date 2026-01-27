@@ -711,79 +711,149 @@ func (ca *CircuitsApp) drawSharedArray(w, h int) image.Image {
 		}
 	}
 
-	// ========== COMPUTE MODE: DAC and ADC boxes ==========
-	if mode == ModeCompute {
-		dacBoxH := 30
-		dacBoxW := cellSize - 2
-		dacY := offsetY - dacBoxH - 18
+	// ========== PERIPHERAL COMPONENTS: DAC (input) and TIA+ADC (output) ==========
+	// Unified visualization across all modes - single source of truth
+	dacBoxH := 30
+	dacBoxW := cellSize - 2
+	if dacBoxW < 28 {
+		dacBoxW = 28
+	}
+	dacY := offsetY - dacBoxH - 18
 
+	tiaBoxW := 32
+	adcBoxW := 28
+	tiaAdcBoxH := cellSize - 2
+	if tiaAdcBoxH < 20 {
+		tiaAdcBoxH = 20
+	}
+	tiaX := offsetX + gridW + 15
+
+	// Get data for peripheral displays
+	ca.mu.RLock()
+	inputVectorCopy := make([]int, min(8, cols))
+	copy(inputVectorCopy, ca.inputVector[:min(8, len(ca.inputVector))])
+	outputVectorCopy := make([]float64, min(8, rows))
+	copy(outputVectorCopy, ca.outputVector[:min(8, len(ca.outputVector))])
+	targetLvl := ca.targetLevel
+	readV := ca.readVoltage
+	vMinVal := ca.vMin
+	vMaxVal := ca.vMax
+	quantLvls := ca.quantLevels
+	ca.mu.RUnlock()
+
+	// Mode-specific peripheral rendering
+	switch mode {
+	case ModeCompute:
+		// COMPUTE: Show all DACs (top) and all TIA+ADCs (right)
 		dacColCount := min(8, cols)
-		inputVectorCopy := make([]int, dacColCount)
-		ca.mu.RLock()
-		copy(inputVectorCopy, ca.inputVector[:dacColCount])
-		ca.mu.RUnlock()
-
 		for c := 0; c < dacColCount; c++ {
 			dacX := offsetX + c*cellSize + 1
-
-			dacTop := color.RGBA{130, 90, 190, 255}
-			dacBot := color.RGBA{80, 50, 140, 255}
-			if animStep == 1 {
-				dacTop = color.RGBA{255, 255, 120, 255}
-				dacBot = color.RGBA{220, 200, 80, 255}
-			}
-
-			drawGradientRect(img, dacX, dacY, dacBoxW, dacBoxH, dacTop, dacBot)
-			drawRectBorder(img, dacX, dacY, dacBoxW, dacBoxH, color.RGBA{170, 140, 220, 255})
-
-			// Voltage display
 			voltage := float64(inputVectorCopy[c]) / 255.0
-			vText := fmt.Sprintf("%.2f", voltage)
-			drawSimpleText(img, vText, dacX+dacBoxW/2-len(vText)*3, dacY+dacBoxH/2-3, color.RGBA{255, 255, 255, 255})
-
-			// Column label
-			drawSimpleText(img, fmt.Sprintf("x%d", c), offsetX+c*cellSize+cellSize/2-6, dacY-12, color.RGBA{140, 170, 255, 255})
+			highlighted := animStep == 1
+			label := fmt.Sprintf("x%d", c)
+			drawDACColumn(img, dacX, dacY, dacBoxW, dacBoxH, voltage, label, highlighted, false)
 		}
-
-		// DAC label
-		drawSimpleText(img, "DAC", offsetX-28, dacY+dacBoxH/2-3, color.RGBA{170, 140, 220, 255})
-
-		// ADC boxes
-		adcBoxW := 52
-		adcBoxH := cellSize - 2
-		adcX := offsetX + gridW + 15
 
 		adcRowCount := min(8, rows)
-		outputVectorCopy := make([]float64, adcRowCount)
-		ca.mu.RLock()
-		copy(outputVectorCopy, ca.outputVector[:min(adcRowCount, len(ca.outputVector))])
-		ca.mu.RUnlock()
-
 		for r := 0; r < adcRowCount; r++ {
-			adcY := offsetY + r*cellSize + 1
-
-			adcTop := color.RGBA{70, 170, 130, 255}
-			adcBot := color.RGBA{40, 120, 90, 255}
-			if animStep == 3 {
-				adcTop = color.RGBA{100, 255, 170, 255}
-				adcBot = color.RGBA{70, 200, 130, 255}
-			}
-
-			drawGradientRect(img, adcX, adcY, adcBoxW, adcBoxH, adcTop, adcBot)
-			drawRectBorder(img, adcX, adcY, adcBoxW, adcBoxH, color.RGBA{130, 210, 170, 255})
-
-			// Level display
-			tiaV := ca.tia.Convert(outputVectorCopy[r] * 1e-6)
+			tiaY := offsetY + r*cellSize + 1
+			current := outputVectorCopy[r]
+			highlighted := animStep == 3
+			label := fmt.Sprintf("y%d", r)
+			tiaV := ca.tia.Convert(current * 1e-6)
 			lvl := ca.adc.Convert(tiaV)
-			lText := fmt.Sprintf("L%d", lvl)
-			drawSimpleText(img, lText, adcX+adcBoxW/2-len(lText)*3, adcY+adcBoxH/2-3, color.RGBA{255, 255, 255, 255})
-
-			// Row label
-			drawSimpleText(img, fmt.Sprintf("y%d", r), adcX+adcBoxW+6, offsetY+r*cellSize+cellSize/2-3, color.RGBA{255, 190, 140, 255})
+			drawTIAADCRow(img, tiaX, tiaY, tiaBoxW, adcBoxW, tiaAdcBoxH, current, lvl, label, highlighted, false, ca.tia, ca.adc)
 		}
 
-		// ADC label
-		drawSimpleText(img, "TIA+ADC", adcX, offsetY-12, color.RGBA{130, 210, 170, 255})
+		// Labels
+		drawSimpleText(img, "DAC", offsetX-28, dacY+dacBoxH/2-3, color.RGBA{170, 140, 220, 255})
+		drawSimpleText(img, "TIA", tiaX, offsetY-12, color.RGBA{220, 180, 100, 255})
+		drawSimpleText(img, "ADC", tiaX+tiaBoxW+4, offsetY-12, color.RGBA{130, 210, 170, 255})
+
+	case ModeWrite:
+		// WRITE: Show single DAC for selected column (highlighted), dimmed TIA+ADC for selected row
+		dacColCount := min(8, cols)
+		for c := 0; c < dacColCount; c++ {
+			dacX := offsetX + c*cellSize + 1
+			isSelected := c == selectedCol
+			// For selected column, show target level voltage
+			voltage := float64(inputVectorCopy[c]) / 255.0
+			if isSelected {
+				voltage = vMinVal + float64(targetLvl)/float64(quantLvls-1)*(vMaxVal-vMinVal)
+			}
+			label := ""
+			if isSelected {
+				label = fmt.Sprintf("L%d", targetLvl)
+			}
+			drawDACColumn(img, dacX, dacY, dacBoxW, dacBoxH, voltage, label, isSelected, !isSelected)
+		}
+
+		// Show dimmed TIA+ADC for selected row (showing what will be read back)
+		adcRowCount := min(8, rows)
+		for r := 0; r < adcRowCount; r++ {
+			tiaY := offsetY + r*cellSize + 1
+			isSelected := r == selectedRow
+			// Calculate expected readback for target level
+			conductance := 1.0 + float64(targetLvl)/float64(quantLvls-1)*99.0
+			current := conductance * 0.5 // Assume 0.5V read voltage
+			tiaV := ca.tia.Convert(current * 1e-6)
+			lvl := ca.adc.Convert(tiaV)
+			label := ""
+			if isSelected {
+				label = "→"
+			}
+			drawTIAADCRow(img, tiaX, tiaY, tiaBoxW, adcBoxW, tiaAdcBoxH, current, lvl, label, false, !isSelected, ca.tia, ca.adc)
+		}
+
+		// Labels
+		drawSimpleText(img, "DAC", offsetX-28, dacY+dacBoxH/2-3, color.RGBA{170, 140, 220, 255})
+		drawSimpleText(img, "TIA", tiaX, offsetY-12, color.RGBA{150, 130, 80, 200})
+		drawSimpleText(img, "ADC", tiaX+tiaBoxW+4, offsetY-12, color.RGBA{90, 150, 120, 200})
+
+	case ModeRead:
+		// READ: Show dimmed DAC for selected column (read voltage), highlighted TIA+ADC for selected row
+		dacColCount := min(8, cols)
+		for c := 0; c < dacColCount; c++ {
+			dacX := offsetX + c*cellSize + 1
+			isSelected := c == selectedCol
+			// For selected column, show read voltage
+			voltage := float64(inputVectorCopy[c]) / 255.0
+			if isSelected {
+				voltage = readV
+			}
+			label := ""
+			if isSelected {
+				label = fmt.Sprintf("%.2fV", readV)
+			}
+			drawDACColumn(img, dacX, dacY, dacBoxW, dacBoxH, voltage, label, false, !isSelected)
+		}
+
+		// Show TIA+ADC for selected row (highlighted, showing actual read result)
+		adcRowCount := min(8, rows)
+		for r := 0; r < adcRowCount; r++ {
+			tiaY := offsetY + r*cellSize + 1
+			isSelected := r == selectedRow
+			// Calculate actual read current for this row's cell
+			var current float64
+			var lvl int
+			if isSelected && selectedRow < len(weights) && selectedCol < len(weights[selectedRow]) {
+				storedLevel := weights[selectedRow][selectedCol]
+				conductance := 1.0 + float64(storedLevel)/float64(quantLvls-1)*99.0
+				current = conductance * readV
+				tiaV := ca.tia.Convert(current * 1e-6)
+				lvl = ca.adc.Convert(tiaV)
+			}
+			label := ""
+			if isSelected {
+				label = fmt.Sprintf("L%d", lvl)
+			}
+			drawTIAADCRow(img, tiaX, tiaY, tiaBoxW, adcBoxW, tiaAdcBoxH, current, lvl, label, isSelected, !isSelected, ca.tia, ca.adc)
+		}
+
+		// Labels
+		drawSimpleText(img, "DAC", offsetX-28, dacY+dacBoxH/2-3, color.RGBA{120, 100, 160, 200})
+		drawSimpleText(img, "TIA", tiaX, offsetY-12, color.RGBA{220, 180, 100, 255})
+		drawSimpleText(img, "ADC", tiaX+tiaBoxW+4, offsetY-12, color.RGBA{130, 210, 170, 255})
 	}
 
 	// ========== Mode title and architecture indicator ==========
