@@ -231,18 +231,26 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	// Architecture toggle buttons (same style as crossbar module)
 	archPassiveBtn := widget.NewButton("PASSIVE", nil)
 	arch1T1RBtn := widget.NewButton("1T1R", nil)
+	arch2T1RBtn := widget.NewButton("2T1R", nil)
 
 	// Helper to update button styles based on selection
 	updateArchButtons := func() {
-		if cfg.Architecture == "passive" {
+		archPassiveBtn.Importance = widget.LowImportance
+		arch1T1RBtn.Importance = widget.LowImportance
+		arch2T1RBtn.Importance = widget.LowImportance
+		switch cfg.Architecture {
+		case "passive":
 			archPassiveBtn.Importance = widget.HighImportance
-			arch1T1RBtn.Importance = widget.LowImportance
-		} else {
-			archPassiveBtn.Importance = widget.LowImportance
+		case "1t1r":
 			arch1T1RBtn.Importance = widget.HighImportance
+		case "2t1r":
+			arch2T1RBtn.Importance = widget.HighImportance
+		default:
+			archPassiveBtn.Importance = widget.HighImportance
 		}
 		archPassiveBtn.Refresh()
 		arch1T1RBtn.Refresh()
+		arch2T1RBtn.Refresh()
 	}
 
 	// Set initial state
@@ -254,8 +262,10 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			return // Already selected
 		}
 		cfg.Architecture = "passive"
+		// Reset to passive cell dimensions (triggers updateStats via OnChanged)
+		widthEntry.SetText("0.460")
+		heightEntry.SetText("2.720")
 		updateArchButtons()
-		// Update layout image path for new architecture
 		updateLayoutImage()
 	}
 
@@ -264,13 +274,27 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			return // Already selected
 		}
 		cfg.Architecture = "1t1r"
+		// Update to 1T1R cell dimensions (triggers updateStats via OnChanged)
+		widthEntry.SetText("0.920")
+		heightEntry.SetText("3.400")
 		updateArchButtons()
-		// Update layout image path for new architecture
 		updateLayoutImage()
 	}
 
-	// Architecture toggle container
-	archToggle := container.NewGridWithColumns(2, archPassiveBtn, arch1T1RBtn)
+	arch2T1RBtn.OnTapped = func() {
+		if cfg.Architecture == "2t1r" {
+			return // Already selected
+		}
+		cfg.Architecture = "2t1r"
+		// Update to 2T1R cell dimensions (triggers updateStats via OnChanged)
+		widthEntry.SetText("1.380")
+		heightEntry.SetText("3.400")
+		updateArchButtons()
+		updateLayoutImage()
+	}
+
+	// Architecture toggle container (3 buttons for passive, 1T1R, 2T1R)
+	archToggle := container.NewGridWithColumns(3, archPassiveBtn, arch1T1RBtn, arch2T1RBtn)
 
 	// Statistics labels - now with more metrics
 	totalLabel := widget.NewLabel(fmt.Sprintf("Total Cells: %d", cfg.Rows*cfg.Cols))
@@ -400,9 +424,14 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		})
 		go func() {
 			defPath := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.def", cfg.Rows, cfg.Cols)
-			lefPath := "cells/fecim_bitcell/fecim_bitcell.lef"
-			if cfg.Architecture == "1t1r" {
+			var lefPath string
+			switch cfg.Architecture {
+			case "1t1r":
 				lefPath = "cells/fecim_1t1r_bitcell/fecim_1t1r_bitcell.lef"
+			case "2t1r":
+				lefPath = "cells/fecim_2t1r_bitcell/fecim_2t1r_bitcell.lef"
+			default:
+				lefPath = "cells/fecim_bitcell/fecim_bitcell.lef"
 			}
 			outputPath := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d_openroad.png", cfg.Rows, cfg.Cols)
 
@@ -560,17 +589,20 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 
 			// Generate cell files - use appropriate directory based on architecture
 			addLog("Generating cell library...")
-			is1T1R := cfg.Architecture == "1t1r"
 			lefContent := export.GenerateLEF(cellCfg)
 			libContent := export.GenerateLiberty(cellCfg)
 			cellVContent := export.GenerateCellVerilog(cellCfg)
 
 			// Choose cell directory and name based on architecture
 			var dir, cellFileName string
-			if is1T1R {
+			switch cfg.Architecture {
+			case "1t1r":
 				dir = "cells/fecim_1t1r_bitcell"
 				cellFileName = "fecim_1t1r_bitcell"
-			} else {
+			case "2t1r":
+				dir = "cells/fecim_2t1r_bitcell"
+				cellFileName = "fecim_2t1r_bitcell"
+			default:
 				dir = "cells/fecim_bitcell"
 				cellFileName = "fecim_bitcell"
 			}
@@ -640,9 +672,14 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			pngFilename := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.png", cfg.Rows, cfg.Cols)
 
 			// Determine LEF path based on architecture
-			cellLEFPath := "cells/fecim_bitcell/fecim_bitcell.lef"
-			if cfg.Architecture == "1t1r" {
+			var cellLEFPath string
+			switch cfg.Architecture {
+			case "1t1r":
 				cellLEFPath = "cells/fecim_1t1r_bitcell/fecim_1t1r_bitcell.lef"
+			case "2t1r":
+				cellLEFPath = "cells/fecim_2t1r_bitcell/fecim_2t1r_bitcell.lef"
+			default:
+				cellLEFPath = "cells/fecim_bitcell/fecim_bitcell.lef"
 			}
 
 			imgManager := openlane.NewManager()
@@ -731,12 +768,15 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			allPassed := true
 
 			// Determine cell paths based on architecture
-			is1T1R := cfg.Architecture == "1t1r"
 			var cellDir, cellFileName string
-			if is1T1R {
+			switch cfg.Architecture {
+			case "1t1r":
 				cellDir = "cells/fecim_1t1r_bitcell"
 				cellFileName = "fecim_1t1r_bitcell"
-			} else {
+			case "2t1r":
+				cellDir = "cells/fecim_2t1r_bitcell"
+				cellFileName = "fecim_2t1r_bitcell"
+			default:
 				cellDir = "cells/fecim_bitcell"
 				cellFileName = "fecim_bitcell"
 			}
@@ -1138,13 +1178,15 @@ Date: %s
 }
 
 // generateBuilderDEF generates DEF content for the unified builder tab
-// Supports both passive and 1T1R architectures:
+// Supports passive, 1T1R, and 2T1R architectures:
 //   - passive: WL[], BL[] pins
 //   - 1t1r: WL[], BL[], SL[] pins (SL at bottom edge for transistor source)
+//   - 2t1r: WL[], BL[], SL[], CSL[] pins (CSL at right edge for column transistor gates)
 // Includes ROW definitions for OpenROAD placement validation
 func generateBuilderDEF(cfg config.ArrayConfig) string {
 	designName := fmt.Sprintf("fecim_crossbar_%dx%d", cfg.Rows, cfg.Cols)
 	is1T1R := cfg.Architecture == "1t1r"
+	is2T1R := cfg.Architecture == "2t1r"
 
 	// Determine cell name and site name based on architecture
 	cellName := "fecim_bitcell"
@@ -1152,6 +1194,10 @@ func generateBuilderDEF(cfg config.ArrayConfig) string {
 	if is1T1R {
 		cellName = "fecim_1t1r_bitcell"
 		siteName = "fecim_1t1r_site"
+	}
+	if is2T1R {
+		cellName = "fecim_2t1r_bitcell"
+		siteName = "fecim_2t1r_site"
 	}
 
 	dbu := 1000 // Database units per micron
@@ -1202,10 +1248,14 @@ BUSBITCHARS "[]" ;
 	}
 	content.WriteString("END COMPONENTS\n\n")
 
-	// Pins - add SL for 1T1R architecture
+	// Pins - add SL for 1T1R/2T1R, add CSL for 2T1R
 	numPins := cfg.Rows + cfg.Cols + 2
 	if is1T1R {
 		numPins += cfg.Cols // Add SL pins (one per column)
+	}
+	if is2T1R {
+		numPins += cfg.Cols // Add SL pins (one per column)
+		numPins += cfg.Cols // Add CSL pins (one per column)
 	}
 	content.WriteString(fmt.Sprintf("PINS %d ;\n", numPins))
 	content.WriteString("    - VPWR + NET VPWR + DIRECTION INOUT + USE POWER ;\n")
@@ -1216,10 +1266,16 @@ BUSBITCHARS "[]" ;
 	for i := 0; i < cfg.Cols; i++ {
 		content.WriteString(fmt.Sprintf("    - BL[%d] + NET BL[%d] + DIRECTION OUTPUT + USE SIGNAL ;\n", i, i))
 	}
-	if is1T1R {
+	if is1T1R || is2T1R {
 		// SL pins at bottom edge (opposite from BL) - one per column for transistor source
 		for i := 0; i < cfg.Cols; i++ {
 			content.WriteString(fmt.Sprintf("    - SL[%d] + NET SL[%d] + DIRECTION INPUT + USE SIGNAL ;\n", i, i))
+		}
+	}
+	if is2T1R {
+		// CSL pins at right edge - one per column for column transistor gates
+		for i := 0; i < cfg.Cols; i++ {
+			content.WriteString(fmt.Sprintf("    - CSL[%d] + NET CSL[%d] + DIRECTION INPUT + USE SIGNAL ;\n", i, i))
 		}
 	}
 	content.WriteString("END PINS\n\n")

@@ -11,6 +11,7 @@ import (
 const (
 	Architecture1T1R = "1T1R (Transistor)"
 	Architecture0T1R = "0T1R (Passive)"
+	Architecture2T1R = "2T1R (Dual Transistor)"
 )
 
 // ArchitectureSelector is a shared widget for selecting crossbar architecture.
@@ -40,7 +41,7 @@ func NewArchitectureSelector(onChanged func(architecture string)) *ArchitectureS
 
 	as.label = widget.NewLabelWithStyle("Architecture", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 
-	as.select_ = widget.NewSelect([]string{Architecture1T1R, Architecture0T1R}, func(s string) {
+	as.select_ = widget.NewSelect([]string{Architecture1T1R, Architecture0T1R, Architecture2T1R}, func(s string) {
 		as.architecture = s
 		if as.OnChanged != nil {
 			as.OnChanged(s)
@@ -81,6 +82,13 @@ func (as *ArchitectureSelector) Is1T1R() bool {
 		as.architecture == "1T1R"
 }
 
+// Is2T1R returns true if the current selection is 2T1R architecture.
+// 2T1R provides individual cell addressing with dual transistor control.
+func (as *ArchitectureSelector) Is2T1R() bool {
+	return as.architecture == Architecture2T1R ||
+		as.architecture == "2T1R"
+}
+
 // GetSelect returns the underlying Select widget for direct access if needed.
 func (as *ArchitectureSelector) GetSelect() *widget.Select {
 	return as.select_
@@ -103,6 +111,25 @@ func ArchitectureInfo(arch string) (title, content string) {
 				"* More complex fabrication\n\n" +
 				"Best for: High-precision inference\n" +
 				"(vision, language models)"
+	}
+	if arch == Architecture2T1R || arch == "2T1R" {
+		return "2T1R Architecture",
+			"2T1R = Two Transistors per FeFET\n\n" +
+				"How it works:\n" +
+				"Row transistor (WL) + Column\n" +
+				"transistor (CSL) provide AND-gate\n" +
+				"selection for individual cells.\n\n" +
+				"Advantages:\n" +
+				"* Individual cell addressing\n" +
+				"* Zero sneak paths\n" +
+				"* No write disturb\n" +
+				"* Precise programming\n\n" +
+				"Tradeoffs:\n" +
+				"* 3x area vs passive\n" +
+				"* Extra CSL routing\n" +
+				"* More complex control\n\n" +
+				"Best for: Precise weight\n" +
+				"programming, multi-level storage"
 	}
 	return "0T1R Architecture",
 		"0T1R = Passive Crossbar (no transistor)\n\n" +

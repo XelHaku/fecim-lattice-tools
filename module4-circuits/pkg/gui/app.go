@@ -191,9 +191,10 @@ type CircuitsApp struct {
 	animationStep   int // 0=none, 1=DAC, 2=Array, 3=ADC
 	animationActive bool
 
-	// Architecture toggle (1T1R vs 0T1R)
+	// Architecture toggle (1T1R vs 0T1R vs 2T1R)
 	archPassiveBtn *widget.Button
 	arch1T1RBtn    *widget.Button
+	arch2T1RBtn    *widget.Button
 	archToggle     *fyne.Container
 }
 

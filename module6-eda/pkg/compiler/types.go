@@ -90,6 +90,7 @@ func (m OperationMode) String() string {
 const (
 	ArchPassive = "passive" // Passive crossbar (WL, BL only)
 	Arch1T1R    = "1T1R"    // 1 Transistor 1 Resistor (WL, BL, SL)
+	Arch2T1R    = "2T1R"    // 2 Transistor 1 Resistor (WL, BL, SL, CSL)
 )
 
 // Technology nodes supported
@@ -240,6 +241,15 @@ func NewComputeConfig(rows, cols int) *ArrayConfig {
 func (c *ArrayConfig) With1T1R() *ArrayConfig {
 	c.Architecture = Arch1T1R
 	c.CellPitch = 0.92 // Larger cell for transistor
+	return c
+}
+
+// With2T1R switches the configuration to 2T1R architecture
+// 2T1R uses dual transistors (row + column select) for individual cell addressing
+func (c *ArrayConfig) With2T1R() *ArrayConfig {
+	c.Architecture = Arch2T1R
+	c.CellPitch = 1.38  // ~3x passive for two transistors
+	c.RowHeight = 3.40  // Taller for dual transistor stack
 	return c
 }
 

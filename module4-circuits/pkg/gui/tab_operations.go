@@ -266,13 +266,18 @@ func (ca *CircuitsApp) drawSharedArray(w, h int) image.Image {
 		return img
 	}
 
-	// Calculate margins - more space for 1T1R transistors and labels
+	// Calculate margins - more space for transistors and labels
 	topMargin := 80
 	rightMargin := 80
 	bottomMargin := 35
 	leftMargin := 50
-	if arch == sharedwidgets.Architecture1T1R {
-		leftMargin = 75 // More space for MOSFET symbols
+	is1T1R := arch == sharedwidgets.Architecture1T1R
+	is2T1R := arch == sharedwidgets.Architecture2T1R
+	if is1T1R || is2T1R {
+		leftMargin = 75 // More space for row MOSFET symbols
+	}
+	if is2T1R {
+		bottomMargin = 75 // More space for column MOSFET symbols below array
 	}
 
 	availableW := w - leftMargin - rightMargin
@@ -303,7 +308,7 @@ func (ca *CircuitsApp) drawSharedArray(w, h int) image.Image {
 	ca.mu.Unlock()
 
 	// ========== PASSIVE MODE: Draw sneak path visualization ==========
-	if arch == sharedwidgets.Architecture0T1R && (mode == ModeRead || mode == ModeWrite) {
+	if !is1T1R && !is2T1R && (mode == ModeRead || mode == ModeWrite) {
 		// Show faded sneak paths through unselected cells
 		sneakColor := color.RGBA{80, 40, 40, 60}
 		for r := 0; r < rows; r++ {
@@ -336,10 +341,16 @@ func (ca *CircuitsApp) drawSharedArray(w, h int) image.Image {
 	panelColor := color.RGBA{18, 28, 45, 255}
 	drawRoundedRect(img, offsetX-6, offsetY-6, gridW+12, gridH+12, 8, panelColor)
 
-	// ========== Highlight selected row (1T1R WRITE/READ) ==========
-	if arch == sharedwidgets.Architecture1T1R && (mode == ModeWrite || mode == ModeRead) {
+	// ========== Highlight selected row (1T1R/2T1R WRITE/READ) ==========
+	if (is1T1R || is2T1R) && (mode == ModeWrite || mode == ModeRead) {
 		rowHighlight := color.RGBA{40, 60, 40, 255}
 		drawRect(img, offsetX-4, offsetY+selectedRow*cellSize-2, gridW+8, cellSize+4, rowHighlight)
+	}
+
+	// ========== Highlight selected column (2T1R WRITE/READ) ==========
+	if is2T1R && (mode == ModeWrite || mode == ModeRead) {
+		colHighlight := color.RGBA{40, 60, 60, 255}
+		drawRect(img, offsetX+selectedCol*cellSize-2, offsetY-4, cellSize+4, gridH+8, colHighlight)
 	}
 
 	// ========== Highlight selected column (WRITE/READ) ==========
@@ -362,8 +373,12 @@ func (ca *CircuitsApp) drawSharedArray(w, h int) image.Image {
 			blCol = color.RGBA{50, 70, 100, 150}
 		}
 
-		// Draw from top to bottom
-		for y := offsetY - 25; y < offsetY+gridH+8; y++ {
+		// Draw from top to column transistors (if 2T1R) or just past grid
+		endY := offsetY + gridH + 8
+		if is2T1R {
+			endY = offsetY + gridH + 20 // Extend to column transistors
+		}
+		for y := offsetY - 25; y < endY; y++ {
 			if y >= 0 && y < h {
 				img.Set(x, y, blCol)
 				if cellSize > 16 {
@@ -388,7 +403,7 @@ func (ca *CircuitsApp) drawSharedArray(w, h int) image.Image {
 		}
 
 		startX := offsetX - 20
-		if arch == sharedwidgets.Architecture1T1R {
+		if is1T1R || is2T1R {
 			startX = offsetX - 8 // Start after transistor
 		}
 
@@ -402,8 +417,8 @@ func (ca *CircuitsApp) drawSharedArray(w, h int) image.Image {
 		}
 	}
 
-	// ========== Draw 1T1R MOSFET transistors ==========
-	if arch == sharedwidgets.Architecture1T1R {
+	// ========== Draw 1T1R/2T1R ROW MOSFET transistors (left side) ==========
+	if is1T1R || is2T1R {
 		for r := 0; r < rows; r++ {
 			ty := offsetY + r*cellSize + cellSize/2
 			tx := offsetX - 28
@@ -413,7 +428,7 @@ func (ca *CircuitsApp) drawSharedArray(w, h int) image.Image {
 			case ModeWrite, ModeRead:
 				transistorOn = (r == selectedRow)
 			case ModeCompute:
-				transistorOn = true
+				transistorOn = true // All row transistors ON for MVM
 			}
 
 			// MOSFET symbol colors
@@ -487,7 +502,99 @@ func (ca *CircuitsApp) drawSharedArray(w, h int) image.Image {
 
 		// Labels
 		drawSimpleText(img, "WL", offsetX-55, offsetY-12, color.RGBA{150, 200, 150, 255})
-		drawSimpleText(img, "Gate", offsetX-55, offsetY+gridH+8, color.RGBA{120, 160, 120, 200})
+		if is2T1R {
+			drawSimpleText(img, "Row T", offsetX-55, offsetY+gridH+8, color.RGBA{120, 160, 120, 200})
+		} else {
+			drawSimpleText(img, "Gate", offsetX-55, offsetY+gridH+8, color.RGBA{120, 160, 120, 200})
+		}
+	}
+
+	// ========== Draw 2T1R COLUMN MOSFET transistors (bottom side) ==========
+	if is2T1R {
+		for c := 0; c < cols; c++ {
+			tx := offsetX + c*cellSize + cellSize/2
+			ty := offsetY + gridH + 28
+
+			var transistorOn bool
+			switch mode {
+			case ModeWrite, ModeRead:
+				transistorOn = (c == selectedCol)
+			case ModeCompute:
+				transistorOn = true // All column transistors ON for MVM
+			}
+
+			// MOSFET symbol colors (cyan/teal for column transistors)
+			var bodyCol, gateCol, channelCol color.RGBA
+			if transistorOn {
+				bodyCol = color.RGBA{60, 180, 200, 255}    // Cyan body
+				gateCol = color.RGBA{100, 220, 255, 255}   // Bright cyan gate
+				channelCol = color.RGBA{80, 200, 220, 255}
+			} else {
+				bodyCol = color.RGBA{50, 50, 60, 255}    // Gray body
+				gateCol = color.RGBA{70, 70, 80, 255}    // Gray gate
+				channelCol = color.RGBA{40, 40, 50, 255}
+			}
+
+			// Draw MOSFET body (horizontal bar)
+			for dx := -8; dx <= 8; dx++ {
+				for dy := 0; dy < 4; dy++ {
+					px, py := tx+dx, ty+dy
+					if px >= 0 && px < w && py >= 0 && py < h {
+						img.Set(px, py, bodyCol)
+					}
+				}
+			}
+
+			// Draw gate (horizontal line with gap)
+			gateY := ty + 6
+			for dx := -10; dx <= 10; dx++ {
+				px := tx + dx
+				if px >= 0 && px < w && gateY >= 0 && gateY < h {
+					img.Set(px, gateY, gateCol)
+					img.Set(px, gateY+1, gateCol)
+				}
+			}
+
+			// Draw channel (vertical connection to BL above)
+			for dy := -20; dy < 0; dy++ {
+				py := ty + dy
+				if tx >= 0 && tx < w && py >= 0 && py < h {
+					img.Set(tx, py, channelCol)
+					img.Set(tx+1, py, channelCol)
+				}
+			}
+
+			// Draw source/drain terminals
+			termCol := channelCol
+			// Left terminal
+			for dx := -12; dx <= -8; dx++ {
+				px := tx + dx
+				py := ty + 2
+				if px >= 0 && px < w && py >= 0 && py < h {
+					img.Set(px, py, termCol)
+				}
+			}
+			// Right terminal
+			for dx := 8; dx <= 12; dx++ {
+				px := tx + dx
+				py := ty + 2
+				if px >= 0 && px < w && py >= 0 && py < h {
+					img.Set(px, py, termCol)
+				}
+			}
+
+			// Draw ON/OFF indicator
+			if transistorOn {
+				// Small glow
+				drawGlowCircle(img, tx, ty+2, 3,
+					color.RGBA{150, 220, 255, 255},
+					color.RGBA{100, 180, 200, 80})
+			}
+		}
+
+		// CSL label
+		drawSimpleText(img, "CSL", offsetX-28, offsetY+gridH+30, color.RGBA{100, 180, 200, 255})
+		drawSimpleText(img, "Col T", offsetX+gridW+10, offsetY+gridH+30, color.RGBA{100, 160, 180, 200})
 	}
 
 	// ========== Draw cells ==========
@@ -557,7 +664,7 @@ func (ca *CircuitsApp) drawSharedArray(w, h int) image.Image {
 	}
 
 	// ========== Draw current flow arrows ==========
-	if mode == ModeCompute || ((mode == ModeWrite || mode == ModeRead) && arch == sharedwidgets.Architecture1T1R) {
+	if mode == ModeCompute || ((mode == ModeWrite || mode == ModeRead) && (is1T1R || is2T1R)) {
 		arrowCol := color.RGBA{255, 255, 100, 200}
 
 		if mode == ModeCompute {
@@ -697,10 +804,14 @@ func (ca *CircuitsApp) drawSharedArray(w, h int) image.Image {
 	// Architecture badge
 	var archText string
 	var archColor color.RGBA
-	if arch == sharedwidgets.Architecture1T1R {
+	switch arch {
+	case sharedwidgets.Architecture2T1R:
+		archText = "2T1R"
+		archColor = color.RGBA{100, 180, 220, 255}
+	case sharedwidgets.Architecture1T1R:
 		archText = "1T1R"
 		archColor = color.RGBA{100, 220, 120, 255}
-	} else {
+	default:
 		archText = "PASSIVE"
 		archColor = color.RGBA{220, 150, 100, 255}
 	}
@@ -713,13 +824,20 @@ func (ca *CircuitsApp) drawSharedArray(w, h int) image.Image {
 	legendY := h - 18
 	legendColor := color.RGBA{120, 130, 150, 255}
 
-	if arch == sharedwidgets.Architecture1T1R {
+	switch arch {
+	case sharedwidgets.Architecture2T1R:
+		if mode == ModeCompute {
+			drawSimpleText(img, "2T1R: All row+col transistors ON | Full MVM", 10, legendY, legendColor)
+		} else {
+			drawSimpleText(img, "2T1R: Row(green)+Col(cyan) = AND gate | Single cell selected", 10, legendY, legendColor)
+		}
+	case sharedwidgets.Architecture1T1R:
 		if mode == ModeCompute {
 			drawSimpleText(img, "All transistors ON | Full matrix active", 10, legendY, legendColor)
 		} else {
 			drawSimpleText(img, "Row transistor ON (green) | Others isolated", 10, legendY, legendColor)
 		}
-	} else {
+	default:
 		if mode == ModeCompute {
 			drawSimpleText(img, "Passive array | Sneak paths affect accuracy", 10, legendY, legendColor)
 		} else {
@@ -822,23 +940,30 @@ func (ca *CircuitsApp) updateModeHelp() {
 	ca.mu.RUnlock()
 
 	is1T1R := arch == sharedwidgets.Architecture1T1R
+	is2T1R := arch == sharedwidgets.Architecture2T1R
 
 	var helpText string
 	switch mode {
 	case ModeWrite:
-		if is1T1R {
+		if is2T1R {
+			helpText = "WRITE: Row transistor (WL●) AND column transistor (CSL●) select ONLY target cell. Zero disturb to neighbors."
+		} else if is1T1R {
 			helpText = "WRITE: Transistor gates ONLY selected row (green●). Full write pulse to target cell, others isolated."
 		} else {
 			helpText = "WRITE: Passive array - partial voltages affect neighboring rows (sneak paths ~5-20% error)."
 		}
 	case ModeRead:
-		if is1T1R {
+		if is2T1R {
+			helpText = "READ: Dual transistor AND-gate selects ONLY target cell (WL●+CSL●). Perfect isolation, zero noise."
+		} else if is1T1R {
 			helpText = "READ: Transistor isolates selected row (green●). Clean sense current from target cell only."
 		} else {
 			helpText = "READ: Passive array - sneak currents add ~5-20% noise to sense signal."
 		}
 	case ModeCompute:
-		if is1T1R {
+		if is2T1R {
+			helpText = "COMPUTE: ALL CSL transistors ON (column gates●), WL selects active rows. Clean parallel MVM."
+		} else if is1T1R {
 			helpText = "COMPUTE: ALL transistors ON (all green●) for full MVM. Sneak-free parallel computation."
 		} else {
 			helpText = "COMPUTE: Passive MVM - sneak paths cause ~5-20% output error. Still functional for AI inference."
@@ -984,25 +1109,34 @@ func (ca *CircuitsApp) updateOperationsButtons() {
 // ARCHITECTURE TOGGLE (1T1R vs 0T1R)
 // ============================================================================
 
-// createArchitectureToggle creates the PASSIVE/1T1R toggle buttons
+// createArchitectureToggle creates the PASSIVE/1T1R/2T1R toggle buttons
 // 1T1R: Transistor gates each row - only selected row active (write/read) or all rows (compute)
+// 2T1R: Dual transistors (row + column) - individual cell addressing with AND-gate selection
 // 0T1R: Passive crossbar - sneak paths affect accuracy
 func (ca *CircuitsApp) createArchitectureToggle() fyne.CanvasObject {
 	// Create toggle buttons (same pattern as Module 2)
 	ca.archPassiveBtn = widget.NewButton("PASSIVE", nil)
-	ca.arch1T1RBtn = widget.NewButton("1T1R GATE", nil)
+	ca.arch1T1RBtn = widget.NewButton("1T1R", nil)
+	ca.arch2T1RBtn = widget.NewButton("2T1R", nil)
 
 	// Helper to update button styles based on selection
 	updateArchButtons := func() {
-		if ca.architecture == sharedwidgets.Architecture0T1R {
+		ca.archPassiveBtn.Importance = widget.LowImportance
+		ca.arch1T1RBtn.Importance = widget.LowImportance
+		ca.arch2T1RBtn.Importance = widget.LowImportance
+		switch ca.architecture {
+		case sharedwidgets.Architecture0T1R:
 			ca.archPassiveBtn.Importance = widget.HighImportance
-			ca.arch1T1RBtn.Importance = widget.LowImportance
-		} else {
-			ca.archPassiveBtn.Importance = widget.LowImportance
+		case sharedwidgets.Architecture1T1R:
 			ca.arch1T1RBtn.Importance = widget.HighImportance
+		case sharedwidgets.Architecture2T1R:
+			ca.arch2T1RBtn.Importance = widget.HighImportance
+		default:
+			ca.archPassiveBtn.Importance = widget.HighImportance
 		}
 		ca.archPassiveBtn.Refresh()
 		ca.arch1T1RBtn.Refresh()
+		ca.arch2T1RBtn.Refresh()
 	}
 
 	// Set initial state
@@ -1033,7 +1167,19 @@ func (ca *CircuitsApp) createArchitectureToggle() fyne.CanvasObject {
 		ca.updateModeHelp()
 	}
 
-	ca.archToggle = container.NewGridWithColumns(2, ca.archPassiveBtn, ca.arch1T1RBtn)
+	ca.arch2T1RBtn.OnTapped = func() {
+		if ca.architecture == sharedwidgets.Architecture2T1R {
+			return // Already selected
+		}
+		ca.mu.Lock()
+		ca.architecture = sharedwidgets.Architecture2T1R
+		ca.mu.Unlock()
+		updateArchButtons()
+		ca.refreshSharedArray()
+		ca.updateModeHelp()
+	}
+
+	ca.archToggle = container.NewGridWithColumns(3, ca.archPassiveBtn, ca.arch1T1RBtn, ca.arch2T1RBtn)
 
 	archLabel := widget.NewLabel("Array:")
 	return container.NewHBox(archLabel, ca.archToggle)

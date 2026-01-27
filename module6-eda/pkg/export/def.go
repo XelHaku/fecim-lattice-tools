@@ -63,6 +63,9 @@ func DEFConfigFrom(design *compiler.ArrayDesign) DEFConfig {
 	if design.Config.Architecture == compiler.Arch1T1R {
 		cfg.CellName = "fecim_1t1r"
 	}
+	if design.Config.Architecture == compiler.Arch2T1R {
+		cfg.CellName = "fecim_2t1r"
+	}
 
 	return cfg
 }
@@ -89,11 +92,15 @@ func GenerateDEF(design *compiler.ArrayDesign, config DEFConfig) string {
 		arch = compiler.ArchPassive
 	}
 	is1T1R := arch == compiler.Arch1T1R
+	is2T1R := arch == compiler.Arch2T1R
 
 	// Determine cell name
 	cellName := config.CellName
 	if is1T1R && cellName == "fecim_bit" {
 		cellName = "fecim_1t1r"
+	}
+	if is2T1R && cellName == "fecim_bit" {
+		cellName = "fecim_2t1r"
 	}
 
 	// Calculate die area in microns
@@ -118,6 +125,10 @@ func GenerateDEF(design *compiler.ArrayDesign, config DEFConfig) string {
 	if is1T1R {
 		sb.WriteString("# Note: 1T1R includes Source Line (SL) pins for sneak path mitigation\n")
 	}
+	if is2T1R {
+		sb.WriteString("# Note: 2T1R includes Column Select Line (CSL) pins for individual cell addressing\n")
+		sb.WriteString("# CSL pins located at right edge (column transistor gates)\n")
+	}
 	sb.WriteString("\n")
 
 	// DEF version and design name
@@ -135,6 +146,9 @@ func GenerateDEF(design *compiler.ArrayDesign, config DEFConfig) string {
 	siteName := "fecim_site"
 	if is1T1R {
 		siteName = "fecim_1t1r_site"
+	}
+	if is2T1R {
+		siteName = "fecim_2t1r_site"
 	}
 	cellWidthDBU := int(config.CellWidth * float64(dbu))
 	cellHeightDBU := int(config.CellHeight * float64(dbu))
@@ -177,9 +191,14 @@ func GenerateDEF(design *compiler.ArrayDesign, config DEFConfig) string {
 	// Calculate number of pins
 	// Passive: WL[] + BL[] + VDD + VSS
 	// 1T1R: WL[] + BL[] + SL[] + VDD + VSS
+	// 2T1R: WL[] + BL[] + SL[] + CSL[] + VDD + VSS
 	numPins := numRows + numCols + 2
 	if is1T1R {
 		numPins += numCols // Add SL[] pins
+	}
+	if is2T1R {
+		numPins += numCols // Add SL[] pins
+		numPins += numCols // Add CSL[] pins
 	}
 	sb.WriteString(fmt.Sprintf("PINS %d ;\n", numPins))
 
@@ -199,13 +218,23 @@ func GenerateDEF(design *compiler.ArrayDesign, config DEFConfig) string {
 		sb.WriteString(fmt.Sprintf("      + LAYER met2 ( 0 0 ) ( 80 80 ) + FIXED ( %d %d ) N ;\n", pinXDBU, dieHeightDBU))
 	}
 
-	// Source Line pins for 1T1R (bottom edge, below array)
-	if is1T1R {
+	// Source Line pins for 1T1R and 2T1R (bottom edge, below array)
+	if is1T1R || is2T1R {
 		for col := 0; col < numCols; col++ {
 			pinX := config.OriginX + float64(col)*config.CellWidth + config.CellWidth/2
 			pinXDBU := int(pinX * float64(dbu))
 			sb.WriteString(fmt.Sprintf("    - SL[%d] + NET SL[%d] + DIRECTION INPUT + USE SIGNAL\n", col, col))
 			sb.WriteString(fmt.Sprintf("      + LAYER met2 ( 0 0 ) ( 80 80 ) + FIXED ( %d 0 ) N ;\n", pinXDBU))
+		}
+	}
+
+	// Column Select Line pins for 2T1R (right edge)
+	if is2T1R {
+		for col := 0; col < numCols; col++ {
+			pinY := config.OriginY + float64(col)*config.CellHeight + config.CellHeight/2
+			pinYDBU := int(pinY * float64(dbu))
+			sb.WriteString(fmt.Sprintf("    - CSL[%d] + NET CSL[%d] + DIRECTION INPUT + USE SIGNAL\n", col, col))
+			sb.WriteString(fmt.Sprintf("      + LAYER met1 ( 0 0 ) ( 80 200 ) + FIXED ( %d %d ) N ;\n", dieWidthDBU, pinYDBU))
 		}
 	}
 
@@ -222,9 +251,14 @@ func GenerateDEF(design *compiler.ArrayDesign, config DEFConfig) string {
 	// Calculate number of nets
 	// Passive: WL nets + BL nets + VDD + VSS
 	// 1T1R: WL nets + BL nets + SL nets + VDD + VSS
+	// 2T1R: WL nets + BL nets + SL nets + CSL nets + VDD + VSS
 	numNets := numRows + numCols + 2
 	if is1T1R {
 		numNets += numCols
+	}
+	if is2T1R {
+		numNets += numCols // SL nets
+		numNets += numCols // CSL nets
 	}
 	sb.WriteString(fmt.Sprintf("NETS %d ;\n", numNets))
 
@@ -254,8 +288,8 @@ func GenerateDEF(design *compiler.ArrayDesign, config DEFConfig) string {
 		sb.WriteString(" ;\n")
 	}
 
-	// Source Line nets for 1T1R
-	if is1T1R {
+	// Source Line nets for 1T1R and 2T1R
+	if is1T1R || is2T1R {
 		for col := 0; col < numCols; col++ {
 			sb.WriteString(fmt.Sprintf("    - SL[%d]\n", col))
 			sb.WriteString(fmt.Sprintf("      ( PIN SL[%d] )", col))
@@ -263,6 +297,21 @@ func GenerateDEF(design *compiler.ArrayDesign, config DEFConfig) string {
 			for _, cell := range cellsToExport {
 				if cell.Col == col {
 					sb.WriteString(fmt.Sprintf(" ( R_%d_%d SL )", cell.Row, cell.Col))
+				}
+			}
+			sb.WriteString(" ;\n")
+		}
+	}
+
+	// Column Select Line nets for 2T1R
+	if is2T1R {
+		for col := 0; col < numCols; col++ {
+			sb.WriteString(fmt.Sprintf("    - CSL[%d]\n", col))
+			sb.WriteString(fmt.Sprintf("      ( PIN CSL[%d] )", col))
+			// Connect all cells in this column
+			for _, cell := range cellsToExport {
+				if cell.Col == col {
+					sb.WriteString(fmt.Sprintf(" ( R_%d_%d CSL )", cell.Row, cell.Col))
 				}
 			}
 			sb.WriteString(" ;\n")
