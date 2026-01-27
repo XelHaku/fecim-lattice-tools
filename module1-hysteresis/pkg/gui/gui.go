@@ -291,11 +291,7 @@ func (a *App) initDebugLog() {
 
 // NewApp creates a new GUI application
 func NewApp() *App {
-	materials := []*ferroelectric.HZOMaterial{
-		ferroelectric.DefaultHZO(),
-		ferroelectric.OptimizedHZO(),
-		ferroelectric.FeCIMMaterial(),
-	}
+	materials := ferroelectric.AllMaterials()
 
 	mat := materials[0]
 	numLevels := 30                                        // Default: FeCIM's 30 discrete analog states

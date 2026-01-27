@@ -52,12 +52,18 @@ type Material struct {
 	Description string `yaml:"description"`
 	Reference   string `yaml:"reference"`
 
+	// Multi-level capability
+	AnalogStates int  `yaml:"analog_states,omitempty"` // Number of discrete states (e.g., 30, 32, 140)
+	TRLLevel     int  `yaml:"trl_level,omitempty"`     // Technology Readiness Level (1-9)
+	CMOSCompatible bool `yaml:"cmos_compatible,omitempty"` // CMOS fabrication compatible
+
 	// Polarization (C/m²)
 	PrCM2 float64 `yaml:"pr_c_m2"`
 	PsCM2 float64 `yaml:"ps_c_m2"`
 
 	// Field (V/m)
-	EcVM float64 `yaml:"ec_v_m"`
+	EcVM         float64 `yaml:"ec_v_m"`
+	MemoryWindowV float64 `yaml:"memory_window_v,omitempty"` // Memory window voltage
 
 	// Dielectric
 	EpsilonHF   float64 `yaml:"epsilon_hf"`
@@ -65,8 +71,8 @@ type Material struct {
 	LossTangent float64 `yaml:"loss_tangent"`
 
 	// Geometry
-	ThicknessM float64 `yaml:"thickness_m"`
-	AreaM2     float64 `yaml:"area_m2"`
+	ThicknessM  float64 `yaml:"thickness_m"`
+	AreaM2      float64 `yaml:"area_m2"`
 	CellPitchNm float64 `yaml:"cell_pitch_nm,omitempty"`
 
 	// Dynamics
@@ -76,14 +82,22 @@ type Material struct {
 	KAIExponent        float64 `yaml:"kai_exponent"`
 
 	// Temperature
-	CurieTempK  float64 `yaml:"curie_temp_k"`
-	TempCoeffEc float64 `yaml:"temp_coeff_ec"`
-	TempCoeffPr float64 `yaml:"temp_coeff_pr"`
+	CurieTempK       float64 `yaml:"curie_temp_k"`
+	TempCoeffEc      float64 `yaml:"temp_coeff_ec"`
+	TempCoeffPr      float64 `yaml:"temp_coeff_pr"`
+	OperatingTempK   float64 `yaml:"operating_temp_k,omitempty"` // For cryogenic operation
 
 	// Reliability
 	EnduranceCycles float64 `yaml:"endurance_cycles"`
 	RetentionTimeS  float64 `yaml:"retention_time_s"`
 	ImprintFieldVM  float64 `yaml:"imprint_field_v_m"`
+
+	// FTJ-specific (Ferroelectric Tunnel Junction)
+	TERRatio       float64 `yaml:"ter_ratio,omitempty"`        // Tunneling electroresistance ratio
+	GmaxGminRatio  float64 `yaml:"gmax_gmin_ratio,omitempty"`  // Conductance on/off ratio
+
+	// AlScN-specific
+	ScFraction float64 `yaml:"sc_fraction,omitempty"` // Scandium fraction in AlScN
 }
 
 // Crossbar holds crossbar array configuration.
@@ -270,7 +284,15 @@ func loadConfig() (*Config, error) {
 }
 
 // GetMaterial returns a material by name.
-// Valid names: "default_hzo", "fecim_hzo", "fecim_hzo_target", "literature_superlattice"
+// Valid names (all CMOS compatible):
+//   - "default_hzo"           - Baseline Si-doped HZO (30 states)
+//   - "fecim_hzo"             - FeCIM demonstrated values (30 states)
+//   - "fecim_hzo_target"      - FeCIM aspirational targets (30 states)
+//   - "literature_superlattice" - Best academic results (30+ states)
+//   - "cryogenic_hzo"         - HZO at 4K for quantum computing
+//   - "hzo_standard_32"       - Oh IEEE EDL 2017 (32 states)
+//   - "hzo_ftj_140"           - Song Adv.Science 2024 FTJ (140 states)
+//   - "alscn"                 - AlScN high-Pr material (8-16 states)
 func (c *Config) GetMaterial(name string) *Material {
 	return c.Materials[name]
 }

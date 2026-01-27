@@ -312,11 +312,7 @@ func (r *PERenderer) RenderTemperatureDependence(material *HZOMaterial) string {
 func (r *PERenderer) RenderMaterialComparison() string {
 	var sb strings.Builder
 
-	materials := []*HZOMaterial{
-		DefaultHZO(),
-		OptimizedHZO(),
-		FeCIMMaterial(),
-	}
+	materials := AllMaterials()
 
 	sb.WriteString("HZO Material Comparison:\n")
 	sb.WriteString(strings.Repeat("═", 70) + "\n\n")

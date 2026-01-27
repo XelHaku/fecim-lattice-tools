@@ -60,12 +60,21 @@ func TestMaterialNames(t *testing.T) {
 	}
 
 	names := cfg.MaterialNames()
-	if len(names) < 3 {
-		t.Errorf("Expected at least 3 materials, got %d", len(names))
+	if len(names) < 8 {
+		t.Errorf("Expected at least 8 materials (CMOS compatible), got %d", len(names))
 	}
 
-	// Check specific materials exist
-	expected := []string{"default_hzo", "fecim_hzo", "literature_superlattice"}
+	// Check all CMOS-compatible materials exist
+	expected := []string{
+		"default_hzo",
+		"fecim_hzo",
+		"fecim_hzo_target",
+		"literature_superlattice",
+		"cryogenic_hzo",
+		"hzo_standard_32",
+		"hzo_ftj_140",
+		"alscn",
+	}
 	for _, name := range expected {
 		found := false
 		for _, n := range names {
@@ -77,6 +86,13 @@ func TestMaterialNames(t *testing.T) {
 		if !found {
 			t.Errorf("Expected material %s not found", name)
 		}
+	}
+
+	// Log all materials for visibility
+	t.Logf("Found %d materials:", len(names))
+	for _, name := range names {
+		mat := cfg.GetMaterial(name)
+		t.Logf("  %-25s | %s", name, mat.Name)
 	}
 }
 

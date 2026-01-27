@@ -227,11 +227,7 @@ type Model struct {
 
 // NewModel creates a new TUI model
 func NewModel() Model {
-	materials := []*ferroelectric.HZOMaterial{
-		ferroelectric.DefaultHZO(),
-		ferroelectric.OptimizedHZO(),
-		ferroelectric.FeCIMMaterial(),
-	}
+	materials := ferroelectric.AllMaterials()
 
 	mat := materials[0]
 	preisach := ferroelectric.NewMayergoyzPreisach(mat, 30)

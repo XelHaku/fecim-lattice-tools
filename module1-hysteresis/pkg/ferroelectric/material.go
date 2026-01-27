@@ -185,6 +185,137 @@ func FeCIMMaterialTarget() *HZOMaterial {
 	return mat
 }
 
+// CryogenicHZO returns HZO parameters at 4K for quantum computing integration.
+// At cryogenic temperatures, HZO shows ENHANCED polarization (75 µC/cm² vs ~30 at RT).
+//
+// Ref: Adv. Electron. Mater. 2024, doi:10.1002/aelm.202300879
+// Ref: Adv. Electron. Mater. 2025, doi:10.1002/aelm.202400840
+func CryogenicHZO() *HZOMaterial {
+	return &HZOMaterial{
+		Name:            "Cryogenic HZO (4K)",
+		Pr:              75e-2,   // 75 µC/cm² at 4K - RECORD (enhanced from RT!)
+		Ps:              80e-2,   // 80 µC/cm²
+		Ec:              1.5e8,   // 1.5 MV/cm (higher Ec at cryo)
+		Epsilon:         28,      // Slightly reduced at cryo
+		EpsilonLF:       35,
+		LossAngle:       0.008,   // Lower loss at cryo
+		Thickness:       10e-9,
+		Area:            100e-12,
+		Tau:             1e-9,    // ~1 ns maintained
+		Tau0:            1e-13,
+		Ea:              0.7,
+		Alpha:           2.0,
+		CurieTemp:       723,
+		TempCoeffEc:     -2e5,
+		TempCoeffPr:     -5e-5,
+		EnduranceCycles: 1e9,     // 10^9 at ±5V verified at cryo
+		RetentionTime:   3.15e10, // >10 years at cryo (improved)
+		ImrintField:     0.3e6,   // Reduced imprint at cryo
+	}
+}
+
+// HZOStandard32 returns parameters for standard HZO demonstrating 32 analog states.
+// This is the peer-reviewed benchmark from Oh et al. 2017.
+//
+// Ref: Oh et al., IEEE EDL 38(6), 732 (2017)
+func HZOStandard32() *HZOMaterial {
+	return &HZOMaterial{
+		Name:            "HZO Standard (32 states)",
+		Pr:              20e-2,   // 20 µC/cm²
+		Ps:              25e-2,   // 25 µC/cm²
+		Ec:              1.0e8,   // 1.0 MV/cm
+		Epsilon:         28,
+		EpsilonLF:       35,
+		LossAngle:       0.02,
+		Thickness:       10e-9,
+		Area:            100e-12,
+		Tau:             10e-9,   // 10 ns
+		Tau0:            1e-13,
+		Ea:              0.7,
+		Alpha:           2.0,
+		CurieTemp:       723,
+		TempCoeffEc:     -2e5,
+		TempCoeffPr:     -5e-5,
+		EnduranceCycles: 1e8,     // 10^8 cycles (2017 era)
+		RetentionTime:   3.15e8,  // 10 years projected
+		ImrintField:     1e6,
+	}
+}
+
+// HZOFJT140 returns parameters for HZO Ferroelectric Tunnel Junction with 140 states.
+// FTJs achieve highest state count through ultrathin tunneling barriers.
+//
+// Ref: Song et al., Adv. Science 2024, doi:10.1002/advs.202308588
+// Ref: ACS Appl. Mater. Interfaces 2022, doi:10.1021/acsami.2c04441
+func HZOFJT140() *HZOMaterial {
+	return &HZOMaterial{
+		Name:            "HZO FTJ (140 states)",
+		Pr:              25e-2,   // 25 µC/cm²
+		Ps:              30e-2,   // 30 µC/cm²
+		Ec:              1.2e8,   // 1.2 MV/cm
+		Epsilon:         30,
+		EpsilonLF:       40,
+		LossAngle:       0.015,
+		Thickness:       4.5e-9,  // 4.5 nm - ULTRATHIN for tunneling
+		Area:            100e-12,
+		Tau:             20e-9,   // 20 ns switching
+		Tau0:            1e-13,
+		Ea:              0.5,     // Lower barrier for tunneling
+		Alpha:           2.0,
+		CurieTemp:       723,
+		TempCoeffEc:     -2e5,
+		TempCoeffPr:     -5e-5,
+		EnduranceCycles: 1e7,     // 10^7 cycles demonstrated
+		RetentionTime:   3.15e8,  // 10 years extrapolated
+		ImrintField:     1e6,
+	}
+}
+
+// AlScN returns parameters for Aluminum Scandium Nitride.
+// AlScN has VERY HIGH Pr (120 µC/cm²) but also very high Ec (5 MV/cm),
+// which limits practical state granularity to 8-16 levels.
+//
+// Ref: Nature Commun. 2025, doi:10.1038/s41467-025-62904-6
+// Ref: APL Materials 2023, doi:10.1063/5.0148068
+func AlScN() *HZOMaterial {
+	return &HZOMaterial{
+		Name:            "AlScN (8-16 states)",
+		Pr:              120e-2,  // 120 µC/cm² - VERY HIGH (range: 100-172)
+		Ps:              150e-2,  // 150 µC/cm²
+		Ec:              5.0e8,   // 5.0 MV/cm - VERY HIGH (limits granularity)
+		Epsilon:         10,      // Lower permittivity than HZO
+		EpsilonLF:       12,
+		LossAngle:       0.01,
+		Thickness:       20e-9,   // 20 nm typical
+		Area:            100e-12,
+		Tau:             10e-9,   // ~10 ns
+		Tau0:            1e-13,
+		Ea:              1.0,     // Higher barrier
+		Alpha:           2.0,
+		CurieTemp:       1273,    // >1000°C - excellent thermal stability
+		TempCoeffEc:     -1e5,
+		TempCoeffPr:     -2e-5,
+		EnduranceCycles: 1e9,     // 10^9 cycles
+		RetentionTime:   3.15e8,
+		ImrintField:     1e6,
+	}
+}
+
+// AllMaterials returns a slice of all available CMOS-compatible materials.
+// Use this to populate material selection dropdowns in the GUI.
+func AllMaterials() []*HZOMaterial {
+	return []*HZOMaterial{
+		DefaultHZO(),
+		FeCIMMaterial(),
+		FeCIMMaterialTarget(),
+		LiteratureSuperlattice(),
+		CryogenicHZO(),
+		HZOStandard32(),
+		HZOFJT140(),
+		AlScN(),
+	}
+}
+
 // CoerciveVoltage returns the coercive voltage for a given thickness.
 func (m *HZOMaterial) CoerciveVoltage() float64 {
 	return m.Ec * m.Thickness
