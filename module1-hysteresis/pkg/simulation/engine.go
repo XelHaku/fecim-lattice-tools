@@ -252,7 +252,8 @@ func (e *Engine) GetHysteresisData() ([]float64, []float64) {
 }
 
 // RunRealtime runs the simulation in real-time with the given callback.
-func (e *Engine) RunRealtime(updateCallback func(*State), targetFPS int) {
+// The callback receives a copy of the state to ensure thread safety.
+func (e *Engine) RunRealtime(updateCallback func(State), targetFPS int) {
 	ticker := time.NewTicker(time.Second / time.Duration(targetFPS))
 	defer ticker.Stop()
 
@@ -270,11 +271,9 @@ func (e *Engine) RunRealtime(updateCallback func(*State), targetFPS int) {
 			}
 		}
 
-		// Call the update callback
+		// Call the update callback with a copy of state
 		if updateCallback != nil {
-			e.mu.RLock()
-			state := e.state
-			e.mu.RUnlock()
+			state := e.State() // Returns a safe copy
 			updateCallback(state)
 		}
 	}
