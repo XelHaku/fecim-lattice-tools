@@ -1,56 +1,29 @@
 TO: tour@rice.edu
+CC: jaeho-shin@rice.edu, tawfik.jarjour@accenture.com
 
-CC:
-  jaeho-shin@rice.edu
-  tawfik.jarjour@accenture.com
-
-
-Subject: Educational FeCIM visualization tool - learning by exploring
+Subject: FeCIM tool - 6 modules, Yosys/KLayout/OpenROAD integration
 
 Dr. Tour,
 
-After watching your COSM presentation - "the same device does the memory and the computation" - I built an educational visualization tool to help myself (and others) understand FeCIM technology. It's exploratory, not production-ready, but it makes the concepts tangible.
+After your COSM presentation, I built an interactive tool 
+for exploring FeCIM concepts. Six modules:
 
-**What it does:**
+- Hysteresis - Preisach model, configurable states, quantization error visible
+- Crossbar - 1T1R vs Passive toggle, IR drop, sneak paths visible
+- MNIST - Draw a digit, watch the crossbar compute
+- Peripherals - DAC/TIA/ADC, Write/Read/Compute modes, 1T1R vs Passive
+- Comparison - FeCIM vs ReRAM vs PCM vs MRAM
+- EDA Explorer - Verilog/DEF, validates with Yosys, views in KLayout and OpenROAD
 
-1. **Hysteresis** - P-E curves with Preisach model, visualize 30 discrete states
-   → Helps explain "why multi-level matters" through interaction
+Built from published literature. Would need real device 
+data for calibration, but the framework is working.
 
-2. **Crossbar MVM** - Matrix-vector multiply with toggleable non-idealities
-   → Passive and 1T1R architectures, IR drop, sneak paths, drift - see the problems visually
+Your faith-and-science work is part of why I paid attention.
 
-3. **MNIST Demo** - Draw a digit, watch the crossbar process it
-   → Makes compute-in-memory intuitive, even for non-technical audiences
-
-4. **Peripheral Circuits** - DAC/ADC/TIA visualization
-   → Passive and 1T1R modes, shows Read/Write/Compute flow
-
-5. **Technology Comparison** - Energy/performance comparisons from literature
-   → Educational overview of where FeCIM sits vs other technologies
-
-6. **EDA Explorer** - Experimental Verilog/DEF generation
-   → Validates with OpenLane, generates visualizations via KLayout, OpenROAD, Yosys
-   → Learning tool for understanding crossbar layout, not a production design flow
-
-7. **Documentation** - Physics explanations and references
-   → Collected from published papers and presentations
-
-**What it's NOT:** This isn't production software. The physics models are simplified, the accuracy numbers need real device calibration, and the EDA output is exploratory. It's a learning framework.
-
-**What it might be useful for:** Helping people understand FeCIM concepts through hands-on exploration. Sometimes drawing a digit and watching the crossbar respond teaches more than reading a paper.
-
-I also appreciate your work on faith and science - it's part of why I paid attention to your COSM talk in the first place.
-
-**Why private:** The repo is private because I know you have patents pending. I've done deep research and added some personal ideas that might actually be relevant to your technology. My goal is to help IronLattice, not create problems. If there's a specific feature or configuration you'd find useful, I'd rather ask than guess.
-
-I want to be part of what IronLattice is building. This software is my contribution - happy to adapt it however serves you best.
-
-Demo video: [2-minute walkthrough]
-GitHub: github.com/your-org/fecim-lattice-tools (private - reply with GitHub usernames to add as collaborators)
+Demo: [5-minute video]
+Repo: Private. Will invite on reply.
 
 FeCIM Maintainers
 Monterrey, Mexico
-+52 812 193 7470 (WhatsApp/Telegram)
-
++52 812 193 7470
 github.com/XelHaku
-trebuchetdynamics.com
