@@ -185,8 +185,13 @@ func (m *MayergoyzPreisach) Update(E float64) float64 {
 	// Apply fatigue degradation
 	m.polarization *= (1 - m.fatigueRate*float64(m.cycleCount))
 
-	// Record history
+	// Record history with bounded growth to prevent memory exhaustion
+	const maxFieldHistory = 10000
 	m.fieldHistory = append(m.fieldHistory, E)
+	if len(m.fieldHistory) > maxFieldHistory {
+		// Keep the most recent half of history
+		m.fieldHistory = m.fieldHistory[maxFieldHistory/2:]
+	}
 
 	return m.polarization
 }

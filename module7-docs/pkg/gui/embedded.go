@@ -30,11 +30,9 @@ type EmbeddedDocsApp struct {
 	tree          *widget.Tree
 	contentText   *widget.RichText
 	contentScroll *container.Scroll
-	breadcrumbs   *BreadcrumbWidget
-	toc           *TableOfContentsWidget
-	quickAccess   *QuickAccessPanel
-	glossaryPills *GlossaryPillsWidget
-	docMetadata   *DocumentMetadataWidget
+	breadcrumbs *BreadcrumbWidget
+	toc         *TableOfContentsWidget
+	docMetadata *DocumentMetadataWidget
 	searchDialog  *SearchDialog
 
 	// State
@@ -115,9 +113,6 @@ func (app *EmbeddedDocsApp) createUIComponents() {
 		}
 	}
 
-	// Glossary pills
-	app.glossaryPills = NewGlossaryPillsWidget(app.window)
-
 	// Document metadata
 	app.docMetadata = NewDocumentMetadataWidget(app.window)
 
@@ -127,7 +122,7 @@ func (app *EmbeddedDocsApp) createUIComponents() {
 	})
 }
 
-// buildSidebar creates the left sidebar with tree and quick access
+// buildSidebar creates the left sidebar with tree
 func (app *EmbeddedDocsApp) buildSidebar() fyne.CanvasObject {
 	// Scan docs and build tree
 	app.docs = app.scanDocsDirectory()
@@ -138,10 +133,7 @@ func (app *EmbeddedDocsApp) buildSidebar() fyne.CanvasObject {
 	return container.NewBorder(
 		widget.NewLabelWithStyle("Documentation", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		nil, nil, nil,
-		container.NewVSplit(
-			app.quickAccess,
-			app.tree,
-		),
+		app.tree,
 	)
 }
 
@@ -157,17 +149,14 @@ func (app *EmbeddedDocsApp) buildPathMap(entries []*docEntry) {
 
 // buildMainContent creates the central content area
 func (app *EmbeddedDocsApp) buildMainContent() fyne.CanvasObject {
-	// Top metadata section
+	// Top metadata section (includes category, reading time, and key terms)
 	topSection := container.NewVBox(
 		app.breadcrumbs,
 		app.docMetadata,
 	)
 
-	// Glossary pills below metadata
-	pillsSection := container.NewHBox(app.glossaryPills)
-
 	return container.NewBorder(
-		container.NewVBox(topSection, pillsSection),
+		topSection,
 		nil,
 		nil, nil,
 		app.contentScroll,
@@ -324,13 +313,8 @@ func (app *EmbeddedDocsApp) loadDocument(path string) {
 		app.toc.ParseMarkdown(markdown)
 	})
 
-	// Update glossary pills
+	// Detect glossary terms and update metadata
 	terms := DetectGlossaryTerms(markdown)
-	fyne.Do(func() {
-		app.glossaryPills.SetTerms(terms)
-	})
-
-	// Update metadata
 	meta := app.searchIndex.GetDocMetadata(path)
 	if meta != nil {
 		fyne.Do(func() {

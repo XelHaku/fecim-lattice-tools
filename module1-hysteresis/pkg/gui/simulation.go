@@ -449,9 +449,16 @@ func (a *App) simulationLoop() {
 			continue
 		}
 
+		a.mu.Lock()
+
+		// Check material inside lock to prevent race condition
 		if a.material == nil {
+			a.mu.Unlock()
 			continue
 		}
+
+		// Copy material reference under lock for safe access
+		mat := a.material
 
 		dt := time.Since(lastTime).Seconds()
 		lastTime = time.Now()
@@ -460,8 +467,6 @@ func (a *App) simulationLoop() {
 		if a.simTime > 1000 {
 			a.simTime = math.Mod(a.simTime, 1000)
 		}
-
-		a.mu.Lock()
 
 		// Generate E-field based on waveform
 		if a.waveform == WaveformManual {
@@ -478,7 +483,7 @@ func (a *App) simulationLoop() {
 			// 2: WRITE - apply calibrated field toward target
 			// 3: HOLD_WRITE - return to zero, polarization persists at target
 			if a.manualAnimating {
-				Ec := a.material.Ec
+				Ec := mat.Ec // Use local copy for thread safety
 				Emax := Ec * 2.5 // Match calibration saturation field
 				phaseDuration := 0.6 / a.frequency
 				rampRate := 4.0 * Emax * a.frequency
@@ -712,7 +717,7 @@ func (a *App) simulationLoop() {
 			}
 			// If not animating, electric field is already set by slider in controls.go
 		} else if a.autoMode {
-			Emax := a.material.Ec * 2
+			Emax := mat.Ec * 2 // Use local copy for thread safety
 			// Wrap phase to prevent floating-point precision loss over long times
 			phase := math.Mod(2*math.Pi*a.frequency*a.simTime, 2*math.Pi)
 
@@ -747,7 +752,7 @@ func (a *App) simulationLoop() {
 				a.wrdPhaseTimer += dt
 				phaseDuration := 1.0 / a.frequency
 				rampRate := 3.0 * Emax * a.frequency
-				Ec := a.material.Ec
+				Ec := mat.Ec // Use local copy for thread safety
 				midLevel := a.numLevels / 2
 				maxLevelIdx := a.numLevels - 1
 
@@ -1093,8 +1098,8 @@ func (a *App) simulationLoop() {
 		if a.waveform == WaveformWriteReadDemo && a.wrdPhase >= 0 && a.wrdPhase <= 4 {
 			deltaP := a.polarization - prevP
 			// Energy per unit volume: E·dP in J/m³
-			// Use actual cell dimensions from material
-			cellVolume := a.material.Area * a.material.Thickness
+			// Use actual cell dimensions from material (use local copy for thread safety)
+			cellVolume := mat.Area * mat.Thickness
 			// Fallback if material doesn't have dimensions
 			if cellVolume <= 0 {
 				cellVolume = 2e-22 // Default: 100nm x 100nm x 20nm
