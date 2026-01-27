@@ -100,11 +100,42 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		a.preisach = ferroelectric.NewMayergoyzPreisach(a.material, 50)
 		a.eHistory = a.eHistory[:0]
 		a.pHistory = a.pHistory[:0]
-		a.plot.SetBounds(a.material.Ec*2.5, a.material.Ps*1.2)
+		a.plot.SetBounds(a.material.Ec*1.5, a.material.Ps*1.2)
 		a.plot.SetMaterialParams(a.material.Ec, a.material.Pr)
 		// Mark calibration as stale (new material needs recalibration)
 		a.calibrated = false
+
+		// Update number of levels based on material's capability
+		newLevels := a.material.GetNumLevels()
+		if newLevels != a.numLevels {
+			a.numLevels = newLevels
+			// Update level indicator and cell visualizer
+			if a.levelIndicator != nil {
+				a.levelIndicator.SetNumLevels(newLevels)
+			}
+			if a.cellViz != nil {
+				a.cellViz.SetNumLevels(newLevels)
+			}
+			// Reset discrete level to middle of new range
+			a.discreteLevel = newLevels / 2
+			// Reset target levels to be within new bounds
+			a.wrdTargetLevel = newLevels / 2
+			a.manualTargetLevel = newLevels / 2
+			// Resize calibration arrays
+			a.calibrationUp = make([]float64, newLevels)
+			a.calibrationDown = make([]float64, newLevels)
+		}
 		a.mu.Unlock()
+
+		// Update levels entry and label in UI thread
+		fyne.Do(func() {
+			if a.levelsEntry != nil {
+				a.levelsEntry.SetText(fmt.Sprintf("%d", newLevels))
+			}
+			if a.levelsLabel != nil {
+				a.levelsLabel.SetText(fmt.Sprintf("Levels: %d (%.1f bits)", newLevels, math.Log2(float64(newLevels))))
+			}
+		})
 
 		// Recalibrate for new material at current temperature (background to not block UI)
 		go func() {

@@ -1,7 +1,11 @@
 // Package ferroelectric provides physics models for ferroelectric materials.
 package ferroelectric
 
-import "math"
+import (
+	"math"
+
+	"fecim-lattice-tools/config/physics"
+)
 
 // HZOMaterial contains material parameters for Hafnium-Zirconium Oxide.
 //
@@ -55,6 +59,9 @@ type HZOMaterial struct {
 	EnduranceCycles float64 // Endurance limit (cycles)
 	RetentionTime   float64 // Retention time at 85°C (s)
 	ImrintField     float64 // Imprint field shift (V/m)
+
+	// Analog state capability
+	NumLevels int // Number of discrete analog states (0 = use default 30)
 }
 
 // DefaultHZO returns material parameters for typical Si-doped HfO2 (Hf0.5Zr0.5O2).
@@ -84,6 +91,7 @@ func DefaultHZO() *HZOMaterial {
 		EnduranceCycles: 1e10,    // 10^10 cycles
 		RetentionTime:   3.15e9,  // 100 years at 85°C
 		ImrintField:     1e6,     // Small imprint
+		NumLevels:       30,      // Standard HZO achieves ~30 levels
 	}
 }
 
@@ -117,6 +125,7 @@ func LiteratureSuperlattice() *HZOMaterial {
 		EnduranceCycles: 1e12, // Literature best-case
 		RetentionTime:   1e10, // Literature best-case
 		ImrintField:     0.5e6,
+		NumLevels:       64, // Enhanced superlattice can achieve more states
 	}
 }
 
@@ -166,9 +175,10 @@ func FeCIMMaterial() *HZOMaterial {
 		CurieTemp:       723,
 		TempCoeffEc:     -1.8e5,
 		TempCoeffPr:     -4e-5,
-		EnduranceCycles: 1e9, // 10^9 DEMONSTRATED (10^12 is TARGET)
-		RetentionTime:   1e7, // 10^7 sec (~116 days) DEMONSTRATED
+		EnduranceCycles: 1e9,  // 10^9 DEMONSTRATED (10^12 is TARGET)
+		RetentionTime:   1e7,  // 10^7 sec (~116 days) DEMONSTRATED
 		ImrintField:     1e6,
+		NumLevels:       30,   // 30 discrete analog states - VERIFIED
 	}
 }
 
@@ -211,6 +221,7 @@ func CryogenicHZO() *HZOMaterial {
 		EnduranceCycles: 1e9,     // 10^9 at ±5V verified at cryo
 		RetentionTime:   3.15e10, // >10 years at cryo (improved)
 		ImrintField:     0.3e6,   // Reduced imprint at cryo
+		NumLevels:       48,      // Enhanced polarization allows more levels
 	}
 }
 
@@ -239,6 +250,7 @@ func HZOStandard32() *HZOMaterial {
 		EnduranceCycles: 1e8,     // 10^8 cycles (2017 era)
 		RetentionTime:   3.15e8,  // 10 years projected
 		ImrintField:     1e6,
+		NumLevels:       32,      // 32 states - VERIFIED (Oh et al. 2017)
 	}
 }
 
@@ -268,6 +280,7 @@ func HZOFJT140() *HZOMaterial {
 		EnduranceCycles: 1e7,     // 10^7 cycles demonstrated
 		RetentionTime:   3.15e8,  // 10 years extrapolated
 		ImrintField:     1e6,
+		NumLevels:       140,     // 140 states - VERIFIED (Song et al. 2024)
 	}
 }
 
@@ -298,12 +311,21 @@ func AlScN() *HZOMaterial {
 		EnduranceCycles: 1e9,     // 10^9 cycles
 		RetentionTime:   3.15e8,
 		ImrintField:     1e6,
+		NumLevels:       12,      // 8-16 states (high Ec limits granularity)
 	}
 }
 
 // AllMaterials returns a slice of all available CMOS-compatible materials.
 // Use this to populate material selection dropdowns in the GUI.
+// Prefers loading from config/physics.yaml, falls back to hardcoded values.
 func AllMaterials() []*HZOMaterial {
+	// Try to load from YAML config first
+	cfg, err := physics.Load()
+	if err == nil && cfg != nil && len(cfg.Materials) > 0 {
+		return AllMaterialsFromConfig(cfg)
+	}
+
+	// Fallback to hardcoded values
 	return []*HZOMaterial{
 		DefaultHZO(),
 		FeCIMMaterial(),
@@ -314,6 +336,80 @@ func AllMaterials() []*HZOMaterial {
 		HZOFJT140(),
 		AlScN(),
 	}
+}
+
+// AllMaterialsFromConfig loads all materials from the physics config.
+// Returns materials in a consistent order for GUI display.
+func AllMaterialsFromConfig(cfg *physics.Config) []*HZOMaterial {
+	// Define order for consistent GUI display
+	order := []string{
+		"default_hzo",
+		"fecim_hzo",
+		"fecim_hzo_target",
+		"literature_superlattice",
+		"cryogenic_hzo",
+		"hzo_standard_32",
+		"hzo_ftj_140",
+		"alscn",
+	}
+
+	var materials []*HZOMaterial
+	for _, name := range order {
+		if mat := cfg.GetMaterial(name); mat != nil {
+			materials = append(materials, MaterialFromConfig(mat, cfg))
+		}
+	}
+
+	// Add any materials not in the predefined order
+	for name, mat := range cfg.Materials {
+		found := false
+		for _, orderedName := range order {
+			if name == orderedName {
+				found = true
+				break
+			}
+		}
+		if !found {
+			materials = append(materials, MaterialFromConfig(mat, cfg))
+		}
+	}
+
+	return materials
+}
+
+// MaterialFromConfig converts a physics.Material to an HZOMaterial.
+func MaterialFromConfig(m *physics.Material, cfg *physics.Config) *HZOMaterial {
+	return &HZOMaterial{
+		Name:            m.Name,
+		Pr:              m.PrCM2,
+		Ps:              m.PsCM2,
+		Ec:              m.EcVM,
+		Epsilon:         m.EpsilonHF,
+		EpsilonLF:       m.EpsilonLF,
+		LossAngle:       m.LossTangent,
+		Thickness:       m.ThicknessM,
+		Area:            m.AreaM2,
+		Tau:             m.TauS,
+		Tau0:            m.Tau0S,
+		Ea:              m.ActivationEnergyEV,
+		Alpha:           m.KAIExponent,
+		CurieTemp:       m.CurieTempK,
+		TempCoeffEc:     m.TempCoeffEc,
+		TempCoeffPr:     m.TempCoeffPr,
+		EnduranceCycles: m.EnduranceCycles,
+		RetentionTime:   m.RetentionTimeS,
+		ImrintField:     m.ImprintFieldVM,
+		NumLevels:       m.GetNumLevels(cfg),
+	}
+}
+
+// GetNumLevels returns the number of discrete analog states for this material.
+// Returns 30 as default if not specified.
+func (m *HZOMaterial) GetNumLevels() int {
+	if m.NumLevels <= 0 {
+		return 30 // Default to FeCIM's 30 levels
+	}
+	return m.NumLevels
 }
 
 // CoerciveVoltage returns the coercive voltage for a given thickness.

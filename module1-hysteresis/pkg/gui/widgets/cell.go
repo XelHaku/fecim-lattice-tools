@@ -28,7 +28,7 @@ func NewCellVisualizer() *CellVisualizer {
 	c := &CellVisualizer{
 		level:     15,
 		numLevels: 30, // Default to 30 levels
-		minSize:   fyne.NewSize(180, 220),
+		minSize:   fyne.NewSize(140, 160),
 	}
 	c.ExtendBaseWidget(c)
 	return c

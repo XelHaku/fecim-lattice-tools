@@ -343,6 +343,19 @@ func (m *Material) ThicknessNm() float64 {
 	return m.ThicknessM * 1e9
 }
 
+// GetNumLevels returns the number of discrete analog states for this material.
+// Returns the material's AnalogStates if set, otherwise falls back to the
+// global FeCIMLevels constant (default 30).
+func (m *Material) GetNumLevels(cfg *Config) int {
+	if m.AnalogStates > 0 {
+		return m.AnalogStates
+	}
+	if cfg != nil && cfg.Constants.FeCIMLevels > 0 {
+		return cfg.Constants.FeCIMLevels
+	}
+	return 30 // Ultimate fallback
+}
+
 // SaveToFile saves the current config to a YAML file.
 func (c *Config) SaveToFile(path string) error {
 	data, err := yaml.Marshal(c)

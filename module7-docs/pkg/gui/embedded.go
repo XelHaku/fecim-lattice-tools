@@ -3,6 +3,7 @@
 package gui
 
 import (
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -11,6 +12,8 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+
+	sharedWidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // EmbeddedDocsApp is the embeddable documentation viewer
@@ -30,9 +33,9 @@ type EmbeddedDocsApp struct {
 	tree          *widget.Tree
 	contentText   *widget.RichText
 	contentScroll *container.Scroll
-	breadcrumbs *BreadcrumbWidget
-	toc         *TableOfContentsWidget
-	docMetadata *DocumentMetadataWidget
+	breadcrumbs   *BreadcrumbWidget
+	toc           *TableOfContentsWidget
+	docMetadata   *DocumentMetadataWidget
 	searchDialog  *SearchDialog
 
 	// State
@@ -58,7 +61,7 @@ func (app *EmbeddedDocsApp) BuildContent(fyneApp fyne.App, window fyne.Window) f
 	app.window = window
 	app.docsPath = findDocsPath()
 
-	// Initialize search index (builds in background via goroutine internally)
+	// Initialize search index
 	app.searchIndex = NewSearchIndex(app.docsPath)
 
 	// Initialize history persistence
@@ -100,18 +103,6 @@ func (app *EmbeddedDocsApp) createUIComponents() {
 	app.toc = NewTableOfContentsWidget(func(anchor string) {
 		app.scrollToSection(anchor)
 	})
-
-	// Quick access panel
-	app.quickAccess = NewQuickAccessPanel(
-		func(path string) { app.loadDocument(path) },
-		func(path string) { app.toggleFavorite(path) },
-	)
-	// Initialize with persisted favorites
-	for _, path := range app.history.GetFavorites() {
-		if !app.quickAccess.IsFavorite(path) {
-			app.quickAccess.ToggleFavorite(path)
-		}
-	}
 
 	// Document metadata
 	app.docMetadata = NewDocumentMetadataWidget(app.window)
@@ -276,10 +267,19 @@ func (app *EmbeddedDocsApp) createDocTree() *widget.Tree {
 		},
 	)
 
-	// Handle selection - load markdown file
+	// Handle selection - load markdown file or toggle folder
 	tree.OnSelected = func(uid widget.TreeNodeID) {
-		if entry, ok := app.pathMap[uid]; ok && !entry.isDir {
-			app.loadDocument(entry.path)
+		if entry, ok := app.pathMap[uid]; ok {
+			if entry.isDir {
+				// Toggle folder open/close when clicking anywhere on the row
+				if tree.IsBranchOpen(uid) {
+					tree.CloseBranch(uid)
+				} else {
+					tree.OpenBranch(uid)
+				}
+			} else {
+				app.loadDocument(entry.path)
+			}
 		}
 	}
 
@@ -298,8 +298,13 @@ func (app *EmbeddedDocsApp) loadDocument(path string) {
 
 	markdown := string(content)
 
+	// Highlight glossary terms inline (Wikipedia-style clickable links)
+	highlightedMarkdown := HighlightGlossaryTerms(markdown)
+
 	fyne.Do(func() {
-		app.contentText.ParseMarkdown(markdown)
+		app.contentText.ParseMarkdown(highlightedMarkdown)
+		// Add click handlers to glossary:// links
+		app.setupGlossaryClickHandlers()
 	})
 	app.currentFile = path
 
@@ -308,7 +313,7 @@ func (app *EmbeddedDocsApp) loadDocument(path string) {
 		app.breadcrumbs.SetPath(path, app.docsPath)
 	})
 
-	// Update ToC
+	// Update ToC (use original markdown to avoid bold markers in headings)
 	fyne.Do(func() {
 		app.toc.ParseMarkdown(markdown)
 	})
@@ -323,12 +328,32 @@ func (app *EmbeddedDocsApp) loadDocument(path string) {
 	}
 }
 
+// setupGlossaryClickHandlers iterates through RichText segments and adds click handlers for glossary:// links
+func (app *EmbeddedDocsApp) setupGlossaryClickHandlers() {
+	for _, seg := range app.contentText.Segments {
+		if hyperlink, ok := seg.(*widget.HyperlinkSegment); ok {
+			if hyperlink.URL != nil && hyperlink.URL.Scheme == "glossary" {
+				term := hyperlink.URL.Host
+				if term == "" {
+					term = strings.TrimPrefix(hyperlink.URL.Path, "/")
+				}
+				// URL decode the term
+				if decoded, err := url.QueryUnescape(term); err == nil {
+					term = decoded
+				}
+				// Capture term for closure
+				termCopy := term
+				hyperlink.OnTapped = func() {
+					sharedWidgets.ShowGlossary(termCopy, app.window)
+				}
+			}
+		}
+	}
+}
+
 // toggleFavorite adds or removes a document from favorites
 func (app *EmbeddedDocsApp) toggleFavorite(path string) {
 	app.history.ToggleFavorite(path)
-	fyne.Do(func() {
-		app.quickAccess.ToggleFavorite(path)
-	})
 }
 
 // showSearch displays the search dialog

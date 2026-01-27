@@ -223,7 +223,7 @@ func (a *App) loadCalibration() bool {
 func (a *App) initializeTempCalibrationBounds(cal *TempCalibration) {
 	if len(cal.CalibUpLow) != a.numLevels {
 		ec := a.material.Ec
-		emax := ec * 2.5
+		emax := ec * 1.5
 		cal.CalibUpLow = make([]float64, a.numLevels)
 		cal.CalibUpHigh = make([]float64, a.numLevels)
 		cal.CalibDownLow = make([]float64, a.numLevels)
@@ -484,7 +484,7 @@ func (a *App) simulationLoop() {
 			// 3: HOLD_WRITE - return to zero, polarization persists at target
 			if a.manualAnimating {
 				Ec := mat.Ec // Use local copy for thread safety
-				Emax := Ec * 2.5 // Match calibration saturation field
+				Emax := Ec * 1.5 // Match calibration saturation field
 				phaseDuration := 0.6 / a.frequency
 				rampRate := 4.0 * Emax * a.frequency
 				maxLevelIdx := a.numLevels - 1
@@ -499,10 +499,10 @@ func (a *App) simulationLoop() {
 					var resetE float64
 					if targetLevel > startLevel {
 						// Going UP: first saturate negative (reach level 1)
-						resetE = -2.5 * Ec // Match calibration saturation
+						resetE = -1.5 * Ec // Match calibration saturation
 					} else {
 						// Going DOWN: first saturate positive (reach level N)
-						resetE = 2.5 * Ec // Match calibration saturation
+						resetE = 1.5 * Ec // Match calibration saturation
 					}
 
 					// Ramp to reset field
@@ -656,7 +656,7 @@ func (a *App) simulationLoop() {
 								if newVal < Ec*0.5 {
 									newVal = Ec * 0.5
 								} else if newVal > Ec*2.5 {
-									newVal = Ec * 2.5
+									newVal = Ec * 1.5
 								}
 								a.calibrationUp[adjIdx] = newVal
 								a.lastErrorUp[adjIdx] = levelError
@@ -700,7 +700,7 @@ func (a *App) simulationLoop() {
 								if newVal > -Ec*0.5 {
 									newVal = -Ec * 0.5
 								} else if newVal < -Ec*2.5 {
-									newVal = -Ec * 2.5
+									newVal = -Ec * 1.5
 								}
 								a.calibrationDown[adjIdx] = newVal
 								a.lastErrorDown[adjIdx] = levelError
@@ -766,10 +766,10 @@ func (a *App) simulationLoop() {
 					// Calibration was measured from saturated states, so we must match that
 					if targetLevel > midLevel {
 						// Target in upper half: saturate negative first (reach level 1), then apply ascending cal
-						resetE = -2.5 * Ec // Match calibration saturation
+						resetE = -1.5 * Ec // Match calibration saturation
 					} else {
 						// Target in lower half: saturate positive first (reach level N), then apply descending cal
-						resetE = 2.5 * Ec // Match calibration saturation
+						resetE = 1.5 * Ec // Match calibration saturation
 					}
 
 					// Ramp to reset field
@@ -933,7 +933,7 @@ func (a *App) simulationLoop() {
 								if newVal < Ec*0.5 {
 									newVal = Ec * 0.5
 								} else if newVal > Ec*2.5 {
-									newVal = Ec * 2.5
+									newVal = Ec * 1.5
 								}
 								a.calibrationUp[targetIdx] = newVal
 								a.lastErrorUp[targetIdx] = levelError
@@ -967,7 +967,7 @@ func (a *App) simulationLoop() {
 								if newVal > -Ec*0.5 {
 									newVal = -Ec * 0.5
 								} else if newVal < -Ec*2.5 {
-									newVal = -Ec * 2.5
+									newVal = -Ec * 1.5
 								}
 								a.calibrationDown[targetIdx] = newVal
 								a.lastErrorDown[targetIdx] = levelError
@@ -1431,7 +1431,7 @@ func (a *App) calibrateLevels() {
 		// Fallback to material Ec if temperature correction returns 0
 		Ec = a.material.Ec
 	}
-	Emax := 2.5 * Ec // Go slightly beyond saturation
+	Emax := 1.5 * Ec // Go slightly beyond saturation
 	numLevels := a.numLevels
 	maxLevel := numLevels - 1
 

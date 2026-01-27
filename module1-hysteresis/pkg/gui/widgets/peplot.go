@@ -288,7 +288,7 @@ func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 	if r.plot.ec > 0 && r.plot.eMax > 0 {
 		ecRatio = float32(r.plot.ec / r.plot.eMax)
 	} else {
-		ecRatio = float32(1.0 / 2.5) // Fallback: assume eMax = 2.5*Ec
+		ecRatio = float32(1.0 / 1.5) // Fallback: assume eMax = 1.5*Ec
 	}
 	ecPosX := centerX + ecRatio*plotW/2
 	ecNegX := centerX - ecRatio*plotW/2

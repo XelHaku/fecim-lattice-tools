@@ -429,12 +429,12 @@ func (a *App) createUI() fyne.CanvasObject {
 	// SAFETY: No mutex needed - createUI() called from run() before simulation goroutine starts (line 319).
 	// No concurrent access to a.material exists during UI initialization.
 
-	// Create cell visualizer (THE memory cell!) - prominent size
+	// Create cell visualizer (THE memory cell!) - responsive size
 	a.cellViz = widgets.NewCellVisualizer()
-	a.cellViz.SetMinSize(fyne.NewSize(180, 200))
+	a.cellViz.SetMinSize(fyne.NewSize(140, 160))
 
 	// Create P-E plot - will expand to fill space
-	a.plot = widgets.NewPEPlot(a.material.Ec*2.5, a.material.Ps*1.2, ColorBackground, ColorGrid, ColorAxis, ColorPositive, ColorNegative, ColorWarning)
+	a.plot = widgets.NewPEPlot(a.material.Ec*1.5, a.material.Ps*1.2, ColorBackground, ColorGrid, ColorAxis, ColorPositive, ColorNegative, ColorWarning)
 	a.plot.SetMinSize(fyne.NewSize(400, 350))
 	a.plot.SetMaterialParams(a.material.Ec, a.material.Pr)
 
@@ -505,7 +505,7 @@ func (a *App) createUI() fyne.CanvasObject {
 		logPanel,
 	)
 	leftScroll := container.NewScroll(leftScrollableContent)
-	leftScroll.SetMinSize(fyne.NewSize(200, 0))
+	leftScroll.SetMinSize(fyne.NewSize(160, 0))
 
 	// Left column: Fixed cell at top, scrollable info below
 	leftColumn := container.NewBorder(
@@ -555,7 +555,7 @@ func (a *App) createUI() fyne.CanvasObject {
 		innerSplit.SetOffset(0.75) // Plot gets 75%, controls get 25%
 
 		outerSplit := container.NewHSplit(zones[0], innerSplit)
-		outerSplit.SetOffset(0.22) // Left column gets 22%
+		outerSplit.SetOffset(0.20) // Left column gets 20%
 
 		return outerSplit
 	})

@@ -77,6 +77,7 @@ materials:
     name: "HZO (Si-doped)"
     description: "Standard Si-doped HfO2-ZrO2 from literature"
     reference: "Park et al., Adv. Mater. 27, 1811 (2015) [1]"
+    analog_states: 30           # Standard HZO achieves ~30 discrete states
 
     # Polarization parameters [1][4]
     pr_c_m2: 0.25               # Remanent polarization (C/m²) = 25 µC/cm²
@@ -114,6 +115,7 @@ materials:
     name: "FeCIM HZO"
     description: "Dr. Tour's FeCIM - DEMONSTRATED values only"
     reference: "Dr. external research group, COSM 2025 [17]"
+    analog_states: 30           # 30 discrete states - VERIFIED (Dr. Tour)
 
     # Polarization (estimated - not disclosed) [17][18]
     pr_c_m2: 0.30               # 30 µC/cm² (estimated from In2Se3 work)
@@ -152,6 +154,7 @@ materials:
     name: "FeCIM HZO (TARGET)"
     description: "Dr. Tour's FeCIM - ASPIRATIONAL targets (NOT demonstrated)"
     reference: "Dr. external research group, COSM 2025"
+    analog_states: 30           # Same as FeCIM demonstrated
 
     # Same as fecim_hzo except reliability targets
     pr_c_m2: 0.30
@@ -178,6 +181,7 @@ materials:
     name: "Literature Superlattice"
     description: "Best academic HfO2/ZrO2 superlattice results"
     reference: "Cheema et al., Nature 580, 478 (2020) [2]; Nature Commun. 2025 [3]"
+    analog_states: 64           # Enhanced superlattice supports more states
 
     # Enhanced polarization [2][3][5]
     pr_c_m2: 0.50               # 50 µC/cm² (superlattice enhanced) [5]
@@ -216,6 +220,7 @@ materials:
     name: "Cryogenic HZO"
     description: "HZO performance at 4K for quantum computing"
     reference: "Adv. Electron. Mater. 2024 [10]; 2025 [11]"
+    analog_states: 48           # Enhanced polarization at cryo enables more states
 
     # ENHANCED polarization at cryogenic temps [10]
     pr_c_m2: 0.75               # 75 µC/cm² at 4K (RECORD - improved from RT!)
@@ -524,7 +529,7 @@ simulation:
 
   # Default waveform parameters
   default_frequency_hz: 0.5     # Default frequency for waveforms
-  default_amplitude_ratio: 2.0  # Default E amplitude = 2 * Ec
+  default_amplitude_ratio: 1.5  # Default E amplitude = 1.5 * Ec (enough for switching, avoid over-saturation)
 
 # =============================================================================
 # MNIST DEMO PARAMETERS

@@ -20,7 +20,7 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 	a.levelLabel = widget.NewLabel("15/30")
 	a.stateLabel = widget.NewLabel("Intermediate")
 	a.modeIndicator = widgets.NewModeIndicator()
-	a.modeIndicator.SetMinSize(fyne.NewSize(160, 40))
+	a.modeIndicator.SetMinSize(fyne.NewSize(140, 36))
 
 	// Combined level + polarization row
 	levelRow := container.NewHBox(

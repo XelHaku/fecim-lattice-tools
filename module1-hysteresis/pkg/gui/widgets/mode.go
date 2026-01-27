@@ -24,7 +24,7 @@ type ModeIndicator struct {
 func NewModeIndicator() *ModeIndicator {
 	m := &ModeIndicator{
 		isWrite: false,
-		minSize: fyne.NewSize(200, 70),
+		minSize: fyne.NewSize(140, 50),
 	}
 	m.ExtendBaseWidget(m)
 	return m
@@ -125,19 +125,33 @@ func (r *modeRenderer) layoutWithSize(size fyne.Size) {
 	bg.Move(fyne.NewPos(padding, padding))
 	r.objects = append(r.objects, bg)
 
-	// Mode text (centered) - larger
+	// Mode text (centered) - scale with size
+	modeTextSize := size.Height * 0.4
+	if modeTextSize < 14 {
+		modeTextSize = 14
+	}
+	if modeTextSize > 24 {
+		modeTextSize = 24
+	}
 	modeLabel := canvas.NewText(modeText, color.White)
-	modeLabel.TextSize = 22
+	modeLabel.TextSize = modeTextSize
 	modeLabel.TextStyle = fyne.TextStyle{Bold: true}
-	modeTextW := float32(len(modeText)) * 13
-	modeLabel.Move(fyne.NewPos((size.Width-modeTextW)/2, 12))
+	modeTextW := float32(len(modeText)) * modeTextSize * 0.6
+	modeLabel.Move(fyne.NewPos((size.Width-modeTextW)/2, size.Height*0.15))
 	r.objects = append(r.objects, modeLabel)
 
-	// Condition text (centered, bottom) - larger
+	// Condition text (centered, bottom) - scale with size
+	condTextSize := size.Height * 0.25
+	if condTextSize < 10 {
+		condTextSize = 10
+	}
+	if condTextSize > 14 {
+		condTextSize = 14
+	}
 	condLabel := canvas.NewText(conditionText, color.RGBA{230, 230, 230, 255})
-	condLabel.TextSize = 14
-	condLabelW := float32(len(conditionText)) * 8
-	condLabel.Move(fyne.NewPos((size.Width-condLabelW)/2, 40))
+	condLabel.TextSize = condTextSize
+	condLabelW := float32(len(conditionText)) * condTextSize * 0.6
+	condLabel.Move(fyne.NewPos((size.Width-condLabelW)/2, size.Height*0.6))
 	r.objects = append(r.objects, condLabel)
 
 	// Mark cache with the effective size used
