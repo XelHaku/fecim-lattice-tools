@@ -2,32 +2,30 @@
 package crossbar
 
 import (
+	"fecim-lattice-tools/shared/physics"
 	"fmt"
 	"math"
 	"math/rand"
 )
 
 // DefaultQuantizationLevels is the standard number of discrete analog states.
-// "It's got 30 discrete states. So it's not 0-1-0-1."
-const DefaultQuantizationLevels = 30
+// Alias to shared/physics for backward compatibility.
+const DefaultQuantizationLevels = physics.DefaultLevels
 
-// Conductance range constants (physical units)
+// Conductance range constants (physical units) - aliases to shared/physics
 const (
-	GMin = 10e-6  // 10 µS minimum conductance (OFF state)
-	GMax = 100e-6 // 100 µS maximum conductance (ON state)
+	GMin = physics.GMin
+	GMax = physics.GMax
 )
 
-// ConductanceModel specifies the G(V) relationship model.
-type ConductanceModel int
+// ConductanceModel is an alias to physics.ConductanceModel for backward compatibility.
+type ConductanceModel = physics.ConductanceModel
 
+// Conductance model constants - aliases to shared/physics
 const (
-	// ConductanceLinear uses linear interpolation: G = Gmin + gNorm*(Gmax-Gmin)
-	ConductanceLinear ConductanceModel = iota
-	// ConductanceExponential uses exponential scaling: G = Gmin * exp(ln(Gmax/Gmin) * gNorm)
-	// This models realistic FeFET behavior where conductance varies exponentially with polarization
-	ConductanceExponential
-	// ConductanceLookup uses a pre-defined calibration table
-	ConductanceLookup
+	ConductanceLinear      = physics.ConductanceLinear
+	ConductanceExponential = physics.ConductanceExponential
+	ConductanceLookup      = physics.ConductanceLookup
 )
 
 // Config contains crossbar array configuration.

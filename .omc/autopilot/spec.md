@@ -1,61 +1,93 @@
-# Autopilot Spec: Fix docs/ Format Issues
+# Autopilot Spec: Module Refactoring to Shared Utilities
 
-## Summary
+## Overview
+Refactor Module 2 (crossbar) and Module 4 (circuits) to use the new shared utilities in `shared/physics` and `shared/peripherals`.
 
-Fix formatting issues and broken links across 77+ markdown files in `<local-path>`.
+## Functional Requirements
 
-## Scope
+### Module 2 Changes
+Replace local definitions with shared imports:
+- `DefaultQuantizationLevels` → `physics.DefaultLevels`
+- `GMin`, `GMax` → `physics.GMin`, `physics.GMax`
+- `ConductanceModel` enum → `physics.ConductanceModel`
+- `QuantizeToLevels()` → `physics.QuantizeTo30Levels()`
+- `GetLevel()` → `physics.GetLevelFor30()`
 
-- 77+ markdown files in docs/
-- 1 mermaid diagram (SKY130.md)
-- 71 files with ASCII diagrams
-- Multiple tables across files
+### Module 4 Changes
+- Verify `ADCType` enum aligns with `peripherals.ADCType`
+- Can optionally use `peripherals.DefaultDACConfig()` / `DefaultADCConfig()` for reference
 
-## HIGH Priority Fixes (7 instances)
+### Backward Compatibility
+- Keep type aliases for exported types
+- Keep wrapper functions that call shared versions
+- All existing tests must pass
 
-### Broken `file://` Links
+## Files to Modify
 
-These machine-specific absolute paths must be converted to relative paths:
+### Module 2 Core (PRIMARY)
+1. `module2-crossbar/pkg/crossbar/array.go` - Main constants and functions
+2. `module2-crossbar/pkg/crossbar/drift.go` - Uses GMin, GMax
+3. `module2-crossbar/pkg/crossbar/temperature.go` - Uses GMin, GMax
+4. `module2-crossbar/pkg/crossbar/enhanced.go` - Uses ConductanceModel
 
-| File | Line | Issue | Fix |
-|------|------|-------|-----|
-| `docs/eda/SKY130.md` | 19 | `file://<local-path>` | `../sky130-reference/` |
-| `docs/eda/SKY130.md` | 104 | `file://<local-path>` | `../sky130-reference/SKY130_QUICK_REFERENCE.md` |
-| `docs/eda/SKY130.md` | 243 | `file://<local-path>` | `../sky130-reference/SKY130_QUICK_REFERENCE.md#metal-layer-stack` |
-| `docs/eda/SKY130.md` | 244 | `file://<local-path>` | `../sky130-reference/SKY130_QUICK_REFERENCE.md#fecim-custom-cell-design-guidelines` |
-| `docs/eda/SKY130.md` | 245 | `file://<local-path>` | `../sky130-reference/SKY130_QUICK_REFERENCE.md#openlane-integration` |
-| `docs/eda/SKY130.md` | 251 | `file://<local-path>` | `../sky130-reference/SKY130_QUICK_REFERENCE.md` |
-| `docs/opensource-tools/walkthrough_final.md` | 7 | `file://<local-path>` | `./research_notes_final.md` |
+### Module 2 Tests
+5. `module2-crossbar/pkg/crossbar/array_test.go`
+6. `module2-crossbar/pkg/crossbar/improvements_test.go`
 
-## MEDIUM Priority Fixes (4 instances)
+### Module 2 GUI (reference only, minimal changes)
+7. `module2-crossbar/pkg/gui/tooltips.go`
+8. `module2-crossbar/pkg/gui/callbacks.go`
+9. `module2-crossbar/pkg/gui/app_tabs.go`
+10. `module2-crossbar/pkg/gui/app_analysis.go`
+11. `module2-crossbar/pkg/gui/vectors.go`
 
-### Old Project Name References
+### Module 4 (verify alignment only)
+12. `module4-circuits/pkg/peripherals/adc.go` - ADCType enum
 
-| File | Line | Current | Fix |
-|------|------|---------|-----|
-| `docs/eda/plan-demo6-improvements.md` | 211 | `github.com/yourusername/ironlattice-vis` | `github.com/your-org/fecim-lattice-tools` |
-| `docs/eda/plan-demo6-improvements.md` | 381 | `github.com/[your-username]/ironlattice-vis/tree/main/module6-eda` | `github.com/your-org/fecim-lattice-tools/tree/main/module6-eda` |
-| `docs/eda/plan-demo6.md` | 3282 | `github.com/XelHaku/ironlattice-vis/tree/main/module6-eda` | `github.com/your-org/fecim-lattice-tools/tree/main/module6-eda` |
-| `docs/eda/plan-demo6.md` | 3354 | `Repository: github.com/XelHaku/ironlattice-vis` | `Repository: github.com/your-org/fecim-lattice-tools` |
+## Implementation Strategy
 
-## Validated: No Issues
+### Phase 1: Add Backward-Compatible Aliases in Module 2
+In `array.go`, keep existing constants as aliases:
+```go
+import "fecim-lattice-tools/shared/physics"
 
-- **Mermaid diagram** in SKY130.md (lines 141-150): Valid `graph LR` syntax
-- **Markdown tables**: All have proper `|---|` header separators
-- **ASCII art**: Properly enclosed in code blocks
+// Backward-compatible aliases
+const DefaultQuantizationLevels = physics.DefaultLevels
+const GMin = physics.GMin
+const GMax = physics.GMax
 
-## Out of Scope
+type ConductanceModel = physics.ConductanceModel
+const (
+    ConductanceLinear = physics.ConductanceLinear
+    ConductanceExponential = physics.ConductanceExponential
+    ConductanceLookup = physics.ConductanceLookup
+)
 
-- Content rewrites
-- Adding new documentation
-- Modifying ASCII art inside code blocks
-- Changing tables inside code blocks
+// Wrapper functions for backward compatibility
+func QuantizeToLevels(value float64) float64 {
+    return physics.QuantizeTo30Levels(value)
+}
 
-## Implementation Plan
+func GetLevel(conductance float64) int {
+    return physics.GetLevelFor30(conductance)
+}
+```
 
-1. Fix SKY130.md file:// links (6 edits)
-2. Fix walkthrough_final.md broken link (1 edit)
-3. Update project name in plan-demo6-improvements.md (2 edits)
-4. Update project name in plan-demo6.md (2 edits)
+### Phase 2: Update Internal Files
+Update `drift.go`, `temperature.go`, `enhanced.go` to import from shared/physics directly.
 
-**Total: 11 targeted edits across 4 files**
+### Phase 3: Verify Module 4 Alignment
+Confirm `ADCType` in Module 4 matches `peripherals.ADCType`.
+
+### Phase 4: Run Tests
+Verify all 117+ tests pass.
+
+## Acceptance Criteria
+1. `go build ./...` succeeds
+2. `go test ./...` passes all tests
+3. No breaking changes to public API
+4. Shared utilities are properly imported
+
+---
+**EXPANSION_COMPLETE**
+**PLANNING_COMPLETE**

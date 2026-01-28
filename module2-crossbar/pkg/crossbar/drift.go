@@ -86,8 +86,8 @@ func NewDriftSimulator(rows, cols int, levels int) *DriftSimulator {
 	conductances := make([][]float64, rows)
 	initialConds := make([][]float64, rows)
 
-	gMin := 1e-6   // 1µS minimum
-	gMax := 100e-6 // 100µS maximum
+	gMin := GMin   // Use package constant
+	gMax := GMax   // Use package constant
 
 	for i := range conductances {
 		conductances[i] = make([]float64, cols)
