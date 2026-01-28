@@ -313,6 +313,16 @@ Real output:     ─╱╲╱╲╱╲╱╲╱╲╱╲─
 
 ---
 
+## Want to Go Deeper?
+
+For the physics behind CIM operations, see **[circuits.CIM-fundamentals.md](circuits.CIM-fundamentals.md)** which explains:
+- How Ohm's Law enables in-memory multiplication
+- How Kirchhoff's Current Law enables accumulation
+- Non-destructive read mechanisms
+- Partial polarization for multi-level states
+
+---
+
 # Part 7: Perfect Peripheral Module Specification for FeCIM
 
 ## What the Production Module MUST Do

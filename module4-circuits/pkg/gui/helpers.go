@@ -203,41 +203,33 @@ func drawGlowCircle(img *image.RGBA, cx, cy, radius int, centerColor, glowColor 
 	}
 }
 
-// levelToColor converts a FeCIM level (0-29) to a visually appealing color.
-// Uses a blue->cyan->green->yellow->red gradient for better visual differentiation.
+// levelToColor converts a FeCIM level to a color based on state relative to mid-level.
+// Below mid: Blue (low conductance)
+// At mid: Gray/neutral
+// Above mid: Red (high conductance)
 func levelToColor(level, maxLevel int) color.RGBA {
 	if maxLevel <= 1 {
-		return color.RGBA{100, 100, 200, 255}
+		return color.RGBA{128, 128, 128, 255} // Gray for single level
 	}
 
-	t := float64(level) / float64(maxLevel-1) // 0.0 to 1.0
-
+	mid := (maxLevel - 1) / 2
 	var r, g, b uint8
 
-	if t < 0.25 {
-		// Blue to Cyan (0.0 - 0.25)
-		s := t / 0.25
-		r = uint8(30)
-		g = uint8(80 + s*120)
-		b = uint8(200)
-	} else if t < 0.5 {
-		// Cyan to Green (0.25 - 0.5)
-		s := (t - 0.25) / 0.25
-		r = uint8(30 + s*50)
-		g = uint8(200)
-		b = uint8(200 - s*150)
-	} else if t < 0.75 {
-		// Green to Yellow (0.5 - 0.75)
-		s := (t - 0.5) / 0.25
-		r = uint8(80 + s*175)
-		g = uint8(200)
-		b = uint8(50 - s*20)
+	if level < mid {
+		// Below mid: Blue gradient (darker blue for lower states)
+		t := float64(level) / float64(mid) // 0.0 to ~1.0
+		r = uint8(40 + t*40)               // 40 -> 80
+		g = uint8(60 + t*60)               // 60 -> 120
+		b = uint8(180 + t*40)              // 180 -> 220
+	} else if level > mid {
+		// Above mid: Red gradient (brighter red for higher states)
+		t := float64(level-mid) / float64(maxLevel-1-mid) // 0.0 to 1.0
+		r = uint8(180 + t*75)                              // 180 -> 255
+		g = uint8(100 - t*60)                              // 100 -> 40
+		b = uint8(80 - t*40)                               // 80 -> 40
 	} else {
-		// Yellow to Red (0.75 - 1.0)
-		s := (t - 0.75) / 0.25
-		r = uint8(255)
-		g = uint8(200 - s*150)
-		b = uint8(30)
+		// At mid: Gray (neutral state)
+		r, g, b = 140, 140, 150
 	}
 
 	return color.RGBA{r, g, b, 255}

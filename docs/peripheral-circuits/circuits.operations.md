@@ -787,6 +787,7 @@ The mode help text dynamically updates based on architecture:
 
 ## Related Documentation
 
+- **[circuits.CIM-fundamentals.md](circuits.CIM-fundamentals.md)** — CIM physics: how read/write/compute works (NEW)
 - **[circuits.research.md](circuits.research.md)** — Peripheral circuits meta-study
 - **[circuits.ELI5.md](circuits.ELI5.md)** — Simple explanations + module spec
 - **[circuits.opensource.md](circuits.opensource.md)** — Open-source tools

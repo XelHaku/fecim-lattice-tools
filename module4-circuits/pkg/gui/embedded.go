@@ -6,6 +6,7 @@ import (
 	"fyne.io/fyne/v2"
 
 	"fecim-lattice-tools/module4-circuits/pkg/peripherals"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // EmbeddedCircuitsApp holds the state for an embedded demo instance
@@ -16,19 +17,20 @@ type EmbeddedCircuitsApp struct {
 // NewEmbeddedCircuitsApp creates a new embedded circuits app (for use in unified visualizer)
 func NewEmbeddedCircuitsApp() *EmbeddedCircuitsApp {
 	ca := &CircuitsApp{
-		arrayRows:   DefaultSize,
-		arrayCols:   DefaultSize,
-		quantLevels: FeCIMLevels,
-		dacBits:     DefaultDACBits,
-		adcBits:     DefaultADCBits,
-		vMin:        2.0,
-		vMax:        5.0,
-		pulseWidth:  50.0,
-		readVoltage: 0.5,
-		tiaGain:     10.0,
-		selectedRow: 3,
-		selectedCol: 5,
-		targetLevel: 15,
+		arrayRows:    DefaultSize,
+		arrayCols:    DefaultSize,
+		quantLevels:  FeCIMLevels,
+		dacBits:      DefaultDACBits,
+		adcBits:      DefaultADCBits,
+		vMin:         2.0,
+		vMax:         5.0,
+		pulseWidth:   50.0,
+		readVoltage:  0.5,
+		tiaGain:      10.0,
+		selectedRow:  3,
+		selectedCol:  5,
+		targetLevel:  15,
+		architecture: sharedwidgets.Architecture0T1R, // Default to passive for educational demo
 	}
 
 	// Initialize peripheral components

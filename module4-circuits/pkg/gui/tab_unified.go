@@ -33,7 +33,7 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 
 	// In passive (0T1R) mode, all WLs are always active - no transistor gating
 	if ca.architecture == sharedwidgets.Architecture0T1R {
-		ca.deviceState.SetWLAll()
+		ca.deviceState.SetPassiveMode(true)
 	}
 
 	// 1. Signal chain header
@@ -259,18 +259,26 @@ func (ca *CircuitsApp) createWLSelector() fyne.CanvasObject {
 		idx := i
 		// H4 FIX: Clearer labels - "Row 0" instead of "WL0"
 		check := widget.NewCheck(fmt.Sprintf("Row %d", i), nil)
+
+		// Store in array BEFORE setting checked state (OnChanged may reference it)
+		ca.unifiedWLChecks[i] = check
+
 		check.OnChanged = func(checked bool) {
 			// In passive mode, ignore checkbox changes - all lines always active
 			if ca.architecture == sharedwidgets.Architecture0T1R {
 				fyne.Do(func() {
-					ca.unifiedWLChecks[idx].SetChecked(true)
+					if ca.unifiedWLChecks[idx] != nil {
+						ca.unifiedWLChecks[idx].SetChecked(true)
+					}
 				})
 				return
 			}
 			// In compute mode, all rows must be active
 			if ca.deviceState != nil && ca.deviceState.GetOperationMode() == OpModeCompute {
 				fyne.Do(func() {
-					ca.unifiedWLChecks[idx].SetChecked(true)
+					if ca.unifiedWLChecks[idx] != nil {
+						ca.unifiedWLChecks[idx].SetChecked(true)
+					}
 				})
 				return
 			}
@@ -279,7 +287,6 @@ func (ca *CircuitsApp) createWLSelector() fyne.CanvasObject {
 		// In passive mode, all WLs start active; otherwise only row 0
 		isPassive := ca.architecture == sharedwidgets.Architecture0T1R
 		check.SetChecked(isPassive || i == 0)
-		ca.unifiedWLChecks[i] = check
 		checkboxes.Add(check)
 	}
 
@@ -1326,12 +1333,22 @@ func (ca *CircuitsApp) updateDACEntries() {
 }
 
 // updateWLCheckboxes updates the WL checkbox states
+// In passive mode, all checkboxes are checked AND disabled (all WLs always on)
 func (ca *CircuitsApp) updateWLCheckboxes() {
+	isPassive := ca.architecture == sharedwidgets.Architecture0T1R
+
 	for i, check := range ca.unifiedWLChecks {
 		if check != nil {
 			isActive := ca.deviceState.IsRowActive(i)
 			fyne.Do(func() {
-				check.SetChecked(isActive)
+				if isPassive {
+					// Passive mode: all WLs always on, checkboxes disabled
+					check.SetChecked(true)
+					check.Disable()
+				} else {
+					check.Enable()
+					check.SetChecked(isActive)
+				}
 			})
 		}
 	}
@@ -1518,8 +1535,8 @@ func (ca *CircuitsApp) createArchitectureToggle() fyne.CanvasObject {
 		ca.architecture = sharedwidgets.Architecture0T1R
 		ca.mu.Unlock()
 		updateArchButtons()
-		// Passive mode: all WLs always active (no transistor gating)
-		ca.deviceState.SetWLAll()
+		// Passive mode: all WLs always active, cannot be changed
+		ca.deviceState.SetPassiveMode(true)
 		ca.updateWLCheckboxesForArchitecture()
 		ca.recomputeAndRefresh()
 	}
@@ -1532,7 +1549,8 @@ func (ca *CircuitsApp) createArchitectureToggle() fyne.CanvasObject {
 		ca.architecture = sharedwidgets.Architecture1T1R
 		ca.mu.Unlock()
 		updateArchButtons()
-		// 1T1R: restore single-row selection capability
+		// 1T1R: disable passive mode, restore single-row selection
+		ca.deviceState.SetPassiveMode(false)
 		ca.deviceState.SetWLSingle(ca.deviceState.GetSelectedRow())
 		ca.updateWLCheckboxesForArchitecture()
 		ca.recomputeAndRefresh()
@@ -1546,7 +1564,8 @@ func (ca *CircuitsApp) createArchitectureToggle() fyne.CanvasObject {
 		ca.architecture = sharedwidgets.Architecture2T1R
 		ca.mu.Unlock()
 		updateArchButtons()
-		// 2T1R: restore single-row selection capability
+		// 2T1R: disable passive mode, restore single-row selection
+		ca.deviceState.SetPassiveMode(false)
 		ca.deviceState.SetWLSingle(ca.deviceState.GetSelectedRow())
 		ca.updateWLCheckboxesForArchitecture()
 		ca.recomputeAndRefresh()

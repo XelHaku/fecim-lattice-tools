@@ -11,6 +11,25 @@ import (
 // "It's got 30 discrete states. So it's not 0-1-0-1."
 const DefaultQuantizationLevels = 30
 
+// Conductance range constants (physical units)
+const (
+	GMin = 10e-6  // 10 µS minimum conductance (OFF state)
+	GMax = 100e-6 // 100 µS maximum conductance (ON state)
+)
+
+// ConductanceModel specifies the G(V) relationship model.
+type ConductanceModel int
+
+const (
+	// ConductanceLinear uses linear interpolation: G = Gmin + gNorm*(Gmax-Gmin)
+	ConductanceLinear ConductanceModel = iota
+	// ConductanceExponential uses exponential scaling: G = Gmin * exp(ln(Gmax/Gmin) * gNorm)
+	// This models realistic FeFET behavior where conductance varies exponentially with polarization
+	ConductanceExponential
+	// ConductanceLookup uses a pre-defined calibration table
+	ConductanceLookup
+)
+
 // Config contains crossbar array configuration.
 type Config struct {
 	Rows       int     // Number of rows (word lines)
@@ -18,13 +37,79 @@ type Config struct {
 	NoiseLevel float64 // Device-to-device variation (0-1)
 	ADCBits    int     // ADC resolution in bits
 	DACBits    int     // DAC resolution in bits
+
+	// Conductance model configuration
+	ConductanceModel ConductanceModel // Model type (linear, exponential, lookup)
+	ConductanceTable []float64        // Calibration table for lookup model (length = 30)
+
+	// Endurance tracking configuration
+	Endurance *EnduranceConfig
+
+	// Process variation configuration
+	ProcessVariation *ProcessVariationConfig
+
+	// Half-select disturb configuration
+	HalfSelect *HalfSelectConfig
 }
 
 // Cell represents a single ferroelectric memory cell.
 type Cell struct {
-	Conductance    float64 // Programmed conductance (normalized 0-1)
-	NoiseFactor    float64 // Per-cell noise factor
-	SwitchingCount int64   // Number of write cycles
+	Conductance     float64 // Programmed conductance (normalized 0-1)
+	NoiseFactor     float64 // Per-cell noise factor
+	SwitchingCount  int64   // Number of write cycles
+	HalfSelectCount int64   // Number of half-select (V/2) exposures
+	DisturbShift    float64 // Accumulated drift from half-select disturb
+}
+
+// EnduranceConfig configures endurance/fatigue modeling.
+type EnduranceConfig struct {
+	Enabled          bool  // Enable endurance modeling
+	FatigueThreshold int64 // Cycles before degradation starts (e.g., 10^8)
+	FailureThreshold int64 // Cycles at 50% window degradation (e.g., 10^12)
+}
+
+// DefaultEnduranceConfig returns default endurance settings.
+// Based on literature: FeFET 10^9-10^12 cycle endurance (IEEE IRPS 2022, Nano Letters 2024).
+func DefaultEnduranceConfig() *EnduranceConfig {
+	return &EnduranceConfig{
+		Enabled:          false, // Off by default for performance
+		FatigueThreshold: 100_000_000,       // 10^8 cycles
+		FailureThreshold: 1_000_000_000_000, // 10^12 cycles
+	}
+}
+
+// ProcessVariationConfig configures systematic process variation.
+type ProcessVariationConfig struct {
+	DeviceSigma float64 // Device-to-device variation (sigma, normalized)
+	GradientX   float64 // Horizontal gradient (%/cell from center)
+	GradientY   float64 // Vertical gradient (%/cell from center)
+	EdgeEffect  float64 // Edge cell degradation factor (0-1)
+}
+
+// DefaultProcessVariationConfig returns default process variation settings.
+func DefaultProcessVariationConfig() *ProcessVariationConfig {
+	return &ProcessVariationConfig{
+		DeviceSigma: 0.02,  // 2% device-to-device variation
+		GradientX:   0.001, // 0.1% per cell horizontal gradient
+		GradientY:   0.001, // 0.1% per cell vertical gradient
+		EdgeEffect:  0.05,  // 5% edge degradation
+	}
+}
+
+// HalfSelectConfig configures half-select disturb modeling.
+type HalfSelectConfig struct {
+	Enabled          bool    // Enable half-select disturb tracking
+	DisturbThreshold float64 // V/Vc threshold for disturb (typically 0.3)
+	DisturbRate      float64 // Conductance shift per half-select pulse
+}
+
+// DefaultHalfSelectConfig returns default half-select settings.
+func DefaultHalfSelectConfig() *HalfSelectConfig {
+	return &HalfSelectConfig{
+		Enabled:          false, // Off by default for performance
+		DisturbThreshold: 0.3,   // 30% of Vc threshold
+		DisturbRate:      0.001, // 0.1% conductance shift per pulse
+	}
 }
 
 // Array represents a crossbar array of ferroelectric cells.

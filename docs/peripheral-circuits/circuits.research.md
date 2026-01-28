@@ -557,6 +557,7 @@ Charge Pump Vout = (N+1) × Vin - losses
 
 | Term | Definition |
 |------|------------|
+| **CIM** | Compute-in-Memory |
 | **ADC** | Analog-to-Digital Converter |
 | **DAC** | Digital-to-Analog Converter |
 | **TIA** | Transimpedance Amplifier |

@@ -97,6 +97,9 @@ type DeviceState struct {
 	rows int
 	cols int
 
+	// Passive mode flag - when true, ALL WLs are always on (0T1R architecture)
+	isPassive bool
+
 	// Operation mode (READ/WRITE/COMPUTE)
 	opMode OpMode // Current operation mode
 
@@ -267,8 +270,30 @@ func (ds *DeviceState) GetCurrentVoltageRange() VoltageRange {
 	return ds.readRange
 }
 
+// SetPassiveMode sets whether the device is in passive mode (0T1R)
+// In passive mode, all WLs are ALWAYS on and cannot be changed
+func (ds *DeviceState) SetPassiveMode(passive bool) {
+	ds.isPassive = passive
+	if passive {
+		// Force all WLs on
+		ds.wlMode = WLAll
+		for i := range ds.activeRows {
+			ds.activeRows[i] = true
+		}
+	}
+}
+
+// IsPassiveMode returns true if in passive mode (all WLs always on)
+func (ds *DeviceState) IsPassiveMode() bool {
+	return ds.isPassive
+}
+
 // SetWLSingle activates only the specified row
+// In passive mode, this is ignored - all WLs stay on
 func (ds *DeviceState) SetWLSingle(row int) {
+	if ds.isPassive {
+		return // Passive mode: all WLs always on, ignore
+	}
 	ds.wlMode = WLSingle
 	ds.selectedRow = row
 	for i := range ds.activeRows {
@@ -285,7 +310,11 @@ func (ds *DeviceState) SetWLAll() {
 }
 
 // SetWLCustom sets a custom WL pattern
+// In passive mode, this is ignored - all WLs stay on
 func (ds *DeviceState) SetWLCustom(pattern []bool) {
+	if ds.isPassive {
+		return // Passive mode: all WLs always on, ignore
+	}
 	ds.wlMode = WLCustom
 	copy(ds.activeRows, pattern)
 }

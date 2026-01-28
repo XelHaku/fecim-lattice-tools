@@ -798,6 +798,17 @@ module4-circuits/
 
 ---
 
+---
+
+## Related Documentation
+
+- **[circuits.CIM-fundamentals.md](circuits.CIM-fundamentals.md)** — CIM physics: how read/write/compute works
+- **[circuits.operations.md](circuits.operations.md)** — 0T1R vs 1T1R architecture operations
+- **[circuits.research.md](circuits.research.md)** — Peripheral circuits meta-study
+- **[circuits.ELI5.md](circuits.ELI5.md)** — Simple explanations for beginners
+
+---
+
 ## Appendix: Quick Installation Guide
 
 ```bash
