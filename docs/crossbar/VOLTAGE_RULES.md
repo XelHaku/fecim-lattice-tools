@@ -1121,16 +1121,65 @@ Sneak Path Suppression:
 
 ## References
 
-### 9.1 Cross-Links to Existing Documentation
+### 9.1 Internal Documentation Cross-Links
 
-| Document | Section | Relevant Content |
-|----------|---------|------------------|
-| **ARCHITECTURES.md** | §3-5 | 0T1R, 1T1R, 2T1R voltage configurations |
-| **PHYSICS.md** | §2-3 | Conductance models, MVM operation |
-| **circuits.operations.md** | §2 WRITE | V/2 scheme, half-select disturb |
-| **circuits.peripherals.md** | §1-4 | DAC, ADC, TIA, charge pump specifications |
+| Document | Path | Relevant Content |
+|----------|------|------------------|
+| CLAUDE.md | /CLAUDE.md | Verified claims table, physics constants |
+| ARCHITECTURES.md | docs/crossbar/ARCHITECTURES.md | 0T1R, 1T1R, 2T1R voltage configurations, sneak path analysis |
+| PHYSICS.md | docs/crossbar/PHYSICS.md | Conductance models, MVM operation, non-idealities |
+| HONESTY_AUDIT.md | docs/comparison/HONESTY_AUDIT.md | Complete verification of all claims with DOIs |
+| circuits.operations.md | docs/peripheral-circuits/circuits.operations.md | V/2 scheme, half-select disturb, write sequences |
+| circuits.peripherals.md | docs/peripheral-circuits/circuits.peripherals.md | DAC, ADC, TIA, charge pump specifications |
+| ELI5.md | docs/ELI5.md | Simplified explanations with key paper links |
 
-### 9.2 Code File References
+### 9.2 Peer-Reviewed Papers - Material Properties (Ec, Pr)
+
+| Parameter | Value | Source | DOI |
+|-----------|-------|--------|-----|
+| Ec (standard) | 1.0-1.5 MV/cm | Nature Commun. 2025 | 10.1038/s41467-025-61758-2 |
+| Ec (engineered, low) | 0.6-0.85 MV/cm | Nano Letters 2024 | 10.1021/acs.nanolett.4c00263 |
+| Pr (room temp) | 15-34 µC/cm² | Nature Commun. 2025 | 10.1038/s41467-025-61758-2 |
+| Pr (cryogenic 4K) | 75 µC/cm² | Adv. Elec. Mat. 2024 | 10.1002/aelm.202300879 |
+| Pr (BEOL 300C) | 36.4 µC/cm² | ACS AMI 2025 | 10.1021/acsami.5c08743 |
+| Sub-1V switching | 0.5V @ 3.6nm | ACS AMI 2024 | 10.1021/acsami.4c10002 |
+
+### 9.3 Peer-Reviewed Papers - Multi-Level States
+
+| States | Source | DOI | Notes |
+|--------|--------|-----|-------|
+| 140 levels | Song, Adv. Science 2024 | 10.1002/advs.202308588 | Maximum demonstrated |
+| 32 levels | Oh, IEEE EDL 2017 | 10.1109/LED.2017.2698083 | Historical benchmark |
+| 32 levels (5-bit) | Samsung Nature 2025 | 10.1038/s41586-025-09793-3 | Production-ready |
+
+### 9.4 Peer-Reviewed Papers - Endurance
+
+| Cycles | Material | Source | DOI |
+|--------|----------|--------|-----|
+| 10¹² | V-doped HfO₂ | Nano Letters 2024 | 10.1021/acs.nanolett.4c05671 |
+| >10¹¹ | Sliding ferroelectrics | Science 2024 | 10.1126/science.adp3575 |
+| 10¹⁰ | AlScN | Nature Commun. 2025 | 10.1038/s41467-025-68221-2 |
+| 10⁹ | HZO (standard) | IEEE IRPS 2022 | Industry baseline |
+
+### 9.5 Peer-Reviewed Papers - Architecture & Biasing
+
+| Topic | Source | DOI |
+|-------|--------|-----|
+| Sneak path analysis | Linn et al., Nature Materials 2010 | 10.1038/nmat2856 |
+| Half-select disturb (V/2) | Cassuto et al., IEEE Trans. IT 2013 | 10.1109/TIT.2013.2274515 |
+| IR drop compensation | Chen & Yu, IEEE Trans. CAD 2018 | 10.1109/TCAD.2017.2666061 |
+| 1T1R architecture | Chen & Lin, IEEE TED 2015 | 10.1109/TED.2015.2435433 |
+| BEOL FeFET integration | Aabrar et al., IEEE TED 2022 | 10.1109/TED.2022.3141991 |
+| 256×256 FeFET array | Jerry et al., IEEE IEDM 2017 | 10.1109/IEDM.2017.8268338 |
+
+### 9.6 Peer-Reviewed Papers - Energy Efficiency
+
+| Comparison | Improvement | Source | DOI |
+|------------|-------------|--------|-----|
+| vs NAND | 25-100× | Samsung Nature 2025 | 10.1038/s41586-025-09793-3 |
+| vs GPU (LLM) | 70,000× | Nature Comp. Sci. 2025 | 10.1038/s43588-025-00854-1 |
+
+### 9.7 Code File References
 
 | File | Lines | Content |
 |------|-------|---------|
@@ -1144,14 +1193,12 @@ Sneak Path Suppression:
 | `module2-crossbar/pkg/crossbar/sneakpath.go` | 219-220 | Half-select voltage struct |
 | `module4-circuits/pkg/gui/device_state.go` | 273-282 | Passive mode WL enforcement |
 
-### 9.3 Peer-Reviewed Physics References
+### 9.8 Dr. external research group Primary Source
 
-| Parameter | Source | DOI/Reference |
-|-----------|--------|---------------|
-| Ec: 0.6-1.5 MV/cm | Nature Commun. 2025 | doi:10.1038/s41467-025-61758-2 |
-| Ec: 0.6-1.5 MV/cm | Nano Letters 2024 | Various FeFET papers |
-| Pr: 15-34 µC/cm² | Nature Commun. 2025 | doi:10.1038/s41467-025-61758-2 |
-| Pr: 75 µC/cm² @ 4K | Adv. Elec. Mat. 2024 | doi:10.1002/aelm.202300879 |
+| Content | Source | Location |
+|---------|--------|----------|
+| FeCIM 30-level concept | COSM 2025 Conference | docs/video-transcripts/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md |
+| Note: Conference presentation, not peer-reviewed | | |
 
 ---
 
