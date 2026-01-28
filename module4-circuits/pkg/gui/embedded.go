@@ -107,7 +107,7 @@ func (e *EmbeddedCircuitsApp) Start() {
 func (e *EmbeddedCircuitsApp) Stop() {
 	// Signal all goroutines to stop
 	e.mu.Lock()
-	if !e.stopped {
+	if !e.stopped && e.stopChan != nil {
 		e.stopped = true
 		close(e.stopChan)
 	}

@@ -470,7 +470,65 @@ func TestLoadWeightsForLevel_DefaultFallback(t *testing.T) {
 // 3. GetBestMatchingWeightsLevel tests
 // ===========================
 
+// createTestWeightsDir creates a temp directory with mock weight files for testing.
+func createTestWeightsDir(t *testing.T, levels []int) string {
+	t.Helper()
+	dir := t.TempDir()
+
+	for _, l := range levels {
+		var filename string
+		if l == 30 {
+			filename = "pretrained_weights.json"
+		} else {
+			filename = fmt.Sprintf("pretrained_weights_%d.json", l)
+		}
+		path := filepath.Join(dir, filename)
+		if err := os.WriteFile(path, []byte("{}"), 0644); err != nil {
+			t.Fatalf("Failed to create test weight file: %v", err)
+		}
+	}
+
+	return dir
+}
+
+func TestScanAvailableQATLevels(t *testing.T) {
+	// Test with multiple levels
+	t.Run("MultipleLevels", func(t *testing.T) {
+		dir := createTestWeightsDir(t, []int{10, 20, 30})
+		levels := ScanAvailableQATLevels(dir)
+		expected := []int{10, 20, 30}
+		if len(levels) != len(expected) {
+			t.Errorf("Expected %v, got %v", expected, levels)
+		}
+		for i, l := range levels {
+			if l != expected[i] {
+				t.Errorf("At index %d: expected %d, got %d", i, expected[i], l)
+			}
+		}
+	})
+
+	// Test with only default 30-level weights
+	t.Run("OnlyDefault30", func(t *testing.T) {
+		dir := createTestWeightsDir(t, []int{30})
+		levels := ScanAvailableQATLevels(dir)
+		if len(levels) != 1 || levels[0] != 30 {
+			t.Errorf("Expected [30], got %v", levels)
+		}
+	})
+
+	// Test with empty directory (should return [30] as fallback)
+	t.Run("EmptyDir", func(t *testing.T) {
+		dir := t.TempDir()
+		levels := ScanAvailableQATLevels(dir)
+		if len(levels) != 1 || levels[0] != 30 {
+			t.Errorf("Expected [30] fallback, got %v", levels)
+		}
+	})
+}
+
 func TestGetBestMatchingWeightsLevel_ExactMatch(t *testing.T) {
+	dir := createTestWeightsDir(t, []int{10, 20, 29, 30, 31})
+
 	testCases := []struct {
 		target   int
 		expected int
@@ -484,7 +542,7 @@ func TestGetBestMatchingWeightsLevel_ExactMatch(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("Target%d", tc.target), func(t *testing.T) {
-			result := GetBestMatchingWeightsLevel(tc.target)
+			result := GetBestMatchingWeightsLevel(dir, tc.target)
 			if result != tc.expected {
 				t.Errorf("GetBestMatchingWeightsLevel(%d): expected %d, got %d",
 					tc.target, tc.expected, result)
@@ -494,6 +552,8 @@ func TestGetBestMatchingWeightsLevel_ExactMatch(t *testing.T) {
 }
 
 func TestGetBestMatchingWeightsLevel_NearestLevel(t *testing.T) {
+	dir := createTestWeightsDir(t, []int{10, 20, 29, 30, 31})
+
 	testCases := []struct {
 		target   int
 		expected int
@@ -511,7 +571,7 @@ func TestGetBestMatchingWeightsLevel_NearestLevel(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			result := GetBestMatchingWeightsLevel(tc.target)
+			result := GetBestMatchingWeightsLevel(dir, tc.target)
 			if result != tc.expected {
 				t.Errorf("GetBestMatchingWeightsLevel(%d): expected %d, got %d (%s)",
 					tc.target, tc.expected, result, tc.desc)
@@ -521,6 +581,8 @@ func TestGetBestMatchingWeightsLevel_NearestLevel(t *testing.T) {
 }
 
 func TestGetBestMatchingWeightsLevel_AllCases(t *testing.T) {
+	dir := createTestWeightsDir(t, []int{10, 20, 29, 30, 31})
+
 	// Table-driven test covering all edge cases
 	testCases := []struct {
 		target   int
@@ -568,7 +630,7 @@ func TestGetBestMatchingWeightsLevel_AllCases(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("Level%d", tc.target), func(t *testing.T) {
-			result := GetBestMatchingWeightsLevel(tc.target)
+			result := GetBestMatchingWeightsLevel(dir, tc.target)
 			if result != tc.expected {
 				t.Errorf("Target %d: expected %d, got %d", tc.target, tc.expected, result)
 			}
@@ -581,21 +643,22 @@ func TestGetBestMatchingWeightsLevel_AllCases(t *testing.T) {
 // ===========================
 
 func TestGetWeightsFilename_AvailableLevels(t *testing.T) {
-	dataDir := "/test/data"
+	// Create temp dir with actual weight files
+	dir := createTestWeightsDir(t, []int{10, 20, 29, 30, 31})
 
 	testCases := []struct {
 		level    int
 		expected string
 	}{
-		{10, filepath.Join(dataDir, "pretrained_weights_10.json")},
-		{20, filepath.Join(dataDir, "pretrained_weights_20.json")},
-		{29, filepath.Join(dataDir, "pretrained_weights_29.json")},
-		{31, filepath.Join(dataDir, "pretrained_weights_31.json")},
+		{10, filepath.Join(dir, "pretrained_weights_10.json")},
+		{20, filepath.Join(dir, "pretrained_weights_20.json")},
+		{29, filepath.Join(dir, "pretrained_weights_29.json")},
+		{31, filepath.Join(dir, "pretrained_weights_31.json")},
 	}
 
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("Level%d", tc.level), func(t *testing.T) {
-			result := GetWeightsFilename(dataDir, tc.level)
+			result := GetWeightsFilename(dir, tc.level)
 			if result != tc.expected {
 				t.Errorf("GetWeightsFilename(%d): expected %s, got %s",
 					tc.level, tc.expected, result)
@@ -605,21 +668,20 @@ func TestGetWeightsFilename_AvailableLevels(t *testing.T) {
 }
 
 func TestGetWeightsFilename_Default30(t *testing.T) {
-	dataDir := "/test/data"
-	expected := filepath.Join(dataDir, "pretrained_weights.json")
+	// Create temp dir with only default 30-level weights
+	dir := createTestWeightsDir(t, []int{30})
+	expected := filepath.Join(dir, "pretrained_weights.json")
 
 	// Level 30 should return default filename (not pretrained_weights_30.json)
-	result := GetWeightsFilename(dataDir, 30)
-
+	result := GetWeightsFilename(dir, 30)
 	if result != expected {
 		t.Errorf("GetWeightsFilename(30): expected %s, got %s", expected, result)
 	}
 
-	// Any level not in AvailableQATLevels should also return default
-	result = GetWeightsFilename(dataDir, 15)
-
+	// Level without weights file should fall back to default
+	result = GetWeightsFilename(dir, 15)
 	if result != expected {
-		t.Errorf("GetWeightsFilename(15): expected %s, got %s", expected, result)
+		t.Errorf("GetWeightsFilename(15): expected %s (fallback), got %s", expected, result)
 	}
 }
 

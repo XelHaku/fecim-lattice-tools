@@ -1,0 +1,88 @@
+VERSION 5.8 ;
+BUSBITCHARS "[]" ;
+DIVIDERCHAR "/" ;
+
+# Minimal layer definition for standalone validation
+LAYER met1
+  TYPE ROUTING ;
+  DIRECTION HORIZONTAL ;
+  PITCH 0.46 ;
+  WIDTH 0.14 ;
+END met1
+
+# Site definition for 2T1R placement
+SITE fecim_2t1r_site
+  CLASS CORE ;
+  SIZE 1.380 BY 3.400 ;
+  SYMMETRY X Y ;
+END fecim_2t1r_site
+
+MACRO fecim_2t1r_bitcell
+  CLASS CORE ;
+  ORIGIN 0 0 ;
+  SIZE 1.380 BY 3.400 ;
+  SYMMETRY X Y ;
+  SITE fecim_2t1r_site ;
+
+  PIN WL
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER met1 ;
+      RECT 0.000 1.600 0.100 1.800 ;
+    END
+  END WL
+
+  PIN CSL
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER met1 ;
+      RECT 1.280 1.600 1.380 1.800 ;
+    END
+  END CSL
+
+  PIN BL
+    DIRECTION OUTPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER met1 ;
+      RECT 0.640 3.300 0.740 3.400 ;
+    END
+  END BL
+
+  PIN SL
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER met1 ;
+      RECT 0.640 0.000 0.740 0.100 ;
+    END
+  END SL
+
+  PIN VPWR
+    DIRECTION INOUT ;
+    USE POWER ;
+    PORT
+      LAYER met1 ;
+      RECT 0.000 3.300 1.380 3.400 ;
+    END
+  END VPWR
+
+  PIN VGND
+    DIRECTION INOUT ;
+    USE GROUND ;
+    PORT
+      LAYER met1 ;
+      RECT 0.000 0.000 1.380 0.100 ;
+    END
+  END VGND
+
+  OBS
+    LAYER met1 ;
+    RECT 0.100 0.100 1.280 3.300 ;
+  END
+
+END fecim_2t1r_bitcell
+
+END LIBRARY

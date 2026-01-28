@@ -186,17 +186,12 @@ Border
 │  │     │  ├─ VBox: [x1 label, entry]
 │  │     │  └─ ... x7
 │  │     └─ HBox: [Random] [Clear]
-│  └─ DAC presets section
+│  └─ DAC section
 │     ├─ HBox
-│     │  ├─ Label: "DAC Presets:"
-│     │  ├─ dacPresetReadBtn: "Safe (0-0.5V)" (dynamic label)
-│     │  ├─ dacPresetWriteBtn: "Program (1.0-2.5V)" (dynamic label)
-│     │  ├─ Button: "Random Vector"
-│     │  ├─ Button: "Random"
+│     │  ├─ dacRangeLabel: "DAC: Read (0-0.5V)" (auto-updated by mode)
 │     │  ├─ Spacer
-│     │  ├─ dacRangeLabel: "DAC: Safe (0-0.5V)"
 │     │  ├─ Label: "Set All (V):"
-│     │  └─ Entry: allEntry
+│     │  └─ Entry: allEntry (manual voltage override)
 ├─ Bottom: Action buttons
 │  ├─ HBox
 │  │  ├─ Button: "Write Cell" (HighImportance)
@@ -356,9 +351,7 @@ case OpModeCompute:
 | mfuxInputVectorEntry | []Entry | 8 input vector entries (0-255) | tab_unified.go:1503 | inputVector via onInputVectorEntryChanged() |
 | writeModePanel | Container | Write mode controls (slider) | tab_unified.go:45 | Show/Hide via updateModePanels() |
 | computeModePanel | Container | Compute mode controls (entries) | tab_unified.go:49 | Show/Hide via updateModePanels() |
-| dacPresetReadBtn | Button | Apply read voltage preset | tab_unified.go:132 | dacVoltages |
-| dacPresetWriteBtn | Button | Apply write voltage preset | tab_unified.go:135 | dacVoltages |
-| dacRangeLabel | Label | Shows current DAC range mode | tab_unified.go:147 | dacRangeMode |
+| dacRangeLabel | Label | Shows current DAC range mode (auto-updated by operation mode) | tab_unified.go:147 | dacRangeMode |
 | materialSelector | Select | Choose ferroelectric material | tab_unified.go:97-122 | material |
 | archPassiveBtn | Button | Select passive (0T1R) architecture | tab_unified.go:1356 | architecture |
 | arch1T1RBtn | Button | Select 1T1R architecture | tab_unified.go:1357 | architecture |
@@ -374,9 +367,8 @@ case OpModeCompute:
 | Mode button click | modeReadBtn/modeWriteBtn/modeComputeBtn | opMode, WL config, DAC config, button highlighting, mode panels | tab_unified.go:314-352 |
 | Write level slider | mfuxWriteLevelSlider | DAC voltage via SetDACVoltageForState(), level/voltage labels | tab_unified.go:1489-1507 |
 | Input vector entry | mfuxInputVectorEntry[i] | inputVector[i], DAC voltages via SetDACPreset(DACInputVector) | tab_unified.go:1527-1551 |
-| Material selection | materialSelector | material, voltage ranges, DAC labels | tab_unified.go:104-115 |
+| Material selection | materialSelector | material, voltage ranges | tab_unified.go:104-115 |
 | Architecture change | archPassiveBtn/arch1T1RBtn/arch2T1RBtn | architecture, WL state, transistor display | tab_unified.go:1384-1424 |
-| DAC preset button | dacPresetReadBtn/dacPresetWriteBtn | dacVoltages, dacRangeMode, range label | tab_unified.go:951-970 |
 | Cell click | UnifiedTappableCanvas.Tapped() | selectedRow, selectedCol, WL (if single mode) | tab_unified.go:1039-1051 |
 | Write Cell button | programBtn | arrayWeights[row][col] | tab_unified.go:1058-1089 |
 | Compute MVM button | computeBtn | WL all, recompute | tab_unified.go:1103-1110 |
@@ -478,13 +470,22 @@ func (ca *CircuitsApp) updateModeButtons() {
 }
 ```
 
-### 4. Dynamic DAC Label Updates
+### 4. Automatic DAC Range Updates (Mode-Based)
 ```go
-func (ca *CircuitsApp) updateDACPresetLabels() {
-    readRange := ca.deviceState.GetReadRange()
-    writeRange := ca.deviceState.GetWriteRange()
-    ca.dacPresetReadBtn.SetText(fmt.Sprintf("Read (0-%.1fV)", readRange.Max))
-    ca.dacPresetWriteBtn.SetText(fmt.Sprintf("Write (%.1f-%.1fV)", writeRange.Min, writeRange.Max))
+// DAC ranges are automatically set by operation mode (no separate buttons)
+// This follows VOLTAGE_RULES.md: mode dictates voltage ranges
+func (ca *CircuitsApp) setOperationMode(mode OperationMode) {
+    switch mode {
+    case OpModeRead:
+        ca.deviceState.SetDACPreset(DACReadPreset)    // 0-0.5V
+    case OpModeWrite:
+        ca.deviceState.SetDACPreset(DACWritePreset)   // 1.2-1.5V
+    case OpModeCompute:
+        if ca.deviceState.GetDACMode() == DACWritePreset {
+            ca.deviceState.SetDACPreset(DACReadPreset) // Keep safe range
+        }
+    }
+    ca.updateDACRangeModeLabel() // Update "DAC: Read/Write (X-YV)"
 }
 ```
 

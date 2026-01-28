@@ -207,10 +207,8 @@ type CircuitsApp struct {
 	unifiedDACEntries []*widget.Entry
 	unifiedDACLabels  []*widget.Label
 
-	// Unified view DAC preset buttons (labels updated based on material)
-	dacPresetReadBtn  *widget.Button
-	dacPresetWriteBtn *widget.Button
-	dacRangeLabel     *widget.Label
+	// Unified view DAC range indicator
+	dacRangeLabel *widget.Label
 
 	// Unified view WL selector widgets
 	unifiedWLChecks   []*widget.Check

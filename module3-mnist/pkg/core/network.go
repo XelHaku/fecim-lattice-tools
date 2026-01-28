@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"sync"
 )
 
@@ -168,16 +169,59 @@ type WeightsFile struct {
 	Layer2QuantLevels int `json:"layer2_quant_levels,omitempty"`
 }
 
-// AvailableQATLevels lists the quantization levels we have trained weights for.
-var AvailableQATLevels = []int{10, 20, 29, 30, 31}
+// ScanAvailableQATLevels scans the data directory for available weight files.
+// Returns sorted list of levels that have trained weights.
+// Pattern: pretrained_weights.json (30) and pretrained_weights_{N}.json (N levels)
+func ScanAvailableQATLevels(dataDir string) []int {
+	levels := make(map[int]bool)
+
+	// Check for default 30-level weights
+	defaultPath := filepath.Join(dataDir, "pretrained_weights.json")
+	if _, err := os.Stat(defaultPath); err == nil {
+		levels[30] = true
+	}
+
+	// Scan for level-specific weight files: pretrained_weights_{N}.json
+	pattern := filepath.Join(dataDir, "pretrained_weights_*.json")
+	matches, err := filepath.Glob(pattern)
+	if err == nil {
+		for _, match := range matches {
+			base := filepath.Base(match)
+			// Skip PTQ weights file
+			if base == "pretrained_weights_ptq.json" {
+				continue
+			}
+			// Extract level number from pretrained_weights_{N}.json
+			var level int
+			if _, err := fmt.Sscanf(base, "pretrained_weights_%d.json", &level); err == nil {
+				levels[level] = true
+			}
+		}
+	}
+
+	// Convert map to sorted slice
+	result := make([]int, 0, len(levels))
+	for l := range levels {
+		result = append(result, l)
+	}
+	sort.Ints(result)
+
+	// If no weights found, return just 30 as fallback
+	if len(result) == 0 {
+		return []int{30}
+	}
+
+	return result
+}
 
 // GetWeightsFilename returns the appropriate weights filename for a quantization level.
 // Returns the exact match if available, otherwise returns the default 30-level weights.
 func GetWeightsFilename(dataDir string, levels int) string {
-	// Check for exact match first
-	for _, l := range AvailableQATLevels {
-		if l == levels && l != 30 {
-			return filepath.Join(dataDir, fmt.Sprintf("pretrained_weights_%d.json", levels))
+	// Check for exact match first (level-specific file)
+	if levels != 30 {
+		levelPath := filepath.Join(dataDir, fmt.Sprintf("pretrained_weights_%d.json", levels))
+		if _, err := os.Stat(levelPath); err == nil {
+			return levelPath
 		}
 	}
 	// Default to 30-level weights (backward compatible)
@@ -185,10 +229,15 @@ func GetWeightsFilename(dataDir string, levels int) string {
 }
 
 // GetBestMatchingWeightsLevel returns the closest available QAT level for a given target.
-func GetBestMatchingWeightsLevel(targetLevels int) int {
-	bestMatch := 30
+func GetBestMatchingWeightsLevel(dataDir string, targetLevels int) int {
+	available := ScanAvailableQATLevels(dataDir)
+	if len(available) == 0 {
+		return 30
+	}
+
+	bestMatch := available[0]
 	bestDiff := 1000
-	for _, l := range AvailableQATLevels {
+	for _, l := range available {
 		diff := targetLevels - l
 		if diff < 0 {
 			diff = -diff
@@ -332,7 +381,7 @@ func (net *DualModeNetwork) LoadWeights(filename string) error {
 // and falls back to the default 30-level weights if not found.
 func (net *DualModeNetwork) LoadWeightsForLevel(dataDir string, levels int) error {
 	// Find the best matching weights file
-	bestLevel := GetBestMatchingWeightsLevel(levels)
+	bestLevel := GetBestMatchingWeightsLevel(dataDir, levels)
 	filename := GetWeightsFilename(dataDir, bestLevel)
 
 	// Check if the file exists

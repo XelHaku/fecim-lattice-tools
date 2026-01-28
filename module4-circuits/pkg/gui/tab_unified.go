@@ -64,8 +64,7 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 	// 4. DAC input section
 	dacSection := ca.createDACInputSection()
 
-	// Update DAC preset labels with actual voltage ranges from material
-	ca.updateDACPresetLabels()
+	// Update DAC range mode label with current voltage range
 	ca.updateDACRangeModeLabel()
 
 	// 5. Main visualization area (center)
@@ -137,8 +136,7 @@ func (ca *CircuitsApp) createMaterialSelector() fyne.CanvasObject {
 		for _, m := range materials {
 			if m.Name == selected {
 				ca.deviceState.SetMaterial(m)
-				ca.updateDACPresetLabels()     // Update button labels for new voltage ranges
-				ca.updateDACRangeModeLabel()   // Update mode indicator
+				ca.updateDACRangeModeLabel() // Update mode indicator
 				ca.recomputeAndRefresh()
 				ca.operationsStatusLabel.SetText(fmt.Sprintf("Material: %s (Vc=%.2fV)", selected, m.CoerciveVoltage()))
 				break
@@ -152,33 +150,20 @@ func (ca *CircuitsApp) createMaterialSelector() fyne.CanvasObject {
 	return container.NewHBox(widget.NewLabel("Material:"), selector)
 }
 
-// createDACInputSection creates the DAC preset controls (individual values shown on diagram)
+// createDACInputSection creates the DAC status and manual control
 func (ca *CircuitsApp) createDACInputSection() fyne.CanvasObject {
 	// Initialize DAC entries array (used by updateDACEntries but not displayed)
 	maxCols := min(8, ca.arrayCols)
 	ca.unifiedDACEntries = make([]*widget.Entry, maxCols)
 	ca.unifiedDACLabels = make([]*widget.Label, maxCols)
 
-	// Preset buttons - labels updated dynamically based on material voltage ranges
-	// "Safe" = non-destructive sensing voltage, "Program" = write voltage that exceeds Vc
-	ca.dacPresetReadBtn = widget.NewButton("Safe (0-1V)", func() {
-		ca.setUnifiedDACPreset(DACReadPreset)
-	})
-	ca.dacPresetWriteBtn = widget.NewButton("Program (1.2-1.5V)", func() {
-		ca.setUnifiedDACPreset(DACWritePreset)
-	})
-	presetCompute := widget.NewButton("Random Vector", func() {
-		ca.applyRandomInputVector()
-	})
-	presetRandom := widget.NewButton("Random", func() {
-		ca.setUnifiedDACPreset(DACRandom)
-	})
-
-	// Range mode indicator
-	ca.dacRangeLabel = widget.NewLabel("DAC: Safe")
+	// Range mode indicator - shows current DAC voltage range based on operation mode
+	// Note: DAC range is set automatically by mode (READ/WRITE/COMPUTE)
+	// Random input is available in COMPUTE mode panel
+	ca.dacRangeLabel = widget.NewLabel("DAC: Read Range")
 	ca.dacRangeLabel.TextStyle = fyne.TextStyle{Italic: true}
 
-	// "Set All" entry for bulk voltage
+	// "Set All" entry for bulk voltage (manual override)
 	allEntry := widget.NewEntry()
 	allEntry.SetPlaceHolder("0.50")
 	allEntry.OnSubmitted = func(s string) {
@@ -186,36 +171,13 @@ func (ca *CircuitsApp) createDACInputSection() fyne.CanvasObject {
 	}
 
 	return container.NewHBox(
-		widget.NewLabel("DAC Presets:"),
-		ca.dacPresetReadBtn, ca.dacPresetWriteBtn, presetCompute, presetRandom,
-		layout.NewSpacer(),
 		ca.dacRangeLabel,
+		layout.NewSpacer(),
 		widget.NewLabel("Set All (V):"), allEntry,
 	)
 }
 
-// updateDACPresetLabels updates the DAC preset button labels based on current material
-func (ca *CircuitsApp) updateDACPresetLabels() {
-	if ca.deviceState == nil {
-		return
-	}
-
-	readRange := ca.deviceState.GetReadRange()
-	writeRange := ca.deviceState.GetWriteRange()
-
-	// Update button labels with actual voltage ranges
-	// "Safe" = non-destructive, "Program" = exceeds coercive voltage
-	fyne.Do(func() {
-		if ca.dacPresetReadBtn != nil {
-			ca.dacPresetReadBtn.SetText(fmt.Sprintf("Safe (0-%.1fV)", readRange.Max))
-		}
-		if ca.dacPresetWriteBtn != nil {
-			ca.dacPresetWriteBtn.SetText(fmt.Sprintf("Program (%.1f-%.1fV)", writeRange.Min, writeRange.Max))
-		}
-	})
-}
-
-// updateDACRangeModeLabel updates the range mode indicator
+// updateDACRangeModeLabel updates the DAC range mode indicator based on operation mode
 func (ca *CircuitsApp) updateDACRangeModeLabel() {
 	if ca.dacRangeLabel == nil || ca.deviceState == nil {
 		return
@@ -226,9 +188,9 @@ func (ca *CircuitsApp) updateDACRangeModeLabel() {
 
 	var text string
 	if rangeMode == DACRangeWrite {
-		text = fmt.Sprintf("DAC: Program (%.1f-%.1fV)", currentRange.Min, currentRange.Max)
+		text = fmt.Sprintf("DAC: Write (%.1f-%.1fV)", currentRange.Min, currentRange.Max)
 	} else {
-		text = fmt.Sprintf("DAC: Safe (0-%.1fV)", currentRange.Max)
+		text = fmt.Sprintf("DAC: Read (0-%.1fV)", currentRange.Max)
 	}
 
 	fyne.Do(func() {
@@ -368,7 +330,6 @@ func (ca *CircuitsApp) setOperationMode(mode OpMode) {
 	ca.updateWLCheckboxes()
 	ca.updateWLHelpLabel()
 	ca.updateDACRangeModeLabel()
-	ca.updateDACPresetLabels()
 	ca.recomputeAndRefresh()
 }
 
@@ -1046,22 +1007,13 @@ func (ca *CircuitsApp) onDACVoltageChanged(col int, voltageStr string) {
 	ca.recomputeAndRefresh()
 }
 
-// setUnifiedDACPreset applies a DAC preset
+// setUnifiedDACPreset applies a DAC preset (called by mode changes)
 func (ca *CircuitsApp) setUnifiedDACPreset(preset DACMode) {
 	switch preset {
 	case DACReadPreset:
-		// Use material-derived read range (SetDACPreset handles voltage calculation)
 		ca.deviceState.SetDACPreset(DACReadPreset)
 	case DACWritePreset:
-		// Use material-derived write range (SetDACPreset handles voltage calculation)
 		ca.deviceState.SetDACPreset(DACWritePreset)
-	case DACRandom:
-		// Random voltages within read range (compute-safe)
-		readRange := ca.deviceState.GetReadRange()
-		for i := 0; i < ca.arrayCols; i++ {
-			voltage := readRange.Min + rand.Float64()*(readRange.Max-readRange.Min)
-			ca.deviceState.SetDACVoltage(i, voltage)
-		}
 	}
 	ca.updateDACRangeModeLabel()
 	ca.updateDACEntries()
@@ -1077,42 +1029,6 @@ func (ca *CircuitsApp) setAllUnifiedDACVoltages(voltageStr string) {
 	ca.deviceState.SetAllDACVoltages(voltage)
 	ca.updateDACEntries()
 	ca.recomputeAndRefresh()
-}
-
-// applyRandomInputVector applies random input vector values (0-255) and syncs UI entries
-func (ca *CircuitsApp) applyRandomInputVector() {
-	// Set random input vector (0-255) converted to voltage
-	ca.mu.Lock()
-	for i := range ca.inputVector {
-		ca.inputVector[i] = rand.Intn(256)
-	}
-	ca.mu.Unlock()
-
-	// Sync the compute mode panel entries if they exist
-	fyne.Do(func() {
-		ca.mu.RLock()
-		defer ca.mu.RUnlock()
-		for i, entry := range ca.mfuxInputVectorEntry {
-			if entry != nil && i < len(ca.inputVector) {
-				entry.SetText(strconv.Itoa(ca.inputVector[i]))
-			}
-		}
-	})
-
-	// Convert to DAC voltages (0-255 -> read range)
-	params := make([]float64, len(ca.inputVector))
-	ca.mu.RLock()
-	for i, v := range ca.inputVector {
-		params[i] = float64(v)
-	}
-	ca.mu.RUnlock()
-	ca.deviceState.SetDACPreset(DACInputVector, params...)
-
-	readRange := ca.deviceState.GetReadRange()
-	ca.updateDACRangeModeLabel()
-	ca.updateDACEntries()
-	ca.recomputeAndRefresh()
-	ca.operationsStatusLabel.SetText(fmt.Sprintf("Random input vector applied (0-255 -> 0-%.1fV)", readRange.Max))
 }
 
 // onWLChanged handles WL checkbox changes
@@ -2009,19 +1925,20 @@ func (ca *CircuitsApp) onInputVectorEntryChanged(col int, valueStr string) {
 // randomizeInputVectorEntries fills entries with random 0-255 values
 // Only applies to DAC if in COMPUTE mode
 func (ca *CircuitsApp) randomizeInputVectorEntries() {
+	// Generate random values and copy for UI update
 	ca.mu.Lock()
+	valuesCopy := make([]int, len(ca.inputVector))
 	for i := range ca.inputVector {
 		ca.inputVector[i] = rand.Intn(256)
+		valuesCopy[i] = ca.inputVector[i]
 	}
 	ca.mu.Unlock()
 
-	// Update entry widgets
+	// Update entry widgets (no lock - use copy)
 	fyne.Do(func() {
-		ca.mu.RLock()
-		defer ca.mu.RUnlock()
 		for i, entry := range ca.mfuxInputVectorEntry {
-			if entry != nil && i < len(ca.inputVector) {
-				entry.SetText(strconv.Itoa(ca.inputVector[i]))
+			if entry != nil && i < len(valuesCopy) {
+				entry.SetText(strconv.Itoa(valuesCopy[i]))
 			}
 		}
 	})
@@ -2032,12 +1949,10 @@ func (ca *CircuitsApp) randomizeInputVectorEntries() {
 	}
 
 	// Apply to DAC
-	params := make([]float64, len(ca.inputVector))
-	ca.mu.RLock()
-	for i, v := range ca.inputVector {
+	params := make([]float64, len(valuesCopy))
+	for i, v := range valuesCopy {
 		params[i] = float64(v)
 	}
-	ca.mu.RUnlock()
 
 	ca.deviceState.SetDACPreset(DACInputVector, params...)
 	ca.recomputeAndRefresh()
