@@ -1,0 +1,58 @@
+#version 450
+
+// TIA (Transimpedance Amplifier) compute shader
+// Current-to-voltage conversion with noise modeling
+
+layout(local_size_x = 256) in;
+
+layout(std140, binding = 0) uniform TIAParams {
+    float gain;         // Transimpedance gain (Ohms)
+    float bandwidth;    // -3dB bandwidth (Hz)
+    float inputNoise;   // Input-referred current noise (A/sqrt(Hz))
+    float vmax;         // Output saturation voltage
+    int size;           // Array size
+    float seed;         // Random seed
+    float padding1;
+    float padding2;
+};
+
+layout(std430, binding = 1) buffer CurrentInput {
+    float currents[];   // Input: currents (Amperes)
+};
+
+layout(std430, binding = 2) buffer VoltageOutput {
+    float voltages[];   // Output: voltages after TIA
+};
+
+float hash(float n) {
+    return fract(sin(n * 12.9898) * 43758.5453123);
+}
+
+float gaussianNoise(float seed1, float seed2) {
+    float u1 = max(hash(seed1), 1e-6);
+    float u2 = hash(seed2);
+    return sqrt(-2.0 * log(u1)) * cos(6.28318530718 * u2);
+}
+
+void main() {
+    uint idx = gl_GlobalInvocationID.x;
+
+    if (idx >= size) {
+        return;
+    }
+
+    float current = currents[idx];
+
+    // Add input-referred noise (scaled by sqrt(bandwidth))
+    float noiseRMS = inputNoise * sqrt(bandwidth);
+    float noise = noiseRMS * gaussianNoise(float(idx) + seed, float(idx) + seed + 0.5);
+    current += noise;
+
+    // Transimpedance conversion: V = I * R
+    float voltage = current * gain;
+
+    // Apply output saturation
+    voltage = clamp(voltage, -vmax, vmax);
+
+    voltages[idx] = voltage;
+}

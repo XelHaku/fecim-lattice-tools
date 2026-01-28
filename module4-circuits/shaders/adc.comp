@@ -1,0 +1,73 @@
+#version 450
+
+// ADC (Analog-to-Digital Converter) compute shader
+// Models quantization and nonlinearity for batch conversion
+
+layout(local_size_x = 256) in;
+
+layout(std140, binding = 0) uniform ADCParams {
+    int bits;           // ADC resolution
+    float vrefP;        // Positive reference voltage
+    float vrefN;        // Negative reference voltage
+    float inlMax;       // Maximum INL in LSBs
+    float dnlMax;       // Maximum DNL in LSBs
+    float noiseRMS;     // Input-referred noise (V)
+    int size;           // Array size
+    float seed;         // Random seed
+};
+
+layout(std430, binding = 1) buffer AnalogInput {
+    float analog_values[];  // Input: analog voltages
+};
+
+layout(std430, binding = 2) buffer DigitalOutput {
+    int digital_codes[];    // Output: quantized codes
+};
+
+layout(std430, binding = 3) buffer QuantizedVoltage {
+    float quantized_v[];    // Output: voltage after quantization
+};
+
+float hash(float n) {
+    return fract(sin(n * 12.9898) * 43758.5453123);
+}
+
+float gaussianNoise(float seed1, float seed2) {
+    float u1 = max(hash(seed1), 1e-6);
+    float u2 = hash(seed2);
+    return sqrt(-2.0 * log(u1)) * cos(6.28318530718 * u2);
+}
+
+void main() {
+    uint idx = gl_GlobalInvocationID.x;
+
+    if (idx >= size) {
+        return;
+    }
+
+    float voltage = analog_values[idx];
+
+    // Add input noise
+    float noise = noiseRMS * gaussianNoise(float(idx) + seed, float(idx) + seed + 0.5);
+    voltage += noise;
+
+    // Clamp to reference range
+    voltage = clamp(voltage, vrefN, vrefP);
+
+    // Ideal quantization
+    int maxCode = (1 << bits) - 1;
+    float lsb = (vrefP - vrefN) / float(maxCode);
+
+    // Apply nonlinearity before quantization (models comparator offsets)
+    float inlError = inlMax * sin(3.14159 * (voltage - vrefN) / (vrefP - vrefN)) * lsb;
+    float dnlError = dnlMax * (hash(voltage * 1000.0 + seed) - 0.5) * lsb;
+
+    float effectiveV = voltage + inlError + dnlError;
+
+    // Quantize
+    int code = int(round((effectiveV - vrefN) / lsb));
+    code = clamp(code, 0, maxCode);
+
+    digital_codes[idx] = code;
+    quantized_v[idx] = vrefN + float(code) * lsb;  // Ideal reconstruction
+}

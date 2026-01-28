@@ -1,0 +1,80 @@
+#version 450
+
+// Compute shader for neural network activation functions
+// Supports ReLU, Sigmoid, Tanh, and Softmax
+
+layout(local_size_x = 256) in;
+
+// Activation type constants
+#define ACTIVATION_RELU     0
+#define ACTIVATION_SIGMOID  1
+#define ACTIVATION_TANH     2
+#define ACTIVATION_SOFTMAX  3
+
+layout(std140, binding = 0) uniform ActivationParams {
+    int activationType;
+    int size;           // Vector size
+    float alpha;        // Leaky ReLU alpha or other parameter
+    float padding;
+};
+
+// Input/Output buffer
+layout(std430, binding = 1) buffer DataBuffer {
+    float data[];
+};
+
+// Temporary buffer for softmax (stores exp values)
+layout(std430, binding = 2) buffer TempBuffer {
+    float temp[];
+};
+
+// Shared memory for softmax reduction
+shared float sharedMax;
+shared float sharedSum;
+
+float relu(float x) {
+    return max(0.0, x);
+}
+
+float leakyRelu(float x, float alpha) {
+    return x >= 0.0 ? x : alpha * x;
+}
+
+float sigmoid(float x) {
+    return 1.0 / (1.0 + exp(-x));
+}
+
+void main() {
+    uint idx = gl_GlobalInvocationID.x;
+
+    if (idx >= size) {
+        return;
+    }
+
+    float value = data[idx];
+
+    switch (activationType) {
+        case ACTIVATION_RELU:
+            data[idx] = relu(value);
+            break;
+
+        case ACTIVATION_SIGMOID:
+            data[idx] = sigmoid(value);
+            break;
+
+        case ACTIVATION_TANH:
+            data[idx] = tanh(value);
+            break;
+
+        case ACTIVATION_SOFTMAX:
+            // Softmax requires two passes:
+            // Pass 1: Find max (for numerical stability)
+            // Pass 2: Compute exp(x - max) / sum(exp)
+
+            // Store exp value in temp buffer
+            // Note: Full softmax requires synchronization across workgroups
+            // This is a simplified per-workgroup version
+            temp[idx] = exp(value);
+            break;
+    }
+}

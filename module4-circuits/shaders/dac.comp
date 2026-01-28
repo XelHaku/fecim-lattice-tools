@@ -1,0 +1,54 @@
+#version 450
+
+// DAC (Digital-to-Analog Converter) compute shader
+// Models INL/DNL nonlinearity for batch conversion
+
+layout(local_size_x = 256) in;
+
+layout(std140, binding = 0) uniform DACParams {
+    int bits;           // DAC resolution (e.g., 5 bits = 32 levels)
+    float vrefP;        // Positive reference voltage
+    float vrefN;        // Negative reference voltage
+    float inlMax;       // Maximum INL in LSBs
+    float dnlMax;       // Maximum DNL in LSBs
+    int size;           // Array size
+    float seed;         // Random seed for variation
+    float padding;
+};
+
+layout(std430, binding = 1) buffer DigitalInput {
+    int digital_codes[];    // Input: digital codes (0 to 2^bits - 1)
+};
+
+layout(std430, binding = 2) buffer AnalogOutput {
+    float analog_values[];  // Output: converted analog voltages
+};
+
+// Simple hash for deterministic noise
+float hash(float n) {
+    return fract(sin(n * 12.9898) * 43758.5453123);
+}
+
+void main() {
+    uint idx = gl_GlobalInvocationID.x;
+
+    if (idx >= size) {
+        return;
+    }
+
+    int code = digital_codes[idx];
+    int maxCode = (1 << bits) - 1;
+    code = clamp(code, 0, maxCode);
+
+    // Ideal conversion
+    float lsb = (vrefP - vrefN) / float(maxCode);
+    float idealVoltage = vrefN + float(code) * lsb;
+
+    // Apply INL (integral nonlinearity) - sinusoidal pattern typical of R-2R DACs
+    float inlError = inlMax * sin(3.14159 * float(code) / float(maxCode)) * lsb;
+
+    // Apply DNL (differential nonlinearity) - code-dependent variation
+    float dnlError = dnlMax * (hash(float(code) + seed) - 0.5) * lsb;
+
+    analog_values[idx] = idealVoltage + inlError + dnlError;
+}

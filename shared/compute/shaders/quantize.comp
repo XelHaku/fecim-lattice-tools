@@ -1,0 +1,49 @@
+#version 450
+
+// Standalone 30-level quantization compute shader
+// For batch quantization operations
+
+layout(local_size_x = 256) in;
+
+layout(std140, binding = 0) uniform QuantizeParams {
+    int levels;      // Number of quantization levels (default 30)
+    float minVal;    // Minimum input value
+    float maxVal;    // Maximum input value
+    int size;        // Array size
+};
+
+layout(std430, binding = 1) buffer InputBuffer {
+    float input_data[];
+};
+
+layout(std430, binding = 2) buffer OutputBuffer {
+    float output_data[];
+};
+
+layout(std430, binding = 3) buffer LevelBuffer {
+    int level_indices[];  // Output: quantized level index (0 to levels-1)
+};
+
+void main() {
+    uint idx = gl_GlobalInvocationID.x;
+
+    if (idx >= size) {
+        return;
+    }
+
+    float value = input_data[idx];
+
+    // Normalize to [0, 1]
+    float normalized = clamp((value - minVal) / (maxVal - minVal), 0.0, 1.0);
+
+    // Quantize to discrete level
+    int level = int(round(normalized * float(levels - 1)));
+    level = clamp(level, 0, levels - 1);
+
+    // Store level index
+    level_indices[idx] = level;
+
+    // Convert back to value (centered in bin)
+    float quantized = float(level) / float(levels - 1);
+    output_data[idx] = quantized * (maxVal - minVal) + minVal;
+}
