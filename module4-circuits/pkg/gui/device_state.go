@@ -3,6 +3,7 @@
 package gui
 
 import (
+	"fecim-lattice-tools/config/physics"
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 	"fecim-lattice-tools/module4-circuits/pkg/peripherals"
 )
@@ -14,6 +15,16 @@ const (
 	ModeWrite OperationMode = iota
 	ModeRead
 	ModeCompute
+)
+
+// OpMode represents the unified operation mode for the device simulation
+// This controls both WL selection and DAC voltage range automatically
+type OpMode int
+
+const (
+	OpModeRead    OpMode = iota // READ: Single row active, safe voltage (0-0.5V)
+	OpModeWrite                 // WRITE: Single row active, write voltage (Vc to 1.3*Vc)
+	OpModeCompute               // COMPUTE: All rows active, input vector (0-1V)
 )
 
 // WLMode represents word line selection mode
@@ -45,20 +56,40 @@ const (
 )
 
 // VoltageRange holds the min/max voltages for a given operation
+// All values are derived from material properties (Ec, thickness) via physics.yaml config
 type VoltageRange struct {
-	Min       float64 // Minimum voltage
-	Max       float64 // Maximum voltage
-	StepSize  float64 // Voltage step between states
-	NumLevels int     // Number of discrete levels
+	Min       float64 // Minimum voltage (derived from material)
+	Max       float64 // Maximum voltage (derived from material)
+	StepSize  float64 // Voltage step between states = (Max-Min)/(NumLevels-1)
+	NumLevels int     // Number of discrete levels (from material.NumLevels)
 }
 
-// Default voltage thresholds (used when no calibration data available)
-const (
-	DefaultVoltageReadMax   = 1.0  // Max safe read voltage
-	DefaultVoltageWriteMin  = 1.2  // Min write voltage (above Vc)
-	DefaultVoltageWriteMax  = 1.5  // Max write voltage
-	DefaultVoltageComputeMax = 1.0 // Max voltage for compute (MVM)
-)
+// CalibrationParams holds voltage calculation parameters from physics.yaml
+// These define the operating voltage regions relative to coercive voltage (Vc)
+type CalibrationParams struct {
+	FieldMinRatio float64 // Read max = FieldMinRatio * Vc (from calibration.field_min_ratio)
+	FieldMaxRatio float64 // Write max = FieldMaxRatio * Vc (from calibration.field_max_ratio)
+}
+
+// loadCalibrationParams loads calibration ratios from physics.yaml config
+// Falls back to sensible defaults if config is unavailable
+func loadCalibrationParams() CalibrationParams {
+	cfg, err := physics.Load()
+	if err != nil || cfg == nil {
+		// Fallback: field_min_ratio=0.5, field_max_ratio=2.5 from typical physics.yaml
+		return CalibrationParams{
+			FieldMinRatio: 0.5,
+			FieldMaxRatio: 2.5,
+		}
+	}
+	return CalibrationParams{
+		FieldMinRatio: cfg.Calibration.FieldMinRatio,
+		FieldMaxRatio: cfg.Calibration.FieldMaxRatio,
+	}
+}
+
+// MaxPracticalVoltage: Hardware DAC/driver limit (prevents unrealistic voltages)
+const MaxPracticalVoltage = 3.0
 
 // DeviceState holds the unified simulation state
 type DeviceState struct {
@@ -66,7 +97,10 @@ type DeviceState struct {
 	rows int
 	cols int
 
-	// WL configuration
+	// Operation mode (READ/WRITE/COMPUTE)
+	opMode OpMode // Current operation mode
+
+	// WL configuration (derived from opMode)
 	wlMode     WLMode
 	activeRows []bool // true = WL HIGH for that row
 
@@ -75,9 +109,10 @@ type DeviceState struct {
 	dacMode      DACMode
 	dacRangeMode DACRangeMode // Current DAC range (read vs write)
 
-	// Voltage ranges (derived from material calibration)
-	readRange  VoltageRange // 0 to ~1V for read/compute
-	writeRange VoltageRange // Vc to Vmax for write operations
+	// Voltage ranges (derived from material + calibration config)
+	readRange   VoltageRange     // 0 to FieldMinRatio*Vc for read/compute
+	writeRange  VoltageRange     // Vc to FieldMaxRatio*Vc for write operations
+	calibParams CalibrationParams // Loaded from physics.yaml
 
 	// Computed outputs (per row)
 	rowCurrents []float64 // TIA input currents (uA)
@@ -100,10 +135,12 @@ type DeviceState struct {
 }
 
 // NewDeviceState creates a new device state with specified dimensions
+// Loads calibration parameters from physics.yaml for voltage range calculation
 func NewDeviceState(rows, cols int, tia *peripherals.TIA, adc *peripherals.ADC) *DeviceState {
 	ds := &DeviceState{
 		rows:         rows,
 		cols:         cols,
+		opMode:       OpModeRead, // Default to READ mode
 		wlMode:       WLSingle,
 		activeRows:   make([]bool, rows),
 		dacVoltages:  make([]float64, cols),
@@ -116,11 +153,12 @@ func NewDeviceState(rows, cols int, tia *peripherals.TIA, adc *peripherals.ADC) 
 		selectedRow:  0,
 		selectedCol:  0,
 		material:     ferroelectric.FeCIMMaterial(), // Default to FeCIM material
+		calibParams:  loadCalibrationParams(),       // Load from physics.yaml
 		tia:          tia,
 		adc:          adc,
 	}
 
-	// Calculate voltage ranges from material properties
+	// Calculate voltage ranges from material + calibration config
 	ds.updateVoltageRanges()
 
 	// Initialize with read preset (uses read range)
@@ -133,49 +171,52 @@ func NewDeviceState(rows, cols int, tia *peripherals.TIA, adc *peripherals.ADC) 
 	return ds
 }
 
-// updateVoltageRanges calculates voltage ranges from material properties
-// Read range: 0 to safe_read_voltage (below Vc to avoid disturbing states)
-// Write range: Vc (coercive voltage) to ~1.5*Vc (programming window)
+// updateVoltageRanges calculates voltage ranges from material properties and calibration config
+// Read range: 0 to FieldMinRatio * Vc (below coercive voltage, non-destructive sensing)
+// Write range: Vc to FieldMaxRatio * Vc (exceeds coercive voltage for polarization switching)
+//
+// From physics.yaml calibration section:
+//   field_min_ratio: 0.5  -> Read max = 0.5 * Vc
+//   field_max_ratio: 2.5  -> Write max = 2.5 * Vc
 func (ds *DeviceState) updateVoltageRanges() {
-	if ds.material == nil {
-		// Use defaults if no material
-		ds.readRange = VoltageRange{Min: 0, Max: DefaultVoltageReadMax, NumLevels: 30}
-		ds.writeRange = VoltageRange{Min: DefaultVoltageWriteMin, Max: DefaultVoltageWriteMax, NumLevels: 30}
-		return
+	// Get material's coercive voltage (Vc = Ec * thickness)
+	Vc := 1.0 // Fallback if no material
+	numLevels := 30
+	if ds.material != nil {
+		Vc = ds.material.CoerciveVoltage()
+		numLevels = ds.material.GetNumLevels()
 	}
 
-	// Coercive voltage = Ec * thickness
-	Vc := ds.material.CoerciveVoltage()
-
-	// Read range: 0 to ~0.8*Vc (safe zone, won't disturb polarization)
-	// For typical HZO: Vc ~ 1.2V, so safe read up to ~1V
-	safeReadMax := 0.8 * Vc
+	// Read range: 0 to FieldMinRatio * Vc
+	// This is the safe sensing zone below coercive voltage
+	safeReadMax := ds.calibParams.FieldMinRatio * Vc
 	if safeReadMax > 1.0 {
 		safeReadMax = 1.0 // Cap at 1V for practical DAC range
 	}
-	if safeReadMax < 0.3 {
-		safeReadMax = 0.3 // Minimum useful read voltage
+	if safeReadMax < 0.1 {
+		safeReadMax = 0.1 // Minimum useful read voltage
 	}
 
 	ds.readRange = VoltageRange{
 		Min:       0,
 		Max:       safeReadMax,
-		NumLevels: 30,
+		StepSize:  safeReadMax / float64(numLevels-1),
+		NumLevels: numLevels,
 	}
 
-	// Write range: Vc to ~1.3*Vc (programming window)
-	// Need to exceed Vc to switch polarization
+	// Write range: Vc to FieldMaxRatio * Vc
+	// Must exceed Vc to switch polarization
 	writeMin := Vc
-	writeMax := 1.3 * Vc
-	if writeMax > 2.0 {
-		writeMax = 2.0 // Practical limit for most devices
+	writeMax := ds.calibParams.FieldMaxRatio * Vc
+	if writeMax > MaxPracticalVoltage {
+		writeMax = MaxPracticalVoltage
 	}
 
 	ds.writeRange = VoltageRange{
 		Min:       writeMin,
 		Max:       writeMax,
-		StepSize:  (writeMax - writeMin) / 29.0, // 30 levels
-		NumLevels: 30,
+		StepSize:  (writeMax - writeMin) / float64(numLevels-1),
+		NumLevels: numLevels,
 	}
 }
 
@@ -485,37 +526,26 @@ func (ds *DeviceState) GetSelectedCol() int {
 	return ds.selectedCol
 }
 
-// ClassifyOperation determines what operation the current configuration represents
+// GetOperationMode returns the current operation mode (READ/WRITE/COMPUTE)
+func (ds *DeviceState) GetOperationMode() OpMode {
+	return ds.opMode
+}
+
+// SetOperationMode sets the operation mode
+// This is called by the UI; actual WL/DAC configuration is done in tab_unified.go
+func (ds *DeviceState) SetOperationMode(mode OpMode) {
+	ds.opMode = mode
+}
+
+// ClassifyOperation returns a string describing the current operation mode
 func (ds *DeviceState) ClassifyOperation() string {
-	// Check if any column has write voltage (above write range minimum)
-	hasWriteVoltage := false
-	hasReadVoltage := false
-	for _, v := range ds.dacVoltages {
-		if v >= ds.writeRange.Min {
-			hasWriteVoltage = true
-		}
-		if v > 0.01 && v <= ds.readRange.Max {
-			hasReadVoltage = true
-		}
-	}
-
-	activeRowCount := 0
-	for _, active := range ds.activeRows {
-		if active {
-			activeRowCount++
-		}
-	}
-
-	// Classify based on WL mode and voltage levels
-	switch {
-	case activeRowCount == 1 && hasWriteVoltage:
-		return "WRITE"
-	case activeRowCount == 1 && hasReadVoltage:
+	switch ds.opMode {
+	case OpModeRead:
 		return "READ"
-	case activeRowCount > 1 && !hasWriteVoltage:
+	case OpModeWrite:
+		return "WRITE"
+	case OpModeCompute:
 		return "COMPUTE (MVM)"
-	case activeRowCount > 1 && hasWriteVoltage:
-		return "BULK WRITE (CAUTION)"
 	default:
 		return "IDLE"
 	}

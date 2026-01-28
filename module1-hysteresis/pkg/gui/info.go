@@ -22,6 +22,10 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 	a.modeIndicator = widgets.NewModeIndicator()
 	a.modeIndicator.SetMinSize(fyne.NewSize(140, 36))
 
+	// Phase indicator for state machine visualization
+	a.phaseIndicator = widgets.NewPhaseIndicator()
+	a.phaseIndicator.SetMinSize(fyne.NewSize(140, 50))
+
 	// Combined level + polarization row
 	levelRow := container.NewHBox(
 		widget.NewLabelWithStyle("L:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
@@ -66,6 +70,7 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 		container.NewCenter(a.stateLabel),
 		widget.NewSeparator(),
 		a.modeIndicator,
+		a.phaseIndicator,
 		widget.NewSeparator(),
 		container.NewHBox(matLine, matInfoBtn),
 		statsRow,

@@ -211,7 +211,8 @@ type CircuitsApp struct {
 	dacRangeLabel     *widget.Label
 
 	// Unified view WL selector widgets
-	unifiedWLChecks []*widget.Check
+	unifiedWLChecks   []*widget.Check
+	unifiedWLHelpLabel *widget.Label // Shows "Checked = Active" or passive mode explanation
 
 	// Unified view mode buttons (READ/WRITE/COMPUTE)
 	modeReadBtn    *widget.Button

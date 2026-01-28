@@ -122,9 +122,11 @@ type App struct {
 	plot           *widgets.PEPlot
 	levelIndicator *widgets.LevelIndicator
 	cellViz        *widgets.CellVisualizer
-	modeIndicator  *widgets.ModeIndicator // WRITE/READ mode indicator with colored box
+	modeIndicator  *widgets.ModeIndicator  // WRITE/READ mode indicator with colored box
+	phaseIndicator *widgets.PhaseIndicator // State machine phase indicator
 	eFieldSlider   *widget.Slider
 	eFieldLabel    *widget.Label
+	eFieldModeLabel *widget.Label // Shows "MANUAL" or "AUTO" for slider control mode
 	pLabel         *widget.Label
 	levelLabel     *widget.Label
 	stateLabel     *widget.Label // State description (Negative P, Intermediate, Positive P)

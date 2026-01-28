@@ -1184,6 +1184,29 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 		a.modeIndicator.SetWrite(isWrite)
 		a.modeIndicator.Refresh()
 
+		// Update phase indicator based on current mode and phase
+		a.mu.RLock()
+		waveform := a.waveform
+		wrdPhaseVal := a.wrdPhase
+		manPhaseVal := a.manualPhase
+		animating := a.manualAnimating
+		a.mu.RUnlock()
+
+		if a.phaseIndicator != nil {
+			switch waveform {
+			case WaveformWriteReadDemo:
+				a.phaseIndicator.SetPhase(wrdPhaseVal, "wrd")
+			case WaveformManual:
+				if animating {
+					a.phaseIndicator.SetPhase(manPhaseVal, "manual")
+				} else {
+					a.phaseIndicator.SetPhase(-1, "") // Idle
+				}
+			default:
+				a.phaseIndicator.SetPhase(-1, "") // Idle for sine/triangle
+			}
+		}
+
 		// Update slider to match current E-field (only if not being manually controlled)
 		// During Manual animation, the slider reflects the animated E-field
 		// Normalize by Ec for display (-1.5 to +1.5 range)

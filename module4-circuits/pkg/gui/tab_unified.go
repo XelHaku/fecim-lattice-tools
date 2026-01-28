@@ -284,14 +284,22 @@ func (ca *CircuitsApp) createWLSelector() fyne.CanvasObject {
 	}
 
 	// H4 FIX: Add tooltip/help label explaining checkbox behavior
-	helpLabel := widget.NewLabel("Checked = Active")
-	helpLabel.TextStyle = fyne.TextStyle{Italic: true}
-	helpLabel.Alignment = fyne.TextAlignCenter
+	ca.unifiedWLHelpLabel = widget.NewLabel("Checked = Active")
+	ca.unifiedWLHelpLabel.TextStyle = fyne.TextStyle{Italic: true}
+	ca.unifiedWLHelpLabel.Alignment = fyne.TextAlignCenter
+
+	// In passive mode, disable checkboxes immediately
+	if ca.architecture == sharedwidgets.Architecture0T1R {
+		for _, check := range ca.unifiedWLChecks {
+			check.Disable()
+		}
+		ca.unifiedWLHelpLabel.SetText("Passive: All rows always on")
+	}
 
 	return container.NewVBox(
 		checkboxes,
 		widget.NewSeparator(),
-		helpLabel,
+		ca.unifiedWLHelpLabel,
 	)
 }
 
@@ -696,17 +704,13 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 			isSelected := r == selectedRow && c == selectedCol
 			isActive := ca.deviceState.IsRowActive(r) && ca.deviceState.GetDACVoltage(c) > 0.01
 
-			var cellColor color.RGBA
-			if isSelected {
-				cellColor = color.RGBA{255, 230, 100, 255}
-			} else {
-				cellColor = levelToColor(level, levels)
-				// Dim inactive cells
-				if !isActive {
-					cellColor.R = uint8(float64(cellColor.R) * 0.4)
-					cellColor.G = uint8(float64(cellColor.G) * 0.4)
-					cellColor.B = uint8(float64(cellColor.B) * 0.4)
-				}
+			// Cell color based on level (no special fill for selected - C1 FIX: border only)
+			cellColor := levelToColor(level, levels)
+			// Dim inactive cells
+			if !isActive {
+				cellColor.R = uint8(float64(cellColor.R) * 0.4)
+				cellColor.G = uint8(float64(cellColor.G) * 0.4)
+				cellColor.B = uint8(float64(cellColor.B) * 0.4)
 			}
 
 			// Animation highlight
@@ -1319,7 +1323,7 @@ func (ca *CircuitsApp) updateWLCheckboxes() {
 }
 
 // updateWLCheckboxesForArchitecture updates checkboxes based on architecture
-// In passive mode, all WLs are always active and checkboxes show this
+// In passive mode (0T1R), all WLs are always active and checkboxes are disabled
 func (ca *CircuitsApp) updateWLCheckboxesForArchitecture() {
 	isPassive := ca.architecture == sharedwidgets.Architecture0T1R
 
@@ -1327,15 +1331,37 @@ func (ca *CircuitsApp) updateWLCheckboxesForArchitecture() {
 		if check != nil {
 			fyne.Do(func() {
 				if isPassive {
-					// Passive: all WLs always active, show as checked
+					// Passive: all WLs always active, disable checkboxes (no transistors)
 					check.SetChecked(true)
+					check.Disable()
 				} else {
-					// 1T1R/2T1R: show actual state
+					// 1T1R/2T1R: enable checkboxes and show actual state
+					check.Enable()
 					check.SetChecked(ca.deviceState.IsRowActive(i))
 				}
 			})
 		}
 	}
+
+	// Update help label based on architecture
+	ca.updateWLHelpLabel()
+}
+
+// updateWLHelpLabel updates the WL help label based on current architecture
+func (ca *CircuitsApp) updateWLHelpLabel() {
+	if ca.unifiedWLHelpLabel == nil {
+		return
+	}
+
+	isPassive := ca.architecture == sharedwidgets.Architecture0T1R
+
+	fyne.Do(func() {
+		if isPassive {
+			ca.unifiedWLHelpLabel.SetText("Passive: All rows always on")
+		} else {
+			ca.unifiedWLHelpLabel.SetText("Checked = Active")
+		}
+	})
 }
 
 // updateOutputDisplay is a no-op - outputs are shown on the diagram
@@ -1546,18 +1572,20 @@ func (ca *CircuitsApp) createModeBar() fyne.CanvasObject {
 	)
 }
 
-// createWriteModePanel creates the write mode panel with level slider (0-29)
+// createWriteModePanel creates the write mode panel with level slider
 // This addresses UX-004: No target level selector for WRITE mode
 func (ca *CircuitsApp) createWriteModePanel() fyne.CanvasObject {
-	// Slider: 0-29 (30 discrete levels = FeCIM standard)
-	ca.mfuxWriteLevelSlider = widget.NewSlider(0, 29)
+	// Slider: 0 to (quantLevels-1) - uses configured level count
+	maxLevel := ca.quantLevels - 1
+	midLevel := ca.quantLevels / 2
+	ca.mfuxWriteLevelSlider = widget.NewSlider(0, float64(maxLevel))
 	ca.mfuxWriteLevelSlider.Step = 1
-	ca.mfuxWriteLevelSlider.Value = 15 // Start at mid-range
+	ca.mfuxWriteLevelSlider.Value = float64(midLevel)
 	ca.mfuxWriteLevelSlider.OnChanged = func(v float64) {
 		ca.onWriteLevelChanged(int(v))
 	}
 
-	ca.mfuxWriteLevelLabel = widget.NewLabel("Level: 15")
+	ca.mfuxWriteLevelLabel = widget.NewLabel(fmt.Sprintf("Level: %d", midLevel))
 	ca.mfuxWriteLevelLabel.TextStyle = fyne.TextStyle{Monospace: true}
 
 	ca.mfuxWriteVoltageLabel = widget.NewLabel("Voltage: 1.00V")

@@ -27,6 +27,9 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		}
 	}
 	a.eFieldLabel = widget.NewLabel("E: 0.00 MV/cm")
+	// Mode label shows whether slider is in manual or auto mode
+	a.eFieldModeLabel = widget.NewLabel("AUTO")
+	a.eFieldModeLabel.TextStyle = fyne.TextStyle{Italic: true}
 
 	// Waveform selector
 	waveforms := []string{"Manual", "Sine Wave", "Triangle Wave", "Write/Read Demo"}
@@ -41,11 +44,23 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			if a.eFieldSlider != nil {
 				a.eFieldSlider.Enable()
 			}
+			if a.eFieldModeLabel != nil {
+				a.eFieldModeLabel.SetText("MANUAL")
+			}
+			if a.levelIndicator != nil {
+				a.levelIndicator.SetInteractive(true)
+			}
 		case "Sine Wave":
 			a.waveform = WaveformSine
 			a.autoMode = true
 			if a.eFieldSlider != nil {
 				a.eFieldSlider.Disable()
+			}
+			if a.eFieldModeLabel != nil {
+				a.eFieldModeLabel.SetText("AUTO")
+			}
+			if a.levelIndicator != nil {
+				a.levelIndicator.SetInteractive(false)
 			}
 		case "Triangle Wave":
 			a.waveform = WaveformTriangle
@@ -53,11 +68,23 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			if a.eFieldSlider != nil {
 				a.eFieldSlider.Disable()
 			}
+			if a.eFieldModeLabel != nil {
+				a.eFieldModeLabel.SetText("AUTO")
+			}
+			if a.levelIndicator != nil {
+				a.levelIndicator.SetInteractive(false)
+			}
 		case "Write/Read Demo":
 			a.waveform = WaveformWriteReadDemo
 			a.autoMode = true
 			if a.eFieldSlider != nil {
 				a.eFieldSlider.Disable()
+			}
+			if a.eFieldModeLabel != nil {
+				a.eFieldModeLabel.SetText("AUTO")
+			}
+			if a.levelIndicator != nil {
+				a.levelIndicator.SetInteractive(false)
 			}
 			// Reset write/read demo state with improved physics
 			a.wrdPhase = 0
@@ -317,7 +344,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		a.waveformSelect,
 		a.levelsLabel,
 		a.levelsEntry,
-		a.eFieldLabel,
+		container.NewHBox(a.eFieldLabel, a.eFieldModeLabel),
 		a.eFieldSlider,
 		freqLabel,
 		freqSlider,
@@ -326,7 +353,6 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		trailLabel,
 		trailSlider,
 		container.NewHBox(a.pauseBtn, resetBtn, eli5Btn),
-		widget.NewLabel("← Click level bar"),
 	)
 }
 

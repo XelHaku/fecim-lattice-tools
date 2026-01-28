@@ -28,6 +28,9 @@ type LevelIndicator struct {
 	// Interactive mode callback - called when user clicks a level
 	OnLevelClicked func(targetLevel int)
 
+	// Interactive mode state - controls visual feedback for clickability
+	interactive bool // True when clicking is enabled (Manual mode)
+
 	// Target level highlighting (for Write/Read Demo)
 	targetLevel     int
 	highlightTarget bool
@@ -85,6 +88,25 @@ func (l *LevelIndicator) SetLevel(level int) {
 	l.mu.Lock()
 	l.level = level
 	l.mu.Unlock()
+}
+
+// SetInteractive sets whether the level indicator is clickable.
+// When true, shows "CLICK TO SET" hint; when false, shows "AUTO" indicator.
+func (l *LevelIndicator) SetInteractive(interactive bool) {
+	l.mu.Lock()
+	changed := l.interactive != interactive
+	l.interactive = interactive
+	l.mu.Unlock()
+	if changed {
+		l.Refresh()
+	}
+}
+
+// IsInteractive returns whether clicking is enabled.
+func (l *LevelIndicator) IsInteractive() bool {
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+	return l.interactive
 }
 
 // SetTargetLevel sets the target level to highlight (for Write/Read Demo).
@@ -237,6 +259,7 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 	targetLevel := r.indicator.targetLevel
 	highlightTarget := r.indicator.highlightTarget
 	pulseProgress := r.indicator.pulseProgress
+	interactive := r.indicator.interactive
 	r.indicator.mu.RUnlock()
 
 	if numLevels < 2 {
@@ -398,6 +421,33 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 			label.Move(fyne.NewPos(marginW+barW+4, y+(segH-gap)/2-6))
 			r.objects = append(r.objects, label)
 		}
+	}
+
+	// Mode indicator at bottom - shows clickability state
+	modeY := size.Height - 28
+	if interactive {
+		// Clickable mode - show "CLICK" hint with pulsing cyan background
+		modeBg := canvas.NewRectangle(color.RGBA{0, 180, 220, 150})
+		modeBg.Resize(fyne.NewSize(size.Width-8, 22))
+		modeBg.Move(fyne.NewPos(4, modeY))
+		r.objects = append(r.objects, modeBg)
+
+		modeText := canvas.NewText("CLICK TO SET", color.RGBA{255, 255, 255, 255})
+		modeText.TextSize = 10
+		modeText.TextStyle = fyne.TextStyle{Bold: true}
+		modeText.Move(fyne.NewPos(8, modeY+4))
+		r.objects = append(r.objects, modeText)
+	} else {
+		// Auto mode - show "AUTO" with dimmed background
+		modeBg := canvas.NewRectangle(color.RGBA{60, 60, 80, 180})
+		modeBg.Resize(fyne.NewSize(size.Width-8, 22))
+		modeBg.Move(fyne.NewPos(4, modeY))
+		r.objects = append(r.objects, modeBg)
+
+		modeText := canvas.NewText("AUTO", color.RGBA{150, 150, 170, 255})
+		modeText.TextSize = 10
+		modeText.Move(fyne.NewPos(20, modeY+4))
+		r.objects = append(r.objects, modeText)
 	}
 
 	// Mark cache with the effective size used

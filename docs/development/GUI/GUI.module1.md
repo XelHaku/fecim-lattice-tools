@@ -3,7 +3,7 @@ Module: module1-hysteresis
 Name: Hysteresis Visualizer
 Entry: cmd/hysteresis/main.go
 Package: fecim-lattice-tools/module1-hysteresis/pkg/gui
-Last Updated: 2026-01-26
+Last Updated: 2026-01-27
 ---
 
 Bugs:
@@ -13,6 +13,11 @@ Bugs:
   - [x] BUG-M1-004: Animation loop refresh rate may cause drift without vsync sync (simulation.go:14)
   - [x] BUG-M1-005: Slider value setting inside mutex lock in keyboard.go - FIXED: removed unnecessary mutex
   - [x] BUG-M1-006: LevelIndicator time-based pulse may not refresh properly - OK: simulation refreshes at 60 FPS
+
+UX Improvements (2026-01-27):
+  - [x] UX-M1-001: LevelIndicator now shows "CLICK TO SET" / "AUTO" mode indicator at bottom
+  - [x] UX-M1-002: PhaseIndicator widget shows state machine progress (RESET→SETTLE→WRITE→HOLD→READ→VERIFY)
+  - [x] UX-M1-003: eFieldSlider shows "MANUAL" / "AUTO" label to indicate control mode
 
 Screens:
   - name: MainWindow
@@ -95,6 +100,12 @@ Screens:
                               file: widgets/mode.go:14-152, info.go:19-20
                               state: [isWrite bool, minSize=180x60]
                               bindings: [SetWrite, Refresh]
+                            - name: phaseIndicator
+                              type: widgets.PhaseIndicator
+                              purpose: Show state machine phase progress (RESET→SETTLE→WRITE→HOLD→READ→VERIFY)
+                              file: widgets/phase.go, info.go:25-27
+                              state: [phase int, mode string ("wrd" or "manual"), minSize=140x50]
+                              bindings: [SetPhase(phase, mode)]
                             - name: matParams
                               type: widget.Label
                               purpose: Display material parameters
@@ -152,11 +163,13 @@ Screens:
                       - level: int (0-29)
                       - targetLevel: int (for highlighting)
                       - highlightTarget: bool
+                      - interactive: bool (shows CLICK TO SET vs AUTO indicator)
                       - minSize: 80x350
                       - OnLevelClicked: func(targetLevel int)
                     bindings:
                       - SetLevel(level)
                       - SetTargetLevel(level, highlight)
+                      - SetInteractive(bool) - controls clickability indicator
                       - Tapped(event) -> OnLevelClicked callback
                       - Refresh
                     bugs: [BUG-M1-006]
@@ -193,8 +206,16 @@ Screens:
                       - name: eFieldLabel
                         type: widget.Label
                         purpose: Display current E-field value
-                        file: controls.go:26
+                        file: controls.go:29
                         state: [text="E: 0.00 MV/cm"]
+
+                      - name: eFieldModeLabel
+                        type: widget.Label
+                        purpose: Show whether slider is in MANUAL or AUTO mode
+                        file: controls.go:31-32
+                        state: [text="AUTO" or "MANUAL", italic style]
+                        bindings:
+                          - SetText updated on waveform change
 
                       - name: eFieldSlider
                         type: widget.Slider
