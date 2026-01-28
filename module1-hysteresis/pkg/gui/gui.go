@@ -455,9 +455,12 @@ func (a *App) createUI() fyne.CanvasObject {
 	a.cellViz.SetMinSize(fyne.NewSize(140, 160))
 
 	// Create P-E plot - will expand to fill space
-	a.plot = widgets.NewPEPlot(a.material.Ec*1.5, a.material.Ps*1.2, ColorBackground, ColorGrid, ColorAxis, ColorPositive, ColorNegative, ColorWarning)
+	// Use temperature-corrected values for initial plot setup
+	effEc := a.preisach.GetEffectiveEc()
+	effPr := a.preisach.GetEffectivePr()
+	a.plot = widgets.NewPEPlot(effEc*1.5, effPr*1.2, ColorBackground, ColorGrid, ColorAxis, ColorPositive, ColorNegative, ColorWarning)
 	a.plot.SetMinSize(fyne.NewSize(400, 350))
-	a.plot.SetMaterialParams(a.material.Ec, a.material.Pr)
+	a.plot.SetMaterialParams(effEc, effPr)
 
 	// Create level indicator (wider for better labels, clickable in Manual mode)
 	a.levelIndicator = widgets.NewLevelIndicator()

@@ -139,14 +139,25 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			}
 		}
 		a.mu.Lock()
+		// HYBRID APPROACH: Capture temperature before material change
+		savedTemp := a.preisach.Temperature
+
 		a.matIndex = idx
 		a.material = a.materials[idx]
 		// Use fixed high-resolution grid (50) for physics accuracy, independent of quantization levels
 		a.preisach = ferroelectric.NewMayergoyzPreisach(a.material, 50)
+
+		// HYBRID APPROACH: Restore temperature immediately after model creation
+		a.preisach.SetTemperature(savedTemp)
+
 		a.eHistory = a.eHistory[:0]
 		a.pHistory = a.pHistory[:0]
-		a.plot.SetBounds(a.material.Ec*1.5, a.material.Ps*1.2)
-		a.plot.SetMaterialParams(a.material.Ec, a.material.Pr)
+
+		// HYBRID APPROACH: Use temperature-corrected values for bounds and markers
+		effEc := a.preisach.GetEffectiveEc()
+		effPr := a.preisach.GetEffectivePr()
+		a.plot.SetBounds(effEc*1.5, effPr*1.2)
+		a.plot.SetMaterialParams(effEc, effPr)
 		// Mark calibration as stale (new material needs recalibration)
 		a.calibrated = false
 
@@ -325,13 +336,25 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		// Update temperature with calibration handling (runs in background if recalibration needed)
 		go func() {
 			a.mu.Lock()
+			// Capture previous temperature before change
+			previousTemp := a.preisach.Temperature
 			a.onTemperatureChanged(v)
+			// Get current temperature after change
+			currentTemp := a.preisach.Temperature
+
+			// Clear history if temperature changed significantly (>25K)
+			if math.Abs(currentTemp-previousTemp) > 25 {
+				a.eHistory = a.eHistory[:0]
+				a.pHistory = a.pHistory[:0]
+			}
+
 			// Get plot markers with temperature-corrected Ec and Pr
 			effEc := a.preisach.GetEffectiveEc()
 			effPr := a.preisach.GetEffectivePr()
 			a.mu.Unlock()
 
-			// Update plot markers (outside lock, uses fyne.Do internally)
+			// Update plot bounds and markers (outside lock, uses fyne.Do internally)
+			a.plot.SetBounds(effEc*1.5, effPr*1.2)
 			a.plot.SetMaterialParams(effEc, effPr)
 		}()
 

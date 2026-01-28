@@ -26,7 +26,7 @@ Fix vertical spikes appearing in the P-E hysteresis plot at transition corners w
    ```
    Should use temperature-corrected values from preisach model.
 
-3. **simulation.go:335** - Temperature change handler updates markers but NOT bounds:
+3. **controls.go:334-335** - Temperature change handler updates markers but NOT bounds:
    ```go
    // Update plot markers (outside lock, uses fyne.Do internally)
    a.plot.SetMaterialParams(effEc, effPr)
@@ -47,7 +47,7 @@ Fix vertical spikes appearing in the P-E hysteresis plot at transition corners w
 
 ## Implementation Steps
 
-### Task 1: Update Temperature Change Handler (simulation.go)
+### Task 1: Update Temperature Change Handler (controls.go)
 **File:** `<local-path>`
 **Lines:** 326-336
 
@@ -67,15 +67,15 @@ go func() {
 ```
 
 **Changes needed:**
-1. Add `SetBounds()` call after `SetMaterialParams()` using temperature-corrected values
-2. Clear history when temperature changes significantly (>25K) to prevent scale artifacts
-3. Store previous temperature to detect significant changes
+1. Capture previous temperature BEFORE calling `onTemperatureChanged` using `a.preisach.Temperature`
+2. Add `SetBounds()` call after `SetMaterialParams()` using temperature-corrected values
+3. Clear history when temperature changes significantly (>25K) to prevent scale artifacts
 
 **New code:**
 ```go
 go func() {
     a.mu.Lock()
-    previousTemp := a.calibrationTemp
+    previousTemp := a.preisach.Temperature
     a.onTemperatureChanged(v)
     // Get plot markers with temperature-corrected Ec and Pr
     effEc := a.preisach.GetEffectiveEc()
@@ -90,31 +90,54 @@ go func() {
     a.mu.Unlock()
 
     // Update plot bounds AND markers with temperature-corrected values
+    // Note: SetBounds must be called BEFORE SetMaterialParams (no Refresh call in SetBounds)
     a.plot.SetBounds(effEc*1.5, effPr*1.2)
     a.plot.SetMaterialParams(effEc, effPr)
 }()
 ```
 
-### Task 2: Update Material Selection Handler (controls.go)
-**File:** `<local-path>`
-**Lines:** 145-149
+**Note:** The `math` package is already imported at controls.go:5.
 
-**Current code:**
+### Task 2: Update Material Selection Handler with Hybrid Approach (controls.go)
+**File:** `<local-path>`
+**Lines:** 145-199 (material selection handler)
+
+**Problem:** When material changes, a new Preisach model is created at line 145 which defaults to 300K. The bounds are set immediately after (lines 148-149) using base material values, BEFORE temperature is restored in the background goroutine (line 186-197).
+
+**Hybrid approach (per Architect recommendation):**
+1. BEFORE creating new model: capture `savedTemp := a.preisach.Temperature`
+2. AFTER creating new model: immediately call `a.preisach.SetTemperature(savedTemp)`
+3. THEN call SetBounds with temperature-corrected values
+4. THEN call SetMaterialParams with temperature-corrected values
+
+**Current code (lines 141-149):**
 ```go
+a.mu.Lock()
+a.matIndex = idx
+a.material = a.materials[idx]
+// Use fixed high-resolution grid (50) for physics accuracy, independent of quantization levels
+a.preisach = ferroelectric.NewMayergoyzPreisach(a.material, 50)
 a.eHistory = a.eHistory[:0]
 a.pHistory = a.pHistory[:0]
 a.plot.SetBounds(a.material.Ec*1.5, a.material.Ps*1.2)
 a.plot.SetMaterialParams(a.material.Ec, a.material.Pr)
 ```
 
-**Changes needed:**
-Use temperature-corrected values from the newly created Preisach model.
-
 **New code:**
 ```go
+a.mu.Lock()
+a.matIndex = idx
+a.material = a.materials[idx]
+// Capture current temperature before creating new model
+savedTemp := a.preisach.Temperature
+// Use fixed high-resolution grid (50) for physics accuracy, independent of quantization levels
+a.preisach = ferroelectric.NewMayergoyzPreisach(a.material, 50)
+// Immediately restore temperature to the new model
+a.preisach.SetTemperature(savedTemp)
 a.eHistory = a.eHistory[:0]
 a.pHistory = a.pHistory[:0]
 // Use temperature-corrected values for plot bounds and markers
+// Note: SetBounds ordering matters - call before SetMaterialParams (no Refresh call in SetBounds)
 effEc := a.preisach.GetEffectiveEc()
 effPr := a.preisach.GetEffectivePr()
 a.plot.SetBounds(effEc*1.5, effPr*1.2)
@@ -145,46 +168,7 @@ a.plot.SetMinSize(fyne.NewSize(400, 350))
 a.plot.SetMaterialParams(effEc, effPr)
 ```
 
-### Task 4: Add Import for math Package (controls.go)
-**File:** `<local-path>`
-**Line:** 5 (import block)
-
-**Changes needed:**
-Add "math" to import block if not already present (needed for `math.Abs` in temperature comparison).
-
-Check current imports and add if missing:
-```go
-import (
-    "fmt"
-    "math"
-    "math/rand"
-    "strconv"
-    ...
-)
-```
-
-Note: `math` is already imported in controls.go (line 5), so no change needed for this file.
-
-### Task 5: Verify Preisach Temperature State During Material Change
-**File:** `<local-path>`
-**Lines:** 145-198 (material selection handler)
-
-**Verification needed:**
-Ensure the Preisach model's temperature is preserved when material changes. Current code creates a new Preisach model (line 145) which defaults to 300K. Need to check if current temperature is applied.
-
-**Current code:**
-```go
-a.preisach = ferroelectric.NewMayergoyzPreisach(a.material, 50)
-```
-
-**Potential issue:** New Preisach model is created with default temperature (300K), not current slider temperature.
-
-**Fix approach:** After creating new Preisach model, set temperature to current slider value. This happens in the background goroutine (line 186-197) via `calibrateLevelsAtTemperature(currentTemp)` which calls `a.preisach.SetTemperature(tempK)`. However, the bounds are set BEFORE this happens (line 148-149).
-
-**Revised Task 2 - Complete fix for controls.go:131-199:**
-Move the SetBounds/SetMaterialParams calls to AFTER the Preisach temperature is set, or set temperature immediately after creating the model.
-
-### Task 6: Add Verification Tests
+### Task 4: Add Verification Tests
 **File:** `<local-path>` (may need to create)
 
 **Tests to add:**
@@ -233,11 +217,10 @@ go test -v ./module1-hysteresis/pkg/gui/...
 
 ## Dependencies
 
-- Task 2 depends on Task 1 pattern
-- Task 3 is independent
-- Task 4 is required for Task 1
-- Task 5 is a refinement of Task 2
-- Task 6 should be done last
+- Task 1 is independent (temperature slider handler)
+- Task 2 is independent (material selection handler)
+- Task 3 is independent (initial plot creation)
+- Task 4 (tests) should be done last after all fixes are in place
 
 ## Commit Strategy
 
@@ -248,6 +231,7 @@ fix(hysteresis): use temperature-corrected Ec/Pr for plot bounds and markers
 - Update plot bounds dynamically when temperature changes
 - Clear history trail on significant temperature changes (>25K) to prevent scale artifacts
 - Use GetEffectiveEc()/GetEffectivePr() instead of base material values
+- Preserve temperature state when material changes (hybrid approach)
 - Apply temperature correction during material selection and initial plot creation
 
 Fixes vertical spikes appearing at plot edges during temperature transitions.
@@ -258,10 +242,8 @@ Fixes vertical spikes appearing at plot edges during temperature transitions.
 | Task | Complexity | Time Estimate |
 |------|------------|---------------|
 | Task 1 | Medium | 15 min |
-| Task 2 | Low | 10 min |
+| Task 2 | Medium | 15 min |
 | Task 3 | Low | 5 min |
-| Task 4 | Trivial | 2 min |
-| Task 5 | Medium | 10 min |
-| Task 6 | Medium | 20 min |
+| Task 4 | Medium | 20 min |
 | **Testing & Verification** | - | 20 min |
-| **Total** | - | ~80 min |
+| **Total** | - | ~75 min |
