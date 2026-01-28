@@ -23,15 +23,36 @@ type MVMOptions struct {
 	Architecture     string  // "1T1R" or "0T1R" - affects sneak path and IR drop calculations
 }
 
-// Is1T1R returns true if the architecture uses transistor isolation (1T1R).
+// Is1T1R returns true if the architecture uses single transistor isolation (1T1R).
 // 1T1R provides ~1000:1 sneak path isolation compared to passive 0T1R.
 func (o *MVMOptions) Is1T1R() bool {
 	if o == nil || o.Architecture == "" {
 		return false // Default to 0T1R (passive crossbar)
 	}
+	// Check for 1T1R but NOT 2T1R
+	if strings.Contains(o.Architecture, "2T1R") {
+		return false
+	}
 	return o.Architecture == "1T1R" ||
 		strings.Contains(o.Architecture, "1T1R") ||
 		strings.Contains(o.Architecture, "Transistor")
+}
+
+// Is2T1R returns true if the architecture uses dual transistor isolation (2T1R).
+// 2T1R provides individual cell addressing via WL+CSL AND-gate selection,
+// offering even better isolation than 1T1R (~10000:1 vs ~1000:1).
+func (o *MVMOptions) Is2T1R() bool {
+	if o == nil || o.Architecture == "" {
+		return false
+	}
+	return strings.Contains(o.Architecture, "2T1R") ||
+		strings.Contains(o.Architecture, "Dual")
+}
+
+// HasTransistorIsolation returns true if the architecture has any transistor isolation (1T1R or 2T1R).
+// Both provide significantly better isolation than passive 0T1R arrays.
+func (o *MVMOptions) HasTransistorIsolation() bool {
+	return o.Is1T1R() || o.Is2T1R()
 }
 
 // DefaultMVMOptions returns options with all non-idealities enabled.
@@ -111,10 +132,20 @@ func (a *Array) MVMWithNonIdealities(input []float64, opts *MVMOptions) (*MVMRes
 		params := DefaultWireParams()
 		archName := "1T1R"
 
-		// 0T1R (passive) has higher effective IR drop because sneak currents
-		// increase total current flow through shared metal lines
-		// 1T1R transistors isolate cells, reducing total current → less IR drop
-		if !opts.Is1T1R() {
+		// Architecture affects IR drop via sneak current contribution:
+		// - 0T1R (passive): Highest IR drop due to full sneak currents
+		// - 1T1R: Reduced IR drop due to transistor isolation (~1000:1)
+		// - 2T1R: Lowest IR drop due to dual transistor AND-gate (~10000:1)
+		if opts.Is2T1R() {
+			// 2T1R has best isolation - lowest effective resistance
+			params.RwordLine *= 0.85 // 15% lower due to minimal sneak currents
+			params.RbitLine *= 0.85
+			archName = "2T1R"
+		} else if opts.Is1T1R() {
+			// 1T1R has good isolation - no modifier (baseline)
+			archName = "1T1R"
+		} else {
+			// 0T1R (passive) has highest effective resistance due to sneak currents
 			params.RwordLine *= 1.5 // 50% higher effective resistance for 0T1R
 			params.RbitLine *= 1.5
 			archName = "0T1R"
@@ -181,7 +212,15 @@ func (a *Array) MVMWithNonIdealities(input []float64, opts *MVMOptions) (*MVMRes
 	if opts.EnableSneakPaths {
 		centerRow := a.config.Rows / 2
 		centerCol := a.config.Cols / 2
-		result.SneakPathAnalysis = a.AnalyzeSneakPathsWithArch(centerRow, centerCol, opts.Is1T1R())
+		// Use architecture-specific isolation factor:
+		// 0T1R: 1.0 (full sneak), 1T1R: 0.001 (1000x), 2T1R: 0.0001 (10000x)
+		isolationFactor := 1.0 // Default: 0T1R passive
+		if opts.Is2T1R() {
+			isolationFactor = 0.0001 // 10000x isolation from dual transistors
+		} else if opts.Is1T1R() {
+			isolationFactor = 0.001 // 1000x isolation from single transistor
+		}
+		result.SneakPathAnalysis = a.AnalyzeSneakPathsWithIsolation(centerRow, centerCol, isolationFactor)
 	}
 
 	// Step 4: Compute error metrics
@@ -209,9 +248,15 @@ const SneakPathThreshold = 32 // Use simplified mode for arrays larger than 32x3
 
 // computeSneakCurrentForRow computes total sneak current affecting a row.
 // The sneak factor varies based on architecture:
-// - 1T1R: Transistor provides ~1000:1 isolation, minimal sneak paths
+// - 2T1R: Dual transistor provides ~10000:1 isolation, virtually no sneak paths
+// - 1T1R: Single transistor provides ~1000:1 isolation, minimal sneak paths
 // - 0T1R: Passive crossbar has full sneak path impact
 func (a *Array) computeSneakCurrentForRow(row int, input []float64, opts *MVMOptions) float64 {
+	// For 2T1R, dual transistor AND-gate makes sneak paths virtually zero
+	if opts != nil && opts.Is2T1R() {
+		return a.computeSimplifiedSneakCurrent(row, input, 0.000001) // 10x better than 1T1R
+	}
+
 	// For 1T1R, transistor isolation makes sneak paths negligible
 	if opts != nil && opts.Is1T1R() {
 		return a.computeSimplifiedSneakCurrent(row, input, 0.00001)
@@ -317,8 +362,8 @@ func (a *Array) computeFullSneakCurrent(targetRow int, input []float64) float64 
 func (a *Array) ComputeFullMVMSneak(input []float64, opts *MVMOptions) []float64 {
 	sneakPerRow := make([]float64, a.config.Rows)
 
-	// 1T1R has negligible sneak paths due to transistor isolation
-	if opts != nil && opts.Is1T1R() {
+	// 1T1R and 2T1R have negligible sneak paths due to transistor isolation
+	if opts != nil && opts.HasTransistorIsolation() {
 		return sneakPerRow // All zeros
 	}
 

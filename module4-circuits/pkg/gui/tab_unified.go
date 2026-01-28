@@ -329,8 +329,8 @@ func (ca *CircuitsApp) createUnifiedArraySection() fyne.CanvasObject {
 	// Array size info
 	ca.sharedArrayInfoLabel = widget.NewLabel(fmt.Sprintf("Array: %dx%d | %d levels", ca.arrayRows, ca.arrayCols, ca.quantLevels))
 
-	// Legend (C1: Updated to reflect bright gold border)
-	legendLabel := widget.NewLabel("State: Low G (blue) -> High G (red) | Gold border = Selected cell")
+	// Legend: Blue-White-Red gradient, gold border for selected
+	legendLabel := widget.NewLabel("State: Low G (blue) → Mid (white) → High G (red) | Gold = Selected")
 	legendLabel.TextStyle = fyne.TextStyle{Italic: true}
 
 	return container.NewVBox(
@@ -1040,14 +1040,27 @@ func (ca *CircuitsApp) writeReadVerifyLoop(row, col, targetLevel int, startVolta
 	}
 	ca.mu.Unlock()
 
+	// Check if using V/2 half-select (passive mode)
+	isPassive := ca.deviceState.IsPassiveMode()
+
 	for iteration := 1; iteration <= maxIterations; iteration++ {
 		// === WRITE PHASE ===
-		fyne.Do(func() {
-			ca.operationsStatusLabel.SetText(fmt.Sprintf("WRITE [%d,%d]: V=%.2fV (iter %d/%d)", row, col, voltage, iteration, maxIterations))
-		})
-
-		// Set DAC voltage for write
-		ca.deviceState.SetDACVoltage(col, voltage)
+		if isPassive {
+			// V/2 half-select scheme for passive (0T1R) mode
+			// WL = +V/2, BL = -V/2, target sees full V, half-selected see V/2
+			halfV := voltage / 2.0
+			fyne.Do(func() {
+				ca.operationsStatusLabel.SetText(fmt.Sprintf("WRITE [%d,%d]: V/2 scheme WL=+%.2fV BL=-%.2fV (iter %d/%d)",
+					row, col, halfV, halfV, iteration, maxIterations))
+			})
+			ca.deviceState.ApplyHalfSelectWrite(row, col, voltage)
+		} else {
+			// 1T1R/2T1R: transistor isolation, full voltage on BL
+			fyne.Do(func() {
+				ca.operationsStatusLabel.SetText(fmt.Sprintf("WRITE [%d,%d]: V=%.2fV (iter %d/%d)", row, col, voltage, iteration, maxIterations))
+			})
+			ca.deviceState.SetDACVoltage(col, voltage)
+		}
 		ca.recomputeAndRefresh()
 		time.Sleep(iterationDelay / 2)
 
@@ -1085,6 +1098,10 @@ func (ca *CircuitsApp) writeReadVerifyLoop(row, col, targetLevel int, startVolta
 			ca.operationsStatusLabel.SetText(fmt.Sprintf("VERIFY [%d,%d]: Read level %d (target %d)", row, col, currentLevel, targetLevel))
 		})
 
+		// Reset write voltages before applying read voltage
+		// This clears V/2 biasing and puts array in safe read state
+		ca.deviceState.ResetWriteVoltages()
+
 		// Set DAC to read voltage for verification
 		readVoltage := ca.deviceState.GetReadRange().Max * 0.5
 		ca.deviceState.SetDACVoltage(col, readVoltage)
@@ -1097,8 +1114,8 @@ func (ca *CircuitsApp) writeReadVerifyLoop(row, col, targetLevel int, startVolta
 				ca.operationsStatusLabel.SetText(fmt.Sprintf("SUCCESS [%d,%d] = State %d (V=%.2fV, %d iterations)",
 					row, col, targetLevel, startVoltage, iteration))
 			})
-			// Restore write voltage display
-			ca.deviceState.SetDACVoltage(col, startVoltage)
+			// Return all voltages to 0 (safe idle state)
+			ca.deviceState.ResetWriteVoltages()
 			ca.recomputeAndRefresh()
 			return
 		}
@@ -1126,12 +1143,12 @@ func (ca *CircuitsApp) writeReadVerifyLoop(row, col, targetLevel int, startVolta
 		ca.operationsStatusLabel.SetText(fmt.Sprintf("PARTIAL [%d,%d] = State %d (target was %d, max iterations)",
 			row, col, currentLevel, targetLevel))
 	})
-	// Restore write voltage display
-	ca.deviceState.SetDACVoltage(col, startVoltage)
+	// Return all voltages to 0 (safe idle state)
+	ca.deviceState.ResetWriteVoltages()
 	ca.recomputeAndRefresh()
 }
 
-// onUnifiedRead reads the selected row by applying read voltage
+// onUnifiedRead reads the selected row by applying read voltage to ALL columns
 func (ca *CircuitsApp) onUnifiedRead() {
 	// Mode validation: only allowed in READ mode
 	if ca.deviceState.GetOperationMode() != OpModeRead {
@@ -1139,15 +1156,18 @@ func (ca *CircuitsApp) onUnifiedRead() {
 		return
 	}
 
-	// Apply read voltage to sense the row
-	ca.deviceState.SetDACPreset(DACReadPreset)
+	// Apply read voltage to ALL columns to sense the entire row
+	// (not just selected column - we want row-wide current sum)
+	readVoltage := ca.deviceState.GetReadRange().Max * 0.5
+	ca.deviceState.SetAllDACVoltages(readVoltage)
+	ca.deviceState.SetDACRangeMode(DACRangeRead)
 	ca.recomputeAndRefresh()
 
 	selectedRow := ca.deviceState.GetSelectedRow()
 	level := ca.deviceState.GetRowLevel(selectedRow)
 	current := ca.deviceState.GetRowCurrent(selectedRow)
 
-	ca.operationsStatusLabel.SetText(fmt.Sprintf("Sense [%d,*]: %.1fuA -> State %d", selectedRow, current, level))
+	ca.operationsStatusLabel.SetText(fmt.Sprintf("Sense Row %d: %.1f µA -> ADC Level %d", selectedRow, current, level))
 
 	// Return DAC to 0 after sensing (non-destructive but don't leave voltage applied)
 	ca.deviceState.SetAllDACVoltages(0)

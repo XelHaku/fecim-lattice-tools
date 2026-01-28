@@ -50,6 +50,15 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			if a.levelIndicator != nil {
 				a.levelIndicator.SetInteractive(true)
 			}
+			// Lazy calibration: run on first use of manual mode
+			if a.needsCalibration {
+				log.Printf("Running deferred calibration (manual mode activated)")
+				a.calibrateLevels()
+				if err := a.saveCalibration(); err != nil {
+					log.Printf("Warning: failed to save calibration: %v", err)
+				}
+				a.needsCalibration = false
+			}
 		case "Sine Wave":
 			a.waveform = WaveformSine
 			a.autoMode = true
@@ -85,6 +94,15 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			}
 			if a.levelIndicator != nil {
 				a.levelIndicator.SetInteractive(false)
+			}
+			// Lazy calibration: run on first use of WRD mode
+			if a.needsCalibration {
+				log.Printf("Running deferred calibration (Write/Read Demo activated)")
+				a.calibrateLevels()
+				if err := a.saveCalibration(); err != nil {
+					log.Printf("Warning: failed to save calibration: %v", err)
+				}
+				a.needsCalibration = false
 			}
 			// Reset write/read demo state with improved physics
 			a.wrdPhase = 0
@@ -204,19 +222,11 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			}
 		})
 
-		// Recalibrate for new material at current temperature (background to not block UI)
-		go func() {
-			a.mu.Lock()
-			// Clear old calibration cache for new material
-			a.tempCalibrations = make(map[int]*TempCalibration)
-			// Calibrate at current temperature
-			currentTemp := a.preisach.Temperature
-			a.calibrateLevelsAtTemperature(currentTemp)
-			if err := a.saveCalibration(); err != nil {
-				log.Printf("Warning: failed to save calibration: %v", err)
-			}
-			a.mu.Unlock()
-		}()
+		// Mark calibration as needed for new material (lazy: runs on first manual/WRD use)
+		// Clear old calibration cache since material changed
+		a.tempCalibrations = make(map[int]*TempCalibration)
+		a.needsCalibration = true
+		log.Printf("Material changed to %s - calibration deferred", a.material.Name)
 	})
 	a.materialSelect.SetSelected(a.materials[0].Name)
 
@@ -266,19 +276,12 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		bits := math.Log2(float64(n))
 		a.levelsLabel.SetText(fmt.Sprintf("Levels: %d (%.1f bits)", n, bits))
 
-		// Recalibrate in background at current temperature (new quantization mapping)
-		go func() {
-			a.mu.Lock()
-			// Clear old calibration cache for new level count
-			a.tempCalibrations = make(map[int]*TempCalibration)
-			// Calibrate at current temperature
-			currentTemp := a.preisach.Temperature
-			a.calibrateLevelsAtTemperature(currentTemp)
-			if err := a.saveCalibration(); err != nil {
-				log.Printf("Warning: failed to save calibration: %v", err)
-			}
-			a.mu.Unlock()
-		}()
+		// Mark calibration as needed for new level count (lazy: runs on first manual/WRD use)
+		a.mu.Lock()
+		a.tempCalibrations = make(map[int]*TempCalibration)
+		a.needsCalibration = true
+		log.Printf("Levels changed to %d - calibration deferred", n)
+		a.mu.Unlock()
 	}
 
 	// Pause/Resume button

@@ -218,33 +218,34 @@ func drawGlowCircle(img *image.RGBA, cx, cy, radius int, centerColor, glowColor 
 	}
 }
 
-// levelToColor converts a FeCIM level to a color based on state relative to mid-level.
-// Below mid: Blue (low conductance)
-// At mid: Gray/neutral
-// Above mid: Red (high conductance)
+// levelToColor converts a FeCIM level to a color using blue-white-red gradient.
+// Level 0: Blue (low conductance)
+// Mid level: White (neutral)
+// Max level: Red (high conductance)
 func levelToColor(level, maxLevel int) color.RGBA {
 	if maxLevel <= 1 {
-		return color.RGBA{128, 128, 128, 255} // Gray for single level
+		return color.RGBA{255, 255, 255, 255} // White for single level
 	}
 
-	mid := (maxLevel - 1) / 2
+	// Normalize level to 0.0 - 1.0 range
+	t := float64(level) / float64(maxLevel-1)
+
 	var r, g, b uint8
 
-	if level < mid {
-		// Below mid: Blue gradient (darker blue for lower states)
-		t := float64(level) / float64(mid) // 0.0 to ~1.0
-		r = uint8(40 + t*40)               // 40 -> 80
-		g = uint8(60 + t*60)               // 60 -> 120
-		b = uint8(180 + t*40)              // 180 -> 220
-	} else if level > mid {
-		// Above mid: Red gradient (brighter red for higher states)
-		t := float64(level-mid) / float64(maxLevel-1-mid) // 0.0 to 1.0
-		r = uint8(180 + t*75)                              // 180 -> 255
-		g = uint8(100 - t*60)                              // 100 -> 40
-		b = uint8(80 - t*40)                               // 80 -> 40
+	if t < 0.5 {
+		// Blue to White: level 0 -> mid
+		// t=0: Blue (50, 100, 220), t=0.5: White (255, 255, 255)
+		s := t * 2.0 // Scale to 0-1 for this half
+		r = uint8(50 + s*205)  // 50 -> 255
+		g = uint8(100 + s*155) // 100 -> 255
+		b = uint8(220 + s*35)  // 220 -> 255
 	} else {
-		// At mid: Gray (neutral state)
-		r, g, b = 140, 140, 150
+		// White to Red: mid -> max level
+		// t=0.5: White (255, 255, 255), t=1: Red (220, 50, 50)
+		s := (t - 0.5) * 2.0 // Scale to 0-1 for this half
+		r = uint8(255 - s*35)  // 255 -> 220
+		g = uint8(255 - s*205) // 255 -> 50
+		b = uint8(255 - s*205) // 255 -> 50
 	}
 
 	return color.RGBA{r, g, b, 255}

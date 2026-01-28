@@ -242,17 +242,9 @@ func TestGPUPeripherals_CPUCompare(t *testing.T) {
 	// Create CPU DAC for comparison
 	dacCPU := DefaultDAC()
 
-	// Test same codes on both
+	// Test same codes on both - use DefaultDACParams to ensure consistency
 	codes := []int32{0, 8, 16, 24, 31}
-	paramsGPU := DACParams{
-		Bits:   5,
-		VrefP:  1.0,
-		VrefN:  -1.0,
-		INLMax: 0.5,
-		DNLMax: 0.25,
-		Size:   int32(len(codes)),
-		Seed:   float32(12345), // Match DefaultDACParams seed
-	}
+	paramsGPU := DefaultDACParams(len(codes))
 
 	// GPU conversion
 	voltagesGPU, err := gpu.BatchDAC(codes, paramsGPU)

@@ -56,10 +56,26 @@ type MayergoyzPreisach struct {
 	fatigueRate   float64 // Fatigue degradation rate
 	wakeupCycles  int     // Cycles needed for wake-up
 	currentWakeup float64 // Current wake-up factor (0-1)
+
+	// NLS (Nucleation-Limited Switching) parameters for Merz law dynamics
+	// tau(E) = Tau0NLS * exp(EaNLS / |E|)
+	// Loaded from material, can be overridden with SetNLSParameters()
+	Tau0NLS float64 // Attempt time for NLS (s)
+	EaNLS   float64 // Activation field for NLS (V/m)
 }
 
 // NewMayergoyzPreisach creates a new full Preisach model.
 func NewMayergoyzPreisach(material *HZOMaterial, gridSize int) *MayergoyzPreisach {
+	// Load NLS parameters from material (with defaults for backward compatibility)
+	tau0NLS := material.Tau0NLS
+	if tau0NLS == 0 {
+		tau0NLS = 1e-12 // Default: 1 ps attempt time
+	}
+	eaNLS := material.EaNLS
+	if eaNLS == 0 {
+		eaNLS = material.Ec * 0.5 // Default: 0.5 * Ec (ensures fast switching above Ec)
+	}
+
 	m := &MayergoyzPreisach{
 		material:      material,
 		numAlpha:      gridSize,
@@ -75,6 +91,8 @@ func NewMayergoyzPreisach(material *HZOMaterial, gridSize int) *MayergoyzPreisac
 		fatigueRate:   1e-10, // Very low fatigue for HZO
 		wakeupCycles:  100,
 		currentWakeup: 0.8, // Start partially woken up
+		Tau0NLS:       tau0NLS,
+		EaNLS:         eaNLS,
 	}
 
 	m.initializeHysterons()
@@ -387,18 +405,63 @@ func (m *MayergoyzPreisach) GetEffectivePr() float64 {
 	return actualPr
 }
 
+// GetSwitchingTime returns the field-dependent switching time using Merz's law.
+// This implements NLS (Nucleation-Limited Switching) dynamics:
+//   tau(E) = tau0 * exp(Ea / |E|)
+//
+// At high fields (E >> Ea), switching is fast (~100 ps).
+// At low fields (E ~ Ec), switching slows dramatically (~100 ns).
+//
+// Reference: Merz, W.J. "Domain Formation and Domain Wall Motions in
+// Ferroelectric BaTiO3 Single Crystals" Phys. Rev. 95, 690 (1954)
+// For HfO2-based materials: Park et al., Adv. Mater. 27, 1811 (2015)
+func (m *MayergoyzPreisach) GetSwitchingTime(E float64) float64 {
+	absE := math.Abs(E)
+	if absE < 1e-6 {
+		return math.Inf(1) // No switching at zero field
+	}
+
+	// Merz law: tau = tau0 * exp(Ea/E)
+	tau := m.Tau0NLS * math.Exp(m.EaNLS/absE)
+
+	// Clamp to reasonable range (100 ps to 1 s)
+	// Upper bound of 1 second prevents numerical issues in simulations
+	if tau < 1e-10 {
+		tau = 1e-10
+	}
+	if tau > 1.0 {
+		tau = 1.0
+	}
+
+	return tau
+}
+
+// SetNLSParameters allows customizing the Merz law parameters.
+// tau0 is the attempt time (typically 1e-10 to 1e-12 s).
+// Ea is the activation field (typically 10-15 MV/cm for HfO2).
+func (m *MayergoyzPreisach) SetNLSParameters(tau0, Ea float64) {
+	m.Tau0NLS = tau0
+	m.EaNLS = Ea
+	log.Debug("SetNLSParameters: tau0=%.2e s, Ea=%.2f MV/cm", tau0, Ea/1e8)
+}
+
 // SimulateDomainSwitching returns domain switching dynamics over time.
 // Returns time, polarization, and number of switched domains.
 func (m *MayergoyzPreisach) SimulateDomainSwitching(Eapplied float64, duration float64, steps int) ([]float64, []float64, []int) {
-	log.Debug("SimulateDomainSwitching: E=%.2f MV/cm, duration=%.0f ns, steps=%d",
-		Eapplied/1e8, duration*1e9, steps)
-
 	times := make([]float64, steps)
 	pols := make([]float64, steps)
 	switched := make([]int, steps)
 
 	dt := duration / float64(steps-1)
-	tau := m.material.Tau // Switching time constant
+
+	// Use KAI model switching time for domain growth dynamics
+	// Note: GetSwitchingTime() provides field-dependent NLS (Merz law) switching time
+	// but KAI model uses its own time constant for nucleation/growth dynamics
+	tau := m.material.Tau
+	tauNLS := m.GetSwitchingTime(Eapplied)
+
+	log.Debug("SimulateDomainSwitching: E=%.2f MV/cm, tau(KAI)=%.2e s, tau(NLS)=%.2e s, duration=%.0f ns",
+		Eapplied/1e8, tau, tauNLS, duration*1e9)
 
 	// KAI (Kolmogorov-Avrami-Ishibashi) switching dynamics
 	// P(t) = Ps * (1 - exp(-(t/τ)^n))

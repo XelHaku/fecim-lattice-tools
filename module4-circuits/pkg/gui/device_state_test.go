@@ -1439,3 +1439,172 @@ func TestGetLastHysteresisDirection_UnknownCell(t *testing.T) {
 		t.Errorf("unknown cell direction: got %d, want DirectionUnknown", dir)
 	}
 }
+
+// ============================================================================
+// Category: V/2 Half-Select Write Tests
+// Per VOLTAGE_RULES.md Section 3.2 and 6.1
+// ============================================================================
+
+func TestApplyHalfSelectWrite_PassiveMode(t *testing.T) {
+	resetGlobalState()
+	ds := newTestDeviceState(8, 8)
+
+	// Enable passive mode (0T1R)
+	ds.SetPassiveMode(true)
+
+	// Apply V/2 write at cell (3, 5) with 1.5V write voltage
+	writeVoltage := 1.5
+	ds.ApplyHalfSelectWrite(3, 5, writeVoltage)
+
+	halfV := writeVoltage / 2.0
+
+	// Check WL voltages: selected row should have +V/2, others 0
+	for row := 0; row < 8; row++ {
+		wlV := ds.GetWLVoltage(row)
+		if row == 3 {
+			assertFloatEquals(t, "selected WL voltage", wlV, halfV)
+		} else {
+			assertFloatEquals(t, "unselected WL voltage", wlV, 0.0)
+		}
+	}
+
+	// Check BL (DAC) voltages: selected col should have -V/2, others 0
+	for col := 0; col < 8; col++ {
+		blV := ds.GetDACVoltage(col)
+		if col == 5 {
+			assertFloatEquals(t, "selected BL voltage", blV, -halfV)
+		} else {
+			assertFloatEquals(t, "unselected BL voltage", blV, 0.0)
+		}
+	}
+}
+
+func TestApplyHalfSelectWrite_NonPassiveMode(t *testing.T) {
+	resetGlobalState()
+	ds := newTestDeviceState(8, 8)
+
+	// Non-passive mode (1T1R/2T1R) - should use full voltage on BL
+	ds.SetPassiveMode(false)
+
+	writeVoltage := 1.5
+	ds.ApplyHalfSelectWrite(3, 5, writeVoltage)
+
+	// Check BL voltage: selected col should have full voltage
+	blV := ds.GetDACVoltage(5)
+	assertFloatEquals(t, "BL voltage in non-passive mode", blV, writeVoltage)
+
+	// Other columns should be 0 (from previous DAC state or SetDACVoltage)
+	// Note: SetDACVoltage only sets one column, doesn't zero others explicitly
+}
+
+func TestResetWriteVoltages_ClearsAll(t *testing.T) {
+	resetGlobalState()
+	ds := newTestDeviceState(8, 8)
+
+	// Enable passive mode and apply V/2 write
+	ds.SetPassiveMode(true)
+	ds.ApplyHalfSelectWrite(3, 5, 1.5)
+
+	// Reset all voltages
+	ds.ResetWriteVoltages()
+
+	// All WL voltages should be 0
+	for row := 0; row < 8; row++ {
+		wlV := ds.GetWLVoltage(row)
+		assertFloatEquals(t, "WL voltage after reset", wlV, 0.0)
+	}
+
+	// All BL voltages should be 0
+	for col := 0; col < 8; col++ {
+		blV := ds.GetDACVoltage(col)
+		assertFloatEquals(t, "BL voltage after reset", blV, 0.0)
+	}
+}
+
+func TestGetHalfSelectVoltage_DerivedFromMaterial(t *testing.T) {
+	resetGlobalState()
+	ds := newTestDeviceState(8, 8)
+
+	halfV := ds.GetHalfSelectVoltage()
+	writeRange := ds.GetWriteRange()
+
+	// Half-select voltage should be half of middle write voltage
+	expectedHalfV := (writeRange.Min + writeRange.Max) / 4.0
+
+	assertFloatEquals(t, "half-select voltage", halfV, expectedHalfV)
+
+	// Verify it's below coercive voltage (safe for half-selected cells)
+	Vc := ds.GetMaterial().CoerciveVoltage()
+	if halfV >= Vc {
+		t.Errorf("half-select voltage %.3fV should be below Vc %.3fV", halfV, Vc)
+	}
+}
+
+func TestIsUsingHalfSelect_PassiveWriteMode(t *testing.T) {
+	resetGlobalState()
+	ds := newTestDeviceState(8, 8)
+
+	// Not passive, not write mode
+	if ds.IsUsingHalfSelect() {
+		t.Error("should not use half-select in non-passive, non-write mode")
+	}
+
+	// Passive but read mode
+	ds.SetPassiveMode(true)
+	ds.SetOperationMode(OpModeRead)
+	if ds.IsUsingHalfSelect() {
+		t.Error("should not use half-select in passive read mode")
+	}
+
+	// Passive and write mode
+	ds.SetOperationMode(OpModeWrite)
+	if !ds.IsUsingHalfSelect() {
+		t.Error("should use half-select in passive write mode")
+	}
+
+	// Non-passive write mode
+	ds.SetPassiveMode(false)
+	if ds.IsUsingHalfSelect() {
+		t.Error("should not use half-select in non-passive write mode")
+	}
+}
+
+func TestApplyHalfSelectWrite_TargetCellEffectiveVoltage(t *testing.T) {
+	resetGlobalState()
+	ds := newTestDeviceState(8, 8)
+
+	ds.SetPassiveMode(true)
+
+	writeVoltage := 1.5
+	ds.ApplyHalfSelectWrite(3, 5, writeVoltage)
+
+	// Target cell effective voltage = WL - BL = +V/2 - (-V/2) = V
+	wlV := ds.GetWLVoltage(3)
+	blV := ds.GetDACVoltage(5)
+	effectiveV := wlV - blV
+
+	assertFloatEquals(t, "target cell effective voltage", effectiveV, writeVoltage)
+}
+
+func TestApplyHalfSelectWrite_HalfSelectedCellVoltages(t *testing.T) {
+	resetGlobalState()
+	ds := newTestDeviceState(8, 8)
+
+	ds.SetPassiveMode(true)
+
+	writeVoltage := 1.5
+	halfV := writeVoltage / 2.0
+	ds.ApplyHalfSelectWrite(3, 5, writeVoltage)
+
+	// Same row, different column (half-selected): WL = +V/2, BL = 0 → ΔV = +V/2
+	sameRowEffectiveV := ds.GetWLVoltage(3) - ds.GetDACVoltage(0) // col 0 is unselected
+	assertFloatEquals(t, "same row half-selected voltage", sameRowEffectiveV, halfV)
+
+	// Different row, same column (half-selected): WL = 0, BL = -V/2 → ΔV = +V/2
+	sameColEffectiveV := ds.GetWLVoltage(0) - ds.GetDACVoltage(5) // row 0 is unselected
+	assertFloatEquals(t, "same col half-selected voltage", sameColEffectiveV, halfV)
+
+	// Diagonal cell (unselected): WL = 0, BL = 0 → ΔV = 0
+	diagonalEffectiveV := ds.GetWLVoltage(0) - ds.GetDACVoltage(0)
+	assertFloatEquals(t, "diagonal cell voltage", diagonalEffectiveV, 0.0)
+}

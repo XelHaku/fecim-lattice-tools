@@ -486,11 +486,12 @@ func init() {
 }
 
 // DefaultDACParams returns typical DAC parameters for 5-bit FeCIM.
+// IMPORTANT: Must match DefaultDAC() in dac.go for CPU/GPU consistency.
 func DefaultDACParams(size int) DACParams {
 	return DACParams{
 		Bits:   5,              // 5 bits = 32 levels
-		VrefP:  1.0,            // +1V reference
-		VrefN:  -1.0,           // -1V reference
+		VrefP:  1.5,            // +1.5V reference (matches dac.go DefaultDAC)
+		VrefN:  -1.5,           // -1.5V reference (matches dac.go DefaultDAC)
 		INLMax: 0.5,            // 0.5 LSB INL (typical for R-2R)
 		DNLMax: 0.25,           // 0.25 LSB DNL
 		Size:   int32(size),    // Number of conversions
@@ -499,11 +500,12 @@ func DefaultDACParams(size int) DACParams {
 }
 
 // DefaultADCParams returns typical ADC parameters for 5-bit FeCIM.
+// IMPORTANT: Must match DefaultADC() in adc.go for CPU/GPU consistency.
 func DefaultADCParams(size int) ADCParams {
 	return ADCParams{
 		Bits:     5,              // 5 bits = 32 levels
-		VrefP:    1.0,            // +1V reference
-		VrefN:    -1.0,           // -1V reference
+		VrefP:    1.0,            // +1V reference (matches adc.go DefaultADC)
+		VrefN:    0.0,            // 0V reference (matches adc.go DefaultADC)
 		INLMax:   0.5,            // 0.5 LSB INL
 		DNLMax:   0.25,           // 0.25 LSB DNL
 		NoiseRMS: 1e-3,           // 1mV input noise (typical SAR ADC)

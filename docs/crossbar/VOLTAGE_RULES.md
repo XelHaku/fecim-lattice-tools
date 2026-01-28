@@ -87,7 +87,7 @@ This document provides the authoritative reference for all voltage values used i
 | Write Voltage (Set) | +1.2-1.5 V | >Vc with margin | Derived from DAC range | ⚠️ Estimated |
 | Write Voltage (Erase) | -1.2-1.5 V | Negative polarity | Derived from DAC range | ⚠️ Estimated |
 | MVM Input Range | 0.0-1.0 V | DAC output → array | ADC Vref range | ✅ Verified |
-| Half-Select (V/2) | 0.75 V | Vwrite/2 (0T1R only) | Calculated: 1.5V / 2 | ⚠️ Estimated |
+| Half-Select (V/2) | 0.75 V | Vwrite/2 (0T1R only) | `device_state.go:487-518` | ✅ Verified |
 | **Transistor Control (1T1R/2T1R)** | | | | |
 | WL HIGH (ON) | 1.0 V | VDD (logic high) | Standard CMOS | ✅ Standard |
 | WL LOW (OFF) | 0.0 V | VSS (logic low) | Standard CMOS | ✅ Standard |
@@ -99,11 +99,12 @@ This document provides the authoritative reference for all voltage values used i
 - All peripheral circuit voltages are hard-coded in source files.
 - Physics parameters (Ec) are peer-reviewed and material-specific.
 - Transistor control voltages follow standard CMOS logic levels.
+- **V/2 half-select is explicitly implemented** in `ApplyHalfSelectWrite()` for passive (0T1R) mode.
 
-**Estimated Values:**
-- Write voltages are **inferred** from DAC range (±1.5V) but not explicitly set in code.
-- Coercive voltage (Vc) is **calculated** from Ec and thickness, not directly measured.
-- Half-select voltage is **derived** as Vwrite/2 for passive arrays.
+**Derived Values:**
+- Write voltages are **derived from material properties** (Vc = Ec × thickness).
+- Write range: Vc to FieldMaxRatio × Vc (from `config/physics.yaml` calibration).
+- Coercive voltage (Vc) is **calculated** from Ec and thickness via `material.CoerciveVoltage()`.
 
 **Recommended Values (300K Operation):**
 - Read: **0.2V** (safe margin below Vc)
@@ -309,6 +310,101 @@ Loop up to 5 times:
 - IR drop effects: Cells at array edges see different voltages
 - Temperature gradients: Local heating changes Ec
 
+#### ISPP Optimization: Skip RESET on Same-Branch Writes
+
+**Key Insight:** RESET is only needed when crossing the hysteresis midpoint (changing branches).
+
+Real FeCIM devices use Incremental Step Pulse Programming that can skip the RESET phase when the target level is on the same branch as the current level. This provides ~50% energy savings on average.
+
+**Same-Branch Detection:**
+```
+                P (Polarization)
+                ↑
+     +Psat │     ╱╲  Upper branch (levels 16-30)
+            │    ╱  ╲     → Can go UP without RESET
+            │   ╱    ╲    → Going DOWN requires RESET
+       +Pr  ├──●      ╲
+            │           ╲
+   ─────────┼─────●──────────→ E (Field)
+            │    midpoint (level 15)
+       -Pr  ├──────────●╱
+            │        ╱     Lower branch (levels 1-14)
+            │       ╱      → Can go DOWN without RESET
+     -Psat │      ╱       → Going UP requires RESET
+```
+
+**When RESET Can Be Skipped (Incremental Write):**
+```
+Current Level | Target Level | Can Skip RESET?
+──────────────┼──────────────┼─────────────────
+Upper half    | Higher level | ✓ YES (same branch, increasing)
+Upper half    | Lower level  | ✗ NO (must cross midpoint)
+Lower half    | Lower level  | ✓ YES (same branch, decreasing)
+Lower half    | Higher level | ✗ NO (must cross midpoint)
+```
+
+**Incremental Write Voltage:**
+```go
+// For same-branch writes, use smaller step pulses
+// instead of full calibration voltages
+levelDelta := targetLevel - currentLevel
+stepE := Ec * 0.05 * abs(levelDelta + 1)  // ~0.05*Ec per level
+
+// Apply in correct direction
+if goingUp {
+    writeE = +stepE   // Positive for increasing P
+} else {
+    writeE = -stepE   // Negative for decreasing P
+}
+```
+
+**Energy Savings:**
+```
+Standard Write (4 phases):
+  RESET → HOLD_RESET → WRITE → HOLD_WRITE
+  Energy ≈ 4× base pulse
+
+Incremental Write (2 phases):
+  WRITE → HOLD_WRITE (skip RESET phases)
+  Energy ≈ 2× base pulse
+
+Average savings: ~50% (when ~half of writes are same-branch)
+```
+
+**Implementation Reference:**
+```
+File: module1-hysteresis/pkg/gui/simulation.go
+
+Manual mode:  Lines 505-580 (ISPP decision logic)
+WRD Demo:     Lines 950-1020 (Write/Read Demo ISPP)
+```
+
+**Code Pattern:**
+```go
+// Detect if we can skip RESET
+midLevel := numLevels / 2
+targetInUpperHalf := targetLevel > midLevel
+currentInUpperHalf := currentLevel > midLevel
+
+canSkipReset := false
+if targetInUpperHalf == currentInUpperHalf {
+    // Same branch - check direction
+    if targetInUpperHalf {
+        canSkipReset = targetLevel >= currentLevel  // Upper: can go UP
+    } else {
+        canSkipReset = targetLevel <= currentLevel  // Lower: can go DOWN
+    }
+}
+
+if canSkipReset {
+    // Skip RESET, jump directly to WRITE phase
+    skipResetCount++
+} else {
+    // Full RESET required - crossing midpoint
+    fullResetCount++
+}
+```
+
 #### Voltage-Level Relationship
 
 **Non-Linear Mapping Due to Hysteresis:**
@@ -382,19 +478,21 @@ Key observations:
 3. **Temperature interpolation**: Vc(T) from physics.yaml
 4. **Drift compensation**: Tracks cumulative cycle count
 
-#### 4-Phase Write Sequence
+#### 4-Phase Write Sequence (or 2-Phase with ISPP Skip)
 
 **Full Write Operation (one cell, one level):**
 
 ```
-Phase 0: RESET (100ns pulse)
+Phase 0: RESET (100ns pulse)        ← SKIPPED for same-branch writes!
 ┌──────────────────────────────────┐
 │ Apply -V_sat (opposite polarity) │
 │ Purpose: Saturate to -Psat       │
 │ Result: Known starting state     │
+│ ** Only needed when crossing **  │
+│ ** the hysteresis midpoint **    │
 └──────────────────────────────────┘
          ↓
-Phase 1: HOLD_RESET (50ns)
+Phase 1: HOLD_RESET (50ns)          ← SKIPPED for same-branch writes!
 ┌──────────────────────────────────┐
 │ Return WL/BL to 0V               │
 │ Purpose: Zero field, P persists  │
@@ -407,6 +505,8 @@ Phase 2: WRITE (Program-Verify Loop)
 │ Purpose: Switch to +P_target     │
 │ Result: Cell at desired level    │
 │ Iterations: 1-5 (ISPP)           │
+│ ** For incremental writes, use **│
+│ ** smaller step pulse voltages **│
 └──────────────────────────────────┘
          ↓
 Phase 3: HOLD_WRITE (50ns)
@@ -416,6 +516,10 @@ Phase 3: HOLD_WRITE (50ns)
 │ Result: Non-volatile storage     │
 └──────────────────────────────────┘
 ```
+
+**ISPP Optimization:** When the target level is on the same hysteresis branch
+as the current level, phases 0-1 (RESET) can be skipped. This provides ~50%
+energy savings. See "ISPP Optimization: Skip RESET on Same-Branch Writes" above.
 
 **Timing (from config/physics.yaml):**
 ```yaml
@@ -906,20 +1010,61 @@ default_hzo:
 #    = 1.2 V
 ```
 
-### 7.6 Half-Select Voltage (Derived)
+### 7.6 Half-Select Voltage (V/2 Implementation)
 
-**Not explicitly coded, but calculated:**
+**File:** `module4-circuits/pkg/gui/device_state.go`
 
-```python
-# From DAC Vref High
-V_write = 1.5  # V
-V_half_select = V_write / 2.0
-              = 0.75  # V
+**Now explicitly implemented** in `ApplyHalfSelectWrite()` (lines 487-518):
 
-# Safety margin check
-V_half_select / Vc = 0.75 / 1.2 = 0.625 (62.5% of Vc)
-# Safe: <100% means no unintended switching
+```go
+// ApplyHalfSelectWrite applies V/2 biasing for passive (0T1R) write operation
+// For SET: WL = +V/2, BL = -V/2, giving target cell ΔV = +V_write
+func (ds *DeviceState) ApplyHalfSelectWrite(targetRow, targetCol int, writeVoltage float64) {
+    if !ds.isPassive {
+        // Non-passive modes use transistor isolation, not V/2
+        ds.SetDACVoltage(targetCol, writeVoltage)
+        return
+    }
+
+    // V/2 half-select for passive mode
+    halfV := writeVoltage / 2.0
+
+    // Set WL voltages: selected row gets +V/2, others get 0
+    for i := range ds.wlVoltages {
+        if i == targetRow {
+            ds.wlVoltages[i] = halfV  // +V/2 for selected WL
+        } else {
+            ds.wlVoltages[i] = 0      // Unselected WLs grounded
+        }
+    }
+
+    // Set BL voltages: selected column gets -V/2, others get 0
+    for i := range ds.dacVoltages {
+        if i == targetCol {
+            ds.dacVoltages[i] = -halfV  // -V/2 for selected BL
+        } else {
+            ds.dacVoltages[i] = 0       // Unselected BLs grounded
+        }
+    }
+}
 ```
+
+**Voltage Calculation:**
+```
+V_write = 1.5V (from material-derived write range)
+V_half_select = V_write / 2.0 = 0.75V
+
+Target cell:     ΔV = WL - BL = (+0.75V) - (-0.75V) = +1.5V (full switching)
+Half-selected:   ΔV = +0.75V or -0.75V (below Vc, minimal disturb)
+
+Safety margin: V/2 / Vc = 0.75 / 1.2 = 0.625 (62.5% of Vc)
+```
+
+**Helper Functions:**
+- `GetWLVoltage(row)` - Returns WL voltage for a row (line 537)
+- `GetHalfSelectVoltage()` - Returns V/2 derived from write range (line 544)
+- `ResetWriteVoltages()` - Returns all WL/BL to 0V after write (line 525)
+- `IsUsingHalfSelect()` - Returns true if passive mode + write mode (line 551)
 
 ### 7.7 Architecture Mode Detection
 
@@ -1191,7 +1336,13 @@ Sneak Path Suppression:
 | `module4-circuits/pkg/peripherals/analysis.go` | 249 | Explicit read voltage (0.1V) |
 | `config/physics.yaml` | 87, 95 | Ec and thickness (Vc derivation) |
 | `module2-crossbar/pkg/crossbar/sneakpath.go` | 219-220 | Half-select voltage struct |
-| `module4-circuits/pkg/gui/device_state.go` | 273-282 | Passive mode WL enforcement |
+| `module4-circuits/pkg/gui/device_state.go` | 280-288 | Passive mode WL enforcement |
+| `module4-circuits/pkg/gui/device_state.go` | 487-518 | **V/2 ApplyHalfSelectWrite()** |
+| `module4-circuits/pkg/gui/device_state.go` | 525-535 | ResetWriteVoltages() |
+| `module4-circuits/pkg/gui/device_state.go` | 537-542 | GetWLVoltage() |
+| `module4-circuits/pkg/gui/device_state.go` | 544-549 | GetHalfSelectVoltage() |
+| `module4-circuits/pkg/gui/device_state.go` | 551-553 | IsUsingHalfSelect() |
+| `module4-circuits/pkg/gui/tab_unified.go` | 1043-1066 | V/2 write operation with status display |
 
 ### 9.8 Dr. external research group Primary Source
 
@@ -1289,10 +1440,11 @@ NOTES:
 **Document Status:**
 - ✅ All peripheral voltages verified from source code
 - ✅ Physics parameters cross-referenced with `config/physics.yaml`
-- ⚠️ Write/half-select voltages are derived (not explicit in code)
+- ✅ V/2 half-select explicitly implemented in `ApplyHalfSelectWrite()` (device_state.go:487-518)
 - ✅ Architecture modes verified from device_state.go implementation
+- ✅ Write voltages derived from material properties (Vc = Ec × thickness)
 
-**Version:** 1.0
+**Version:** 1.1
 **Last Updated:** January 2026
 **Part of:** FeCIM Lattice Tools
 **License:** See project root

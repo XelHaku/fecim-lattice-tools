@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -57,7 +58,41 @@ var keyTemperatures = []float64{
 
 // temperatureTolerance is the max distance from a cached calibration to interpolate
 const temperatureTolerance = 25.0 // Kelvin
-const calibrationFile = "data/hysteresis_calibration.json"
+const calibrationDir = "data/calibrations"
+
+// calibrationFileForMaterial returns the calibration file path for a given material.
+// Material names are sanitized to be filesystem-safe.
+func calibrationFileForMaterial(materialName string) string {
+	// Sanitize material name for use as filename
+	safe := strings.Map(func(r rune) rune {
+		switch {
+		case r >= 'a' && r <= 'z':
+			return r
+		case r >= 'A' && r <= 'Z':
+			return r - 'A' + 'a' // lowercase
+		case r >= '0' && r <= '9':
+			return r
+		case r == '-' || r == '_':
+			return r
+		case r == ' ' || r == '(' || r == ')':
+			return '_'
+		default:
+			return -1 // drop
+		}
+	}, materialName)
+
+	// Remove consecutive underscores and trim
+	for strings.Contains(safe, "__") {
+		safe = strings.ReplaceAll(safe, "__", "_")
+	}
+	safe = strings.Trim(safe, "_")
+
+	if safe == "" {
+		safe = "unknown"
+	}
+
+	return filepath.Join(calibrationDir, safe+".json")
+}
 
 // saveCalibration persists calibration data to disk (v2: multi-temperature)
 func (a *App) saveCalibration() error {
@@ -503,7 +538,12 @@ func (a *App) simulationLoop() {
 				startLevel := a.manualStartLevel   // Captured at animation start
 
 				switch a.manualPhase {
-				case 0: // RESET - saturate in opposite direction to target
+				case 0: // RESET phase - always saturate to known state before writing
+					// NOTE: ISPP skip-reset optimization removed (incompatible with Preisach model).
+					// Preisach hysteresis is path-dependent - reliable level targeting requires
+					// starting from a known saturation state. Incremental writes with sub-Ec
+					// fields do not produce predictable switching.
+
 					var resetE float64
 					if targetLevel > startLevel {
 						// Going UP: first saturate negative (reach level 1)
@@ -561,6 +601,9 @@ func (a *App) simulationLoop() {
 					targetIdx := targetLevel - 1
 					midLevel := a.numLevels / 2
 					goingUp := targetLevel > midLevel
+
+					// Use calibrated fields for reliable level targeting
+					// (ISPP incremental writes removed - incompatible with Preisach model)
 					if targetIdx < 0 || targetIdx >= len(a.calibrationUp) {
 						// Out of bounds - use fallback
 						ratio := float64(targetLevel-1) / float64(maxLevelIdx)
@@ -618,9 +661,9 @@ func (a *App) simulationLoop() {
 						finalLevel := a.discreteLevel + 1
 						levelError := finalLevel - targetLevel
 
-						// Log animation result with detailed state (always log for debugging)
-						log.Printf("ANIMATION COMPLETE: target=%d, final=%d, error=%d, normalizedP=%.4f, discreteLevel=%d",
-							targetLevel, finalLevel, levelError, a.normalizedP, a.discreteLevel)
+						// Log animation result with detailed state
+						log.Printf("ANIMATION COMPLETE: target=%d, final=%d, error=%d, normalizedP=%.4f",
+							targetLevel, finalLevel, levelError, a.normalizedP)
 
 						// Update calibration using binary search with bounds tracking
 						// This approach converges much faster and avoids oscillation
@@ -662,9 +705,9 @@ func (a *App) simulationLoop() {
 									newVal = currentE*0.7 + newVal*0.3
 								}
 
-								// Clamp to valid range
-								if newVal < Ec*0.5 {
-									newVal = Ec * 0.5
+								// Clamp to valid range (allow weaker fields for mid-levels)
+								if newVal < Ec*0.3 {
+									newVal = Ec * 0.3
 								} else if newVal > Ec*2.5 {
 									newVal = Ec * 1.5
 								}
@@ -706,9 +749,9 @@ func (a *App) simulationLoop() {
 									newVal = currentE*0.7 + newVal*0.3
 								}
 
-								// Clamp to valid range
-								if newVal > -Ec*0.5 {
-									newVal = -Ec * 0.5
+								// Clamp to valid range (allow weaker fields for mid-levels)
+								if newVal > -Ec*0.3 {
+									newVal = -Ec * 0.3
 								} else if newVal < -Ec*2.5 {
 									newVal = -Ec * 1.5
 								}
@@ -963,8 +1006,8 @@ func (a *App) simulationLoop() {
 									newVal = currentE*0.7 + newVal*0.3
 								}
 
-								if newVal < Ec*0.5 {
-									newVal = Ec * 0.5
+								if newVal < Ec*0.3 {
+									newVal = Ec * 0.3
 								} else if newVal > Ec*2.5 {
 									newVal = Ec * 1.5
 								}
@@ -997,8 +1040,8 @@ func (a *App) simulationLoop() {
 									newVal = currentE*0.7 + newVal*0.3
 								}
 
-								if newVal > -Ec*0.5 {
-									newVal = -Ec * 0.5
+								if newVal > -Ec*0.3 {
+									newVal = -Ec * 0.3
 								} else if newVal < -Ec*2.5 {
 									newVal = -Ec * 1.5
 								}

@@ -55,7 +55,8 @@ func (e *EmbeddedComparisonApp) BuildContent(fyneApp fyne.App, parentWindow fyne
 
 	content := e.createMainLayout()
 
-	e.updateCalculations()
+	// Note: updateCalculations() is called via onWorkloadChanged when SetSelected triggers
+	// No need for explicit call here - it causes duplicate calculation
 	e.updateStatus("Ready. Select workload and adjust parameters.")
 
 	return content

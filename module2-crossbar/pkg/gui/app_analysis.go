@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"image/color"
 	"math"
-	"math/rand"
 	"path/filepath"
 	"time"
 
@@ -72,17 +71,10 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 
 	// Update before/after toggle
 	if ca.beforeAfterToggle != nil {
+		// Ideal: programmed conductances (no noise/variation)
 		idealMatrix := ca.array.GetConductanceMatrix()
-		// For actual, apply a slight variation (simulated)
-		actualMatrix := make([][]float64, len(idealMatrix))
-		for i := range idealMatrix {
-			actualMatrix[i] = make([]float64, len(idealMatrix[i]))
-			for j := range idealMatrix[i] {
-				// Apply simulated degradation
-				factor := 1.0 - mvmResult.RMSE*rand.Float64()
-				actualMatrix[i][j] = idealMatrix[i][j] * factor
-			}
-		}
+		// Actual: effective conductances with per-cell noise factors applied
+		actualMatrix := ca.array.GetEffectiveConductanceMatrix()
 		ca.beforeAfterToggle.SetData(idealMatrix, actualMatrix)
 	}
 

@@ -62,13 +62,15 @@ func (e *EmbeddedApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) f
 func (e *EmbeddedApp) Start() {
 	e.running = true
 
-	// Try to load saved calibration, or perform fresh calibration
+	// Try to load saved calibration (fast), or mark for lazy calibration
 	go func() {
 		time.Sleep(100 * time.Millisecond) // Let UI settle
 		e.mu.Lock()
 		if !e.loadCalibration() {
-			// No valid saved calibration - perform fresh calibration
-			e.calibrateLevels()
+			// No valid saved calibration - defer to first manual/WRD mode use
+			// This saves ~400ms at startup for users who only view auto waveforms
+			e.needsCalibration = true
+			log.Printf("Calibration deferred (will run on first manual/WRD mode use)")
 		}
 		e.mu.Unlock()
 	}()

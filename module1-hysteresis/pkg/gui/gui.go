@@ -117,9 +117,10 @@ type App struct {
 
 	// Level calibration data (populated at startup/material change)
 	// Maps field values needed to reach each level from known starting states
-	calibrationUp   []float64 // Field needed to reach level N from level 1 (ascending)
-	calibrationDown []float64 // Field needed to reach level N from level N (descending)
-	calibrated      bool      // Whether calibration has been performed
+	calibrationUp    []float64 // Field needed to reach level N from level 1 (ascending)
+	calibrationDown  []float64 // Field needed to reach level N from level N (descending)
+	calibrated       bool      // Whether calibration has been performed
+	needsCalibration bool      // True if calibration should run on first manual/WRD mode use
 
 	// Adaptive calibration bounds (binary search approach)
 	// Tracks proven lower/upper bounds for each level to converge faster

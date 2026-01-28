@@ -66,14 +66,14 @@ type searchToken struct {
 	inHeading bool
 }
 
-// NewSearchIndex creates and builds a new search index.
+// NewSearchIndex creates a new search index (built lazily on first query).
 func NewSearchIndex(docsPath string) *SearchIndex {
 	si := &SearchIndex{
 		index:    make(map[string][]IndexEntry),
 		docs:     make(map[string]*SearchDocMetadata),
 		docsPath: docsPath,
 	}
-	si.Build()
+	// Index is built lazily on first Query() call to speed up app startup
 	return si
 }
 
@@ -346,6 +346,15 @@ func (si *SearchIndex) extractSnippet(content, term string) string {
 
 // Query performs a fuzzy search with TF-IDF ranking.
 func (si *SearchIndex) Query(query string, limit int) []SearchResult {
+	// Lazy build: index on first query
+	si.mu.RLock()
+	needsBuild := len(si.docs) == 0 && si.docsPath != ""
+	si.mu.RUnlock()
+
+	if needsBuild {
+		si.Build() // Build() takes write lock internally
+	}
+
 	si.mu.RLock()
 	defer si.mu.RUnlock()
 
@@ -572,9 +581,25 @@ func minInt(a, b, c int) int {
 }
 
 // GetDocMetadata returns metadata for a document path.
+// If index hasn't been built yet, indexes just this document.
 func (si *SearchIndex) GetDocMetadata(path string) *SearchDocMetadata {
 	si.mu.RLock()
-	defer si.mu.RUnlock()
+	meta, exists := si.docs[path]
+	si.mu.RUnlock()
+
+	if exists {
+		return meta
+	}
+
+	// Index just this one document if not found
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil
+	}
+
+	si.mu.Lock()
+	defer si.mu.Unlock()
+	si.indexDocument(path, info)
 	return si.docs[path]
 }
 

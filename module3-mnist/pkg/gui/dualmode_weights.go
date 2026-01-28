@@ -14,34 +14,12 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-
-	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // createWeightZone creates the weight visualization zone (Zone 4).
 func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
-	// Default state: collapsed
-	app.weightsCollapsed = true
-
-	// Layer selector as horizontal radio
-	// NOTE: Don't set callback initially - SetSelected triggers callback which uses fyne.Do() and deadlocks during startup
-	layerSelect := widget.NewRadioGroup(
-		[]string{"Layer1 (784x128)", "Layer2 (128x10)"},
-		nil, // No callback initially to avoid fyne.Do() deadlock during startup
-	)
-	layerSelect.Horizontal = true
-	layerSelect.SetSelected("Layer1 (784x128)")
-	// Now set the callback after initial selection
-	layerSelect.OnChanged = func(s string) {
-		if s == "Layer1 (784x128)" {
-			app.weightLayer = 0
-		} else {
-			app.weightLayer = 1
-		}
-		app.updateWeightHeatmap()
-		app.updateWeightComparison()
-		app.updateCollapsedSummary()
-	}
+	// Default state: expanded
+	app.weightsCollapsed = false
 
 	// Info labels (for expanded view)
 	app.weightDimLabel = widget.NewLabel("")
@@ -53,50 +31,78 @@ func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
 	app.hoverableWeightHeatmap.SetMinSize(fyne.NewSize(600, 400))
 	app.weightHeatmap = app.hoverableWeightHeatmap.raster // Keep reference for updateWeightHeatmap
 
-	// Create color legend for weight heatmap (blue-white-red)
-	weightLegend := sharedwidgets.NewColorLegend(-1.0, 1.0, "", true, sharedwidgets.BlueWhiteRedColor)
-
 	// Create FP vs Quantized comparison widget
 	app.weightComparisonWidget = NewWeightComparisonWidget()
 
 	// Create dual heatmap (side-by-side FP vs Quantized)
 	app.dualWeightHeatmap = NewDualWeightHeatmap()
 
-	zoomBtn := widget.NewButtonWithIcon("", theme.ZoomFitIcon(), func() {
-		app.showZoomedHeatmap()
-	})
-
-	// P1 Enhancement Widgets (moved from controls zone for better space utilization)
+	// P1 Enhancement Widgets
 	app.quantizationWidget = NewQuantizationWidget()
 	app.energyWidget = NewEnergyWidget(MNISTInputSize, MNISTHiddenSize, MNISTOutputSize)
 
-	// Note: Expanded content (tabs, headers) is built dynamically in toggleWeightsCollapsed()
-	// when the user expands the section. We don't create it here to avoid unused variables.
-	_ = layerSelect     // Used in toggleWeightsCollapsed()
-	_ = zoomBtn         // Used in toggleWeightsCollapsed()
-	_ = weightLegend    // Used in toggleWeightsCollapsed()
-
-	// Collapsible toggle button with summary
-	app.weightsToggleBtn = widget.NewButton("▶ Weights: Layer1 784×128 | 30 levels | Click to expand", func() {
+	// Collapsible toggle button
+	app.weightsToggleBtn = widget.NewButton("▼ Weights: Click to collapse", func() {
 		app.toggleWeightsCollapsed()
 	})
 	app.weightsToggleBtn.Alignment = widget.ButtonAlignLeading
 
-	// Content container (starts empty, filled by toggleWeightsCollapsed)
-	app.weightsContent = container.NewMax()
+	// Build expanded content (default state)
+	layerSelect := widget.NewRadioGroup(
+		[]string{"Layer1 (784x128)", "Layer2 (128x10)"},
+		nil,
+	)
+	layerSelect.Horizontal = true
+	layerSelect.SetSelected("Layer1 (784x128)")
+	layerSelect.OnChanged = func(s string) {
+		if s == "Layer1 (784x128)" {
+			app.weightLayer = 0
+		} else {
+			app.weightLayer = 1
+		}
+		app.updateWeightHeatmap()
+		app.updateWeightComparison()
+	}
+
+	zoomBtn := widget.NewButtonWithIcon("", theme.ZoomFitIcon(), func() {
+		app.showZoomedHeatmap()
+	})
+
+	expandedHeader := container.NewVBox(
+		container.NewHBox(layout.NewSpacer(), layerSelect, zoomBtn),
+		container.NewHBox(
+			app.weightDimLabel,
+			widget.NewSeparator(),
+			app.weightRangeLabel,
+			widget.NewSeparator(),
+			app.weightLevelsLabel,
+		),
+	)
+
+	// Use DualWeightHeatmap to show FP vs Quantized side-by-side
+	heatmapTab := container.NewMax(app.dualWeightHeatmap)
+	statsTab := app.createStatsTab()
+
+	weightTabs := container.NewAppTabs(
+		container.NewTabItem("FP vs Quantized", heatmapTab),
+		container.NewTabItem("Stats", statsTab),
+	)
+
+	expandedContent := container.NewBorder(
+		expandedHeader,
+		nil, nil, nil,
+		weightTabs,
+	)
+
+	// Content container (starts expanded)
+	app.weightsContent = container.NewMax(expandedContent)
 
 	// Main container
-	mainContainer := container.NewBorder(
+	return container.NewBorder(
 		app.weightsToggleBtn, // Top: toggle button
 		nil, nil, nil,
 		app.weightsContent, // Center: expandable content
 	)
-
-	// Set initial state (collapsed)
-	app.weightsContent.Objects = []fyne.CanvasObject{} // Empty when collapsed
-	app.updateCollapsedSummary()
-
-	return mainContainer
 }
 
 // createStatsTab creates the consolidated Stats tab combining quantization info, energy info, and FP vs Quant comparison.
@@ -186,12 +192,12 @@ func (app *DualModeApp) toggleWeightsCollapsed() {
 				),
 			)
 
-			weightLegend := sharedwidgets.NewColorLegend(-1.0, 1.0, "", true, sharedwidgets.BlueWhiteRedColor)
-			heatmapTab := container.NewBorder(nil, nil, weightLegend, nil, app.hoverableWeightHeatmap)
+			// Use DualWeightHeatmap to show FP vs Quantized side-by-side
+			heatmapTab := container.NewMax(app.dualWeightHeatmap)
 			statsTab := app.createStatsTab()
 
 			weightTabs := container.NewAppTabs(
-				container.NewTabItem("Heatmap", heatmapTab),
+				container.NewTabItem("FP vs Quantized", heatmapTab),
 				container.NewTabItem("Stats", statsTab),
 			)
 

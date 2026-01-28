@@ -385,3 +385,88 @@ func TestPECurveSmoothness(t *testing.T) {
 	}
 	t.Logf("P-E curve smoothness: %d distinct P values in ±Pr range", len(uniqueP))
 }
+
+// TestNLSSwitchingTime verifies the Merz law switching time calculation.
+func TestNLSSwitchingTime(t *testing.T) {
+	material := DefaultHZO()
+	model := NewMayergoyzPreisach(material, 50)
+
+	Ec := material.Ec
+
+	// Test cases: field -> expected tau range
+	testCases := []struct {
+		field  float64
+		tauMin float64
+		tauMax float64
+		desc   string
+	}{
+		{2.0 * Ec, 1e-12, 1e-6, "High field (2*Ec)"},
+		{1.5 * Ec, 1e-11, 1e-5, "Moderate field (1.5*Ec)"},
+		{1.1 * Ec, 1e-10, 1e-3, "Near threshold (1.1*Ec)"},
+		{0.5 * Ec, 1e-6, 1.0, "Below Ec (0.5*Ec)"},
+	}
+
+	for _, tc := range testCases {
+		tau := model.GetSwitchingTime(tc.field)
+		if tau < tc.tauMin || tau > tc.tauMax {
+			t.Errorf("%s: tau=%.2e, expected [%.2e, %.2e]", tc.desc, tau, tc.tauMin, tc.tauMax)
+		} else {
+			t.Logf("%s: tau=%.2e s (OK)", tc.desc, tau)
+		}
+	}
+}
+
+// TestNLSFieldDependence verifies switching time increases as field decreases.
+func TestNLSFieldDependence(t *testing.T) {
+	material := DefaultHZO()
+	model := NewMayergoyzPreisach(material, 50)
+
+	Ec := material.Ec
+	fields := []float64{2.0 * Ec, 1.5 * Ec, 1.2 * Ec, 1.0 * Ec}
+
+	var prevTau float64 = 0
+	for _, E := range fields {
+		tau := model.GetSwitchingTime(E)
+		if prevTau > 0 && tau <= prevTau {
+			t.Errorf("Switching time should increase as field decreases: E=%.2f*Ec gave tau=%.2e (prev=%.2e)",
+				E/Ec, tau, prevTau)
+		}
+		t.Logf("E=%.2f*Ec -> tau=%.2e s", E/Ec, tau)
+		prevTau = tau
+	}
+}
+
+// TestNLSPerMaterial verifies different materials have different NLS parameters.
+func TestNLSPerMaterial(t *testing.T) {
+	hzo := DefaultHZO()
+	alscn := AlScN()
+
+	modelHZO := NewMayergoyzPreisach(hzo, 50)
+	modelAlScN := NewMayergoyzPreisach(alscn, 50)
+
+	// At same normalized field (1.5*Ec), AlScN should have different tau
+	fieldHZO := 1.5 * hzo.Ec
+	fieldAlScN := 1.5 * alscn.Ec
+
+	tauHZO := modelHZO.GetSwitchingTime(fieldHZO)
+	tauAlScN := modelAlScN.GetSwitchingTime(fieldAlScN)
+
+	t.Logf("HZO at 1.5*Ec: tau=%.2e s (Tau0NLS=%.2e, EaNLS=%.2e)", tauHZO, modelHZO.Tau0NLS, modelHZO.EaNLS)
+	t.Logf("AlScN at 1.5*Ec: tau=%.2e s (Tau0NLS=%.2e, EaNLS=%.2e)", tauAlScN, modelAlScN.Tau0NLS, modelAlScN.EaNLS)
+
+	// They should be different (AlScN has higher EaNLS but faster Tau0NLS)
+	if tauHZO == tauAlScN {
+		t.Errorf("Expected different switching times for different materials")
+	}
+}
+
+// TestNLSZeroField verifies GetSwitchingTime handles zero field correctly.
+func TestNLSZeroField(t *testing.T) {
+	material := DefaultHZO()
+	model := NewMayergoyzPreisach(material, 50)
+
+	tau := model.GetSwitchingTime(0)
+	if !math.IsInf(tau, 1) {
+		t.Errorf("Expected Inf for zero field, got %v", tau)
+	}
+}

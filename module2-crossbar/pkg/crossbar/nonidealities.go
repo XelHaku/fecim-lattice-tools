@@ -40,45 +40,184 @@ type IRDropAnalysis struct {
 	WorstCaseCell  [2]int  // Location of worst-case cell
 }
 
-// AnalyzeIRDrop performs IR drop analysis for the array.
-// Uses iterative relaxation to solve the resistive network.
+// IRDropSolverConfig contains configuration for the iterative IR drop solver.
+type IRDropSolverConfig struct {
+	MaxIterations int     // Maximum solver iterations (default: 100)
+	Tolerance     float64 // Convergence tolerance in volts (default: 1e-6)
+	Damping       float64 // Damping factor for stability (default: 0.5)
+}
+
+// DefaultIRDropSolverConfig returns default solver configuration.
+func DefaultIRDropSolverConfig() *IRDropSolverConfig {
+	return &IRDropSolverConfig{
+		MaxIterations: 100,
+		Tolerance:     1e-6,
+		Damping:       0.5, // Under-relaxation for stability
+	}
+}
+
+// AnalyzeIRDrop performs IR drop analysis using iterative relaxation.
+// Solves the coupled resistive network where voltage drops affect currents
+// and currents affect voltage drops. Iterates until convergence.
+//
+// Physics model (per PHYSICS.md):
+//   - Word line drivers on LEFT, bit line sense amps/ground at TOP
+//   - V_wl(i,j) = V_input - cumulative_drop_from_driver
+//   - V_bl(i,j) = cumulative_rise_from_ground
+//   - V_eff(i,j) = V_wl(i,j) - V_bl(i,j)
+//   - I_ij = V_eff(i,j) × G_ij
 func (a *Array) AnalyzeIRDrop(input []float64, params *WireParams) *IRDropAnalysis {
+	return a.AnalyzeIRDropIterative(input, params, nil)
+}
+
+// AnalyzeIRDropIterative performs physics-based IR drop analysis with configurable solver.
+func (a *Array) AnalyzeIRDropIterative(input []float64, params *WireParams, config *IRDropSolverConfig) *IRDropAnalysis {
 	if params == nil {
 		params = DefaultWireParams()
+	}
+	if config == nil {
+		config = DefaultIRDropSolverConfig()
 	}
 
 	rows := a.config.Rows
 	cols := a.config.Cols
 
 	// Initialize voltage matrices
+	// Per PHYSICS.md: V_wl(i,j) = V_input, V_bl(i,j) = 0
 	wlVoltage := make([][]float64, rows)
 	blVoltage := make([][]float64, rows)
 	effVoltage := make([][]float64, rows)
+	cellCurrent := make([][]float64, rows) // Current through each cell
 
 	for i := 0; i < rows; i++ {
 		wlVoltage[i] = make([]float64, cols)
 		blVoltage[i] = make([]float64, cols)
 		effVoltage[i] = make([]float64, cols)
+		cellCurrent[i] = make([]float64, cols)
+
+		// Initialize: word line voltage = 1V (normalized driver voltage)
+		// bit line voltage = 0V (ground at sense amp)
+		for j := 0; j < cols; j++ {
+			wlVoltage[i][j] = 1.0 // All word lines driven at 1V
+			blVoltage[i][j] = 0   // Bit lines start at ground
+		}
 	}
 
-	// Simple analytical model for IR drop
-	// Driver topology: WL drivers on LEFT, BL sense amps/ground at TOP
-	// This matches display convention where row 0 is at top
-	for i := 0; i < rows; i++ {
-		rowCurrent := a.estimateCurrent(i, input)
+	// Iterative relaxation solver
+	// Couples the voltage drops and currents until convergence
+	for iter := 0; iter < config.MaxIterations; iter++ {
+		maxChange := 0.0
+
+		// Store old voltages for convergence check
+		oldWL := make([][]float64, rows)
+		oldBL := make([][]float64, rows)
+		for i := 0; i < rows; i++ {
+			oldWL[i] = make([]float64, cols)
+			oldBL[i] = make([]float64, cols)
+			copy(oldWL[i], wlVoltage[i])
+			copy(oldBL[i], blVoltage[i])
+		}
+
+		// Step 1: Calculate cell currents based on current voltages
+		// I_ij = V_eff × G_ij × input_scale where V_eff = V_wl - V_bl
+		// The input vector scales the current (represents DAC modulation)
+		for i := 0; i < rows; i++ {
+			for j := 0; j < cols; j++ {
+				effVoltage[i][j] = wlVoltage[i][j] - blVoltage[i][j]
+				if effVoltage[i][j] < 0 {
+					effVoltage[i][j] = 0
+				}
+				// Get physical conductance (in Siemens)
+				gPhys := a.GetPhysicalConductanceForCell(i, j)
+				// Scale by input (represents DAC output affecting current)
+				inputScale := 1.0
+				if j < len(input) {
+					inputScale = input[j]
+				}
+				cellCurrent[i][j] = effVoltage[i][j] * gPhys * inputScale
+			}
+		}
+
+		// Step 2: Update word line voltages
+		// Driver topology: WL drivers on LEFT (column 0)
+		// V_wl(i,j) = V_driver - sum of drops from driver to position j
+		// Drop per segment = R_wl × (current through that segment)
+		// Current through segment k→k+1 = sum of cell currents from columns k+1 to end
+		for i := 0; i < rows; i++ {
+			driverV := 1.0 // All word lines driven at normalized 1V
+
+			cumulativeDrop := 0.0
+			for j := 0; j < cols; j++ {
+				// Current flowing through wire segment before position j
+				// is sum of all cell currents from this column onwards
+				if j > 0 {
+					var segmentCurrent float64
+					for k := j; k < cols; k++ {
+						segmentCurrent += cellCurrent[i][k]
+					}
+					cumulativeDrop += params.RwordLine * segmentCurrent
+				}
+
+				// New word line voltage with damping
+				newWL := driverV - cumulativeDrop
+				if newWL < 0 {
+					newWL = 0
+				}
+				wlVoltage[i][j] = config.Damping*newWL + (1-config.Damping)*oldWL[i][j]
+			}
+		}
+
+		// Step 3: Update bit line voltages
+		// Topology: BL sense amps/ground at TOP (row 0)
+		// V_bl(i,j) = sum of drops from ground to position i
+		// Drop per segment = R_bl × (sum of currents from row 0 to i)
 		for j := 0; j < cols; j++ {
-			// Word line voltage drop (cumulative from left driver)
-			// Drop increases with column index j (farther from driver)
-			wlDrop := float64(j) * params.RwordLine * rowCurrent
-			wlVoltage[i][j] = 1.0 - wlDrop // Assuming 1V input normalized
+			cumulativeDrop := 0.0
+			for i := 0; i < rows; i++ {
+				// Current flowing through wire segment from i-1 to i
+				// is sum of all cell currents from row 0 to row i-1
+				var segmentCurrent float64
+				for k := 0; k < i; k++ {
+					segmentCurrent += cellCurrent[k][j]
+				}
 
-			// Bit line voltage (sense amp/ground at top, row 0)
-			// Drop increases with row index i (farther from sense amp)
-			blDrop := float64(i) * params.RbitLine * a.estimateColumnCurrent(j, input)
-			blVoltage[i][j] = blDrop // Voltage above ground
+				// Voltage rise from ground (drop going upward = rise going downward)
+				if i > 0 {
+					cumulativeDrop += params.RbitLine * segmentCurrent
+				}
 
-			// Effective voltage across cell = WL voltage - BL voltage
-			// Worst case is bottom-right (max i, max j): both drops are maximum
+				// Add contact resistance at the cell
+				cumulativeDrop += params.Rcontact * cellCurrent[i][j] * 0.001 // Scaled contact effect
+
+				// New bit line voltage with damping
+				newBL := cumulativeDrop
+				blVoltage[i][j] = config.Damping*newBL + (1-config.Damping)*oldBL[i][j]
+			}
+		}
+
+		// Check convergence
+		for i := 0; i < rows; i++ {
+			for j := 0; j < cols; j++ {
+				changeWL := math.Abs(wlVoltage[i][j] - oldWL[i][j])
+				changeBL := math.Abs(blVoltage[i][j] - oldBL[i][j])
+				if changeWL > maxChange {
+					maxChange = changeWL
+				}
+				if changeBL > maxChange {
+					maxChange = changeBL
+				}
+			}
+		}
+
+		// Converged when max voltage change is below tolerance
+		if maxChange < config.Tolerance {
+			break
+		}
+	}
+
+	// Final effective voltage calculation
+	for i := 0; i < rows; i++ {
+		for j := 0; j < cols; j++ {
 			effVoltage[i][j] = wlVoltage[i][j] - blVoltage[i][j]
 			if effVoltage[i][j] < 0 {
 				effVoltage[i][j] = 0
@@ -91,9 +230,15 @@ func (a *Array) AnalyzeIRDrop(input []float64, params *WireParams) *IRDropAnalys
 	var worstCell [2]int
 	count := 0
 
+	// Reference voltage for drop calculation (normalized input)
+	refVoltage := 1.0
+
 	for i := 0; i < rows; i++ {
 		for j := 0; j < cols; j++ {
-			drop := 1.0 - effVoltage[i][j]
+			drop := refVoltage - effVoltage[i][j]
+			if drop < 0 {
+				drop = 0
+			}
 			if drop > maxDrop {
 				maxDrop = drop
 				worstCell = [2]int{i, j}
@@ -109,7 +254,10 @@ func (a *Array) AnalyzeIRDrop(input []float64, params *WireParams) *IRDropAnalys
 	var variance float64
 	for i := 0; i < rows; i++ {
 		for j := 0; j < cols; j++ {
-			drop := 1.0 - effVoltage[i][j]
+			drop := refVoltage - effVoltage[i][j]
+			if drop < 0 {
+				drop = 0
+			}
 			variance += (drop - avgDrop) * (drop - avgDrop)
 		}
 	}
@@ -181,7 +329,21 @@ func (a *Array) AnalyzeSneakPaths(selectedRow, selectedCol int) *SneakPathAnalys
 
 // AnalyzeSneakPathsWithArch analyzes sneak paths with architecture consideration.
 // If is1T1R is true, transistor isolation reduces sneak by ~1000x.
+// For 2T1R, use AnalyzeSneakPathsWithIsolation with factor 0.0001.
 func (a *Array) AnalyzeSneakPathsWithArch(selectedRow, selectedCol int, is1T1R bool) *SneakPathAnalysis {
+	isolationFactor := 1.0
+	if is1T1R {
+		isolationFactor = 0.001 // 1000x isolation from transistor
+	}
+	return a.AnalyzeSneakPathsWithIsolation(selectedRow, selectedCol, isolationFactor)
+}
+
+// AnalyzeSneakPathsWithIsolation analyzes sneak paths with a configurable isolation factor.
+// isolationFactor values:
+//   - 1.0:    0T1R (passive) - full sneak path impact
+//   - 0.001:  1T1R - ~1000x isolation from single transistor
+//   - 0.0001: 2T1R - ~10000x isolation from dual transistor AND-gate
+func (a *Array) AnalyzeSneakPathsWithIsolation(selectedRow, selectedCol int, isolationFactor float64) *SneakPathAnalysis {
 	rows := a.config.Rows
 	cols := a.config.Cols
 
@@ -194,14 +356,6 @@ func (a *Array) AnalyzeSneakPathsWithArch(selectedRow, selectedCol int, is1T1R b
 	signalG := a.cells[selectedRow][selectedCol].Conductance
 	if signalG < 1e-10 {
 		signalG = 1e-10 // Avoid division by zero
-	}
-
-	// Architecture-dependent isolation factor
-	// 1T1R: Transistor provides ~10^6 ON/OFF ratio, use 10^-3 for conservative estimate
-	// 0T1R: Full sneak path (factor = 1.0)
-	isolationFactor := 1.0
-	if is1T1R {
-		isolationFactor = 0.001 // 1000x isolation from transistor
 	}
 
 	var totalSneak float64
@@ -342,26 +496,27 @@ func (a *Array) MVMWithIRDrop(input []float64, params *WireParams) ([]float64, *
 var ErrInputSize error
 
 // GetIRDropMap returns an IR drop heatmap for visualization.
-// Uses a FIXED scale (0-15% drop) so architecture differences are visible.
+// Returns values in [0,1] where value directly represents percentage (0.05 = 5%).
+// This matches the 0-100% legend scale.
 func (a *IRDropAnalysis) GetIRDropMap() [][]float64 {
 	rows := len(a.EffectiveVoltage)
 	cols := len(a.EffectiveVoltage[0])
-
-	// Fixed scale: 15% max drop for better color differentiation
-	// Typical values: 0T1R ~12%, 1T1R ~8% - this range shows clear differences
-	fixedMaxDrop := 0.15
 
 	normalized := make([][]float64, rows)
 	for i := range normalized {
 		normalized[i] = make([]float64, cols)
 		for j := range normalized[i] {
 			// IR drop = 1 - effective voltage (assuming 1V input)
+			// Value directly represents fraction (e.g., 0.05 = 5% drop)
 			drop := 1.0 - a.EffectiveVoltage[i][j]
-			// Normalize to fixed scale, cap at 1.0
-			normalized[i][j] = drop / fixedMaxDrop
-			if normalized[i][j] > 1.0 {
-				normalized[i][j] = 1.0
+			// Cap at 1.0 (100% drop max)
+			if drop > 1.0 {
+				drop = 1.0
 			}
+			if drop < 0 {
+				drop = 0
+			}
+			normalized[i][j] = drop
 		}
 	}
 

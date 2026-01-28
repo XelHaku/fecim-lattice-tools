@@ -62,6 +62,12 @@ type HZOMaterial struct {
 
 	// Analog state capability
 	NumLevels int // Number of discrete analog states (0 = use default 30)
+
+	// NLS (Nucleation-Limited Switching) parameters for Merz law dynamics
+	// tau(E) = Tau0NLS * exp(EaNLS / |E|)
+	// These are per-material since different ferroelectrics have different switching behavior
+	Tau0NLS float64 // Attempt time for NLS (s), typically 1e-10 to 1e-12 for HfO2
+	EaNLS   float64 // Activation field for NLS (V/m), typically 10-15 MV/cm for HfO2
 }
 
 // DefaultHZO returns material parameters for typical Si-doped HfO2 (Hf0.5Zr0.5O2).
@@ -92,6 +98,8 @@ func DefaultHZO() *HZOMaterial {
 		RetentionTime:   3.15e9,  // 100 years at 85°C
 		ImrintField:     1e6,     // Small imprint
 		NumLevels:       30,      // Standard HZO achieves ~30 levels
+		Tau0NLS:         1e-10,   // 100 ps attempt time (HfO2 typical)
+		EaNLS:           12e8,    // 12 MV/cm activation field
 	}
 }
 
@@ -125,7 +133,9 @@ func LiteratureSuperlattice() *HZOMaterial {
 		EnduranceCycles: 1e12, // Literature best-case
 		RetentionTime:   1e10, // Literature best-case
 		ImrintField:     0.5e6,
-		NumLevels:       64, // Enhanced superlattice can achieve more states
+		NumLevels:       64,    // Enhanced superlattice can achieve more states
+		Tau0NLS:         0.5e-10, // 50 ps (faster switching)
+		EaNLS:           10e8,    // 10 MV/cm (lower barrier)
 	}
 }
 
@@ -179,6 +189,8 @@ func FeCIMMaterial() *HZOMaterial {
 		RetentionTime:   1e7,  // 10^7 sec (~116 days) DEMONSTRATED
 		ImrintField:     1e6,
 		NumLevels:       30,   // 30 discrete analog states - VERIFIED
+		Tau0NLS:         1e-10,  // 100 ps attempt time
+		EaNLS:           12e8,   // 12 MV/cm activation field
 	}
 }
 
@@ -192,6 +204,8 @@ func FeCIMMaterialTarget() *HZOMaterial {
 	mat.EnduranceCycles = 1e12 // TARGET - not yet achieved
 	mat.RetentionTime = 3.15e9 // TARGET - 100 years (not demonstrated)
 	mat.Tau = 1e-9             // TARGET - 1ns (demonstrated ~10ns)
+	mat.Tau0NLS = 0.5e-10 // 50 ps target
+	mat.EaNLS = 10e8      // 10 MV/cm target
 	return mat
 }
 
@@ -222,6 +236,8 @@ func CryogenicHZO() *HZOMaterial {
 		RetentionTime:   3.15e10, // >10 years at cryo (improved)
 		ImrintField:     0.3e6,   // Reduced imprint at cryo
 		NumLevels:       48,      // Enhanced polarization allows more levels
+		Tau0NLS:         2e-10,  // 200 ps (slower at cryo)
+		EaNLS:           15e8,   // 15 MV/cm (higher barrier at cryo)
 	}
 }
 
@@ -251,6 +267,8 @@ func HZOStandard32() *HZOMaterial {
 		RetentionTime:   3.15e8,  // 10 years projected
 		ImrintField:     1e6,
 		NumLevels:       32,      // 32 states - VERIFIED (Oh et al. 2017)
+		Tau0NLS:         1e-10,  // 100 ps attempt time
+		EaNLS:           12e8,   // 12 MV/cm activation field
 	}
 }
 
@@ -281,6 +299,8 @@ func HZOFJT140() *HZOMaterial {
 		RetentionTime:   3.15e8,  // 10 years extrapolated
 		ImrintField:     1e6,
 		NumLevels:       140,     // 140 states - VERIFIED (Song et al. 2024)
+		Tau0NLS:         2e-10,  // 200 ps (FTJ tunneling)
+		EaNLS:           10e8,   // 10 MV/cm
 	}
 }
 
@@ -312,6 +332,8 @@ func AlScN() *HZOMaterial {
 		RetentionTime:   3.15e8,
 		ImrintField:     1e6,
 		NumLevels:       12,      // 8-16 states (high Ec limits granularity)
+		Tau0NLS:         1e-11,  // 10 ps (faster attempt time)
+		EaNLS:           22e8,   // 22 MV/cm (higher Ec material)
 	}
 }
 

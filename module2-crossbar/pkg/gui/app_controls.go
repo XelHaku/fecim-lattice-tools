@@ -166,11 +166,10 @@ func (ca *CrossbarApp) createControlWidgets() {
 	// This affects sneak path and IR drop physics calculations
 	ca.architecture = sharedwidgets.Architecture0T1R // Default to passive
 
-	// m4 UX fix: Create toggle buttons with icons for better visual distinction
-	// Use meaningful icons: grid for passive array, lock for gated transistor
-	ca.archPassiveBtn = widget.NewButtonWithIcon("PASSIVE", theme.GridIcon(), nil)
-	ca.arch1T1RBtn = widget.NewButtonWithIcon("1T1R GATE", theme.VisibilityIcon(), nil)
-	ca.arch2T1RBtn = widget.NewButtonWithIcon("2T1R", theme.MoreVerticalIcon(), nil)
+	// Create toggle buttons (text only)
+	ca.archPassiveBtn = widget.NewButton("PASSIVE", nil)
+	ca.arch1T1RBtn = widget.NewButton("1T1R", nil)
+	ca.arch2T1RBtn = widget.NewButton("2T1R", nil)
 
 	// m4 UX fix: Helper to update button styles with clear selected/unselected states
 	updateArchButtons := func() {

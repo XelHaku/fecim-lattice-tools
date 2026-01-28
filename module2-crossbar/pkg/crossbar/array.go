@@ -534,12 +534,28 @@ func (a *Array) GetStats() (reads, writes int64) {
 }
 
 // GetConductanceMatrix returns the current conductance values as a matrix.
+// This returns the programmed (ideal) conductance values without noise.
 func (a *Array) GetConductanceMatrix() [][]float64 {
 	matrix := make([][]float64, a.config.Rows)
 	for i := range matrix {
 		matrix[i] = make([]float64, a.config.Cols)
 		for j := range matrix[i] {
 			matrix[i][j] = a.cells[i][j].Conductance
+		}
+	}
+	return matrix
+}
+
+// GetEffectiveConductanceMatrix returns the actual effective conductance values.
+// This includes per-cell noise factors that represent process variation and noise.
+// Use this for comparing "actual" vs "ideal" conductances.
+func (a *Array) GetEffectiveConductanceMatrix() [][]float64 {
+	matrix := make([][]float64, a.config.Rows)
+	for i := range matrix {
+		matrix[i] = make([]float64, a.config.Cols)
+		for j := range matrix[i] {
+			// Effective conductance = base conductance × noise factor
+			matrix[i][j] = a.cells[i][j].Conductance * a.cells[i][j].NoiseFactor
 		}
 	}
 	return matrix

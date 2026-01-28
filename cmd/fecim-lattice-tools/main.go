@@ -668,6 +668,19 @@ func main() {
 			})
 		} else {
 			log.Debug("Starting recording...")
+
+			// Lazy-start audio monitoring on first record (saves startup time)
+			audioMonitorMu.Lock()
+			if micController != nil && audioMonitor != nil && !audioMonitor.IsRunning() {
+				log.Debug("Starting audio monitoring (lazy init on first record)")
+				if err := micController.Start(); err != nil {
+					log.Debug("Failed to start audio monitoring: %v", err)
+				} else {
+					log.Info("Audio level monitoring started")
+				}
+			}
+			audioMonitorMu.Unlock()
+
 			// Start recording
 			if err := recordingState.startRecording(window); err != nil {
 				fmt.Println("Error starting recording:", err)
@@ -846,13 +859,14 @@ func main() {
 		})
 	})
 
-	// Initialize audio in background after window is shown (can take 7+ seconds)
+	// Prepare audio monitoring (but don't start FFmpeg yet - that's expensive)
+	// Audio monitoring will be started lazily when Record button is clicked
 	utils.SafeGo("audio-init", func() {
 		time.Sleep(500 * time.Millisecond) // Let UI render first
 		fmt.Println("[STARTUP] Checking audio availability (background)...")
 
 		if recording.IsAudioAvailable() {
-			log.Info("Audio input detected, enabling mic level indicator")
+			log.Info("Audio input detected, mic level indicator available")
 			monitor := recording.NewAudioMonitor()
 
 			// Try to set default device
@@ -864,18 +878,13 @@ func main() {
 			// Create controller to connect monitor to widget
 			controller := sharedwidgets.NewMicLevelController(micLevelWidget, monitor)
 
-			// Start monitoring immediately (shows levels even when not recording)
-			if err := controller.Start(); err != nil {
-				log.Debug("Failed to start audio monitoring: %v", err)
-			} else {
-				log.Info("Audio level monitoring started")
-			}
-
-			// Store references for cleanup
+			// Store references for lazy start (don't start FFmpeg now - saves 5-11s at startup)
 			audioMonitorMu.Lock()
 			audioMonitor = monitor
 			micController = controller
 			audioMonitorMu.Unlock()
+
+			log.Debug("Audio monitoring prepared (will start on first record)")
 		} else {
 			log.Info("No audio input detected, mic level indicator disabled")
 		}

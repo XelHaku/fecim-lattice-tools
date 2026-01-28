@@ -106,7 +106,8 @@ type DeviceState struct {
 
 	// WL configuration (derived from opMode)
 	wlMode     WLMode
-	activeRows []bool // true = WL HIGH for that row
+	activeRows []bool   // true = WL HIGH for that row
+	wlVoltages []float64 // WL voltages for V/2 scheme (passive mode write)
 
 	// DAC inputs (per column)
 	dacVoltages  []float64
@@ -147,6 +148,7 @@ func NewDeviceState(rows, cols int, tia *peripherals.TIA, adc *peripherals.ADC) 
 		opMode:       OpModeRead, // Default to READ mode
 		wlMode:       WLSingle,
 		activeRows:   make([]bool, rows),
+		wlVoltages:   make([]float64, rows), // WL voltages for V/2 scheme
 		dacVoltages:  make([]float64, cols),
 		dacMode:      DACReadPreset,
 		dacRangeMode: DACRangeRead,
@@ -455,6 +457,101 @@ func (ds *DeviceState) SetAllDACVoltages(voltage float64) {
 	}
 }
 
+// ============================================================================
+// V/2 HALF-SELECT SCHEME (Passive 0T1R Mode Only)
+// ============================================================================
+//
+// Per VOLTAGE_RULES.md Section 3.2 and 6.1:
+// For passive (0T1R) WRITE operations, use V/2 half-select biasing to minimize
+// write disturb on half-selected cells (same row or column as target).
+//
+// Target cell (SET operation):
+//   - Selected WL: +V_write/2 (positive half)
+//   - Selected BL: -V_write/2 (negative half)
+//   - Effective ΔV = WL - BL = +V/2 - (-V/2) = V_write (full switching)
+//
+// Half-selected cells (same row or same column):
+//   - Same row: WL = +V/2, BL = 0 → ΔV = +V/2 (below Vc, minimal disturb)
+//   - Same col: WL = 0, BL = -V/2 → ΔV = +V/2 (below Vc, minimal disturb)
+//
+// Unselected cells (diagonal):
+//   - WL = 0, BL = 0 → ΔV = 0 (no disturb)
+//
+// For 1T1R/2T1R modes, transistor isolation eliminates need for V/2.
+// ============================================================================
+
+// ApplyHalfSelectWrite applies V/2 biasing for passive (0T1R) write operation
+// writeVoltage is the full write voltage (derived from material's Vc)
+// For SET: WL = +V/2, BL = -V/2, giving target cell ΔV = +V_write
+// For ERASE: WL = -V/2, BL = +V/2, giving target cell ΔV = -V_write
+func (ds *DeviceState) ApplyHalfSelectWrite(targetRow, targetCol int, writeVoltage float64) {
+	if !ds.isPassive {
+		// Non-passive modes use transistor isolation, not V/2
+		// Apply full voltage to selected BL only, WL controls transistor gate
+		ds.SetDACVoltage(targetCol, writeVoltage)
+		return
+	}
+
+	// V/2 half-select for passive mode
+	halfV := writeVoltage / 2.0
+
+	// Set WL voltages: selected row gets +V/2 (for SET), others get 0
+	for i := range ds.wlVoltages {
+		if i == targetRow {
+			ds.wlVoltages[i] = halfV // +V/2 for selected WL
+		} else {
+			ds.wlVoltages[i] = 0 // Unselected WLs grounded
+		}
+	}
+
+	// Set BL (DAC) voltages: selected column gets -V/2 (for SET), others get 0
+	for i := range ds.dacVoltages {
+		if i == targetCol {
+			ds.dacVoltages[i] = -halfV // -V/2 for selected BL
+		} else {
+			ds.dacVoltages[i] = 0 // Unselected BLs grounded
+		}
+	}
+
+	ds.dacMode = DACManual
+	ds.dacRangeMode = DACRangeWrite
+}
+
+// ResetWriteVoltages returns all WL and BL voltages to 0V after write operation
+// Should be called after write completes to put array in safe idle state
+func (ds *DeviceState) ResetWriteVoltages() {
+	// Reset all WL voltages to 0
+	for i := range ds.wlVoltages {
+		ds.wlVoltages[i] = 0
+	}
+	// Reset all DAC (BL) voltages to 0
+	for i := range ds.dacVoltages {
+		ds.dacVoltages[i] = 0
+	}
+	ds.dacMode = DACManual
+}
+
+// GetWLVoltage returns the WL voltage for a specific row
+func (ds *DeviceState) GetWLVoltage(row int) float64 {
+	if row >= 0 && row < len(ds.wlVoltages) {
+		return ds.wlVoltages[row]
+	}
+	return 0
+}
+
+// GetHalfSelectVoltage returns V/2 value derived from material's write voltage
+// This is the voltage seen by half-selected cells (below Vc, minimal disturb)
+func (ds *DeviceState) GetHalfSelectVoltage() float64 {
+	// Use middle of write range as reference
+	fullWriteV := (ds.writeRange.Min + ds.writeRange.Max) / 2
+	return fullWriteV / 2.0
+}
+
+// IsUsingHalfSelect returns true if V/2 scheme is active (passive mode write)
+func (ds *DeviceState) IsUsingHalfSelect() bool {
+	return ds.isPassive && ds.opMode == OpModeWrite
+}
+
 // SetSelectedCell sets the currently selected cell
 func (ds *DeviceState) SetSelectedCell(row, col int) {
 	ds.selectedRow = row
@@ -625,6 +722,7 @@ func (ds *DeviceState) Resize(rows, cols int) {
 	if rows != ds.rows {
 		ds.rows = rows
 		ds.activeRows = make([]bool, rows)
+		ds.wlVoltages = make([]float64, rows) // V/2 scheme support
 		ds.rowCurrents = make([]float64, rows)
 		ds.rowVoltages = make([]float64, rows)
 		ds.rowLevels = make([]int, rows)
