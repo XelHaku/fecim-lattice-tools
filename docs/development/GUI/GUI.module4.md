@@ -5,7 +5,7 @@ Entry: cmd/circuits-gui/main.go
 Package: fecim-lattice-tools/module4-circuits/pkg/gui
 Theme: FeCIMTheme
 Architecture: Unified 3-view design with embedded interface
-Last Updated: 2026-01-28 (UX Fixes)
+Last Updated: 2026-01-28 (Voltage Rules & ISPP)
 ---
 
 ## Bugs Summary
@@ -42,6 +42,32 @@ Last Updated: 2026-01-28 (UX Fixes)
 ---
 
 ## Recent Changes (2026-01-28)
+
+### Voltage Rules Implementation (Major Feature)
+
+**4-Phase Write Sequence:**
+- Implements proper ferroelectric write timing: RESET → HOLD → WRITE → HOLD
+- Animated timing diagram shows phase progression
+- Each phase has configurable duration (ns)
+- State machine in `WriteSequenceState` struct
+
+**ISPP (Incremental Step Pulse Programming):**
+- Iterative write algorithm with overshoot detection
+- Automatic reset-to-saturation when overshoot detected
+- Direction tracking (ascending/descending) per cell
+- Max 10 iterations with status display
+- States: `ISPPSuccess`, `ISPPOvershoot`, `ISPPMaxIter`, `ISPPCancelled`
+
+**V/2 Half-Select Visualization:**
+- Gold overlay for target cell during WRITE
+- Amber overlay for half-selected cells (V/2 voltage)
+- Architecture-specific: critical for passive (0T1R) mode
+- Shows sneak path risk in crossbar arrays
+
+**Per-Level Voltage Calibration:**
+- 30-level voltage arrays for fine-grained control
+- Linear interpolation between calibration points
+- Hysteresis direction tracking per cell
 
 ### UX Improvements
 - **Dynamic ADC saturation** - Saturation check now uses `adc.Bits` to calculate max level (2^bits - 1) instead of hardcoded 31
@@ -280,6 +306,130 @@ type DeviceState struct {
 | `Compute(weights, levels)` | Run MVM simulation |
 | `GetReadRange() / GetWriteRange()` | Get voltage ranges for current material |
 | `ClassifyOperation()` | Get operation name string |
+| `AdvanceWritePhase()` | Move to next phase in 4-phase write sequence |
+| `GetWritePhaseInfo()` | Get current write sequence state for UI |
+| `StartISPP(row, col, target, current)` | Begin ISPP loop for cell programming |
+| `ISPPIterate(newLevel)` | Perform one ISPP iteration, returns result |
+| `GetISPPStatus()` | Get current ISPP state for UI display |
+| `CancelISPP()` | Cancel active ISPP operation |
+| `EnableHalfSelectVisualization(row, col, V)` | Enable V/2 overlay for write |
+| `DisableHalfSelectVisualization()` | Disable V/2 overlay |
+| `IsHalfSelected(row, col)` | Check if cell is in half-select state |
+
+---
+
+### 4-Phase Write Sequence (device_state.go:772-908)
+
+**Purpose**: Implements proper ferroelectric write timing for reliable cell programming.
+
+**Phases**:
+```
+PhaseIdle → PhaseReset → PhaseHold1 → PhaseWrite → PhaseHold2 → PhaseIdle
+    │           │            │            │            │
+    │        ~10ns        ~5ns        ~50ns        ~5ns
+    └─────────────────────────────────────────────────────┘
+```
+
+**WritePhase Enum**:
+```go
+type WritePhase int
+const (
+    PhaseIdle   WritePhase = iota  // No write in progress
+    PhaseReset                      // Apply reset pulse (opposite polarity)
+    PhaseHold1                      // Stabilization after reset
+    PhaseWrite                      // Apply write pulse (target polarity)
+    PhaseHold2                      // Stabilization after write
+)
+```
+
+**WriteSequenceState Struct**:
+```go
+type WriteSequenceState struct {
+    Active       bool        // True if sequence in progress
+    Phase        WritePhase  // Current phase
+    TargetRow    int         // Row being written
+    TargetCol    int         // Column being written
+    TargetLevel  int         // Target conductance level
+    CurrentLevel int         // Current cell level
+}
+```
+
+**UI Integration**: Animated timing diagram shows phase progression with color-coded pulses.
+
+---
+
+### ISPP State Machine (device_state.go:910-1068)
+
+**Purpose**: Incremental Step Pulse Programming for precise cell programming with overshoot detection.
+
+**Algorithm**:
+1. Start with initial voltage estimate for target level
+2. Apply write pulse, read back actual level
+3. If level matches target → Success
+4. If level overshoots → Reset to saturation, restart
+5. If level undershoots → Increment voltage, repeat
+6. After max iterations → Report max-iter failure
+
+**ISPPResult Enum**:
+```go
+type ISPPResult int
+const (
+    ISPPContinue  ISPPResult = iota  // Need more iterations
+    ISPPSuccess                       // Target level reached
+    ISPPOvershoot                     // Overshot target, needs reset
+    ISPPMaxIter                       // Max iterations reached
+    ISPPCancelled                     // User cancelled
+)
+```
+
+**ISPPState Struct**:
+```go
+type ISPPState struct {
+    Active       bool       // True if ISPP loop running
+    Iteration    int        // Current iteration (0-9)
+    MaxIter      int        // Maximum iterations (default: 10)
+    Direction    int        // +1 ascending, -1 descending
+    TargetRow    int
+    TargetCol    int
+    TargetLevel  int
+    LastResult   ISPPResult
+}
+```
+
+**Constants**:
+- `ISPPMaxIterations = 10` - Maximum pulse iterations
+- `ISPPVoltageStep = 0.05` - Voltage increment per iteration (V)
+
+---
+
+### V/2 Half-Select Visualization (device_state.go:1071-1165)
+
+**Purpose**: Visualize half-select disturb risk in passive (0T1R) crossbar arrays.
+
+**Physics**: In passive arrays without transistor isolation:
+- Selected cell sees full write voltage (V)
+- Cells in same row (different columns) see V/2 on WL
+- Cells in same column (different rows) see V/2 on BL
+- These V/2 cells may experience disturb over time
+
+**HalfSelectVisualization Struct**:
+```go
+type HalfSelectVisualization struct {
+    Enabled        bool      // True when visualization active
+    TargetRow      int       // Selected cell row
+    TargetCol      int       // Selected cell column
+    FullVoltage    float64   // Voltage on target cell
+    HalfVoltage    float64   // V/2 voltage on half-selected cells
+    HalfSelectRows []int     // Rows with V/2 (same column)
+    HalfSelectCols []int     // Columns with V/2 (same row)
+}
+```
+
+**UI Colors**:
+- **Gold** (`#FFD700`): Target cell receiving full write voltage
+- **Amber** (`#FFBF00`): Half-selected cells receiving V/2
+
+**Constant**: `HalfSelectVoltageRatio = 0.5`
 
 ---
 
@@ -357,6 +507,11 @@ case OpModeCompute:
 | arch1T1RBtn | Button | Select 1T1R architecture | tab_unified.go:1357 | architecture |
 | arch2T1RBtn | Button | Select 2T1R architecture | tab_unified.go:1358 | architecture |
 | operationsModeHelp | Label | Mode + architecture help text | tab_unified.go:79 | Updated by updateOperationClassification() |
+| writePhaseCanvas | Raster | 4-phase timing diagram animation | tab_unified.go | WriteSequenceState |
+| isppStatusLabel | Label | Shows "ISPP: Iter N/10, Direction: ↑" | tab_unified.go | ISPPState |
+| isppStartBtn | Button | Start ISPP programming loop | tab_unified.go | Triggers StartISPP() |
+| isppCancelBtn | Button | Cancel active ISPP operation | tab_unified.go | Triggers CancelISPP() |
+| halfSelectOverlay | Canvas Layer | V/2 visualization (gold/amber) | tab_unified.go | HalfSelectVisualization |
 
 ---
 
@@ -370,8 +525,12 @@ case OpModeCompute:
 | Material selection | materialSelector | material, voltage ranges | tab_unified.go:104-115 |
 | Architecture change | archPassiveBtn/arch1T1RBtn/arch2T1RBtn | architecture, WL state, transistor display | tab_unified.go:1384-1424 |
 | Cell click | UnifiedTappableCanvas.Tapped() | selectedRow, selectedCol, WL (if single mode) | tab_unified.go:1039-1051 |
-| Write Cell button | programBtn | arrayWeights[row][col] | tab_unified.go:1058-1089 |
+| Write Cell button | programBtn | arrayWeights[row][col], starts 4-phase sequence | tab_unified.go:1058-1089 |
 | Compute MVM button | computeBtn | WL all, recompute | tab_unified.go:1103-1110 |
+| ISPP Start | isppStartBtn | StartISPP(), begins iteration loop | tab_unified.go |
+| ISPP Iterate | Timer/callback | ISPPIterate(), updates status | tab_unified.go |
+| Write phase advance | Timer (500ms) | AdvanceWritePhase(), updates timing diagram | tab_unified.go |
+| Half-select enable | Write mode entry | EnableHalfSelectVisualization() | tab_unified.go |
 
 ---
 
@@ -1364,6 +1523,16 @@ if rows > MaxAnimationArraySize || cols > MaxAnimationArraySize {
 13. **Dynamic quantLevels**: Write slider range and array initialization use `ca.quantLevels` (default 30) instead of hardcoded values.
 
 14. **Mid-Level Initialization**: Array cells start at mid-level (quantLevels/2 = 15 for 30 states), representing neutral polarization state.
+
+15. **4-Phase Write Sequence**: Proper ferroelectric write timing (RESET→HOLD→WRITE→HOLD) ensures reliable programming. Animated timing diagram shows each phase.
+
+16. **ISPP Programming**: Incremental Step Pulse Programming with overshoot detection. If cell overshoots target, automatically resets to saturation and restarts. Max 10 iterations.
+
+17. **V/2 Half-Select Visualization**: In passive (0T1R) mode, shows cells receiving half voltage during write. Gold = target cell, Amber = half-selected cells at risk of disturb.
+
+18. **Hysteresis Direction Tracking**: Each cell tracks whether it was last programmed ascending or descending. Affects voltage calculation for accurate programming.
+
+19. **Per-Level Voltage Calibration**: 30-level voltage arrays allow fine-grained control. Uses linear interpolation between calibration points.
 
 ---
 

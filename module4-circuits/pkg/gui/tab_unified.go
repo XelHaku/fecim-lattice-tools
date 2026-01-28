@@ -200,86 +200,17 @@ func (ca *CircuitsApp) updateDACRangeModeLabel() {
 
 // createMainSimSection creates the main simulation visualization area
 func (ca *CircuitsApp) createMainSimSection() fyne.CanvasObject {
-	// Left: WL selector
-	wlSelector := ca.createWLSelector()
+	// WL checkboxes removed - row selection is done by clicking cells
+	// WL state is determined automatically by mode and architecture:
+	// - Passive (0T1R): All WLs always on
+	// - 1T1R/2T1R READ/WRITE: Selected row only (via cell click)
+	// - COMPUTE: All WLs on for MVM
 
-	// Center: Array canvas (DAC inputs shown at top, TIA/ADC outputs shown at right)
-	arraySection := ca.createUnifiedArraySection()
+	// Initialize empty WL checks array (some code may reference it)
+	ca.unifiedWLChecks = make([]*widget.Check, 0)
 
-	// Left panel with WL controls
-	leftPanel := container.NewVBox(
-		widget.NewLabelWithStyle("WORD LINES", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-		wlSelector,
-	)
-
-	// Use HSplit: WL selector (12%) | Array with peripherals (88%)
-	mainSplit := container.NewHSplit(leftPanel, arraySection)
-	mainSplit.SetOffset(0.10)
-
-	return mainSplit
-}
-
-// createWLSelector creates the word line selection controls
-// H1 FIX: Mode buttons have been moved to top mode bar (no duplicate buttons here)
-func (ca *CircuitsApp) createWLSelector() fyne.CanvasObject {
-	// Row checkboxes (show first 8 for visual indication)
-	maxRows := min(8, ca.arrayRows)
-	ca.unifiedWLChecks = make([]*widget.Check, maxRows)
-
-	checkboxes := container.NewVBox()
-	for i := 0; i < maxRows; i++ {
-		idx := i
-		// H4 FIX: Clearer labels - "Row 0" instead of "WL0"
-		check := widget.NewCheck(fmt.Sprintf("Row %d", i), nil)
-
-		// Store in array BEFORE setting checked state (OnChanged may reference it)
-		ca.unifiedWLChecks[i] = check
-
-		check.OnChanged = func(checked bool) {
-			// In passive mode, ignore checkbox changes - all lines always active
-			if ca.architecture == sharedwidgets.Architecture0T1R {
-				fyne.Do(func() {
-					if ca.unifiedWLChecks[idx] != nil {
-						ca.unifiedWLChecks[idx].SetChecked(true)
-					}
-				})
-				return
-			}
-			// In compute mode, all rows must be active
-			if ca.deviceState != nil && ca.deviceState.GetOperationMode() == OpModeCompute {
-				fyne.Do(func() {
-					if ca.unifiedWLChecks[idx] != nil {
-						ca.unifiedWLChecks[idx].SetChecked(true)
-					}
-				})
-				return
-			}
-			ca.onWLChanged(idx, checked)
-		}
-		// In passive mode, all WLs start active; otherwise only row 0
-		isPassive := ca.architecture == sharedwidgets.Architecture0T1R
-		check.SetChecked(isPassive || i == 0)
-		checkboxes.Add(check)
-	}
-
-	// H4 FIX: Add tooltip/help label explaining checkbox behavior
-	ca.unifiedWLHelpLabel = widget.NewLabel("Checked = Active")
-	ca.unifiedWLHelpLabel.TextStyle = fyne.TextStyle{Italic: true}
-	ca.unifiedWLHelpLabel.Alignment = fyne.TextAlignCenter
-
-	// In passive mode, disable checkboxes immediately
-	if ca.architecture == sharedwidgets.Architecture0T1R {
-		for _, check := range ca.unifiedWLChecks {
-			check.Disable()
-		}
-		ca.unifiedWLHelpLabel.SetText("Passive: All rows always on")
-	}
-
-	return container.NewVBox(
-		checkboxes,
-		widget.NewSeparator(),
-		ca.unifiedWLHelpLabel,
-	)
+	// Array canvas with DAC inputs at top, TIA/ADC outputs at right
+	return ca.createUnifiedArraySection()
 }
 
 // setOperationMode sets the operation mode and configures WL/DAC accordingly
@@ -299,29 +230,32 @@ func (ca *CircuitsApp) setOperationMode(mode OpMode) {
 
 	switch mode {
 	case OpModeRead:
-		// Single row active (only in 1T1R/2T1R), safe read voltage on all columns
+		// Single row active (only in 1T1R/2T1R)
+		// DAC voltages stay at 0 until user presses "Sense Row"
 		if !isPassive {
 			ca.deviceState.SetWLSingle(ca.deviceState.GetSelectedRow())
 		}
-		ca.deviceState.SetDACPreset(DACReadPreset)
+		ca.deviceState.SetDACRangeMode(DACRangeRead)
+		ca.deviceState.SetAllDACVoltages(0)
 
 	case OpModeWrite:
-		// Single row active (only in 1T1R/2T1R), write voltage on selected column only
+		// Single row active (only in 1T1R/2T1R)
+		// DAC voltages stay at 0 until user presses "Write Cell" (prevents accidental writes)
 		if !isPassive {
 			ca.deviceState.SetWLSingle(ca.deviceState.GetSelectedRow())
 		}
-		ca.deviceState.SetDACPreset(DACWritePreset)
+		// Set all DAC to 0 but indicate we're in write range mode
+		ca.deviceState.SetDACRangeMode(DACRangeWrite)
+		ca.deviceState.SetAllDACVoltages(0)
 
 	case OpModeCompute:
-		// All rows active for MVM, input vector on columns
+		// All rows active for MVM
+		// DAC voltages stay at 0 until user presses "Compute MVM"
 		if !isPassive {
 			ca.deviceState.SetWLAll()
 		}
-		// Keep current DAC voltages or set to mid-range for demo
-		if ca.deviceState.GetDACMode() == DACWritePreset {
-			// Switch from write to read range for compute
-			ca.deviceState.SetDACPreset(DACReadPreset)
-		}
+		ca.deviceState.SetDACRangeMode(DACRangeRead)
+		ca.deviceState.SetAllDACVoltages(0)
 	}
 
 	ca.updateModeButtons()
@@ -333,27 +267,9 @@ func (ca *CircuitsApp) setOperationMode(mode OpMode) {
 	ca.recomputeAndRefresh()
 }
 
-// updateWLHelpLabel updates the WL help text based on mode and architecture
+// updateWLHelpLabel is a no-op - WL UI has been removed
 func (ca *CircuitsApp) updateWLHelpLabel() {
-	if ca.unifiedWLHelpLabel == nil {
-		return
-	}
-
-	isPassive := ca.architecture == sharedwidgets.Architecture0T1R
-	mode := ca.deviceState.GetOperationMode()
-
-	var helpText string
-	if isPassive {
-		helpText = "Passive: All rows on (no transistors)"
-	} else if mode == OpModeCompute {
-		helpText = "Compute: All rows active (locked)"
-	} else {
-		helpText = "R/W: Select one row"
-	}
-
-	fyne.Do(func() {
-		ca.unifiedWLHelpLabel.SetText(helpText)
-	})
+	// No-op: WL UI removed
 }
 
 // updateModeButtons updates the mode button highlighting
@@ -1031,52 +947,10 @@ func (ca *CircuitsApp) setAllUnifiedDACVoltages(voltageStr string) {
 	ca.recomputeAndRefresh()
 }
 
-// onWLChanged handles WL checkbox changes
+// onWLChanged is a no-op - WL checkboxes have been removed
+// Row selection is now done via cell clicks in onUnifiedCellTapped
 func (ca *CircuitsApp) onWLChanged(row int, checked bool) {
-	if ca.deviceState == nil {
-		return
-	}
-
-	mode := ca.deviceState.GetOperationMode()
-
-	// In READ/WRITE mode: radio button behavior - only ONE row can be active
-	if mode == OpModeRead || mode == OpModeWrite {
-		if checked {
-			// User checked this row - make it the only active row
-			ca.deviceState.SetWLSingle(row)
-			// Also update selected cell to this row
-			ca.deviceState.SetSelectedCell(row, ca.deviceState.GetSelectedCol())
-			// Uncheck all other checkboxes
-			fyne.Do(func() {
-				for i, check := range ca.unifiedWLChecks {
-					if check != nil {
-						check.SetChecked(i == row)
-					}
-				}
-			})
-		} else {
-			// User unchecked - don't allow (must have one row active)
-			fyne.Do(func() {
-				if ca.unifiedWLChecks[row] != nil {
-					ca.unifiedWLChecks[row].SetChecked(true)
-				}
-			})
-		}
-		ca.recomputeAndRefresh()
-		return
-	}
-
-	// In COMPUTE mode: all rows must be active (handled elsewhere)
-	// This shouldn't be called in compute mode, but handle gracefully
-	pattern := make([]bool, ca.arrayRows)
-	for i := 0; i < len(ca.unifiedWLChecks) && i < ca.arrayRows; i++ {
-		if ca.unifiedWLChecks[i] != nil {
-			pattern[i] = ca.unifiedWLChecks[i].Checked
-		}
-	}
-	ca.deviceState.SetWLCustom(pattern)
-
-	ca.recomputeAndRefresh()
+	// No-op: WL checkboxes removed from UI
 }
 
 // setWLModeSingle sets WL mode to single (only selected row)
@@ -1103,36 +977,15 @@ func (ca *CircuitsApp) onUnifiedCellTapped(row, col int) {
 	isPassive := ca.architecture == sharedwidgets.Architecture0T1R
 
 	// In READ/WRITE mode (non-passive): select ONLY this row (single transistor)
-	// This enforces radio-button behavior - only one row can be active
 	if !isPassive && (mode == OpModeRead || mode == OpModeWrite) {
 		ca.deviceState.SetWLSingle(row)
-		// Update checkboxes to show only this row selected
-		fyne.Do(func() {
-			for i, check := range ca.unifiedWLChecks {
-				if check != nil {
-					check.SetChecked(i == row)
-				}
-			}
-		})
 	}
 
-	// H2 FIX: Update target cell label in write mode panel
+	// Update target cell label in write mode panel
 	ca.updateWriteTargetLabel()
 
-	// Update DAC voltage for the newly selected column based on mode
-	switch mode {
-	case OpModeWrite:
-		// Write mode: set write voltage on selected column only
-		if ca.mfuxWriteLevelSlider != nil {
-			ca.deviceState.SetDACVoltageForState(col, int(ca.mfuxWriteLevelSlider.Value), ca.quantLevels)
-		}
-	case OpModeRead:
-		// Read mode: set read voltage on selected column only (others stay 0)
-		ca.deviceState.SetDACPreset(DACReadPreset)
-	case OpModeCompute:
-		// Compute mode: don't change DAC (input vector is already applied)
-		// Cell selection is just for visual feedback - MVM uses all cells
-	}
+	// Cell click only selects the cell - does NOT apply voltages
+	// Voltages are only applied when user presses action buttons
 
 	ca.recomputeAndRefresh()
 	ca.updateCellInfo()
@@ -1278,7 +1131,7 @@ func (ca *CircuitsApp) writeReadVerifyLoop(row, col, targetLevel int, startVolta
 	ca.recomputeAndRefresh()
 }
 
-// onUnifiedRead reads the selected cell
+// onUnifiedRead reads the selected row by applying read voltage
 func (ca *CircuitsApp) onUnifiedRead() {
 	// Mode validation: only allowed in READ mode
 	if ca.deviceState.GetOperationMode() != OpModeRead {
@@ -1286,16 +1139,22 @@ func (ca *CircuitsApp) onUnifiedRead() {
 		return
 	}
 
+	// Apply read voltage to sense the row
+	ca.deviceState.SetDACPreset(DACReadPreset)
 	ca.recomputeAndRefresh()
 
 	selectedRow := ca.deviceState.GetSelectedRow()
 	level := ca.deviceState.GetRowLevel(selectedRow)
 	current := ca.deviceState.GetRowCurrent(selectedRow)
 
-	ca.operationsStatusLabel.SetText(fmt.Sprintf("Read [%d,*]: %.1fuA -> State %d", selectedRow, current, level))
+	ca.operationsStatusLabel.SetText(fmt.Sprintf("Sense [%d,*]: %.1fuA -> State %d", selectedRow, current, level))
+
+	// Return DAC to 0 after sensing (non-destructive but don't leave voltage applied)
+	ca.deviceState.SetAllDACVoltages(0)
+	ca.recomputeAndRefresh()
 }
 
-// onUnifiedCompute runs MVM computation
+// onUnifiedCompute runs MVM computation with current input vector
 func (ca *CircuitsApp) onUnifiedCompute() {
 	// Mode validation: only allowed in COMPUTE mode
 	if ca.deviceState.GetOperationMode() != OpModeCompute {
@@ -1306,6 +1165,15 @@ func (ca *CircuitsApp) onUnifiedCompute() {
 	// Ensure all rows are active for MVM
 	ca.deviceState.SetWLAll()
 	ca.updateWLCheckboxes()
+
+	// Apply input vector to DAC (convert 0-255 to read range voltages)
+	ca.mu.RLock()
+	params := make([]float64, len(ca.inputVector))
+	for i, v := range ca.inputVector {
+		params[i] = float64(v)
+	}
+	ca.mu.RUnlock()
+	ca.deviceState.SetDACPreset(DACInputVector, params...)
 
 	ca.recomputeAndRefresh()
 	ca.operationsStatusLabel.SetText("Compute complete in ~20ns (parallel MVM)")
@@ -1518,41 +1386,16 @@ func (ca *CircuitsApp) updateDACEntries() {
 	// DAC values are displayed in the array diagram's DAC boxes
 }
 
-// updateWLCheckboxes updates the WL checkbox states
-// In passive mode, all checkboxes are checked AND disabled (all WLs always on)
+// updateWLCheckboxes is a no-op - WL checkboxes have been removed
+// WL state is now managed automatically based on mode and architecture
 func (ca *CircuitsApp) updateWLCheckboxes() {
-	isPassive := ca.architecture == sharedwidgets.Architecture0T1R
-	mode := ca.deviceState.GetOperationMode()
-
-	for i, check := range ca.unifiedWLChecks {
-		if check != nil {
-			isActive := ca.deviceState.IsRowActive(i)
-			fyne.Do(func() {
-				if isPassive {
-					// Passive mode: all WLs always on, checkboxes disabled (no transistors)
-					check.SetChecked(true)
-					check.Disable()
-				} else if mode == OpModeCompute {
-					// COMPUTE mode: all WLs active, checkboxes disabled (locked for MVM)
-					check.SetChecked(true)
-					check.Disable()
-				} else {
-					// READ/WRITE mode: single row selection enabled
-					check.Enable()
-					check.SetChecked(isActive)
-				}
-			})
-		}
-	}
+	// No-op: WL checkboxes removed from UI
+	// Row selection is done via cell clicks
 }
 
-// updateWLCheckboxesForArchitecture updates checkboxes based on architecture
-// In passive mode (0T1R), all WLs are always active and checkboxes are disabled
+// updateWLCheckboxesForArchitecture is a no-op - WL UI has been removed
 func (ca *CircuitsApp) updateWLCheckboxesForArchitecture() {
-	// Delegate to updateWLCheckboxes which handles both architecture and mode
-	ca.updateWLCheckboxes()
-	// Update help label based on architecture
-	ca.updateWLHelpLabel()
+	// No-op: WL UI removed
 }
 
 // updateOutputDisplay is a no-op - outputs are shown on the diagram
@@ -1813,16 +1656,15 @@ func (ca *CircuitsApp) createWriteModePanel() fyne.CanvasObject {
 }
 
 // onWriteLevelChanged handles write level slider changes
-// Uses SetDACVoltageForState() to map level to material-derived voltage
+// Only updates UI labels - does NOT apply voltage to DAC
+// Voltage is only applied when user presses "Write Cell" button
 func (ca *CircuitsApp) onWriteLevelChanged(level int) {
 	if ca.deviceState == nil {
 		return
 	}
 
-	selectedCol := ca.deviceState.GetSelectedCol()
-	ca.deviceState.SetDACVoltageForState(selectedCol, level, ca.quantLevels)
-
-	voltage := ca.deviceState.GetDACVoltage(selectedCol)
+	// Calculate voltage for display only (don't apply to DAC)
+	voltage := ca.deviceState.CalculateVoltageForState(level, ca.quantLevels)
 
 	fyne.Do(func() {
 		if ca.mfuxWriteLevelLabel != nil {
@@ -1832,8 +1674,6 @@ func (ca *CircuitsApp) onWriteLevelChanged(level int) {
 			ca.mfuxWriteVoltageLabel.SetText(fmt.Sprintf("Voltage: %.2fV", voltage))
 		}
 	})
-
-	ca.recomputeAndRefresh()
 }
 
 // createComputeModePanel creates the compute mode panel with input vector entries
@@ -1965,9 +1805,11 @@ func (ca *CircuitsApp) clearInputVectorEntries() {
 	for i := range ca.inputVector {
 		ca.inputVector[i] = 0
 	}
+	// IMPORTANT: Unlock BEFORE fyne.Do to prevent deadlock.
+	// SetText triggers OnChanged which acquires ca.mu.
 	ca.mu.Unlock()
 
-	// Update entry widgets
+	// Update entry widgets (no lock held - safe)
 	fyne.Do(func() {
 		for _, entry := range ca.mfuxInputVectorEntry {
 			if entry != nil {

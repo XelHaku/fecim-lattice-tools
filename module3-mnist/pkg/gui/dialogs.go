@@ -9,10 +9,31 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// ShowWhy30LevelsDialog displays information about the 30 analog levels.
-// CRIT-003 fix: Add verification status and peer-reviewed context
-func ShowWhy30LevelsDialog(window fyne.Window) {
-	content := container.NewVBox(
+// ShowInfoDialog displays a tabbed dialog with all information sections.
+func ShowInfoDialog(window fyne.Window) {
+	// Create content for each tab (reusing existing dialog content functions)
+	why30Content := createWhy30LevelsContent()
+	hardwareContent := createHardwareRealityContent()
+	failuresContent := createFailureModesContent()
+	aboutContent := createAboutContent()
+
+	// Create tabs
+	tabs := container.NewAppTabs(
+		container.NewTabItem("Why 30 Levels?", container.NewVScroll(why30Content)),
+		container.NewTabItem("Hardware Reality", container.NewVScroll(hardwareContent)),
+		container.NewTabItem("Failure Modes", container.NewVScroll(failuresContent)),
+		container.NewTabItem("About", container.NewVScroll(aboutContent)),
+	)
+
+	// Create dialog with tabbed content
+	d := dialog.NewCustom("Information", "Close", tabs, window)
+	d.Resize(fyne.NewSize(600, 550))
+	d.Show()
+}
+
+// createWhy30LevelsContent creates the content for the Why 30 Levels section.
+func createWhy30LevelsContent() fyne.CanvasObject {
+	return container.NewVBox(
 		widget.NewLabelWithStyle("Why 30 Analog Levels?", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		widget.NewSeparator(),
 
@@ -65,7 +86,12 @@ func ShowWhy30LevelsDialog(window fyne.Window) {
 		widget.NewLabel("Statistical requirement: 3σ separation between adjacent levels"),
 		widget.NewLabel("Result: 30 levels is the practical manufacturing limit at 28nm node"),
 	)
+}
 
+// ShowWhy30LevelsDialog displays information about the 30 analog levels.
+// CRIT-003 fix: Add verification status and peer-reviewed context
+func ShowWhy30LevelsDialog(window fyne.Window) {
+	content := createWhy30LevelsContent()
 	scroll := container.NewVScroll(content)
 	scroll.SetMinSize(fyne.NewSize(500, 400))
 
@@ -74,9 +100,9 @@ func ShowWhy30LevelsDialog(window fyne.Window) {
 	d.Show()
 }
 
-// ShowHardwareRealityDialog displays the hardware reality check information.
-func ShowHardwareRealityDialog(window fyne.Window) {
-	content := container.NewVBox(
+// createHardwareRealityContent creates the content for the Hardware Reality section.
+func createHardwareRealityContent() fyne.CanvasObject {
+	return container.NewVBox(
 		widget.NewLabelWithStyle("Hardware Reality Check", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		widget.NewSeparator(),
 
@@ -109,17 +135,18 @@ func ShowHardwareRealityDialog(window fyne.Window) {
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("Energy Efficiency Advantage", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		widget.NewLabel("Verified: 25-100× more efficient than NAND Flash"),
+		widget.NewLabel("Reference: Samsung Nature 2025"),
+		widget.NewLabel(""),
 		widget.NewLabel("FeCIM Energy: ~50 fJ/MAC (ferroelectric switching + analog MVM)"),
-		widget.NewLabel("GPU Energy:   ~500 pJ/MAC (V100 with HBM2 DRAM access)"),
 		widget.NewLabel(""),
-		widget.NewLabel("For MNIST inference (101,632 MACs per digit):"),
-		widget.NewLabel("• FeCIM:  5.08 μJ (microjoules)"),
-		widget.NewLabel("• GPU:    50.8 mJ (millijoules)"),
-		widget.NewLabel("• Speedup: 10,000x more energy-efficient!"),
-		widget.NewLabel(""),
-		widget.NewLabel("Reference: Jerry et al., IEDM 2017 (DOI: 10.1109/IEDM.2017.8268338)"),
+		widget.NewLabel("Note: Exact improvement depends on workload and comparison baseline."),
 	)
+}
 
+// ShowHardwareRealityDialog displays the hardware reality check information.
+func ShowHardwareRealityDialog(window fyne.Window) {
+	content := createHardwareRealityContent()
 	scroll := container.NewVScroll(content)
 	scroll.SetMinSize(fyne.NewSize(500, 400))
 
@@ -128,9 +155,9 @@ func ShowHardwareRealityDialog(window fyne.Window) {
 	d.Show()
 }
 
-// ShowFailureModesDialog displays information about failure modes.
-func ShowFailureModesDialog(window fyne.Window) {
-	content := container.NewVBox(
+// createFailureModesContent creates the content for the Failure Modes section.
+func createFailureModesContent() fyne.CanvasObject {
+	return container.NewVBox(
 		widget.NewLabelWithStyle("Failure Modes Explained", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		widget.NewSeparator(),
 
@@ -179,7 +206,11 @@ func ShowFailureModesDialog(window fyne.Window) {
 		widget.NewLabel("Result: Network completely loses ability to extract meaningful features."),
 		widget.NewLabel("All digits produce nearly uniform probability distributions."),
 	)
+}
 
+// ShowFailureModesDialog displays information about failure modes.
+func ShowFailureModesDialog(window fyne.Window) {
+	content := createFailureModesContent()
 	scroll := container.NewVScroll(content)
 	scroll.SetMinSize(fyne.NewSize(500, 400))
 
@@ -188,9 +219,9 @@ func ShowFailureModesDialog(window fyne.Window) {
 	d.Show()
 }
 
-// ShowAboutDialog displays information about the demo.
-func ShowAboutDialog(window fyne.Window) {
-	content := container.NewVBox(
+// createAboutContent creates the content for the About section.
+func createAboutContent() fyne.CanvasObject {
+	return container.NewVBox(
 		widget.NewLabelWithStyle("MNIST FeCIM Demo", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		widget.NewLabel("Educational Visualization of Ferroelectric Compute-in-Memory"),
 		widget.NewLabel("Peer-reviewed accuracy: 96.6-98.24% (Nature Commun. 2023, ScienceDirect 2025)"),
@@ -219,7 +250,11 @@ func ShowAboutDialog(window fyne.Window) {
 
 		widget.NewLabel("GitHub: your-org/fecim-lattice-tools (Open Source)"),
 	)
+}
 
+// ShowAboutDialog displays information about the demo.
+func ShowAboutDialog(window fyne.Window) {
+	content := createAboutContent()
 	scroll := container.NewVScroll(content)
 	scroll.SetMinSize(fyne.NewSize(450, 400))
 

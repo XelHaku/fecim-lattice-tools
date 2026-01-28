@@ -274,7 +274,7 @@ func TestArgmaxCorrectness(t *testing.T) {
 // =============================================================================
 
 // TestEnergyCalculation verifies FeCIM energy estimates.
-// Dr. Tour's claim: FeCIM is 10,000x more efficient than GPU.
+// Verified claim: 25-100× more efficient than NAND (Samsung Nature 2025).
 func TestEnergyCalculation(t *testing.T) {
 	net := NewDualModeNetwork(784, 128, 10)
 

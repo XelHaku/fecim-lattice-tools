@@ -246,17 +246,18 @@ Screens:
         children:
           - comparisonCard (ComparisonCard):
               file: comparison_card.go:39-58
-              purpose: Enhanced FP vs CIM side-by-side comparison
+              purpose: CIM-focused prediction display with FP as validation reference
               state:
                 - result: *ComparisonResult
               rendering:
-                - Left card: FP (Float32) with blue accent
-                - Right card: CIM (30 Levels) with green accent
-                - Center indicator: Green checkmark (match) or Red X (mismatch)
-                - Large digits: 3x scale
-                - Confidence bars: Gradient fill
-                - Mini probability bars: Bottom of each card
-                - Bottom info: Match status, energy savings, confidence delta, 2nd best
+                - Single card layout with CIM as hero element
+                - CIM prediction: Large 5x scale digit in cyan/green
+                - FP reference: Small text below CIM ("✓ Matches FP" or "⚠ FP predicts: X")
+                - Color-coded background tint: Green for match, Amber for mismatch
+                - Thick border: Green (match) or Amber (mismatch)
+                - Large confidence bar: Horizontal gradient fill for CIM only
+                - Energy display: Compact "Ex more efficient than GPU" format
+                - Second-best prediction: CIM 2nd choice only
               layout: Fixed height ~320px
           - dualProbabilityChart (DualProbabilityChart):
               file: comparison_card.go:547-571

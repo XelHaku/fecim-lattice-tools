@@ -32,10 +32,10 @@ const (
 	FeCIMDefaultADC    = 8    // 8-bit ADC resolution
 	FeCIMDefaultDAC    = 8    // 8-bit DAC resolution
 
-	// Energy efficiency
-	FeCIMEnergyPerMAC = 50e-15  // 50 fJ/MAC (femtojoules)
-	GPUEnergyPerMAC   = 500e-12 // 500 pJ/MAC (with DRAM access)
-	EnergyRatioGPU    = 10000   // GPU uses 10,000x more energy
+	// Energy efficiency (Samsung Nature 2025: 25-100× vs NAND)
+	FeCIMEnergyPerMAC = 50e-15 // 50 fJ/MAC (femtojoules)
+	GPUEnergyPerMAC   = 5e-12  // 5 pJ/MAC estimate
+	EnergyRatioGPU    = 100    // Verified: 25-100× (Samsung Nature 2025)
 
 	// Accuracy reference (peer-reviewed baselines, not targets)
 	// Note: Accuracy varies with noise, levels, and architecture
@@ -66,9 +66,6 @@ type DualModeApp struct {
 	levelsLabel  *widget.Label
 	noiseSlider  *widget.Slider
 	noiseLabel   *widget.Label
-	adcSelect    *widget.Select
-	dacSelect    *widget.Select
-	hiddenSelect *widget.Select
 
 	// Result panel components
 	fpPredLabel    *widget.Label
@@ -100,9 +97,6 @@ type DualModeApp struct {
 	// Last inference result for refresh
 	lastPixels []float64
 
-	// Guided Tour
-	tour *GuidedTour
-
 	// P1 Enhancement Widgets
 	quantizationWidget   *QuantizationWidget   // P1.1: Shows weight quantization
 	energyWidget         *EnergyWidget         // P1.3: Energy tracking
@@ -119,6 +113,11 @@ type DualModeApp struct {
 	weightComparisonWidget *WeightComparisonWidget
 	dualWeightHeatmap      *DualWeightHeatmap
 
+	// Weight zone collapse state
+	weightsCollapsed bool
+	weightsToggleBtn *widget.Button
+	weightsContent   *fyne.Container
+
 	// Layout containers (stored to defer SetOffset)
 	leftSplit  *container.Split
 	rightSplit *container.Split
@@ -126,14 +125,6 @@ type DualModeApp struct {
 
 	// Adaptive layout for responsive design
 	adaptiveLayout *sharedwidgets.AdaptiveLayout
-
-	// Expert Mode
-	expertMode          bool
-	simplePresets       *fyne.Container
-	expertOnlyControls  *fyne.Container
-	expertModeToggle    *widget.Check
-	brushRow            *fyne.Container // For hiding brush selector in simple mode
-	expertHeaderButtons *fyne.Container // For HW Reality, Failures buttons
 }
 
 // NewDualModeApp creates a new dual-mode MNIST application.
@@ -204,11 +195,6 @@ func (app *DualModeApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window)
 	app.fyneApp = fyneApp
 	app.window = parentWindow
 
-	// Load Expert Mode preference
-	if fyneApp != nil {
-		app.expertMode = fyneApp.Preferences().BoolWithFallback("mnist.expertMode", false)
-	}
-
 	// Create main layout
 	content := app.createMainLayout()
 	// NOTE: updateWeightHeatmap and changeHiddenSize deferred to Start() to avoid fyne.Do() deadlock
@@ -223,13 +209,13 @@ func (app *DualModeApp) Start() {
 	// Set layout offsets (deferred from createMainLayout to avoid layout cascade)
 	fyne.Do(func() {
 		if app.leftSplit != nil {
-			app.leftSplit.SetOffset(0.50) // 50% drawing, 50% controls (increased canvas space)
+			app.leftSplit.SetOffset(0.60) // 60% drawing, 40% controls (increased canvas space)
 		}
 		if app.rightSplit != nil {
 			app.rightSplit.SetOffset(0.55) // 55% results, 45% weights
 		}
 		if app.mainSplit != nil {
-			app.mainSplit.SetOffset(0.40) // 40% left, 60% right (increased left column width)
+			app.mainSplit.SetOffset(0.50) // 50% left, 50% right (balanced layout)
 		}
 	})
 
@@ -288,48 +274,6 @@ func (app *DualModeApp) Start() {
 // Stop cleans up resources.
 func (app *DualModeApp) Stop() {
 	// Nothing to stop
-}
-
-// setExpertMode toggles between Simple and Expert modes.
-func (app *DualModeApp) setExpertMode(enabled bool) {
-	app.expertMode = enabled
-
-	// Save preference
-	if app.fyneApp != nil {
-		app.fyneApp.Preferences().SetBool("mnist.expertMode", enabled)
-	}
-
-	fyne.Do(func() {
-		if enabled {
-			// Expert Mode: show all controls
-			if app.simplePresets != nil {
-				app.simplePresets.Hide()
-			}
-			if app.expertOnlyControls != nil {
-				app.expertOnlyControls.Show()
-			}
-			if app.brushRow != nil {
-				app.brushRow.Show()
-			}
-			if app.expertHeaderButtons != nil {
-				app.expertHeaderButtons.Show()
-			}
-		} else {
-			// Simple Mode: hide expert controls
-			if app.expertOnlyControls != nil {
-				app.expertOnlyControls.Hide()
-			}
-			if app.simplePresets != nil {
-				app.simplePresets.Show()
-			}
-			if app.brushRow != nil {
-				app.brushRow.Hide()
-			}
-			if app.expertHeaderButtons != nil {
-				app.expertHeaderButtons.Hide()
-			}
-		}
-	})
 }
 
 // createMainLayout builds the 4-zone responsive layout.
@@ -417,57 +361,16 @@ func (app *DualModeApp) createHeader() fyne.CanvasObject {
 	})
 	quickDemoBtn.Importance = widget.WarningImportance // Orange/yellow - stands out
 
-	// Guided Tour button
-	tourBtn := widget.NewButton("Tour", func() {
-		mnistLog.Button("GuidedTour")
-		if app.tour == nil {
-			app.tour = NewGuidedTour(app)
-		}
-		app.tour.Start()
+	// Consolidated Info button - opens tabbed dialog with all info
+	infoBtn := widget.NewButton("ℹ Info", func() {
+		mnistLog.Button("Info")
+		ShowInfoDialog(app.window)
 	})
-	tourBtn.Importance = widget.HighImportance
-
-	// Info buttons
-	why30Btn := widget.NewButton("Why 30?", func() {
-		ShowWhy30LevelsDialog(app.window)
-	})
-
-	realityBtn := widget.NewButton("HW Reality", func() {
-		ShowHardwareRealityDialog(app.window)
-	})
-
-	failuresBtn := widget.NewButton("Failures", func() {
-		ShowFailureModesDialog(app.window)
-	})
-
-	aboutBtn := widget.NewButton("About", func() {
-		ShowAboutDialog(app.window)
-	})
-
-	// Expert Mode toggle
-	app.expertModeToggle = widget.NewCheck("Expert", func(checked bool) {
-		app.setExpertMode(checked)
-	})
-	app.expertModeToggle.Checked = app.expertMode
-
-	// Expert-only header buttons (hidden in simple mode)
-	app.expertHeaderButtons = container.NewHBox(
-		realityBtn,
-		failuresBtn,
-	)
-	if !app.expertMode {
-		app.expertHeaderButtons.Hide()
-	}
 
 	buttonRow := container.NewHBox(
 		quickDemoBtn,
 		widget.NewSeparator(),
-		tourBtn,
-		why30Btn,
-		app.expertHeaderButtons,
-		aboutBtn,
-		widget.NewSeparator(),
-		app.expertModeToggle,
+		infoBtn,
 	)
 
 	return container.NewHBox(title, layout.NewSpacer(), buttonRow)
@@ -490,18 +393,8 @@ func (app *DualModeApp) createDrawingZone() fyne.CanvasObject {
 		})
 	}
 
-	// Brush size selector
-	brushSelect := widget.NewSelect([]string{"Thin", "Medium (Recommended)", "Thick"}, func(s string) {
-		switch s {
-		case "Thin":
-			app.digitCanvas.SetBrushSize(BrushThin)
-		case "Medium (Recommended)":
-			app.digitCanvas.SetBrushSize(BrushMedium)
-		case "Thick":
-			app.digitCanvas.SetBrushSize(BrushThick)
-		}
-	})
-	brushSelect.SetSelected("Medium (Recommended)")
+	// Set default brush size (medium)
+	app.digitCanvas.SetBrushSize(BrushMedium)
 
 	clearBtn := widget.NewButton("Clear", func() {
 		mnistLog.Button("Clear")
@@ -517,16 +410,9 @@ func (app *DualModeApp) createDrawingZone() fyne.CanvasObject {
 	// Top row: label + pixel count + buttons
 	topRow := container.NewHBox(label, layout.NewSpacer(), pixelCountLabel, clearBtn, randomBtn)
 
-	// Bottom row: brush selector
-	app.brushRow = container.NewHBox(widget.NewLabel("Brush:"), brushSelect)
-	if !app.expertMode {
-		app.brushRow.Hide()
-	}
-
 	return container.NewVBox(
 		topRow,
 		container.NewCenter(app.digitCanvas),
-		app.brushRow,
 	)
 }
 

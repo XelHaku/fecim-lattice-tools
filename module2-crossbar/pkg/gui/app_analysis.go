@@ -98,8 +98,7 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 			mvmResult.IRDropAnalysis.MaxIRDrop*100,
 			mvmResult.IRDropAnalysis.AvgIRDrop*100)
 
-		// Update legend with actual IR drop percentages
-		ca.irLegend.SetRange(0, mvmResult.IRDropAnalysis.MaxIRDrop*100)
+		// Legend uses fixed 0-100% range for consistent comparison across runs
 
 		ca.irDropHeatmap.SetData(irMap)
 		ca.irDropHeatmap.SetSelection(

@@ -4,7 +4,16 @@ package ferroelectric
 import (
 	"math"
 	"math/rand"
+
+	"fecim-lattice-tools/shared/logging"
 )
+
+// Package-level logger
+var log *logging.Logger
+
+func init() {
+	log = logging.NewLogger("ferroelectric")
+}
 
 // Hysteron represents an elementary bistable switching unit in the Preisach model.
 // Each hysteron switches UP at field alpha and DOWN at field beta (alpha > beta).
@@ -70,6 +79,9 @@ func NewMayergoyzPreisach(material *HZOMaterial, gridSize int) *MayergoyzPreisac
 
 	m.initializeHysterons()
 	m.initializeDistribution()
+
+	log.Debug("NewMayergoyzPreisach: material=%s, grid=%dx%d, Ec=%.2f MV/cm, Ps=%.1f µC/cm²",
+		material.Name, gridSize, gridSize, material.Ec/1e8, material.Ps*100)
 
 	return m
 }
@@ -158,9 +170,14 @@ func (m *MayergoyzPreisach) temperatureCorrectedEc() float64 {
 
 // SetTemperature updates the operating temperature and recalculates distributions.
 func (m *MayergoyzPreisach) SetTemperature(T float64) {
+	oldTemp := m.Temperature
 	m.Temperature = T
 	m.initializeHysterons()
 	m.initializeDistribution()
+
+	effEc := m.temperatureCorrectedEc()
+	log.Debug("SetTemperature: %.0fK → %.0fK, Ec(T)=%.2f MV/cm (%.0f%% of Tc)",
+		oldTemp, T, effEc/1e8, T/m.CurieTemp*100)
 }
 
 // Update applies a new electric field and returns the resulting polarization.
@@ -202,9 +219,15 @@ func (m *MayergoyzPreisach) Cycle() {
 
 	// Update wake-up factor
 	if m.currentWakeup < 1.0 {
+		oldWakeup := m.currentWakeup
 		wakeupRate := 1.0 - math.Exp(-float64(m.cycleCount)/float64(m.wakeupCycles))
 		m.currentWakeup = 0.8 + 0.2*wakeupRate
 		m.initializeDistribution() // Recalculate with new wake-up
+
+		// Log wake-up progress at milestones
+		if m.cycleCount%100 == 0 || m.currentWakeup >= 0.99 {
+			log.Debug("Cycle: count=%d, wakeup=%.1f%% → %.1f%%", m.cycleCount, oldWakeup*100, m.currentWakeup*100)
+		}
 	}
 }
 
@@ -215,6 +238,8 @@ func (m *MayergoyzPreisach) Reset() {
 	}
 	m.polarization = 0
 	m.fieldHistory = m.fieldHistory[:0]
+
+	log.Trace("Reset: all hysterons set to -1, P=0")
 }
 
 // Polarization returns the current polarization.
@@ -365,6 +390,9 @@ func (m *MayergoyzPreisach) GetEffectivePr() float64 {
 // SimulateDomainSwitching returns domain switching dynamics over time.
 // Returns time, polarization, and number of switched domains.
 func (m *MayergoyzPreisach) SimulateDomainSwitching(Eapplied float64, duration float64, steps int) ([]float64, []float64, []int) {
+	log.Debug("SimulateDomainSwitching: E=%.2f MV/cm, duration=%.0f ns, steps=%d",
+		Eapplied/1e8, duration*1e9, steps)
+
 	times := make([]float64, steps)
 	pols := make([]float64, steps)
 	switched := make([]int, steps)
@@ -398,6 +426,9 @@ func (m *MayergoyzPreisach) SimulateDomainSwitching(Eapplied float64, duration f
 		}
 		switched[i] = count
 	}
+
+	log.Debug("SimulateDomainSwitching complete: final P=%.2f µC/cm², switched=%d/%d hysterons",
+		pols[steps-1]*100, switched[steps-1], len(m.hysterons))
 
 	return times, pols, switched
 }

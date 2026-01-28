@@ -20,8 +20,8 @@ import (
 
 // createWeightZone creates the weight visualization zone (Zone 4).
 func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
-	label := widget.NewLabel("Weights")
-	label.TextStyle = fyne.TextStyle{Bold: true}
+	// Default state: collapsed
+	app.weightsCollapsed = true
 
 	// Layer selector as horizontal radio
 	// NOTE: Don't set callback initially - SetSelected triggers callback which uses fyne.Do() and deadlocks during startup
@@ -40,9 +40,10 @@ func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
 		}
 		app.updateWeightHeatmap()
 		app.updateWeightComparison()
+		app.updateCollapsedSummary()
 	}
 
-	// Info labels (combined into one)
+	// Info labels (for expanded view)
 	app.weightDimLabel = widget.NewLabel("")
 	app.weightRangeLabel = widget.NewLabel("")
 	app.weightLevelsLabel = widget.NewLabel("")
@@ -65,42 +66,185 @@ func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
 		app.showZoomedHeatmap()
 	})
 
-	// Header with controls
-	header := container.NewVBox(
-		container.NewHBox(label, layout.NewSpacer(), layerSelect, zoomBtn),
-		container.NewHBox(
-			app.weightDimLabel,
-			widget.NewSeparator(),
-			app.weightRangeLabel,
-			widget.NewSeparator(),
-			app.weightLevelsLabel,
-		),
-	)
-
 	// P1 Enhancement Widgets (moved from controls zone for better space utilization)
 	app.quantizationWidget = NewQuantizationWidget()
 	app.energyWidget = NewEnergyWidget(MNISTInputSize, MNISTHiddenSize, MNISTOutputSize)
 
-	// Create tabbed view for different weight visualizations
-	// Add legend to the left of the heatmap
-	quantizedTab := container.NewBorder(nil, nil, weightLegend, nil, app.hoverableWeightHeatmap)
-	comparisonTab := container.NewMax(app.weightComparisonWidget)
-	sideBySideTab := container.NewMax(app.dualWeightHeatmap)
-	quantizationTab := container.NewMax(app.quantizationWidget)
-	energyTab := container.NewMax(app.energyWidget)
+	// Note: Expanded content (tabs, headers) is built dynamically in toggleWeightsCollapsed()
+	// when the user expands the section. We don't create it here to avoid unused variables.
+	_ = layerSelect     // Used in toggleWeightsCollapsed()
+	_ = zoomBtn         // Used in toggleWeightsCollapsed()
+	_ = weightLegend    // Used in toggleWeightsCollapsed()
 
-	weightTabs := container.NewAppTabs(
-		container.NewTabItem("Quantized", quantizedTab),
-		container.NewTabItem("FP vs Quant", comparisonTab),
-		container.NewTabItem("Side-by-Side", sideBySideTab),
-		container.NewTabItem("Quantization", quantizationTab),
-		container.NewTabItem("Energy", energyTab),
-	)
-	return container.NewBorder(
-		header,
+	// Collapsible toggle button with summary
+	app.weightsToggleBtn = widget.NewButton("▶ Weights: Layer1 784×128 | 30 levels | Click to expand", func() {
+		app.toggleWeightsCollapsed()
+	})
+	app.weightsToggleBtn.Alignment = widget.ButtonAlignLeading
+
+	// Content container (starts empty, filled by toggleWeightsCollapsed)
+	app.weightsContent = container.NewMax()
+
+	// Main container
+	mainContainer := container.NewBorder(
+		app.weightsToggleBtn, // Top: toggle button
 		nil, nil, nil,
-		weightTabs,
+		app.weightsContent, // Center: expandable content
 	)
+
+	// Set initial state (collapsed)
+	app.weightsContent.Objects = []fyne.CanvasObject{} // Empty when collapsed
+	app.updateCollapsedSummary()
+
+	return mainContainer
+}
+
+// createStatsTab creates the consolidated Stats tab combining quantization info, energy info, and FP vs Quant comparison.
+func (app *DualModeApp) createStatsTab() fyne.CanvasObject {
+	// Quantization section
+	quantLabel := widget.NewLabel("Quantization")
+	quantLabel.TextStyle = fyne.TextStyle{Bold: true}
+	quantSection := container.NewVBox(
+		quantLabel,
+		app.quantizationWidget,
+	)
+
+	// Energy section
+	energyLabel := widget.NewLabel("Energy Analysis")
+	energyLabel.TextStyle = fyne.TextStyle{Bold: true}
+	energySection := container.NewVBox(
+		energyLabel,
+		app.energyWidget,
+	)
+
+	// FP vs Quant comparison metrics
+	comparisonLabel := widget.NewLabel("FP vs Quantized Comparison")
+	comparisonLabel.TextStyle = fyne.TextStyle{Bold: true}
+	comparisonSection := container.NewVBox(
+		comparisonLabel,
+		app.weightComparisonWidget,
+	)
+
+	// Combine all sections in a scrollable container
+	statsContent := container.NewVBox(
+		quantSection,
+		widget.NewSeparator(),
+		energySection,
+		widget.NewSeparator(),
+		comparisonSection,
+	)
+
+	return container.NewScroll(statsContent)
+}
+
+// toggleWeightsCollapsed toggles the collapsed/expanded state of the weights zone.
+func (app *DualModeApp) toggleWeightsCollapsed() {
+	app.weightsCollapsed = !app.weightsCollapsed
+
+	fyne.Do(func() {
+		if app.weightsCollapsed {
+			// Collapsed: clear content
+			app.weightsContent.Objects = []fyne.CanvasObject{}
+			app.updateCollapsedSummary()
+		} else {
+			// Expanded: show full content
+			app.weightsToggleBtn.SetText("▼ Weights: Click to collapse")
+
+			// Rebuild expanded content (to get fresh tabs)
+			layerSelect := widget.NewRadioGroup(
+				[]string{"Layer1 (784x128)", "Layer2 (128x10)"},
+				nil,
+			)
+			layerSelect.Horizontal = true
+			if app.weightLayer == 0 {
+				layerSelect.SetSelected("Layer1 (784x128)")
+			} else {
+				layerSelect.SetSelected("Layer2 (128x10)")
+			}
+			layerSelect.OnChanged = func(s string) {
+				if s == "Layer1 (784x128)" {
+					app.weightLayer = 0
+				} else {
+					app.weightLayer = 1
+				}
+				app.updateWeightHeatmap()
+				app.updateWeightComparison()
+			}
+
+			zoomBtn := widget.NewButtonWithIcon("", theme.ZoomFitIcon(), func() {
+				app.showZoomedHeatmap()
+			})
+
+			expandedHeader := container.NewVBox(
+				container.NewHBox(layout.NewSpacer(), layerSelect, zoomBtn),
+				container.NewHBox(
+					app.weightDimLabel,
+					widget.NewSeparator(),
+					app.weightRangeLabel,
+					widget.NewSeparator(),
+					app.weightLevelsLabel,
+				),
+			)
+
+			weightLegend := sharedwidgets.NewColorLegend(-1.0, 1.0, "", true, sharedwidgets.BlueWhiteRedColor)
+			heatmapTab := container.NewBorder(nil, nil, weightLegend, nil, app.hoverableWeightHeatmap)
+			statsTab := app.createStatsTab()
+
+			weightTabs := container.NewAppTabs(
+				container.NewTabItem("Heatmap", heatmapTab),
+				container.NewTabItem("Stats", statsTab),
+			)
+
+			expandedContent := container.NewBorder(
+				expandedHeader,
+				nil, nil, nil,
+				weightTabs,
+			)
+
+			app.weightsContent.Objects = []fyne.CanvasObject{expandedContent}
+		}
+		app.weightsContent.Refresh()
+	})
+}
+
+// updateCollapsedSummary updates the collapsed state summary text.
+func (app *DualModeApp) updateCollapsedSummary() {
+	if !app.weightsCollapsed {
+		return
+	}
+
+	// Get current layer info
+	layerName := "Layer1"
+	dims := "784×128"
+	if app.weightLayer == 1 {
+		layerName = "Layer2"
+		dims = "128×10"
+	}
+
+	// Get distinct levels count
+	var weights [][]float64
+	if app.weightLayer == 0 {
+		weights, _, _, _ = app.network().GetQuantWeights()
+	} else {
+		_, weights, _, _ = app.network().GetQuantWeights()
+	}
+
+	levelsCount := 30 // Default
+	if len(weights) > 0 && len(weights[0]) > 0 {
+		distinctMap := make(map[float64]bool)
+		for i := range weights {
+			for j := range weights[i] {
+				distinctMap[weights[i][j]] = true
+			}
+		}
+		levelsCount = len(distinctMap)
+	}
+
+	summaryText := fmt.Sprintf("▶ Weights: %s %s | %d levels | Click to expand", layerName, dims, levelsCount)
+
+	fyne.Do(func() {
+		app.weightsToggleBtn.SetText(summaryText)
+	})
 }
 
 // updateWeightComparison updates the FP vs Quantized comparison widgets.

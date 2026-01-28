@@ -183,13 +183,15 @@ func NewDeviceState(rows, cols int, tia *peripherals.TIA, adc *peripherals.ADC) 
 //   field_min_ratio: 0.5  -> Read max = 0.5 * Vc
 //   field_max_ratio: 2.5  -> Write max = 2.5 * Vc
 func (ds *DeviceState) updateVoltageRanges() {
-	// Get material's coercive voltage (Vc = Ec * thickness)
-	Vc := 1.0 // Fallback if no material
-	numLevels := 30 // Default FeCIM level count, matches app.go:FeCIMLevels
-	if ds.material != nil {
-		Vc = ds.material.CoerciveVoltage()
-		numLevels = ds.material.GetNumLevels()
+	// Ensure material is set - use default FeCIM if not
+	if ds.material == nil {
+		ds.material = ferroelectric.FeCIMMaterial()
 	}
+
+	// Get material's coercive voltage (Vc = Ec * thickness)
+	// All values derived from material properties - no hardcoded fallbacks
+	Vc := ds.material.CoerciveVoltage()
+	numLevels := ds.material.GetNumLevels()
 
 	// Read range: 0 to FieldMinRatio * Vc
 	// This is the safe sensing zone below coercive voltage
@@ -423,6 +425,26 @@ func (ds *DeviceState) SetDACVoltageForState(col int, targetState int, numLevels
 	ds.dacVoltages[col] = voltage
 	ds.dacRangeMode = DACRangeWrite
 	ds.dacMode = DACManual
+}
+
+// CalculateVoltageForState calculates the write voltage for a target state without setting it
+// Used for UI preview - actual voltage is only applied when user presses "Write Cell"
+func (ds *DeviceState) CalculateVoltageForState(targetState int, numLevels int) float64 {
+	if numLevels <= 0 {
+		numLevels = ds.writeRange.NumLevels
+	}
+
+	// Clamp target state
+	if targetState < 0 {
+		targetState = 0
+	}
+	if targetState >= numLevels {
+		targetState = numLevels - 1
+	}
+
+	// Linear interpolation within write range
+	normalized := float64(targetState) / float64(numLevels-1)
+	return ds.writeRange.Min + normalized*(ds.writeRange.Max-ds.writeRange.Min)
 }
 
 // SetAllDACVoltages sets all DAC columns to the same voltage

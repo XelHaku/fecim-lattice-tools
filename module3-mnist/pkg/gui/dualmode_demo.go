@@ -35,7 +35,7 @@ func (app *DualModeApp) StartQuickDemo() {
 
 		// Step 2: Load sample and show ideal prediction (3s)
 		fyne.Do(func() {
-			app.applyPresetWithMode(30, 0.01, 8, 8, false)
+			app.applyPreset(30, 0.01, 8, 8)
 			app.statusLabel.SetText("QUICK DEMO | Step 2/5: Loading test digit with 30 levels (ideal)...")
 		})
 		if app.waitOrStop(500 * time.Millisecond) {
@@ -64,7 +64,7 @@ func (app *DualModeApp) StartQuickDemo() {
 			return
 		}
 		fyne.Do(func() {
-			app.applyPresetWithMode(2, 0.01, 8, 8, false)
+			app.applyPreset(2, 0.01, 8, 8)
 		})
 		if app.waitOrStop(500 * time.Millisecond) {
 			return
@@ -89,7 +89,7 @@ func (app *DualModeApp) StartQuickDemo() {
 
 		// Restore ideal settings (2s)
 		fyne.Do(func() {
-			app.applyPresetWithMode(30, 0.01, 8, 8, false)
+			app.applyPreset(30, 0.01, 8, 8)
 			app.statusLabel.SetText("DEMO COMPLETE | Key insight: 30 levels enable high accuracy with 25-100× energy efficiency (Samsung Nature 2025)")
 		})
 		if app.waitOrStop(500 * time.Millisecond) {

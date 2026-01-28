@@ -192,6 +192,9 @@ type CircuitsApp struct {
 	stopChan        chan struct{} // Closed to signal all goroutines to stop
 	stopped         bool          // True when Stop() has been called
 
+	// UI update flags (prevent recursive callbacks)
+	updatingWLCheckboxes bool // True when programmatically updating WL checkboxes
+
 	// Architecture toggle (1T1R vs 0T1R vs 2T1R)
 	archPassiveBtn *widget.Button
 	arch1T1RBtn    *widget.Button

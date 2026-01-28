@@ -87,7 +87,7 @@ func (app *DualModeApp) runInferenceAnimated(pixels []float64) {
 
 		// Show dramatic match/mismatch feedback (UI-024 fix: better units, UI-023 fix: clearer wording)
 		if result.Agree {
-			app.statusLabel.SetText(fmt.Sprintf("MATCH | FP: %d | CIM: %d | Confidence: %.1f%% | Energy Efficiency: 10,000× improvement",
+			app.statusLabel.SetText(fmt.Sprintf("MATCH | FP: %d | CIM: %d | Confidence: %.1f%% | 25-100× energy efficient (Samsung Nature 2025)",
 				result.FPPrediction, result.CIMPrediction, result.CIMConfidence*100))
 		} else {
 			app.statusLabel.SetText(fmt.Sprintf("Prediction Mismatch | FP: %d vs CIM: %d | Weight quantization may need tuning",
@@ -121,9 +121,8 @@ func (app *DualModeApp) updateResultDisplays(result *core.InferenceResult, quant
 	}
 
 	// Update energy (legacy) - UI-024 fix: clearer units and wording
-	gpuEnergy := result.EnergyUsed * EnergyRatioGPU
-	app.energyLabel.SetText(fmt.Sprintf("Energy: %.2f µJ (FeCIM) vs %.0f mJ (GPU) = %.0f× improvement",
-		result.EnergyUsed, gpuEnergy/1000, float64(EnergyRatioGPU)))
+	app.energyLabel.SetText(fmt.Sprintf("Energy: %.2f µJ (FeCIM) | 25-100× more efficient (verified)",
+		result.EnergyUsed))
 
 	// P1 Enhancements
 	if app.quantizationWidget != nil && len(quantWeights) > 0 {

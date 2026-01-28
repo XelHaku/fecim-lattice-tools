@@ -781,6 +781,7 @@ func (a *App) simulationLoop() {
 						// Target in lower half: saturate positive first (reach level N), then apply descending cal
 						resetE = 1.5 * Ec // Match calibration saturation
 					}
+					a.wrdSaturateE = resetE // Store for logging
 
 					// Ramp to reset field
 					diff := resetE - a.electricField
@@ -795,6 +796,11 @@ func (a *App) simulationLoop() {
 
 					// Transition when field reached and held briefly
 					if a.wrdPhaseTimer > phaseDuration*0.25 && math.Abs(a.electricField-resetE) < 0.01*Emax {
+						// Capture end-of-RESET state for logging
+						a.wrdResetEndP = a.polarization * 100 // Convert to µC/cm²
+						a.wrdResetEndLvl = a.discreteLevel + 1
+						log.Printf("WRD PHASE 0→1: RESET done | E=%.3f MV/cm | P=%.2f→%.2f µC/cm² | L=%d→%d | target=%d",
+							a.electricField/1e8, a.wrdResetStartP, a.wrdResetEndP, a.wrdStartLevel, a.wrdResetEndLvl, targetLevel)
 						a.wrdPhase = 1
 						a.wrdPhaseTimer = 0
 					}
@@ -811,6 +817,10 @@ func (a *App) simulationLoop() {
 
 					// Now at known remanent state (level 1 or level N)
 					if a.wrdPhaseTimer > phaseDuration*0.15 && math.Abs(a.electricField) < 0.01*Emax {
+						// Capture start-of-WRITE state for logging
+						a.wrdWriteStartP = a.polarization * 100 // Convert to µC/cm²
+						log.Printf("WRD PHASE 1→2: SETTLE done | E=%.3f MV/cm | P=%.2f µC/cm² | L=%d | ready to write target=%d",
+							a.electricField/1e8, a.wrdWriteStartP, a.discreteLevel+1, targetLevel)
 						a.wrdPhase = 2
 						a.wrdPhaseTimer = 0
 					}
@@ -861,6 +871,11 @@ func (a *App) simulationLoop() {
 
 					// Transition when field applied and held
 					if a.wrdPhaseTimer > phaseDuration*0.3 && math.Abs(a.electricField-writeE) < 0.01*Emax {
+						// Capture end-of-WRITE state for logging
+						a.wrdWriteEndP = a.polarization * 100 // Convert to µC/cm²
+						a.wrdWriteEndLvl = a.discreteLevel + 1
+						log.Printf("WRD PHASE 2→3: WRITE done | E=%.3f MV/cm (%.2f×Ec) | P=%.2f→%.2f µC/cm² | L=%d→%d | target=%d",
+							a.electricField/1e8, a.electricField/Ec, a.wrdWriteStartP, a.wrdWriteEndP, a.wrdResetEndLvl, a.wrdWriteEndLvl, targetLevel)
 						a.wrdPhase = 3
 						a.wrdPhaseTimer = 0
 					}
@@ -877,6 +892,10 @@ func (a *App) simulationLoop() {
 
 					// Transition to READ phase
 					if a.wrdPhaseTimer > phaseDuration*0.2 && math.Abs(a.electricField) < 0.01*Emax {
+						// Capture start-of-READ state for logging
+						a.wrdReadStartP = a.polarization * 100 // Convert to µC/cm²
+						log.Printf("WRD PHASE 3→4: HOLD done | E=%.3f MV/cm | P=%.2f µC/cm² | L=%d | ready to read",
+							a.electricField/1e8, a.wrdReadStartP, a.discreteLevel+1)
 						a.wrdPhase = 4
 						a.wrdPhaseTimer = 0
 					}
@@ -902,9 +921,13 @@ func (a *App) simulationLoop() {
 						a.wrdTotalWrites++
 						// Success if within ±2 levels (realistic analog tolerance for 30-level memory)
 						levelError := a.wrdReadLevel - a.wrdTargetLevel
-						if abs(levelError) <= 2 {
+						success := abs(levelError) <= 2
+						if success {
 							a.wrdSuccessWrites++
 						}
+						successRate := float64(a.wrdSuccessWrites) / float64(a.wrdTotalWrites) * 100
+						log.Printf("WRD PHASE 4→5: READ done | readE=%.3f MV/cm | L_read=%d | L_target=%d | error=%+d | success=%v | rate=%.1f%% (%d/%d)",
+							readE/1e8, a.wrdReadLevel, a.wrdTargetLevel, levelError, success, successRate, a.wrdSuccessWrites, a.wrdTotalWrites)
 
 						// Update calibration using binary search with bounds tracking
 						// Bounds check: ensure target is within calibration array bounds
@@ -988,7 +1011,7 @@ func (a *App) simulationLoop() {
 						a.wrdTotalEnergyfJ += a.wrdCycleEnergy
 						a.wrdCycleEnergy = 0 // Reset for next cycle
 
-						// Log this cycle for debugging
+						// Log this cycle for debugging with complete phase data
 						if a.wrdDebugLog != nil {
 							cycle := WriteReadCycle{
 								CycleNum:    len(a.wrdDebugLog.Cycles) + 1,
@@ -997,9 +1020,30 @@ func (a *App) simulationLoop() {
 								ReadLevel:   a.wrdReadLevel,
 								Success:     abs(a.wrdReadLevel-a.wrdTargetLevel) <= 2,
 								Phases: []WriteReadPhase{
-									{Phase: "RESET", EFieldPeak: a.wrdSaturateE / 1e8},
-									{Phase: "WRITE", EFieldPeak: a.wrdWriteE / 1e8},
-									{Phase: "READ", EFieldPeak: readE / 1e8, LevelEnd: a.wrdReadLevel},
+									{
+										Phase:      "RESET",
+										EFieldPeak: a.wrdSaturateE / 1e8,
+										PStart:     a.wrdResetStartP,
+										PEnd:       a.wrdResetEndP,
+										LevelStart: a.wrdStartLevel,
+										LevelEnd:   a.wrdResetEndLvl,
+									},
+									{
+										Phase:      "WRITE",
+										EFieldPeak: a.wrdWriteE / 1e8,
+										PStart:     a.wrdWriteStartP,
+										PEnd:       a.wrdWriteEndP,
+										LevelStart: a.wrdResetEndLvl,
+										LevelEnd:   a.wrdWriteEndLvl,
+									},
+									{
+										Phase:      "READ",
+										EFieldPeak: readE / 1e8,
+										PStart:     a.wrdReadStartP,
+										PEnd:       a.wrdReadStartP, // Non-destructive read - P doesn't change
+										LevelStart: a.wrdWriteEndLvl,
+										LevelEnd:   a.wrdReadLevel,
+									},
 								},
 							}
 							a.wrdDebugLog.Cycles = append(a.wrdDebugLog.Cycles, cycle)
@@ -1082,6 +1126,10 @@ func (a *App) simulationLoop() {
 								a.wrdTargetLevel = 2
 							}
 						}
+						// Capture start-of-RESET state for next cycle logging
+						a.wrdResetStartP = a.polarization * 100 // Convert to µC/cm²
+						log.Printf("WRD CYCLE START: cycle=%d | startLevel=%d | newTarget=%d | P=%.2f µC/cm²",
+							a.wrdTotalWrites+1, a.discreteLevel+1, a.wrdTargetLevel, a.wrdResetStartP)
 						a.wrdPhase = 0
 						a.wrdPhaseTimer = 0
 						a.wrdCycleEnergy = 0 // Reset energy accumulator for next cycle

@@ -97,6 +97,8 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			a.wrdTotalEnergyfJ = 0
 			a.wrdCycleEnergy = 0
 			a.wrdBitsStored = math.Log2(float64(a.numLevels))
+			// Initialize phase tracking for first cycle
+			a.wrdResetStartP = a.polarization * 100 // Current polarization in µC/cm²
 			// Initialize debug log (requires material to be set)
 			if a.material != nil {
 				a.initDebugLog()

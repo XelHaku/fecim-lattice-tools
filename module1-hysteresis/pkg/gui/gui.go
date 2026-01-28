@@ -84,6 +84,15 @@ type App struct {
 	wrdPrevP       float64 // Previous polarization for energy calculation (E·dP integration)
 	wrdCycleEnergy float64 // Energy for current write/read cycle
 
+	// Phase transition tracking for logging
+	wrdResetStartP float64 // Polarization at start of RESET phase
+	wrdResetEndP   float64 // Polarization at end of RESET phase
+	wrdResetEndLvl int     // Level at end of RESET phase
+	wrdWriteStartP float64 // Polarization at start of WRITE phase
+	wrdWriteEndP   float64 // Polarization at end of WRITE phase
+	wrdWriteEndLvl int     // Level at end of WRITE phase
+	wrdReadStartP  float64 // Polarization at start of READ phase
+
 	// Dr. Tour Demo Metrics (impressive stats!)
 	wrdTotalWrites   int     // Total write operations
 	wrdSuccessWrites int     // Successful writes (read matches target)

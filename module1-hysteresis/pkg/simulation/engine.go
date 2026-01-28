@@ -7,7 +7,15 @@ import (
 	"time"
 
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
+	"fecim-lattice-tools/shared/logging"
 )
+
+// Package-level logger
+var log *logging.Logger
+
+func init() {
+	log = logging.NewLogger("hysteresis-sim")
+}
 
 // State represents the current simulation state.
 type State struct {
@@ -57,7 +65,7 @@ const (
 func NewEngine(material *ferroelectric.HZOMaterial) *Engine {
 	model := ferroelectric.NewPreisachModel(material)
 
-	return &Engine{
+	e := &Engine{
 		model:     model,
 		material:  material,
 		state:     newState(1000),
@@ -66,6 +74,11 @@ func NewEngine(material *ferroelectric.HZOMaterial) *Engine {
 		frequency: 1e6, // 1 MHz default
 		amplitude: material.CoerciveVoltage() * 2,
 	}
+
+	log.Debug("NewEngine: material=%s, dt=%.0f ns, freq=%.0f MHz, amplitude=%.2f V",
+		material.Name, e.dt*1e9, e.frequency/1e6, e.amplitude)
+
+	return e
 }
 
 func newState(maxHistory int) *State {
@@ -82,6 +95,7 @@ func (e *Engine) Start() {
 	defer e.mu.Unlock()
 	e.running = true
 	e.paused = false
+	log.Info("Simulation started")
 }
 
 // Stop halts the simulation.
@@ -89,6 +103,7 @@ func (e *Engine) Stop() {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.running = false
+	log.Info("Simulation stopped")
 }
 
 // Pause toggles the paused state.
@@ -96,6 +111,11 @@ func (e *Engine) Pause() {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.paused = !e.paused
+	if e.paused {
+		log.Debug("Simulation paused")
+	} else {
+		log.Debug("Simulation resumed")
+	}
 }
 
 // IsPaused returns true if simulation is paused.
@@ -203,6 +223,7 @@ func (e *Engine) SetWaveform(w WaveformType) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.waveform = w
+	log.Debug("SetWaveform: %v", w)
 }
 
 // SetFrequency changes the waveform frequency.
@@ -211,6 +232,7 @@ func (e *Engine) SetFrequency(f float64) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.frequency = f
+	log.Debug("SetFrequency: %.2f Hz", f)
 }
 
 // SetAmplitude changes the waveform amplitude.
@@ -219,6 +241,7 @@ func (e *Engine) SetAmplitude(a float64) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	e.amplitude = a
+	log.Debug("SetAmplitude: %.2f V", a)
 }
 
 // State returns a copy of the current simulation state.
@@ -243,6 +266,7 @@ func (e *Engine) Reset() {
 	defer e.mu.Unlock()
 	e.model.Reset()
 	e.state = newState(e.state.MaxHistory)
+	log.Debug("Engine reset: state cleared, maxHistory=%d", e.state.MaxHistory)
 }
 
 // GetHysteresisData returns P-E data for plotting the hysteresis loop.

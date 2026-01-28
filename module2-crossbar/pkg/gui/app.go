@@ -259,8 +259,9 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	ca.sneakPathHeatmap.OnCellHover = ca.onSneakCellHover
 
 	// Create color legends for each heatmap
-	ca.condLegend = sharedwidgets.NewColorLegendWithColormap(0, 100, "µS", true, "fecim")
-	ca.irLegend = sharedwidgets.NewColorLegendWithColormap(0, 15, "%", true, "viridis")
+	// Conductance displayed as discrete level (0-29) per FeCIM 30-level spec
+	ca.condLegend = sharedwidgets.NewColorLegendWithColormap(0, 29, "Level", true, "fecim")
+	ca.irLegend = sharedwidgets.NewColorLegendWithColormap(0, 100, "%", true, "viridis")
 	ca.sneakLegend = sharedwidgets.NewColorLegendWithColormap(0, 200, "%", true, "plasma")
 
 	// Create MVM visualization with bar charts
@@ -695,23 +696,11 @@ func (ca *CrossbarApp) programRandomWeights() {
 func (ca *CrossbarApp) updateConductanceDisplay() {
 	matrix := ca.array.GetConductanceMatrix()
 
-	// Calculate min/max for conductance legend
-	minG, maxG := 1e6, 0.0
-	for i := range matrix {
-		for j := range matrix[i] {
-			val := matrix[i][j] * 1e6 // Convert S to µS
-			if val < minG {
-				minG = val
-			}
-			if val > maxG {
-				maxG = val
-			}
-		}
-	}
-
+	// Conductance values are normalized [0,1] mapping to 30 discrete levels (0-29)
+	// Legend shows the level range (0-29) per FeCIM spec
 	fyne.Do(func() {
 		ca.conductanceHeatmap.SetData(matrix)
-		ca.condLegend.SetRange(minG, maxG)
+		ca.condLegend.SetRange(0, float64(crossbar.DefaultQuantizationLevels-1))
 	})
 }
 

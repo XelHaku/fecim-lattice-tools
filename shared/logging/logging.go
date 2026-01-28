@@ -88,7 +88,7 @@ func NewLogger(demoName string) *Logger {
 	}
 
 	logger := &Logger{
-		Logger:   log.New(sharedLogWriter, "["+demoName+"] ", log.Ltime|log.Lmicroseconds),
+		Logger:   log.New(sharedLogWriter, "["+demoName+"] ", log.Ldate|log.Ltime|log.Lmicroseconds),
 		logFile:  nil, // Don't store file reference - shared file is managed globally
 		demoName: demoName,
 	}
@@ -226,7 +226,7 @@ func Init(demoName string, logPath string) error {
 		// Write to both file and stdout
 		multiWriter := io.MultiWriter(os.Stdout, logFile)
 		defaultLogger = &Logger{
-			Logger:   log.New(multiWriter, "["+demoName+"] ", log.Ltime|log.Lmicroseconds),
+			Logger:   log.New(multiWriter, "["+demoName+"] ", log.Ldate|log.Ltime|log.Lmicroseconds),
 			logFile:  logFile,
 			demoName: demoName,
 		}
