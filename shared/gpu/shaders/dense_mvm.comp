@@ -1,0 +1,49 @@
+#version 450
+
+layout(local_size_x = 256) in;
+
+// Layer parameters (std140 layout)
+layout(std140, binding = 0) uniform LayerParams {
+    int rows;        // Output features
+    int cols;        // Input features
+    int activation;  // 0=none, 1=relu
+    int padding;     // std140 alignment
+};
+
+// Weight matrix W[rows][cols] in row-major order
+layout(std430, binding = 1) buffer WeightBuffer {
+    float W[];
+};
+
+// Bias vector b[rows]
+layout(std430, binding = 2) buffer BiasBuffer {
+    float b[];
+};
+
+// Input vector x[cols]
+layout(std430, binding = 3) buffer InputBuffer {
+    float x[];
+};
+
+// Output vector y[rows]
+layout(std430, binding = 4) buffer OutputBuffer {
+    float y[];
+};
+
+void main() {
+    uint rowIdx = gl_GlobalInvocationID.x;
+    if (rowIdx >= rows) return;
+
+    // Compute y[i] = sum(W[i,j] * x[j]) + b[i]
+    float sum = b[rowIdx];
+    for (int j = 0; j < cols; j++) {
+        sum += W[rowIdx * cols + j] * x[j];
+    }
+
+    // Optional inline ReLU
+    if (activation == 1) {
+        sum = max(0.0, sum);
+    }
+
+    y[rowIdx] = sum;
+}

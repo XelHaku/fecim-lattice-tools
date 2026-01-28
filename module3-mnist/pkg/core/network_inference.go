@@ -188,7 +188,18 @@ func (net *DualModeNetwork) InferCIMOnly(input []float64) (prediction int, confi
 }
 
 // forwardFP performs standard FP matrix multiplication.
+// Uses GPU acceleration when available and input is large enough.
 func (net *DualModeNetwork) forwardFP(input []float64, weights [][]float64, bias []float64) []float64 {
+	// Try GPU path if available and input is large enough to benefit
+	if net.useGPU && len(input) >= 128 {
+		result, err := net.forwardFPGPU(input, weights, bias)
+		if err == nil {
+			return result
+		}
+		// Fall back to CPU on GPU error (silent fallback)
+	}
+
+	// CPU path (original implementation)
 	output := make([]float64, len(bias))
 
 	for i := 0; i < len(weights); i++ {

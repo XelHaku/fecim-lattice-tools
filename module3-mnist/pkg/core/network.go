@@ -75,6 +75,9 @@ type DualModeNetwork struct {
 
 	// Separate mutex for RNG access to prevent races under RLock
 	rngMu sync.Mutex
+
+	// GPU acceleration flag
+	useGPU bool
 }
 
 // InferenceResult holds results from dual-path inference.

@@ -1,0 +1,52 @@
+#version 450
+
+layout(local_size_x = 256) in;
+
+layout(std140, binding = 0) uniform SoftmaxParams {
+    int size;        // Vector length
+    int padding1;
+    int padding2;
+    int padding3;
+};
+
+layout(std430, binding = 1) buffer DataBuffer {
+    float data[];
+};
+
+// Shared memory for reduction
+shared float sharedMax;
+shared float sharedSum;
+
+void main() {
+    uint idx = gl_GlobalInvocationID.x;
+
+    // Pass 1: Find max for numerical stability
+    if (idx == 0) {
+        float maxVal = data[0];
+        for (int i = 1; i < size; i++) {
+            maxVal = max(maxVal, data[i]);
+        }
+        sharedMax = maxVal;
+    }
+    barrier();
+
+    // Pass 2: Compute exp(x - max) and sum
+    if (idx < size) {
+        data[idx] = exp(data[idx] - sharedMax);
+    }
+    barrier();
+
+    if (idx == 0) {
+        float sum = 0.0;
+        for (int i = 0; i < size; i++) {
+            sum += data[i];
+        }
+        sharedSum = sum;
+    }
+    barrier();
+
+    // Pass 3: Normalize
+    if (idx < size) {
+        data[idx] /= sharedSum;
+    }
+}
