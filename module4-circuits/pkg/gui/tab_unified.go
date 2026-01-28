@@ -1139,9 +1139,13 @@ func (ca *CircuitsApp) onUnifiedCellTapped(row, col int) {
 	// H2 FIX: Update target cell label in write mode panel
 	ca.updateWriteTargetLabel()
 
-	// Update write voltage for the newly selected column
+	// Update DAC voltage for the newly selected column
 	if mode == OpModeWrite && ca.mfuxWriteLevelSlider != nil {
+		// Write mode: set write voltage on selected column only
 		ca.deviceState.SetDACVoltageForState(col, int(ca.mfuxWriteLevelSlider.Value), ca.quantLevels)
+	} else if mode == OpModeRead {
+		// Read mode: set read voltage on selected column only (others stay 0)
+		ca.deviceState.SetDACPreset(DACReadPreset)
 	}
 
 	ca.recomputeAndRefresh()

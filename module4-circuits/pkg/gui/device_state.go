@@ -41,8 +41,8 @@ type DACMode int
 
 const (
 	DACManual DACMode = iota // User entered each voltage
-	DACReadPreset            // All columns at readVoltage (0-1V range)
-	DACWritePreset           // Selected column at write voltage (Vmin-Vmax range)
+	DACReadPreset            // Selected column at readVoltage, others 0 (single cell read)
+	DACWritePreset           // Selected column at write voltage, others 0 (single cell write)
 	DACInputVector           // From digital input vector (0-255 -> 0-1V)
 	DACRandom                // Random voltages
 )
@@ -334,6 +334,7 @@ func (ds *DeviceState) SetDACPreset(preset DACMode, params ...float64) {
 	switch preset {
 	case DACReadPreset:
 		// Use read range from material calibration
+		// Only selected column gets read voltage, others are 0
 		ds.dacRangeMode = DACRangeRead
 		voltage := ds.readRange.Max * 0.5 // Default to 50% of safe read range
 		if len(params) > 0 {
@@ -344,7 +345,11 @@ func (ds *DeviceState) SetDACPreset(preset DACMode, params ...float64) {
 			voltage = ds.readRange.Max
 		}
 		for i := range ds.dacVoltages {
-			ds.dacVoltages[i] = voltage
+			if i == ds.selectedCol {
+				ds.dacVoltages[i] = voltage
+			} else {
+				ds.dacVoltages[i] = 0
+			}
 		}
 
 	case DACWritePreset:
