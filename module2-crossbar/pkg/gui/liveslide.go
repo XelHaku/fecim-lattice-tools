@@ -155,6 +155,8 @@ func (r *modeIndicatorBoxRenderer) layoutWithSize(size fyne.Size) {
 	}
 
 	// Colors based on mode
+	// Accessibility: Each mode has a distinct text label with unique shape prefix
+	// Shape meanings: ○=inactive, ▶=running, ↓=writing, ↑=reading, ~=resistance, ⌇=leakage
 	var bgColor, borderColor color.RGBA
 	var modeText string
 
@@ -162,27 +164,27 @@ func (r *modeIndicatorBoxRenderer) layoutWithSize(size fyne.Size) {
 	case DemoModeIdle:
 		bgColor = color.RGBA{60, 60, 80, 255}
 		borderColor = color.RGBA{100, 100, 130, 255}
-		modeText = "░░ IDLE ░░"
+		modeText = "○ IDLE"
 	case DemoModeCompute:
 		bgColor = color.RGBA{50, 120, 180, 255}
 		borderColor = color.RGBA{100, 180, 255, 255}
-		modeText = "▶▶ COMPUTE ▶▶"
+		modeText = "▶ COMPUTE"
 	case DemoModeWrite:
 		bgColor = color.RGBA{180, 50, 50, 255}
 		borderColor = color.RGBA{255, 100, 100, 255}
-		modeText = "██ WRITE ██"
+		modeText = "↓ WRITE"
 	case DemoModeRead:
 		bgColor = color.RGBA{50, 150, 80, 255}
 		borderColor = color.RGBA{100, 220, 130, 255}
-		modeText = "░░ READ ░░"
+		modeText = "↑ READ"
 	case DemoModeIRDrop:
 		bgColor = color.RGBA{180, 120, 50, 255}
 		borderColor = color.RGBA{255, 180, 100, 255}
-		modeText = "⚡ IR DROP ⚡"
+		modeText = "~ IR DROP"
 	case DemoModeSneakPath:
 		bgColor = color.RGBA{150, 50, 150, 255}
 		borderColor = color.RGBA{220, 100, 220, 255}
-		modeText = "↯ SNEAK ↯"
+		modeText = "⌇ SNEAK"
 	}
 
 	// Border

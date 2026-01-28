@@ -133,17 +133,26 @@ type CrossbarApp struct {
 	// First visit flag for auto-run MVM
 	hasRunInitialMVM bool
 
+	// M5 UX fix: Track if MVM is running to disable controls during animation
+	isMVMRunning bool
+
 	// Responsive layout support
 	responsiveDetector  *sharedwidgets.ResponsiveDetector
 	leftCenterSplit     *container.Split
 	mainSplit           *container.Split
 	currentBreakpoint   sharedwidgets.Breakpoint
+
+	// Tab badge state for accessibility/discoverability (C2 fix)
+	// Tracks which tabs have new/unseen data
+	tabHasNewData map[string]bool
 }
 
 // NewCrossbarApp creates and initializes the crossbar demo application.
 // Returns an error if the crossbar array cannot be created.
 func NewCrossbarApp() (*CrossbarApp, error) {
-	ca := &CrossbarApp{}
+	ca := &CrossbarApp{
+		tabHasNewData: make(map[string]bool),
+	}
 
 	// Create Fyne app
 	ca.fyneApp = app.NewWithID("com.fecim.crossbar-demo")
@@ -207,6 +216,23 @@ func (ca *CrossbarApp) RunWithLayout(enhanced bool) {
 	ca.updateConductanceDisplay()
 	debug.Println("App: Updating status")
 	ca.updateStatus("Ready | Array initialized with random weights. Click 'Run MVM' to start!")
+
+	// m5 UX fix: Set first-load onboarding content
+	ca.setEducationalContent("Getting Started",
+		"Welcome to Crossbar MVM!\n\n"+
+			"Quick Start:\n"+
+			"1. Hover over cells to see\n"+
+			"   conductance values\n"+
+			"2. Click cells for details\n"+
+			"3. Adjust controls on right\n"+
+			"4. Explore IR Drop & Sneak\n"+
+			"   Path analysis tabs\n\n"+
+			"Key Concepts:\n"+
+			"• 30 analog levels/cell\n"+
+			"• MVM = Matrix × Vector\n"+
+			"• All rows compute in 1 step\n\n"+
+			"Try: Switch tabs to see\n"+
+			"different non-idealities!")
 
 	debug.Println("App: ShowAndRun starting")
 	ca.window.ShowAndRun()
@@ -275,12 +301,13 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		ca.recreateArray(size, ca.config.NoiseLevel, ca.config.ADCBits)
 	}
 
-	ca.noiseLabel = widget.NewLabel("2.0%")
+	// m1 UX fix: Changed noise step from 0.5% to 1.0% for simpler interaction
+	ca.noiseLabel = widget.NewLabel("2%")
 	ca.noiseSlider = widget.NewSlider(0, 20)
-	ca.noiseSlider.Step = 0.5
+	ca.noiseSlider.Step = 1.0
 	ca.noiseSlider.Value = 2
 	ca.noiseSlider.OnChanged = func(v float64) {
-		ca.noiseLabel.SetText(fmt.Sprintf("%.1f%%", v))
+		ca.noiseLabel.SetText(fmt.Sprintf("%.0f%%", v))
 		ca.config.NoiseLevel = v / 100.0
 	}
 
@@ -408,7 +435,11 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 
 	// Update educational panel based on selected tab
 	ca.tabs.OnSelected = func(tab *container.TabItem) {
-		switch tab.Text {
+		// Clear badge when tab is viewed (C2 accessibility fix)
+		baseName := ca.getBaseTabName(tab.Text)
+		ca.clearTabBadge(baseName)
+
+		switch baseName {
 		case "Conductance":
 			ca.setEducationalContent("Conductance Matrix",
 				"Each cell = one FeFET\n\n"+
@@ -491,7 +522,8 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	// Action buttons row
 	actionButtons := container.NewGridWithColumns(2, ca.resetButton, exportButton)
 
-	// Combined controls with scroll for overflow
+	// M4 UX fix: Remove scroll from controls section to avoid nested scroll issues
+	// Controls are fixed-height, only stats need scrolling
 	controlsBox := container.NewVBox(
 		arraySizeRow,
 		widget.NewSeparator(),
@@ -502,13 +534,11 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		adcRow,
 		widget.NewSeparator(),
 		colormapRow,
-		layout.NewSpacer(),
+		widget.NewSeparator(),
 		actionButtons,
 	)
-	controlsScroll := container.NewVScroll(controlsBox)
-	controlsScroll.SetMinSize(fyne.NewSize(220, 280))
 
-	// Stats section with header
+	// Stats section with header (scrollable)
 	statsHeader := widget.NewLabelWithStyle("Analysis Results", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	statsSection := container.NewBorder(
 		container.NewVBox(widget.NewSeparator(), statsHeader),
@@ -518,22 +548,29 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	statsScroll := container.NewVScroll(statsSection)
 	statsScroll.SetMinSize(fyne.NewSize(240, 120))
 
-	// Use VSplit for controls and stats
-	rightPanel := container.NewVSplit(
-		controlsScroll,
-		statsScroll,
+	// Use Border layout: controls at top (fixed), stats fills rest (scrollable)
+	// This eliminates nested scroll containers that compete for scroll events
+	rightPanel := container.NewBorder(
+		controlsBox,  // top - fixed controls
+		nil,          // bottom
+		nil,          // left
+		nil,          // right
+		statsScroll,  // center - scrollable stats
 	)
-	rightPanel.SetOffset(0.6) // 60% controls, 40% stats
 
 	// Left panel using simple labels (no custom widgets)
-	leftPanel := container.NewVBox(
+	// M2 UX fix: Wrap educational content in fixed-size container to prevent layout shifts
+	// when content changes between tabs (BUG-M2-004 mitigation)
+	eduContentWrapper := container.NewGridWrap(fyne.NewSize(200, 280), ca.eduContentLabel)
+	leftPanelContent := container.NewVBox(
 		ca.eduTitleLabel,
 		widget.NewSeparator(),
-		ca.eduContentLabel,
+		eduContentWrapper,
 		widget.NewSeparator(),
 		ca.keyStatLabel,
 		ca.keyStatValue,
 	)
+	leftPanel := container.NewVScroll(leftPanelContent)
 
 	// Simple status footer with hover info
 	// Wrap hoverInfoLabel in fixed-size container to prevent layout recalc on text change
@@ -736,4 +773,76 @@ func (ca *CrossbarApp) onBreakpointChange(bp sharedwidgets.Breakpoint, size fyne
 			ca.mainSplit.SetOffset(0.8) // 80% left+center, 20% right
 		}
 	}
+}
+
+// Tab badge constants for accessibility (C2 fix)
+const (
+	tabBadgeNew = " ●" // Indicator for tabs with new/unseen data
+)
+
+// baseTabNames maps tab indices to their base names (without badges)
+var baseTabNames = []string{"Conductance", "IR Drop", "Sneak Paths", "Input/Output"}
+
+// setTabBadge marks a tab as having new data (adds visual indicator).
+// This improves discoverability by showing users when analysis tabs have been updated.
+func (ca *CrossbarApp) setTabBadge(tabName string) {
+	if ca.tabs == nil {
+		return
+	}
+
+	ca.tabHasNewData[tabName] = true
+
+	fyne.Do(func() {
+		for _, tab := range ca.tabs.Items {
+			// Find the tab by checking if its text starts with the base name
+			baseName := ca.getBaseTabName(tab.Text)
+			if baseName == tabName && !ca.hasBadge(tab.Text) {
+				tab.Text = tabName + tabBadgeNew
+				ca.tabs.Refresh()
+				break
+			}
+		}
+	})
+}
+
+// clearTabBadge removes the new data indicator from a tab.
+func (ca *CrossbarApp) clearTabBadge(tabName string) {
+	if ca.tabs == nil {
+		return
+	}
+
+	baseName := ca.getBaseTabName(tabName)
+	ca.tabHasNewData[baseName] = false
+
+	fyne.Do(func() {
+		for _, tab := range ca.tabs.Items {
+			if ca.getBaseTabName(tab.Text) == baseName {
+				tab.Text = baseName
+				ca.tabs.Refresh()
+				break
+			}
+		}
+	})
+}
+
+// getBaseTabName strips any badge suffix from a tab name.
+func (ca *CrossbarApp) getBaseTabName(tabText string) string {
+	for _, base := range baseTabNames {
+		if len(tabText) >= len(base) && tabText[:len(base)] == base {
+			return base
+		}
+	}
+	// For enhanced mode tabs
+	enhancedTabs := []string{"Ideal vs Actual", "Accuracy Analysis"}
+	for _, base := range enhancedTabs {
+		if len(tabText) >= len(base) && tabText[:len(base)] == base {
+			return base
+		}
+	}
+	return tabText
+}
+
+// hasBadge checks if a tab name already has a badge.
+func (ca *CrossbarApp) hasBadge(tabText string) bool {
+	return len(tabText) > len(tabBadgeNew) && tabText[len(tabText)-len(tabBadgeNew):] == tabBadgeNew
 }

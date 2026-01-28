@@ -14,6 +14,62 @@ import (
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
+// setControlsEnabled enables or disables interactive controls during MVM animation (M5 UX fix).
+func (ca *CrossbarApp) setControlsEnabled(enabled bool) {
+	// Disable/enable sliders during animation
+	if ca.arraySizeSlider != nil {
+		if enabled {
+			ca.arraySizeSlider.Enable()
+		} else {
+			ca.arraySizeSlider.Disable()
+		}
+	}
+	if ca.noiseSlider != nil {
+		if enabled {
+			ca.noiseSlider.Enable()
+		} else {
+			ca.noiseSlider.Disable()
+		}
+	}
+	if ca.adcBitsSlider != nil {
+		if enabled {
+			ca.adcBitsSlider.Enable()
+		} else {
+			ca.adcBitsSlider.Disable()
+		}
+	}
+	// Disable/enable architecture toggle buttons
+	if ca.archPassiveBtn != nil {
+		if enabled {
+			ca.archPassiveBtn.Enable()
+		} else {
+			ca.archPassiveBtn.Disable()
+		}
+	}
+	if ca.arch1T1RBtn != nil {
+		if enabled {
+			ca.arch1T1RBtn.Enable()
+		} else {
+			ca.arch1T1RBtn.Disable()
+		}
+	}
+	if ca.arch2T1RBtn != nil {
+		if enabled {
+			ca.arch2T1RBtn.Enable()
+		} else {
+			ca.arch2T1RBtn.Disable()
+		}
+	}
+	// Disable/enable action buttons
+	if ca.resetButton != nil {
+		if enabled {
+			ca.resetButton.Enable()
+		} else {
+			ca.resetButton.Disable()
+		}
+	}
+}
+
 // createControlWidgets creates all control panel widgets (buttons, sliders, dropdowns).
 func (ca *CrossbarApp) createControlWidgets() {
 	// Reset button
@@ -33,14 +89,14 @@ func (ca *CrossbarApp) createControlWidgets() {
 		ca.recreateArray(size, ca.config.NoiseLevel, ca.config.ADCBits)
 	}
 
-	// Keep sliders for continuous values but with compact labels
-	ca.noiseLabel = widget.NewLabel("2.0%")
+	// m1 UX fix: Changed noise step from 0.5% to 1.0% for simpler interaction
+	ca.noiseLabel = widget.NewLabel("2%")
 	ca.noiseLabel.Wrapping = fyne.TextWrapOff
 	ca.noiseSlider = widget.NewSlider(0, 20)
-	ca.noiseSlider.Step = 0.5
+	ca.noiseSlider.Step = 1.0 // Was 0.5, simplified for easier use
 	ca.noiseSlider.Value = 2
 	ca.noiseSlider.OnChanged = func(v float64) {
-		ca.noiseLabel.SetText(fmt.Sprintf("%.1f%%", v))
+		ca.noiseLabel.SetText(fmt.Sprintf("%.0f%%", v))
 		ca.config.NoiseLevel = v / 100.0
 		ca.runEnhancedMVMInstant()
 	}
@@ -91,17 +147,23 @@ func (ca *CrossbarApp) createControlWidgets() {
 	// This affects sneak path and IR drop physics calculations
 	ca.architecture = sharedwidgets.Architecture0T1R // Default to passive
 
-	// Create toggle buttons
-	ca.archPassiveBtn = widget.NewButton("PASSIVE", nil)
-	ca.arch1T1RBtn = widget.NewButton("1T1R GATE", nil)
+	// m4 UX fix: Create toggle buttons with icons for better visual distinction
+	// Use meaningful icons: grid for passive array, lock for gated transistor
+	ca.archPassiveBtn = widget.NewButtonWithIcon("PASSIVE", theme.GridIcon(), nil)
+	ca.arch1T1RBtn = widget.NewButtonWithIcon("1T1R GATE", theme.VisibilityIcon(), nil)
 
-	// Helper to update button styles based on selection
+	// m4 UX fix: Helper to update button styles with clear selected/unselected states
 	updateArchButtons := func() {
 		if ca.architecture == sharedwidgets.Architecture0T1R {
+			// Selected: high importance, show checkmark in text
+			ca.archPassiveBtn.SetText("● PASSIVE")
 			ca.archPassiveBtn.Importance = widget.HighImportance
+			ca.arch1T1RBtn.SetText("1T1R GATE")
 			ca.arch1T1RBtn.Importance = widget.LowImportance
 		} else {
+			ca.archPassiveBtn.SetText("PASSIVE")
 			ca.archPassiveBtn.Importance = widget.LowImportance
+			ca.arch1T1RBtn.SetText("● 1T1R GATE")
 			ca.arch1T1RBtn.Importance = widget.HighImportance
 		}
 		ca.archPassiveBtn.Refresh()
@@ -157,7 +219,8 @@ func (ca *CrossbarApp) createControlWidgets() {
 }
 
 // createRightPanel creates the right panel with controls and metrics.
-func (ca *CrossbarApp) createRightPanel(metricsScroll *container.Scroll) *container.Split {
+// M4 UX fix: Returns a Border container instead of VSplit to avoid nested scroll issues.
+func (ca *CrossbarApp) createRightPanel(metricsScroll *container.Scroll) fyne.CanvasObject {
 	exportButton := widget.NewButton("Export", ca.exportData)
 	exportButton.Importance = widget.MediumImportance
 
@@ -196,6 +259,8 @@ func (ca *CrossbarApp) createRightPanel(metricsScroll *container.Scroll) *contai
 	actionButtons := container.NewGridWithColumns(2, ca.resetButton, exportButton)
 
 	// === ASSEMBLE CONTROLS ===
+	// M4 UX fix: Remove scroll from controls section to avoid nested scroll issues
+	// Controls are fixed-height, only metrics need scrolling
 	controlsBox := container.NewVBox(
 		arraySizeRow,
 		widget.NewSeparator(),
@@ -206,14 +271,19 @@ func (ca *CrossbarApp) createRightPanel(metricsScroll *container.Scroll) *contai
 		adcRow,
 		widget.NewSeparator(),
 		colormapRow,
-		layout.NewSpacer(),
+		widget.NewSeparator(),
 		actionButtons,
 	)
-	controlsScroll := container.NewVScroll(controlsBox)
-	controlsScroll.SetMinSize(fyne.NewSize(220, 280))
 
-	rightPanel := container.NewVSplit(controlsScroll, metricsScroll)
-	rightPanel.SetOffset(0.45) // Give more space to metrics
+	// Use Border layout: controls at top (fixed), metrics fills rest (scrollable)
+	// This eliminates nested scroll containers that compete for scroll events
+	rightPanel := container.NewBorder(
+		controlsBox,   // top - fixed controls
+		nil,           // bottom
+		nil,           // left
+		nil,           // right
+		metricsScroll, // center - scrollable metrics
+	)
 
 	return rightPanel
 }

@@ -107,6 +107,9 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 			mvmResult.IRDropAnalysis.WorstCaseCell[1],
 		)
 		ca.irDropHeatmap.Refresh() // Force refresh
+
+		// Add badge to IR Drop tab (C2 accessibility fix - discoverability)
+		ca.setTabBadge("IR Drop")
 	} else {
 		debug.Println("Warning: IRDropAnalysis is nil")
 	}
@@ -130,6 +133,9 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 			}
 		}
 		ca.sneakPathHeatmap.SetData(sneakMap)
+
+		// Add badge to Sneak Paths tab (C2 accessibility fix - discoverability)
+		ca.setTabBadge("Sneak Paths")
 	} else {
 		debug.Println("Warning: SneakPathAnalysis is nil")
 	}

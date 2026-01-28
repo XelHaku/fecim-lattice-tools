@@ -39,6 +39,9 @@ func (ca *CrossbarApp) runIRDropAnalysis() {
 		ca.irDropHeatmap.SetData(irMap)
 		ca.irDropHeatmap.SetSelection(analysis.WorstCaseCell[0], analysis.WorstCaseCell[1])
 	})
+
+	// Add badge to IR Drop tab (C2 accessibility fix - discoverability)
+	ca.setTabBadge("IR Drop")
 }
 
 // runSneakPathAnalysis updates sneak path heatmap silently (no tab switch).
@@ -66,6 +69,9 @@ func (ca *CrossbarApp) runSneakPathAnalysis() {
 		ca.sneakPathHeatmap.SetData(sneakMap)
 		ca.sneakPathHeatmap.SetSelection(selectedRow, selectedCol)
 	})
+
+	// Add badge to Sneak Paths tab (C2 accessibility fix - discoverability)
+	ca.setTabBadge("Sneak Paths")
 }
 
 // analyzeIRDrop performs IR drop analysis.

@@ -14,6 +14,11 @@ import (
 
 // runEnhancedMVM performs MVM with full non-ideality analysis and updates all widgets.
 func (ca *CrossbarApp) runEnhancedMVM() {
+	// M5 UX fix: Prevent starting new MVM while one is running
+	if ca.isMVMRunning {
+		return
+	}
+
 	debug.Println("runEnhancedMVM: Starting")
 
 	// Create random input
@@ -88,10 +93,23 @@ func (ca *CrossbarApp) runEnhancedMVMInstant() {
 
 // runEnhancedMVMAnimated performs the enhanced MVM with all analysis.
 func (ca *CrossbarApp) runEnhancedMVMAnimated(input []float64) {
+	// M5 UX fix: Set running flag and disable controls
+	ca.isMVMRunning = true
+	fyne.Do(func() {
+		ca.setControlsEnabled(false)
+	})
+	// Ensure we re-enable controls when done
+	defer func() {
+		ca.isMVMRunning = false
+		fyne.Do(func() {
+			ca.setControlsEnabled(true)
+		})
+	}()
+
 	// Phase 1: Input voltages applied (300ms)
 	fyne.Do(func() {
 		ca.modeIndicator.SetMode(DemoModeCompute)
-		ca.updateStatus("COMPUTE | Phase 1: Applying input voltages...")
+		ca.updateStatus("COMPUTE | Phase 1/3: Applying input voltages...")
 
 		cols := make([]int, ca.config.Cols)
 		for i := range cols {
@@ -104,7 +122,7 @@ func (ca *CrossbarApp) runEnhancedMVMAnimated(input []float64) {
 
 	// Phase 2: Current flowing through cells (500ms)
 	fyne.Do(func() {
-		ca.updateStatus("COMPUTE | Phase 2: Current flowing through cells...")
+		ca.updateStatus("COMPUTE | Phase 2/3: Current flowing (I = G × V)...")
 	})
 
 	steps := 10
@@ -142,7 +160,7 @@ func (ca *CrossbarApp) runEnhancedMVMAnimated(input []float64) {
 
 	// Phase 3: Output currents collected (300ms)
 	fyne.Do(func() {
-		ca.updateStatus("COMPUTE | Phase 3: Collecting output currents...")
+		ca.updateStatus("COMPUTE | Phase 3/3: Collecting outputs (ADC)...")
 		ca.mvmVis.SetOutput(mvmResult.ActualOutput)
 
 		rows := make([]int, ca.config.Rows)

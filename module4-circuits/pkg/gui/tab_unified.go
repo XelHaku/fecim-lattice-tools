@@ -248,7 +248,7 @@ func (ca *CircuitsApp) createMainSimSection() fyne.CanvasObject {
 }
 
 // createWLSelector creates the word line selection controls
-// Mode buttons have been moved to top mode bar (Mode-First UX)
+// H1 FIX: Mode buttons have been moved to top mode bar (no duplicate buttons here)
 func (ca *CircuitsApp) createWLSelector() fyne.CanvasObject {
 	// Row checkboxes (show first 8 for visual indication)
 	maxRows := min(8, ca.arrayRows)
@@ -257,7 +257,8 @@ func (ca *CircuitsApp) createWLSelector() fyne.CanvasObject {
 	checkboxes := container.NewVBox()
 	for i := 0; i < maxRows; i++ {
 		idx := i
-		check := widget.NewCheck(fmt.Sprintf("WL%d", i), nil)
+		// H4 FIX: Clearer labels - "Row 0" instead of "WL0"
+		check := widget.NewCheck(fmt.Sprintf("Row %d", i), nil)
 		check.OnChanged = func(checked bool) {
 			// In passive mode, ignore checkbox changes - all lines always active
 			if ca.architecture == sharedwidgets.Architecture0T1R {
@@ -282,7 +283,16 @@ func (ca *CircuitsApp) createWLSelector() fyne.CanvasObject {
 		checkboxes.Add(check)
 	}
 
-	return checkboxes
+	// H4 FIX: Add tooltip/help label explaining checkbox behavior
+	helpLabel := widget.NewLabel("Checked = Active")
+	helpLabel.TextStyle = fyne.TextStyle{Italic: true}
+	helpLabel.Alignment = fyne.TextAlignCenter
+
+	return container.NewVBox(
+		checkboxes,
+		widget.NewSeparator(),
+		helpLabel,
+	)
 }
 
 // setOperationMode sets the operation mode and configures WL/DAC accordingly
@@ -382,8 +392,8 @@ func (ca *CircuitsApp) createUnifiedArraySection() fyne.CanvasObject {
 	// Array size info
 	ca.sharedArrayInfoLabel = widget.NewLabel(fmt.Sprintf("Array: %dx%d | %d levels", ca.arrayRows, ca.arrayCols, ca.quantLevels))
 
-	// Legend
-	legendLabel := widget.NewLabel("State: Low G (blue) -> High G (red) | Yellow = Selected")
+	// Legend (C1: Updated to reflect bright gold border)
+	legendLabel := widget.NewLabel("State: Low G (blue) -> High G (red) | Gold border = Selected cell")
 	legendLabel.TextStyle = fyne.TextStyle{Italic: true}
 
 	return container.NewVBox(
@@ -418,6 +428,12 @@ func (ca *CircuitsApp) createUnifiedActionSection() fyne.CanvasObject {
 		ca.onUnifiedAnimate()
 	})
 
+	// H3 FIX: Undo button
+	ca.undoHistoryBtn = widget.NewButton("Undo", func() {
+		ca.onUndo()
+	})
+	ca.undoHistoryBtn.Disable() // Initially disabled (no history)
+
 	// Reset array button
 	resetBtn := widget.NewButton("Reset Array", func() {
 		ca.onUnifiedReset()
@@ -431,7 +447,7 @@ func (ca *CircuitsApp) createUnifiedActionSection() fyne.CanvasObject {
 	return container.NewHBox(
 		programBtn, readBtn, computeBtn,
 		layout.NewSpacer(),
-		animateBtn, randomBtn, resetBtn,
+		ca.undoHistoryBtn, animateBtn, randomBtn, resetBtn,
 	)
 }
 
@@ -717,11 +733,15 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 			}
 			drawRectBorder(img, x0, y0, cw, ch, borderColor)
 
-			// Selected cell glow
+			// C1 FIX: Selected cell highlight with bright contrasting border
 			if isSelected {
-				white := color.RGBA{255, 255, 255, 255}
-				drawRectBorder(img, x0-1, y0-1, cw+2, ch+2, white)
-				drawRectBorder(img, x0-2, y0-2, cw+4, ch+4, color.RGBA{255, 255, 180, 150})
+				// Bold yellow/gold border (3px thick)
+				highlightColor := color.RGBA{255, 200, 0, 255}
+				drawRectBorder(img, x0-1, y0-1, cw+2, ch+2, highlightColor)
+				drawRectBorder(img, x0-2, y0-2, cw+4, ch+4, highlightColor)
+				drawRectBorder(img, x0-3, y0-3, cw+6, ch+6, highlightColor)
+				// Subtle white outer glow
+				drawRectBorder(img, x0-4, y0-4, cw+8, ch+8, color.RGBA{255, 255, 255, 180})
 			}
 		}
 	}
@@ -1028,6 +1048,9 @@ func (ca *CircuitsApp) onUnifiedCellTapped(row, col int) {
 		ca.updateWLCheckboxes()
 	}
 
+	// H2 FIX: Update target cell label in write mode panel
+	ca.updateWriteTargetLabel()
+
 	ca.recomputeAndRefresh()
 	ca.updateCellInfo()
 }
@@ -1058,6 +1081,9 @@ func (ca *CircuitsApp) onUnifiedProgram() {
 	if targetLevel >= ca.quantLevels {
 		targetLevel = ca.quantLevels - 1
 	}
+
+	// H3 FIX: Save current state to undo history before modifying
+	ca.saveUndoHistory()
 
 	// Update array weight
 	ca.mu.Lock()
@@ -1144,6 +1170,18 @@ func (ca *CircuitsApp) onUnifiedAnimate() {
 
 // onUnifiedReset resets the array to random values
 func (ca *CircuitsApp) onUnifiedReset() {
+	// Clear undo history on reset (per code review recommendation)
+	ca.mu.Lock()
+	ca.undoHistory = nil
+	ca.hasUndoHistory = false
+	ca.mu.Unlock()
+
+	fyne.Do(func() {
+		if ca.undoHistoryBtn != nil {
+			ca.undoHistoryBtn.Disable()
+		}
+	})
+
 	// Reset DAC to read preset (uses material-derived voltage range)
 	ca.deviceState.SetDACPreset(DACReadPreset)
 	ca.updateDACRangeModeLabel()
@@ -1159,6 +1197,9 @@ func (ca *CircuitsApp) onUnifiedReset() {
 
 // onUnifiedRandomArray randomizes the array weights
 func (ca *CircuitsApp) onUnifiedRandomArray() {
+	// H3 FIX: Save current state to undo history before modifying
+	ca.saveUndoHistory()
+
 	ca.mu.Lock()
 	for r := range ca.arrayWeights {
 		for c := range ca.arrayWeights[r] {
@@ -1169,6 +1210,59 @@ func (ca *CircuitsApp) onUnifiedRandomArray() {
 
 	ca.recomputeAndRefresh()
 	ca.operationsStatusLabel.SetText("Array randomized")
+}
+
+// H3 FIX: saveUndoHistory saves the current array state for undo
+func (ca *CircuitsApp) saveUndoHistory() {
+	ca.mu.Lock()
+	// Create a deep copy of current array state
+	ca.undoHistory = make([][]int, len(ca.arrayWeights))
+	for i := range ca.arrayWeights {
+		ca.undoHistory[i] = make([]int, len(ca.arrayWeights[i]))
+		copy(ca.undoHistory[i], ca.arrayWeights[i])
+	}
+	ca.hasUndoHistory = true
+	ca.mu.Unlock() // Release lock before UI update to avoid deadlock
+
+	// Enable undo button
+	fyne.Do(func() {
+		if ca.undoHistoryBtn != nil {
+			ca.undoHistoryBtn.Enable()
+		}
+	})
+}
+
+// H3 FIX: onUndo restores the previous array state
+func (ca *CircuitsApp) onUndo() {
+	ca.mu.Lock()
+	if !ca.hasUndoHistory || ca.undoHistory == nil {
+		ca.mu.Unlock()
+		return
+	}
+
+	// Restore array from history with defensive length check
+	for i := range ca.arrayWeights {
+		if i < len(ca.undoHistory) && len(ca.arrayWeights[i]) == len(ca.undoHistory[i]) {
+			copy(ca.arrayWeights[i], ca.undoHistory[i])
+		}
+	}
+
+	// Clear history (single-level undo only)
+	ca.undoHistory = nil
+	ca.hasUndoHistory = false
+	ca.mu.Unlock() // Release lock before UI updates to avoid deadlock
+
+	// Disable undo button
+	fyne.Do(func() {
+		if ca.undoHistoryBtn != nil {
+			ca.undoHistoryBtn.Disable()
+		}
+		if ca.operationsStatusLabel != nil {
+			ca.operationsStatusLabel.SetText("Undo complete")
+		}
+	})
+
+	ca.recomputeAndRefresh()
 }
 
 // ============================================================================
@@ -1327,6 +1421,20 @@ func (ca *CircuitsApp) updateOperationClassification() {
 	})
 }
 
+// H2 FIX: updateWriteTargetLabel updates the target cell display in write mode panel
+func (ca *CircuitsApp) updateWriteTargetLabel() {
+	if ca.mfuxWriteTargetLabel == nil || ca.deviceState == nil {
+		return
+	}
+
+	row := ca.deviceState.GetSelectedRow()
+	col := ca.deviceState.GetSelectedCol()
+
+	fyne.Do(func() {
+		ca.mfuxWriteTargetLabel.SetText(fmt.Sprintf("Target: Row %d, Col %d", row, col))
+	})
+}
+
 // ============================================================================
 // ARCHITECTURE TOGGLE
 // ============================================================================
@@ -1455,8 +1563,18 @@ func (ca *CircuitsApp) createWriteModePanel() fyne.CanvasObject {
 	ca.mfuxWriteVoltageLabel = widget.NewLabel("Voltage: 1.00V")
 	ca.mfuxWriteVoltageLabel.TextStyle = fyne.TextStyle{Monospace: true}
 
-	// Layout: Title row, then slider with value labels
+	// H2 FIX: Add target cell display
+	ca.mfuxWriteTargetLabel = widget.NewLabel("Target: Row 0, Col 0")
+	ca.mfuxWriteTargetLabel.TextStyle = fyne.TextStyle{Bold: true}
+
+	// Layout: Title row with target cell, then slider with value labels
 	titleLabel := widget.NewLabelWithStyle("Target Write Level:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+
+	headerRow := container.NewHBox(
+		titleLabel,
+		layout.NewSpacer(),
+		ca.mfuxWriteTargetLabel,
+	)
 
 	sliderRow := container.NewBorder(nil, nil,
 		ca.mfuxWriteLevelLabel,
@@ -1465,7 +1583,7 @@ func (ca *CircuitsApp) createWriteModePanel() fyne.CanvasObject {
 	)
 
 	return container.NewVBox(
-		titleLabel,
+		headerRow,
 		sliderRow,
 	)
 }
@@ -1648,6 +1766,8 @@ func (ca *CircuitsApp) updateModePanels(mode OpMode) {
 					// Trigger an update to sync voltage display
 					ca.onWriteLevelChanged(int(ca.mfuxWriteLevelSlider.Value))
 				}
+				// H2 FIX: Update target cell label when entering write mode
+				ca.updateWriteTargetLabel()
 			}
 		case OpModeCompute:
 			if ca.computeModePanel != nil {

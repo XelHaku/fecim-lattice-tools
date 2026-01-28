@@ -122,15 +122,19 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 
 	// Update educational panel based on selected tab and preserve selection
 	ca.tabs.OnSelected = func(tab *container.TabItem) {
+		// Clear badge when tab is viewed (C2 accessibility fix)
+		baseName := ca.getBaseTabName(tab.Text)
+		ca.clearTabBadge(baseName)
+
 		// Apply persisted selection to the newly selected tab's heatmap
 		if ca.selectedRow >= 0 && ca.selectedCol >= 0 {
 			ca.syncSelection(ca.selectedRow, ca.selectedCol)
 			// Update tooltip for the selected cell based on current tab
-			ca.updateTooltipForTab(tab.Text, ca.selectedRow, ca.selectedCol)
+			ca.updateTooltipForTab(baseName, ca.selectedRow, ca.selectedCol)
 		}
 
 		// Sync colormap dropdown to show current tab's colormap
-		switch tab.Text {
+		switch baseName {
 		case "Conductance":
 			if ca.colormapSelect != nil && ca.condColormap != "" {
 				ca.colormapSelect.SetSelected(ca.condColormap)
@@ -145,7 +149,7 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 			}
 		}
 
-		switch tab.Text {
+		switch baseName {
 		case "Conductance":
 			ca.setEducationalContent("Conductance Matrix",
 				"Each cell = one FeFET\n\n"+

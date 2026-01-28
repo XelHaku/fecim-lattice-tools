@@ -230,11 +230,17 @@ type CircuitsApp struct {
 	mfuxWriteLevelSlider  *widget.Slider
 	mfuxWriteLevelLabel   *widget.Label
 	mfuxWriteVoltageLabel *widget.Label
+	mfuxWriteTargetLabel  *widget.Label // H2 FIX: Shows "Target: Row X, Col Y"
 
 	// Compute mode panel with input vector entries
 	computeModePanel      *fyne.Container
 	mfuxInputVectorEntry  []*widget.Entry
 	mfuxInputVectorLabels []*widget.Label
+
+	// H3 FIX: Undo history for array changes
+	undoHistory     [][]int // Previous array state
+	undoHistoryBtn  *widget.Button
+	hasUndoHistory  bool
 }
 
 // NewCircuitsApp creates and initializes the circuits demo application.

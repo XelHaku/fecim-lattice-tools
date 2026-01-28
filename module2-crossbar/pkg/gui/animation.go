@@ -14,6 +14,11 @@ import (
 
 // runMVM performs matrix-vector multiplication with animation.
 func (ca *CrossbarApp) runMVM() {
+	// M5 UX fix: Prevent starting new MVM while one is running
+	if ca.isMVMRunning {
+		return
+	}
+
 	debug.Println("runMVM: Starting")
 
 	// Create random input
@@ -36,10 +41,23 @@ func (ca *CrossbarApp) runMVM() {
 
 // runMVMAnimated performs the MVM with visual animation.
 func (ca *CrossbarApp) runMVMAnimated(input []float64) {
+	// M5 UX fix: Set running flag and disable controls
+	ca.isMVMRunning = true
+	fyne.Do(func() {
+		ca.setControlsEnabled(false)
+	})
+	// Ensure we re-enable controls when done
+	defer func() {
+		ca.isMVMRunning = false
+		fyne.Do(func() {
+			ca.setControlsEnabled(true)
+		})
+	}()
+
 	// Phase 1: Input voltages applied (300ms)
 	fyne.Do(func() {
 		ca.modeIndicator.SetMode(DemoModeCompute)
-		ca.updateStatus("COMPUTE | Phase 1: Applying input voltages to columns (DAC)")
+		ca.updateStatus("COMPUTE | Phase 1/3: Applying input voltages (DAC)")
 
 		// Highlight all columns to show input voltages
 		cols := make([]int, ca.config.Cols)
@@ -53,7 +71,7 @@ func (ca *CrossbarApp) runMVMAnimated(input []float64) {
 
 	// Phase 2: Current flowing through cells (500ms animation)
 	fyne.Do(func() {
-		ca.updateStatus("COMPUTE | Phase 2: Currents flowing (I = G × V for all cells in parallel)")
+		ca.updateStatus("COMPUTE | Phase 2/3: Currents flowing (I = G × V)")
 	})
 
 	// Animate wave propagation
@@ -87,7 +105,7 @@ func (ca *CrossbarApp) runMVMAnimated(input []float64) {
 
 	// Phase 3: Output currents collected (300ms)
 	fyne.Do(func() {
-		ca.updateStatus("COMPUTE | Phase 3: Summing row currents (ADC conversion)")
+		ca.updateStatus("COMPUTE | Phase 3/3: Summing row currents (ADC)")
 		ca.mvmVis.SetOutput(output)
 
 		// Highlight all rows to show output currents

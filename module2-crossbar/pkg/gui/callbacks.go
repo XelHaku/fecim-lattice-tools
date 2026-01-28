@@ -4,7 +4,6 @@ package gui
 
 import (
 	"fmt"
-	"math"
 
 	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 )
@@ -55,19 +54,19 @@ func (ca *CrossbarApp) onCellTapped(row, col int) {
 }
 
 // onCellHover handles mouse hover over heatmap cells.
+// M3 UX fix: Compact format with most important info first to avoid truncation
 func (ca *CrossbarApp) onCellHover(row, col int, value float64) {
 	if row < 0 || col < 0 {
-		ca.hoverInfoLabel.SetText("Hover over cells to see detailed physics data")
+		ca.hoverInfoLabel.SetText("Hover over cells for details")
 		return
 	}
 	level := crossbar.GetLevel(value)
 	conductanceUS := value*99 + 1
-	resistance := 1.0 / (conductanceUS * 1e-6) / 1000.0 // kΩ
 
+	// Compact format: position, level, conductance (most important first)
 	ca.hoverInfoLabel.SetText(fmt.Sprintf(
-		"[%d,%d] │ L%d/29 (%.1f%%) │ G=%.2f µS │ R=%.1f kΩ │ %s %.6f",
-		row, col, level, float64(level)/29.0*100, conductanceUS, resistance,
-		"Norm:", value))  // Already has µS
+		"[%d,%d] L%d │ %.1f µS",
+		row, col, level, conductanceUS))
 }
 
 // onIRDropCellTapped handles clicks on IR Drop heatmap.
@@ -91,44 +90,56 @@ func (ca *CrossbarApp) onIRDropCellTapped(row, col int) {
 		dropPercent := (1.0 - effectiveV) * 100
 		ca.updateStatus(fmt.Sprintf("IR DROP | Cell [%d,%d]: %.3f V (%.1f%% drop)",
 			row, col, effectiveV, dropPercent))
+
+		// m3 UX fix: Update educational content for extreme cells
+		isWorstCell := row == analysis.WorstCaseCell[0] && col == analysis.WorstCaseCell[1]
+		if isWorstCell {
+			ca.setEducationalContent("Worst IR Drop Cell",
+				"This cell has the HIGHEST\nvoltage drop in the array.\n\n"+
+					"Why? It's farthest from\nthe voltage drivers.\n\n"+
+					"Impact:\n"+
+					"• Reduced effective voltage\n"+
+					"• Lower compute accuracy\n"+
+					"• Current loss proportional\n\n"+
+					"Mitigation:\n"+
+					"• Hierarchical drivers\n"+
+					"• Wider metal lines\n"+
+					"• Tiled architecture")
+		} else if dropPercent > 10 {
+			ca.setEducationalContent("High IR Drop Cell",
+				"This cell has significant\nvoltage drop (>10%).\n\n"+
+					"Position matters: cells\nfar from drivers suffer\nmore voltage drop.\n\n"+
+					"The drop follows Ohm's Law:\nV_drop = I × R_wire\n\n"+
+					"Click the worst-case cell\nto see maximum impact.")
+		}
 	}
 }
 
 // onIRDropCellHover handles hover on IR Drop heatmap.
+// M3 UX fix: Compact format with most important info first
 func (ca *CrossbarApp) onIRDropCellHover(row, col int, value float64) {
 	if row < 0 || col < 0 {
-		ca.hoverInfoLabel.SetText("Hover over cells for IR drop details")
+		ca.hoverInfoLabel.SetText("Hover over cells for IR drop")
 		return
 	}
-
-	conductance := ca.array.GetConductanceMatrix()[row][col]
-	level := crossbar.GetLevel(conductance)
-	conductanceUS := conductance*99 + 1
 
 	// Protected read of lastIRDropAnalysis
 	ca.stateMu.RLock()
 	analysis := ca.lastIRDropAnalysis
 	ca.stateMu.RUnlock()
 
-	// Get detailed voltage info if available
+	// Compact format: position, drop%, voltage (most important first)
 	if analysis != nil && row < len(analysis.EffectiveVoltage) &&
 		col < len(analysis.EffectiveVoltage[0]) {
 		effectiveV := analysis.EffectiveVoltage[row][col]
-		wlV := analysis.WordLineVoltages[row][col]
-		blV := analysis.BitLineVoltages[row][col]
 		dropPercent := (1.0 - effectiveV) * 100
 
-		// Calculate distance from drivers (WL driver on left, BL sense amp at top)
-		wlDist := col // Distance from left WL driver
-		blDist := row // Distance from top BL sense amp
-
 		ca.hoverInfoLabel.SetText(fmt.Sprintf(
-			"[%d,%d] │ Veff=%.3fV (%.1f%% drop) │ WL=%.3fV BL=%.3fV │ G=%.1f µS L%d │ Dist=[WL:%d,BL:%d]",
-			row, col, effectiveV, dropPercent, wlV, blV, conductanceUS, level, wlDist, blDist))
+			"[%d,%d] %.1f%% drop │ %.3fV",
+			row, col, dropPercent, effectiveV))
 	} else {
 		ca.hoverInfoLabel.SetText(fmt.Sprintf(
-			"[%d,%d] │ G=%.1f µS │ L%d/29 │ Run MVM for IR drop analysis",
-			row, col, conductanceUS, level))  // Already has µS
+			"[%d,%d] Run MVM for IR drop", row, col))
 	}
 }
 
@@ -160,19 +171,50 @@ func (ca *CrossbarApp) onSneakCellTapped(row, col int) {
 		}
 		ca.updateStatus(fmt.Sprintf("SNEAK | Cell [%d,%d]: %.6f µA (%.2f%% of signal)",
 			row, col, sneakCurrent*1e6, sneakRatio))
+
+		// m3 UX fix: Update educational content for specific cell types
+		isTargetCell := row == sneakTargetRow && col == sneakTargetCol
+		isRowNeighbor := row == sneakTargetRow && col != sneakTargetCol
+		isColNeighbor := col == sneakTargetCol && row != sneakTargetRow
+
+		if isTargetCell {
+			ca.setEducationalContent("Target Cell",
+				"This is the SELECTED cell\nfor sneak path analysis.\n\n"+
+					"Ideal read: Only this cell's\ncurrent should be measured.\n\n"+
+					"Reality: Current from OTHER\ncells sneaks through shared\nword/bit lines.\n\n"+
+					"Sneak paths cause:\n"+
+					"• Read errors\n"+
+					"• Increased power\n"+
+					"• Crosstalk noise")
+		} else if isRowNeighbor {
+			ca.setEducationalContent("Row Neighbor Cell",
+				"Same ROW as target cell.\n\n"+
+					"Shares the WORD LINE with\nthe target cell.\n\n"+
+					"Sneak path: Current can flow\nthrough this cell when its\nbit line is partially selected.\n\n"+
+					"1T1R architecture adds a\ntransistor to block this path.")
+		} else if isColNeighbor {
+			ca.setEducationalContent("Column Neighbor Cell",
+				"Same COLUMN as target cell.\n\n"+
+					"Shares the BIT LINE with\nthe target cell.\n\n"+
+					"Sneak path: Current from this\ncell's word line can add to\nthe sensed output current.\n\n"+
+					"Half-select voltage schemes\nhelp reduce this leakage.")
+		} else if sneakRatio > 5 {
+			ca.setEducationalContent("High Sneak Contributor",
+				"This diagonal cell contributes\n>5% sneak current.\n\n"+
+					"Diagonal cells create the\nworst sneak paths because\nthey connect through TWO\nintermediate cells.\n\n"+
+					"Path: Target → Row neighbor\n→ This cell → Col neighbor\n→ Back to bit line\n\n"+
+					"High conductance cells\ncontribute more sneak current.")
+		}
 	}
 }
 
 // onSneakCellHover handles hover on Sneak Path heatmap.
+// M3 UX fix: Compact format with most important info first
 func (ca *CrossbarApp) onSneakCellHover(row, col int, value float64) {
 	if row < 0 || col < 0 {
-		ca.hoverInfoLabel.SetText("Hover over cells for sneak path details")
+		ca.hoverInfoLabel.SetText("Hover over cells for sneak path")
 		return
 	}
-
-	conductance := ca.array.GetConductanceMatrix()[row][col]
-	level := crossbar.GetLevel(conductance)
-	conductanceUS := conductance*99 + 1
 
 	// Get selected cell (center)
 	selectedRow := ca.config.Rows / 2
@@ -183,38 +225,30 @@ func (ca *CrossbarApp) onSneakCellHover(row, col int, value float64) {
 	analysis := ca.lastSneakAnalysis
 	ca.stateMu.RUnlock()
 
-	// Get detailed sneak info if available
+	// Compact format: position, sneak%, path type (most important first)
 	if analysis != nil && row < len(analysis.SneakCurrents) &&
 		col < len(analysis.SneakCurrents[0]) {
-		sneakCurrent := analysis.SneakCurrents[row][col]
 		sneakRatio := 0.0
 		if analysis.TotalSignal > 0 {
-			sneakRatio = sneakCurrent / analysis.TotalSignal * 100
+			sneakRatio = analysis.SneakCurrents[row][col] / analysis.TotalSignal * 100
 		}
 
-		// Determine path type
-		pathType := "DIAG"
+		// Determine path type (compact)
+		pathType := "diag"
 		if row == selectedRow && col == selectedCol {
-			pathType = "TGT"
+			pathType = "target"
 		} else if row == selectedRow {
-			pathType = "ROW"
+			pathType = "row"
 		} else if col == selectedCol {
-			pathType = "COL"
-		}
-
-		// SNR in dB
-		snrDB := -100.0
-		if sneakCurrent > 0 && analysis.TotalSignal > 0 {
-			snrDB = 20 * math.Log10(analysis.TotalSignal / sneakCurrent)
+			pathType = "col"
 		}
 
 		ca.hoverInfoLabel.SetText(fmt.Sprintf(
-			"[%d,%d] │ %s sneak │ I=%.3fµA (%.2f%%) │ SNR=%.1fdB │ G=%.1f µS L%d",
-			row, col, pathType, sneakCurrent*1e6, sneakRatio, snrDB, conductanceUS, level))
+			"[%d,%d] %.1f%% sneak │ %s",
+			row, col, sneakRatio, pathType))
 	} else {
 		ca.hoverInfoLabel.SetText(fmt.Sprintf(
-			"[%d,%d] │ G=%.1f µS │ L%d/29 │ Run MVM for sneak analysis",
-			row, col, conductanceUS, level))  // Already has µS
+			"[%d,%d] Run MVM for sneak analysis", row, col))
 	}
 }
 
