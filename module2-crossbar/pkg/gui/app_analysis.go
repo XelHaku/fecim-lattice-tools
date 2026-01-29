@@ -88,30 +88,33 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 	isPassive := currentArch == "" || currentArch == sharedwidgets.Architecture0T1R
 
 	// Compute passive baseline if not yet set (needed for legend scaling)
-	// This runs once when first MVM is executed, regardless of architecture
-	if !baselineIRExists || !baselineSneakExists {
-		debug.Println("Computing passive baseline for legend scaling...")
-		passiveOpts := crossbar.DefaultMVMOptions()
-		passiveOpts.Architecture = sharedwidgets.Architecture0T1R
-		passiveResult, err := ca.array.MVMWithNonIdealities(input, passiveOpts)
-		if err == nil {
-			ca.stateMu.Lock()
-			if passiveResult.IRDropAnalysis != nil && !baselineIRExists {
-				ca.baselineMaxIRDrop = passiveResult.IRDropAnalysis.MaxIRDrop * 100
-				if ca.baselineMaxIRDrop < 1 {
-					ca.baselineMaxIRDrop = 1
-				}
-				debug.Printf("Baseline IR Drop set: %.2f%%", ca.baselineMaxIRDrop)
-			}
-			if passiveResult.SneakPathAnalysis != nil && !baselineSneakExists {
-				ca.baselineMaxSneak = passiveResult.SneakPathAnalysis.MaxSneakRatio * 100
-				if ca.baselineMaxSneak < 1 {
-					ca.baselineMaxSneak = 1
-				}
-				debug.Printf("Baseline Sneak set: %.2f%%", ca.baselineMaxSneak)
-			}
-			ca.stateMu.Unlock()
+	// Uses direct array analysis with passive (0T1R) isolation factor = 1.0
+	if !baselineSneakExists {
+		centerRow := ca.config.Rows / 2
+		centerCol := ca.config.Cols / 2
+		passiveSneak := ca.array.AnalyzeSneakPathsWithIsolation(centerRow, centerCol, 1.0) // 0T1R factor
+		ca.stateMu.Lock()
+		ca.baselineMaxSneak = passiveSneak.MaxSneakRatio * 100
+		if ca.baselineMaxSneak < 1 {
+			ca.baselineMaxSneak = 1
 		}
+		debug.Printf("Baseline Sneak set from passive: %.2f%%", ca.baselineMaxSneak)
+		ca.stateMu.Unlock()
+	}
+
+	if !baselineIRExists && input != nil && len(input) > 0 {
+		// Use passive wire params (1.5x multiplier for 0T1R)
+		passiveParams := crossbar.DefaultWireParams()
+		passiveParams.RwordLine *= 1.5
+		passiveParams.RbitLine *= 1.5
+		passiveIR := ca.array.AnalyzeIRDrop(input, passiveParams)
+		ca.stateMu.Lock()
+		ca.baselineMaxIRDrop = passiveIR.MaxIRDrop * 100
+		if ca.baselineMaxIRDrop < 1 {
+			ca.baselineMaxIRDrop = 1
+		}
+		debug.Printf("Baseline IR Drop set from passive: %.2f%%", ca.baselineMaxIRDrop)
+		ca.stateMu.Unlock()
 	}
 
 	// Update IR drop heatmap
@@ -128,14 +131,14 @@ func (ca *CrossbarApp) updateEnhancedWidgets(mvmResult *crossbar.MVMResult) {
 		baselineIR := ca.baselineMaxIRDrop
 		ca.stateMu.Unlock()
 
-		irMap := mvmResult.IRDropAnalysis.GetIRDropMap()
-		debug.Printf("IR Drop data: %d×%d, MaxDrop=%.4f%%, Baseline=%.2f%%",
-			len(irMap), len(irMap[0]),
+		debug.Printf("IR Drop data: MaxDrop=%.4f%%, Baseline=%.2f%%",
 			mvmResult.IRDropAnalysis.MaxIRDrop*100, baselineIR)
 
 		// Use passive baseline for legend
 		ca.irLegend.SetRange(0, baselineIR)
 
+		// Get IR drop map scaled to baseline (convert percent to fraction)
+		irMap := mvmResult.IRDropAnalysis.GetIRDropMapWithScale(baselineIR / 100)
 		ca.irDropHeatmap.SetData(irMap)
 		ca.irDropHeatmap.SetSelection(
 			mvmResult.IRDropAnalysis.WorstCaseCell[0],

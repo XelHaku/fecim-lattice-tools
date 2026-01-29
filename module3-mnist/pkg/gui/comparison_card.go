@@ -92,7 +92,7 @@ func (cc *ComparisonCard) Clear() {
 
 // MinSize returns the minimum size for the widget.
 func (cc *ComparisonCard) MinSize() fyne.Size {
-	return fyne.NewSize(500, 320) // Increased height for larger digits
+	return fyne.NewSize(550, 480) // Redesigned with hero layout
 }
 
 // CreateRenderer implements fyne.Widget.
@@ -115,10 +115,10 @@ func (cc *ComparisonCard) CreateRenderer() fyne.WidgetRenderer {
 // generateImage creates the comparison visualization.
 func (cc *ComparisonCard) generateImage(w, h int) image.Image {
 	if w < 10 {
-		w = 500
+		w = 550
 	}
 	if h < 10 {
-		h = 260
+		h = 420
 	}
 
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
@@ -127,169 +127,269 @@ func (cc *ComparisonCard) generateImage(w, h int) image.Image {
 	result := cc.result
 	cc.mu.RUnlock()
 
-	if result == nil {
-		// Idle state - darker background
-		bgColor := color.RGBA{20, 25, 40, 255}
-		for y := 0; y < h; y++ {
-			for x := 0; x < w; x++ {
-				img.Set(x, y, bgColor)
-			}
+	// Background - Deep dark blue with subtle gradient
+	for y := 0; y < h; y++ {
+		gradFactor := float64(y) / float64(h)
+		r := uint8(12 + gradFactor*8)
+		g := uint8(15 + gradFactor*10)
+		b := uint8(25 + gradFactor*15)
+		bgColor := color.RGBA{r, g, b, 255}
+		for x := 0; x < w; x++ {
+			img.Set(x, y, bgColor)
 		}
-		// Draw idle state with hint
-		drawSimpleText(img, "Ready - Draw a digit to classify", w/2-100, h/2-8, color.RGBA{100, 100, 120, 255})
-		drawSimpleText(img, "or click Random to load from MNIST", w/2-110, h/2+12, color.RGBA{80, 80, 100, 255})
+	}
+
+	if result == nil {
+		// Idle state - centered message
+		drawScaledText(img, "Ready - Draw a digit", w/2-105, h/2-20, 2, color.RGBA{120, 130, 150, 255})
+		drawSimpleText(img, "or click Random to load from MNIST", w/2-120, h/2+10, color.RGBA{80, 90, 110, 255})
 		return img
 	}
 
-	// Determine match state for styling
-	matchColor := color.RGBA{50, 200, 120, 255}     // Green for match
-	mismatchColor := color.RGBA{255, 200, 87, 255}  // Amber/yellow for mismatch
+	// Color palette - Bold and distinct
+	matchColor := color.RGBA{50, 255, 150, 255}     // Vibrant green
+	mismatchColor := color.RGBA{255, 140, 50, 255}  // Bright orange
+	fpColor := color.RGBA{80, 150, 255, 255}        // Azure blue
+	cimColor := color.RGBA{0, 220, 200, 255}        // Cyan
+	whiteColor := color.RGBA{245, 250, 255, 255}
+	dimColor := color.RGBA{120, 130, 150, 255}
+	accentColor := color.RGBA{255, 200, 100, 255}   // Gold
 
-	// Background with subtle color tint based on match state
-	var bgBase color.RGBA
-	if result.Match {
-		// Subtle green tint for match
-		bgBase = color.RGBA{15, 35, 25, 255}
-	} else {
-		// Subtle amber tint for mismatch
-		bgBase = color.RGBA{35, 30, 15, 255}
-	}
+	// Layout sections (height percentages)
+	topSectionH := int(float64(h) * 0.18)      // 18% - Status badge and predictions
+	heroSectionH := int(float64(h) * 0.38)     // 38% - Giant digit
+	chartSectionH := int(float64(h) * 0.38)    // 38% - Probability chart
+	footerH := h - topSectionH - heroSectionH - chartSectionH // 6% - Energy info
 
-	// Fill background with gradient
-	for y := 0; y < h; y++ {
-		for x := 0; x < w; x++ {
-			gradientFactor := float64(y) / float64(h)
-			r := uint8(float64(bgBase.R) + gradientFactor*10)
-			g := uint8(float64(bgBase.G) + gradientFactor*10)
-			b := uint8(float64(bgBase.B) + gradientFactor*10)
-			img.Set(x, y, color.RGBA{r, g, b, 255})
-		}
-	}
-
-	// Layout constants
 	padding := 20
-	cardX := padding
-	cardY := padding
-	cardWidth := w - 2*padding
-	cardHeight := h - 2*padding
+	currentY := padding
 
-	// Border color based on match state
-	var borderColor color.RGBA
+	// ========== TOP SECTION: Match Badge & Predictions ==========
+	topY := currentY
+
+	// Centered badge
+	badgeW := 140
+	badgeH := 32
+	badgeX := (w - badgeW) / 2
+	badgeY := topY
+
+	var badgeColor color.RGBA
+	var badgeText string
 	if result.Match {
-		borderColor = matchColor
+		badgeColor = matchColor
+		badgeText = "MATCH"
 	} else {
-		borderColor = mismatchColor
+		badgeColor = mismatchColor
+		badgeText = "DIFFERS"
 	}
 
-	// Draw thick border (4px)
-	for i := 0; i < 4; i++ {
-		// Top
-		for x := cardX + i; x < cardX+cardWidth-i; x++ {
-			img.Set(x, cardY+i, borderColor)
-		}
-		// Bottom
-		for x := cardX + i; x < cardX+cardWidth-i; x++ {
-			img.Set(x, cardY+cardHeight-1-i, borderColor)
-		}
-		// Left
-		for y := cardY + i; y < cardY+cardHeight-i; y++ {
-			img.Set(cardX+i, y, borderColor)
-		}
-		// Right
-		for y := cardY + i; y < cardY+cardHeight-i; y++ {
-			img.Set(cardX+cardWidth-1-i, y, borderColor)
+	// Badge background with glow
+	for bx := badgeX; bx < badgeX+badgeW; bx++ {
+		for by := badgeY; by < badgeY+badgeH; by++ {
+			img.Set(bx, by, color.RGBA{30, 35, 50, 255})
 		}
 	}
+	// Badge border - 2px thick
+	for bx := badgeX; bx < badgeX+badgeW; bx++ {
+		img.Set(bx, badgeY, badgeColor)
+		img.Set(bx, badgeY+1, badgeColor)
+		img.Set(bx, badgeY+badgeH-1, badgeColor)
+		img.Set(bx, badgeY+badgeH-2, badgeColor)
+	}
+	for by := badgeY; by < badgeY+badgeH; by++ {
+		img.Set(badgeX, by, badgeColor)
+		img.Set(badgeX+1, by, badgeColor)
+		img.Set(badgeX+badgeW-1, by, badgeColor)
+		img.Set(badgeX+badgeW-2, by, badgeColor)
+	}
+	// Badge text
+	textW := len(badgeText) * 7 * 2
+	badgeTextX := badgeX + (badgeW-textW)/2
+	drawScaledText(img, badgeText, badgeTextX, badgeY+10, 2, badgeColor)
 
-	// Content area
-	contentX := cardX + 15
-	contentY := cardY + 15
+	// FP and CIM predictions side-by-side below badge
+	predY := badgeY + badgeH + 15
+	fpText := fmt.Sprintf("FP: %d (%.0f%%)", result.FPPrediction, result.FPConfidence*100)
+	cimText := fmt.Sprintf("CIM: %d (%.0f%%)", result.CIMPrediction, result.CIMConfidence*100)
 
-	// Title: "CIM PREDICTION"
-	titleColor := color.RGBA{0, 212, 255, 255} // Cyan
-	drawSimpleText(img, "CIM HARDWARE PREDICTION", contentX, contentY, titleColor)
+	// FP on left
+	fpX := w/4 - len(fpText)*7/2
+	drawSimpleText(img, fpText, fpX, predY, fpColor)
 
-	// Large CIM prediction digit (5x scale)
-	digitScale := 5
+	// CIM on right
+	cimX := 3*w/4 - len(cimText)*7/2
+	drawSimpleText(img, cimText, cimX, predY, cimColor)
+
+	currentY = topY + topSectionH
+
+	// Subtle divider
+	for x := padding; x < w-padding; x++ {
+		img.Set(x, currentY, color.RGBA{40, 50, 70, 255})
+	}
+
+	// ========== HERO SECTION: Giant Prediction Digit ==========
+	heroY := currentY + 10
+
+	// HUGE digit scale - 12x for maximum impact
+	digitScale := 12
 	digitHeight := 7 * digitScale
 	digitWidth := 5 * digitScale
-	digitY := contentY + 22
-	digitX := contentX + (cardWidth-30-digitWidth)/2 // Center the digit
+	digitX := (w - digitWidth) / 2
+	digitY := heroY + (heroSectionH-digitHeight-30)/2
 
 	digitText := fmt.Sprintf("%d", result.CIMPrediction)
 	if result.CIMPrediction < 0 {
 		digitText = "?"
 	}
 
-	// Draw digit in cyan/green based on match
-	digitColor := color.RGBA{100, 255, 180, 255} // Green
+	// Digit color based on match
+	var digitColor color.RGBA
+	if result.Match {
+		digitColor = matchColor
+	} else {
+		digitColor = mismatchColor
+	}
+
+	// Draw hero digit
 	cc.drawScaledDigit(img, digitX, digitY, digitText, digitColor, digitScale)
 
-	// FP reference text below digit
-	fpRefY := digitY + digitHeight + 15
-	fpRefX := contentX
+	// Confidence percentage below digit - large and bold
+	confText := fmt.Sprintf("%.1f%%", result.CIMConfidence*100)
+	confScale := 3
+	confW := len(confText) * 7 * confScale
+	confX := (w - confW) / 2
+	confY := digitY + digitHeight + 10
+	drawScaledText(img, confText, confX, confY, confScale, whiteColor)
 
-	if result.Match {
-		// Green checkmark + FP agreement
-		checkX := fpRefX
-		cc.drawSmallCheckmark(img, checkX+3, fpRefY+4, matchColor)
-		fpRefText := fmt.Sprintf(" Matches FP (%.0f%%)", result.FPConfidence*100)
-		drawSimpleText(img, fpRefText, checkX+12, fpRefY, color.RGBA{180, 200, 180, 255})
-	} else {
-		// Warning icon + FP disagreement
-		warnX := fpRefX
-		cc.drawSmallWarning(img, warnX+3, fpRefY+4, mismatchColor)
-		fpRefText := fmt.Sprintf(" FP predicts: %d (%.0f%%)", result.FPPrediction, result.FPConfidence*100)
-		drawSimpleText(img, fpRefText, warnX+12, fpRefY, color.RGBA{200, 180, 140, 255})
+	currentY = heroY + heroSectionH
+
+	// Subtle divider
+	for x := padding; x < w-padding; x++ {
+		img.Set(x, currentY, color.RGBA{40, 50, 70, 255})
 	}
 
-	// Large confidence bar for CIM
-	barY := fpRefY + 18
-	barX := contentX
-	barWidth := cardWidth - 50
-	barHeight := 28
+	// ========== CHART SECTION: Full-Width Probability Comparison ==========
+	chartY := currentY + 15
 
-	// Bar background
-	for bx := barX; bx < barX+barWidth; bx++ {
-		for by := barY; by < barY+barHeight; by++ {
-			img.Set(bx, by, color.RGBA{30, 35, 45, 255})
+	// Title
+	titleText := "Probability Distribution"
+	titleX := (w - len(titleText)*7) / 2
+	drawSimpleText(img, titleText, titleX, chartY, dimColor)
+	chartY += 18
+
+	// Bar chart dimensions - much larger bars
+	chartWidth := w - 2*padding
+	barGroupWidth := chartWidth / 10
+	singleBarWidth := (barGroupWidth - 6) / 2  // Gap between FP and CIM bars
+	maxBarHeight := chartSectionH - 60  // Taller bars
+
+	// Draw bars for each digit 0-9
+	for i := 0; i < 10; i++ {
+		groupX := padding + i*barGroupWidth
+
+		// FP bar (blue)
+		fpProb := 0.0
+		if len(result.FPProbabilities) > i {
+			fpProb = result.FPProbabilities[i]
+		}
+		fpBarH := int(float64(maxBarHeight) * fpProb)
+		if fpBarH < 2 && fpProb > 0.005 {
+			fpBarH = 2
+		}
+		fpBarY := chartY + maxBarHeight - fpBarH
+
+		fpBarColor := fpColor
+		if i == result.FPPrediction {
+			fpBarColor = color.RGBA{120, 180, 255, 255} // Brighter
+		}
+
+		// Draw FP bar with top highlight
+		for bx := groupX + 2; bx < groupX+2+singleBarWidth; bx++ {
+			for by := fpBarY; by < chartY+maxBarHeight; by++ {
+				if by == fpBarY {
+					// Top highlight
+					lighter := color.RGBA{
+						uint8(min(255, int(fpBarColor.R)+50)),
+						uint8(min(255, int(fpBarColor.G)+50)),
+						uint8(min(255, int(fpBarColor.B)+50)),
+						255,
+					}
+					img.Set(bx, by, lighter)
+				} else {
+					img.Set(bx, by, fpBarColor)
+				}
+			}
+		}
+
+		// CIM bar (cyan/green)
+		cimProb := 0.0
+		if len(result.CIMProbabilities) > i {
+			cimProb = result.CIMProbabilities[i]
+		}
+		cimBarH := int(float64(maxBarHeight) * cimProb)
+		if cimBarH < 2 && cimProb > 0.005 {
+			cimBarH = 2
+		}
+		cimBarY := chartY + maxBarHeight - cimBarH
+
+		cimBarColor := cimColor
+		if i == result.CIMPrediction {
+			cimBarColor = matchColor // Vibrant green for prediction
+		}
+
+		// Draw CIM bar with top highlight
+		for bx := groupX + 4 + singleBarWidth; bx < groupX+4+singleBarWidth*2; bx++ {
+			for by := cimBarY; by < chartY+maxBarHeight; by++ {
+				if by == cimBarY {
+					// Top highlight
+					lighter := color.RGBA{
+						uint8(min(255, int(cimBarColor.R)+50)),
+						uint8(min(255, int(cimBarColor.G)+50)),
+						uint8(min(255, int(cimBarColor.B)+50)),
+						255,
+					}
+					img.Set(bx, by, lighter)
+				} else {
+					img.Set(bx, by, cimBarColor)
+				}
+			}
+		}
+
+		// Digit label below bars
+		labelX := groupX + barGroupWidth/2 - 3
+		labelY := chartY + maxBarHeight + 6
+		digitLabel := fmt.Sprintf("%d", i)
+		drawSimpleText(img, digitLabel, labelX, labelY, whiteColor)
+	}
+
+	// Legend below chart
+	legendY := chartY + maxBarHeight + 22
+	legendX := padding + 10
+
+	// FP legend
+	for bx := legendX; bx < legendX+15; bx++ {
+		for by := legendY; by < legendY+10; by++ {
+			img.Set(bx, by, fpColor)
 		}
 	}
+	drawSimpleText(img, "FP32", legendX+20, legendY+1, dimColor)
 
-	// Bar fill with gradient
-	fillWidth := int(float64(barWidth) * result.CIMConfidence)
-	for bx := barX; bx < barX+fillWidth; bx++ {
-		for by := barY; by < barY+barHeight; by++ {
-			// Horizontal gradient on fill
-			t := float64(bx-barX) / float64(fillWidth)
-			r := uint8(float64(digitColor.R) * (0.7 + t*0.3))
-			g := uint8(float64(digitColor.G) * (0.7 + t*0.3))
-			b := uint8(float64(digitColor.B) * (0.7 + t*0.3))
-			img.Set(bx, by, color.RGBA{r, g, b, 255})
+	// CIM legend
+	cimLegendX := legendX + 100
+	for bx := cimLegendX; bx < cimLegendX+15; bx++ {
+		for by := legendY; by < legendY+10; by++ {
+			img.Set(bx, by, cimColor)
 		}
 	}
+	drawSimpleText(img, "FeCIM", cimLegendX+20, legendY+1, dimColor)
 
-	// Confidence percentage text inside bar
-	confY := barY + 9
-	confText := fmt.Sprintf("%.1f%% CONFIDENCE", result.CIMConfidence*100)
-	confX := barX + 8
-	drawSimpleText(img, confText, confX, confY, color.RGBA{240, 244, 248, 255})
+	currentY = chartY + maxBarHeight + 40
 
-	// Energy efficiency compact display
-	energyY := barY + barHeight + 15
-	energyX := contentX
-
-	energyIcon := "E:"
-	drawSimpleText(img, energyIcon, energyX, energyY, color.RGBA{255, 200, 87, 255})
-
-	energyText := fmt.Sprintf("25-100x more efficient (verified)")
-	drawSimpleText(img, energyText, energyX+20, energyY, color.RGBA{160, 180, 200, 255})
-
-	// Second-best CIM prediction
-	secondY := energyY + 14
-	cimSecond, cimSecondConf := cc.getSecondBest(result.CIMProbabilities)
-	secondText := fmt.Sprintf("2nd choice: %d (%.1f%%)", cimSecond, cimSecondConf*100)
-	drawSimpleText(img, secondText, contentX, secondY, color.RGBA{120, 130, 150, 255})
+	// ========== FOOTER: Energy Efficiency ==========
+	footerY := h - footerH - 8
+	effText := fmt.Sprintf("%.0f-%.0fx Energy Efficiency", 25.0, 100.0)
+	effX := (w - len(effText)*7) / 2
+	drawSimpleText(img, effText, effX, footerY, accentColor)
 
 	return img
 }
@@ -501,6 +601,55 @@ func (cc *ComparisonCard) drawSmallWarning(img *image.RGBA, cx, cy int, c color.
 	}
 	// Dot
 	img.Set(cx, cy+3, c)
+}
+
+// drawCheckmark draws a clean checkmark symbol for the new layout.
+func (cc *ComparisonCard) drawCheckmark(img *image.RGBA, cx, cy int, c color.RGBA) {
+	// Draw a simple checkmark
+	// Short leg
+	for i := 0; i < 4; i++ {
+		x := cx - 2 + i
+		y := cy + 2 - i
+		if x >= 0 && x < img.Bounds().Dx() && y >= 0 && y < img.Bounds().Dy() {
+			img.Set(x, y, c)
+			img.Set(x, y+1, c)
+		}
+	}
+	// Long leg
+	for i := 0; i < 7; i++ {
+		x := cx + 1 + i
+		y := cy - 1 + i
+		if x >= 0 && x < img.Bounds().Dx() && y >= 0 && y < img.Bounds().Dy() {
+			img.Set(x, y, c)
+			img.Set(x, y+1, c)
+		}
+	}
+}
+
+// drawWarningIcon draws a warning triangle/exclamation for the new layout.
+func (cc *ComparisonCard) drawWarningIcon(img *image.RGBA, cx, cy int, c color.RGBA) {
+	// Simple filled circle with exclamation
+	r := 5
+	for dy := -r; dy <= r; dy++ {
+		for dx := -r; dx <= r; dx++ {
+			if dx*dx+dy*dy <= r*r {
+				px, py := cx+dx, cy+dy
+				if px >= 0 && px < img.Bounds().Dx() && py >= 0 && py < img.Bounds().Dy() {
+					img.Set(px, py, c)
+				}
+			}
+		}
+	}
+	// Exclamation mark (dark)
+	dark := color.RGBA{20, 28, 38, 255}
+	for i := -2; i <= 1; i++ {
+		if cx >= 0 && cx < img.Bounds().Dx() && cy+i >= 0 && cy+i < img.Bounds().Dy() {
+			img.Set(cx, cy+i, dark)
+		}
+	}
+	if cx >= 0 && cx < img.Bounds().Dx() && cy+3 >= 0 && cy+3 < img.Bounds().Dy() {
+		img.Set(cx, cy+3, dark)
+	}
 }
 
 // drawLargeCheckmark draws a checkmark symbol.

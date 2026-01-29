@@ -239,6 +239,29 @@ func (ds *DeviceState) GetMaterial() *ferroelectric.HZOMaterial {
 	return ds.material
 }
 
+// SetADCBits changes the ADC resolution (5, 6, 7, or 8 bits)
+func (ds *DeviceState) SetADCBits(bits int) {
+	if ds.adc != nil && bits >= 5 && bits <= 8 {
+		ds.adc.Bits = bits
+	}
+}
+
+// GetADCBits returns the current ADC resolution in bits
+func (ds *DeviceState) GetADCBits() int {
+	if ds.adc != nil {
+		return ds.adc.Bits
+	}
+	return 5 // Default
+}
+
+// GetADCLevels returns the number of ADC output levels (2^bits)
+func (ds *DeviceState) GetADCLevels() int {
+	if ds.adc != nil {
+		return 1 << ds.adc.Bits
+	}
+	return 32 // Default 5-bit
+}
+
 // GetMaterialName returns the name of the current material
 func (ds *DeviceState) GetMaterialName() string {
 	if ds.material != nil {
@@ -381,13 +404,13 @@ func (ds *DeviceState) SetDACPreset(preset DACMode, params ...float64) {
 		}
 
 	case DACInputVector:
-		// Convert input vector (0-255) to voltage using read range
-		// Maps 0-255 to readRange.Min-readRange.Max
+		// Convert input vector (0-255) to voltage for MVM
+		// Maps 0 -> 0V, 255 -> readRange.Max (proper MVM: I = G × V)
 		ds.dacRangeMode = DACRangeRead
 		for i := range ds.dacVoltages {
 			if i < len(params) {
 				normalized := params[i] / 255.0
-				ds.dacVoltages[i] = ds.readRange.Min + normalized*(ds.readRange.Max-ds.readRange.Min)
+				ds.dacVoltages[i] = normalized * ds.readRange.Max // 0 input = 0 voltage
 			}
 		}
 
@@ -563,6 +586,7 @@ func (ds *DeviceState) SetSelectedCell(row, col int) {
 
 // Compute runs the device simulation given the weight matrix
 func (ds *DeviceState) Compute(weights [][]int, quantLevels int) {
+	// Perform computation
 	for r := 0; r < ds.rows; r++ {
 		if !ds.activeRows[r] {
 			ds.rowCurrents[r] = 0
@@ -604,9 +628,39 @@ func (ds *DeviceState) Compute(weights [][]int, quantLevels int) {
 
 		ds.rowCurrents[r] = totalCurrent
 
-		// TIA conversion: current (A) to voltage (V)
+		// TIA conversion with automatic gain scaling for MVM
+		// In MVM mode, multiple columns contribute current, so we need lower effective gain
+		// Max current = cols × Gmax × Vmax = cols × 100µS × 0.5V
+		// Scale TIA gain so max current maps to ~0.9V output
 		if ds.tia != nil {
-			ds.rowVoltages[r] = ds.tia.Convert(totalCurrent * 1e-6) // µA to A
+			currentA := totalCurrent * 1e-6 // µA to A
+
+			// Count active columns (columns with voltage > 0.01V)
+			activeColCount := 0
+			for _, v := range ds.dacVoltages {
+				if v > 0.01 {
+					activeColCount++
+				}
+			}
+
+			if activeColCount > 1 {
+				// MVM mode: scale gain based on number of active columns
+				// Effective gain = base_gain / sqrt(active_cols) to prevent saturation
+				// This models a real MVM TIA with automatic range adjustment
+				scaleFactor := 1.0 / float64(activeColCount)
+				effectiveGain := ds.tia.Gain * scaleFactor
+				ds.rowVoltages[r] = currentA * effectiveGain
+				// Clamp to max output
+				if ds.rowVoltages[r] > ds.tia.MaxOutputVoltage {
+					ds.rowVoltages[r] = ds.tia.MaxOutputVoltage
+				}
+				if ds.rowVoltages[r] < 0 {
+					ds.rowVoltages[r] = 0
+				}
+			} else {
+				// Single-cell read: use standard TIA conversion
+				ds.rowVoltages[r] = ds.tia.Convert(currentA)
+			}
 		}
 
 		// ADC conversion: voltage to level
@@ -614,14 +668,16 @@ func (ds *DeviceState) Compute(weights [][]int, quantLevels int) {
 			ds.rowLevels[r] = ds.adc.Convert(ds.rowVoltages[r])
 		}
 
-		// Check saturation (TIA saturates around 100 µA)
-		// ADC saturation: 5-bit ADC has 32 levels (0-31), level 31 indicates max/saturated
+		// Check saturation
 		adcMaxLevel := 31 // Default 5-bit ADC max level
 		if ds.adc != nil {
 			adcMaxLevel = (1 << ds.adc.Bits) - 1 // 2^bits - 1
 		}
-		ds.saturated[r] = totalCurrent > 100.0 || ds.rowLevels[r] >= adcMaxLevel
+		ds.saturated[r] = ds.rowLevels[r] >= adcMaxLevel
 	}
+
+	// Log compute for debugging
+	ds.LogCompute(weights, quantLevels)
 }
 
 // GetRowCurrent returns the computed current for a row

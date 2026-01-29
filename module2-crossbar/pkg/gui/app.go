@@ -72,7 +72,6 @@ type CrossbarApp struct {
 
 	// Simple right panel widgets (replacing custom widgets)
 	resetButton      *widget.Button
-	runMVMButton     *widget.Button
 	arraySizeSelect  *widget.Select // Dropdown for array size
 	arraySizeLabel   *widget.Label  // Label for slider display
 	arraySizeSlider  *widget.Slider // Slider for array size
@@ -316,6 +315,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	ca.noiseSlider.OnChanged = func(v float64) {
 		ca.noiseLabel.SetText(fmt.Sprintf("%.0f%%", v))
 		ca.config.NoiseLevel = v / 100.0
+		ca.runEnhancedMVMInstant()
 	}
 
 	ca.adcBitsLabel = widget.NewLabel("6")
@@ -326,6 +326,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		bits := int(v)
 		ca.adcBitsLabel.SetText(fmt.Sprintf("ADC Bits: %d", bits))
 		ca.config.ADCBits = bits
+		ca.runEnhancedMVMInstant()
 	}
 
 	ca.colormapSelect = widget.NewSelect([]string{"fecim", "viridis", "plasma", "coolwarm"}, func(s string) {
@@ -664,6 +665,12 @@ func (ca *CrossbarApp) recreateArray(size int, noise float64, adcBits int) {
 		}
 		return
 	}
+
+	// Reset baseline values so they get recomputed for new array size
+	ca.stateMu.Lock()
+	ca.baselineMaxIRDrop = 0
+	ca.baselineMaxSneak = 0
+	ca.stateMu.Unlock()
 
 	// Resize existing heatmaps instead of creating new ones
 	// This preserves the widget references in the window layout

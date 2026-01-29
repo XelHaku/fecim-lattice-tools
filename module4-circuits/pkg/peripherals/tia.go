@@ -21,7 +21,7 @@ func DefaultTIA() *TIA {
 		Gain:             10e3,   // 10 kΩ transimpedance
 		Bandwidth:        100e6,  // 100 MHz bandwidth
 		InputNoiseRMS:    1e-12,  // 1 pA/sqrt(Hz) input noise
-		OutputOffset:     5e-3,   // 5 mV output offset
+		OutputOffset:     0,      // No offset for clean simulation
 		MaxInputCurrent:  100e-6, // 100 µA max input
 		MaxOutputVoltage: 1.0,    // 1V max output
 	}

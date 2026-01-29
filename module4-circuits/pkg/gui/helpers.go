@@ -417,13 +417,21 @@ func drawDACColumn(img *image.RGBA, x, y, w, h int, voltage float64, label strin
 
 // drawTIAADCRow draws TIA+ADC boxes to the right of a row with current/level display
 func drawTIAADCRow(img *image.RGBA, x, y, tiaW, adcW, h int, current float64, level int, label string, highlighted, dimmed bool, tia interface{ Convert(float64) float64 }, adc interface{ Convert(float64) int }) {
-	// TIA box
+	// TIA box - shows both input current and output voltage
 	tiaStyle := TIAStyle(highlighted, dimmed)
 	tiaV := 0.0
 	if tia != nil {
 		tiaV = tia.Convert(current * 1e-6) // uA to A
 	}
-	tiaText := fmt.Sprintf("%.2fV", tiaV)
+	// Format: "12µA→.12" (compact: current in µA, arrow, voltage without leading 0)
+	var tiaText string
+	if current < 10 {
+		tiaText = fmt.Sprintf("%.1fµ→%.2f", current, tiaV)
+	} else if current < 100 {
+		tiaText = fmt.Sprintf("%.0fµ→%.2f", current, tiaV)
+	} else {
+		tiaText = fmt.Sprintf("%.0fµ→%.2f", current, tiaV)
+	}
 	drawPeripheralBox(img, x, y, tiaW, h, tiaStyle, tiaText)
 
 	// ADC box (to the right of TIA) - shows decoded state (0-29 for 30 analog states)

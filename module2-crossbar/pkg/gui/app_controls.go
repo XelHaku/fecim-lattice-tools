@@ -68,13 +68,6 @@ func (ca *CrossbarApp) setControlsEnabled(enabled bool) {
 			ca.resetButton.Disable()
 		}
 	}
-	if ca.runMVMButton != nil {
-		if enabled {
-			ca.runMVMButton.Enable()
-		} else {
-			ca.runMVMButton.Disable()
-		}
-	}
 }
 
 // createControlWidgets creates all control panel widgets (buttons, sliders, dropdowns).
@@ -82,10 +75,6 @@ func (ca *CrossbarApp) createControlWidgets() {
 	// Reset button
 	ca.resetButton = widget.NewButton("Reset", ca.resetArray)
 	ca.resetButton.Importance = widget.MediumImportance
-
-	// Run MVM button - primary action for enhanced mode
-	ca.runMVMButton = widget.NewButton("Run MVM", ca.runEnhancedMVM)
-	ca.runMVMButton.Importance = widget.HighImportance
 
 	// Array size slider (8 to 128 in steps of 8)
 	// Create without callback first, set value, then add callback to avoid
@@ -325,7 +314,7 @@ func (ca *CrossbarApp) createRightPanel(metricsScroll *container.Scroll) fyne.Ca
 		nil,
 		ca.colormapSelect,
 	)
-	actionButtons := container.NewGridWithColumns(3, ca.runMVMButton, ca.resetButton, exportButton)
+	actionButtons := container.NewGridWithColumns(2, ca.resetButton, exportButton)
 
 	// === ASSEMBLE CONTROLS ===
 	// M4 UX fix: Remove scroll from controls section to avoid nested scroll issues

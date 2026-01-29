@@ -322,7 +322,7 @@ func NewApp() *App {
 
 	mat := materials[0]
 	numLevels := 30                                        // Default: FeCIM's 30 discrete analog states
-	preisachGridSize := 60                                 // High-resolution physics simulation (independent of quantization)
+	preisachGridSize := 200                                 // High-resolution physics simulation (independent of quantization)
 	preisach := ferroelectric.NewMayergoyzPreisach(mat, preisachGridSize)
 
 	return &App{
@@ -384,7 +384,7 @@ func NewAppWithMaterial(materialName string) *App {
 	}
 
 	numLevels := 30                                        // Default: FeCIM's 30 discrete analog states
-	preisachGridSize := 60                                 // High-resolution physics simulation (independent of quantization)
+	preisachGridSize := 200                                 // High-resolution physics simulation (independent of quantization)
 	preisach := ferroelectric.NewMayergoyzPreisach(mat, preisachGridSize)
 
 	return &App{

@@ -499,24 +499,38 @@ var ErrInputSize error
 // Returns values in [0,1] where value directly represents percentage (0.05 = 5%).
 // This matches the 0-100% legend scale.
 func (a *IRDropAnalysis) GetIRDropMap() [][]float64 {
+	return a.GetIRDropMapWithScale(1.0) // Default 100% scale
+}
+
+// GetIRDropMapWithScale returns the IR drop map normalized to a custom scale.
+// Use the passive (0T1R) max IR drop as scale for architecture comparison:
+// - Passive: Shows full color range (highest IR drop)
+// - 1T1R/2T1R: Shows proportionally less (better isolation)
+// maxDrop should be provided as a fraction (e.g., 0.0296 for 2.96%)
+func (a *IRDropAnalysis) GetIRDropMapWithScale(maxDrop float64) [][]float64 {
 	rows := len(a.EffectiveVoltage)
 	cols := len(a.EffectiveVoltage[0])
+
+	if maxDrop <= 0 {
+		maxDrop = 1.0 // Default to 100%
+	}
 
 	normalized := make([][]float64, rows)
 	for i := range normalized {
 		normalized[i] = make([]float64, cols)
 		for j := range normalized[i] {
 			// IR drop = 1 - effective voltage (assuming 1V input)
-			// Value directly represents fraction (e.g., 0.05 = 5% drop)
 			drop := 1.0 - a.EffectiveVoltage[i][j]
-			// Cap at 1.0 (100% drop max)
-			if drop > 1.0 {
-				drop = 1.0
+			// Normalize to scale: drop / maxDrop gives 0-1 range
+			scaled := drop / maxDrop
+			// Cap at 1.0
+			if scaled > 1.0 {
+				scaled = 1.0
 			}
-			if drop < 0 {
-				drop = 0
+			if scaled < 0 {
+				scaled = 0
 			}
-			normalized[i][j] = drop
+			normalized[i][j] = scaled
 		}
 	}
 

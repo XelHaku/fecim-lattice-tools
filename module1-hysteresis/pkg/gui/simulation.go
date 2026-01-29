@@ -772,6 +772,7 @@ func (a *App) simulationLoop() {
 									newVal = maxE
 								}
 								a.calibrationUp[adjIdx] = newVal
+								a.enforceMonotonicityUp(adjIdx, Ec) // Prevent spikes from runtime updates
 								a.lastErrorUp[adjIdx] = levelError
 								log.Printf("CALIB UP[%d]: bounds=[%.4f,%.4f]*Ec, new=%.4f*Ec, err=%d",
 									adjIdx, a.calibUpLow[adjIdx]/Ec, a.calibUpHigh[adjIdx]/Ec, newVal/Ec, levelError)
@@ -809,13 +810,21 @@ func (a *App) simulationLoop() {
 									newVal = currentE*0.7 + newVal*0.3
 								}
 
-								// Clamp to valid range (allow weaker fields for mid-levels)
-								if newVal > -Ec*0.3 {
-									newVal = -Ec * 0.3
-								} else if newVal < -Ec*2.5 {
-									newVal = -Ec * 1.5
+								// Level-dependent minimum field: lower levels need stronger (more negative) fields
+								// For descending: level 29 needs ~-0.4×Ec, level 1 needs ~-1.4×Ec
+								maxLevel := float64(a.numLevels - 1)
+								levelRatio := float64(adjIdx) / maxLevel
+								// Invert: low level index = strong negative field
+								minE := -Ec * (0.6 + (1-levelRatio)*1.2) // Range: -1.8×Ec to -0.6×Ec
+								maxE := -Ec * (0.4 + (1-levelRatio)*1.0) // Range: -1.4×Ec to -0.4×Ec
+
+								if newVal > maxE {
+									newVal = maxE
+								} else if newVal < minE {
+									newVal = minE
 								}
 								a.calibrationDown[adjIdx] = newVal
+								a.enforceMonotonicityDown(adjIdx, Ec) // Prevent spikes from runtime updates
 								a.lastErrorDown[adjIdx] = levelError
 								log.Printf("CALIB DOWN[%d]: bounds=[%.4f,%.4f]*Ec, new=%.4f*Ec, err=%d",
 									adjIdx, a.calibDownLow[adjIdx]/Ec, a.calibDownHigh[adjIdx]/Ec, newVal/Ec, levelError)
@@ -1066,10 +1075,16 @@ func (a *App) simulationLoop() {
 									newVal = currentE*0.7 + newVal*0.3
 								}
 
-								if newVal < Ec*0.3 {
-									newVal = Ec * 0.3
-								} else if newVal > Ec*2.5 {
-									newVal = Ec * 1.5
+								// Level-dependent minimum field: higher levels need stronger fields
+								maxLevel := float64(a.numLevels - 1)
+								levelRatio := float64(targetIdx) / maxLevel
+								minE := Ec * (0.4 + levelRatio*1.0)
+								maxE := Ec * (0.6 + levelRatio*1.2)
+
+								if newVal < minE {
+									newVal = minE
+								} else if newVal > maxE {
+									newVal = maxE
 								}
 								a.calibrationUp[targetIdx] = newVal
 								a.lastErrorUp[targetIdx] = levelError
@@ -1100,10 +1115,16 @@ func (a *App) simulationLoop() {
 									newVal = currentE*0.7 + newVal*0.3
 								}
 
-								if newVal > -Ec*0.3 {
-									newVal = -Ec * 0.3
-								} else if newVal < -Ec*2.5 {
-									newVal = -Ec * 1.5
+								// Level-dependent minimum field: lower levels need stronger (more negative) fields
+								maxLevel := float64(a.numLevels - 1)
+								levelRatio := float64(targetIdx) / maxLevel
+								minE := -Ec * (0.6 + (1-levelRatio)*1.2)
+								maxE := -Ec * (0.4 + (1-levelRatio)*1.0)
+
+								if newVal > maxE {
+									newVal = maxE
+								} else if newVal < minE {
+									newVal = minE
 								}
 								a.calibrationDown[targetIdx] = newVal
 								a.lastErrorDown[targetIdx] = levelError
@@ -1960,4 +1981,46 @@ func (a *App) calibrateLevels() {
 	a.electricField = 0
 	a.polarization = 0
 	a.calibrated = true
+}
+
+// enforceMonotonicityUp ensures calibrationUp[idx] maintains local monotonicity.
+// Called after runtime calibration updates to prevent spikes.
+// MUST be called with a.mu held.
+func (a *App) enforceMonotonicityUp(idx int, Ec float64) {
+	if idx <= 0 || idx >= len(a.calibrationUp) {
+		return
+	}
+	step := Ec * 0.02 // 2% of Ec minimum step between levels
+
+	// Ensure value is greater than previous level
+	if a.calibrationUp[idx] <= a.calibrationUp[idx-1] {
+		a.calibrationUp[idx] = a.calibrationUp[idx-1] + step
+	}
+
+	// Ensure value is less than next level (if not at end)
+	if idx < len(a.calibrationUp)-1 && a.calibrationUp[idx] >= a.calibrationUp[idx+1] {
+		// Push next value up to maintain monotonicity
+		a.calibrationUp[idx+1] = a.calibrationUp[idx] + step
+	}
+}
+
+// enforceMonotonicityDown ensures calibrationDown[idx] maintains local monotonicity.
+// Called after runtime calibration updates to prevent spikes.
+// MUST be called with a.mu held.
+func (a *App) enforceMonotonicityDown(idx int, Ec float64) {
+	if idx <= 0 || idx >= len(a.calibrationDown)-1 {
+		return
+	}
+	step := Ec * 0.02 // 2% of Ec minimum step between levels
+
+	// Ensure value is more negative than next level (lower index = more negative)
+	if a.calibrationDown[idx] >= a.calibrationDown[idx+1] {
+		a.calibrationDown[idx] = a.calibrationDown[idx+1] - step
+	}
+
+	// Ensure value is less negative than previous level
+	if idx > 0 && a.calibrationDown[idx] <= a.calibrationDown[idx-1] {
+		// Push previous value down to maintain monotonicity
+		a.calibrationDown[idx-1] = a.calibrationDown[idx] - step
+	}
 }

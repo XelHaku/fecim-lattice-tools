@@ -30,6 +30,10 @@ type ColorLegend struct {
 	raster   *canvas.Raster
 	minLabel *widget.Label
 	maxLabel *widget.Label
+
+	// Vertical layout text labels (need separate reference for updates)
+	verticalMinText *canvas.Text
+	verticalMaxText *canvas.Text
 }
 
 // NewColorLegend creates a new color legend widget.
@@ -84,8 +88,20 @@ func (cl *ColorLegend) SetRange(minValue, maxValue float64) {
 	cl.maxValue = maxValue
 
 	fyne.Do(func() {
+		// Update horizontal layout labels
 		cl.minLabel.SetText(cl.formatLabel(minValue))
 		cl.maxLabel.SetText(cl.formatLabel(maxValue))
+
+		// Update vertical layout text labels if they exist
+		if cl.verticalMinText != nil {
+			cl.verticalMinText.Text = cl.formatLabel(minValue)
+			cl.verticalMinText.Refresh()
+		}
+		if cl.verticalMaxText != nil {
+			cl.verticalMaxText.Text = cl.formatLabel(maxValue)
+			cl.verticalMaxText.Refresh()
+		}
+
 		cl.Refresh()
 	})
 }
@@ -112,13 +128,18 @@ func (cl *ColorLegend) CreateRenderer() fyne.WidgetRenderer {
 		cl.raster.SetMinSize(fyne.NewSize(60, 180))
 
 		// Position max label at top, min label at bottom
-		maxLabelText := canvas.NewText(cl.formatLabel(cl.maxValue), color.White)
-		maxLabelText.TextSize = 11
-		maxLabelText.Alignment = fyne.TextAlignLeading
+		// Store references so SetRange can update them
+		cl.verticalMaxText = canvas.NewText(cl.formatLabel(cl.maxValue), color.White)
+		cl.verticalMaxText.TextSize = 11
+		cl.verticalMaxText.Alignment = fyne.TextAlignLeading
 
-		minLabelText := canvas.NewText(cl.formatLabel(cl.minValue), color.White)
-		minLabelText.TextSize = 11
-		minLabelText.Alignment = fyne.TextAlignLeading
+		cl.verticalMinText = canvas.NewText(cl.formatLabel(cl.minValue), color.White)
+		cl.verticalMinText.TextSize = 11
+		cl.verticalMinText.Alignment = fyne.TextAlignLeading
+
+		// Local references for layout
+		maxLabelText := cl.verticalMaxText
+		minLabelText := cl.verticalMinText
 
 		// Create intermediate labels if widget is tall enough
 		// Labels at 0, 10, 20, max (assuming range is roughly 0-30 for FeCIM)

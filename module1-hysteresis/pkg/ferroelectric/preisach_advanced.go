@@ -80,11 +80,11 @@ func NewMayergoyzPreisach(material *HZOMaterial, gridSize int) *MayergoyzPreisac
 		material:      material,
 		numAlpha:      gridSize,
 		numBeta:       gridSize,
-		AlphaMean:     material.Ec,       // +Ec
-		AlphaSigma:    material.Ec * 0.28, // 28% distribution (Mayergoyz literature: 0.25-0.35)
-		BetaMean:      -material.Ec,      // -Ec
-		BetaSigma:     material.Ec * 0.28,
-		Correlation:   0.5,   // Some correlation between α and β
+		AlphaMean:     material.Ec,        // +Ec
+		AlphaSigma:    material.Ec * 0.65, // 65% distribution - wider for more gradual switching
+		BetaMean:      -material.Ec,       // -Ec
+		BetaSigma:     material.Ec * 0.65, // Match alpha sigma
+		Correlation:   0.15,               // Low correlation for well-distributed hysterons
 		Temperature:   300,   // Room temperature (K)
 		CurieTemp:     723,   // HZO Curie temperature ~450°C
 		TempExponent:  0.5,   // Typical exponent

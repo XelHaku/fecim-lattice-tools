@@ -150,15 +150,6 @@ func (app *DualModeApp) updateResultDisplays(result *core.InferenceResult, quant
 		app.comparisonCard.SetResult(compResult)
 	}
 
-	if app.dualProbabilityChart != nil {
-		app.dualProbabilityChart.SetProbabilities(
-			result.FPProbabilities,
-			result.CIMProbabilities,
-			result.FPPrediction,
-			result.CIMPrediction,
-		)
-	}
-
 	if app.energyWidget != nil {
 		app.energyWidget.RecordInference()
 	}
@@ -185,9 +176,6 @@ func (app *DualModeApp) resetResults() {
 	}
 	if app.comparisonCard != nil {
 		app.comparisonCard.Clear()
-	}
-	if app.dualProbabilityChart != nil {
-		app.dualProbabilityChart.Clear()
 	}
 	// Note: Energy widget is not cleared to keep session totals
 }

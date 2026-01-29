@@ -433,18 +433,9 @@ func (app *DualModeApp) createResultsZone() fyne.CanvasObject {
 		app.cimProbBars[i] = widget.NewProgressBar()
 	}
 
-	// P1.2: Enhanced Comparison Card
+	// P1.2: Enhanced Comparison Card (includes integrated FP vs CIM bar chart)
 	app.comparisonCard = NewComparisonCard()
 
-	// P1.2: Dual Probability Chart with divergence highlighting
-	app.dualProbabilityChart = NewDualProbabilityChart()
-
-	// Use Border layout so probability chart expands to fill space
-	resultsLayout := container.NewBorder(
-		app.comparisonCard, // Top: comparison card (fixed height)
-		nil, nil, nil,
-		container.NewMax(app.dualProbabilityChart), // Center: probability chart (expands)
-	)
-
-	return resultsLayout
+	// Comparison card is the main results display (probability chart integrated)
+	return container.NewMax(app.comparisonCard)
 }

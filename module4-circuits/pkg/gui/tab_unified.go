@@ -101,6 +101,9 @@ func (ca *CircuitsApp) createSignalChainHeader() fyne.CanvasObject {
 	// Material selector
 	materialSelector := ca.createMaterialSelector()
 
+	// ADC bits selector
+	adcBitsSelector := ca.createADCBitsSelector()
+
 	chainLabel := widget.NewLabelWithStyle(
 		"SIGNAL CHAIN: DAC -> Array -> TIA -> ADC",
 		fyne.TextAlignCenter,
@@ -116,6 +119,7 @@ func (ca *CircuitsApp) createSignalChainHeader() fyne.CanvasObject {
 			chainLabel,
 			layout.NewSpacer(),
 			materialSelector,
+			adcBitsSelector,
 			layout.NewSpacer(),
 			archToggle,
 			layout.NewSpacer(),
@@ -151,6 +155,36 @@ func (ca *CircuitsApp) createMaterialSelector() fyne.CanvasObject {
 	selector.SetSelected("FeCIM HZO")
 
 	return container.NewHBox(widget.NewLabel("Material:"), selector)
+}
+
+// createADCBitsSelector creates a dropdown to select ADC resolution (5-8 bits)
+func (ca *CircuitsApp) createADCBitsSelector() fyne.CanvasObject {
+	options := []string{"5-bit (32)", "6-bit (64)", "7-bit (128)", "8-bit (256)"}
+
+	selector := widget.NewSelect(options, func(selected string) {
+		var bits int
+		switch selected {
+		case "5-bit (32)":
+			bits = 5
+		case "6-bit (64)":
+			bits = 6
+		case "7-bit (128)":
+			bits = 7
+		case "8-bit (256)":
+			bits = 8
+		default:
+			bits = 5
+		}
+		ca.deviceState.SetADCBits(bits)
+		ca.recomputeAndRefresh()
+		levels := 1 << bits
+		ca.operationsStatusLabel.SetText(fmt.Sprintf("ADC: %d-bit (%d levels, 0-%d)", bits, levels, levels-1))
+	})
+
+	// Set default selection
+	selector.SetSelected("5-bit (32)")
+
+	return container.NewHBox(widget.NewLabel("ADC:"), selector)
 }
 
 // createDACInputSection creates the DAC status and manual control
@@ -238,12 +272,14 @@ func (ca *CircuitsApp) setOperationMode(mode OpMode) {
 			ca.deviceState.SetWLSingle(ca.deviceState.GetSelectedRow())
 		}
 		ca.deviceState.SetDACRangeMode(DACRangeRead)
-		// Apply default read voltage so TIA shows real-time current
-		readVoltage := ca.deviceState.GetReadRange().Max * 0.5
+		// Per VOLTAGE_RULES.md: Only selected column gets read voltage
+		// Ground all columns first, then apply to selected column only
+		readVoltage := ca.deviceState.GetReadRange().Max * 0.4 // ~0.2V safe read
 		if readVoltage < 0.1 {
-			readVoltage = 0.5
+			readVoltage = 0.2
 		}
-		ca.deviceState.SetAllDACVoltages(readVoltage)
+		ca.deviceState.SetAllDACVoltages(0)
+		ca.deviceState.SetDACVoltage(ca.deviceState.GetSelectedCol(), readVoltage)
 
 	case OpModeWrite:
 		// Single row active (only in 1T1R/2T1R)
@@ -260,12 +296,13 @@ func (ca *CircuitsApp) setOperationMode(mode OpMode) {
 			ca.deviceState.SetWLAll()
 		}
 		ca.deviceState.SetDACRangeMode(DACRangeRead)
-		// Apply default read voltage so TIA shows real-time MVM output
-		readVoltage := ca.deviceState.GetReadRange().Max * 0.5
-		if readVoltage < 0.1 {
-			readVoltage = 0.5
+		// Apply input vector as DAC voltages (MVM: I = G × V)
+		// Input vector values (0-255) map to voltage range
+		params := make([]float64, len(ca.inputVector))
+		for i, v := range ca.inputVector {
+			params[i] = float64(v)
 		}
-		ca.deviceState.SetAllDACVoltages(readVoltage)
+		ca.deviceState.SetDACPreset(DACInputVector, params...)
 	}
 
 	ca.updateModeButtons()
@@ -684,16 +721,10 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 			isSelected := r == selectedRow && c == selectedCol
 			isActive := ca.deviceState.IsRowActive(r) && ca.deviceState.GetDACVoltage(c) > 0.01
 
-			// Cell color based on level (no special fill for selected - C1 FIX: border only)
+			// Cell color based on level - always full brightness
 			cellColor := levelToColor(level, levels)
-			// Dim inactive cells
-			if !isActive {
-				cellColor.R = uint8(float64(cellColor.R) * 0.4)
-				cellColor.G = uint8(float64(cellColor.G) * 0.4)
-				cellColor.B = uint8(float64(cellColor.B) * 0.4)
-			}
 
-			// Animation highlight
+			// Animation highlight (only during compute animation)
 			if animStep == 2 && isActive {
 				cellColor.R = uint8(min(int(cellColor.R)+40, 255))
 				cellColor.G = uint8(min(int(cellColor.G)+40, 255))
@@ -746,7 +777,7 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	}
 
 	// Draw TIA+ADC boxes (right side)
-	tiaBoxW := 28
+	tiaBoxW := 50 // Wider to show both current and voltage
 	adcBoxW := 24
 	tiaAdcBoxH := cellSize - 2
 	if tiaAdcBoxH < 18 {
@@ -1239,7 +1270,13 @@ func (ca *CircuitsApp) onUnifiedCompute() {
 	ca.deviceState.SetDACPreset(DACInputVector, params...)
 
 	ca.recomputeAndRefresh()
-	ca.operationsStatusLabel.SetText("Compute complete in ~20ns (parallel MVM)")
+
+	// Save compute log for debugging
+	if err := SaveComputeLog(); err != nil {
+		ca.operationsStatusLabel.SetText(fmt.Sprintf("Compute done, log error: %v", err))
+	} else {
+		ca.operationsStatusLabel.SetText("Compute complete - saved to compute_log.json")
+	}
 }
 
 // onUnifiedAnimate animates the signal flow
