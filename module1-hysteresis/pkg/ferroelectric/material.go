@@ -27,12 +27,6 @@ func LiteratureSuperlattice() *HZOMaterial {
 	return sharedphysics.LiteratureSuperlattice()
 }
 
-// OptimizedHZO is deprecated. Use LiteratureSuperlattice() instead.
-// Re-exported from shared/physics for backward compatibility.
-func OptimizedHZO() *HZOMaterial {
-	return sharedphysics.OptimizedHZO()
-}
-
 // FeCIMMaterial returns parameters matching FeCIM specifications.
 // Re-exported from shared/physics for backward compatibility.
 func FeCIMMaterial() *HZOMaterial {

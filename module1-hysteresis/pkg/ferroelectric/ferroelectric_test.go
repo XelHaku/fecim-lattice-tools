@@ -426,7 +426,6 @@ func TestMaterialVariants(t *testing.T) {
 		mat  *HZOMaterial
 	}{
 		{"DefaultHZO", DefaultHZO()},
-		{"OptimizedHZO", OptimizedHZO()},
 		{"FeCIMMaterial", FeCIMMaterial()},
 		{"FeCIMMaterialTarget", FeCIMMaterialTarget()},
 	}

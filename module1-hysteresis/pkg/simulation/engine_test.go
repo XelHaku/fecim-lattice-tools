@@ -315,7 +315,6 @@ func TestHistoryMaxLimit(t *testing.T) {
 func TestEngineWithDifferentMaterials(t *testing.T) {
 	materials := []*ferroelectric.HZOMaterial{
 		ferroelectric.DefaultHZO(),
-		ferroelectric.OptimizedHZO(),
 		ferroelectric.FeCIMMaterial(),
 		ferroelectric.FeCIMMaterialTarget(),
 	}

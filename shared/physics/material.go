@@ -167,12 +167,6 @@ func LiteratureSuperlattice() *HZOMaterial {
 	}
 }
 
-// OptimizedHZO is deprecated. Use LiteratureSuperlattice() instead.
-// Kept for backwards compatibility.
-func OptimizedHZO() *HZOMaterial {
-	return LiteratureSuperlattice()
-}
-
 // FeCIMMaterial returns parameters matching FeCIM specifications.
 // Based on Dr. Tour's Nov 2024 presentation data.
 //
