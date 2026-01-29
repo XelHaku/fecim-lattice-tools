@@ -13,6 +13,9 @@
 | Fix Fyne GUI issues | `docs/development/GUI/FYNE_NOTES.md` |
 | Run/understand tests | `docs/development/TESTING.md` |
 | Review UI analysis | `docs/development/HYPER_ANALYSIS_REPORT.md` |
+| EDA documentation | `docs/eda/README.md` |
+| OpenLane integration | `docs/eda/guides/integration.md` |
+| EDA CLI reference | `docs/eda/references/cli-reference.md` |
 
 ## Overview
 

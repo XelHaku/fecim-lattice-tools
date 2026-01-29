@@ -1132,7 +1132,7 @@ pip install --upgrade PySpice
 - **[circuits.operations.md](../peripheral-circuits/circuits.operations.md)** — How read/write/compute operations work
 - **[circuits.opensource.md](../peripheral-circuits/circuits.opensource.md)** — Additional peripheral design tools
 - **[hysteresis.physics.md](../hysteresis/hysteresis.physics.md)** — Ferroelectric physics models
-- **[EDA-LEARN-screen.md](../eda-design-suite/EDA-LEARN-screen.md)** — EDA tool learning resources
+- **[eda-learn-screen.md](../eda/_archive/eda-learn-screen.md)** — EDA tool learning resources (archived)
 
 ---
 
