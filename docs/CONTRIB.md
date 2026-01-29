@@ -236,7 +236,6 @@ func (e *EmbeddedApp) Stop()
 
 ### Do NOT Modify
 
-- `module2-crossbar/pkg/_layers_experimental/` - Archived research code
 - Binaries - Never commit compiled binaries
 
 ## Dependencies

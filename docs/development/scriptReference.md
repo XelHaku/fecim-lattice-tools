@@ -409,19 +409,9 @@ fecim-lattice-tools/
 │   │   └── terminal.go            # Terminal visualization
 │   ├── pkg/network/
 │   │   └── network.go             # Network interface
-│   ├── pkg/evaluation/
-│   │   └── accuracy.go            # Accuracy metrics
 │   ├── pkg/weights/
 │   │   ├── weights.go             # Weight management
 │   │   └── serialization.go       # Weight I/O
-│   ├── pkg/data/
-│   │   └── mnist.go               # MNIST data loading
-│   ├── pkg/_layers_experimental/  # Research code (~30 files)
-│   │   ├── attention.go           # Attention mechanisms
-│   │   ├── transformer.go         # Transformer layers
-│   │   ├── federated*.go          # Federated learning
-│   │   ├── diffusion*.go          # Diffusion models
-│   │   └── optical*.go            # Optical interconnects
 │   └── shaders/                   # MVM compute shaders
 │
 ├── module3-mnist/                 # Demo 3: AI Brain (Dual Mode: FP vs CIM)

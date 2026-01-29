@@ -214,24 +214,6 @@ func (d *DriftSimulator) SetConductanceLevel(row, col, level int) {
 	}
 }
 
-// SetWeightMatrix sets conductances from a weight matrix.
-func (d *DriftSimulator) SetWeightMatrix(weights [][]int) {
-	for i := 0; i < d.Rows && i < len(weights); i++ {
-		for j := 0; j < d.Cols && j < len(weights[i]); j++ {
-			level := weights[i][j]
-			if level < 0 {
-				level = 0
-			}
-			if level >= d.Levels {
-				level = d.Levels - 1
-			}
-			g := d.GMin + (d.GMax-d.GMin)*float64(level)/float64(d.Levels-1)
-			d.Conductances[i][j] = g
-			d.InitialConds[i][j] = g
-		}
-	}
-}
-
 // SimulateTimeStep advances simulation by dt seconds.
 func (d *DriftSimulator) SimulateTimeStep(dt float64) {
 	getLog().Calculation("SimulateTimeStep", map[string]interface{}{
@@ -288,28 +270,6 @@ func (d *DriftSimulator) SimulateTimeStep(dt float64) {
 	}, nil)
 }
 
-// SimulateRead simulates read disturb on a cell.
-func (d *DriftSimulator) SimulateRead(row, col int, numReads int) {
-	if row < 0 || row >= d.Rows || col < 0 || col >= d.Cols {
-		return
-	}
-
-	for n := 0; n < numReads; n++ {
-		if rand.Float64() < d.ReadDisturb {
-			// Small conductance change due to read disturb
-			change := (rand.Float64() - 0.5) * 0.0001 * d.Conductances[row][col]
-			d.Conductances[row][col] += change
-
-			if d.Conductances[row][col] < d.GMin {
-				d.Conductances[row][col] = d.GMin
-			}
-			if d.Conductances[row][col] > d.GMax {
-				d.Conductances[row][col] = d.GMax
-			}
-		}
-	}
-}
-
 // RecordSnapshot records current state.
 func (d *DriftSimulator) RecordSnapshot() {
 	avgDrift := 0.0
@@ -362,23 +322,6 @@ func (d *DriftSimulator) GetCurrentLevel(row, col int) int {
 	}
 
 	g := d.Conductances[row][col]
-	level := int((g-d.GMin)/(d.GMax-d.GMin)*float64(d.Levels-1) + 0.5)
-	if level < 0 {
-		level = 0
-	}
-	if level >= d.Levels {
-		level = d.Levels - 1
-	}
-	return level
-}
-
-// GetInitialLevel returns the initial quantized level for a cell.
-func (d *DriftSimulator) GetInitialLevel(row, col int) int {
-	if row < 0 || row >= d.Rows || col < 0 || col >= d.Cols {
-		return 0
-	}
-
-	g := d.InitialConds[row][col]
 	level := int((g-d.GMin)/(d.GMax-d.GMin)*float64(d.Levels-1) + 0.5)
 	if level < 0 {
 		level = 0

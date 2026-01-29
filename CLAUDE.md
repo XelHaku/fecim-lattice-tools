@@ -38,7 +38,6 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-too
 - Run `go test ./...` before committing
 
 ### Don't
-- Modify `module2-crossbar/pkg/_layers_experimental/` - archived
 - Add demos without implementing embedded interface
 - Use blocking operations on main UI thread
 - Commit binaries
@@ -112,4 +111,3 @@ Full test documentation: `docs/development/TESTING.md`
 ## Ignore
 
 - `logs/`, `output/`, `docs/archive/`
-- `module2-crossbar/pkg/_layers_experimental/`

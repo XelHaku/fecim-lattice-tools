@@ -62,20 +62,6 @@ func (sp *SneakPathAnalyzer) SetConductance(row, col int, g float64) {
 	}
 }
 
-// SetConductancePattern sets conductances based on a weight pattern.
-func (sp *SneakPathAnalyzer) SetConductancePattern(weights [][]int, levels int) {
-	gMin := 1e-6   // 1µS minimum conductance
-	gMax := 100e-6 // 100µS maximum conductance
-
-	for i := 0; i < sp.Rows && i < len(weights); i++ {
-		for j := 0; j < sp.Cols && j < len(weights[i]); j++ {
-			// Linear mapping from level to conductance
-			level := weights[i][j]
-			sp.Conductances[i][j] = gMin + (gMax-gMin)*float64(level)/float64(levels-1)
-		}
-	}
-}
-
 // AnalyzeTarget analyzes sneak paths for a target cell.
 //
 // Physics model per VOLTAGE_RULES.md Section 3.3 (MVM/Compute):
@@ -204,39 +190,6 @@ func (sp *SneakPathAnalyzer) GetStats(voltage float64) SneakPathStats {
 	}
 }
 
-// GetSneakCurrentMap returns 2D map of sneak currents.
-func (sp *SneakPathAnalyzer) GetSneakCurrentMap() [][]float64 {
-	return sp.SneakCurrents
-}
-
-// GetTopSneakPaths returns the n largest sneak paths.
-func (sp *SneakPathAnalyzer) GetTopSneakPaths(n int) []SneakPath {
-	if n > len(sp.SneakPaths) {
-		n = len(sp.SneakPaths)
-	}
-
-	// Simple selection of top n (not optimal but works for small n)
-	result := make([]SneakPath, n)
-	used := make([]bool, len(sp.SneakPaths))
-
-	for i := 0; i < n; i++ {
-		maxIdx := -1
-		maxCurrent := -1.0
-		for j, path := range sp.SneakPaths {
-			if !used[j] && path.PathCurrent > maxCurrent {
-				maxCurrent = path.PathCurrent
-				maxIdx = j
-			}
-		}
-		if maxIdx >= 0 {
-			result[i] = sp.SneakPaths[maxIdx]
-			used[maxIdx] = true
-		}
-	}
-
-	return result
-}
-
 // SneakMitigation represents mitigation strategies for sneak paths.
 type SneakMitigation struct {
 	UseSelector       bool    // Use selector device (1T1R, 1S1R)
@@ -345,49 +298,4 @@ func (sp *SneakPathAnalyzer) AnalyzeWithMitigation(targetRow, targetCol int, vol
 		WorstSneakPath:     worstSneak,
 		SignalToNoiseRatio: snr,
 	}
-}
-
-// ArraySneakAnalysis analyzes sneak paths for entire array operation.
-type ArraySneakAnalysis struct {
-	Analyzer        *SneakPathAnalyzer
-	CellSneakRatios [][]float64 // Sneak ratio at each position
-	AvgSneakRatio   float64
-	MaxSneakRatio   float64
-	WorstCellRow    int
-	WorstCellCol    int
-}
-
-// AnalyzeArray performs full array sneak path analysis.
-func (sp *SneakPathAnalyzer) AnalyzeArray(voltage float64) ArraySneakAnalysis {
-	analysis := ArraySneakAnalysis{
-		Analyzer:        sp,
-		CellSneakRatios: make([][]float64, sp.Rows),
-	}
-
-	for i := range analysis.CellSneakRatios {
-		analysis.CellSneakRatios[i] = make([]float64, sp.Cols)
-	}
-
-	totalRatio := 0.0
-	maxRatio := 0.0
-
-	for i := 0; i < sp.Rows; i++ {
-		for j := 0; j < sp.Cols; j++ {
-			sp.AnalyzeTarget(i, j, voltage)
-			ratio := sp.TotalSneakRatio
-			analysis.CellSneakRatios[i][j] = ratio
-			totalRatio += ratio
-
-			if ratio > maxRatio {
-				maxRatio = ratio
-				analysis.WorstCellRow = i
-				analysis.WorstCellCol = j
-			}
-		}
-	}
-
-	analysis.AvgSneakRatio = totalRatio / float64(sp.Rows*sp.Cols)
-	analysis.MaxSneakRatio = maxRatio
-
-	return analysis
 }

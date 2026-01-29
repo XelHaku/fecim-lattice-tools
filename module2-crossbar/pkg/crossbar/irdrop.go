@@ -291,10 +291,3 @@ func (ir *IRDropSimulator) ApplyMitigation(mit IRDropMitigation) {
 	ir.Simulate(100)
 }
 
-// CompareWithIdeal returns comparison between actual and ideal operation.
-func (ir *IRDropSimulator) CompareWithIdeal() (idealOutputs, actualOutputs []float64, errors []float64) {
-	idealOutputs = ir.GetIdealOutputs()
-	actualOutputs = ir.GetOutputCurrents()
-	errors = ir.GetOutputError()
-	return
-}
