@@ -21,13 +21,28 @@ const (
 	CategorySpecial      = "Special"
 )
 
+// ModelUsage indicates which physics models use a parameter.
+type ModelUsage struct {
+	Preisach bool // Used in Preisach hysteresis model
+	// Landau   bool // Reserved for future Landau model implementation
+}
+
+// String returns the model indicator string (e.g., "[P]" or "").
+func (m ModelUsage) String() string {
+	if m.Preisach {
+		return "[P]"
+	}
+	return ""
+}
+
 // FormattedProperty holds a material property with display formatting.
 type FormattedProperty struct {
-	Name        string  // Display name (e.g., "Remanent Polarization")
-	Value       string  // Formatted value with units (e.g., "25 µC/cm²")
-	RawValue    float64 // Raw value for sorting/comparison
-	Category    string  // Physics category
-	Description string  // Tooltip/help text
+	Name        string     // Display name (e.g., "Remanent Polarization")
+	Value       string     // Formatted value with units (e.g., "25 µC/cm²")
+	RawValue    float64    // Raw value for sorting/comparison
+	Category    string     // Physics category
+	Description string     // Tooltip/help text
+	Models      ModelUsage // Which physics models use this parameter
 }
 
 // FormatPolarization converts C/m² to µC/cm² display string.
@@ -184,24 +199,32 @@ func FormatPercent(v float64) string {
 	return fmt.Sprintf("%.1f%%", v*100)
 }
 
+// preisachModel is a helper for marking Preisach model parameters.
+var preisachModel = ModelUsage{Preisach: true}
+
 // GetMaterialProperties extracts all properties from a Material into formatted display structs.
+// Properties used in the Preisach hysteresis model are marked with [P].
 func GetMaterialProperties(mat *physics.Material) []FormattedProperty {
 	props := []FormattedProperty{}
 
 	// Polarization properties
+	// Pr is used in Preisach for initialization logging and normalization
 	props = append(props, FormattedProperty{
 		Name:        "Remanent Polarization (Pr)",
 		Value:       FormatPolarization(mat.PrCM2),
 		RawValue:    mat.PrCM2,
 		Category:    CategoryPolarization,
-		Description: "Polarization remaining after field removal",
+		Description: "Polarization remaining after field removal. Used in Preisach model initialization.",
+		Models:      preisachModel,
 	})
+	// Ps is a primary Preisach parameter for saturation and normalization
 	props = append(props, FormattedProperty{
 		Name:        "Saturation Polarization (Ps)",
 		Value:       FormatPolarization(mat.PsCM2),
 		RawValue:    mat.PsCM2,
 		Category:    CategoryPolarization,
-		Description: "Maximum achievable polarization",
+		Description: "Maximum achievable polarization. Primary parameter in Preisach model for hysteresis loop normalization.",
+		Models:      preisachModel,
 	})
 	if mat.AnalogStates > 0 {
 		props = append(props, FormattedProperty{
@@ -209,17 +232,19 @@ func GetMaterialProperties(mat *physics.Material) []FormattedProperty {
 			Value:       fmt.Sprintf("%d (%.1f bits)", mat.AnalogStates, math.Log2(float64(mat.AnalogStates))),
 			RawValue:    float64(mat.AnalogStates),
 			Category:    CategoryPolarization,
-			Description: "Number of discrete programmable states",
+			Description: "Number of discrete programmable states achievable through partial polarization switching.",
 		})
 	}
 
 	// Field properties
+	// Ec is the primary Preisach parameter for coercive field distribution
 	props = append(props, FormattedProperty{
 		Name:        "Coercive Field (Ec)",
 		Value:       FormatField(mat.EcVM),
 		RawValue:    mat.EcVM,
 		Category:    CategoryField,
-		Description: "Field required to switch polarization",
+		Description: "Field required to switch polarization. Primary Preisach parameter - sets distribution mean and width (σ = 0.25·Ec).",
+		Models:      preisachModel,
 	})
 	if mat.MemoryWindowV > 0 {
 		props = append(props, FormattedProperty{
@@ -227,7 +252,7 @@ func GetMaterialProperties(mat *physics.Material) []FormattedProperty {
 			Value:       FormatVoltage(mat.MemoryWindowV),
 			RawValue:    mat.MemoryWindowV,
 			Category:    CategoryField,
-			Description: "Voltage window between states",
+			Description: "Voltage window between on/off states. Determines margin for reliable state detection.",
 		})
 	}
 
@@ -237,37 +262,39 @@ func GetMaterialProperties(mat *physics.Material) []FormattedProperty {
 		Value:       FormatDimensionless(mat.EpsilonHF),
 		RawValue:    mat.EpsilonHF,
 		Category:    CategoryDielectric,
-		Description: "High-frequency relative permittivity",
+		Description: "High-frequency relative permittivity (ε∞). Affects capacitance at MHz-GHz frequencies.",
 	})
 	props = append(props, FormattedProperty{
 		Name:        "Permittivity (LF)",
 		Value:       FormatDimensionless(mat.EpsilonLF),
 		RawValue:    mat.EpsilonLF,
 		Category:    CategoryDielectric,
-		Description: "Low-frequency relative permittivity",
+		Description: "Low-frequency relative permittivity (εs). Affects DC capacitance and charge storage.",
 	})
 	props = append(props, FormattedProperty{
 		Name:        "Loss Tangent (tan δ)",
 		Value:       FormatPercent(mat.LossTangent),
 		RawValue:    mat.LossTangent,
 		Category:    CategoryDielectric,
-		Description: "Dielectric loss factor",
+		Description: "Dielectric loss factor. Ratio of energy dissipated to energy stored per cycle.",
 	})
 
 	// Geometry properties
+	// Thickness is used in advanced Preisach for voltage calculations
 	props = append(props, FormattedProperty{
 		Name:        "Film Thickness",
 		Value:       FormatThickness(mat.ThicknessM),
 		RawValue:    mat.ThicknessM,
 		Category:    CategoryGeometry,
-		Description: "Ferroelectric layer thickness",
+		Description: "Ferroelectric layer thickness. Used in Preisach DiscreteStates() for field-to-voltage conversion.",
+		Models:      preisachModel,
 	})
 	props = append(props, FormattedProperty{
 		Name:        "Cell Area",
 		Value:       FormatArea(mat.AreaM2),
 		RawValue:    mat.AreaM2,
 		Category:    CategoryGeometry,
-		Description: "Active device area",
+		Description: "Active device area. Determines total charge capacity (Q = P × A).",
 	})
 	if mat.CellPitchNm > 0 {
 		props = append(props, FormattedProperty{
@@ -275,61 +302,71 @@ func GetMaterialProperties(mat *physics.Material) []FormattedProperty {
 			Value:       fmt.Sprintf("%.0f nm", mat.CellPitchNm),
 			RawValue:    mat.CellPitchNm,
 			Category:    CategoryGeometry,
-			Description: "Center-to-center cell spacing",
+			Description: "Center-to-center cell spacing. Determines array density and potential crosstalk.",
 		})
 	}
 
 	// Dynamics properties
+	// Tau is used in Preisach KAI dynamics for domain switching simulation
 	props = append(props, FormattedProperty{
 		Name:        "Switching Time (τ)",
 		Value:       FormatTime(mat.TauS),
 		RawValue:    mat.TauS,
 		Category:    CategoryDynamics,
-		Description: "Characteristic switching time constant",
+		Description: "Characteristic switching time constant. Used in Preisach KAI dynamics: P(t) = Ps·(1 - exp(-(t/τ)^n)).",
+		Models:      preisachModel,
 	})
+	// Tau0 is used in Preisach Merz law for field-dependent switching time
 	props = append(props, FormattedProperty{
 		Name:        "Attempt Time (τ₀)",
 		Value:       FormatTime(mat.Tau0S),
 		RawValue:    mat.Tau0S,
 		Category:    CategoryDynamics,
-		Description: "Thermal activation attempt frequency inverse",
+		Description: "Thermal activation attempt time. Used in Preisach Merz law: τ(E) = τ₀·exp(Ea/|E|).",
+		Models:      preisachModel,
 	})
+	// Activation energy is used in Preisach Merz law
 	props = append(props, FormattedProperty{
 		Name:        "Activation Energy",
 		Value:       FormatEnergy(mat.ActivationEnergyEV),
 		RawValue:    mat.ActivationEnergyEV,
 		Category:    CategoryDynamics,
-		Description: "Energy barrier for switching",
+		Description: "Energy barrier for domain nucleation. Used in Preisach NLS dynamics for field-dependent switching.",
+		Models:      preisachModel,
 	})
+	// KAI exponent is used in Preisach domain switching simulation
 	props = append(props, FormattedProperty{
 		Name:        "KAI Exponent",
 		Value:       FormatDimensionless(mat.KAIExponent),
 		RawValue:    mat.KAIExponent,
 		Category:    CategoryDynamics,
-		Description: "Kolmogorov-Avrami-Ishibashi model exponent",
+		Description: "Kolmogorov-Avrami-Ishibashi exponent (n). n≈2 for 2D domain growth, n≈3 for 3D. Used in Preisach dynamics.",
+		Models:      preisachModel,
 	})
 
 	// Temperature properties
+	// Curie temperature is used in advanced Preisach for temperature-dependent Ec
 	props = append(props, FormattedProperty{
 		Name:        "Curie Temperature",
 		Value:       FormatTemperature(mat.CurieTempK),
 		RawValue:    mat.CurieTempK,
 		Category:    CategoryTemperature,
-		Description: "Ferroelectric transition temperature",
+		Description: "Ferroelectric transition temperature. Used in Preisach: Ec(T) = Ec·(1 - T/Tc)^0.5.",
+		Models:      preisachModel,
 	})
 	props = append(props, FormattedProperty{
 		Name:        "Temp. Coeff. Ec",
 		Value:       fmt.Sprintf("%.1e V/m/K", mat.TempCoeffEc),
 		RawValue:    mat.TempCoeffEc,
 		Category:    CategoryTemperature,
-		Description: "Temperature dependence of coercive field",
+		Description: "Temperature dependence of coercive field. Linear approximation: Ec(T) ≈ Ec + α·(T - T₀).",
 	})
 	props = append(props, FormattedProperty{
 		Name:        "Temp. Coeff. Pr",
 		Value:       fmt.Sprintf("%.1e C/m²/K", mat.TempCoeffPr),
 		RawValue:    mat.TempCoeffPr,
 		Category:    CategoryTemperature,
-		Description: "Temperature dependence of remanent polarization",
+		Description: "Temperature dependence of remanent polarization. Pr decreases as T approaches Tc.",
 	})
 	if mat.OperatingTempK > 0 {
 		props = append(props, FormattedProperty{
@@ -337,7 +374,7 @@ func GetMaterialProperties(mat *physics.Material) []FormattedProperty {
 			Value:       FormatTemperature(mat.OperatingTempK),
 			RawValue:    mat.OperatingTempK,
 			Category:    CategoryTemperature,
-			Description: "Designed operating temperature",
+			Description: "Designed operating temperature. Properties are optimized for this temperature.",
 		})
 	}
 
@@ -347,14 +384,14 @@ func GetMaterialProperties(mat *physics.Material) []FormattedProperty {
 		Value:       FormatEndurance(mat.EnduranceCycles),
 		RawValue:    mat.EnduranceCycles,
 		Category:    CategoryReliability,
-		Description: "Maximum write cycles before degradation",
+		Description: "Maximum write cycles before significant degradation. HZO typically achieves 10⁹-10¹² cycles.",
 	})
 	props = append(props, FormattedProperty{
 		Name:        "Retention Time",
 		Value:       FormatTime(mat.RetentionTimeS),
 		RawValue:    mat.RetentionTimeS,
 		Category:    CategoryReliability,
-		Description: "Data retention at specified temperature",
+		Description: "Data retention time at specified temperature. Typically >10 years at 85°C for mature devices.",
 	})
 	if mat.ImprintFieldVM > 0 {
 		props = append(props, FormattedProperty{
@@ -362,7 +399,7 @@ func GetMaterialProperties(mat *physics.Material) []FormattedProperty {
 			Value:       FormatField(mat.ImprintFieldVM),
 			RawValue:    mat.ImprintFieldVM,
 			Category:    CategoryReliability,
-			Description: "Voltage shift from polarization aging",
+			Description: "Voltage shift from polarization aging. Causes asymmetric hysteresis loop over time.",
 		})
 	}
 
@@ -373,16 +410,18 @@ func GetMaterialProperties(mat *physics.Material) []FormattedProperty {
 			Value:       FormatConductanceRatio(mat.TERRatio),
 			RawValue:    mat.TERRatio,
 			Category:    CategorySpecial,
-			Description: "Tunneling electroresistance ratio (FTJ)",
+			Description: "Tunneling electroresistance ratio for FTJ devices. High/low resistance state ratio.",
 		})
 	}
+	// Gmax/Gmin ratio is used in advanced Preisach for conductance mapping
 	if mat.GmaxGminRatio > 0 {
 		props = append(props, FormattedProperty{
 			Name:        "Gmax/Gmin Ratio",
 			Value:       FormatConductanceRatio(mat.GmaxGminRatio),
 			RawValue:    mat.GmaxGminRatio,
 			Category:    CategorySpecial,
-			Description: "Conductance on/off ratio",
+			Description: "Conductance on/off ratio. Used in Preisach polarizationToConductance() for FeFET modeling.",
+			Models:      preisachModel,
 		})
 	}
 	if mat.ScFraction > 0 {
@@ -391,7 +430,7 @@ func GetMaterialProperties(mat *physics.Material) []FormattedProperty {
 			Value:       fmt.Sprintf("%.0f%% (Al%.2fSc%.2fN)", mat.ScFraction*100, 1-mat.ScFraction, mat.ScFraction),
 			RawValue:    mat.ScFraction,
 			Category:    CategorySpecial,
-			Description: "Scandium fraction in AlScN alloy",
+			Description: "Scandium fraction in AlScN alloy. Higher Sc increases piezoelectric response but reduces stability.",
 		})
 	}
 	if mat.TRLLevel > 0 {
@@ -400,7 +439,7 @@ func GetMaterialProperties(mat *physics.Material) []FormattedProperty {
 			Value:       fmt.Sprintf("TRL %d", mat.TRLLevel),
 			RawValue:    float64(mat.TRLLevel),
 			Category:    CategorySpecial,
-			Description: "Technology Readiness Level (1-9)",
+			Description: "Technology Readiness Level (1-9). 1=basic research, 9=flight proven/production.",
 		})
 	}
 

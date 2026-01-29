@@ -56,16 +56,17 @@ func (mt *MaterialTable) CreateRenderer() fyne.WidgetRenderer {
 }
 
 // buildCategoryTable creates a table widget for a category's properties.
+// Displays property name with model indicator [P] and value. Tooltips show descriptions.
 func (mt *MaterialTable) buildCategoryTable(props []FormattedProperty) fyne.CanvasObject {
 	if len(props) == 0 {
 		return widget.NewLabel("No properties in this category")
 	}
 
-	// Create table with property name and value columns
+	// Create table with property name (with model indicator) and value columns
 	table := widget.NewTable(
-		// Data size
+		// Data size: 3 columns (model indicator, name, value)
 		func() (int, int) {
-			return len(props), 2
+			return len(props), 3
 		},
 		// Create cell
 		func() fyne.CanvasObject {
@@ -79,9 +80,16 @@ func (mt *MaterialTable) buildCategoryTable(props []FormattedProperty) fyne.Canv
 			prop := props[id.Row]
 			switch id.Col {
 			case 0:
+				// Model indicator column
+				modelStr := prop.Models.String()
+				label.SetText(modelStr)
+				label.TextStyle = fyne.TextStyle{Bold: true}
+			case 1:
+				// Property name
 				label.SetText(prop.Name)
 				label.TextStyle = fyne.TextStyle{Bold: false}
-			case 1:
+			case 2:
+				// Value
 				label.SetText(prop.Value)
 				label.TextStyle = fyne.TextStyle{Monospace: true}
 			}
@@ -89,11 +97,41 @@ func (mt *MaterialTable) buildCategoryTable(props []FormattedProperty) fyne.Canv
 	)
 
 	// Set column widths
-	table.SetColumnWidth(0, 200) // Property name
-	table.SetColumnWidth(1, 180) // Value
+	table.SetColumnWidth(0, 30)  // Model indicator [P]
+	table.SetColumnWidth(1, 200) // Property name
+	table.SetColumnWidth(2, 180) // Value
 
-	// Wrap in scroll container
-	return container.NewVScroll(table)
+	// Create info panel for showing tooltips
+	infoLabel := widget.NewLabel("Hover over a property to see its description.")
+	infoLabel.Wrapping = fyne.TextWrapWord
+	infoLabel.TextStyle = fyne.TextStyle{Italic: true}
+
+	// Track selection for tooltip display
+	table.OnSelected = func(id widget.TableCellID) {
+		if id.Row >= 0 && id.Row < len(props) {
+			prop := props[id.Row]
+			desc := prop.Description
+			if prop.Models.Preisach {
+				desc = "[P] = Used in Preisach model\n\n" + desc
+			}
+			infoLabel.SetText(desc)
+		}
+		// Unselect to allow re-selection
+		table.UnselectAll()
+	}
+
+	// Layout: table above, info panel below
+	infoBox := container.NewVBox(
+		canvas.NewRectangle(color.RGBA{60, 70, 90, 255}),
+		container.NewPadded(infoLabel),
+	)
+
+	return container.NewBorder(
+		nil,
+		infoBox,
+		nil, nil,
+		container.NewVScroll(table),
+	)
 }
 
 // MinSize returns the minimum size for the table.
