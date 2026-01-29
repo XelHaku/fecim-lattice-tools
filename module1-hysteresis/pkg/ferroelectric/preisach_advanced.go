@@ -96,21 +96,21 @@ func NewMayergoyzPreisach(material *HZOMaterial, gridSize int) *MayergoyzPreisac
 		material:    material,
 		numAlpha:    gridSize,
 		numBeta:     gridSize,
-		DistType:    DistGaussian, // Default to Gaussian
+		DistType:    DistGaussian,       // Default to Gaussian
 		AlphaMean:   material.Ec,        // +Ec
 		AlphaSigma:  material.Ec * 0.65, // 65% distribution - wider for more gradual switching
 		BetaMean:    -material.Ec,       // -Ec
 		BetaSigma:   material.Ec * 0.65, // Match alpha sigma
 		Correlation: 0.15,               // Low correlation for well-distributed hysterons
 		// Lorentzian defaults
-		LorentzAlphaC: material.Ec,        // Center at +Ec
-		LorentzAlphaW: material.Ec * 0.5,  // Half-width at half-maximum
-		LorentzBetaC:  -material.Ec,       // Center at -Ec
-		LorentzBetaW:  material.Ec * 0.5,  // Half-width at half-maximum
-		Temperature:   300,   // Room temperature (K)
-		CurieTemp:     723,   // HZO Curie temperature ~450°C
-		TempExponent:  0.5,   // Typical exponent
-		fatigueRate:   1e-10, // Very low fatigue for HZO
+		LorentzAlphaC: material.Ec,       // Center at +Ec
+		LorentzAlphaW: material.Ec * 0.5, // Half-width at half-maximum
+		LorentzBetaC:  -material.Ec,      // Center at -Ec
+		LorentzBetaW:  material.Ec * 0.5, // Half-width at half-maximum
+		Temperature:   300,               // Room temperature (K)
+		CurieTemp:     723,               // HZO Curie temperature ~450°C
+		TempExponent:  0.5,               // Typical exponent
+		fatigueRate:   1e-10,             // Very low fatigue for HZO
 		wakeupCycles:  100,
 		currentWakeup: 0.8, // Start partially woken up
 		Tau0NLS:       tau0NLS,
@@ -257,7 +257,6 @@ func (m *MayergoyzPreisach) initializeDistributionLorentzian() {
 		}
 	}
 }
-
 
 // temperatureCorrectedEc returns the coercive field at current temperature.
 // Ec(T) = Ec0 * (1 - T/Tc)^β
@@ -503,7 +502,8 @@ func (m *MayergoyzPreisach) GetEffectivePr() float64 {
 
 // GetSwitchingTime returns the field-dependent switching time using Merz's law.
 // This implements NLS (Nucleation-Limited Switching) dynamics:
-//   tau(E) = tau0 * exp(Ea / |E|)
+//
+//	tau(E) = tau0 * exp(Ea / |E|)
 //
 // At high fields (E >> Ea), switching is fast (~100 ps).
 // At low fields (E ~ Ec), switching slows dramatically (~100 ns).
@@ -664,10 +664,10 @@ func (m *MayergoyzPreisach) GetFatigueState() (cycles int, degradation float64, 
 // PreisachExport represents the serializable state of a Preisach model.
 // This structure captures all necessary information to restore a calibrated model.
 type PreisachExport struct {
-	Version     int     `json:"version"`      // Format version for compatibility
-	Material    string  `json:"material"`     // Material name
-	Temperature float64 `json:"temperature_k"` // Operating temperature (K)
-	GridSize    int     `json:"grid_size"`    // Grid discretization size
+	Version     int     `json:"version"`           // Format version for compatibility
+	Material    string  `json:"material"`          // Material name
+	Temperature float64 `json:"temperature_k"`     // Operating temperature (K)
+	GridSize    int     `json:"grid_size"`         // Grid discretization size
 	DistType    string  `json:"distribution_type"` // "gaussian" or "lorentzian"
 
 	// Hysteron states (compact int8 representation: -1 or +1)
@@ -691,7 +691,7 @@ type PreisachExport struct {
 	CurrentWakeup float64 `json:"current_wakeup"`
 
 	// Metadata
-	Timestamp string `json:"timestamp"` // ISO8601 timestamp
+	Timestamp string `json:"timestamp"`  // ISO8601 timestamp
 	NumStates int    `json:"num_states"` // Number of hysterons (for validation)
 }
 
@@ -705,7 +705,8 @@ type PreisachExport struct {
 //   - Fatigue/wake-up state
 //
 // Example:
-//   err := model.ExportState("data/preisach_states/hzo_300K.json")
+//
+//	err := model.ExportState("data/preisach_states/hzo_300K.json")
 func (m *MayergoyzPreisach) ExportState(filename string) error {
 	// Convert hysteron states to compact int8 array
 	states := make([]int8, len(m.hysterons))
@@ -779,7 +780,8 @@ func (m *MayergoyzPreisach) ExportState(filename string) error {
 //   - Material name mismatch generates warning but continues
 //
 // Example:
-//   err := model.ImportState("data/preisach_states/hzo_300K.json")
+//
+//	err := model.ImportState("data/preisach_states/hzo_300K.json")
 func (m *MayergoyzPreisach) ImportState(filename string) error {
 	// Read file
 	data, err := os.ReadFile(filename)
