@@ -347,46 +347,11 @@ func GetLevel(conductance float64) int {
 //
 // Level 0 → Gmin (10 µS), Level 29 → Gmax (100 µS)
 // For exponential model, midpoint (level 15) = geometric mean ≈ 31.6 µS
+//
+// Uses shared/physics.NormalizedToPhysicalRange for the base calculation.
 func (a *Array) GetPhysicalConductance(gNorm float64) float64 {
-	// Clamp to valid range
-	if gNorm < 0 {
-		gNorm = 0
-	}
-	if gNorm > 1 {
-		gNorm = 1
-	}
-
-	switch a.config.ConductanceModel {
-	case ConductanceExponential:
-		// G = Gmin * exp(ln(Gmax/Gmin) * gNorm)
-		// This gives exponential scaling where:
-		//   gNorm=0   → Gmin
-		//   gNorm=0.5 → sqrt(Gmin*Gmax) = geometric mean
-		//   gNorm=1   → Gmax
-		ratio := GMax / GMin
-		return GMin * math.Exp(math.Log(ratio)*gNorm)
-
-	case ConductanceLookup:
-		// Use calibration table if available
-		if len(a.config.ConductanceTable) == DefaultQuantizationLevels {
-			level := int(math.Round(gNorm * float64(DefaultQuantizationLevels-1)))
-			if level < 0 {
-				level = 0
-			}
-			if level >= len(a.config.ConductanceTable) {
-				level = len(a.config.ConductanceTable) - 1
-			}
-			return a.config.ConductanceTable[level]
-		}
-		// Fall back to linear if no table
-		fallthrough
-
-	case ConductanceLinear:
-		fallthrough
-	default:
-		// Linear interpolation (original model)
-		return GMin + gNorm*(GMax-GMin)
-	}
+	// Use shared physics implementation with array's conductance table for lookup
+	return physics.NormalizedToPhysicalRange(gNorm, a.config.ConductanceModel, GMin, GMax, a.config.ConductanceTable)
 }
 
 // GetPhysicalConductanceForCell returns the physical conductance for a specific cell,

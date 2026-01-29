@@ -4,8 +4,9 @@ package gui
 
 import (
 	"fmt"
+
 	"fecim-lattice-tools/config/physics"
-	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
+	sharedphysics "fecim-lattice-tools/shared/physics"
 	"fecim-lattice-tools/shared/peripherals"
 )
 
@@ -132,7 +133,7 @@ type DeviceState struct {
 	selectedCol int
 
 	// Material physics model (from hysteresis calibration)
-	material *ferroelectric.HZOMaterial
+	material *sharedphysics.HZOMaterial
 
 	// Peripherals reference
 	tia *peripherals.TIA
@@ -158,7 +159,7 @@ func NewDeviceState(rows, cols int, tia *peripherals.TIA, adc *peripherals.ADC) 
 		saturated:    make([]bool, rows),
 		selectedRow:  0,
 		selectedCol:  0,
-		material:     ferroelectric.FeCIMMaterial(), // Default to FeCIM material
+		material:     sharedphysics.FeCIMMaterial(), // Default to FeCIM material
 		calibParams:  loadCalibrationParams(),       // Load from physics.yaml
 		tia:          tia,
 		adc:          adc,
@@ -187,7 +188,7 @@ func NewDeviceState(rows, cols int, tia *peripherals.TIA, adc *peripherals.ADC) 
 func (ds *DeviceState) updateVoltageRanges() {
 	// Ensure material is set - use default FeCIM if not
 	if ds.material == nil {
-		ds.material = ferroelectric.FeCIMMaterial()
+		ds.material = sharedphysics.FeCIMMaterial()
 	}
 
 	// Get material's coercive voltage (Vc = Ec * thickness)
@@ -229,13 +230,13 @@ func (ds *DeviceState) updateVoltageRanges() {
 }
 
 // SetMaterial changes the ferroelectric material used for conductance calculation
-func (ds *DeviceState) SetMaterial(mat *ferroelectric.HZOMaterial) {
+func (ds *DeviceState) SetMaterial(mat *sharedphysics.HZOMaterial) {
 	ds.material = mat
 	ds.updateVoltageRanges() // Recalculate voltage ranges for new material
 }
 
 // GetMaterial returns the current material
-func (ds *DeviceState) GetMaterial() *ferroelectric.HZOMaterial {
+func (ds *DeviceState) GetMaterial() *sharedphysics.HZOMaterial {
 	return ds.material
 }
 

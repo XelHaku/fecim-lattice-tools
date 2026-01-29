@@ -4,6 +4,8 @@ package render
 
 import (
 	"math"
+
+	"fecim-lattice-tools/shared/physics"
 )
 
 // Config contains rendering configuration.
@@ -172,9 +174,9 @@ func (cd *CellDisplay) GetColor() Color {
 	return cd.ColorMap.PolarizationToColor(cd.Polarization)
 }
 
-// FeCIMLevels is the number of discrete analog states per Dr. Tour's specs.
+// FeCIMLevels is re-exported from shared/physics for backward compatibility.
 // "It's got 30 discrete states. So it's not 0-1-0-1." — Dr. Tour
-const FeCIMLevels = 30
+const FeCIMLevels = physics.DefaultLevels
 
 // LevelIndicator displays the 30 discrete FeCIM levels.
 type LevelIndicator struct {

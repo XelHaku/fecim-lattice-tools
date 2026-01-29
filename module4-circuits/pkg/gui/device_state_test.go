@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
+	sharedphysics "fecim-lattice-tools/shared/physics"
 	"fecim-lattice-tools/shared/peripherals"
 )
 
@@ -233,11 +233,11 @@ func TestUpdateVoltageRanges_WriteRange(t *testing.T) {
 func TestUpdateVoltageRanges_MaterialCoerciveVoltage(t *testing.T) {
 	resetGlobalState()
 
-	testMaterials := []*ferroelectric.HZOMaterial{
-		ferroelectric.FeCIMMaterial(),
-		ferroelectric.DefaultHZO(),
-		ferroelectric.LiteratureSuperlattice(),
-		ferroelectric.CryogenicHZO(),
+	testMaterials := []*sharedphysics.HZOMaterial{
+		sharedphysics.FeCIMMaterial(),
+		sharedphysics.DefaultHZO(),
+		sharedphysics.LiteratureSuperlattice(),
+		sharedphysics.CryogenicHZO(),
 	}
 
 	for _, mat := range testMaterials {
@@ -265,7 +265,7 @@ func TestUpdateVoltageRanges_MaxPracticalVoltageClamp(t *testing.T) {
 	ds := newTestDeviceState(8, 8)
 
 	// Create a material with very high Ec that would exceed 3V
-	highEcMaterial := &ferroelectric.HZOMaterial{
+	highEcMaterial := &sharedphysics.HZOMaterial{
 		Name:      "High Ec Test",
 		Ec:        5e8, // 5 MV/cm
 		Thickness: 20e-9,

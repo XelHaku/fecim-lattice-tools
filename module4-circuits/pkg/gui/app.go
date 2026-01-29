@@ -16,17 +16,18 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/shared/peripherals"
+	"fecim-lattice-tools/shared/physics"
 	sharedtheme "fecim-lattice-tools/shared/theme"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // Constants
 const (
-	FeCIMLevels    = 30  // Always 30 levels for FeCIM
-	MaxArraySize   = 128 // Maximum array dimension
-	DefaultSize    = 8   // Default array size
-	DefaultDACBits = 5   // Default DAC resolution (matches peripherals.DefaultDAC)
-	DefaultADCBits = 5   // Default ADC resolution (matches peripherals.DefaultADC)
+	FeCIMLevels    = physics.DefaultLevels // 30 levels for FeCIM (from shared/physics)
+	MaxArraySize   = 128                   // Maximum array dimension
+	DefaultSize    = 8                     // Default array size
+	DefaultDACBits = 5                     // Default DAC resolution (matches peripherals.DefaultDAC)
+	DefaultADCBits = 5                     // Default ADC resolution (matches peripherals.DefaultADC)
 )
 
 // CircuitsApp is the main application for the peripheral circuits demo.

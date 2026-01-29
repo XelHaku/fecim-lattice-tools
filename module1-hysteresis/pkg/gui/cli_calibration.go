@@ -18,6 +18,7 @@ type CLICalibrationOptions struct {
 	Temperature  float64 // Temperature in Kelvin (default: 300)
 	Force        bool    // Force recalibration even if file exists
 	Verbose      bool    // Print progress messages
+	Verify       bool    // Run verification after calibration
 }
 
 // RunCLICalibration performs calibration without GUI and saves results to file.
@@ -83,6 +84,26 @@ func RunCLICalibration(opts CLICalibrationOptions) error {
 		if opts.Verbose {
 			fmt.Printf("  Saved: %s (%.2fs)\n", calibFile, time.Since(start).Seconds())
 		}
+
+		// Run verification if requested
+		if opts.Verify {
+			if opts.Verbose {
+				fmt.Printf("  Verifying calibration...\n")
+			}
+			successRate, err := verifyCalibration(mat, opts)
+			if err != nil {
+				return fmt.Errorf("verification failed for %s: %w", mat.Name, err)
+			}
+			if opts.Verbose {
+				fmt.Printf("  Verification: %.1f%% target accuracy\n", successRate*100)
+			}
+			// Warn but don't fail for moderate accuracy - extreme levels have physics limitations
+			if successRate < 0.70 {
+				return fmt.Errorf("verification failed for %s: only %.1f%% accuracy (need 70%%+ minimum)", mat.Name, successRate*100)
+			} else if successRate < 0.85 && opts.Verbose {
+				fmt.Printf("    Note: %.1f%% accuracy (extreme levels have physics limitations)\n", successRate*100)
+			}
+		}
 	}
 
 	return nil
@@ -97,8 +118,8 @@ func calibrateMaterial(mat *ferroelectric.HZOMaterial, opts CLICalibrationOption
 	}
 	tempK := opts.Temperature
 
-	// Create Preisach model with high resolution
-	preisachGridSize := 200
+	// Create Preisach model with very high resolution for precise calibration
+	preisachGridSize := 400 // Increased from 200 for better level resolution
 	preisach := ferroelectric.NewMayergoyzPreisach(mat, preisachGridSize)
 	preisach.SetTemperature(tempK)
 
@@ -107,7 +128,7 @@ func calibrateMaterial(mat *ferroelectric.HZOMaterial, opts CLICalibrationOption
 	if Ec == 0 {
 		Ec = mat.Ec
 	}
-	Emax := 1.5 * Ec
+	Emax := 2.0 * Ec // Wider range for reliable calibration
 	Ps := mat.Ps
 
 	maxLevel := numLevels - 1
@@ -140,34 +161,48 @@ func calibrateMaterial(mat *ferroelectric.HZOMaterial, opts CLICalibrationOption
 		relaxCompDown[i] = 0.05 * 4 * normalizedPos * (1 - normalizedPos)
 	}
 
+	// Helper to test what level results from a field (ascending)
+	testLevelAsc := func(testE float64) int {
+		preisach.Reset()
+		preisach.Update(-Emax)
+		preisach.Update(0)
+		preisach.Update(testE)
+		P := preisach.Update(0)
+		normalizedP := P / Ps
+		level := int(math.Round((normalizedP + 1) / 2 * float64(maxLevel)))
+		if level < 0 {
+			level = 0
+		} else if level > maxLevel {
+			level = maxLevel
+		}
+		return level
+	}
+
 	// Calibrate ascending (from -Ps to each level)
 	for level := 1; level < numLevels; level++ {
-		targetP := -Ps + float64(level)/float64(maxLevel)*2*Ps
-
-		// Binary search for field
+		// Binary search for field that hits target level
 		lowE := Ec * 0.3
 		highE := Ec * 2.0
-		var bestE float64
+		bestE := (lowE + highE) / 2
+		bestDiff := numLevels
 
-		for iter := 0; iter < 20; iter++ {
+		for iter := 0; iter < 25; iter++ {
 			midE := (lowE + highE) / 2
-
-			// Reset to -Ps
-			preisach.Reset()
-			preisach.Update(-Emax)
-			preisach.Update(0)
-
-			// Apply test field
-			preisach.Update(midE)
-			preisach.Update(0)
-
-			P := preisach.Polarization()
+			resultLevel := testLevelAsc(midE)
 			bestE = midE
 
-			if P < targetP {
-				lowE = midE
+			diff := resultLevel - level
+			if absInt(diff) < absInt(bestDiff) {
+				bestDiff = diff
+				bestE = midE
+			}
+
+			if resultLevel == level {
+				break // Exact match
+			} else if resultLevel < level {
+				lowE = midE // Need higher field
 			} else {
-				highE = midE
+				highE = midE // Need lower field
 			}
 
 			if highE-lowE < Ec*0.01 {
@@ -180,33 +215,49 @@ func calibrateMaterial(mat *ferroelectric.HZOMaterial, opts CLICalibrationOption
 		calibUpHigh[level] = highE
 	}
 
+	// Helper to test what level results from a field (descending)
+	testLevelDesc := func(testE float64) int {
+		preisach.Reset()
+		preisach.Update(Emax)
+		preisach.Update(0)
+		preisach.Update(testE)
+		P := preisach.Update(0)
+		normalizedP := P / Ps
+		level := int(math.Round((normalizedP + 1) / 2 * float64(maxLevel)))
+		if level < 0 {
+			level = 0
+		} else if level > maxLevel {
+			level = maxLevel
+		}
+		return level
+	}
+
 	// Calibrate descending (from +Ps to each level)
 	for level := numLevels - 2; level >= 0; level-- {
-		targetP := Ps - float64(numLevels-1-level)/float64(maxLevel)*2*Ps
+		// Binary search for field (negative) that hits target level
+		lowE := -Ec * 2.0  // More negative
+		highE := -Ec * 0.3 // Less negative
+		bestE := (lowE + highE) / 2
+		bestDiff := numLevels
 
-		// Binary search for field (negative)
-		lowE := -Ec * 2.0
-		highE := -Ec * 0.3
-		var bestE float64
-
-		for iter := 0; iter < 20; iter++ {
+		for iter := 0; iter < 25; iter++ {
 			midE := (lowE + highE) / 2
-
-			// Reset to +Ps
-			preisach.Reset()
-			preisach.Update(Emax)
-			preisach.Update(0)
-
-			// Apply test field
-			preisach.Update(midE)
-			preisach.Update(0)
-
-			P := preisach.Polarization()
+			resultLevel := testLevelDesc(midE)
 			bestE = midE
 
-			if P > targetP {
+			diff := resultLevel - level
+			if absInt(diff) < absInt(bestDiff) {
+				bestDiff = diff
+				bestE = midE
+			}
+
+			if resultLevel == level {
+				break // Exact match
+			} else if resultLevel > level {
+				// Need more negative field to go lower
 				highE = midE
 			} else {
+				// Need less negative field (result too low)
 				lowE = midE
 			}
 
@@ -218,6 +269,32 @@ func calibrateMaterial(mat *ferroelectric.HZOMaterial, opts CLICalibrationOption
 		calibrationDown[level] = bestE
 		calibDownLow[level] = lowE
 		calibDownHigh[level] = highE
+	}
+
+	// Enforce strict monotonicity with minimum step size
+	minStep := Ec * 0.02 // 2% of Ec minimum separation
+
+	// Ascending: each level must require strictly higher field
+	// Two-pass algorithm to handle both spikes and plateaus
+	for pass := 0; pass < 2; pass++ {
+		for i := 1; i < numLevels; i++ {
+			minAllowed := calibrationUp[i-1] + minStep
+			if calibrationUp[i] < minAllowed {
+				calibrationUp[i] = minAllowed
+			}
+		}
+	}
+
+	// Descending: each level must require strictly more negative field
+	// For descending: index 0 = level 0 (most negative = -Ps)
+	// So calibrationDown[i] should be MORE negative than calibrationDown[i+1]
+	for pass := 0; pass < 2; pass++ {
+		for i := numLevels - 2; i >= 0; i-- {
+			maxAllowed := calibrationDown[i+1] - minStep // More negative
+			if calibrationDown[i] > maxAllowed {
+				calibrationDown[i] = maxAllowed
+			}
+		}
 	}
 
 	// Build calibration data structure
@@ -246,6 +323,147 @@ func calibrateMaterial(mat *ferroelectric.HZOMaterial, opts CLICalibrationOption
 
 	// Save to file
 	return saveCalibrationData(mat.Name, calData)
+}
+
+// verifyCalibration tests that calibrated fields actually hit target levels
+func verifyCalibration(mat *ferroelectric.HZOMaterial, opts CLICalibrationOptions) (float64, error) {
+	numLevels := mat.GetNumLevels()
+	if opts.NumLevels > 0 {
+		numLevels = opts.NumLevels
+	}
+	tempK := opts.Temperature
+	maxLevel := numLevels - 1
+	if maxLevel < 1 {
+		maxLevel = 1
+	}
+
+	// Create fresh Preisach model
+	preisach := ferroelectric.NewMayergoyzPreisach(mat, 200)
+	preisach.SetTemperature(tempK)
+
+	Ec := preisach.GetEffectiveEc()
+	if Ec == 0 {
+		Ec = mat.Ec
+	}
+	Emax := 2.0 * Ec
+	Ps := mat.Ps
+
+	// Load calibration data
+	calData, err := loadCalibrationData(mat.Name)
+	if err != nil {
+		return 0, fmt.Errorf("failed to load calibration: %w", err)
+	}
+
+	tempKRounded := int(math.Round(tempK))
+	cal, ok := calData.Calibrations[tempKRounded]
+	if !ok {
+		return 0, fmt.Errorf("no calibration for temperature %dK", tempKRounded)
+	}
+
+	// Test ascending calibration (saturate negative, apply field)
+	successAsc := 0
+	var failedAsc []string
+	for targetLevel := 1; targetLevel < numLevels; targetLevel++ {
+		// Saturate negative
+		preisach.Reset()
+		for i := 0; i < 50; i++ {
+			preisach.Update(-Emax)
+		}
+		preisach.Update(0)
+
+		// Apply calibrated field
+		writeE := cal.CalibrationUp[targetLevel]
+		preisach.Update(writeE)
+		P := preisach.Update(0)
+
+		// Calculate resulting level
+		normalizedP := P / Ps
+		resultLevel := int(math.Round((normalizedP + 1) / 2 * float64(maxLevel)))
+		if resultLevel < 0 {
+			resultLevel = 0
+		} else if resultLevel > maxLevel {
+			resultLevel = maxLevel
+		}
+
+		// Check if hit target (allow ±1 tolerance)
+		if absInt(resultLevel-targetLevel) <= 1 {
+			successAsc++
+		} else if opts.Verbose {
+			failedAsc = append(failedAsc, fmt.Sprintf("asc[%d]→%d", targetLevel, resultLevel))
+		}
+	}
+
+	// Test descending calibration (saturate positive, apply field)
+	successDesc := 0
+	var failedDesc []string
+	for targetLevel := 0; targetLevel < numLevels-1; targetLevel++ {
+		// Saturate positive
+		preisach.Reset()
+		for i := 0; i < 50; i++ {
+			preisach.Update(Emax)
+		}
+		preisach.Update(0)
+
+		// Apply calibrated field
+		writeE := cal.CalibrationDown[targetLevel]
+		preisach.Update(writeE)
+		P := preisach.Update(0)
+
+		// Calculate resulting level
+		normalizedP := P / Ps
+		resultLevel := int(math.Round((normalizedP + 1) / 2 * float64(maxLevel)))
+		if resultLevel < 0 {
+			resultLevel = 0
+		} else if resultLevel > maxLevel {
+			resultLevel = maxLevel
+		}
+
+		// Check if hit target (allow ±1 tolerance)
+		if absInt(resultLevel-targetLevel) <= 1 {
+			successDesc++
+		} else if opts.Verbose {
+			failedDesc = append(failedDesc, fmt.Sprintf("desc[%d]→%d", targetLevel, resultLevel))
+		}
+	}
+
+	// Print failures if verbose
+	if opts.Verbose && (len(failedAsc) > 0 || len(failedDesc) > 0) {
+		if len(failedAsc) > 0 {
+			fmt.Printf("    Failed asc: %v\n", failedAsc)
+		}
+		if len(failedDesc) > 0 {
+			fmt.Printf("    Failed desc: %v\n", failedDesc)
+		}
+	}
+
+	// Calculate overall success rate
+	totalTests := (numLevels - 1) * 2 // Skip level 0 for ascending, level N-1 for descending
+	totalSuccess := successAsc + successDesc
+	return float64(totalSuccess) / float64(totalTests), nil
+}
+
+// absInt returns the absolute value of an integer (for CLI calibration)
+func absInt(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
+// loadCalibrationData loads calibration from JSON file
+func loadCalibrationData(materialName string) (*CalibrationData, error) {
+	filePath := calibrationFileForMaterial(materialName)
+	f, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	var data CalibrationData
+	if err := json.NewDecoder(f).Decode(&data); err != nil {
+		return nil, err
+	}
+	return &data, nil
 }
 
 // saveCalibrationData writes calibration to JSON file

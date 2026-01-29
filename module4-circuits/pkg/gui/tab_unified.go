@@ -17,7 +17,7 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
-	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
+	sharedphysics "fecim-lattice-tools/shared/physics"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
@@ -132,7 +132,7 @@ func (ca *CircuitsApp) createSignalChainHeader() fyne.CanvasObject {
 
 // createMaterialSelector creates the ferroelectric material selection dropdown
 func (ca *CircuitsApp) createMaterialSelector() fyne.CanvasObject {
-	materials := ferroelectric.AllMaterials()
+	materials := sharedphysics.AllMaterials()
 	materialNames := make([]string, len(materials))
 	for i, m := range materials {
 		materialNames[i] = m.Name

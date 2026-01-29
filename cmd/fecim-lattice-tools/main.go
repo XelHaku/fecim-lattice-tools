@@ -433,6 +433,7 @@ func main() {
 	calibrateFlag := flag.Bool("calibrate", false, "Run hysteresis calibration and exit (no GUI)")
 	materialFlag := flag.String("material", "all", "Material to calibrate (use 'all' for all materials, or specify name)")
 	forceFlag := flag.Bool("force", false, "Force recalibration even if calibration file exists")
+	verifyFlag := flag.Bool("verify", false, "Verify calibration accuracy after calibrating")
 	listMaterialsFlag := flag.Bool("list-materials", false, "List available materials and exit")
 	flag.Parse()
 
@@ -453,6 +454,7 @@ func main() {
 			Temperature:  300,
 			Force:        *forceFlag,
 			Verbose:      true,
+			Verify:       *verifyFlag,
 		}
 		if err := demo1gui.RunCLICalibration(opts); err != nil {
 			fmt.Fprintf(os.Stderr, "Calibration error: %v\n", err)

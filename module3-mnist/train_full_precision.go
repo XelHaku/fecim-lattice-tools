@@ -15,13 +15,14 @@ import (
 	"time"
 
 	"fecim-lattice-tools/module3-mnist/pkg/mnist"
+	"fecim-lattice-tools/shared/physics"
 )
 
 const (
-	inputSize  = 784
-	hiddenSize = 128
-	outputSize = 10
-	feCIMLevels = 30
+	inputSize   = 784
+	hiddenSize  = 128
+	outputSize  = 10
+	feCIMLevels = physics.DefaultLevels
 )
 
 // SimpleNetwork is a 2-layer network trained with full precision

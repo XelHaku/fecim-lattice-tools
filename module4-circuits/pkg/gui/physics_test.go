@@ -6,7 +6,7 @@ import (
 	"math"
 	"testing"
 
-	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
+	sharedphysics "fecim-lattice-tools/shared/physics"
 	"fecim-lattice-tools/shared/peripherals"
 )
 
@@ -74,7 +74,7 @@ func TestMVMEquation(t *testing.T) {
 // TestConductanceFromWeight verifies G = material.DiscreteLevel(weight, quantLevels)
 // Per material.go FeFET physics model
 func TestConductanceFromWeight(t *testing.T) {
-	mat := ferroelectric.FeCIMMaterial()
+	mat := sharedphysics.FeCIMMaterial()
 	quantLevels := 30
 
 	// Test boundary conditions
@@ -192,10 +192,10 @@ func TestADCQuantization(t *testing.T) {
 // TestCoerciveVoltageDerivation verifies Vc = Ec × thickness
 // Per VOLTAGE_RULES.md Section 2 "Coercive Voltage (Vc)"
 func TestCoerciveVoltageDerivation(t *testing.T) {
-	testMaterials := []*ferroelectric.HZOMaterial{
-		ferroelectric.DefaultHZO(),
-		ferroelectric.FeCIMMaterial(),
-		ferroelectric.LiteratureSuperlattice(),
+	testMaterials := []*sharedphysics.HZOMaterial{
+		sharedphysics.DefaultHZO(),
+		sharedphysics.FeCIMMaterial(),
+		sharedphysics.LiteratureSuperlattice(),
 	}
 
 	for _, mat := range testMaterials {
@@ -432,7 +432,7 @@ func TestMVMOutputRangeMatchesADC(t *testing.T) {
 // TestConductanceRange verifies conductance bounds from material
 // Per material.go: Gmin = 1µS (HRS), Gmax = 100µS (LRS), ratio ~100x
 func TestConductanceRange(t *testing.T) {
-	mat := ferroelectric.FeCIMMaterial()
+	mat := sharedphysics.FeCIMMaterial()
 
 	// Verify Gmin and Gmax are set
 	if mat.Gmin <= 0 {

@@ -15,6 +15,7 @@ import (
 
 	"fecim-lattice-tools/module3-mnist/pkg/core"
 	"fecim-lattice-tools/shared/logging"
+	"fecim-lattice-tools/shared/physics"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
@@ -27,7 +28,7 @@ const (
 	MNISTTotalMACs  = 101632 // Total MACs per inference: (784×128) + (128×10) = 101632 (reference value)
 
 	// FeCIM hardware parameters
-	FeCIMDefaultLevels = 30   // Default levels (can be changed in UI)
+	FeCIMDefaultLevels = physics.DefaultLevels // Default levels (can be changed in UI)
 	FeCIMDefaultNoise  = 0.01 // 1% standard deviation (typical production)
 	FeCIMDefaultADC    = 8    // 8-bit ADC resolution
 	FeCIMDefaultDAC    = 8    // 8-bit DAC resolution

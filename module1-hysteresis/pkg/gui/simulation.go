@@ -648,10 +648,10 @@ func (a *App) simulationLoop() {
 					var resetE float64
 					if targetLevel > startLevel {
 						// Going UP: first saturate negative (reach level 1)
-						resetE = -1.5 * Ec // Match calibration saturation
+						resetE = -2.0 * Ec // Match calibration saturation (2.0×Ec)
 					} else {
 						// Going DOWN: first saturate positive (reach level N)
-						resetE = 1.5 * Ec // Match calibration saturation
+						resetE = 2.0 * Ec // Match calibration saturation (2.0×Ec)
 					}
 
 					// Ramp to reset field
@@ -935,10 +935,10 @@ func (a *App) simulationLoop() {
 					// Calibration was measured from saturated states, so we must match that
 					if targetLevel > midLevel {
 						// Target in upper half: saturate negative first (reach level 1), then apply ascending cal
-						resetE = -1.5 * Ec // Match calibration saturation
+						resetE = -2.0 * Ec // Match calibration saturation (2.0×Ec)
 					} else {
 						// Target in lower half: saturate positive first (reach level N), then apply descending cal
-						resetE = 1.5 * Ec // Match calibration saturation
+						resetE = 2.0 * Ec // Match calibration saturation (2.0×Ec)
 					}
 					a.wrdSaturateE = resetE // Store for logging
 
@@ -1763,7 +1763,7 @@ func (a *App) calibrateLevels() {
 		// Fallback to material Ec if temperature correction returns 0
 		Ec = a.material.Ec
 	}
-	Emax := 1.5 * Ec // Go slightly beyond saturation
+	Emax := 2.0 * Ec // Go well beyond saturation for reliable calibration
 	numLevels := a.numLevels
 	maxLevel := numLevels - 1
 	if maxLevel < 1 {
@@ -1876,8 +1876,8 @@ func (a *App) calibrateLevels() {
 		ratio := float64(targetLevel) / float64(maxLevel)
 		initialGuess := Ec * (0.8 + ratio*1.2) // Range: 0.8*Ec to 2.0*Ec
 
-		// Binary search to find exact field
-		lowE := Ec * 0.5
+		// Binary search to find exact field - use full bounds range
+		lowE := Ec * 0.3  // Match initialized bounds for full coverage
 		highE := Emax
 		bestE := initialGuess
 		bestDiff := numLevels // Start with worst case
@@ -1916,9 +1916,9 @@ func (a *App) calibrateLevels() {
 		ratio := float64(maxLevel-targetLevel) / float64(maxLevel)
 		initialGuess := -Ec * (0.8 + ratio*1.2) // Range: -0.8*Ec to -2.0*Ec
 
-		// Binary search to find exact field (negative values)
+		// Binary search to find exact field (negative values) - use full bounds range
 		lowE := -Emax      // More negative
-		highE := -Ec * 0.5 // Less negative
+		highE := -Ec * 0.3 // Less negative - match initialized bounds
 		bestE := initialGuess
 		bestDiff := numLevels
 
@@ -2138,17 +2138,20 @@ func (a *App) updateCalibrationUp(targetIdx int, levelError int, Ec float64) {
 	// Don't call enforceMonotonicityUp - cascade handles it and won't fight with newVal
 	a.lastErrorUp[targetIdx] = levelError
 
-	// Update relaxation compensation based on error direction
+	// Update relaxation compensation based on error direction (exponential moving average for smooth convergence)
 	if targetIdx < len(a.relaxCompUp) {
-		relaxAdjust := 0.01 // 1% adjustment per retry
+		relaxAdjust := 0.02 // 2% target adjustment per retry (more aggressive for faster convergence)
 		oldRelaxComp := a.relaxCompUp[targetIdx]
+		var targetRelax float64
 		if levelError > 0 {
 			// Overshot: read level > target, reduce compensation (we overshot too much)
-			a.relaxCompUp[targetIdx] -= relaxAdjust
+			targetRelax = oldRelaxComp - relaxAdjust*float64(levelError) // Scale by error magnitude
 		} else {
 			// Undershot: read level < target, increase compensation (need more overshoot)
-			a.relaxCompUp[targetIdx] += relaxAdjust
+			targetRelax = oldRelaxComp - relaxAdjust*float64(levelError) // levelError is negative, so this adds
 		}
+		// Exponential moving average: 70% old + 30% new for smooth convergence
+		a.relaxCompUp[targetIdx] = 0.7*oldRelaxComp + 0.3*targetRelax
 		// Clamp to reasonable bounds [-0.05, 0.25]
 		if a.relaxCompUp[targetIdx] < -0.05 {
 			a.relaxCompUp[targetIdx] = -0.05
@@ -2257,17 +2260,20 @@ func (a *App) updateCalibrationDown(targetIdx int, levelError int, Ec float64) {
 	// Don't call enforceMonotonicityDown - cascade handles it and won't fight with newVal
 	a.lastErrorDown[targetIdx] = levelError
 
-	// Update relaxation compensation based on error direction
+	// Update relaxation compensation based on error direction (exponential moving average for smooth convergence)
 	if targetIdx < len(a.relaxCompDown) {
-		relaxAdjust := 0.01 // 1% adjustment per retry
+		relaxAdjust := 0.02 // 2% target adjustment per retry (more aggressive for faster convergence)
 		oldRelaxComp := a.relaxCompDown[targetIdx]
+		var targetRelax float64
 		if levelError < 0 {
 			// Went too far down (error < 0), reduce compensation
-			a.relaxCompDown[targetIdx] -= relaxAdjust
+			targetRelax = oldRelaxComp + relaxAdjust*float64(levelError) // levelError is negative, so this subtracts
 		} else {
 			// Didn't go down enough (error > 0), increase compensation
-			a.relaxCompDown[targetIdx] += relaxAdjust
+			targetRelax = oldRelaxComp + relaxAdjust*float64(levelError) // Scale by error magnitude
 		}
+		// Exponential moving average: 70% old + 30% new for smooth convergence
+		a.relaxCompDown[targetIdx] = 0.7*oldRelaxComp + 0.3*targetRelax
 		// Clamp to reasonable bounds [-0.05, 0.25]
 		if a.relaxCompDown[targetIdx] < -0.05 {
 			a.relaxCompDown[targetIdx] = -0.05

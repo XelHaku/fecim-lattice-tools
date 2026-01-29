@@ -6,13 +6,16 @@ package core
 import (
 	"fmt"
 	"math"
+
+	"fecim-lattice-tools/shared/physics"
 )
 
 // Note: logger is shared with network.go (var log = logging.NewLogger("mnist-core"))
 
 // FeCIMLevels is the number of discrete conductance levels in FeCIM hardware.
 // This is the key physical constraint from Dr. Tour's research.
-const FeCIMLevels = 30
+// Re-exported from shared/physics for backward compatibility.
+const FeCIMLevels = physics.DefaultLevels
 
 // QuantizeWeights quantizes FP weights to N discrete levels
 // using symmetric range [-W_max, +W_max] with linear mapping.

@@ -1,6 +1,8 @@
 // Package peripherals provides shared peripheral circuit configurations for FeCIM systems.
 package peripherals
 
+import "fecim-lattice-tools/shared/physics"
+
 // Standard peripheral configuration constants for FeCIM 30-level operation.
 const (
 	// DefaultBits is the standard resolution for ADC/DAC (5 bits = 32 levels, we use 30).
@@ -10,7 +12,8 @@ const (
 	DefaultLevels = 32
 
 	// FeCIMLevels is the actual number of analog states used in FeCIM.
-	FeCIMLevels = 30
+	// Re-exported from shared/physics for backward compatibility.
+	FeCIMLevels = physics.DefaultLevels
 )
 
 // DAC reference voltage constants

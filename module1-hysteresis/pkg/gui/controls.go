@@ -10,7 +10,9 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
+	"fecim-lattice-tools/config/physics"
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 func (a *App) createControlsPanel() fyne.CanvasObject {
@@ -405,9 +407,18 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		trailLabel.SetText(fmt.Sprintf("Trail: %d", int(v)))
 	}
 
+	// Material picker button for detailed material selection
+	materialPickerBtn := sharedwidgets.CreateMaterialPickerButton(
+		a.mainWindow,
+		a.getCurrentMaterialID(),
+		func(id string, mat *physics.Material) {
+			a.onMaterialPickerSelected(id, mat)
+		},
+	)
+
 	// Compact layout
 	return container.NewVBox(
-		a.materialSelect,
+		container.NewBorder(nil, nil, nil, materialPickerBtn, a.materialSelect),
 		a.waveformSelect,
 		a.levelsLabel,
 		a.levelsEntry,
@@ -421,5 +432,137 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		trailSlider,
 		container.NewHBox(a.pauseBtn, resetBtn, eli5Btn),
 	)
+}
+
+// getCurrentMaterialID returns the ID of the currently selected material.
+func (a *App) getCurrentMaterialID() string {
+	// Map material names to IDs
+	nameToID := map[string]string{
+		"HZO (Si-doped)":                       "default_hzo",
+		"FeCIM HZO":                            "fecim_hzo",
+		"FeCIM HZO (TARGET - NOT DEMONSTRATED)": "fecim_hzo_target",
+		"Literature Superlattice (Cheema 2020)": "literature_superlattice",
+		"Cryogenic HZO (4K)":                   "cryogenic_hzo",
+		"HZO Standard (32 states)":             "hzo_standard_32",
+		"HZO FTJ (140 states)":                 "hzo_ftj_140",
+		"AlScN (8-16 states)":                  "alscn",
+	}
+
+	if a.material != nil {
+		if id, ok := nameToID[a.material.Name]; ok {
+			return id
+		}
+	}
+	return "default_hzo"
+}
+
+// onMaterialPickerSelected handles selection from the material picker dialog.
+func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Material) {
+	if physMat == nil {
+		return
+	}
+
+	log.Printf("Material picker selected: %s (%s)", physMat.Name, materialID)
+
+	// Convert physics.Material to ferroelectric.HZOMaterial
+	cfg, err := physics.Load()
+	if err != nil {
+		log.Printf("Error loading physics config: %v", err)
+		return
+	}
+	hzoMat := ferroelectric.MaterialFromConfig(physMat, cfg)
+
+	// Find index in materials list (for compatibility with existing dropdown)
+	var newIdx int
+	for i, m := range a.materials {
+		if m.Name == hzoMat.Name {
+			newIdx = i
+			break
+		}
+	}
+
+	a.mu.Lock()
+	// Capture temperature before material change
+	savedTemp := a.preisach.Temperature
+
+	a.matIndex = newIdx
+	a.material = hzoMat
+	// Use fixed high-resolution grid for physics accuracy
+	a.preisach = ferroelectric.NewMayergoyzPreisach(a.material, 60)
+
+	// Restore temperature
+	a.preisach.SetTemperature(savedTemp)
+
+	// Clear history for new material
+	a.eHistory = a.eHistory[:0]
+	a.pHistory = a.pHistory[:0]
+
+	// Reset simulation state
+	a.electricField = 0
+	a.polarization = 0
+	a.normalizedP = 0
+	a.simTime = 0
+
+	// Get temperature-corrected values
+	effEc := a.preisach.GetEffectiveEc()
+	effPr := a.preisach.GetEffectivePr()
+
+	// Update number of levels based on material
+	newLevels := a.material.GetNumLevels()
+	if newLevels != a.numLevels {
+		a.numLevels = newLevels
+		// Update level indicator and cell visualizer
+		if a.levelIndicator != nil {
+			a.levelIndicator.SetNumLevels(newLevels)
+		}
+		if a.cellViz != nil {
+			a.cellViz.SetNumLevels(newLevels)
+		}
+		// Reset discrete level to middle of new range
+		a.discreteLevel = newLevels / 2
+		// Reset target levels
+		a.wrdTargetLevel = newLevels / 2
+		a.manualTargetLevel = newLevels / 2
+		// Resize calibration arrays
+		a.calibrationUp = make([]float64, newLevels)
+		a.calibrationDown = make([]float64, newLevels)
+	}
+
+	// Mark calibration as stale
+	a.calibrated = false
+	a.mu.Unlock()
+
+	// Update UI (must use fyne.Do from goroutine context)
+	fyne.Do(func() {
+		// Update plot bounds and markers
+		a.plot.SetBounds(effEc*2.0, effPr*1.2)
+		a.plot.SetMaterialParams(effEc, effPr)
+		a.plot.SetData(nil, nil, 0, 0)
+		a.plot.Refresh()
+
+		// Update dropdown to match
+		if a.materialSelect != nil {
+			a.materialSelect.SetSelected(hzoMat.Name)
+		}
+
+		// Update levels entry and label
+		if a.levelsEntry != nil {
+			a.levelsEntry.SetText(fmt.Sprintf("%d", newLevels))
+		}
+		if a.levelsLabel != nil {
+			a.levelsLabel.SetText(fmt.Sprintf("Levels: %d (%.1f bits)", newLevels, math.Log2(float64(newLevels))))
+		}
+	})
+
+	// Load or run calibration for new material
+	a.tempCalibrations = make(map[int]*TempCalibration)
+	if !a.loadCalibration() {
+		log.Printf("Running calibration for %s...", a.material.Name)
+		a.calibrateLevelsAtTemperature(300)
+		if err := a.saveCalibration(); err != nil {
+			log.Printf("Warning: failed to save calibration: %v", err)
+		}
+	}
+	a.needsCalibration = false
 }
 
