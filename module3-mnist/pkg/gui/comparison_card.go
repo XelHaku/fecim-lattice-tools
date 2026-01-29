@@ -511,36 +511,6 @@ func (cc *ComparisonCard) drawPredictionCardEnhanced(img *image.RGBA, x, y, w, h
 	}
 }
 
-// drawGlowCircle draws a circle with a glow effect.
-func (cc *ComparisonCard) drawGlowCircle(img *image.RGBA, cx, cy, r int, c color.RGBA) {
-	// Outer glow (larger, faded)
-	for dy := -r - 5; dy <= r+5; dy++ {
-		for dx := -r - 5; dx <= r+5; dx++ {
-			dist := math.Sqrt(float64(dx*dx + dy*dy))
-			if dist > float64(r) && dist <= float64(r+5) {
-				// Fade based on distance
-				alpha := uint8(80 * (1 - (dist-float64(r))/5))
-				px := cx + dx
-				py := cy + dy
-				if px >= 0 && px < img.Bounds().Dx() && py >= 0 && py < img.Bounds().Dy() {
-					// Blend with background
-					bg := img.RGBAAt(px, py)
-					blended := color.RGBA{
-						R: uint8((int(bg.R)*(255-int(alpha)) + int(c.R)*int(alpha)) / 255),
-						G: uint8((int(bg.G)*(255-int(alpha)) + int(c.G)*int(alpha)) / 255),
-						B: uint8((int(bg.B)*(255-int(alpha)) + int(c.B)*int(alpha)) / 255),
-						A: 255,
-					}
-					img.Set(px, py, blended)
-				}
-			}
-		}
-	}
-
-	// Main circle
-	cc.drawCircle(img, cx, cy, r, c)
-}
-
 // drawSmallCheckmark draws a small checkmark symbol.
 func (cc *ComparisonCard) drawSmallCheckmark(img *image.RGBA, cx, cy int, c color.RGBA) {
 	// Draw a checkmark using lines
@@ -652,109 +622,8 @@ func (cc *ComparisonCard) drawWarningIcon(img *image.RGBA, cx, cy int, c color.R
 	}
 }
 
-// drawLargeCheckmark draws a checkmark symbol.
-func (cc *ComparisonCard) drawLargeCheckmark(img *image.RGBA, cx, cy int, c color.RGBA) {
-	white := color.RGBA{255, 255, 255, 255}
-	// Draw a checkmark using lines
-	// Short leg: from bottom-left going up-right
-	for i := 0; i < 8; i++ {
-		x := cx - 8 + i
-		y := cy + 2 - i
-		for dx := -1; dx <= 1; dx++ {
-			for dy := -1; dy <= 1; dy++ {
-				px, py := x+dx, y+dy
-				if px >= 0 && px < img.Bounds().Dx() && py >= 0 && py < img.Bounds().Dy() {
-					img.Set(px, py, white)
-				}
-			}
-		}
-	}
-	// Long leg: from middle going up-right
-	for i := 0; i < 12; i++ {
-		x := cx + i
-		y := cy - 6 + i
-		for dx := -1; dx <= 1; dx++ {
-			for dy := -1; dy <= 1; dy++ {
-				px, py := x+dx, y+dy
-				if px >= 0 && px < img.Bounds().Dx() && py >= 0 && py < img.Bounds().Dy() {
-					img.Set(px, py, white)
-				}
-			}
-		}
-	}
-}
-
-// drawLargeX draws an X symbol for mismatch.
-func (cc *ComparisonCard) drawLargeX(img *image.RGBA, cx, cy int, c color.RGBA) {
-	white := color.RGBA{255, 255, 255, 255}
-	// Draw X using two diagonal lines
-	for i := -10; i <= 10; i++ {
-		// Line 1: top-left to bottom-right
-		x1, y1 := cx+i, cy+i
-		// Line 2: top-right to bottom-left
-		x2, y2 := cx+i, cy-i
-
-		for dx := -1; dx <= 1; dx++ {
-			for dy := -1; dy <= 1; dy++ {
-				px1, py1 := x1+dx, y1+dy
-				px2, py2 := x2+dx, y2+dy
-				if px1 >= 0 && px1 < img.Bounds().Dx() && py1 >= 0 && py1 < img.Bounds().Dy() {
-					img.Set(px1, py1, white)
-				}
-				if px2 >= 0 && px2 < img.Bounds().Dx() && py2 >= 0 && py2 < img.Bounds().Dy() {
-					img.Set(px2, py2, white)
-				}
-			}
-		}
-	}
-}
-
 // drawScaledDigit draws a single digit with configurable scale.
 func (cc *ComparisonCard) drawScaledDigit(img *image.RGBA, x, y int, digit string, c color.RGBA, scale int) {
-	patterns := map[rune][]string{
-		'0': {"01110", "10001", "10001", "10001", "10001", "10001", "01110"},
-		'1': {"00100", "01100", "00100", "00100", "00100", "00100", "01110"},
-		'2': {"01110", "10001", "00001", "00110", "01000", "10000", "11111"},
-		'3': {"01110", "10001", "00001", "00110", "00001", "10001", "01110"},
-		'4': {"00010", "00110", "01010", "10010", "11111", "00010", "00010"},
-		'5': {"11111", "10000", "11110", "00001", "00001", "10001", "01110"},
-		'6': {"01110", "10000", "10000", "11110", "10001", "10001", "01110"},
-		'7': {"11111", "00001", "00010", "00100", "01000", "01000", "01000"},
-		'8': {"01110", "10001", "10001", "01110", "10001", "10001", "01110"},
-		'9': {"01110", "10001", "10001", "01111", "00001", "00001", "01110"},
-		'?': {"01110", "10001", "00001", "00110", "00100", "00000", "00100"},
-	}
-
-	for _, ch := range digit {
-		pattern, ok := patterns[ch]
-		if !ok {
-			continue
-		}
-
-		for dy, row := range pattern {
-			for dx, pixel := range row {
-				if pixel == '1' {
-					// Draw scaled pixel
-					for sy := 0; sy < scale; sy++ {
-						for sx := 0; sx < scale; sx++ {
-							px := x + dx*scale + sx
-							py := y + dy*scale + sy
-							if px >= 0 && px < img.Bounds().Dx() && py >= 0 && py < img.Bounds().Dy() {
-								img.Set(px, py, c)
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
-// drawLargeDigit draws a scaled-up digit.
-func (cc *ComparisonCard) drawLargeDigit(img *image.RGBA, x, y int, digit string, c color.RGBA) {
-	// 3x scale for the digit
-	scale := 3
-
 	patterns := map[rune][]string{
 		'0': {"01110", "10001", "10001", "10001", "10001", "10001", "01110"},
 		'1': {"00100", "01100", "00100", "00100", "00100", "00100", "01110"},
