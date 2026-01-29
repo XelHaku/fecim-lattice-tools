@@ -355,6 +355,16 @@ func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 	// Plot the hysteresis data
 	if len(r.plot.eData) > 1 {
 		for i := 1; i < len(r.plot.eData); i++ {
+			// Skip drawing line if points are too far apart (discontinuity)
+			// This prevents visual spikes when history is cleared or during rapid phase transitions
+			eDiff := r.plot.eData[i] - r.plot.eData[i-1]
+			pDiff := r.plot.pData[i] - r.plot.pData[i-1]
+			// Threshold: skip if E jumps more than 30% of range OR P jumps more than 30% of range
+			if eDiff > r.plot.eMax*0.3 || eDiff < -r.plot.eMax*0.3 ||
+				pDiff > r.plot.pMax*0.3 || pDiff < -r.plot.pMax*0.3 {
+				continue // Skip this line segment - it's a discontinuity
+			}
+
 			// Map data to screen coordinates
 			x1 := marginLeft + plotW/2 + float32(r.plot.eData[i-1]/r.plot.eMax)*plotW/2
 			y1 := centerY - float32(r.plot.pData[i-1]/r.plot.pMax)*plotH/2

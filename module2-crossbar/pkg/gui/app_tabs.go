@@ -127,10 +127,13 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 		ca.clearTabBadge(baseName)
 
 		// Apply persisted selection to the newly selected tab's heatmap
-		if ca.selectedRow >= 0 && ca.selectedCol >= 0 {
-			ca.syncSelection(ca.selectedRow, ca.selectedCol)
+		ca.stateMu.RLock()
+		row, col := ca.selectedRow, ca.selectedCol
+		ca.stateMu.RUnlock()
+		if row >= 0 && col >= 0 && row < ca.config.Rows && col < ca.config.Cols {
+			ca.syncSelection(row, col)
 			// Update tooltip for the selected cell based on current tab
-			ca.updateTooltipForTab(baseName, ca.selectedRow, ca.selectedCol)
+			ca.updateTooltipForTab(baseName, row, col)
 		}
 
 		// Sync colormap dropdown to show current tab's colormap

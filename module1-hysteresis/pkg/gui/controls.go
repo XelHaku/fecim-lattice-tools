@@ -226,19 +226,55 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	resetBtn := widget.NewButton("Reset", func() {
 		log.Button("Reset")
 		a.mu.Lock()
+		// Reset physics model
 		a.preisach.Reset()
 		a.electricField = 0
 		a.polarization = 0
 		a.normalizedP = 0
 		a.discreteLevel = a.numLevels / 2 // Reset to middle of current range
+
+		// Reset trail history
 		a.eHistory = a.eHistory[:0]
 		a.pHistory = a.pHistory[:0]
 		a.simTime = 0
+
+		// Reset WRD (Write/Read Demo) state
+		a.wrdPhase = 0
+		a.wrdPhaseTimer = 0
+		a.wrdTargetLevel = a.numLevels / 2
+		a.wrdStartLevel = a.numLevels / 2
+		a.wrdReadLevel = 0
+		a.wrdRetryCount = 0
+		a.wrdTotalWrites = 0
+		a.wrdSuccessWrites = 0
+		a.wrdTotalEnergyfJ = 0
+		a.wrdCycleEnergy = 0
+
+		// Reset manual mode animation state
+		a.manualAnimating = false
+		a.manualTargetLevel = a.numLevels / 2
+		a.manualPhase = 0
+		a.manualPhaseTime = 0
+
 		// Reset Time-Resolved animation state
 		a.timeResAnimating = false
 		a.timeResIndex = 0
-		a.eFieldSlider.SetValue(0)
+		a.timeResDataTimes = nil
+		a.timeResDataPols = nil
+		a.timeResDataSwitch = nil
+
+		// Clear log entries
+		a.logEntries = a.logEntries[:0]
+		a.lastLogPhase = -1
 		a.mu.Unlock()
+
+		// Update UI elements (outside lock to avoid deadlock with fyne.Do)
+		fyne.Do(func() {
+			a.eFieldSlider.SetValue(0)
+			if a.logText != nil {
+				a.logText.SetText("")
+			}
+		})
 	})
 
 	// ELI5 (Explain Like I'm 5) button

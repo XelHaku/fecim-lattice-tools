@@ -700,6 +700,37 @@ That humility should be visible in every screen.
 
 ---
 
+## CONSOLIDATION NOTE (2026-01-29)
+
+This document has been consolidated with:
+- `a.md` (Academic Peer Review - 28 additional items)
+- `drtour-conversation.md` and `drtour-conversation-v2.md` (context documents)
+
+**Master reference**: See `CRITIQUE_MASTER_LIST.md` for unified priority × difficulty matrix.
+**Action tracking**: See `TODO.md` Section 3-6 for sprint-organized task lists.
+
+### Completion Status After Consolidation
+
+| Category | Original | Completed | Remaining |
+|----------|----------|-----------|-----------|
+| CRITICAL | 5 | 5 | 0 |
+| HIGH | 5 | 5 | 0 |
+| MEDIUM | 5 | 3 | 2 |
+| LOW | 4 | 0 | 4 |
+| UI/LAYOUT | 33 | 12 | 21 |
+| **From a.md** | 28 | 0 | 28 |
+| **TOTAL** | 80 | 25 | 55 |
+
+New items from `a.md` academic review include:
+- Device-to-device variation (Gaussian Ec/Pr)
+- Arrhenius temperature scaling
+- Write disturb modeling
+- ISPP visualization
+- Simulation vs Experiment tab
+- Fabrication Reality section
+
+---
+
 ## APPENDIX: Screenshot Coverage
 
 | Module | Screenshots Reviewed | Key Observations |

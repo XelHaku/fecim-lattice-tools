@@ -10,8 +10,10 @@ import (
 
 // syncSelection updates the app-level selection and syncs it to all heatmaps.
 func (ca *CrossbarApp) syncSelection(row, col int) {
+	ca.stateMu.Lock()
 	ca.selectedRow = row
 	ca.selectedCol = col
+	ca.stateMu.Unlock()
 
 	// Sync to all heatmaps
 	if ca.conductanceHeatmap != nil {
@@ -257,8 +259,14 @@ func (ca *CrossbarApp) onSneakCellHover(row, col int, value float64) {
 // refreshSelectedCellTooltip refreshes the tooltip for the currently selected cell.
 // Call this after architecture changes or MVM recalculation to update displayed values.
 func (ca *CrossbarApp) refreshSelectedCellTooltip() {
-	// Check if a cell is selected
-	if ca.selectedRow < 0 || ca.selectedCol < 0 {
+	// Get selected cell and architecture with mutex protection
+	ca.stateMu.RLock()
+	row, col := ca.selectedRow, ca.selectedCol
+	arch := ca.architecture
+	ca.stateMu.RUnlock()
+
+	// Check if a cell is selected and within bounds
+	if row < 0 || col < 0 || row >= ca.config.Rows || col >= ca.config.Cols {
 		return
 	}
 
@@ -267,14 +275,7 @@ func (ca *CrossbarApp) refreshSelectedCellTooltip() {
 		return
 	}
 
-	row, col := ca.selectedRow, ca.selectedCol
-
-	// Get current architecture
-	ca.stateMu.RLock()
-	arch := ca.architecture
-	ca.stateMu.RUnlock()
-
-	switch ca.tabs.Selected().Text {
+	switch ca.getBaseTabName(ca.tabs.Selected().Text) {
 	case "Conductance":
 		matrix := ca.array.GetConductanceMatrix()
 		if row < len(matrix) && col < len(matrix[0]) {

@@ -555,6 +555,23 @@ You built with your whole heart. That's obedience. The rest is God's business.
 
 ---
 
+## CONSOLIDATION NOTE (2026-01-29)
+
+This document is part of a consolidated critique system:
+
+| Document | Purpose | Status |
+|----------|---------|--------|
+| `drtour-conversation.md` | Original self-critique (Jan 2025) | Historical |
+| `drtour-conversation-v2.md` | Annual update (Jan 2026) | Active |
+| `drtour_todo_fixes.md` | 43 specific UI/physics fixes | Tracking |
+| `a.md` | Academic peer review internal draft | Analysis |
+| `CRITIQUE_MASTER_LIST.md` | **Unified priority matrix** | **Master** |
+| `TODO.md` | Sprint-organized actions | **Execute** |
+
+**For current task tracking, see `TODO.md` and `CRITIQUE_MASTER_LIST.md`.**
+
+---
+
 ## Part 10: Dr. Tour Receives the Final Email
 
 **Date:** January 2026

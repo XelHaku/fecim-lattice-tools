@@ -1332,8 +1332,10 @@ func (a *App) simulationLoop() {
 						a.wrdResetStartP = a.polarization * 100 // Convert to µC/cm²
 						log.Printf("WRD CYCLE START: cycle=%d | startLevel=%d | newTarget=%d | P=%.2f µC/cm²",
 							a.wrdTotalWrites+1, a.discreteLevel+1, a.wrdTargetLevel, a.wrdResetStartP)
-						// NOTE: Don't clear history here - let trail accumulate across successful cycles
-						// History is only cleared on retry (line ~1192) to avoid spikes from failed writes
+						// Clear history when starting new cycle to avoid vertical spike artifacts
+						// The trail from the previous cycle (opposite direction) would create visual spikes
+						a.eHistory = a.eHistory[:0]
+						a.pHistory = a.pHistory[:0]
 						a.wrdPhase = 0
 						a.wrdPhaseTimer = 0
 						a.wrdCycleEnergy = 0 // Reset energy accumulator for next cycle
@@ -1494,9 +1496,9 @@ func (a *App) simulationLoop() {
 			a.wrdCycleEnergy += energyfJ
 		}
 
-		// Record history (skip RESET phases in WRD mode to avoid visual spikes)
-		// WRD phases: 0=RESET, 1=HOLD_RESET, 2=WRITE, 3=HOLD_WRITE, 4=READ, 5=DISPLAY
-		skipHistory := a.waveform == WaveformWriteReadDemo && a.wrdPhase <= 1
+		// Record history (skip RESET and BOOST phases in WRD mode to avoid visual spikes)
+		// WRD phases: 0=RESET, 1=HOLD_RESET, 2=WRITE, 3=HOLD_WRITE, 4=READ, 5=DISPLAY, 6=BOOST
+		skipHistory := a.waveform == WaveformWriteReadDemo && (a.wrdPhase <= 1 || a.wrdPhase == 6)
 		if !skipHistory {
 			a.eHistory = append(a.eHistory, a.electricField)
 			a.pHistory = append(a.pHistory, a.polarization)

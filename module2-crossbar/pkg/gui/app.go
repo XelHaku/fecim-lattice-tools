@@ -675,6 +675,8 @@ func (ca *CrossbarApp) recreateArray(size int, noise float64, adcBits int) {
 	ca.stateMu.Lock()
 	ca.baselineMaxIRDrop = 0
 	ca.baselineMaxSneak = 0
+	ca.selectedRow = -1 // Reset selection - old indices may be out of bounds
+	ca.selectedCol = -1
 	ca.stateMu.Unlock()
 
 	// Resize existing heatmaps instead of creating new ones
