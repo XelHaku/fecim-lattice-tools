@@ -2,6 +2,8 @@
 package widgets
 
 import (
+	"fmt"
+	"math"
 	"sort"
 	"strings"
 
@@ -15,7 +17,7 @@ import (
 )
 
 // MaterialPicker provides a dialog for selecting ferroelectric materials.
-// It displays all materials with their properties, descriptions, and references.
+// Displays all materials in a single table with key parameters as columns.
 type MaterialPicker struct {
 	widget.BaseWidget
 
@@ -23,32 +25,49 @@ type MaterialPicker struct {
 	materials   map[string]*physics.Material
 	materialIDs []string // Ordered list
 	selectedID  string
+	selectedRow int
 
 	// Callbacks
 	OnSelected func(materialID string, material *physics.Material)
 
 	// UI components
-	searchEntry  *widget.Entry
-	cardList     *fyne.Container
-	detailPanel  *MaterialDetailPanel
-	cards        map[string]*MaterialCard
+	searchEntry *widget.Entry
+	table       *widget.Table
+	infoLabel   *widget.Label
 
 	// Filter state
 	filterQuery string
 	filteredIDs []string
 }
 
+// Column definitions for the material table
+var materialColumns = []struct {
+	Name        string
+	Width       float32
+	Description string
+	Models      string // [P] for Preisach
+}{
+	{"Name", 180, "Material name", ""},
+	{"States", 70, "Number of analog states (bits/cell)", ""},
+	{"Pr", 90, "Remanent polarization (µC/cm²)", "[P]"},
+	{"Ps", 90, "Saturation polarization (µC/cm²)", "[P]"},
+	{"Ec", 90, "Coercive field (MV/cm)", "[P]"},
+	{"τ", 80, "Switching time", "[P]"},
+	{"Tc", 100, "Curie temperature", "[P]"},
+	{"Endurance", 100, "Write cycle endurance", ""},
+	{"Thickness", 80, "Film thickness (nm)", "[P]"},
+}
+
 // NewMaterialPicker creates a new material picker widget.
 func NewMaterialPicker(onSelected func(string, *physics.Material)) *MaterialPicker {
 	mp := &MaterialPicker{
-		OnSelected: onSelected,
-		cards:      make(map[string]*MaterialCard),
+		OnSelected:  onSelected,
+		selectedRow: -1,
 	}
 
 	// Load materials from config
 	cfg, err := physics.Load()
 	if err != nil {
-		// Fallback: empty picker
 		mp.materials = make(map[string]*physics.Material)
 		mp.materialIDs = []string{}
 	} else {
@@ -63,7 +82,6 @@ func NewMaterialPicker(onSelected func(string, *physics.Material)) *MaterialPick
 
 // getSortedMaterialIDs returns material IDs in a consistent order.
 func (mp *MaterialPicker) getSortedMaterialIDs() []string {
-	// Preferred order for common materials
 	preferredOrder := []string{
 		"default_hzo",
 		"fecim_hzo",
@@ -78,7 +96,6 @@ func (mp *MaterialPicker) getSortedMaterialIDs() []string {
 	ordered := []string{}
 	seen := make(map[string]bool)
 
-	// Add materials in preferred order first
 	for _, id := range preferredOrder {
 		if _, exists := mp.materials[id]; exists {
 			ordered = append(ordered, id)
@@ -86,7 +103,6 @@ func (mp *MaterialPicker) getSortedMaterialIDs() []string {
 		}
 	}
 
-	// Add remaining materials alphabetically
 	remaining := []string{}
 	for id := range mp.materials {
 		if !seen[id] {
@@ -105,6 +121,13 @@ func (mp *MaterialPicker) SetSelected(materialID string) {
 		return
 	}
 	mp.selectedID = materialID
+	// Find row index
+	for i, id := range mp.filteredIDs {
+		if id == materialID {
+			mp.selectedRow = i
+			break
+		}
+	}
 	mp.Refresh()
 }
 
@@ -122,84 +145,94 @@ func (mp *MaterialPicker) updateFilter() {
 
 	if query == "" {
 		mp.filteredIDs = mp.materialIDs
-		mp.rebuildCardList()
-		return
-	}
+	} else {
+		mp.filteredIDs = []string{}
+		for _, id := range mp.materialIDs {
+			mat := mp.materials[id]
 
-	mp.filteredIDs = []string{}
-	for _, id := range mp.materialIDs {
-		mat := mp.materials[id]
-
-		// Search in ID, name, description, reference
-		if strings.Contains(strings.ToLower(id), query) ||
-			strings.Contains(strings.ToLower(mat.Name), query) ||
-			strings.Contains(strings.ToLower(mat.Description), query) ||
-			strings.Contains(strings.ToLower(mat.Reference), query) {
-			mp.filteredIDs = append(mp.filteredIDs, id)
-			continue
-		}
-
-		// Search for analog states number
-		if mat.AnalogStates > 0 {
-			statesStr := strings.ToLower(FormatDimensionless(float64(mat.AnalogStates)))
-			if strings.Contains(statesStr, query) {
+			if strings.Contains(strings.ToLower(id), query) ||
+				strings.Contains(strings.ToLower(mat.Name), query) ||
+				strings.Contains(strings.ToLower(mat.Description), query) ||
+				strings.Contains(strings.ToLower(mat.Reference), query) {
 				mp.filteredIDs = append(mp.filteredIDs, id)
+				continue
+			}
+
+			if mat.AnalogStates > 0 {
+				statesStr := strings.ToLower(FormatDimensionless(float64(mat.AnalogStates)))
+				if strings.Contains(statesStr, query) {
+					mp.filteredIDs = append(mp.filteredIDs, id)
+				}
 			}
 		}
 	}
 
-	mp.rebuildCardList()
+	// Update selected row index
+	mp.selectedRow = -1
+	for i, id := range mp.filteredIDs {
+		if id == mp.selectedID {
+			mp.selectedRow = i
+			break
+		}
+	}
+
+	if mp.table != nil {
+		mp.table.Refresh()
+	}
 }
 
-// rebuildCardList rebuilds the card list based on filtered IDs.
-func (mp *MaterialPicker) rebuildCardList() {
-	if mp.cardList == nil {
-		return
+// getCellValue returns the formatted value for a cell.
+func (mp *MaterialPicker) getCellValue(row, col int) string {
+	if row < 0 || row >= len(mp.filteredIDs) {
+		return ""
 	}
 
-	mp.cardList.RemoveAll()
-
-	for _, id := range mp.filteredIDs {
-		mat := mp.materials[id]
-		card := mp.getOrCreateCard(id, mat)
-		card.SetSelected(id == mp.selectedID)
-		mp.cardList.Add(card)
+	mat := mp.materials[mp.filteredIDs[row]]
+	if mat == nil {
+		return ""
 	}
 
-	mp.cardList.Refresh()
+	switch col {
+	case 0: // Name
+		return mat.Name
+	case 1: // States
+		if mat.AnalogStates > 0 {
+			bits := math.Log2(float64(mat.AnalogStates))
+			return fmt.Sprintf("%d (%.1fb)", mat.AnalogStates, bits)
+		}
+		return "—"
+	case 2: // Pr
+		return FormatPolarization(mat.PrCM2)
+	case 3: // Ps
+		return FormatPolarization(mat.PsCM2)
+	case 4: // Ec
+		return FormatField(mat.EcVM)
+	case 5: // τ (Tau)
+		return FormatTime(mat.TauS)
+	case 6: // Tc (Curie temp)
+		if mat.CurieTempK > 0 {
+			return fmt.Sprintf("%.0f K", mat.CurieTempK)
+		}
+		return "—"
+	case 7: // Endurance
+		return FormatEndurance(mat.EnduranceCycles)
+	case 8: // Thickness
+		return FormatThickness(mat.ThicknessM)
+	default:
+		return ""
+	}
 }
 
-// getOrCreateCard returns an existing card or creates a new one.
-func (mp *MaterialPicker) getOrCreateCard(id string, mat *physics.Material) *MaterialCard {
-	if card, exists := mp.cards[id]; exists {
-		return card
+// getHeaderText returns the header text for a column.
+func (mp *MaterialPicker) getHeaderText(col int) string {
+	if col < 0 || col >= len(materialColumns) {
+		return ""
 	}
-
-	card := NewMaterialCard(id, mat, func(selectedID string) {
-		mp.onCardTapped(selectedID)
-	})
-	mp.cards[id] = card
-	return card
-}
-
-// onCardTapped handles when a material card is tapped.
-func (mp *MaterialPicker) onCardTapped(materialID string) {
-	// Update selection
-	oldSelected := mp.selectedID
-	mp.selectedID = materialID
-
-	// Update card visual states
-	if oldCard, exists := mp.cards[oldSelected]; exists {
-		oldCard.SetSelected(false)
+	c := materialColumns[col]
+	if c.Models != "" {
+		return fmt.Sprintf("%s %s", c.Models, c.Name)
 	}
-	if newCard, exists := mp.cards[materialID]; exists {
-		newCard.SetSelected(true)
-	}
-
-	// Update detail panel
-	if mp.detailPanel != nil && mp.materials[materialID] != nil {
-		mp.detailPanel.SetMaterial(mp.materials[materialID])
-	}
+	return c.Name
 }
 
 // CreateRenderer creates the widget renderer.
@@ -212,70 +245,118 @@ func (mp *MaterialPicker) CreateRenderer() fyne.WidgetRenderer {
 		mp.updateFilter()
 	}
 
-	// Card list container
-	mp.cardList = container.NewVBox()
-	for _, id := range mp.filteredIDs {
-		mat := mp.materials[id]
-		card := mp.getOrCreateCard(id, mat)
-		card.SetSelected(id == mp.selectedID)
-		mp.cardList.Add(card)
-	}
+	// Info label for tooltips
+	mp.infoLabel = widget.NewLabel("Click a row to select. [P] = Used in Preisach model.")
+	mp.infoLabel.Wrapping = fyne.TextWrapWord
+	mp.infoLabel.TextStyle = fyne.TextStyle{Italic: true}
 
-	// Detail panel - show first material by default
-	var firstMat *physics.Material
-	if len(mp.materialIDs) > 0 {
-		firstID := mp.materialIDs[0]
-		firstMat = mp.materials[firstID]
-		if mp.selectedID == "" {
-			mp.selectedID = firstID
-			if card, exists := mp.cards[firstID]; exists {
-				card.SetSelected(true)
+	// Create table
+	mp.table = widget.NewTable(
+		// Size: rows = materials + 1 header, cols = parameters
+		func() (int, int) {
+			return len(mp.filteredIDs) + 1, len(materialColumns)
+		},
+		// Create cell
+		func() fyne.CanvasObject {
+			label := widget.NewLabel("Template Text")
+			label.Wrapping = fyne.TextWrapOff
+			return label
+		},
+		// Update cell
+		func(id widget.TableCellID, cell fyne.CanvasObject) {
+			label := cell.(*widget.Label)
+
+			if id.Row == 0 {
+				// Header row
+				label.SetText(mp.getHeaderText(id.Col))
+				label.TextStyle = fyne.TextStyle{Bold: true}
+			} else {
+				// Data row (adjust for header)
+				dataRow := id.Row - 1
+				label.SetText(mp.getCellValue(dataRow, id.Col))
+
+				// Highlight selected row
+				if dataRow == mp.selectedRow {
+					label.TextStyle = fyne.TextStyle{Bold: true}
+				} else {
+					label.TextStyle = fyne.TextStyle{}
+				}
+
+				// First column (name) gets monospace for readability
+				if id.Col == 0 {
+					label.TextStyle.Bold = (dataRow == mp.selectedRow)
+				}
 			}
-		}
-	}
-	if mp.selectedID != "" {
-		firstMat = mp.materials[mp.selectedID]
-	}
-	if firstMat == nil {
-		// Fallback empty material
-		firstMat = &physics.Material{Name: "No materials loaded", Description: "Check config/materials.yaml"}
-	}
-	mp.detailPanel = NewMaterialDetailPanel(firstMat)
-
-	// Left pane: search + scrollable card list
-	leftPane := container.NewBorder(
-		mp.searchEntry,
-		nil, nil, nil,
-		container.NewVScroll(mp.cardList),
+		},
 	)
 
-	// Right pane: detail panel (dialog provides confirm/cancel buttons)
-	rightPane := mp.detailPanel
+	// Set column widths
+	for i, col := range materialColumns {
+		mp.table.SetColumnWidth(i, col.Width)
+	}
 
-	// Main split layout
-	split := container.NewHSplit(leftPane, rightPane)
-	split.SetOffset(0.35)
+	// Handle row selection
+	mp.table.OnSelected = func(id widget.TableCellID) {
+		if id.Row == 0 {
+			// Header clicked - show column description
+			if id.Col >= 0 && id.Col < len(materialColumns) {
+				col := materialColumns[id.Col]
+				desc := col.Description
+				if col.Models != "" {
+					desc = col.Models + " " + desc
+				}
+				mp.infoLabel.SetText(desc)
+			}
+			mp.table.UnselectAll()
+			return
+		}
 
-	return widget.NewSimpleRenderer(split)
+		dataRow := id.Row - 1
+		if dataRow >= 0 && dataRow < len(mp.filteredIDs) {
+			mp.selectedRow = dataRow
+			mp.selectedID = mp.filteredIDs[dataRow]
+			mat := mp.materials[mp.selectedID]
+
+			// Update info with material description
+			info := mat.Name
+			if mat.Description != "" {
+				info += ": " + mat.Description
+			}
+			if mat.Reference != "" {
+				info += " [" + TruncateString(mat.Reference, 60) + "]"
+			}
+			mp.infoLabel.SetText(info)
+
+			mp.table.Refresh()
+		}
+		mp.table.UnselectAll()
+	}
+
+	// Select first material by default
+	if len(mp.filteredIDs) > 0 && mp.selectedID == "" {
+		mp.selectedID = mp.filteredIDs[0]
+		mp.selectedRow = 0
+	}
+
+	// Layout: search at top, table in middle, info at bottom
+	content := container.NewBorder(
+		mp.searchEntry,
+		container.NewPadded(mp.infoLabel),
+		nil, nil,
+		mp.table,
+	)
+
+	return widget.NewSimpleRenderer(content)
 }
 
 // MinSize returns the minimum size for the picker.
 func (mp *MaterialPicker) MinSize() fyne.Size {
-	return fyne.NewSize(850, 550)
+	return fyne.NewSize(950, 450)
 }
 
 // ShowMaterialPicker displays the material picker in a modal dialog.
 func ShowMaterialPicker(parent fyne.Window, currentMaterialID string, onSelected func(string, *physics.Material)) {
 	picker := NewMaterialPicker(nil)
-
-	// Track if selection was made
-	var selectedID string
-	var selectedMat *physics.Material
-
-	picker.OnSelected = func(id string, mat *physics.Material) {
-		selectedID = id
-		selectedMat = mat
-	}
 
 	// Pre-select current material
 	if currentMaterialID != "" {
@@ -289,17 +370,14 @@ func ShowMaterialPicker(parent fyne.Window, currentMaterialID string, onSelected
 		"Cancel",
 		picker,
 		func(confirmed bool) {
-			if confirmed && onSelected != nil && selectedID != "" {
-				onSelected(selectedID, selectedMat)
-			} else if confirmed && onSelected != nil && picker.selectedID != "" {
-				// Use picker's current selection if callback wasn't triggered
+			if confirmed && onSelected != nil && picker.selectedID != "" {
 				onSelected(picker.selectedID, picker.materials[picker.selectedID])
 			}
 		},
 		parent,
 	)
 
-	d.Resize(fyne.NewSize(900, 650))
+	d.Resize(fyne.NewSize(1000, 500))
 	d.Show()
 }
 
@@ -312,7 +390,6 @@ func CreateMaterialPickerButton(parent fyne.Window, currentID string, onSelected
 }
 
 // GetMaterialByID returns a material by its ID from the global config.
-// Returns nil if not found.
 func GetMaterialByID(materialID string) *physics.Material {
 	cfg, err := physics.Load()
 	if err != nil {

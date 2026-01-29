@@ -287,8 +287,8 @@ func TestMaterialPickerSearch(t *testing.T) {
 func TestMaterialPickerSelection(t *testing.T) {
 	// Create picker without extending base widget (to avoid Fyne app requirement)
 	picker := &MaterialPicker{
-		OnSelected: nil,
-		cards:      make(map[string]*MaterialCard),
+		OnSelected:  nil,
+		selectedRow: -1,
 	}
 
 	// Load materials from config
