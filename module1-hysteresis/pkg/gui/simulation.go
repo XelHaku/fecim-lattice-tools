@@ -1087,6 +1087,7 @@ func (a *App) simulationLoop() {
 									newVal = maxE
 								}
 								a.calibrationUp[targetIdx] = newVal
+								a.enforceMonotonicityUp(targetIdx, Ec) // Prevent spikes from runtime updates
 								a.lastErrorUp[targetIdx] = levelError
 							} else {
 								// DESCENDING calibration with binary search
@@ -1127,6 +1128,7 @@ func (a *App) simulationLoop() {
 									newVal = minE
 								}
 								a.calibrationDown[targetIdx] = newVal
+								a.enforceMonotonicityDown(targetIdx, Ec) // Prevent spikes from runtime updates
 								a.lastErrorDown[targetIdx] = levelError
 							}
 						}
