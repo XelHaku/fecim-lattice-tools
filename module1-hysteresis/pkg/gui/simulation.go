@@ -598,6 +598,11 @@ func (a *App) simulationLoop() {
 
 		dt := time.Since(lastTime).Seconds()
 		lastTime = time.Now()
+		// Clamp dt to prevent animation "catch-up" after window loses focus
+		// Max 100ms per frame keeps animation smooth when returning from background
+		if dt > 0.1 {
+			dt = 0.1
+		}
 		a.simTime += dt
 		// Wrap simTime to prevent floating-point issues after long runs
 		if a.simTime > 1000 {
