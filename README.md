@@ -114,6 +114,24 @@ go test -v ./module2-crossbar/pkg/crossbar # Crossbar tests only
 go test -race ./...                        # Race detector (all pass)
 ```
 
+### Command Line Options
+
+```bash
+./launch.sh [options]
+# Or: ./fecim-lattice-tools [options]
+```
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--logger` | off | Enable file logging to `logs/<timestamp>-fecim.log` |
+| `--verbosity` | info | Log level: `off`, `info`, `debug`, `trace` |
+
+**Examples:**
+```bash
+./launch.sh --logger --verbosity debug  # Enable logging with debug output
+./launch.sh --verbosity trace           # Console-only trace output (no file)
+```
+
 ---
 
 ## Modules
