@@ -182,7 +182,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		// HYBRID APPROACH: Use temperature-corrected values for bounds and markers
 		effEc := a.preisach.GetEffectiveEc()
 		effPr := a.preisach.GetEffectivePr()
-		a.plot.SetBounds(effEc*1.5, effPr*1.2)
+		a.plot.SetBounds(effEc*2.0, effPr*1.2)
 		a.plot.SetMaterialParams(effEc, effPr)
 		// Clear plot data and refresh immediately
 		a.plot.SetData(nil, nil, 0, 0)
@@ -377,7 +377,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			a.mu.Unlock()
 
 			// Update plot bounds and markers (outside lock, uses fyne.Do internally)
-			a.plot.SetBounds(effEc*1.5, effPr*1.2)
+			a.plot.SetBounds(effEc*2.0, effPr*1.2)
 			a.plot.SetMaterialParams(effEc, effPr)
 		}()
 

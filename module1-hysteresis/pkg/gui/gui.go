@@ -472,7 +472,7 @@ func (a *App) createUI() fyne.CanvasObject {
 	// Use temperature-corrected values for initial plot setup
 	effEc := a.preisach.GetEffectiveEc()
 	effPr := a.preisach.GetEffectivePr()
-	a.plot = widgets.NewPEPlot(effEc*1.5, effPr*1.2, ColorBackground, ColorGrid, ColorAxis, ColorPositive, ColorNegative, ColorWarning)
+	a.plot = widgets.NewPEPlot(effEc*2.0, effPr*1.2, ColorBackground, ColorGrid, ColorAxis, ColorPositive, ColorNegative, ColorWarning)
 	a.plot.SetMinSize(fyne.NewSize(400, 350))
 	a.plot.SetMaterialParams(effEc, effPr)
 
