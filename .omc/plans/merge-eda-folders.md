@@ -4,7 +4,7 @@
 
 **Original Request:** Merge two EDA documentation folders intelligently
 - `docs/eda/` - 3 files (newer, more technical, focused)
-- `docs/eda-design-suite/` - 15+ files (older, broader coverage, includes archive)
+- `docs/eda-design-suite/` - 16 files (older, broader coverage, includes archive)
 
 **Goal:** Consolidate into a single canonical `docs/eda/` folder with clear organization
 
@@ -30,6 +30,7 @@
 | eda.eli5.md | 787 | Beginner explanation | MOVE to docs/eda/guides/ |
 | eda.demo.md | 317 | Demo walkthrough | MERGE into WORKFLOW.md or MOVE to docs/eda/guides/ |
 | eda.integration.md | 582 | OpenLane integration guide | MOVE to docs/eda/guides/ |
+| eda.guide.zero_to_asic.md | 118 | Zero to ASIC practical field guide | MOVE to docs/eda/guides/ |
 | EDA-LEARN-screen.md | ~100 | GUI screen docs | ARCHIVE (superseded by GUI code) |
 | EDA-SPICE-screen.md | 349 | SPICE format explanation | MOVE to docs/eda/guides/ |
 | FECIM_TO_WAFER.md | 1186 | Complete fab workflow | MOVE to docs/eda/guides/ |
@@ -53,6 +54,7 @@ docs/eda/
 │   ├── eli5.md                  # FROM: eda.eli5.md (beginner guide)
 │   ├── demo.md                  # FROM: eda.demo.md (demo walkthrough)
 │   ├── integration.md           # FROM: eda.integration.md (OpenLane integration)
+│   ├── zero-to-asic.md          # FROM: eda.guide.zero_to_asic.md (practical field guide)
 │   ├── spice-format.md          # FROM: EDA-SPICE-screen.md
 │   └── fecim-to-wafer.md        # FROM: FECIM_TO_WAFER.md (fab workflow)
 │
@@ -121,11 +123,12 @@ docs/eda/
 | eda-design-suite/eda.eli5.md | docs/eda/guides/eli5.md | Yes |
 | eda-design-suite/eda.demo.md | docs/eda/guides/demo.md | Yes |
 | eda-design-suite/eda.integration.md | docs/eda/guides/integration.md | Yes |
+| eda-design-suite/eda.guide.zero_to_asic.md | docs/eda/guides/zero-to-asic.md | Yes |
 | eda-design-suite/EDA-SPICE-screen.md | docs/eda/guides/spice-format.md | Yes |
 | eda-design-suite/FECIM_TO_WAFER.md | docs/eda/guides/fecim-to-wafer.md | Yes |
 
 **Acceptance Criteria:**
-- All 5 files exist in docs/eda/guides/
+- All 6 files exist in docs/eda/guides/
 - Original files removed from eda-design-suite/
 
 ---
@@ -186,25 +189,39 @@ docs/eda/
 ### Task 8: Delete Empty eda-design-suite Folder
 **Action:** After all files are migrated, delete the now-empty `docs/eda-design-suite/` folder
 
-**Pre-condition:** All files have been moved or archived
+**Pre-condition:** All 16 files have been moved or archived (verify with `ls`)
 **Acceptance Criteria:** `docs/eda-design-suite/` no longer exists
 
 ---
 
-### Task 9: Update Internal Links
-**Action:** Search and update any internal links in:
-1. The moved files (update relative paths)
-2. Other docs that reference eda-design-suite files
-3. CLAUDE.md if it references these paths
+### Task 9: Update Internal Links (COMPREHENSIVE)
+**Action:** Search and update any internal links that reference `eda-design-suite/` paths.
 
-**Files to Check:**
-- All files in docs/eda/guides/
-- All files in docs/eda/references/
+**Files to Update (with specific changes):**
+
+| File | Line(s) | Current Link | New Link |
+|------|---------|--------------|----------|
+| docs/README.md | 20 | `[eda-design-suite/](eda-design-suite/)` | `[eda/](eda/)` |
+| docs/README.md | 20 | `[ELI5](eda-design-suite/eda.eli5.md)` | `[ELI5](eda/guides/eli5.md)` |
+| docs/opensource-tools/circuit-simulation-tools.md | 1135 | `[EDA-LEARN-screen.md](../eda-design-suite/EDA-LEARN-screen.md)` | `[eda-learn-screen.md](../eda/_archive/eda-learn-screen.md)` |
+| docs/opensource-tools/eda-tools.md | 1532 | `[SKY130.md](../eda-design-suite/SKY130.md)` | `[sky130.md](../eda/pdk/sky130.md)` |
+| docs/opensource-tools/eda-tools.md | 1533 | `[OPENLANE_STUDY.md](../eda-design-suite/OPENLANE_STUDY.md)` | `[openlane-study.md](../eda/references/openlane-study.md)` |
+| docs/opensource-tools/eda-tools.md | 1534 | `[FECIM_TO_WAFER.md](../eda-design-suite/FECIM_TO_WAFER.md)` | `[fecim-to-wafer.md](../eda/guides/fecim-to-wafer.md)` |
+
+**Additional Files to Check:**
+- All files in docs/eda/guides/ (update relative paths within moved files)
+- All files in docs/eda/references/ (update relative paths within moved files)
 - docs/development/scriptReference.md (mentioned in CLAUDE.md)
+
+**Verification Command:**
+```bash
+grep -r "eda-design-suite" docs/ --include="*.md"
+```
 
 **Acceptance Criteria:**
 - No broken internal links
 - All relative paths updated to new locations
+- `grep -r "eda-design-suite" docs/` returns no results (except _archive files if they contain historical references)
 
 ---
 
@@ -245,6 +262,7 @@ Move and rename:
 - eda.eli5.md -> guides/eli5.md
 - eda.demo.md -> guides/demo.md
 - eda.integration.md -> guides/integration.md
+- eda.guide.zero_to_asic.md -> guides/zero-to-asic.md
 - EDA-SPICE-screen.md -> guides/spice-format.md
 - FECIM_TO_WAFER.md -> guides/fecim-to-wafer.md
 ```
@@ -284,7 +302,10 @@ Move to _archive/:
 docs(eda): complete folder merge, remove eda-design-suite
 
 - Delete empty docs/eda-design-suite/ folder
-- Update internal documentation links
+- Update internal documentation links in:
+  - docs/README.md (line 20)
+  - docs/opensource-tools/circuit-simulation-tools.md (line 1135)
+  - docs/opensource-tools/eda-tools.md (lines 1532-1534)
 - Update CLAUDE.md references
 ```
 
@@ -295,9 +316,9 @@ docs(eda): complete folder merge, remove eda-design-suite
 1. Single canonical EDA documentation folder at `docs/eda/`
 2. Clear organizational structure with subfolders by purpose
 3. No duplicate content
-4. All valuable content preserved
+4. All 16 source files from eda-design-suite/ preserved (moved or archived)
 5. Historical content archived (not deleted)
-6. All internal links working
+6. All internal links working (verified with grep)
 7. CLAUDE.md updated with correct paths
 8. `docs/eda-design-suite/` folder completely removed
 
@@ -307,8 +328,9 @@ docs(eda): complete folder merge, remove eda-design-suite
 
 | Risk | Mitigation |
 |------|------------|
-| Broken links in other files | Search entire codebase for "eda-design-suite" before final deletion |
+| Broken links in other files | Comprehensive link audit in Task 9 with specific file:line references |
 | Lost content | Archive rather than delete any uncertain files |
+| Missing files during migration | Verify 16-file count before and after each commit |
 | Merge conflicts | Small, focused commits that can be reviewed independently |
 
 ---
@@ -318,3 +340,4 @@ docs(eda): complete folder merge, remove eda-design-suite
 - The three existing files in `docs/eda/` (API.md, ARCHITECTURE.md, WORKFLOW.md) are newer and more comprehensive - keep them as-is
 - The `eda-design-suite/README.md` has valuable disclaimers that should be preserved in the new README.md
 - Some content overlap exists (e.g., OpenLane integration in both WORKFLOW.md and eda.integration.md) - keep both as they serve different purposes (quick reference vs detailed guide)
+- `eda.guide.zero_to_asic.md` is a valuable practical guide derived from Matt Venn's work - move to guides/ subfolder
