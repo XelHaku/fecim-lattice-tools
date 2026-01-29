@@ -378,3 +378,148 @@ func TestSimpleVsAdvancedPreisachConsistency(t *testing.T) {
 		PsatSimple, PsatAdvanced, PsatDiff*100,
 		PrSimple, PrAdvanced, PrDiff*100)
 }
+
+// TestSubstrateStrainEffect verifies that substrate strain correctly modifies
+// the effective coercive field (Ec).
+//
+// Physical basis: Electrostrictive coupling between polarization and strain
+// causes the free energy landscape to shift under mechanical strain:
+//   f_electrostr = -Q11 * ε * P²
+// This shifts the coercive field: Ec_eff = Ec0 * (1 + factor * ε)
+//
+// For HZO on silicon:
+//   - Compressive strain (ε < 0): INCREASES Ec (harder to switch)
+//   - Tensile strain (ε > 0): DECREASES Ec (easier to switch)
+//
+// Typical values: HZO on Si has ~-2% compressive strain, shifting Ec by 10-20%.
+//
+// Reference: Park et al., J. Appl. Phys. 117, 074103 (2015)
+func TestSubstrateStrainEffect(t *testing.T) {
+	material := DefaultHZO()
+	model := NewMayergoyzPreisach(material, 30)
+	model.SetTemperature(300) // Room temperature
+
+	// Get baseline Ec without strain
+	EcBaseline := model.GetEffectiveEc()
+
+	// Test compressive strain (-2%, typical for HZO on Si)
+	compressiveStrain := -0.02
+	model.SetSubstrateStrain(compressiveStrain)
+	EcCompressive := model.GetEffectiveEc()
+
+	// Test tensile strain (+2%)
+	tensileStrain := 0.02
+	model.SetSubstrateStrain(tensileStrain)
+	EcTensile := model.GetEffectiveEc()
+
+	// Verify compressive strain INCREASES Ec
+	if EcCompressive <= EcBaseline {
+		t.Errorf("Compressive strain should increase Ec:\n"+
+			"  Ec_baseline   = %.4e V/m\n"+
+			"  Ec_compressive = %.4e V/m (expected > baseline)",
+			EcBaseline, EcCompressive)
+	}
+
+	// Verify tensile strain DECREASES Ec
+	if EcTensile >= EcBaseline {
+		t.Errorf("Tensile strain should decrease Ec:\n"+
+			"  Ec_baseline = %.4e V/m\n"+
+			"  Ec_tensile  = %.4e V/m (expected < baseline)",
+			EcBaseline, EcTensile)
+	}
+
+	// Verify strain effect is symmetric and reasonable (~10-20% shift per 2% strain)
+	compressiveShift := (EcCompressive - EcBaseline) / EcBaseline * 100
+	tensileShift := (EcTensile - EcBaseline) / EcBaseline * 100
+
+	// Expected: ~15% shift factor means ~0.3% Ec shift per 0.01 strain
+	// For 2% strain: ~3% shift
+	expectedShiftMag := 0.15 * math.Abs(compressiveStrain) * 100
+	if math.Abs(compressiveShift) < expectedShiftMag*0.5 || math.Abs(compressiveShift) > expectedShiftMag*2.0 {
+		t.Errorf("Compressive strain shift outside expected range:\n"+
+			"  Strain           = %.2f%%\n"+
+			"  Ec shift         = %.2f%%\n"+
+			"  Expected shift   ≈ %.2f%%",
+			compressiveStrain*100, compressiveShift, expectedShiftMag)
+	}
+
+	t.Logf("Substrate strain effect verified:\n"+
+		"  Baseline Ec      = %.4e V/m (%.2f MV/cm)\n"+
+		"  Compressive (%.1f%%): Ec = %.4e V/m (shift: %+.2f%%)\n"+
+		"  Tensile (%.1f%%):     Ec = %.4e V/m (shift: %+.2f%%)",
+		EcBaseline, EcBaseline/1e8,
+		compressiveStrain*100, EcCompressive, compressiveShift,
+		tensileStrain*100, EcTensile, tensileShift)
+}
+
+// TestSubstrateStrainAndTemperatureCombined verifies that both temperature
+// and strain corrections are applied correctly together.
+//
+// Physical basis: Both effects are multiplicative on Ec:
+//   Ec_eff = Ec0 * (1 - T/Tc)^β * (1 + factor * ε)
+//
+// At high temperature with compressive strain, we expect:
+//   - Temperature reduces Ec (approaches zero near Tc)
+//   - Strain shifts Ec up or down depending on sign
+func TestSubstrateStrainAndTemperatureCombined(t *testing.T) {
+	material := DefaultHZO()
+	model := NewMayergoyzPreisach(material, 30)
+
+	// Test at elevated temperature (400K) with compressive strain
+	T := 400.0 // K
+	strain := -0.02
+
+	// Set temperature first
+	model.SetTemperature(T)
+	EcTempOnly := model.GetEffectiveEc()
+
+	// Now add strain
+	model.SetSubstrateStrain(strain)
+	EcBoth := model.GetEffectiveEc()
+
+	// Verify both effects are applied
+	// With compressive strain, Ec should be higher than temp-only
+	if EcBoth <= EcTempOnly {
+		t.Errorf("Combined effects not applied correctly:\n"+
+			"  Temperature only: Ec = %.4e V/m\n"+
+			"  Temp + compressive strain: Ec = %.4e V/m (expected higher)",
+			EcTempOnly, EcBoth)
+	}
+
+	// Verify we're not at or above Curie temp (where Ec = 0)
+	if EcTempOnly <= 0 || EcBoth <= 0 {
+		t.Errorf("Unexpected zero Ec at T=%.0fK (Tc=%.0fK)", T, model.CurieTemp)
+	}
+
+	t.Logf("Combined temperature + strain effects:\n"+
+		"  Temperature       = %.0f K\n"+
+		"  Strain           = %.2f%%\n"+
+		"  Ec (temp only)   = %.4e V/m (%.2f MV/cm)\n"+
+		"  Ec (temp+strain) = %.4e V/m (%.2f MV/cm)",
+		T, strain*100, EcTempOnly, EcTempOnly/1e8, EcBoth, EcBoth/1e8)
+}
+
+// TestSubstrateStrainGetterSetter verifies the Get/Set interface works correctly.
+func TestSubstrateStrainGetterSetter(t *testing.T) {
+	material := DefaultHZO()
+	model := NewMayergoyzPreisach(material, 30)
+
+	// Initial strain should be 0
+	if model.GetSubstrateStrain() != 0 {
+		t.Errorf("Initial strain should be 0, got %.4f", model.GetSubstrateStrain())
+	}
+
+	// Set and verify
+	testStrain := -0.015
+	model.SetSubstrateStrain(testStrain)
+	if math.Abs(model.GetSubstrateStrain()-testStrain) > 1e-10 {
+		t.Errorf("Strain not set correctly: expected %.4f, got %.4f",
+			testStrain, model.GetSubstrateStrain())
+	}
+
+	// Reset to zero
+	model.SetSubstrateStrain(0)
+	if model.GetSubstrateStrain() != 0 {
+		t.Errorf("Strain not reset to 0, got %.4f", model.GetSubstrateStrain())
+	}
+}

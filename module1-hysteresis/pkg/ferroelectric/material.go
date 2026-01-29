@@ -82,6 +82,14 @@ type HZOMaterial struct {
 	// Based on FeFET channel conductance modulation by ferroelectric polarization
 	Gmin float64 // Minimum conductance (S) at P = -Ps (HRS state)
 	Gmax float64 // Maximum conductance (S) at P = +Ps (LRS state)
+
+	// Electrostrictive coefficients (m⁴/C²) for strain-polarization coupling
+	// Used to calculate Ec shift under substrate strain:
+	//   Ec_eff = Ec * (1 + strainFactor * strain)
+	//   strainFactor ≈ 2 * Q11 * Ec / Ec = 2 * Q11 (simplified)
+	// Ref: Park et al., J. Appl. Phys. 117, 074103 (2015)
+	Q11 float64 // Longitudinal electrostrictive coefficient
+	Q12 float64 // Transverse electrostrictive coefficient
 }
 
 // DefaultHZO returns material parameters for typical Si-doped HfO2 (Hf0.5Zr0.5O2).
@@ -116,6 +124,8 @@ func DefaultHZO() *HZOMaterial {
 		EaNLS:           12e8,    // 12 MV/cm activation field
 		Gmin:            1e-6,    // 1 µS at HRS (P = -Ps)
 		Gmax:            100e-6,  // 100 µS at LRS (P = +Ps), ~100x on/off ratio
+		Q11:             0.089,   // Longitudinal electrostriction (m⁴/C²)
+		Q12:             -0.026,  // Transverse electrostriction (m⁴/C²)
 	}
 }
 
@@ -211,6 +221,8 @@ func FeCIMMaterial() *HZOMaterial {
 		EaNLS:           12e8,   // 12 MV/cm activation field
 		Gmin:            1e-6,   // 1 µS at HRS
 		Gmax:            100e-6, // 100 µS at LRS, on/off ~100x
+		Q11:             0.089,  // Longitudinal electrostriction (m⁴/C²)
+		Q12:             -0.026, // Transverse electrostriction (m⁴/C²)
 	}
 }
 

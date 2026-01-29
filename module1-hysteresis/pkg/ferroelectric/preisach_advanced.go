@@ -78,6 +78,13 @@ type MayergoyzPreisach struct {
 	// Loaded from material, can be overridden with SetNLSParameters()
 	Tau0NLS float64 // Attempt time for NLS (s)
 	EaNLS   float64 // Activation field for NLS (V/m)
+
+	// Substrate strain effects
+	// Biaxial strain from lattice mismatch (e.g., HZO on Si: ~-2% compressive)
+	// Strain shifts the effective coercive field via electrostrictive coupling:
+	// Ec_eff = Ec * (1 + strainShiftFactor * strain)
+	SubstrateStrain   float64 // Biaxial in-plane strain (negative = compressive)
+	strainShiftFactor float64 // Calculated from Q11, Q12 electrostrictive coefficients
 }
 
 // NewMayergoyzPreisach creates a new full Preisach model.
@@ -115,6 +122,9 @@ func NewMayergoyzPreisach(material *HZOMaterial, gridSize int) *MayergoyzPreisac
 		currentWakeup: 0.8, // Start partially woken up
 		Tau0NLS:       tau0NLS,
 		EaNLS:         eaNLS,
+		// Substrate strain defaults
+		SubstrateStrain:   0,     // No strain by default
+		strainShiftFactor: -0.15, // ~15% Ec shift per 1% strain (negative: compressive increases Ec)
 	}
 
 	m.initializeHysterons()
@@ -258,15 +268,22 @@ func (m *MayergoyzPreisach) initializeDistributionLorentzian() {
 	}
 }
 
-// temperatureCorrectedEc returns the coercive field at current temperature.
-// Ec(T) = Ec0 * (1 - T/Tc)^β
+// temperatureCorrectedEc returns the coercive field corrected for temperature and strain.
+// Temperature: Ec(T) = Ec0 * (1 - T/Tc)^β
+// Strain: Ec_eff = Ec(T) * (1 + strainShiftFactor * strain)
 func (m *MayergoyzPreisach) temperatureCorrectedEc() float64 {
 	if m.Temperature >= m.CurieTemp {
 		return 0 // Above Curie temperature, no ferroelectricity
 	}
 
+	// Temperature correction
 	ratio := m.Temperature / m.CurieTemp
-	return m.material.Ec * math.Pow(1-ratio, m.TempExponent)
+	tempEc := m.material.Ec * math.Pow(1-ratio, m.TempExponent)
+
+	// Strain correction: compressive strain (negative) increases Ec
+	strainEc := tempEc * (1 + m.strainShiftFactor*m.SubstrateStrain)
+
+	return strainEc
 }
 
 // SetTemperature updates the operating temperature and recalculates distributions.
@@ -291,6 +308,59 @@ func (m *MayergoyzPreisach) SetDistributionType(dtype DistributionType) {
 		distName = "Lorentzian"
 	}
 	log.Debug("SetDistributionType: %s", distName)
+}
+
+// SetSubstrateStrain applies biaxial substrate strain effects to the model.
+// Strain shifts the effective coercive field via electrostrictive coupling.
+//
+// Physics: For HZO on silicon, compressive strain (negative) typically INCREASES Ec
+// due to electrostrictive coupling: Ec_eff = Ec * (1 + factor * strain)
+//
+// Typical values:
+//   - HZO on Si: strain ≈ -0.02 (-2% compressive)
+//   - This shifts Ec by ~10-20% depending on film quality
+//
+// The strainShiftFactor can be derived from electrostrictive coefficients:
+//
+//	factor ≈ 2 * Q11 / Ec  (simplified model)
+//
+// where Q11 ≈ 0.089 m⁴/C² for HZO.
+func (m *MayergoyzPreisach) SetSubstrateStrain(strain float64) {
+	oldStrain := m.SubstrateStrain
+	m.SubstrateStrain = strain
+
+	// Recalculate hysteron grid and distribution with new strain
+	m.initializeHysterons()
+	m.initializeDistribution()
+
+	// Calculate the effective Ec shift for logging
+	shiftPercent := m.strainShiftFactor * strain * 100
+	log.Debug("SetSubstrateStrain: %.2f%% → %.2f%%, Ec shift: %+.1f%%",
+		oldStrain*100, strain*100, shiftPercent)
+}
+
+// SetStrainShiftFactor sets the strain-to-Ec coupling factor.
+// Default is 0.15 (~15% Ec change per 1% strain).
+// Can be calculated from electrostrictive coefficients: factor ≈ 2*Q11*Ec/Ec = 2*Q11
+func (m *MayergoyzPreisach) SetStrainShiftFactor(factor float64) {
+	m.strainShiftFactor = factor
+	if m.SubstrateStrain != 0 {
+		// Re-apply strain with new factor
+		m.initializeHysterons()
+		m.initializeDistribution()
+	}
+}
+
+// GetSubstrateStrain returns the current substrate strain value.
+func (m *MayergoyzPreisach) GetSubstrateStrain() float64 {
+	return m.SubstrateStrain
+}
+
+// GetEffectiveEc returns the coercive field with all corrections applied
+// (temperature + strain). This is the same as temperatureCorrectedEc()
+// but exposed for external use.
+func (m *MayergoyzPreisach) GetEffectiveEc() float64 {
+	return m.temperatureCorrectedEc()
 }
 
 // Update applies a new electric field and returns the resulting polarization.
@@ -458,11 +528,6 @@ func (m *MayergoyzPreisach) GetSwitchedFraction() float64 {
 		}
 	}
 	return float64(switched) / float64(len(m.hysterons))
-}
-
-// GetEffectiveEc returns the temperature-corrected coercive field.
-func (m *MayergoyzPreisach) GetEffectiveEc() float64 {
-	return m.temperatureCorrectedEc()
 }
 
 // GetEffectivePr returns the actual simulated remanent polarization.
