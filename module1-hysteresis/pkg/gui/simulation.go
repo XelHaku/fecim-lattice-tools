@@ -1266,9 +1266,8 @@ func (a *App) simulationLoop() {
 						a.wrdResetStartP = a.polarization * 100 // Convert to µC/cm²
 						log.Printf("WRD CYCLE START: cycle=%d | startLevel=%d | newTarget=%d | P=%.2f µC/cm²",
 							a.wrdTotalWrites+1, a.discreteLevel+1, a.wrdTargetLevel, a.wrdResetStartP)
-						// Clear history trail to prevent visual spikes between cycles
-						a.eHistory = a.eHistory[:0]
-						a.pHistory = a.pHistory[:0]
+						// NOTE: Don't clear history here - let trail accumulate across successful cycles
+						// History is only cleared on retry (line ~1192) to avoid spikes from failed writes
 						a.wrdPhase = 0
 						a.wrdPhaseTimer = 0
 						a.wrdCycleEnergy = 0 // Reset energy accumulator for next cycle
