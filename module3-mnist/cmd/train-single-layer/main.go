@@ -10,6 +10,7 @@ import (
 
 	"fecim-lattice-tools/module3-mnist/pkg/mnist"
 	"fecim-lattice-tools/module3-mnist/pkg/training"
+	"fecim-lattice-tools/shared/utils"
 )
 
 func main() {
@@ -19,7 +20,7 @@ func main() {
 	fmt.Println("")
 
 	// Find data directory
-	dataDir := findDataDir()
+	dataDir := utils.FindDirectoryWithMarker("module3-mnist/data", "train-images-idx3-ubyte.gz")
 	if dataDir == "" {
 		fmt.Println("Error: Could not find MNIST data directory")
 		os.Exit(1)
@@ -68,24 +69,6 @@ func main() {
 	}
 
 	fmt.Println("\nDone!")
-}
-
-func findDataDir() string {
-	// Try common locations
-	paths := []string{
-		"module3-mnist/data",
-		"../module3-mnist/data",
-		"../../module3-mnist/data",
-		"data",
-	}
-
-	for _, p := range paths {
-		if _, err := os.Stat(filepath.Join(p, "train-images-idx3-ubyte.gz")); err == nil {
-			return p
-		}
-	}
-
-	return ""
 }
 
 func appendSingleLayerToMainWeights(mainPath string, net *training.SingleLayerNetwork) error {

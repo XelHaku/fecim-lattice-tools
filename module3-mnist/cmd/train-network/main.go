@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"fecim-lattice-tools/module3-mnist/pkg/mnist"
+	"fecim-lattice-tools/shared/utils"
 )
 
 // Simple 2-layer network with quantization-aware training
@@ -387,7 +388,7 @@ func main() {
 	fmt.Println("Training with FP32, quantization applied at inference time")
 	fmt.Println("")
 
-	dataDir := findDataDir()
+	dataDir := utils.FindDirectoryWithMarker("module3-mnist/data", "train-images-idx3-ubyte.gz")
 	if dataDir == "" {
 		fmt.Println("Error: Could not find MNIST data directory")
 		os.Exit(1)
@@ -440,17 +441,3 @@ func main() {
 	fmt.Println("\nDone! Weights saved. Quantization applied dynamically based on UI slider.")
 }
 
-func findDataDir() string {
-	paths := []string{
-		"module3-mnist/data",
-		"../module3-mnist/data",
-		"../../module3-mnist/data",
-		"data",
-	}
-	for _, p := range paths {
-		if _, err := os.Stat(filepath.Join(p, "train-images-idx3-ubyte.gz")); err == nil {
-			return p
-		}
-	}
-	return ""
-}
