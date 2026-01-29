@@ -163,20 +163,28 @@ func (ca *CrossbarApp) analyzeSneakPaths() {
 		snr = analysis.TotalSignal / analysis.TotalSneak
 	}
 
+	// Cap display at 100% (sneak can exceed signal when center cell has low G)
+	maxSneakDisplay := analysis.MaxSneakRatio * 100
+	maxSneakNote := ""
+	if maxSneakDisplay > 100.0 {
+		maxSneakNote = fmt.Sprintf(" (actual: %.1f%%)", maxSneakDisplay)
+		maxSneakDisplay = 100.0
+	}
+
 	// Update stats
 	ca.statsLabel.SetText(fmt.Sprintf(
 		"Sneak Path Analysis\n"+
 			"Selected Cell: [%d, %d]\n"+
 			"Signal Current: %.6f\n"+
 			"Total Sneak: %.6f\n"+
-			"Max Sneak/Signal: %.2f%%\n"+
+			"Max Sneak/Signal: %.2f%%%s\n"+
 			"Avg Sneak/Signal: %.2f%%\n"+
 			"Signal/Sneak Ratio: %.1f:1\n\n"+
 			"Impact Assessment:\n%s",
 		selectedRow, selectedCol,
 		analysis.TotalSignal,
 		analysis.TotalSneak,
-		analysis.MaxSneakRatio*100,
+		maxSneakDisplay, maxSneakNote,
 		analysis.AvgSneakRatio*100,
 		snr,
 		getImpactAssessment(analysis.MaxSneakRatio),

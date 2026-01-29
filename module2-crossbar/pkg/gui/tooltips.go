@@ -193,6 +193,14 @@ func SneakPathTooltipWithArch(row, col int, sneakAnalysis *crossbar.SneakPathAna
 		archNote = "2T1R: ~10000× sneak reduction"
 	}
 
+	// Cap array max display at 100% (sneak can exceed signal when center cell has low G)
+	arrayMaxPercent := sneakAnalysis.MaxSneakRatio * 100
+	arrayMaxNote := ""
+	if arrayMaxPercent > 100.0 {
+		arrayMaxNote = fmt.Sprintf(" (actual %.1f%% - sneak > signal)", arrayMaxPercent)
+		arrayMaxPercent = 100.0
+	}
+
 	// Progressive disclosure: Key metrics first (M1 UX fix)
 	tooltip := fmt.Sprintf(
 		"CELL [%d, %d] - SNEAK PATH [%s]\n"+
@@ -206,7 +214,7 @@ func SneakPathTooltipWithArch(row, col int, sneakAnalysis *crossbar.SneakPathAna
 			"  Architecture: %s\n"+
 			"  Signal: %.3f µA\n"+
 			"  Sneak: %.3f µA\n"+
-			"  Array max: %.2f%%\n\n"+
+			"  Array max: %.2f%%%s\n\n"+
 			"%s\n",
 		row, col, archDisplay,
 		severitySymbol, sneakRatio, severity,
@@ -216,7 +224,7 @@ func SneakPathTooltipWithArch(row, col int, sneakAnalysis *crossbar.SneakPathAna
 		archDisplay,
 		signalCurrent*1e6,
 		sneakCurrent*1e6,
-		sneakAnalysis.MaxSneakRatio*100,
+		arrayMaxPercent, arrayMaxNote,
 		archNote,
 	)
 

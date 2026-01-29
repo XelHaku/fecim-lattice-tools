@@ -271,7 +271,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	// Conductance displayed as discrete level (0-29) per FeCIM 30-level spec
 	ca.condLegend = sharedwidgets.NewColorLegendWithColormap(0, 29, "Level", true, "fecim")
 	ca.irLegend = sharedwidgets.NewColorLegendWithColormap(0, 10, "%", true, "viridis") // Typical IR drop range ~1-10%
-	ca.sneakLegend = sharedwidgets.NewColorLegendWithColormap(0, 10, "%", true, "plasma") // Typical sneak ratio range
+	ca.sneakLegend = sharedwidgets.NewColorLegendWithColormap(0, 100, "%", true, "plasma") // Sneak ratio: 0-100% of signal
 
 	// Create MVM visualization with bar charts
 	ca.mvmVis = NewMVMVisualization()

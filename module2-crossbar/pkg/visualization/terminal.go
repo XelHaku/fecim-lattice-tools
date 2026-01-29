@@ -380,7 +380,13 @@ func (v *TerminalVisualizer) ShowSneakPathAnalysis(analysis *crossbar.SneakPathA
 	fmt.Println("\nSneak Path Statistics:")
 	fmt.Printf("  Signal Current:    %.4f (normalized)\n", analysis.TotalSignal)
 	fmt.Printf("  Total Sneak:       %.4f (normalized)\n", analysis.TotalSneak)
-	fmt.Printf("  Max Sneak/Signal:  %.2f%%\n", analysis.MaxSneakRatio*100)
+	maxSneakDisplay := analysis.MaxSneakRatio * 100
+	maxSneakNote := ""
+	if maxSneakDisplay > 100.0 {
+		maxSneakNote = fmt.Sprintf(" (actual: %.1f%%)", maxSneakDisplay)
+		maxSneakDisplay = 100.0
+	}
+	fmt.Printf("  Max Sneak/Signal:  %.2f%%%s\n", maxSneakDisplay, maxSneakNote)
 	fmt.Printf("  Avg Sneak/Signal:  %.2f%%\n", analysis.AvgSneakRatio*100)
 
 	// Signal-to-noise assessment
