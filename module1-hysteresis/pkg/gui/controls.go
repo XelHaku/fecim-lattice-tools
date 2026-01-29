@@ -145,97 +145,12 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	})
 	a.waveformSelect.SetSelected("Write/Read Demo")
 
-	// Material selector - dynamically build from AllMaterials()
-	matNames := make([]string, len(a.materials))
-	for i, m := range a.materials {
-		matNames[i] = m.Name
-	}
-	a.materialSelect = widget.NewSelect(matNames, func(s string) {
-		log.Selection("Material", s)
-		// Find selected material by name
-		var idx int
-		for i, m := range a.materials {
-			if m.Name == s {
-				idx = i
-				break
-			}
-		}
-		a.mu.Lock()
-		// HYBRID APPROACH: Capture temperature before material change
-		savedTemp := a.preisach.Temperature
-
-		a.matIndex = idx
-		a.material = a.materials[idx]
-		// Use fixed high-resolution grid (60) for physics accuracy, independent of quantization levels
-		a.preisach = ferroelectric.NewMayergoyzPreisach(a.material, 60)
-
-		// HYBRID APPROACH: Restore temperature immediately after model creation
-		a.preisach.SetTemperature(savedTemp)
-
-		a.eHistory = a.eHistory[:0]
-		a.pHistory = a.pHistory[:0]
-
-		// Reset simulation state for new material
-		a.electricField = 0
-		a.polarization = 0
-		a.normalizedP = 0
-		a.simTime = 0
-
-		// HYBRID APPROACH: Use temperature-corrected values for bounds and markers
-		effEc := a.preisach.GetEffectiveEc()
-		effPr := a.preisach.GetEffectivePr()
-		a.plot.SetBounds(effEc*2.0, effPr*1.2)
-		a.plot.SetMaterialParams(effEc, effPr)
-		// Clear plot data and refresh immediately
-		a.plot.SetData(nil, nil, 0, 0)
-		a.plot.Refresh()
-		// Mark calibration as stale (new material needs recalibration)
-		a.calibrated = false
-
-		// Update number of levels based on material's capability
-		newLevels := a.material.GetNumLevels()
-		if newLevels != a.numLevels {
-			a.numLevels = newLevels
-			// Update level indicator and cell visualizer
-			if a.levelIndicator != nil {
-				a.levelIndicator.SetNumLevels(newLevels)
-			}
-			if a.cellViz != nil {
-				a.cellViz.SetNumLevels(newLevels)
-			}
-			// Reset discrete level to middle of new range
-			a.discreteLevel = newLevels / 2
-			// Reset target levels to be within new bounds
-			a.wrdTargetLevel = newLevels / 2
-			a.manualTargetLevel = newLevels / 2
-			// Resize calibration arrays
-			a.calibrationUp = make([]float64, newLevels)
-			a.calibrationDown = make([]float64, newLevels)
-		}
-		a.mu.Unlock()
-
-		// Update levels entry and label in UI thread
-		fyne.Do(func() {
-			if a.levelsEntry != nil {
-				a.levelsEntry.SetText(fmt.Sprintf("%d", newLevels))
-			}
-			if a.levelsLabel != nil {
-				a.levelsLabel.SetText(fmt.Sprintf("Levels: %d (%.1f bits)", newLevels, math.Log2(float64(newLevels))))
-			}
+	// Material button - shows current material, opens picker on click
+	a.materialBtn = widget.NewButton(a.material.Name, func() {
+		sharedwidgets.ShowMaterialPicker(a.mainWindow, a.getCurrentMaterialID(), func(id string, mat *physics.Material) {
+			a.onMaterialPickerSelected(id, mat)
 		})
-
-		// Load or run calibration for new material immediately
-		a.tempCalibrations = make(map[int]*TempCalibration)
-		if !a.loadCalibration() {
-			log.Printf("Running calibration for %s...", a.material.Name)
-			a.calibrateLevelsAtTemperature(300)
-			if err := a.saveCalibration(); err != nil {
-				log.Printf("Warning: failed to save calibration: %v", err)
-			}
-		}
-		a.needsCalibration = false
 	})
-	a.materialSelect.SetSelected(a.materials[0].Name)
 
 	// Levels selector (2-256 levels)
 	a.levelsLabel = widget.NewLabel(fmt.Sprintf("Levels: %d (%.1f bits)", a.numLevels, math.Log2(float64(a.numLevels))))
@@ -407,18 +322,9 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		trailLabel.SetText(fmt.Sprintf("Trail: %d", int(v)))
 	}
 
-	// Material picker button for detailed material selection
-	materialPickerBtn := sharedwidgets.CreateMaterialPickerButton(
-		a.mainWindow,
-		a.getCurrentMaterialID(),
-		func(id string, mat *physics.Material) {
-			a.onMaterialPickerSelected(id, mat)
-		},
-	)
-
 	// Compact layout
 	return container.NewVBox(
-		container.NewBorder(nil, nil, nil, materialPickerBtn, a.materialSelect),
+		a.materialBtn,
 		a.waveformSelect,
 		a.levelsLabel,
 		a.levelsEntry,
@@ -540,9 +446,9 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 		a.plot.SetData(nil, nil, 0, 0)
 		a.plot.Refresh()
 
-		// Update dropdown to match
-		if a.materialSelect != nil {
-			a.materialSelect.SetSelected(hzoMat.Name)
+		// Update material button text
+		if a.materialBtn != nil {
+			a.materialBtn.SetText(hzoMat.Name)
 		}
 
 		// Update levels entry and label

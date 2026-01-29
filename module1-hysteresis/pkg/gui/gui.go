@@ -151,7 +151,7 @@ type App struct {
 	pLabel         *widget.Label
 	levelLabel     *widget.Label
 	stateLabel     *widget.Label // State description (Negative P, Intermediate, Positive P)
-	materialSelect *widget.Select
+	materialBtn *widget.Button // Opens material picker, shows current material name
 	waveformSelect *widget.Select
 	statusLabel    *widget.Label
 	pauseBtn       *widget.Button

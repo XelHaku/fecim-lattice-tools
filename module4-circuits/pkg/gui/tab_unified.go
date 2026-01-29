@@ -17,6 +17,7 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
+	configphysics "fecim-lattice-tools/config/physics"
 	sharedphysics "fecim-lattice-tools/shared/physics"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
@@ -130,7 +131,7 @@ func (ca *CircuitsApp) createSignalChainHeader() fyne.CanvasObject {
 	)
 }
 
-// createMaterialSelector creates the ferroelectric material selection dropdown
+// createMaterialSelector creates the ferroelectric material selection dropdown with browse button
 func (ca *CircuitsApp) createMaterialSelector() fyne.CanvasObject {
 	materials := sharedphysics.AllMaterials()
 	materialNames := make([]string, len(materials))
@@ -154,7 +155,21 @@ func (ca *CircuitsApp) createMaterialSelector() fyne.CanvasObject {
 	// Set default selection to FeCIM material
 	selector.SetSelected("FeCIM HZO")
 
-	return container.NewHBox(widget.NewLabel("Material:"), selector)
+	// Material picker button for detailed view
+	pickerBtn := sharedwidgets.CreateMaterialPickerButton(
+		ca.window,
+		"fecim_hzo", // Default material ID
+		func(materialID string, mat *configphysics.Material) {
+			if mat == nil {
+				return
+			}
+			// Update dropdown to match selection
+			selector.SetSelected(mat.Name)
+			// The dropdown's OnChanged will handle the rest
+		},
+	)
+
+	return container.NewHBox(widget.NewLabel("Material:"), selector, pickerBtn)
 }
 
 // createADCBitsSelector creates a dropdown to select ADC resolution (5-8 bits)
