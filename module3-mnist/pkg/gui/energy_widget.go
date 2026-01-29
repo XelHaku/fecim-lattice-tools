@@ -14,6 +14,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/shared/physics"
+	"fecim-lattice-tools/shared/utils"
 )
 
 // EnergyConfig defines energy parameters for calculations.
@@ -225,7 +226,7 @@ func (ew *EnergyWidget) generateImage(w, h int) image.Image {
 	y := padding
 
 	// Title
-	drawSimpleText(img, "Per Inference Energy (Horowitz 2014 model):", padding, y, color.RGBA{180, 180, 200, 255})
+	utils.DrawSimpleText(img, "Per Inference Energy (Horowitz 2014 model):", padding, y, color.RGBA{180, 180, 200, 255})
 	y += 15
 
 	// GPU bar (full width represents GPU energy)
@@ -236,14 +237,14 @@ func (ew *EnergyWidget) generateImage(w, h int) image.Image {
 	}
 
 	// GPU label and bar with units
-	drawSimpleText(img, "FP32:", padding, y+8, color.RGBA{255, 100, 100, 255})
+	utils.DrawSimpleText(img, "FP32:", padding, y+8, color.RGBA{255, 100, 100, 255})
 	drawBar(img, padding+labelWidth, y, gpuBarWidth, barHeight, color.RGBA{200, 80, 80, 255})
 	// UI-022 fix: Clear unit labeling
 	gpuLabel := fmt.Sprintf("%.2f nJ", gpuEnergy)
 	if gpuEnergy >= 1000 {
 		gpuLabel = fmt.Sprintf("%.2f µJ", gpuEnergy/1000)
 	}
-	drawSimpleText(img, gpuLabel, padding+labelWidth+gpuBarWidth+5, y+8, color.RGBA{200, 150, 150, 255})
+	utils.DrawSimpleText(img, gpuLabel, padding+labelWidth+gpuBarWidth+5, y+8, color.RGBA{200, 150, 150, 255})
 	y += barHeight + 5
 
 	// FeCIM bar (proportionally smaller)
@@ -256,14 +257,14 @@ func (ew *EnergyWidget) generateImage(w, h int) image.Image {
 	}
 
 	// FeCIM label and bar with units
-	drawSimpleText(img, "FeCIM:", padding, y+8, color.RGBA{100, 255, 180, 255})
+	utils.DrawSimpleText(img, "FeCIM:", padding, y+8, color.RGBA{100, 255, 180, 255})
 	drawBar(img, padding+labelWidth, y, fecimBarWidth, barHeight, color.RGBA{80, 200, 150, 255})
 	// UI-022 fix: Clear unit labeling (nJ or pJ)
 	fecimLabel := fmt.Sprintf("%.2f nJ", fecimEnergy)
 	if fecimEnergy < 1 {
 		fecimLabel = fmt.Sprintf("%.0f pJ", fecimEnergy*1000)
 	}
-	drawSimpleText(img, fecimLabel, padding+labelWidth+fecimBarWidth+5, y+8, color.RGBA{150, 200, 180, 255})
+	utils.DrawSimpleText(img, fecimLabel, padding+labelWidth+fecimBarWidth+5, y+8, color.RGBA{150, 200, 180, 255})
 	y += barHeight + 10
 
 	// Efficiency highlight box
@@ -293,18 +294,18 @@ func (ew *EnergyWidget) generateImage(w, h int) image.Image {
 
 		// Efficiency text
 		effText := fmt.Sprintf("%.0fx MORE EFFICIENT", ratio)
-		drawSimpleText(img, effText, boxX+20, boxY+12, color.RGBA{0, 230, 255, 255})
+		utils.DrawSimpleText(img, effText, boxX+20, boxY+12, color.RGBA{0, 230, 255, 255})
 		y += boxH + 5
 	}
 
 	// Section 2: Why CIM wins (bottom section)
 	if y < h-30 {
 		y = h - 35
-		drawSimpleText(img, "Physics does the math! No data movement needed.", padding, y, color.RGBA{120, 120, 140, 255})
+		utils.DrawSimpleText(img, "Physics does the math! No data movement needed.", padding, y, color.RGBA{120, 120, 140, 255})
 		y += 12
 
 		if totalInf > 0 {
-			drawSimpleText(img, fmt.Sprintf("Session: %d inferences tracked", totalInf), padding, y, color.RGBA{100, 100, 120, 255})
+			utils.DrawSimpleText(img, fmt.Sprintf("Session: %d inferences tracked", totalInf), padding, y, color.RGBA{100, 100, 120, 255})
 		}
 	}
 
@@ -330,132 +331,4 @@ func drawBar(img *image.RGBA, x, y, w, h int, c color.RGBA) {
 	for bx := x; bx < x+w && bx < img.Bounds().Dx(); bx++ {
 		img.Set(bx, y, lighter)
 	}
-}
-
-// drawSimpleText draws text using a simple bitmap font.
-func drawSimpleText(img *image.RGBA, text string, x, y int, c color.RGBA) {
-	charWidth := 7
-	for i, ch := range text {
-		cx := x + i*charWidth
-		drawSimpleChar(img, ch, cx, y, c)
-	}
-}
-
-// Basic 5x7 font patterns
-var fontPatterns = map[rune][]string{
-	'0': {"01110", "10001", "10001", "10001", "10001", "10001", "01110"},
-	'1': {"00100", "01100", "00100", "00100", "00100", "00100", "01110"},
-	'2': {"01110", "10001", "00001", "00110", "01000", "10000", "11111"},
-	'3': {"01110", "10001", "00001", "00110", "00001", "10001", "01110"},
-	'4': {"00010", "00110", "01010", "10010", "11111", "00010", "00010"},
-	'5': {"11111", "10000", "11110", "00001", "00001", "10001", "01110"},
-	'6': {"01110", "10000", "10000", "11110", "10001", "10001", "01110"},
-	'7': {"11111", "00001", "00010", "00100", "01000", "01000", "01000"},
-	'8': {"01110", "10001", "10001", "01110", "10001", "10001", "01110"},
-	'9': {"01110", "10001", "10001", "01111", "00001", "00001", "01110"},
-	'.': {"00000", "00000", "00000", "00000", "00000", "01100", "01100"},
-	'-': {"00000", "00000", "00000", "11111", "00000", "00000", "00000"},
-	':': {"00000", "01100", "01100", "00000", "01100", "01100", "00000"},
-	'%': {"11001", "11010", "00100", "01000", "01011", "10011", "00000"},
-	' ': {"00000", "00000", "00000", "00000", "00000", "00000", "00000"},
-	'x': {"00000", "00000", "10001", "01010", "00100", "01010", "10001"},
-	'n': {"00000", "00000", "10110", "11001", "10001", "10001", "10001"},
-	'J': {"00111", "00010", "00010", "00010", "00010", "10010", "01100"},
-	'G': {"01110", "10001", "10000", "10111", "10001", "10001", "01110"},
-	'P': {"11110", "10001", "10001", "11110", "10000", "10000", "10000"},
-	'U': {"10001", "10001", "10001", "10001", "10001", "10001", "01110"},
-	'F': {"11111", "10000", "10000", "11110", "10000", "10000", "10000"},
-	'e': {"00000", "00000", "01110", "10001", "11111", "10000", "01110"},
-	'C': {"01110", "10001", "10000", "10000", "10000", "10001", "01110"},
-	'I': {"01110", "00100", "00100", "00100", "00100", "00100", "01110"},
-	'M': {"10001", "11011", "10101", "10101", "10001", "10001", "10001"},
-	'E': {"11111", "10000", "10000", "11110", "10000", "10000", "11111"},
-	'R': {"11110", "10001", "10001", "11110", "10100", "10010", "10001"},
-	'O': {"01110", "10001", "10001", "10001", "10001", "10001", "01110"},
-	'N': {"10001", "11001", "10101", "10011", "10001", "10001", "10001"},
-	'S': {"01110", "10001", "10000", "01110", "00001", "10001", "01110"},
-	's': {"00000", "00000", "01110", "10000", "01110", "00001", "11110"},
-	'i': {"00100", "00000", "01100", "00100", "00100", "00100", "01110"},
-	'o': {"00000", "00000", "01110", "10001", "10001", "10001", "01110"},
-	'c': {"00000", "00000", "01110", "10000", "10000", "10001", "01110"},
-	'f': {"00110", "01000", "01000", "11100", "01000", "01000", "01000"},
-	'r': {"00000", "00000", "10110", "11001", "10000", "10000", "10000"},
-	'a': {"00000", "00000", "01110", "00001", "01111", "10001", "01111"},
-	't': {"00100", "00100", "01110", "00100", "00100", "00100", "00011"},
-	'h': {"10000", "10000", "10110", "11001", "10001", "10001", "10001"},
-	'm': {"00000", "00000", "11010", "10101", "10101", "10001", "10001"},
-	'd': {"00001", "00001", "01101", "10011", "10001", "10001", "01111"},
-	'v': {"00000", "00000", "10001", "10001", "10001", "01010", "00100"},
-	'y': {"00000", "00000", "10001", "10001", "01111", "00001", "01110"},
-	'k': {"10000", "10000", "10010", "10100", "11000", "10100", "10010"},
-	'g': {"00000", "00000", "01111", "10001", "01111", "00001", "01110"},
-	'W': {"10001", "10001", "10001", "10101", "10101", "10101", "01010"},
-	'p': {"00000", "00000", "11110", "10001", "11110", "10000", "10000"},
-	'!': {"00100", "00100", "00100", "00100", "00100", "00000", "00100"},
-	'D': {"11100", "10010", "10001", "10001", "10001", "10010", "11100"},
-	'w': {"00000", "00000", "10001", "10001", "10101", "10101", "01010"},
-	'l': {"01100", "00100", "00100", "00100", "00100", "00100", "01110"},
-	'T': {"11111", "00100", "00100", "00100", "00100", "00100", "00100"},
-	'A': {"01110", "10001", "10001", "11111", "10001", "10001", "10001"},
-	'u': {"00000", "00000", "10001", "10001", "10001", "10011", "01101"},
-	'L': {"10000", "10000", "10000", "10000", "10000", "10000", "11111"},
-	'b': {"10000", "10000", "11110", "10001", "10001", "10001", "11110"},
-	'q': {"00000", "00000", "01101", "10011", "10001", "01111", "00001"},
-	'j': {"00010", "00000", "00110", "00010", "00010", "10010", "01100"},
-	'z': {"00000", "00000", "11111", "00010", "00100", "01000", "11111"},
-	'H': {"10001", "10001", "10001", "11111", "10001", "10001", "10001"},
-	'B': {"11110", "10001", "10001", "11110", "10001", "10001", "11110"},
-	'K': {"10001", "10010", "10100", "11000", "10100", "10010", "10001"},
-	'V': {"10001", "10001", "10001", "10001", "10001", "01010", "00100"},
-	'X': {"10001", "10001", "01010", "00100", "01010", "10001", "10001"},
-	'Y': {"10001", "10001", "01010", "00100", "00100", "00100", "00100"},
-	'Z': {"11111", "00001", "00010", "00100", "01000", "10000", "11111"},
-	'(': {"00010", "00100", "01000", "01000", "01000", "00100", "00010"},
-	')': {"01000", "00100", "00010", "00010", "00010", "00100", "01000"},
-}
-
-// drawSimpleChar draws a single character.
-func drawSimpleChar(img *image.RGBA, ch rune, x, y int, c color.RGBA) {
-	drawScaledChar(img, ch, x, y, 1, c)
-}
-
-// drawScaledText draws text with a scaling factor.
-func drawScaledText(img *image.RGBA, text string, x, y int, scale int, c color.RGBA) {
-	charWidth := 7 * scale
-	for i, ch := range text {
-		cx := x + i*charWidth
-		drawScaledChar(img, ch, cx, y, scale, c)
-	}
-}
-
-// drawScaledChar draws a single character with scaling.
-func drawScaledChar(img *image.RGBA, ch rune, x, y int, scale int, c color.RGBA) {
-	pattern, ok := fontPatterns[ch]
-	if !ok {
-		return
-	}
-
-	for dy, row := range pattern {
-		for dx, pixel := range row {
-			if pixel == '1' {
-				// Draw scaled pixel
-				for sy := 0; sy < scale; sy++ {
-					for sx := 0; sx < scale; sx++ {
-						px := x + dx*scale + sx
-						py := y + dy*scale + sy
-						if px >= 0 && px < img.Bounds().Dx() && py >= 0 && py < img.Bounds().Dy() {
-							img.Set(px, py, c)
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }
