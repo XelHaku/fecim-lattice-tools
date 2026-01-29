@@ -697,7 +697,12 @@ func formatElements(count int) string {
 }
 
 // TestComputePipeline_WithRealShader tests pipeline creation with actual shader files.
+// This test can crash the Vulkan driver on some systems. Set SKIP_VULKAN_PIPELINE_TEST=1 to skip.
 func TestComputePipeline_WithRealShader(t *testing.T) {
+	if os.Getenv("SKIP_VULKAN_PIPELINE_TEST") != "" {
+		t.Skip("Skipping Vulkan pipeline test (SKIP_VULKAN_PIPELINE_TEST is set)")
+	}
+
 	ctx := skipIfNoVulkan(t)
 	defer ctx.Destroy()
 

@@ -44,6 +44,11 @@ func (c *VulkanContext) CreateBuffer(size uint64, usage BufferUsage, deviceLocal
 		return nil, fmt.Errorf("Vulkan context not available")
 	}
 
+	// Vulkan does not support zero-sized buffers - reject early to avoid driver crash
+	if size == 0 {
+		return nil, fmt.Errorf("buffer size must be greater than 0")
+	}
+
 	buf := &GPUBuffer{
 		ctx:         c,
 		size:        vk.DeviceSize(size),

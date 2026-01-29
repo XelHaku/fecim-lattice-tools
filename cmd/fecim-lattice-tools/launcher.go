@@ -386,10 +386,6 @@ func (r *demoCardRenderer) layoutWithSize(size fyne.Size) {
 	if hintSize > 14 {
 		hintSize = 14
 	}
-	hintText := canvas.NewText("Click to explore →", color.RGBA{100, 130, 160, 200})
-	hintText.TextSize = hintSize
-	hintText.Move(fyne.NewPos(14, size.Height-18))
-	r.objects = append(r.objects, hintText)
 
 	r.cache.MarkLayout(size)
 }
