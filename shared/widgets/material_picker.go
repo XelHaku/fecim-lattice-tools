@@ -3,11 +3,13 @@ package widgets
 
 import (
 	"fmt"
+	"image/color"
 	"math"
 	"sort"
 	"strings"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
@@ -256,43 +258,50 @@ func (mp *MaterialPicker) CreateRenderer() fyne.WidgetRenderer {
 	mp.infoLabel.Wrapping = fyne.TextWrapWord
 	mp.infoLabel.TextStyle = fyne.TextStyle{Italic: true}
 
+	// Colors for row highlighting
+	selectedBgColor := color.RGBA{40, 80, 120, 255}
+	normalBgColor := color.RGBA{0, 0, 0, 0} // transparent
+	headerBgColor := color.RGBA{50, 55, 65, 255}
+
 	// Create table
 	mp.table = widget.NewTable(
 		// Size: rows = materials + 1 header, cols = parameters
 		func() (int, int) {
 			return len(mp.filteredIDs) + 1, len(materialColumns)
 		},
-		// Create cell
+		// Create cell with background rectangle for row highlighting
 		func() fyne.CanvasObject {
+			bg := canvas.NewRectangle(normalBgColor)
 			label := widget.NewLabel("Template Text")
 			label.Wrapping = fyne.TextWrapOff
-			return label
+			return container.NewStack(bg, label)
 		},
 		// Update cell
 		func(id widget.TableCellID, cell fyne.CanvasObject) {
-			label := cell.(*widget.Label)
+			stack := cell.(*fyne.Container)
+			bg := stack.Objects[0].(*canvas.Rectangle)
+			label := stack.Objects[1].(*widget.Label)
 
 			if id.Row == 0 {
 				// Header row
 				label.SetText(mp.getHeaderText(id.Col))
 				label.TextStyle = fyne.TextStyle{Bold: true}
+				bg.FillColor = headerBgColor
 			} else {
 				// Data row (adjust for header)
 				dataRow := id.Row - 1
 				label.SetText(mp.getCellValue(dataRow, id.Col))
 
-				// Highlight selected row
+				// Highlight entire selected row
 				if dataRow == mp.selectedRow {
 					label.TextStyle = fyne.TextStyle{Bold: true}
+					bg.FillColor = selectedBgColor
 				} else {
 					label.TextStyle = fyne.TextStyle{}
-				}
-
-				// First column (name) gets monospace for readability
-				if id.Col == 0 {
-					label.TextStyle.Bold = (dataRow == mp.selectedRow)
+					bg.FillColor = normalBgColor
 				}
 			}
+			bg.Refresh()
 		},
 	)
 

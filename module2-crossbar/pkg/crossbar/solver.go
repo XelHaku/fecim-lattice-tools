@@ -38,8 +38,8 @@ func DefaultSORConfig() *SORConfig {
 	}
 }
 
-// MVMResult contains the results of MVM computation with parasitic effects.
-type MVMResult struct {
+// ParasiticMVMResult contains the results of MVM computation with parasitic effects.
+type ParasiticMVMResult struct {
 	OutputCurrents []float64   // Output currents at bit lines
 	DeviceCurrents [][]float64 // Current through each device
 	DeviceVoltages [][]float64 // Voltage across each device
@@ -108,7 +108,7 @@ func (s *ParasiticSolver) SetParasitics(rpRow, rpCol float64) {
 // 5. Calculate voltage error: V_error = V_applied - V_parasitic - V_device
 // 6. Update device voltages with relaxation: V_new = V_old + omega × V_error
 // 7. Repeat until converged or max iterations
-func (s *ParasiticSolver) SolveMVM(appliedVoltages []float64) (*MVMResult, error) {
+func (s *ParasiticSolver) SolveMVM(appliedVoltages []float64) (*ParasiticMVMResult, error) {
 	if len(appliedVoltages) != s.cols {
 		return nil, ErrInvalidConfiguration
 	}
@@ -256,7 +256,7 @@ func (s *ParasiticSolver) SolveMVM(appliedVoltages []float64) (*MVMResult, error
 }
 
 // buildResult constructs the MVMResult from solver state.
-func (s *ParasiticSolver) buildResult(dV, Ires [][]float64, iters int, converged bool, maxErr, omega float64) *MVMResult {
+func (s *ParasiticSolver) buildResult(dV, Ires [][]float64, iters int, converged bool, maxErr, omega float64) *ParasiticMVMResult {
 	// Sum currents along columns to get output
 	output := make([]float64, s.cols)
 	for j := 0; j < s.cols; j++ {
@@ -275,7 +275,7 @@ func (s *ParasiticSolver) buildResult(dV, Ires [][]float64, iters int, converged
 		copy(deviceVoltages[i], dV[i])
 	}
 
-	return &MVMResult{
+	return &ParasiticMVMResult{
 		OutputCurrents: output,
 		DeviceCurrents: deviceCurrents,
 		DeviceVoltages: deviceVoltages,
@@ -288,7 +288,7 @@ func (s *ParasiticSolver) buildResult(dV, Ires [][]float64, iters int, converged
 
 // SolveMVMWithFallback attempts SOR solver, falls back to damped Jacobi on failure.
 // This provides robustness for edge cases where SOR may diverge.
-func (s *ParasiticSolver) SolveMVMWithFallback(appliedVoltages []float64) (*MVMResult, error) {
+func (s *ParasiticSolver) SolveMVMWithFallback(appliedVoltages []float64) (*ParasiticMVMResult, error) {
 	result, err := s.SolveMVM(appliedVoltages)
 	if err == nil {
 		return result, nil
