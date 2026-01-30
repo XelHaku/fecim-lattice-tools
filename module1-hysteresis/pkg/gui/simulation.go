@@ -1708,6 +1708,18 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 		if a.fatigueLabel != nil {
 			a.fatigueLabel.SetText(fmt.Sprintf("%.4f%%", degradation*100))
 		}
+		// L01: Update cycle phase indicator based on wakeup and degradation
+		if a.cyclePhaseLabel != nil {
+			var phase string
+			if wakeup < 0.95 {
+				phase = "WAKE-UP"
+			} else if degradation < 0.0001 { // < 0.01% degradation
+				phase = "STABLE"
+			} else {
+				phase = "FATIGUE"
+			}
+			a.cyclePhaseLabel.SetText(phase)
+		}
 
 		// Update temperature-dependent metrics (must hold lock during preisach access)
 		a.mu.RLock()

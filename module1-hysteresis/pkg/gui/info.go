@@ -64,11 +64,15 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 	a.cyclesLabel = widget.NewLabel("0")
 	a.wakeupLabel = widget.NewLabel("80%")
 	a.fatigueLabel = widget.NewLabel("0%")
+	// L01: Cycle phase indicator (WAKE-UP, STABLE, FATIGUE)
+	a.cyclePhaseLabel = widget.NewLabel("WAKE-UP")
+	a.cyclePhaseLabel.TextStyle = fyne.TextStyle{Bold: true}
 
 	statsRow := container.NewHBox(
 		widget.NewLabel("Cyc:"), a.cyclesLabel,
 		widget.NewLabel("W:"), a.wakeupLabel,
 		widget.NewLabel("F:"), a.fatigueLabel,
+		widget.NewLabel("|"), a.cyclePhaseLabel,
 	)
 
 	// Temperature-dependent metrics (with uncertainty notation)

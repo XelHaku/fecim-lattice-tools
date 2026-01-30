@@ -57,15 +57,18 @@ func (g *ResponsiveGridLayout) getBreakpointHeight(width float32) float32 {
 }
 
 // getMaxColumns returns the maximum columns allowed for the current breakpoint.
+// M13: <1024px=1-col, 1024-1600px=2-col, >1600px=3-col
 func (g *ResponsiveGridLayout) getMaxColumns(width float32) int {
 	bp := GetBreakpoint(width)
 	switch bp {
-	case BreakpointSM:
-		return 1 // Single column on mobile
-	case BreakpointMD:
-		return 2 // Two columns on tablet
+	case BreakpointSM, BreakpointMD, BreakpointLG:
+		return 1 // Single column on mobile/tablet/small laptop (<1024px)
+	case BreakpointXL:
+		return 2 // Two columns on desktop (1024-1600px)
+	case BreakpointXXL:
+		return 3 // Three columns on ultra-wide (>1600px)
 	default:
-		return 3 // Up to 3 columns on desktop
+		return 2 // Default to 2 columns
 	}
 }
 

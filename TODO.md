@@ -142,7 +142,7 @@
 
 | ID | Task | Status | Est. |
 |----|------|--------|------|
-| M13 | Responsive layout breakpoints (>1600px 3-col, 1024-1600px 2-col, <1024px 1-col) | ⏳ | 8hr |
+| M13 | Responsive layout breakpoints (>1600px 3-col, 1024-1600px 2-col, <1024px 1-col) | ✅ | Done |
 | M14 | Conductance drift time-dependent visualization (1s, 1hr, 1day, 1year) | ✅ | Done |
 | M15 | Device-to-device variation modeling GUI with yield prediction | ✅ | Done |
 
@@ -154,17 +154,17 @@
 
 | ID | Task | Status | Est. |
 |----|------|--------|------|
-| L01 | Hysteresis cycle labels (wake-up, stable, fatigue phases) | ⏳ | 45m |
-| L02 | Screenshot metadata embedding (PNG EXIF with parameters) | ⏳ | 1hr |
-| L03 | Add GitHub URL to glossary widget TODO | ⏳ | 15m |
-| L04 | Hysteresis polarization bar indicator - increase to 16px with pulsing | ⏳ | 30m |
+| L01 | Hysteresis cycle labels (wake-up, stable, fatigue phases) | ✅ | Done |
+| L02 | Screenshot metadata embedding (PNG EXIF with parameters) | ✅ | Done |
+| L03 | Add GitHub URL to glossary widget TODO | ✅ | Done (existing) |
+| L04 | Hysteresis polarization bar indicator - increase to 16px with pulsing | ✅ | Done |
 
 ### P4-D2: Medium-Effort Low-Priority Fixes
 
 | ID | Task | Status | Est. |
 |----|------|--------|------|
-| L05 | "About the Science" unified Learn More section | ⏳ | 2hr |
-| L06 | Accessibility audit (keyboard nav, ARIA labels, high-contrast mode) | ⏳ | 4hr |
+| L05 | "About the Science" unified Learn More section | ✅ | Done |
+| L06 | Accessibility audit (keyboard nav, ARIA labels, high-contrast mode) | ✅ | Done |
 | L07 | Demo video creation (2-3 min walkthrough) | ⏳ | 4hr |
 
 ### P4-D3: Hard Low-Priority Fixes
@@ -310,9 +310,9 @@ From HONESTY_AUDIT Section 6.2:
 |----------|-------|------|-----------|------------|
 | P1 Critical | 13 | 13 | 0 | 100% |
 | P2 High | 16 | 16 | 0 | 100% |
-| P3 Medium | 15 | 15 | 0 | 100% |
-| P4 Low | 10 | 0 | 10 | 0% |
-| **TOTAL** | **54** | **44** | **10** | **81%** |
+| P3 Medium | 16 | 16 | 0 | 100% |
+| P4 Low | 10 | 7 | 3 | 70% |
+| **TOTAL** | **55** | **52** | **3** | **95%** |
 
 **Estimated Remaining Effort**: ~27 hours
 
@@ -321,7 +321,8 @@ From HONESTY_AUDIT Section 6.2:
 - Sprint 3: C11 ✅, C12 ✅, H10 ✅, H15 ✅
 - Sprint 4: C13 ✅, H16 ✅, H14 ✅ (COMPLETE)
 - P2 Remaining: H08 ✅, H09 ✅, H11 ✅ (ALL P2 COMPLETE)
-- P3 Progress: M12 ✅, M07 ✅, M09 ✅, M08 ✅, M11 ✅, M10 ✅, M14 ✅
+- P3 Progress: M12 ✅, M07 ✅, M09 ✅, M08 ✅, M11 ✅, M10 ✅, M14 ✅, M15 ✅, M13 ✅ (ALL P3 COMPLETE)
+- P4 Progress: L01 ✅, L02 ✅, L03 ✅, L04 ✅, L05 ✅, L06 ✅ (7/10 complete)
 
 ---
 

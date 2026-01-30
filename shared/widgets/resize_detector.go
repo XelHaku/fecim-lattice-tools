@@ -104,17 +104,21 @@ const (
 	BreakpointSM Breakpoint = iota
 	// BreakpointMD is for medium devices (tablets) - width <= 768dp
 	BreakpointMD
-	// BreakpointLG is for large devices (small laptops) - width <= 992dp
+	// BreakpointLG is for large devices (small laptops) - width <= 1024dp (M13: 1-col)
 	BreakpointLG
-	// BreakpointXL is for extra large devices (desktops) - width > 992dp
+	// BreakpointXL is for extra large devices (desktops) - width <= 1600dp (M13: 2-col)
 	BreakpointXL
+	// BreakpointXXL is for ultra-wide displays - width > 1600dp (M13: 3-col)
+	BreakpointXXL
 )
 
 // Breakpoint thresholds in device-independent pixels
+// M13: <1024px=1-col, 1024-1600px=2-col, >1600px=3-col
 const (
-	ThresholdSM = 576
-	ThresholdMD = 768
-	ThresholdLG = 992
+	ThresholdSM  = 576
+	ThresholdMD  = 768
+	ThresholdLG  = 1024  // M13: 1-col threshold
+	ThresholdXL  = 1600  // M13: 2-col threshold
 )
 
 // GetBreakpoint returns the current breakpoint for a given width.
@@ -126,8 +130,10 @@ func GetBreakpoint(width float32) Breakpoint {
 		return BreakpointMD
 	case width <= ThresholdLG:
 		return BreakpointLG
-	default:
+	case width <= ThresholdXL:
 		return BreakpointXL
+	default:
+		return BreakpointXXL
 	}
 }
 
@@ -139,9 +145,11 @@ func BreakpointName(bp Breakpoint) string {
 	case BreakpointMD:
 		return "MD (Tablet)"
 	case BreakpointLG:
-		return "LG (Laptop)"
+		return "LG (1-col)"
 	case BreakpointXL:
-		return "XL (Desktop)"
+		return "XL (2-col)"
+	case BreakpointXXL:
+		return "XXL (3-col)"
 	default:
 		return "Unknown"
 	}

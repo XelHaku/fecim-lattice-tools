@@ -482,6 +482,9 @@ func ShowReferences(parent fyne.Window) {
 // CreateHelpMenuItems creates standardized Help menu items for glossary and references.
 func CreateHelpMenuItems(parent fyne.Window) []*fyne.MenuItem {
 	return []*fyne.MenuItem{
+		fyne.NewMenuItem("About the Science", func() {
+			ShowAboutScience(parent)
+		}),
 		fyne.NewMenuItem("Technical Glossary", func() {
 			ShowFullGlossary(parent)
 		}),

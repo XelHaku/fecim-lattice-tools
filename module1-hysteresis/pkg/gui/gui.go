@@ -168,9 +168,10 @@ type App struct {
 	pauseBtn       *widget.Button
 
 	// Wake-up/Fatigue display labels (Dr. Tour recommendation)
-	cyclesLabel  *widget.Label
-	wakeupLabel  *widget.Label
-	fatigueLabel *widget.Label
+	cyclesLabel    *widget.Label
+	wakeupLabel    *widget.Label
+	fatigueLabel   *widget.Label
+	cyclePhaseLabel *widget.Label // L01: Shows current phase (WAKE-UP, STABLE, FATIGUE)
 
 	// Temperature-dependent metrics labels
 	effEcLabel       *widget.Label

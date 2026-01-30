@@ -17,7 +17,6 @@ import (
 	"flag"
 	"fmt"
 	"image"
-	"image/png"
 	"io"
 	"os"
 	"os/exec"
@@ -105,7 +104,8 @@ func sectionNameFromTab(viewName string) string {
 	}
 }
 
-// takeScreenshot captures the current window and saves it as PNG
+// takeScreenshot captures the current window and saves it as PNG with metadata
+// L02: Embeds PNG metadata (title, timestamp, module name, simulation parameters)
 func takeScreenshot(window fyne.Window, sectionName string) string {
 	// Create screenshots directory if it doesn't exist
 	screenshotDir := "screenshots"
@@ -121,17 +121,13 @@ func takeScreenshot(window fyne.Window, sectionName string) string {
 	// Capture the canvas
 	img := window.Canvas().Capture()
 
-	// Create the file
-	file, err := os.Create(filename)
-	if err != nil {
-		fmt.Println("Error creating screenshot file:", err)
-		return ""
-	}
-	defer file.Close()
+	// L02: Create metadata for the screenshot
+	meta := utils.DefaultScreenshotMetadata(sectionName)
+	meta.CustomData["Window-Size"] = fmt.Sprintf("%dx%d", int(window.Canvas().Size().Width), int(window.Canvas().Size().Height))
 
-	// Encode as PNG
-	if err := png.Encode(file, img); err != nil {
-		fmt.Println("Error encoding screenshot:", err)
+	// L02: Save with embedded metadata
+	if err := utils.SavePNGWithMetadata(img, filename, meta); err != nil {
+		fmt.Println("Error saving screenshot with metadata:", err)
 		return ""
 	}
 

@@ -109,9 +109,11 @@ func TestGetBreakpoint(t *testing.T) {
 		{577, BreakpointMD},
 		{768, BreakpointMD},
 		{769, BreakpointLG},
-		{992, BreakpointLG},
-		{993, BreakpointXL},
-		{1920, BreakpointXL},
+		{1024, BreakpointLG},
+		{1025, BreakpointXL},
+		{1600, BreakpointXL},
+		{1601, BreakpointXXL},
+		{1920, BreakpointXXL},
 	}
 
 	for _, tt := range tests {
@@ -129,8 +131,9 @@ func TestBreakpointName(t *testing.T) {
 	}{
 		{BreakpointSM, "SM (Mobile)"},
 		{BreakpointMD, "MD (Tablet)"},
-		{BreakpointLG, "LG (Laptop)"},
-		{BreakpointXL, "XL (Desktop)"},
+		{BreakpointLG, "LG (1-col)"},
+		{BreakpointXL, "XL (2-col)"},
+		{BreakpointXXL, "XXL (3-col)"},
 		{Breakpoint(99), "Unknown"},
 	}
 
@@ -198,13 +201,13 @@ func TestResponsiveDetector_BreakpointChangeCallback(t *testing.T) {
 	renderer := detector.CreateRenderer()
 
 	// First layout - initializes but doesn't fire callback
-	renderer.Layout(fyne.NewSize(1000, 800)) // XL
+	renderer.Layout(fyne.NewSize(1200, 800)) // XL (1024-1600)
 	if atomic.LoadInt32(&callCount) != 0 {
 		t.Errorf("first layout should not fire callback, got %d calls", callCount)
 	}
 
 	// Same breakpoint - no callback
-	renderer.Layout(fyne.NewSize(1100, 800)) // Still XL
+	renderer.Layout(fyne.NewSize(1300, 800)) // Still XL
 	if atomic.LoadInt32(&callCount) != 0 {
 		t.Errorf("same breakpoint should not fire callback, got %d calls", callCount)
 	}
@@ -241,15 +244,18 @@ func TestResponsiveDetector_NilCallback(t *testing.T) {
 }
 
 func TestBreakpointThresholds(t *testing.T) {
-	// Verify threshold constants
+	// Verify threshold constants (M13: <1024=1col, 1024-1600=2col, >1600=3col)
 	if ThresholdSM != 576 {
 		t.Errorf("ThresholdSM should be 576, got %d", ThresholdSM)
 	}
 	if ThresholdMD != 768 {
 		t.Errorf("ThresholdMD should be 768, got %d", ThresholdMD)
 	}
-	if ThresholdLG != 992 {
-		t.Errorf("ThresholdLG should be 992, got %d", ThresholdLG)
+	if ThresholdLG != 1024 {
+		t.Errorf("ThresholdLG should be 1024, got %d", ThresholdLG)
+	}
+	if ThresholdXL != 1600 {
+		t.Errorf("ThresholdXL should be 1600, got %d", ThresholdXL)
 	}
 }
 

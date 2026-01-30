@@ -38,6 +38,10 @@ type LevelIndicator struct {
 	// Animation state for pulsing highlight
 	pulseAnim     *fyne.Animation
 	pulseProgress float32 // 0.0 to 1.0, used for pulsing effect
+
+	// L04: Polarization bar pulsing (always on to show current level)
+	polBarAnim     *fyne.Animation
+	polBarProgress float32
 }
 
 // NewLevelIndicator creates a new level indicator with default 30 levels
@@ -48,6 +52,7 @@ func NewLevelIndicator() *LevelIndicator {
 		minSize:   fyne.NewSize(60, 400),
 	}
 	l.ExtendBaseWidget(l)
+	// L04: Animation started in CreateRenderer (requires running app)
 	return l
 }
 
@@ -157,6 +162,19 @@ func (l *LevelIndicator) stopPulseAnimation() {
 	l.mu.Unlock()
 }
 
+// L04: startPolBarAnimation starts the continuous polarization bar pulsing.
+func (l *LevelIndicator) startPolBarAnimation() {
+	l.polBarAnim = fyne.NewAnimation(800*time.Millisecond, func(progress float32) {
+		l.mu.Lock()
+		l.polBarProgress = progress
+		l.mu.Unlock()
+		l.Refresh()
+	})
+	l.polBarAnim.RepeatCount = fyne.AnimationRepeatForever
+	l.polBarAnim.AutoReverse = true
+	l.polBarAnim.Start()
+}
+
 // Tapped implements fyne.Tappable - allows clicking to select a level
 func (l *LevelIndicator) Tapped(e *fyne.PointEvent) {
 	if l.OnLevelClicked == nil {
@@ -213,6 +231,10 @@ func (l *LevelIndicator) Tapped(e *fyne.PointEvent) {
 }
 
 func (l *LevelIndicator) CreateRenderer() fyne.WidgetRenderer {
+	// L04: Start polarization bar animation when renderer is created (app is running)
+	if l.polBarAnim == nil {
+		l.startPolBarAnimation()
+	}
 	return &levelRenderer{indicator: l}
 }
 
@@ -259,6 +281,7 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 	targetLevel := r.indicator.targetLevel
 	highlightTarget := r.indicator.highlightTarget
 	pulseProgress := r.indicator.pulseProgress
+	polBarProgress := r.indicator.polBarProgress
 	interactive := r.indicator.interactive
 	r.indicator.mu.RUnlock()
 
@@ -392,12 +415,20 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 			r.objects = append(r.objects, targetBorder)
 		}
 
-		// Current level gets GREEN glow
+		// Current level gets GREEN glow + L04: 16px pulsing polarization bar
 		if i == level {
+			// Outer glow
 			glow := canvas.NewRectangle(color.RGBA{colorCurrent.R, colorCurrent.G, colorCurrent.B, 100})
 			glow.Resize(fyne.NewSize(barW+6, segH+4))
 			glow.Move(fyne.NewPos(marginW-3, y-2))
 			r.objects = append(r.objects, glow)
+
+			// L04: 16px pulsing polarization bar indicator
+			polBarAlpha := uint8(150 + 105*polBarProgress) // Pulses 150-255
+			polBar := canvas.NewRectangle(color.RGBA{colorCurrent.R, colorCurrent.G, colorCurrent.B, polBarAlpha})
+			polBar.Resize(fyne.NewSize(16, segH+8)) // 16px wide bar
+			polBar.Move(fyne.NewPos(size.Width-20, y-4))
+			r.objects = append(r.objects, polBar)
 		}
 
 		seg := canvas.NewRectangle(segColor)
