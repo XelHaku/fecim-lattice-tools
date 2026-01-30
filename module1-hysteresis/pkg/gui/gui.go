@@ -133,6 +133,19 @@ type App struct {
 	relaxCompUp   []float64 // Relaxation compensation factors (ascending, 0-indexed)
 	relaxCompDown []float64 // Relaxation compensation factors (descending, 0-indexed)
 
+	// ISPP (Incremental Step Pulse Programming) state
+	// True ISPP: climb hysteresis S-curve incrementally instead of single calibrated pulse
+	isppEnabled        bool    // Whether to use ISPP algorithm (default: true)
+	isppPulseCount     int     // Current pulse number in ISPP sequence (1-based)
+	isppCurrentVoltage float64 // Current ISPP pulse voltage (E-field)
+	isppStartVoltage   float64 // ISPP starting voltage for this write
+	isppVoltageStep    float64 // Voltage increment per ISPP step (default: 0.05*Ec)
+	isppMaxPulses      int     // Maximum ISPP pulses before giving up (default: 10)
+	isppPhase          int     // ISPP sub-phase: 0=APPLY, 1=WAIT, 2=VERIFY, 3=ADJUST
+	isppPhaseTimer     float64 // Timer for ISPP sub-phases
+	isppLastVerifyLvl  int     // Level at last ISPP verification (for detecting stuck states)
+	isppTotalPulses    int     // Total ISPP pulses across all retries for current write target
+
 	// Temperature-aware calibration (v2)
 	calibrationTemp  float64                   // Temperature of current active calibration (K)
 	tempCalibrations map[int]*TempCalibration  // Cache of calibrations at key temperatures (key: temp in K)
