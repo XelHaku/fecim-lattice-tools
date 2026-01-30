@@ -130,8 +130,8 @@ type ISPPConfig struct {
 func DefaultISPPConfig() ISPPConfig {
 	return ISPPConfig{
 		StartRatio:  0.7,
-		StepPercent: 0.05,
-		MaxPulses:   10,
+		StepPercent: 0.02, // 2% of Ec per step for fine control (was 5%)
+		MaxPulses:   20,   // More pulses for fine convergence (was 10)
 		SafetyCap:   2.2,
 		Tolerance:   0,
 	}
