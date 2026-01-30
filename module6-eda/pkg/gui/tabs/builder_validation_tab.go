@@ -170,7 +170,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 
 	// Helper to update KLayout image from file
 	updateLayoutImage := func() {
-		pngPath := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.png", cfg.Rows, cfg.Cols)
+		pngPath := fmt.Sprintf("data/fecim_crossbar_%dx%d.png", cfg.Rows, cfg.Cols)
 		absPath, _ := filepath.Abs(pngPath)
 		if fileExists(absPath) {
 			klayoutImage.File = absPath
@@ -185,7 +185,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	// Helper to update Yosys schematic image (PNG converted from DOT)
 	updateYosysImage := func() {
 		// Try PNG first (converted from DOT by graphviz)
-		pngPath := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d_schematic.png", cfg.Rows, cfg.Cols)
+		pngPath := fmt.Sprintf("data/fecim_crossbar_%dx%d_schematic.png", cfg.Rows, cfg.Cols)
 		absPath, _ := filepath.Abs(pngPath)
 		if fileExists(absPath) {
 			yosysImage.File = absPath
@@ -197,7 +197,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			return
 		}
 		// Fallback: check if DOT file exists but PNG conversion failed
-		dotPath := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d_schematic.dot", cfg.Rows, cfg.Cols)
+		dotPath := fmt.Sprintf("data/fecim_crossbar_%dx%d_schematic.dot", cfg.Rows, cfg.Cols)
 		dotAbs, _ := filepath.Abs(dotPath)
 		if fileExists(dotAbs) {
 			fyne.Do(func() {
@@ -208,7 +208,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 
 	// Helper to update OpenROAD image
 	updateOpenROADImage := func() {
-		pngPath := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d_openroad.png", cfg.Rows, cfg.Cols)
+		pngPath := fmt.Sprintf("data/fecim_crossbar_%dx%d_openroad.png", cfg.Rows, cfg.Cols)
 		absPath, _ := filepath.Abs(pngPath)
 		if fileExists(absPath) {
 			openroadImage.File = absPath
@@ -381,8 +381,8 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			yosysStatus.SetText("Generating...")
 		})
 		go func() {
-			verilogPath := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.v", cfg.Rows, cfg.Cols)
-			outputPrefix := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d_schematic", cfg.Rows, cfg.Cols)
+			verilogPath := fmt.Sprintf("data/fecim_crossbar_%dx%d.v", cfg.Rows, cfg.Cols)
+			outputPrefix := fmt.Sprintf("data/fecim_crossbar_%dx%d_schematic", cfg.Rows, cfg.Cols)
 			topModule := fmt.Sprintf("fecim_crossbar_%dx%d", cfg.Rows, cfg.Cols)
 
 			manager := openlane.NewManager()
@@ -423,7 +423,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			openroadStatus.SetText("Generating...")
 		})
 		go func() {
-			defPath := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.def", cfg.Rows, cfg.Cols)
+			defPath := fmt.Sprintf("data/fecim_crossbar_%dx%d.def", cfg.Rows, cfg.Cols)
 			var lefPath string
 			switch cfg.Architecture {
 			case "1t1r":
@@ -433,7 +433,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			default:
 				lefPath = "cells/fecim_bitcell/fecim_bitcell.lef"
 			}
-			outputPath := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d_openroad.png", cfg.Rows, cfg.Cols)
+			outputPath := fmt.Sprintf("data/fecim_crossbar_%dx%d_openroad.png", cfg.Rows, cfg.Cols)
 
 			manager := openlane.NewManager()
 			config := openlane.DefaultConfig()
@@ -642,9 +642,9 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 				verilogStatsLabel.SetText(fmt.Sprintf("Instances: %d | Lines: %d | Size: %.1fKB", instances, lines, size))
 			})
 
-			vFilename := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.v", cfg.Rows, cfg.Cols)
-			if err := os.MkdirAll("output/exports", 0755); err != nil {
-				addLog("ERROR: Failed to create output/exports directory: " + err.Error())
+			vFilename := fmt.Sprintf("data/fecim_crossbar_%dx%d.v", cfg.Rows, cfg.Cols)
+			if err := os.MkdirAll("data", 0755); err != nil {
+				addLog("ERROR: Failed to create data directory: " + err.Error())
 			}
 			if err := os.WriteFile(vFilename, []byte(vContent), 0644); err != nil {
 				addLog("ERROR: Failed to write Verilog: " + err.Error())
@@ -658,7 +658,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 				defPreview.SetText(defContent)
 			})
 
-			defFilename := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.def", cfg.Rows, cfg.Cols)
+			defFilename := fmt.Sprintf("data/fecim_crossbar_%dx%d.def", cfg.Rows, cfg.Cols)
 			if err := os.WriteFile(defFilename, []byte(defContent), 0644); err != nil {
 				addLog("ERROR: Failed to write DEF: " + err.Error())
 			}
@@ -669,7 +669,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 
 			// Generate layout image using KLayout (if available)
 			addLog("Generating layout image...")
-			pngFilename := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.png", cfg.Rows, cfg.Cols)
+			pngFilename := fmt.Sprintf("data/fecim_crossbar_%dx%d.png", cfg.Rows, cfg.Cols)
 
 			// Determine LEF path based on architecture
 			var cellLEFPath string
@@ -733,10 +733,10 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			// Generate OpenLane config
 			addLog("Generating OpenLane config...")
 			configContent := export.GenerateOpenLaneConfig(*cfg)
-			if err := os.WriteFile("output/exports/config.json", []byte(configContent), 0644); err != nil {
+			if err := os.WriteFile("data/config.json", []byte(configContent), 0644); err != nil {
 				addLog("ERROR: Failed to write OpenLane config: " + err.Error())
 			}
-			addLog("  Config: output/exports/config.json")
+			addLog("  Config: data/config.json")
 
 			fyne.Do(func() {
 				statusLabel.SetText("All files generated")
@@ -783,7 +783,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 
 			// Yosys validation
 			addLog("=== Yosys Verilog Validation ===")
-			arrayPath := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.v", cfg.Rows, cfg.Cols)
+			arrayPath := fmt.Sprintf("data/fecim_crossbar_%dx%d.v", cfg.Rows, cfg.Cols)
 			cellPath := cellDir + "/" + cellFileName + ".v"
 			addLog(fmt.Sprintf("Array: %s", arrayPath))
 			addLog(fmt.Sprintf("Cell:  %s", cellPath))
@@ -800,7 +800,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 
 			// DEF validation
 			addLog("\n=== DEF Syntax Validation ===")
-			defPath := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.def", cfg.Rows, cfg.Cols)
+			defPath := fmt.Sprintf("data/fecim_crossbar_%dx%d.def", cfg.Rows, cfg.Cols)
 			addLog(fmt.Sprintf("DEF: %s", defPath))
 
 			err2 := validation.ValidateDEF(defPath)
@@ -845,7 +845,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 				fyne.Do(func() { placementResult.SetText("⊝ SKIP") })
 				addLog("SKIPPED: OpenLane/Docker not available")
 			} else {
-				defPath := fmt.Sprintf("output/exports/fecim_crossbar_%dx%d.def", cfg.Rows, cfg.Cols)
+				defPath := fmt.Sprintf("data/fecim_crossbar_%dx%d.def", cfg.Rows, cfg.Cols)
 
 				addLog(fmt.Sprintf("Mode: %s", mode))
 				addLog(fmt.Sprintf("DEF: %s", defPath))
@@ -910,7 +910,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			})
 
 			designName := fmt.Sprintf("fecim_crossbar_%dx%d", cfg.Rows, cfg.Cols)
-			outputDir := fmt.Sprintf("output/exports/%s", designName)
+			outputDir := fmt.Sprintf("data/%s", designName)
 			if err := os.MkdirAll(outputDir, 0755); err != nil {
 				addLog("ERROR: Failed to create directory " + outputDir + ": " + err.Error())
 				fyne.Do(func() {

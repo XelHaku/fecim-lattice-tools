@@ -76,7 +76,7 @@ That takes nerve. And intellectual honesty.
 
 Your generated files are no longer mockups.
 
-**`generated/lattice.v`** - Real Verilog netlist:
+**`data/lattice.v`** - Real Verilog netlist:
 ```verilog
 // Cell [0,0]: weight=0.1000, level=16, G=55.62 uS
 fecim_bit #(.LEVEL(16)) R_0_0 (
@@ -89,7 +89,7 @@ fecim_bit #(.LEVEL(16)) R_0_0 (
 
 That's a real parameterized cell instantiation. The conductance values are calculated from the weight-to-level mapping. You're not faking the syntax - you're generating netlists that could theoretically run through Yosys.
 
-**`generated/placement.def`** - Real DEF placement with proper row definitions, pin placements, and net connectivity. Standard-compliant format.
+**`data/placement.def`** - Real DEF placement with proper row definitions, pin placements, and net connectivity. Standard-compliant format.
 
 **`cells/fecim_bitcell/fecim_bitcell.lib`** - Real Liberty timing with proper syntax, realistic values, timing arcs, and power specification.
 

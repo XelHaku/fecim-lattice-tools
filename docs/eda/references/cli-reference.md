@@ -2016,19 +2016,19 @@ Module 6 generates: `fecim_bitcell.lef`, `fecim_bitcell.lib`, `fecim_bitcell.v`,
 ```bash
 # Quick syntax check
 yosys -p "read_verilog cells/fecim_bitcell/fecim_bitcell.v"
-yosys -p "read_verilog generated/lattice.v"
+yosys -p "read_verilog data/lattice.v"
 
 # Full validation with hierarchy check
 yosys -p "
   read_verilog cells/fecim_bitcell/fecim_bitcell.v
-  read_verilog generated/lattice.v
+  read_verilog data/lattice.v
   hierarchy -check -top fecim_array_4x4
   check -assert
 "
 
 # Pre-check with Verilator (recommended)
 verilator --lint-only cells/fecim_bitcell/fecim_bitcell.v
-verilator --lint-only generated/lattice.v
+verilator --lint-only data/lattice.v
 ```
 
 #### Liberty (.lib) Validation
@@ -2068,7 +2068,7 @@ EOF
 # Validate DEF with LEF dependency
 magic -dnull -noconsole << 'EOF'
 lef read cells/fecim_bitcell/fecim_bitcell.lef
-def read generated/placement.def
+def read data/placement.def
 quit
 EOF
 ```
@@ -2088,14 +2088,14 @@ yosys -p "
 yosys -p "
   read_liberty -lib cells/fecim_bitcell/fecim_bitcell.lib
   read_verilog cells/fecim_bitcell/fecim_bitcell.v
-  read_verilog generated/lattice.v
+  read_verilog data/lattice.v
   hierarchy -top fecim_array_4x4
   stat -liberty cells/fecim_bitcell/fecim_bitcell.lib
 "
 
 # JSON output for programmatic analysis
 yosys -p "
-  read_verilog generated/lattice.v
+  read_verilog data/lattice.v
   hierarchy -top fecim_array_4x4
   stat -json
 " > array_stats.json
@@ -2111,7 +2111,7 @@ yosys -p "
 # Generate SVG schematic of array
 yosys -p "
   read_verilog cells/fecim_bitcell/fecim_bitcell.v
-  read_verilog generated/lattice.v
+  read_verilog data/lattice.v
   hierarchy -top fecim_array_4x4
   show -format svg -prefix docs/array_schematic -viewer none
 "
@@ -2142,7 +2142,7 @@ view.save_image($output, 2000, 2000)
 RUBY
 
 klayout -z -r /tmp/def_screenshot.rb \
-  -rd input=generated/placement.def \
+  -rd input=data/placement.def \
   -rd output=docs/array_layout.png
 ```
 
@@ -2157,7 +2157,7 @@ klayout -z -r /tmp/def_screenshot.rb \
 openroad << 'EOF'
 read_lef cells/fecim_bitcell/fecim_bitcell.lef
 read_liberty cells/fecim_bitcell/fecim_bitcell.lib
-read_verilog generated/lattice.v
+read_verilog data/lattice.v
 link_design fecim_array_4x4
 report_design_area
 exit
@@ -2170,7 +2170,7 @@ EOF
 # Validate config.json structure
 python3 -c "
 import json
-with open('generated/config.json') as f:
+with open('data/config.json') as f:
     cfg = json.load(f)
     print('Design:', cfg.get('DESIGN_NAME', 'NOT SET'))
     print('Verilog:', cfg.get('VERILOG_FILES', 'NOT SET'))
@@ -2191,7 +2191,7 @@ set -e
 echo "=== Module 6 Output Validation ==="
 
 CELL_DIR="cells/fecim_bitcell"
-GEN_DIR="generated"
+GEN_DIR="data"
 
 # Colors
 GREEN='\033[0;32m'
@@ -2265,7 +2265,7 @@ echo -e "\n${GREEN}=== All validations passed ===${NC}"
 # Ensure cell module is read before array
 yosys -p "
   read_verilog cells/fecim_bitcell/fecim_bitcell.v  # Cell first
-  read_verilog generated/lattice.v                   # Array second
+  read_verilog data/lattice.v                   # Array second
   hierarchy -check -top fecim_array_4x4
 "
 ```
@@ -2290,7 +2290,7 @@ grep "pin(" fecim_bitcell.lib
 #### DEF placement issues
 ```bash
 # Check COMPONENTS section references correct cell
-grep "COMPONENTS" generated/placement.def -A5
+grep "COMPONENTS" data/placement.def -A5
 # Should show: fecim_bitcell (matching MACRO name in LEF)
 ```
 
@@ -2305,7 +2305,7 @@ on:
   push:
     paths:
       - 'cells/**'
-      - 'generated/**'
+      - 'data/**'
       - 'module6-eda/**'
 
 jobs:
@@ -2328,7 +2328,7 @@ jobs:
         run: |
           yosys -p "
             read_verilog cells/fecim_bitcell/fecim_bitcell.v
-            read_verilog generated/lattice.v
+            read_verilog data/lattice.v
             hierarchy -check
             check -assert
           "
@@ -2336,7 +2336,7 @@ jobs:
       - name: Generate Stats
         run: |
           yosys -p "
-            read_verilog generated/lattice.v
+            read_verilog data/lattice.v
             stat -json
           " > stats.json
           cat stats.json

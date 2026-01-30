@@ -318,7 +318,7 @@ OPENLANE PLACEMENT VALIDATION (via Docker):
 OUR APP USES KLAYOUT (via Docker):
   • Automatically invoked when Docker + OpenLane image available
   • Reads our generated LEF (cell geometry) and DEF (placement)
-  • Exports PNG layout image to output/exports/
+  • Exports PNG layout image to data/
   • Falls back to schematic SVG if KLayout unavailable
 
 MANUAL KLAYOUT:

@@ -541,9 +541,16 @@ func (a *Array) AnalyzeSneakPathsWithArch(selectedRow, selectedCol int, is1T1R b
 // During MVM in passive (0T1R) mode, ALL word lines are active simultaneously.
 // This enables 3-cell sneak paths: WL_i → cell(i,j) → BL_j → cell(k,j) → WL_k → ...
 //
-// The sneak current through each off-diagonal cell depends on parallel paths
-// through the array. For visualization, we show the relative contribution of
-// each cell to total sneak current affecting the selected cell's readout.
+// IMPORTANT: Only OFF-DIAGONAL three-cell paths are true sneak paths during MVM:
+//   - Same-row cells contribute to DIFFERENT column outputs (not sneak)
+//   - Same-column cells receive DIFFERENT input voltages (part of MVM computation)
+//   - Only off-diagonal paths form parasitic loops back to the selected cell's readout
+//
+// Per IEEE/industry standards (CrossSim, arXiv 2025), sneak ratio for passive
+// arrays should be 5-20%, not 100%+. The three-cell series model is:
+//
+//	G_path = 1/(1/G1 + 1/G2 + 1/G3)
+//	I_sneak = V × G_path
 func (a *Array) AnalyzeSneakPathsWithIsolation(selectedRow, selectedCol int, isolationFactor float64) *SneakPathAnalysis {
 	rows := a.config.Rows
 	cols := a.config.Cols
@@ -571,44 +578,31 @@ func (a *Array) AnalyzeSneakPathsWithIsolation(selectedRow, selectedCol int, iso
 	}, nil)
 
 	var totalSneak float64
-	var sameRowCount, sameColCount, offDiagCount int
-	var sameRowSneak, sameColSneak, offDiagSneak float64
+	var offDiagCount int
+	var offDiagSneak float64
 
 	for i := 0; i < rows; i++ {
 		for j := 0; j < cols; j++ {
-			if i == selectedRow && j == selectedCol {
-				continue // Skip selected cell
+			if i == selectedRow || j == selectedCol {
+				// Skip selected cell AND same-row/same-column cells
+				// Same-row: contributes to different column output (not sneak)
+				// Same-column: receives different input voltage (part of MVM)
+				continue
 			}
+
+			// Off-diagonal: Three-cell sneak path
+			// Path: cell(selectedRow, j) → cell(i, j) → cell(i, selectedCol)
+			g1 := a.cells[selectedRow][j].Conductance // Same row as target, other column
+			g2 := a.cells[i][j].Conductance           // The off-diagonal cell
+			g3 := a.cells[i][selectedCol].Conductance // Same column as target, other row
 
 			var sneakG float64
-
-			if i == selectedRow {
-				// Same row: Direct parallel path to selected BL
-				cellG := a.cells[i][j].Conductance
-				sneakG = cellG
-				sameRowCount++
-				sameRowSneak += sneakG
-
-			} else if j == selectedCol {
-				// Same column: Current from other WLs can reach selected BL
-				cellG := a.cells[i][j].Conductance
-				sneakG = cellG
-				sameColCount++
-				sameColSneak += sneakG
-
-			} else {
-				// Off-diagonal: Three-cell sneak path
-				g1 := a.cells[selectedRow][j].Conductance // Same row, other column
-				g2 := a.cells[i][j].Conductance           // The off-diagonal cell
-				g3 := a.cells[i][selectedCol].Conductance // Same column, other row
-
-				if g1 > 0 && g2 > 0 && g3 > 0 {
-					// Series conductance: 1/G_total = 1/G1 + 1/G2 + 1/G3
-					sneakG = 1.0 / (1.0/g1 + 1.0/g2 + 1.0/g3)
-				}
-				offDiagCount++
-				offDiagSneak += sneakG
+			if g1 > 0 && g2 > 0 && g3 > 0 {
+				// Series conductance: 1/G_total = 1/G1 + 1/G2 + 1/G3
+				sneakG = 1.0 / (1.0/g1 + 1.0/g2 + 1.0/g3)
 			}
+			offDiagCount++
+			offDiagSneak += sneakG
 
 			// Apply architecture isolation factor
 			sneakG *= isolationFactor
@@ -618,14 +612,14 @@ func (a *Array) AnalyzeSneakPathsWithIsolation(selectedRow, selectedCol int, iso
 		}
 	}
 
-	// Calculate statistics
+	// Calculate statistics over off-diagonal cells only
 	var maxRatio, sumRatio float64
 	var maxRatioRow, maxRatioCol int
 	count := 0
 	for i := 0; i < rows; i++ {
 		for j := 0; j < cols; j++ {
-			if i == selectedRow && j == selectedCol {
-				continue
+			if i == selectedRow || j == selectedCol {
+				continue // Only count off-diagonal cells
 			}
 			ratio := sneakMap[i][j] / signalG
 			if ratio > maxRatio {
@@ -644,10 +638,6 @@ func (a *Array) AnalyzeSneakPathsWithIsolation(selectedRow, selectedCol int, iso
 	}
 
 	getLog().Calculation("SneakPathAnalysis", map[string]interface{}{
-		"sameRowCount":    sameRowCount,
-		"sameRowSneak":    sameRowSneak,
-		"sameColCount":    sameColCount,
-		"sameColSneak":    sameColSneak,
 		"offDiagCount":    offDiagCount,
 		"offDiagSneak":    offDiagSneak,
 		"totalSneak":      totalSneak,

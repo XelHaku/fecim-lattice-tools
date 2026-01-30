@@ -217,7 +217,7 @@ go build -o eda-cli ./cmd/eda-cli
 |------|---------|-------------|
 | `-mode` | compute | Operation mode: `storage`, `memory`, or `compute` |
 | `-input` | (empty) | JSON weights file (optional in compute mode) |
-| `-output` | output/exports | Output directory for generated files |
+| `-output` | data | Output directory for generated files |
 | `-name` | fecim_array | Design name (used in filenames) |
 | `-rows` | 128 | Array rows |
 | `-cols` | 128 | Array columns |

@@ -221,7 +221,7 @@ Screens:
                       bindings:
                         - Disables all 3 action buttons during execution
                         - Updates statusLabel, logOutput
-                        - Generates files in cells/ and output/exports/
+                        - Generates files in cells/ and data/
                         - Updates verilogPreview, defPreview, layoutViz
                         - Re-enables buttons when complete
                   - ValidateAllBtn (Button):
@@ -238,7 +238,7 @@ Screens:
                   - ExportPackageBtn (Button):
                       type: widget.Button
                       text: "Export Package"
-                      purpose: Export complete package to output/exports/{design}/
+                      purpose: Export complete package to data/{design}/
                       file:tabs/builder_validation_tab.go:489-575
                       async: true
                       bindings:
@@ -633,10 +633,10 @@ DataFlow:
       - Disables all 3 action buttons
       - statusLabel -> "Generating..."
       - Generates cell files (LEF/LIB/V) to cells/fecim_bitcell/ or cells/fecim_1t1r_bitcell/
-      - Generates array Verilog to output/exports/fecim_crossbar_NxM.v (with SL for 1T1R)
-      - Generates DEF to output/exports/fecim_crossbar_NxM.def (with SL pins for 1T1R)
-      - Generates KLayout PNG to output/exports/fecim_crossbar_NxM.png (if Docker available)
-      - Generates OpenLane config to output/exports/config.json
+      - Generates array Verilog to data/fecim_crossbar_NxM.v (with SL for 1T1R)
+      - Generates DEF to data/fecim_crossbar_NxM.def (with SL pins for 1T1R)
+      - Generates KLayout PNG to data/fecim_crossbar_NxM.png (if Docker available)
+      - Generates OpenLane config to data/config.json
       - Updates verilogPreview, defPreview
       - Updates klayoutImage via updateLayoutImage()
       - Updates verilogStatsLabel, defStatsLabel
@@ -661,7 +661,7 @@ DataFlow:
     updates:
       - Disables all 3 action buttons
       - statusLabel -> "Exporting package..."
-      - Creates directory output/exports/fecim_crossbar_NxM/
+      - Creates directory data/fecim_crossbar_NxM/
       - Copies all files (cells/, Verilog, DEF, config.json, design JSON, README)
       - Shows dialog with absolute path
       - Re-enables buttons, statusLabel -> "Package exported to ..."
@@ -860,7 +860,7 @@ KeyFeatures:
   - name: Package Export
     description: |
       Export complete design package with all files + README to
-      output/exports/{design}/ ready for OpenLane integration
+      data/{design}/ ready for OpenLane integration
     file:tabs/builder_validation_tab.go:489-575
 
   - name: Docker Integration
@@ -919,7 +919,7 @@ FilesGenerated:
       - Larger cell dimensions (0.92x3.4 µm vs 0.46x2.72 µm)
       - Transistor + FeFET behavioral model
 
-  - path: output/exports/fecim_crossbar_NxM.v
+  - path: data/fecim_crossbar_NxM.v
     purpose: Array Verilog netlist
     generator: export.GenerateArrayVerilog(*cfg)
     file:tabs/builder_validation_tab.go:328
@@ -928,7 +928,7 @@ FilesGenerated:
       - fecim_1t1r_bitcell cell instantiation
       - .SL() connections per column
 
-  - path: output/exports/fecim_crossbar_NxM.def
+  - path: data/fecim_crossbar_NxM.def
     purpose: Physical placement (DEF)
     generator: generateBuilderDEF(*cfg)
     file:tabs/builder_validation_tab.go:346
@@ -936,7 +936,7 @@ FilesGenerated:
       - SL[M-1:0] pins at bottom edge
       - fecim_1t1r_bitcell cell references
 
-  - path: output/exports/fecim_crossbar_NxM.png
+  - path: data/fecim_crossbar_NxM.png
     purpose: Physical layout image (KLayout)
     generator: validation.GenerateLayoutImage()
     file:pkg/validation/layout_image.go:92
@@ -946,7 +946,7 @@ FilesGenerated:
       - 1600x1200 resolution
       - Requires X display passthrough
 
-  - path: output/exports/fecim_crossbar_NxM_openroad.png
+  - path: data/fecim_crossbar_NxM_openroad.png
     purpose: Placement visualization (OpenROAD)
     generator: validation.GenerateOpenROADImage()
     file:pkg/validation/circuit_image.go:108
@@ -955,7 +955,7 @@ FilesGenerated:
       - Reads DEF + cell LEF
       - Requires X display passthrough
 
-  - path: output/exports/fecim_crossbar_NxM_schematic.png
+  - path: data/fecim_crossbar_NxM_schematic.png
     purpose: Circuit schematic (Yosys)
     generator: validation.GenerateYosysSchematic()
     file:pkg/validation/circuit_image.go:29
@@ -965,12 +965,12 @@ FilesGenerated:
       - Reads array Verilog + cell Verilog
       - Requires graphviz installed locally
 
-  - path: output/exports/config.json
+  - path: data/config.json
     purpose: OpenLane configuration
     generator: export.GenerateOpenLaneConfig(*cfg)
     file:tabs/builder_validation_tab.go:394
 
-  - path: output/exports/fecim_crossbar_NxM/
+  - path: data/fecim_crossbar_NxM/
     purpose: Complete package directory (created by Export Package)
     contains: cells/, Verilog, DEF, config.json, design JSON, README.md
     file:tabs/builder_validation_tab.go:527-620
@@ -1031,7 +1031,7 @@ IntegrationPoints:
 
   - name: Export Package Integration
     purpose: Exported packages can be directly copied to OpenLane designs/
-    workflow: "Copy output/exports/fecim_crossbar_NxM/ to designs/ -> run flow.tcl"
+    workflow: "Copy data/fecim_crossbar_NxM/ to designs/ -> run flow.tcl"
     file:tabs/builder_validation_tab.go:537-554
 
 ExternalDependencies:

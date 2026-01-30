@@ -97,7 +97,7 @@ Electrical Parameters:
 
 Output Configuration:
   -name string          Design name for output files (default "fecim_array")
-  -output string        Output directory (default "output/exports")
+  -output string        Output directory (default "data")
 
 Export Formats:
   -json bool            Export JSON mapping (default true)

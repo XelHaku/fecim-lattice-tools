@@ -27,9 +27,14 @@ cmd/fecim-lattice-tools/logs/OpenLane/
 !/output/.gitkeep
 !/output/README.md
 !/output/*/
+
+# Data directory (user-generated design files)
+/data/*
+!/data/.gitkeep
+!/data/README.md
 cmd/fecim-lattice-tools/logs/
 module5-comparison/pkg/gui/logs/
-generated/
+# generated/ - OBSOLETE: replaced by data/ directory
 
 # Logs
 *.log
@@ -38,3 +43,12 @@ logs/
 cmd/fecim-visualizer/logs/2026-01-23_19-16-14-mnist.log
 cmd/fecim-visualizer/logs/
 .commit-push.pid
+
+# AI session state (should never be tracked)
+.omc/
+.claude/plan*.md
+
+# Session/temp files
+command*.md
+a.md
+5module-plan.md
