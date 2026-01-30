@@ -4,10 +4,12 @@ package gui
 
 import (
 	"fmt"
+	"image/color"
 	"math/rand"
 	"strconv"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
@@ -18,6 +20,16 @@ import (
 	"fecim-lattice-tools/shared/validation"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
+
+// createFixedHeightContainer wraps content in a container with minimum height
+func createFixedHeightContainer(content fyne.CanvasObject, minHeight float32) fyne.CanvasObject {
+	// Create invisible spacer rectangle with minimum size
+	spacer := canvas.NewRectangle(color.Transparent)
+	spacer.SetMinSize(fyne.NewSize(0, minHeight))
+
+	// Stack content over spacer - content expands to spacer's min height
+	return container.NewStack(spacer, content)
+}
 
 // ============================================================================
 // UNIFIED DEVICE SIMULATION VIEW
@@ -81,6 +93,7 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 
 	// Stack the mode panels (only one visible at a time)
 	modePanelStack := container.NewStack(ca.writeModePanel, ca.computeModePanel)
+	fixedModePanelArea := createFixedHeightContainer(modePanelStack, 80)
 
 	// Initialize architecture-specific voltage panels
 	ca.passiveVoltagePanel = ca.createPassiveVoltagePanel()
@@ -102,12 +115,12 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 
 	// Bottom section: All controls consolidated
 	bottomSection := container.NewVBox(
-		configSection,    // Material, ADC, Architecture
-		modeBar,          // READ/WRITE/COMPUTE buttons
-		modePanelStack,   // Mode-specific panels (write slider, compute inputs)
-		archVoltageStack, // Architecture-specific voltage info
-		dacSection,       // DAC controls
-		actionSection,    // Action buttons
+		configSection,       // Material, ADC, Architecture
+		modeBar,             // READ/WRITE/COMPUTE buttons
+		fixedModePanelArea,  // Fixed 80px area for mode panels
+		archVoltageStack,    // Architecture-specific voltage info
+		dacSection,          // DAC controls
+		actionSection,       // Action buttons
 	)
 
 	return container.NewBorder(
@@ -118,7 +131,9 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 	)
 }
 
-// createConfigurationSection creates the configuration controls row
+// createConfigurationSection creates the configuration controls in two rows
+// Row 1: Material, Array size, ADC bits, ADC levels, Architecture
+// Row 2: Validation tools (CrossSim, BadCrossbar)
 func (ca *CircuitsApp) createConfigurationSection() fyne.CanvasObject {
 	archToggle := ca.createArchitectureToggle()
 	materialSelector := ca.createMaterialSelector()
@@ -181,7 +196,8 @@ func (ca *CircuitsApp) createConfigurationSection() fyne.CanvasObject {
 
 	go updateToolStatus()
 
-	return container.NewHBox(
+	// Row 1: Core configuration elements
+	configRow1 := container.NewHBox(
 		materialSelector,
 		widget.NewSeparator(),
 		arraySizeSelector,
@@ -189,12 +205,19 @@ func (ca *CircuitsApp) createConfigurationSection() fyne.CanvasObject {
 		adcBitsSelector,
 		circuitSpecsLabel,
 		layout.NewSpacer(),
+		archToggle,
+	)
+
+	// Row 2: Validation tools
+	configRow2 := container.NewHBox(
+		widget.NewLabel("Validation:"),
 		crosssimStatus,
 		badcrossbarStatus,
 		validateToolsBtn,
-		widget.NewSeparator(),
-		archToggle,
+		layout.NewSpacer(),
 	)
+
+	return container.NewVBox(configRow1, configRow2)
 }
 
 // ValidArraySizes defines the supported array dimensions
@@ -378,23 +401,31 @@ func (ca *CircuitsApp) createDACInputSection() fyne.CanvasObject {
 }
 
 // updateDACRangeModeLabel updates the DAC range mode indicator based on operation mode
+// Only shown in WRITE mode; hidden in READ and COMPUTE modes
 func (ca *CircuitsApp) updateDACRangeModeLabel() {
 	if ca.dacRangeLabel == nil || ca.deviceState == nil {
 		return
 	}
 
+	mode := ca.deviceState.GetOperationMode()
 	rangeMode := ca.deviceState.GetDACRangeMode()
 	currentRange := ca.deviceState.GetCurrentVoltageRange()
 
-	var text string
-	if rangeMode == DACRangeWrite {
-		text = fmt.Sprintf("DAC: Write (%.1f-%.1fV)", currentRange.Min, currentRange.Max)
-	} else {
-		text = fmt.Sprintf("DAC: Read (0-%.1fV)", currentRange.Max)
-	}
-
 	fyne.Do(func() {
-		ca.dacRangeLabel.SetText(text)
+		// Only show in WRITE mode where voltage range matters
+		if mode == OpModeWrite {
+			var text string
+			if rangeMode == DACRangeWrite {
+				text = fmt.Sprintf("DAC: Write (%.1f-%.1fV)", currentRange.Min, currentRange.Max)
+			} else {
+				text = fmt.Sprintf("DAC: Read (0-%.1fV)", currentRange.Max)
+			}
+			ca.dacRangeLabel.SetText(text)
+			ca.dacRangeLabel.Show()
+		} else {
+			// Hide in READ and COMPUTE modes
+			ca.dacRangeLabel.Hide()
+		}
 	})
 }
 
@@ -1101,14 +1132,6 @@ func (ca *CircuitsApp) createComputeModePanel() fyne.CanvasObject {
 		fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	ca.computeInputTitle = titleLabel
 
-	// Create scrollable input container
-	ca.computeInputContainer = container.NewVBox()
-	ca.buildComputeInputEntries()
-
-	// Wrap in scroll for large arrays
-	scrollContent := container.NewVScroll(ca.computeInputContainer)
-	scrollContent.SetMinSize(fyne.NewSize(0, 80)) // Fixed height for consistency
-
 	// Random button to populate with random values
 	randomBtn := widget.NewButton("Random", func() {
 		ca.randomizeInputVectorEntries()
@@ -1119,10 +1142,20 @@ func (ca *CircuitsApp) createComputeModePanel() fyne.CanvasObject {
 		ca.clearInputVectorEntries()
 	})
 
+	// Title row with buttons
+	titleRow := container.NewHBox(titleLabel, layout.NewSpacer(), randomBtn, clearBtn)
+
+	// Horizontal container for input entries
+	ca.computeInputContainer = container.NewHBox()
+	ca.buildComputeInputEntries()
+
+	// Horizontal scroll for large arrays
+	scrollContent := container.NewHScroll(ca.computeInputContainer)
+	scrollContent.SetMinSize(fyne.NewSize(400, 40)) // Width for scrolling, shorter height
+
 	return container.NewVBox(
-		titleLabel,
+		titleRow,
 		scrollContent,
-		container.NewHBox(randomBtn, clearBtn),
 	)
 }
 
@@ -1139,39 +1172,26 @@ func (ca *CircuitsApp) buildComputeInputEntries() {
 	ca.mfuxInputVectorEntry = make([]*widget.Entry, cols)
 	ca.mfuxInputVectorLabels = make([]*widget.Label, cols)
 
-	// For small arrays (<=8), show all entries in a single row
-	// For medium arrays (<=32), show in rows of 8
-	// For large arrays (>32), show in rows of 16
-	entriesPerRow := 8
-	if cols > 32 {
-		entriesPerRow = 16
-	}
+	// Single horizontal row with inline label:entry pairs
+	for i := 0; i < cols; i++ {
+		idx := i
 
-	// Create grid rows
-	for rowStart := 0; rowStart < cols; rowStart += entriesPerRow {
-		rowEnd := min(rowStart+entriesPerRow, cols)
-		rowBox := container.NewHBox()
+		// Inline label
+		label := widget.NewLabel(fmt.Sprintf("x%d:", i))
+		label.TextStyle = fyne.TextStyle{Monospace: true}
+		ca.mfuxInputVectorLabels[i] = label
 
-		for i := rowStart; i < rowEnd; i++ {
-			idx := i
-			entry := widget.NewEntry()
-			entry.SetPlaceHolder("0")
-			entry.SetText("0")
-			entry.OnChanged = func(s string) {
-				ca.onInputVectorEntryChanged(idx, s)
-			}
-			ca.mfuxInputVectorEntry[i] = entry
-
-			label := widget.NewLabel(fmt.Sprintf("x%d", i))
-			label.TextStyle = fyne.TextStyle{Monospace: true}
-			ca.mfuxInputVectorLabels[i] = label
-
-			// Compact layout: label above entry
-			col := container.NewVBox(label, entry)
-			rowBox.Add(col)
+		entry := widget.NewEntry()
+		entry.SetPlaceHolder("0")
+		entry.SetText("0")
+		entry.OnChanged = func(s string) {
+			ca.onInputVectorEntryChanged(idx, s)
 		}
+		ca.mfuxInputVectorEntry[i] = entry
 
-		ca.computeInputContainer.Add(rowBox)
+		// Add pair: label then entry
+		ca.computeInputContainer.Add(label)
+		ca.computeInputContainer.Add(entry)
 	}
 }
 

@@ -677,9 +677,21 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 		}
 	}
 
-	// Draw color legend in bottom-left corner
-	legendY := h - 60
-	legendX := 5
+	// Draw color legend in top-left corner (below operation badge)
+	legendX := 8
+	legendY := 28 // Below operation badge
+	legendW := 100
+	legendH := 55
+
+	// Draw semi-transparent background for legend
+	legendBg := color.RGBA{15, 20, 35, 190} // Dark blue-gray, ~75% opacity
+	for py := legendY - 5; py < legendY+legendH; py++ {
+		for px := legendX - 3; px < legendX+legendW; px++ {
+			if px >= 0 && px < w && py >= 0 && py < h {
+				img.Set(px, py, legendBg)
+			}
+		}
+	}
 
 	// Title
 	drawSimpleText(img, "Legend:", legendX, legendY, color.RGBA{200, 200, 220, 255})
