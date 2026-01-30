@@ -352,34 +352,24 @@ func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 	prNegLabel.Move(fyne.NewPos(marginLeft+plotW-28, prNegY+4))
 	r.objects = append(r.objects, prNegLabel)
 
-	// Plot the hysteresis data
+	// Plot the hysteresis data as smooth curve segments
+	// Strategy: Only connect points that are close together on the E-P plane
+	// Discontinuous jumps (phase transitions) are shown as separate curve segments
 	if len(r.plot.eData) > 1 {
 		for i := 1; i < len(r.plot.eData); i++ {
-			// Skip drawing line if it would create a spike (discontinuity)
+			// Calculate distance between consecutive points
 			eDiff := r.plot.eData[i] - r.plot.eData[i-1]
 			pDiff := r.plot.pData[i] - r.plot.pData[i-1]
-			absEDiff := eDiff
-			if absEDiff < 0 {
-				absEDiff = -absEDiff
+			if eDiff < 0 {
+				eDiff = -eDiff
 			}
-			absPDiff := pDiff
-			if absPDiff < 0 {
-				absPDiff = -absPDiff
+			if pDiff < 0 {
+				pDiff = -pDiff
 			}
 
-			// Detect spikes: unphysical jumps where one variable changes dramatically
-			// while the other stays nearly constant
-			eSmall := absEDiff < r.plot.eMax*0.05 // E changed less than 5%
-			eLarge := absEDiff > r.plot.eMax*0.15 // E changed more than 15%
-			pSmall := absPDiff < r.plot.pMax*0.05 // P changed less than 5%
-			pLarge := absPDiff > r.plot.pMax*0.15 // P changed more than 15%
-
-			// Skip if: vertical spike (E small, P large) OR horizontal spike (E large, P small)
-			// OR any jump larger than 40% of range
-			if (eSmall && pLarge) || (eLarge && pSmall) ||
-				absEDiff > r.plot.eMax*0.4 || absPDiff > r.plot.pMax*0.4 {
-				continue // Skip this line segment - it's a spike
-			}
+			// Normalize to [0,1] range
+			normE := eDiff / r.plot.eMax
+			normP := pDiff / r.plot.pMax
 
 			// Map data to screen coordinates
 			x1 := marginLeft + plotW/2 + float32(r.plot.eData[i-1]/r.plot.eMax)*plotW/2
@@ -387,10 +377,9 @@ func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 			x2 := marginLeft + plotW/2 + float32(r.plot.eData[i]/r.plot.eMax)*plotW/2
 			y2 := centerY - float32(r.plot.pData[i]/r.plot.pMax)*plotH/2
 
-			// Color based on age (fade effect) - smooth opacity gradient from old (50) to recent (255)
+			// Color based on age (fade effect)
 			age := float64(len(r.plot.eData)-i) / float64(len(r.plot.eData))
-			// Map age [0..1] to alpha [255..50]: recent points fully opaque, old points semi-transparent
-			alpha := uint8(255 - age*205) // 255 - (age * 205) gives range 255 (recent) to 50 (old)
+			alpha := uint8(255 - age*205)
 
 			var lineColor color.RGBA
 			if r.plot.pData[i] >= 0 {
@@ -399,11 +388,24 @@ func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 				lineColor = color.RGBA{r.plot.ColorNegative.R, r.plot.ColorNegative.G, r.plot.ColorNegative.B, alpha}
 			}
 
-			line := canvas.NewLine(lineColor)
-			line.Position1 = fyne.NewPos(x1, y1)
-			line.Position2 = fyne.NewPos(x2, y2)
-			line.StrokeWidth = 2
-			r.objects = append(r.objects, line)
+			// Only draw line if points are close (smooth curve segment)
+			// These thresholds are tuned for WRD mode where we need to filter
+			// discontinuities between cycles while preserving the steep switching region
+			// Typical WRD discontinuity: E≈0, ΔP > 100% (cycle boundary)
+			// Typical steep switch: ΔE≈2%, ΔP≈10% (legitimate curve)
+			isSpike := (normE < 0.05 && normP > 0.30) || // Vertical spike (P jumps while E stays)
+				(normE > 0.30 && normP < 0.05) || // Horizontal spike (E jumps while P stays)
+				normP > 0.50 // Any P jump > 50% is definitely a discontinuity
+
+			if !isSpike {
+				line := canvas.NewLine(lineColor)
+				line.Position1 = fyne.NewPos(x1, y1)
+				line.Position2 = fyne.NewPos(x2, y2)
+				line.StrokeWidth = 2
+				r.objects = append(r.objects, line)
+			}
+			// Note: We don't draw disconnected points as dots to keep the plot clean
+			// The visible curve segments show the hysteresis loop shape clearly
 		}
 	}
 

@@ -1134,6 +1134,12 @@ func (a *App) simulationLoop() {
 							a.wrdSuccessWrites++
 							successRate := float64(a.wrdSuccessWrites) / float64(a.wrdTotalWrites) * 100
 
+							// Track ISPP statistics (H14)
+							if a.isppWidget != nil {
+								pulsesUsed := a.wrdRetryCount + 1 // Retries + initial attempt
+								a.isppWidget.RecordWrite(a.wrdTargetLevel, pulsesUsed, true, a.wrdRetryCount > 0)
+							}
+
 							if a.wrdRetryCount > 0 {
 								log.Printf("WRD PHASE 4→5: TARGET HIT after %d retries | L_read=%d L_target=%d | rate=%.1f%% (%d/%d)",
 									a.wrdRetryCount, a.wrdReadLevel, a.wrdTargetLevel,
@@ -1547,6 +1553,11 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 		}
 		if a.stateLabel != nil {
 			a.stateLabel.SetText(stateText)
+		}
+
+		// Update stability indicator (M12)
+		if a.stabilityIndicator != nil {
+			a.stabilityIndicator.SetLevel(level+1, numLevels)
 		}
 
 		// Update wake-up/fatigue labels (Dr. Tour recommendation)

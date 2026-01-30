@@ -245,9 +245,11 @@ type CircuitsApp struct {
 	activeVoltagePanel       fyne.CanvasObject // 1T1R/2T1R voltage panel
 
 	// Compute mode panel with input vector entries
-	computeModePanel      *fyne.Container
-	mfuxInputVectorEntry  []*widget.Entry
-	mfuxInputVectorLabels []*widget.Label
+	computeModePanel       *fyne.Container
+	computeInputTitle      *widget.Label     // Title label (updated on resize)
+	computeInputContainer  *fyne.Container   // Container for input entries (rebuilt on resize)
+	mfuxInputVectorEntry   []*widget.Entry
+	mfuxInputVectorLabels  []*widget.Label
 
 	// H3 FIX: Undo history for array changes
 	undoHistory     [][]int // Previous array state
@@ -256,7 +258,6 @@ type CircuitsApp struct {
 
 	// Action buttons (stored for mode-based enable/disable)
 	actionWriteCellBtn *widget.Button
-	actionReadBtn      *widget.Button
 	actionComputeBtn   *widget.Button
 }
 

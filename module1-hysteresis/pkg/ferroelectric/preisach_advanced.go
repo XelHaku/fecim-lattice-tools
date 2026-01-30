@@ -386,6 +386,13 @@ func (m *MayergoyzPreisach) GetEffectiveEc() float64 {
 
 // Update applies a new electric field and returns the resulting polarization.
 func (m *MayergoyzPreisach) Update(E float64) float64 {
+	// Safety check: ensure distribution and hysterons are synchronized
+	if len(m.distribution) != len(m.hysterons) {
+		log.Debug("Update: distribution/hysteron mismatch (%d vs %d), reinitializing",
+			len(m.distribution), len(m.hysterons))
+		m.initializeDistribution()
+	}
+
 	// Update each hysteron's state based on the applied field
 	for i := range m.hysterons {
 		if E >= m.hysterons[i].Alpha {
@@ -405,6 +412,17 @@ func (m *MayergoyzPreisach) Update(E float64) float64 {
 
 	// Apply fatigue degradation
 	m.polarization *= (1 - m.fatigueRate*float64(m.cycleCount))
+
+	// Clamp polarization to physical bounds [-Ps, +Ps]
+	// This prevents visual spikes from numerical edge cases or race conditions
+	Ps := m.material.Ps
+	if m.polarization > Ps {
+		log.Debug("Update: clamping P=%.4f to +Ps=%.4f (E=%.2e)", m.polarization, Ps, E)
+		m.polarization = Ps
+	} else if m.polarization < -Ps {
+		log.Debug("Update: clamping P=%.4f to -Ps=%.4f (E=%.2e)", m.polarization, -Ps, E)
+		m.polarization = -Ps
+	}
 
 	// Record history with bounded growth to prevent memory exhaustion
 	const maxFieldHistory = 10000

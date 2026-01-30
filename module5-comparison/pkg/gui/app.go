@@ -350,6 +350,19 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 		container.NewPadded(ca.calculator),
 	)
 
+	// SECTION 4: FABRICATION REALITY (H08)
+	// Per Dr. Tour critique - show honest development expectations
+	fabricationReality := NewFabricationReality()
+	sectionFabHeader := widget.NewLabelWithStyle(
+		"FABRICATION REALITY",
+		fyne.TextAlignCenter,
+		fyne.TextStyle{Bold: true},
+	)
+	fabSection := container.NewVBox(
+		sectionFabHeader,
+		container.NewPadded(fabricationReality),
+	)
+
 	// UNIFIED VIEW - Single scrollable container
 	unifiedContent := container.NewVBox(
 		energySection,
@@ -357,6 +370,8 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 		marketSection,
 		widget.NewSeparator(),
 		roiSection,
+		widget.NewSeparator(),
+		fabSection,
 	)
 
 	centerPanel := container.NewScroll(unifiedContent)

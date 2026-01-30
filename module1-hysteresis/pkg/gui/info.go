@@ -25,6 +25,11 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 	a.phaseIndicator = widgets.NewPhaseIndicator()
 	a.phaseIndicator.SetMinSize(fyne.NewSize(140, 50))
 
+	// State stability indicator (M12)
+	// Shows color-coded stability warnings: green=stable, yellow=moderate, red=edge
+	a.stabilityIndicator = widgets.NewStabilityIndicator()
+	a.stabilityIndicator.SetLevel(15, a.numLevels)
+
 	// Combined level + polarization row
 	levelRow := container.NewHBox(
 		widget.NewLabelWithStyle("L:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
@@ -87,6 +92,7 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 	return container.NewVBox(
 		levelRow,
 		container.NewCenter(a.stateLabel),
+		a.stabilityIndicator, // M12: State stability warning
 		widget.NewSeparator(),
 		a.phaseIndicator,
 		widget.NewSeparator(),
@@ -109,13 +115,30 @@ func (a *App) createSlidePanel() fyne.CanvasObject {
 	)
 }
 
-// createLogPanel creates the memory operations log panel
+// createLogPanel creates the memory operations log panel with toggle (M07)
 func (a *App) createLogPanel() fyne.CanvasObject {
 	logTitle := widget.NewLabelWithStyle("Memory Log", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	a.logText = widget.NewLabel("Waiting...")
 	a.logText.Wrapping = fyne.TextWrapWord
+
+	// M07: Toggle button for verbose/compact log view
+	a.logVerbose = true // Default to verbose
+	a.logToggleBtn = widget.NewButton("Compact", func() {
+		a.mu.Lock()
+		a.logVerbose = !a.logVerbose
+		if a.logVerbose {
+			a.logToggleBtn.SetText("Compact")
+		} else {
+			a.logToggleBtn.SetText("Verbose")
+		}
+		a.mu.Unlock()
+	})
+	a.logToggleBtn.Importance = widget.LowImportance
+
+	headerRow := container.NewHBox(logTitle, a.logToggleBtn)
+
 	return container.NewVBox(
-		logTitle,
+		headerRow,
 		a.logText,
 	)
 }
@@ -210,11 +233,53 @@ func (a *App) addLogEntry(entry string) {
 	}
 }
 
-// getLogText returns the formatted log text
+// getLogText returns the formatted log text (M07: supports verbose/compact modes)
 func (a *App) getLogText() string {
 	if len(a.logEntries) == 0 {
 		return "Waiting for operations..."
 	}
+
+	// M07: Compact mode shows only last 3 entries without decorative lines
+	if !a.logVerbose {
+		compactEntries := a.logEntries
+		// Skip header decorations (lines starting with ═ or ─ or spaces)
+		filtered := make([]string, 0, len(compactEntries))
+		for _, e := range compactEntries {
+			if len(e) == 0 {
+				continue
+			}
+			// Get first rune for unicode-safe comparison
+			firstRune := []rune(e)[0]
+			if firstRune != '═' && firstRune != '─' && firstRune != ' ' {
+				// Shorten timestamp format for compact view
+				if len(e) > 7 && e[:2] == "t=" {
+					// Extract just the operation part after timestamp
+					for i := 0; i < len(e); i++ {
+						if e[i] == ' ' && i < len(e)-1 {
+							filtered = append(filtered, e[i+1:])
+							break
+						}
+					}
+				} else {
+					filtered = append(filtered, e)
+				}
+			}
+		}
+		// Show only last 3
+		if len(filtered) > 3 {
+			filtered = filtered[len(filtered)-3:]
+		}
+		result := ""
+		for _, e := range filtered {
+			result += e + "\n"
+		}
+		if result == "" {
+			return "Ready"
+		}
+		return result
+	}
+
+	// Verbose mode: show everything
 	result := ""
 	for _, e := range a.logEntries {
 		result += e + "\n"

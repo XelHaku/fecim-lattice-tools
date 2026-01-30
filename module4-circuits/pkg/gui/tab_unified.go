@@ -124,6 +124,9 @@ func (ca *CircuitsApp) createConfigurationSection() fyne.CanvasObject {
 	// Material selector
 	materialSelector := ca.createMaterialSelector()
 
+	// Array size selector
+	arraySizeSelector := ca.createArraySizeSelector()
+
 	// ADC bits selector
 	adcBitsSelector := ca.createADCBitsSelector()
 
@@ -139,11 +142,92 @@ func (ca *CircuitsApp) createConfigurationSection() fyne.CanvasObject {
 	return container.NewHBox(
 		materialSelector,
 		widget.NewSeparator(),
+		arraySizeSelector,
+		widget.NewSeparator(),
 		adcBitsSelector,
 		circuitSpecsLabel,
 		layout.NewSpacer(),
 		archToggle,
 	)
+}
+
+// ValidArraySizes defines the supported array dimensions
+var ValidArraySizes = []int{1, 2, 4, 8, 16, 32, 64}
+
+// createArraySizeSelector creates a dropdown to select array size (1x1 to 128x128)
+func (ca *CircuitsApp) createArraySizeSelector() fyne.CanvasObject {
+	options := make([]string, len(ValidArraySizes))
+	for i, size := range ValidArraySizes {
+		options[i] = fmt.Sprintf("%dx%d", size, size)
+	}
+
+	selector := widget.NewSelect(options, func(selected string) {
+		// Parse size from "NxN" format
+		var rows, cols int
+		n, _ := fmt.Sscanf(selected, "%dx%d", &rows, &cols)
+		if n == 2 && rows > 0 && rows <= MaxArraySize && cols > 0 && cols <= MaxArraySize {
+			ca.resizeArray(rows, cols)
+		}
+	})
+
+	// Set default selection
+	selector.SetSelected(fmt.Sprintf("%dx%d", ca.arrayRows, ca.arrayCols))
+
+	return container.NewHBox(widget.NewLabel("Array:"), selector)
+}
+
+// resizeArray changes the array dimensions and reinitializes all related state
+func (ca *CircuitsApp) resizeArray(rows, cols int) {
+	ca.mu.Lock()
+
+	// Skip if no change
+	if rows == ca.arrayRows && cols == ca.arrayCols {
+		ca.mu.Unlock()
+		return
+	}
+
+	ca.arrayRows = rows
+	ca.arrayCols = cols
+
+	// Reinitialize weight matrix
+	ca.arrayWeights = make([][]int, rows)
+	for i := range ca.arrayWeights {
+		ca.arrayWeights[i] = make([]int, cols)
+		// Initialize to mid-level (like a fresh device)
+		for j := range ca.arrayWeights[i] {
+			ca.arrayWeights[i][j] = ca.quantLevels / 2
+		}
+	}
+
+	// Reinitialize input/output vectors
+	ca.inputVector = make([]int, cols)
+	ca.outputVector = make([]float64, rows)
+
+	ca.mu.Unlock()
+
+	// Reinitialize device state with new dimensions
+	ca.deviceState = NewDeviceState(rows, cols, ca.tia, ca.adc)
+
+	// Preserve architecture mode
+	if ca.architecture == sharedwidgets.Architecture0T1R {
+		ca.deviceState.SetPassiveMode(true)
+	}
+
+	// Update compute mode panel inputs
+	ca.rebuildComputeInputs()
+
+	// Update status (must be on UI thread)
+	totalCells := rows * cols
+	bitCapacity := float64(totalCells) * 4.9 // ~4.9 bits per 30-level cell
+	fyne.Do(func() {
+		if ca.operationsStatusLabel != nil {
+			ca.operationsStatusLabel.SetText(fmt.Sprintf("Array resized: %dx%d (%d cells, %.1f bits)",
+				rows, cols, totalCells, bitCapacity))
+		}
+	})
+
+	// Refresh display
+	ca.recomputeAndRefresh()
 }
 
 // Note: createSignalChainHeader removed - functionality moved to createConfigurationSection
@@ -223,9 +307,9 @@ func (ca *CircuitsApp) createADCBitsSelector() fyne.CanvasObject {
 // createDACInputSection creates the DAC status and manual control
 func (ca *CircuitsApp) createDACInputSection() fyne.CanvasObject {
 	// Initialize DAC entries array (used by updateDACEntries but not displayed)
-	maxCols := min(8, ca.arrayCols)
-	ca.unifiedDACEntries = make([]*widget.Entry, maxCols)
-	ca.unifiedDACLabels = make([]*widget.Label, maxCols)
+	// Use all columns - no limit
+	ca.unifiedDACEntries = make([]*widget.Entry, ca.arrayCols)
+	ca.unifiedDACLabels = make([]*widget.Label, ca.arrayCols)
 
 	// Range mode indicator - shows current DAC voltage range based on operation mode
 	// Note: DAC range is set automatically by mode (READ/WRITE/COMPUTE)
@@ -433,11 +517,6 @@ func (ca *CircuitsApp) createUnifiedActionSection() fyne.CanvasObject {
 	})
 	ca.actionWriteCellBtn.Importance = widget.HighImportance
 
-	// Sense button - only enabled in READ mode
-	ca.actionReadBtn = widget.NewButton("Sense Row", func() {
-		ca.onUnifiedRead()
-	})
-
 	// Compute button - only enabled in COMPUTE mode
 	ca.actionComputeBtn = widget.NewButton("Compute MVM", func() {
 		ca.onUnifiedCompute()
@@ -465,7 +544,7 @@ func (ca *CircuitsApp) createUnifiedActionSection() fyne.CanvasObject {
 	})
 
 	return container.NewHBox(
-		ca.actionWriteCellBtn, ca.actionReadBtn, ca.actionComputeBtn,
+		ca.actionWriteCellBtn, ca.actionComputeBtn,
 		layout.NewSpacer(),
 		ca.undoHistoryBtn, animateBtn, randomBtn, resetBtn,
 	)
@@ -490,15 +569,6 @@ func (ca *CircuitsApp) updateActionButtons() {
 				ca.actionWriteCellBtn.Importance = widget.MediumImportance
 			}
 			ca.actionWriteCellBtn.Refresh()
-		}
-
-		// Read/Sense: only in READ mode
-		if ca.actionReadBtn != nil {
-			if mode == OpModeRead {
-				ca.actionReadBtn.Enable()
-			} else {
-				ca.actionReadBtn.Disable()
-			}
 		}
 
 		// Compute MVM: only in COMPUTE mode
@@ -596,11 +666,13 @@ func (ca *CircuitsApp) onUnifiedCellTapped(row, col int) {
 	// Update target cell label in write mode panel
 	ca.updateWriteTargetLabel()
 
-	// Cell click only selects the cell - does NOT apply voltages
-	// Voltages are only applied when user presses action buttons
-
 	ca.recomputeAndRefresh()
 	ca.updateCellInfo()
+
+	// Auto-sense in READ mode when clicking a cell
+	if mode == OpModeRead {
+		ca.onUnifiedRead()
+	}
 }
 
 // ============================================================================
@@ -974,31 +1046,23 @@ func (ca *CircuitsApp) onWriteLevelChanged(level int) {
 }
 
 // createComputeModePanel creates the compute mode panel with input vector entries
-// This addresses UX-005: Input vector entries not visible
+// Supports variable array sizes: shows individual entries for small arrays, grid for large
 func (ca *CircuitsApp) createComputeModePanel() fyne.CanvasObject {
-	maxCols := min(8, ca.arrayCols)
-	ca.mfuxInputVectorEntry = make([]*widget.Entry, maxCols)
-	ca.mfuxInputVectorLabels = make([]*widget.Label, maxCols)
+	cols := ca.arrayCols
 
-	entriesBox := container.NewHBox()
-	for i := 0; i < maxCols; i++ {
-		idx := i
-		entry := widget.NewEntry()
-		entry.SetPlaceHolder("0")
-		entry.SetText("0")
-		entry.OnChanged = func(s string) {
-			ca.onInputVectorEntryChanged(idx, s)
-		}
-		ca.mfuxInputVectorEntry[i] = entry
+	// Title with array size info
+	titleLabel := widget.NewLabelWithStyle(
+		fmt.Sprintf("Input Vector (%d inputs, 0-255):", cols),
+		fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	ca.computeInputTitle = titleLabel
 
-		label := widget.NewLabel(fmt.Sprintf("x%d", i))
-		label.TextStyle = fyne.TextStyle{Monospace: true}
-		ca.mfuxInputVectorLabels[i] = label
+	// Create scrollable input container
+	ca.computeInputContainer = container.NewVBox()
+	ca.buildComputeInputEntries()
 
-		// Each column: label above entry
-		col := container.NewVBox(label, entry)
-		entriesBox.Add(col)
-	}
+	// Wrap in scroll for large arrays
+	scrollContent := container.NewVScroll(ca.computeInputContainer)
+	scrollContent.SetMinSize(fyne.NewSize(0, 80)) // Fixed height for consistency
 
 	// Random button to populate with random values
 	randomBtn := widget.NewButton("Random", func() {
@@ -1010,13 +1074,80 @@ func (ca *CircuitsApp) createComputeModePanel() fyne.CanvasObject {
 		ca.clearInputVectorEntries()
 	})
 
-	titleLabel := widget.NewLabelWithStyle("Input Vector (0-255):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-
 	return container.NewVBox(
 		titleLabel,
-		entriesBox,
+		scrollContent,
 		container.NewHBox(randomBtn, clearBtn),
 	)
+}
+
+// buildComputeInputEntries builds the input entries based on current array size
+func (ca *CircuitsApp) buildComputeInputEntries() {
+	cols := ca.arrayCols
+
+	// Clear existing entries
+	if ca.computeInputContainer != nil {
+		ca.computeInputContainer.RemoveAll()
+	}
+
+	// Allocate entry arrays
+	ca.mfuxInputVectorEntry = make([]*widget.Entry, cols)
+	ca.mfuxInputVectorLabels = make([]*widget.Label, cols)
+
+	// For small arrays (<=8), show all entries in a single row
+	// For medium arrays (<=32), show in rows of 8
+	// For large arrays (>32), show in rows of 16
+	entriesPerRow := 8
+	if cols > 32 {
+		entriesPerRow = 16
+	}
+
+	// Create grid rows
+	for rowStart := 0; rowStart < cols; rowStart += entriesPerRow {
+		rowEnd := min(rowStart+entriesPerRow, cols)
+		rowBox := container.NewHBox()
+
+		for i := rowStart; i < rowEnd; i++ {
+			idx := i
+			entry := widget.NewEntry()
+			entry.SetPlaceHolder("0")
+			entry.SetText("0")
+			entry.OnChanged = func(s string) {
+				ca.onInputVectorEntryChanged(idx, s)
+			}
+			ca.mfuxInputVectorEntry[i] = entry
+
+			label := widget.NewLabel(fmt.Sprintf("x%d", i))
+			label.TextStyle = fyne.TextStyle{Monospace: true}
+			ca.mfuxInputVectorLabels[i] = label
+
+			// Compact layout: label above entry
+			col := container.NewVBox(label, entry)
+			rowBox.Add(col)
+		}
+
+		ca.computeInputContainer.Add(rowBox)
+	}
+}
+
+// rebuildComputeInputs rebuilds the compute input panel after array resize
+func (ca *CircuitsApp) rebuildComputeInputs() {
+	if ca.computeInputContainer == nil {
+		return
+	}
+
+	// Update title
+	if ca.computeInputTitle != nil {
+		fyne.Do(func() {
+			ca.computeInputTitle.SetText(fmt.Sprintf("Input Vector (%d inputs, 0-255):", ca.arrayCols))
+		})
+	}
+
+	// Rebuild entries
+	fyne.Do(func() {
+		ca.buildComputeInputEntries()
+		ca.computeInputContainer.Refresh()
+	})
 }
 
 // onInputVectorEntryChanged handles input vector entry changes

@@ -86,11 +86,23 @@ func (t *UnifiedTappableCanvas) Tapped(e *fyne.PointEvent) {
 		cellW := availableW / cols
 		cellH := availableH / rows
 		cellSize = min(cellW, cellH)
-		if cellSize > 70 { // Match drawing function limits
-			cellSize = 70
+
+		// Scale max/min cell size based on array dimensions (must match drawUnifiedArray)
+		maxCellSize := 70
+		minCellSize := 18
+		if cols > 32 || rows > 32 {
+			maxCellSize = 30
+			minCellSize = 8
+		} else if cols > 16 || rows > 16 {
+			maxCellSize = 40
+			minCellSize = 12
 		}
-		if cellSize < 18 { // Match drawing function limits
-			cellSize = 18
+
+		if cellSize > maxCellSize {
+			cellSize = maxCellSize
+		}
+		if cellSize < minCellSize {
+			cellSize = minCellSize
 		}
 
 		gridW := cols * cellSize

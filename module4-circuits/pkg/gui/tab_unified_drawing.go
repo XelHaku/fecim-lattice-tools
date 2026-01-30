@@ -61,11 +61,25 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	cellW := availableW / cols
 	cellH := availableH / rows
 	cellSize := min(cellW, cellH)
-	if cellSize > 70 { // Larger cells for better state visibility
-		cellSize = 70
+
+	// Scale max/min cell size based on array dimensions
+	maxCellSize := 70 // Default for small arrays
+	minCellSize := 18 // Default minimum
+
+	// For larger arrays, reduce cell size to fit
+	if cols > 32 || rows > 32 {
+		maxCellSize = 30
+		minCellSize = 8
+	} else if cols > 16 || rows > 16 {
+		maxCellSize = 40
+		minCellSize = 12
 	}
-	if cellSize < 18 { // Readable minimum
-		cellSize = 18
+
+	if cellSize > maxCellSize {
+		cellSize = maxCellSize
+	}
+	if cellSize < minCellSize {
+		cellSize = minCellSize
 	}
 
 	gridW := cols * cellSize
@@ -171,7 +185,23 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	}
 
 	// Draw row indices on left side of array
+	// For large arrays, only show every Nth index to avoid overlap
+	rowLabelStep := 1
+	if rows > 64 {
+		rowLabelStep = 16
+	} else if rows > 32 {
+		rowLabelStep = 8
+	} else if rows > 16 {
+		rowLabelStep = 4
+	} else if rows > 8 {
+		rowLabelStep = 2
+	}
+
 	for r := 0; r < rows; r++ {
+		// Only draw label at intervals or if selected
+		if r%rowLabelStep != 0 && r != selectedRow {
+			continue
+		}
 		y := offsetY + r*cellSize + cellSize/2 - 3
 		indexColor := color.RGBA{150, 150, 170, 200}
 		if r == selectedRow {
@@ -182,7 +212,23 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	}
 
 	// Draw column indices below array (above DAC boxes position)
+	// For large arrays, only show every Nth index to avoid overlap
+	colLabelStep := 1
+	if cols > 64 {
+		colLabelStep = 16
+	} else if cols > 32 {
+		colLabelStep = 8
+	} else if cols > 16 {
+		colLabelStep = 4
+	} else if cols > 8 {
+		colLabelStep = 2
+	}
+
 	for c := 0; c < cols; c++ {
+		// Only draw label at intervals or if selected
+		if c%colLabelStep != 0 && c != selectedCol {
+			continue
+		}
 		x := offsetX + c*cellSize + cellSize/2 - 3
 		indexColor := color.RGBA{150, 150, 170, 200}
 		if c == selectedCol {
@@ -292,40 +338,64 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 		}
 	}
 
-	// Draw DAC boxes (top) - larger for better visibility
-	dacBoxH := 30 // Increased from 25
+	// Draw DAC boxes (top) - scale based on array size
+	dacBoxH := 30
 	dacBoxW := cellSize - 2
-	if dacBoxW < 35 { // Increased from 24
-		dacBoxW = 35
+	// Scale DAC box size based on array dimensions
+	if cols > 32 {
+		dacBoxH = 18
+		dacBoxW = cellSize - 1
+	} else if cols > 16 {
+		dacBoxH = 22
 	}
-	dacY := offsetY - dacBoxH - 18 // More spacing
+	if dacBoxW < 20 {
+		dacBoxW = 20
+	}
+	dacY := offsetY - dacBoxH - 12
 
-	for c := 0; c < min(8, cols); c++ {
+	// Show ALL DAC boxes (scaled to fit)
+	for c := 0; c < cols; c++ {
 		dacX := offsetX + c*cellSize + 1
 		voltage := ca.deviceState.GetDACVoltage(c)
 		highlighted := animStep == 1
-		// Show column number as label for clarity
-		colLabel := fmt.Sprintf("C%d", c)
+		// Only show label for every Nth column to avoid clutter
+		colLabel := ""
+		if cols <= 16 || c%4 == 0 {
+			colLabel = fmt.Sprintf("C%d", c)
+		}
 		drawDACColumn(img, dacX, dacY, dacBoxW, dacBoxH, voltage, colLabel, highlighted, false)
 	}
 
-	// Draw TIA+ADC boxes (right side) - larger for better visibility
-	tiaBoxW := 70 // Increased from 50 for more data
-	adcBoxW := 30 // Increased from 24
+	// Draw TIA+ADC boxes (right side) - scale based on array size
+	tiaBoxW := 70
+	adcBoxW := 30
 	tiaAdcBoxH := cellSize - 2
-	if tiaAdcBoxH < 24 { // Increased from 18
-		tiaAdcBoxH = 24
+	// Scale TIA/ADC box size based on array dimensions
+	if rows > 32 {
+		tiaBoxW = 45
+		adcBoxW = 20
+		tiaAdcBoxH = cellSize - 1
+	} else if rows > 16 {
+		tiaBoxW = 55
+		adcBoxW = 25
 	}
-	tiaX := offsetX + gridW + 12
+	if tiaAdcBoxH < 16 {
+		tiaAdcBoxH = 16
+	}
+	tiaX := offsetX + gridW + 8
 
-	for r := 0; r < min(8, rows); r++ {
+	// Show ALL TIA+ADC boxes (scaled to fit)
+	for r := 0; r < rows; r++ {
 		tiaY := offsetY + r*cellSize + 1
 		current := ca.deviceState.GetRowCurrent(r)
 		level := ca.deviceState.GetRowLevel(r)
 		highlighted := animStep == 3
 		dimmed := !ca.deviceState.IsRowActive(r)
-		// Show row number as label for clarity
-		rowLabel := fmt.Sprintf("R%d", r)
+		// Only show label for every Nth row to avoid clutter
+		rowLabel := ""
+		if rows <= 16 || r%4 == 0 {
+			rowLabel = fmt.Sprintf("R%d", r)
+		}
 		drawTIAADCRow(img, tiaX, tiaY, tiaBoxW, adcBoxW, tiaAdcBoxH, current, level, rowLabel, highlighted, dimmed, ca.tia, ca.adc)
 	}
 

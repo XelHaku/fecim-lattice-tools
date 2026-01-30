@@ -174,7 +174,18 @@ type App struct {
 	logText      *widget.Label
 	logEntries   []string
 	maxLogLines  int
-	lastLogPhase int // Track phase changes to avoid duplicate logs
+	lastLogPhase int  // Track phase changes to avoid duplicate logs
+	logVerbose   bool // M07: Toggle between verbose and compact log views
+	logToggleBtn *widget.Button // M07: Button to toggle log verbosity
+
+	// Simulation vs Experiment comparison widget (H16)
+	simVsExpWidget *widgets.SimVsExpComparison
+
+	// ISPP visualization widget (H14)
+	isppWidget *widgets.ISPPVisualization
+
+	// State stability indicator (M12)
+	stabilityIndicator *widgets.StabilityIndicator
 }
 
 // WaveformType represents the input waveform
@@ -516,6 +527,27 @@ func (a *App) createUI() fyne.CanvasObject {
 	// Create log panel
 	logPanel := a.createLogPanel()
 
+	// Create simulation vs experiment comparison widget (H16)
+	a.simVsExpWidget = widgets.NewSimVsExpComparison()
+	// Set initial values from Preisach model
+	simPr := a.preisach.GetEffectivePr()
+	simEc := a.preisach.GetEffectiveEc()
+	// Calculate squareness from model
+	a.preisach.Reset()
+	a.preisach.Update(simEc * 2)  // Saturate
+	psat := a.preisach.Polarization()
+	a.preisach.Update(0)          // Return to zero
+	pr := a.preisach.Polarization()
+	squareness := 0.0
+	if psat > 0 {
+		squareness = pr / psat
+	}
+	a.simVsExpWidget.SetSimulatedValues(simPr, simEc, squareness)
+	a.preisach.Reset() // Reset for normal operation
+
+	// Create ISPP visualization widget (H14)
+	a.isppWidget = widgets.NewISPPVisualization()
+
 	// Cell title with underline effect
 	cellTitle := canvas.NewText("MEMORY CELL", color.RGBA{0, 212, 255, 255})
 	cellTitle.TextSize = 16
@@ -543,6 +575,10 @@ func (a *App) createUI() fyne.CanvasObject {
 		slidePanel,
 		widget.NewSeparator(),
 		logPanel,
+		widget.NewSeparator(),
+		a.isppWidget,
+		widget.NewSeparator(),
+		a.simVsExpWidget,
 	)
 	leftScroll := container.NewScroll(leftScrollableContent)
 	leftScroll.SetMinSize(fyne.NewSize(160, 0))

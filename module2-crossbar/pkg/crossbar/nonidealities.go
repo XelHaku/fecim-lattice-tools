@@ -11,19 +11,188 @@ func init() {
 	ErrInputSize = errors.New("input size exceeds array columns")
 }
 
-// WireParams contains wire resistance parameters for IR drop modeling.
+// WireParams contains wire resistance and capacitance parameters for
+// IR drop and RC delay modeling.
+//
+// H11: Added parasitic capacitance for realistic RC delay simulation.
+// RC delay affects signal propagation time and limits array operating frequency.
+//
+// Physical basis:
+//   - Wire capacitance: C = ε₀ε_r × (W×L)/t + fringe capacitance
+//   - Typical interconnect: 0.1-0.3 fF/µm for 45nm node
+//   - RC delay: τ = R × C (Elmore delay for distributed RC line)
 type WireParams struct {
 	RwordLine float64 // Word line resistance per unit (Ohm)
 	RbitLine  float64 // Bit line resistance per unit (Ohm)
 	Rcontact  float64 // Contact resistance (Ohm)
+
+	// Parasitic capacitance (H11)
+	CwordLine float64 // Word line capacitance per unit (F), typical: 0.1-0.5 fF
+	CbitLine  float64 // Bit line capacitance per unit (F), typical: 0.1-0.5 fF
+	CellPitch float64 // Cell pitch in meters (for calculating total wire length)
 }
 
 // DefaultWireParams returns typical wire parameters for a 45nm technology node.
+// Includes parasitic capacitance values for RC delay modeling (H11).
 func DefaultWireParams() *WireParams {
 	return &WireParams{
-		RwordLine: 2.5, // 2.5 Ohm per cell pitch
-		RbitLine:  2.5, // 2.5 Ohm per cell pitch
-		Rcontact:  50,  // 50 Ohm contact resistance
+		RwordLine: 2.5,    // 2.5 Ohm per cell pitch
+		RbitLine:  2.5,    // 2.5 Ohm per cell pitch
+		Rcontact:  50,     // 50 Ohm contact resistance
+		CwordLine: 0.2e-15, // 0.2 fF per cell pitch (typical 45nm)
+		CbitLine:  0.2e-15, // 0.2 fF per cell pitch
+		CellPitch: 90e-9,  // 90 nm cell pitch (2× minimum feature size for 45nm)
+	}
+}
+
+// ============================================================================
+// H11: PARASITIC CAPACITANCE AND RC DELAY MODELING
+// ============================================================================
+
+// RCDelayAnalysis contains RC delay analysis results.
+type RCDelayAnalysis struct {
+	// Per-line delays
+	WordLineDelay []float64 // RC delay for each word line (seconds)
+	BitLineDelay  []float64 // RC delay for each bit line (seconds)
+
+	// Summary statistics
+	MaxWordLineDelay float64 // Maximum word line delay (seconds)
+	MaxBitLineDelay  float64 // Maximum bit line delay (seconds)
+	TotalArrayDelay  float64 // Total array propagation delay (seconds)
+	MaxFrequency     float64 // Maximum operating frequency (Hz)
+
+	// Capacitance breakdown
+	TotalWordLineCap float64 // Total word line capacitance (F)
+	TotalBitLineCap  float64 // Total bit line capacitance (F)
+	TotalArrayCap    float64 // Total array capacitance (F)
+
+	// Energy per operation (CV²/2)
+	ChargingEnergy float64 // Energy to charge all lines (J)
+}
+
+// AnalyzeRCDelay performs RC delay analysis for the crossbar array.
+// Uses Elmore delay model for distributed RC lines.
+//
+// For a distributed RC line of length L:
+//   τ_elmore = R_total × C_total / 2 (for load at end)
+//
+// Reference: IEEE TCAD, Elmore delay modeling for VLSI interconnects
+func (a *Array) AnalyzeRCDelay(params *WireParams, inputVoltage float64) *RCDelayAnalysis {
+	if params == nil {
+		params = DefaultWireParams()
+	}
+
+	rows := a.config.Rows
+	cols := a.config.Cols
+
+	result := &RCDelayAnalysis{
+		WordLineDelay: make([]float64, rows),
+		BitLineDelay:  make([]float64, cols),
+	}
+
+	// Word line analysis
+	// Each word line spans 'cols' cells
+	wlResistance := params.RwordLine * float64(cols)
+	wlCapacitance := params.CwordLine * float64(cols)
+	result.TotalWordLineCap = wlCapacitance * float64(rows)
+
+	for i := 0; i < rows; i++ {
+		// Elmore delay for distributed RC line
+		// τ = R × C / 2 for a uniformly distributed RC line
+		result.WordLineDelay[i] = wlResistance * wlCapacitance / 2
+
+		if result.WordLineDelay[i] > result.MaxWordLineDelay {
+			result.MaxWordLineDelay = result.WordLineDelay[i]
+		}
+	}
+
+	// Bit line analysis
+	// Each bit line spans 'rows' cells
+	blResistance := params.RbitLine * float64(rows)
+	blCapacitance := params.CbitLine * float64(rows)
+	result.TotalBitLineCap = blCapacitance * float64(cols)
+
+	for j := 0; j < cols; j++ {
+		result.BitLineDelay[j] = blResistance * blCapacitance / 2
+
+		if result.BitLineDelay[j] > result.MaxBitLineDelay {
+			result.MaxBitLineDelay = result.BitLineDelay[j]
+		}
+	}
+
+	// Total array capacitance
+	result.TotalArrayCap = result.TotalWordLineCap + result.TotalBitLineCap
+
+	// Total array delay is dominated by the longer path
+	// Word lines drive the inputs, bit lines collect outputs
+	result.TotalArrayDelay = result.MaxWordLineDelay + result.MaxBitLineDelay
+
+	// Maximum frequency (with 10× margin for settling)
+	if result.TotalArrayDelay > 0 {
+		result.MaxFrequency = 0.1 / result.TotalArrayDelay
+	}
+
+	// Charging energy: E = C × V² / 2 (per transition)
+	// For one complete MVM, all word lines switch
+	result.ChargingEnergy = result.TotalArrayCap * inputVoltage * inputVoltage / 2
+
+	return result
+}
+
+// GetRCTimeConstant returns the RC time constant for a single line.
+func (p *WireParams) GetRCTimeConstant(numCells int, isWordLine bool) float64 {
+	if isWordLine {
+		return p.RwordLine * float64(numCells) * p.CwordLine * float64(numCells)
+	}
+	return p.RbitLine * float64(numCells) * p.CbitLine * float64(numCells)
+}
+
+// GetPropagationDelay returns the 50% propagation delay for a line (Elmore model).
+func (p *WireParams) GetPropagationDelay(numCells int, isWordLine bool) float64 {
+	// Elmore delay: τ = 0.69 × R × C for 50% threshold
+	tau := p.GetRCTimeConstant(numCells, isWordLine)
+	return 0.69 * tau / float64(numCells) // Divide by N for distributed RC
+}
+
+// GetSettlingTime returns time to settle within given percentage (e.g., 0.01 = 1%).
+func (p *WireParams) GetSettlingTime(numCells int, isWordLine bool, errorPercent float64) float64 {
+	if errorPercent <= 0 || errorPercent >= 1 {
+		errorPercent = 0.01 // Default 1%
+	}
+	tau := p.GetRCTimeConstant(numCells, isWordLine) / float64(numCells)
+	// Settling to within error requires -ln(error) time constants
+	return tau * (-math.Log(errorPercent))
+}
+
+// ScaleForTechNode scales wire parameters for a different technology node.
+// Scaling follows Dennard scaling rules with modifications for modern nodes.
+//
+// fromNode, toNode: technology nodes in nm (e.g., 45, 28, 14, 7)
+func (p *WireParams) ScaleForTechNode(fromNode, toNode float64) *WireParams {
+	if fromNode <= 0 || toNode <= 0 {
+		return p
+	}
+
+	// Scaling factor
+	s := fromNode / toNode
+
+	// Resistance scales as 1/s (narrower wires = higher resistance)
+	// Capacitance scales as s (shorter wires = lower capacitance)
+	// But modern nodes have higher resistivity due to electron scattering
+	resistivityPenalty := 1.0
+	if toNode < 14 {
+		resistivityPenalty = 1.5 // Significant penalty below 14nm
+	} else if toNode < 28 {
+		resistivityPenalty = 1.2
+	}
+
+	return &WireParams{
+		RwordLine: p.RwordLine * (1 / s) * resistivityPenalty,
+		RbitLine:  p.RbitLine * (1 / s) * resistivityPenalty,
+		Rcontact:  p.Rcontact * (1 / s) * resistivityPenalty,
+		CwordLine: p.CwordLine * s,
+		CbitLine:  p.CbitLine * s,
+		CellPitch: p.CellPitch * (toNode / fromNode),
 	}
 }
 
