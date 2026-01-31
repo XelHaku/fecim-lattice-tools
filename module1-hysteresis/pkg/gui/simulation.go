@@ -771,416 +771,413 @@ func (a *App) Update(dt float64) {
 						}
 					}
 
-					a.manualAnimating = false
-					a.manualPhase = 0
-					a.manualPhaseTime = 0
 				}
 			}
-			// If not animating, electric field is already set by slider in controls.go
-		} else if a.autoMode {
-			Emax := mat.Ec * 2 // Use local copy for thread safety
-			// Wrap phase to prevent floating-point precision loss over long times
-			phase := math.Mod(2*math.Pi*a.frequency*a.simTime, 2*math.Pi)
+		}
+	} else if a.autoMode {
+		Emax := mat.Ec * 2 // Use local copy for thread safety
+		// Wrap phase to prevent floating-point precision loss over long times
+		phase := math.Mod(2*math.Pi*a.frequency*a.simTime, 2*math.Pi)
 
-			switch a.waveform {
-			case WaveformSine:
-				a.electricField = Emax * math.Sin(phase)
-			case WaveformTriangle:
-				p := phase / (2 * math.Pi)
-				if p < 0.25 {
-					a.electricField = Emax * (4 * p)
-				} else if p < 0.75 {
-					a.electricField = Emax * (2 - 4*p)
+		switch a.waveform {
+		case WaveformSine:
+			a.electricField = Emax * math.Sin(phase)
+		case WaveformTriangle:
+			p := phase / (2 * math.Pi)
+			if p < 0.25 {
+				a.electricField = Emax * (4 * p)
+			} else if p < 0.75 {
+				a.electricField = Emax * (2 - 4*p)
+			} else {
+				a.electricField = Emax * (4*p - 4)
+			}
+		case WaveformWriteReadDemo:
+			// Correct ferroelectric write/read physics with RESET-AND-RETRY approach:
+			//
+			// PHYSICS: Hysteresis is PATH-DEPENDENT and NON-REVERSIBLE.
+			// If you overshoot a target level, you CANNOT correct by applying less field
+			// or opposite field (that's a different branch of the hysteresis loop).
+			// You MUST reset to a known saturation state and apply precise programming pulse.
+			//
+			// Phase mapping:
+			// 0 = RESET (saturate in opposite direction to target)
+			// 1 = HOLD_RESET (return to zero - now at known remanent: level 1 or N)
+			// 2 = WRITE (apply calibrated field toward target)
+			// 3 = HOLD_WRITE (return to zero, polarization persists)
+			// 4 = READ (small sense pulse below Ec)
+			// 5 = DISPLAY (show result, pick next target)
+
+			a.wrdPhaseTimer += dt
+			phaseDuration := 1.0 / a.frequency
+			rampRate := 3.0 * Emax * a.frequency
+			Ec := mat.Ec // Use local copy for thread safety
+			midLevel := a.numLevels / 2
+
+			targetLevel := a.wrdTargetLevel // 1-indexed
+			// Note: startLevel (a.wrdStartLevel) no longer used for direction - we use absolute position
+
+			switch a.wrdPhase {
+			case 0: // RESET - saturate in opposite direction to target
+				var resetE float64
+				// Use absolute level position (not relative to start) for consistent calibration
+				// Calibration was measured from saturated states, so we must match that
+				if targetLevel > midLevel {
+					// Target in upper half: saturate negative first (reach level 1), then apply ascending cal
+					resetE = -2.0 * Ec // Match calibration saturation (2.0×Ec)
 				} else {
-					a.electricField = Emax * (4*p - 4)
+					// Target in lower half: saturate positive first (reach level N), then apply descending cal
+					resetE = 2.0 * Ec // Match calibration saturation (2.0×Ec)
 				}
-			case WaveformWriteReadDemo:
-				// Correct ferroelectric write/read physics with RESET-AND-RETRY approach:
-				//
-				// PHYSICS: Hysteresis is PATH-DEPENDENT and NON-REVERSIBLE.
-				// If you overshoot a target level, you CANNOT correct by applying less field
-				// or opposite field (that's a different branch of the hysteresis loop).
-				// You MUST reset to a known saturation state and apply precise programming pulse.
-				//
-				// Phase mapping:
-				// 0 = RESET (saturate in opposite direction to target)
-				// 1 = HOLD_RESET (return to zero - now at known remanent: level 1 or N)
-				// 2 = WRITE (apply calibrated field toward target)
-				// 3 = HOLD_WRITE (return to zero, polarization persists)
-				// 4 = READ (small sense pulse below Ec)
-				// 5 = DISPLAY (show result, pick next target)
+				a.wrdSaturateE = resetE // Store for logging
 
-				a.wrdPhaseTimer += dt
-				phaseDuration := 1.0 / a.frequency
-				rampRate := 3.0 * Emax * a.frequency
-				Ec := mat.Ec // Use local copy for thread safety
-				midLevel := a.numLevels / 2
+				// Ramp to reset field
+				diff := resetE - a.electricField
+				step := rampRate * dt
+				if math.Abs(diff) < step {
+					a.electricField = resetE
+				} else if diff > 0 {
+					a.electricField += step
+				} else {
+					a.electricField -= step
+				}
 
-				targetLevel := a.wrdTargetLevel // 1-indexed
-				// Note: startLevel (a.wrdStartLevel) no longer used for direction - we use absolute position
+				// Transition when field reached and held briefly
+				if a.wrdPhaseTimer > phaseDuration*0.25 && math.Abs(a.electricField-resetE) < 0.01*Emax {
+					// Capture end-of-RESET state for logging
+					a.wrdResetEndP = a.polarization * 100 // Convert to µC/cm²
+					a.wrdResetEndLvl = a.discreteLevel + 1
+					log.Printf("WRD PHASE 0→1: RESET done | E=%.3f MV/cm | P=%.2f→%.2f µC/cm² | L=%d→%d | target=%d",
+						a.electricField/1e8, a.wrdResetStartP, a.wrdResetEndP, a.wrdStartLevel, a.wrdResetEndLvl, targetLevel)
+					a.wrdPhase = 1
+					a.wrdPhaseTimer = 0
+				}
 
-				switch a.wrdPhase {
-				case 0: // RESET - saturate in opposite direction to target
-					var resetE float64
-					// Use absolute level position (not relative to start) for consistent calibration
-					// Calibration was measured from saturated states, so we must match that
-					if targetLevel > midLevel {
-						// Target in upper half: saturate negative first (reach level 1), then apply ascending cal
-						resetE = -2.0 * Ec // Match calibration saturation (2.0×Ec)
-					} else {
-						// Target in lower half: saturate positive first (reach level N), then apply descending cal
-						resetE = 2.0 * Ec // Match calibration saturation (2.0×Ec)
-					}
-					a.wrdSaturateE = resetE // Store for logging
+			case 1: // HOLD_RESET - return to zero (now at known remanent state)
+				step := rampRate * dt
+				if math.Abs(a.electricField) < step {
+					a.electricField = 0
+				} else if a.electricField > 0 {
+					a.electricField -= step
+				} else {
+					a.electricField += step
+				}
 
-					// Ramp to reset field
-					diff := resetE - a.electricField
-					step := rampRate * dt
-					if math.Abs(diff) < step {
-						a.electricField = resetE
-					} else if diff > 0 {
-						a.electricField += step
-					} else {
-						a.electricField -= step
-					}
+				// Now at known remanent state (level 1 or level N)
+				if a.wrdPhaseTimer > phaseDuration*0.15 && math.Abs(a.electricField) < 0.01*Emax {
+					// Capture start-of-WRITE state for logging
+					a.wrdWriteStartP = a.polarization * 100 // Convert to µC/cm²
+					log.Printf("WRD PHASE 1→2: SETTLE done | E=%.3f MV/cm | P=%.2f µC/cm² | L=%d | ready to write target=%d",
+						a.electricField/1e8, a.wrdWriteStartP, a.discreteLevel+1, targetLevel)
 
-					// Transition when field reached and held briefly
-					if a.wrdPhaseTimer > phaseDuration*0.25 && math.Abs(a.electricField-resetE) < 0.01*Emax {
-						// Capture end-of-RESET state for logging
-						a.wrdResetEndP = a.polarization * 100 // Convert to µC/cm²
-						a.wrdResetEndLvl = a.discreteLevel + 1
-						log.Printf("WRD PHASE 0→1: RESET done | E=%.3f MV/cm | P=%.2f→%.2f µC/cm² | L=%d→%d | target=%d",
-							a.electricField/1e8, a.wrdResetStartP, a.wrdResetEndP, a.wrdStartLevel, a.wrdResetEndLvl, targetLevel)
-						a.wrdPhase = 1
-						a.wrdPhaseTimer = 0
-					}
-
-				case 1: // HOLD_RESET - return to zero (now at known remanent state)
-					step := rampRate * dt
-					if math.Abs(a.electricField) < step {
-						a.electricField = 0
-					} else if a.electricField > 0 {
-						a.electricField -= step
-					} else {
-						a.electricField += step
-					}
-
-					// Now at known remanent state (level 1 or level N)
-					if a.wrdPhaseTimer > phaseDuration*0.15 && math.Abs(a.electricField) < 0.01*Emax {
-						// Capture start-of-WRITE state for logging
-						a.wrdWriteStartP = a.polarization * 100 // Convert to µC/cm²
-						log.Printf("WRD PHASE 1→2: SETTLE done | E=%.3f MV/cm | P=%.2f µC/cm² | L=%d | ready to write target=%d",
-							a.electricField/1e8, a.wrdWriteStartP, a.discreteLevel+1, targetLevel)
-
-						// Initialize WriteController (Refactoring)
-						// Determine if fromSaturation: Level 1 or MaxLevel
-						currentLevel := a.discreteLevel + 1
-						fromSaturation := currentLevel <= 2 || currentLevel >= a.numLevels-1
-
-						// SYNC TIMING: Pulse duration should be ~40% of phase duration to allow ramp-up
-						a.writeController.PulseDuration = phaseDuration * 0.4
-						a.writeController.Start(targetLevel, fromSaturation)
-
-						a.wrdPhase = 2
-						a.wrdPhaseTimer = 0
-					}
-
-				case 2: // WRITE - Delegated to WriteController
-					// Refactored to use pkg/controller/WriteController
-					// This consolidates Write, Wait, Verify, and Retry logic
-
+					// Initialize WriteController (Refactoring)
+					// Determine if fromSaturation: Level 1 or MaxLevel
 					currentLevel := a.discreteLevel + 1
-					targetField, done := a.writeController.Update(dt, a.electricField, currentLevel)
+					fromSaturation := currentLevel <= 2 || currentLevel >= a.numLevels-1
 
-					// Apply Voltage Ramp (Controller outputs target, Simulation handles physics ramp)
-					step := rampRate * 1.5 * dt // Faster ramp for write pulses
-					diff := targetField - a.electricField
-					if math.Abs(diff) < step {
-						a.electricField = targetField
-					} else if diff > 0 {
-						a.electricField += step
-					} else {
-						a.electricField -= step
-					}
+					// SYNC TIMING: Pulse duration should be ~40% of phase duration to allow ramp-up
+					a.writeController.PulseDuration = phaseDuration * 0.4
+					a.writeController.Start(targetLevel, fromSaturation)
 
-					if done {
-						switch a.writeController.State {
-						case controller.StateSuccess:
-							// SUCCESS: Proceed to DISPLAY phase
-							a.wrdPhase = 5
-							a.wrdPhaseTimer = 0
-
-							// Logging and Metrics
-							a.wrdTotalWrites++
-							a.wrdSuccessWrites++
-							successRate := float64(a.wrdSuccessWrites) / float64(a.wrdTotalWrites) * 100
-
-							log.Printf("WRD SUCCESS via Controller: target=%d, tries=%d", targetLevel, a.writeController.RetryCount)
-
-							// Log result (replaces Case 4 success log)
-							log.Printf("WRD PHASE 4→5: TARGET HIT | L_read=%d L_target=%d | rate=%.1f%% (%d/%d)",
-								a.writeController.LastVerifyLevel, targetLevel,
-								successRate, a.wrdSuccessWrites, a.wrdTotalWrites)
-
-							// CRITICAL FIX: Learn from the Servo using CalibrationManager
-							// Instead of naïve 100% overwrite, we use binary search + monotonicity
-							learnedV := a.writeController.CurrentVoltage
-							Ec := mat.Ec
-							targetIdx := targetLevel - 1 // 0-indexed for CM
-
-							if a.calibManager != nil {
-								if targetLevel > midLevel {
-									// Ascending (written from reset negative)
-									a.calibManager.UpdateCalibrationUp(targetIdx, 0, Ec)
-									// Override the midpoint with the actual successful servo voltage to anchor the search
-									a.calibManager.CalibrationUp[targetIdx] = learnedV
-									a.calibrationUp[targetIdx] = learnedV
-								} else {
-									// Descending (written from reset positive)
-									a.calibManager.UpdateCalibrationDown(targetIdx, 0, Ec)
-									a.calibManager.CalibrationDown[targetIdx] = learnedV
-									a.calibrationDown[targetIdx] = learnedV
-								}
-								log.Printf("CALIB LEARN: target=%d learnedV=%.3f×Ec (updated via CM)", targetLevel, learnedV/Ec)
-							}
-
-						case controller.StateForceReset:
-							// RETRY LIMIT: Trigger Full Reset
-							log.Printf("WRD RETRY LIMIT: Full RESET to saturation (retry %d)", a.writeController.RetryCount)
-							a.wrdPhase = 0 // RESET phase
-							a.wrdPhaseTimer = 0
-
-						case controller.StateFailed:
-							// Generic failure (shouldn't happen with infinite retries enabled, but just in case)
-							log.Printf("WRD FAILED: Controller gave up on target %d", targetLevel)
-							a.wrdPhase = 5 // Display anyway
-							a.wrdPhaseTimer = 0
-							a.wrdTotalWrites++ // Count as attempt
-						}
-					}
-
-					// Cases 3 (HOLD) and 4 (VERIFY) are now internal to the Controller
-					// We stay in Case 2 until 'done' is true.
-
-				case 3, 4:
-					// Legacy states - should not be reached with new controller
-					// Jump to 2 just in case
 					a.wrdPhase = 2
-				case 5: // DISPLAY phase - return to zero, show result
-					step := rampRate * 0.4 * dt
-					if math.Abs(a.electricField) < step {
-						a.electricField = 0
-					} else if a.electricField > 0 {
-						a.electricField -= step
-					} else {
-						a.electricField += step
-					}
-					// Transition to next cycle
-					if a.wrdPhaseTimer > phaseDuration*0.6 {
-						// Record start level for next cycle
-						a.wrdStartLevel = a.discreteLevel + 1
-
-						// Add comparison callout every 5 cycles
-						if a.wrdTotalWrites > 0 && a.wrdTotalWrites%5 == 0 {
-							fecimEnergy := a.wrdTotalEnergyfJ / 1000 // pJ
-							// NOTE: 10M× is Dr. Tour's unverified claim. Peer-reviewed: 25-100× (Samsung Nature 2025)
-							nandEquiv := fecimEnergy * 50   // 25-100× better (conservative: use 50)
-							dramEquiv := fecimEnergy * 1000 // 1000× worse
-							bitsStored := float64(a.wrdTotalWrites) * 4.91
-							a.addLogEntry("━━ ENERGY COMPARISON ━━")
-							a.addLogEntry(fmt.Sprintf("FeCIM: %.0f pJ total", fecimEnergy))
-							a.addLogEntry(fmt.Sprintf("NAND:  %.0f pJ (50×!)", nandEquiv))
-							a.addLogEntry(fmt.Sprintf("DRAM:  %.0f pJ (1000×)", dramEquiv))
-							a.addLogEntry(fmt.Sprintf("Bits stored: %.0f (%.1f×binary)", bitsStored, 4.91))
-							a.addLogEntry("━━━━━━━━━━━━━━━━━━━━━━")
-						}
-
-						// Milestone celebrations
-						switch a.wrdTotalWrites {
-						case 10:
-							a.addLogEntry("★★ 10 ops! ~49 bits stored ★★")
-						case 25:
-							a.addLogEntry("★★★ 25 ops! ~123 bits stored ★★★")
-						case 50:
-							a.addLogEntry("★★★★ 50 ops! ~245 bits stored ★★★★")
-							a.addLogEntry("Binary would need 245 cells!")
-							a.addLogEntry("FeCIM: only 50 cells! (5× denser)")
-						case 100:
-							a.addLogEntry("★★★★★ 100 OPERATIONS! ★★★★★")
-							a.addLogEntry("~491 bits in 100 FeCIM cells")
-							a.addLogEntry("Binary: 491 cells needed!")
-							successRate := float64(a.wrdSuccessWrites) / float64(a.wrdTotalWrites) * 100
-							a.addLogEntry(fmt.Sprintf("Accuracy: %.0f%%", successRate))
-						}
-
-						// Pick new target - alternate between high and low
-						midLvl := a.numLevels / 2
-						rangeSize := a.numLevels / 3
-						if rangeSize < 2 {
-							rangeSize = 2
-						}
-						if a.wrdTargetLevel > midLvl {
-							// Low range: 2 to rangeSize+1 (avoid extremes)
-							a.wrdTargetLevel = rand.Intn(rangeSize) + 2
-							if a.wrdTargetLevel > a.numLevels-1 {
-								a.wrdTargetLevel = a.numLevels - 1
-							}
-						} else {
-							// High range: (numLevels - rangeSize) to numLevels-1
-							a.wrdTargetLevel = a.numLevels - rangeSize + rand.Intn(rangeSize)
-							if a.wrdTargetLevel < 2 {
-								a.wrdTargetLevel = 2
-							}
-						}
-						// Capture start state for next cycle logging
-						a.wrdWriteStartP = a.polarization * 100 // Convert to µC/cm²
-						log.Printf("WRD CYCLE START: cycle=%d | startLevel=%d | newTarget=%d | P=%.2f µC/cm²",
-							a.wrdTotalWrites+1, a.discreteLevel+1, a.wrdTargetLevel, a.wrdWriteStartP)
-						// NOTE: Don't clear history - let the trail accumulate to show full hysteresis loop
-						// Spike detection in plot widget handles any discontinuities
-						// Go to RESET phase to ensure clean state and proper initialization
-						a.wrdPhase = 0
-						a.wrdPhaseTimer = 0
-						a.wrdCycleEnergy = 0  // Reset energy accumulator for next cycle
-						a.isppTotalPulses = 0 // Reset ISPP pulse counter for next target
-
-						// Reset ISPP widget to idle state for new target
-						if a.isppWidget != nil {
-							a.isppWidget.SetAnimationState(0, 0, a.discreteLevel+1, 0, false)
-						}
-					}
-
-				case 6: // Legacy BOOST phase - redirect to Controller
-					// The generic WriteController handles retries/boost internally or via re-entry to Case 2
-					a.wrdPhase = 2
+					a.wrdPhaseTimer = 0
 				}
-			case WaveformTimeResolved:
-				// Time-resolved switching dynamics visualization
-				// Shows KAI (Kolmogorov-Avrami-Ishibashi) stretched exponential switching
-				if !a.timeResAnimating {
-					// Start new animation - simulate domain switching dynamics
-					Eapplied := 2.0 * a.material.Ec // Write pulse at 2×Ec
-					duration := 100e-9              // 100 nanoseconds
-					steps := 100                    // 100 time points
 
-					times, pols, switched := a.preisach.SimulateDomainSwitching(Eapplied, duration, steps)
+			case 2: // WRITE - Delegated to WriteController
+				// Refactored to use pkg/controller/WriteController
+				// This consolidates Write, Wait, Verify, and Retry logic
 
-					a.timeResDataTimes = times
-					a.timeResDataPols = pols
-					a.timeResDataSwitch = switched
+				currentLevel := a.discreteLevel + 1
+				targetField, done := a.writeController.Update(dt, a.electricField, currentLevel)
+
+				// Apply Voltage Ramp (Controller outputs target, Simulation handles physics ramp)
+				step := rampRate * 1.5 * dt // Faster ramp for write pulses
+				diff := targetField - a.electricField
+				if math.Abs(diff) < step {
+					a.electricField = targetField
+				} else if diff > 0 {
+					a.electricField += step
+				} else {
+					a.electricField -= step
+				}
+
+				if done {
+					switch a.writeController.State {
+					case controller.StateSuccess:
+						// SUCCESS: Proceed to DISPLAY phase
+						a.wrdPhase = 5
+						a.wrdPhaseTimer = 0
+
+						// Logging and Metrics
+						a.wrdTotalWrites++
+						a.wrdSuccessWrites++
+						successRate := float64(a.wrdSuccessWrites) / float64(a.wrdTotalWrites) * 100
+
+						log.Printf("WRD SUCCESS via Controller: target=%d, tries=%d", targetLevel, a.writeController.RetryCount)
+
+						// Log result (replaces Case 4 success log)
+						log.Printf("WRD PHASE 4→5: TARGET HIT | L_read=%d L_target=%d | rate=%.1f%% (%d/%d)",
+							a.writeController.LastVerifyLevel, targetLevel,
+							successRate, a.wrdSuccessWrites, a.wrdTotalWrites)
+
+						// CRITICAL FIX: Learn from the Servo using CalibrationManager
+						// Instead of naïve 100% overwrite, we use binary search + monotonicity
+						learnedV := a.writeController.CurrentVoltage
+						Ec := mat.Ec
+						targetIdx := targetLevel - 1 // 0-indexed for CM
+
+						if a.calibManager != nil {
+							if targetLevel > midLevel {
+								// Ascending (written from reset negative)
+								a.calibManager.UpdateCalibrationUp(targetIdx, 0, Ec)
+								// Override the midpoint with the actual successful servo voltage to anchor the search
+								a.calibManager.CalibrationUp[targetIdx] = learnedV
+								a.calibrationUp[targetIdx] = learnedV
+							} else {
+								// Descending (written from reset positive)
+								a.calibManager.UpdateCalibrationDown(targetIdx, 0, Ec)
+								a.calibManager.CalibrationDown[targetIdx] = learnedV
+								a.calibrationDown[targetIdx] = learnedV
+							}
+							log.Printf("CALIB LEARN: target=%d learnedV=%.3f×Ec (updated via CM)", targetLevel, learnedV/Ec)
+						}
+
+					case controller.StateForceReset:
+						// RETRY LIMIT: Trigger Full Reset
+						log.Printf("WRD RETRY LIMIT: Full RESET to saturation (retry %d)", a.writeController.RetryCount)
+						a.wrdPhase = 0 // RESET phase
+						a.wrdPhaseTimer = 0
+
+					case controller.StateFailed:
+						// Generic failure (shouldn't happen with infinite retries enabled, but just in case)
+						log.Printf("WRD FAILED: Controller gave up on target %d", targetLevel)
+						a.wrdPhase = 5 // Display anyway
+						a.wrdPhaseTimer = 0
+						a.wrdTotalWrites++ // Count as attempt
+					}
+				}
+
+				// Cases 3 (HOLD) and 4 (VERIFY) are now internal to the Controller
+				// We stay in Case 2 until 'done' is true.
+
+			case 3, 4:
+				// Legacy states - should not be reached with new controller
+				// Jump to 2 just in case
+				a.wrdPhase = 2
+			case 5: // DISPLAY phase - return to zero, show result
+				step := rampRate * 0.4 * dt
+				if math.Abs(a.electricField) < step {
+					a.electricField = 0
+				} else if a.electricField > 0 {
+					a.electricField -= step
+				} else {
+					a.electricField += step
+				}
+				// Transition to next cycle
+				if a.wrdPhaseTimer > phaseDuration*0.6 {
+					// Record start level for next cycle
+					a.wrdStartLevel = a.discreteLevel + 1
+
+					// Add comparison callout every 5 cycles
+					if a.wrdTotalWrites > 0 && a.wrdTotalWrites%5 == 0 {
+						fecimEnergy := a.wrdTotalEnergyfJ / 1000 // pJ
+						// NOTE: 10M× is Dr. Tour's unverified claim. Peer-reviewed: 25-100× (Samsung Nature 2025)
+						nandEquiv := fecimEnergy * 50   // 25-100× better (conservative: use 50)
+						dramEquiv := fecimEnergy * 1000 // 1000× worse
+						bitsStored := float64(a.wrdTotalWrites) * 4.91
+						a.addLogEntry("━━ ENERGY COMPARISON ━━")
+						a.addLogEntry(fmt.Sprintf("FeCIM: %.0f pJ total", fecimEnergy))
+						a.addLogEntry(fmt.Sprintf("NAND:  %.0f pJ (50×!)", nandEquiv))
+						a.addLogEntry(fmt.Sprintf("DRAM:  %.0f pJ (1000×)", dramEquiv))
+						a.addLogEntry(fmt.Sprintf("Bits stored: %.0f (%.1f×binary)", bitsStored, 4.91))
+						a.addLogEntry("━━━━━━━━━━━━━━━━━━━━━━")
+					}
+
+					// Milestone celebrations
+					switch a.wrdTotalWrites {
+					case 10:
+						a.addLogEntry("★★ 10 ops! ~49 bits stored ★★")
+					case 25:
+						a.addLogEntry("★★★ 25 ops! ~123 bits stored ★★★")
+					case 50:
+						a.addLogEntry("★★★★ 50 ops! ~245 bits stored ★★★★")
+						a.addLogEntry("Binary would need 245 cells!")
+						a.addLogEntry("FeCIM: only 50 cells! (5× denser)")
+					case 100:
+						a.addLogEntry("★★★★★ 100 OPERATIONS! ★★★★★")
+						a.addLogEntry("~491 bits in 100 FeCIM cells")
+						a.addLogEntry("Binary: 491 cells needed!")
+						successRate := float64(a.wrdSuccessWrites) / float64(a.wrdTotalWrites) * 100
+						a.addLogEntry(fmt.Sprintf("Accuracy: %.0f%%", successRate))
+					}
+
+					// Pick new target - alternate between high and low
+					midLvl := a.numLevels / 2
+					rangeSize := a.numLevels / 3
+					if rangeSize < 2 {
+						rangeSize = 2
+					}
+					if a.wrdTargetLevel > midLvl {
+						// Low range: 2 to rangeSize+1 (avoid extremes)
+						a.wrdTargetLevel = rand.Intn(rangeSize) + 2
+						if a.wrdTargetLevel > a.numLevels-1 {
+							a.wrdTargetLevel = a.numLevels - 1
+						}
+					} else {
+						// High range: (numLevels - rangeSize) to numLevels-1
+						a.wrdTargetLevel = a.numLevels - rangeSize + rand.Intn(rangeSize)
+						if a.wrdTargetLevel < 2 {
+							a.wrdTargetLevel = 2
+						}
+					}
+					// Capture start state for next cycle logging
+					a.wrdWriteStartP = a.polarization * 100 // Convert to µC/cm²
+					log.Printf("WRD CYCLE START: cycle=%d | startLevel=%d | newTarget=%d | P=%.2f µC/cm²",
+						a.wrdTotalWrites+1, a.discreteLevel+1, a.wrdTargetLevel, a.wrdWriteStartP)
+					// NOTE: Don't clear history - let the trail accumulate to show full hysteresis loop
+					// Spike detection in plot widget handles any discontinuities
+					// Go to RESET phase to ensure clean state and proper initialization
+					a.wrdPhase = 0
+					a.wrdPhaseTimer = 0
+					a.wrdCycleEnergy = 0  // Reset energy accumulator for next cycle
+					a.isppTotalPulses = 0 // Reset ISPP pulse counter for next target
+
+					// Reset ISPP widget to idle state for new target
+					if a.isppWidget != nil {
+						a.isppWidget.SetAnimationState(0, 0, a.discreteLevel+1, 0, false)
+					}
+				}
+
+			case 6: // Legacy BOOST phase - redirect to Controller
+				// The generic WriteController handles retries/boost internally or via re-entry to Case 2
+				a.wrdPhase = 2
+			}
+		case WaveformTimeResolved:
+			// Time-resolved switching dynamics visualization
+			// Shows KAI (Kolmogorov-Avrami-Ishibashi) stretched exponential switching
+			if !a.timeResAnimating {
+				// Start new animation - simulate domain switching dynamics
+				Eapplied := 2.0 * a.material.Ec // Write pulse at 2×Ec
+				duration := 100e-9              // 100 nanoseconds
+				steps := 100                    // 100 time points
+
+				times, pols, switched := a.preisach.SimulateDomainSwitching(Eapplied, duration, steps)
+
+				a.timeResDataTimes = times
+				a.timeResDataPols = pols
+				a.timeResDataSwitch = switched
+				a.timeResIndex = 0
+				a.timeResAnimating = true
+
+				// Clear history for clean display
+				a.eHistory = a.eHistory[:0]
+				a.pHistory = a.pHistory[:0]
+
+				a.addLogEntry("━━ TIME-RESOLVED SWITCHING ━━")
+				a.addLogEntry(fmt.Sprintf("E = %.1f MV/cm (2×Ec)", Eapplied/1e8))
+				a.addLogEntry(fmt.Sprintf("Duration: %.0f ns", duration*1e9))
+				a.addLogEntry("KAI stretched exponential")
+				a.addLogEntry("P(t)=Ps(1-exp(-(t/τ)^n))")
+			}
+
+			// Animate through the precomputed data
+			if a.timeResAnimating && len(a.timeResDataTimes) > 0 {
+				// Advance at a rate of ~2 samples per frame (controlled animation speed)
+				a.timeResIndex += 2
+				if a.timeResIndex >= len(a.timeResDataTimes) {
+					// Loop back to start for continuous demonstration
 					a.timeResIndex = 0
-					a.timeResAnimating = true
-
-					// Clear history for clean display
 					a.eHistory = a.eHistory[:0]
 					a.pHistory = a.pHistory[:0]
-
-					a.addLogEntry("━━ TIME-RESOLVED SWITCHING ━━")
-					a.addLogEntry(fmt.Sprintf("E = %.1f MV/cm (2×Ec)", Eapplied/1e8))
-					a.addLogEntry(fmt.Sprintf("Duration: %.0f ns", duration*1e9))
-					a.addLogEntry("KAI stretched exponential")
-					a.addLogEntry("P(t)=Ps(1-exp(-(t/τ)^n))")
+					a.addLogEntry("─── Loop ───")
 				}
 
-				// Animate through the precomputed data
-				if a.timeResAnimating && len(a.timeResDataTimes) > 0 {
-					// Advance at a rate of ~2 samples per frame (controlled animation speed)
-					a.timeResIndex += 2
-					if a.timeResIndex >= len(a.timeResDataTimes) {
-						// Loop back to start for continuous demonstration
-						a.timeResIndex = 0
-						a.eHistory = a.eHistory[:0]
-						a.pHistory = a.pHistory[:0]
-						a.addLogEntry("─── Loop ───")
-					}
+				// Set current state from precomputed data
+				idx := a.timeResIndex
+				currentTime := a.timeResDataTimes[idx]
+				a.polarization = a.timeResDataPols[idx]
+				a.electricField = 2.0 * a.material.Ec * (1.0 - math.Exp(-math.Pow(currentTime/(100e-9/10), 2.0)))
 
-					// Set current state from precomputed data
-					idx := a.timeResIndex
-					currentTime := a.timeResDataTimes[idx]
-					a.polarization = a.timeResDataPols[idx]
-					a.electricField = 2.0 * a.material.Ec * (1.0 - math.Exp(-math.Pow(currentTime/(100e-9/10), 2.0)))
+				// Update discrete level - normalize by material Pr (not Ps) so levels 1 and 30 are reachable
+				effPr := a.material.Pr
+				if effPr <= 0 {
+					effPr = a.material.Pr
+				}
+				if effPr <= 0 {
+					effPr = a.material.Ps * 0.9
+				}
+				a.normalizedP = a.polarization / effPr
+				if a.normalizedP > 1.0 {
+					a.normalizedP = 1.0
+				}
+				if a.normalizedP < -1.0 {
+					a.normalizedP = -1.0
+				}
+				maxLevel := a.numLevels - 1
+				a.discreteLevel = int(math.Round((a.normalizedP + 1) / 2 * float64(maxLevel)))
+				if a.discreteLevel < 0 {
+					a.discreteLevel = 0
+				}
+				if a.discreteLevel > maxLevel {
+					a.discreteLevel = maxLevel
+				}
 
-					// Update discrete level - normalize by material Pr (not Ps) so levels 1 and 30 are reachable
-					effPr := a.material.Pr
-					if effPr <= 0 {
-						effPr = a.material.Pr
-					}
-					if effPr <= 0 {
-						effPr = a.material.Ps * 0.9
-					}
-					a.normalizedP = a.polarization / effPr
-					if a.normalizedP > 1.0 {
-						a.normalizedP = 1.0
-					}
-					if a.normalizedP < -1.0 {
-						a.normalizedP = -1.0
-					}
-					maxLevel := a.numLevels - 1
-					a.discreteLevel = int(math.Round((a.normalizedP + 1) / 2 * float64(maxLevel)))
-					if a.discreteLevel < 0 {
-						a.discreteLevel = 0
-					}
-					if a.discreteLevel > maxLevel {
-						a.discreteLevel = maxLevel
-					}
-
-					// Log progress at key milestones
-					if idx == 10 {
-						switchedFrac := float64(a.timeResDataSwitch[idx]) / float64(len(a.timeResDataSwitch)) * 100
-						a.addLogEntry(fmt.Sprintf("10 ns: %.0f%% switched", switchedFrac))
-					} else if idx == 50 {
-						switchedFrac := float64(a.timeResDataSwitch[idx]) / float64(len(a.timeResDataSwitch)) * 100
-						a.addLogEntry(fmt.Sprintf("50 ns: %.0f%% switched", switchedFrac))
-					} else if idx == 90 {
-						switchedFrac := float64(a.timeResDataSwitch[idx]) / float64(len(a.timeResDataSwitch)) * 100
-						a.addLogEntry(fmt.Sprintf("90 ns: %.0f%% switched", switchedFrac))
-						a.addLogEntry("τ = switching time constant")
-						a.addLogEntry("n = Avrami exponent")
-					}
+				// Log progress at key milestones
+				if idx == 10 {
+					switchedFrac := float64(a.timeResDataSwitch[idx]) / float64(len(a.timeResDataSwitch)) * 100
+					a.addLogEntry(fmt.Sprintf("10 ns: %.0f%% switched", switchedFrac))
+				} else if idx == 50 {
+					switchedFrac := float64(a.timeResDataSwitch[idx]) / float64(len(a.timeResDataSwitch)) * 100
+					a.addLogEntry(fmt.Sprintf("50 ns: %.0f%% switched", switchedFrac))
+				} else if idx == 90 {
+					switchedFrac := float64(a.timeResDataSwitch[idx]) / float64(len(a.timeResDataSwitch)) * 100
+					a.addLogEntry(fmt.Sprintf("90 ns: %.0f%% switched", switchedFrac))
+					a.addLogEntry("τ = switching time constant")
+					a.addLogEntry("n = Avrami exponent")
 				}
 			}
 		}
+	}
 
-		// Update physics
-		prevP := a.polarization
-		a.polarization = a.preisach.Update(a.electricField)
-		a.normalizedP = a.preisach.NormalizedPolarization()
-		maxLevel := a.numLevels - 1
-		a.discreteLevel = int(math.Round((a.normalizedP + 1) / 2 * float64(maxLevel)))
-		if a.discreteLevel < 0 {
-			a.discreteLevel = 0
-		}
-		if a.discreteLevel > maxLevel {
-			a.discreteLevel = maxLevel
-		}
+	// Update physics
+	prevP := a.polarization
+	a.polarization = a.preisach.Update(a.electricField)
+	a.normalizedP = a.preisach.NormalizedPolarization()
+	maxLevel := a.numLevels - 1
+	a.discreteLevel = int(math.Round((a.normalizedP + 1) / 2 * float64(maxLevel)))
+	if a.discreteLevel < 0 {
+		a.discreteLevel = 0
+	}
+	if a.discreteLevel > maxLevel {
+		a.discreteLevel = maxLevel
+	}
 
-		// Calculate energy: integral of E·dP ≈ |E| * |ΔP|
-		// During write/read cycles, accumulate energy for the cycle (phases 0-4)
-		if a.waveform == WaveformWriteReadDemo && a.wrdPhase >= 0 && a.wrdPhase <= 4 {
-			deltaP := a.polarization - prevP
-			// Energy per unit volume: E·dP in J/m³
-			// Use actual cell dimensions from material (use local copy for thread safety)
-			cellVolume := mat.Area * mat.Thickness
-			// Fallback if material doesn't have dimensions
-			if cellVolume <= 0 {
-				cellVolume = 2e-22 // Default: 100nm x 100nm x 20nm
-			}
-			energyJ := math.Abs(a.electricField*deltaP) * cellVolume
-			energyfJ := energyJ * 1e15 // Convert J to fJ
-			a.wrdCycleEnergy += energyfJ
+	// Calculate energy: integral of E·dP ≈ |E| * |ΔP|
+	// During write/read cycles, accumulate energy for the cycle (phases 0-4)
+	if a.waveform == WaveformWriteReadDemo && a.wrdPhase >= 0 && a.wrdPhase <= 4 {
+		deltaP := a.polarization - prevP
+		// Energy per unit volume: E·dP in J/m³
+		// Use actual cell dimensions from material (use local copy for thread safety)
+		cellVolume := mat.Area * mat.Thickness
+		// Fallback if material doesn't have dimensions
+		if cellVolume <= 0 {
+			cellVolume = 2e-22 // Default: 100nm x 100nm x 20nm
 		}
+		energyJ := math.Abs(a.electricField*deltaP) * cellVolume
+		energyfJ := energyJ * 1e15 // Convert J to fJ
+		a.wrdCycleEnergy += energyfJ
+	}
 
-		// Record history (skip RESET and BOOST phases in WRD mode to avoid visual spikes)
-		// WRD phases: 0=RESET, 1=HOLD_RESET, 2=WRITE, 3=HOLD_WRITE, 4=READ, 5=DISPLAY, 6=BOOST
-		skipHistory := a.waveform == WaveformWriteReadDemo && (a.wrdPhase <= 1 || a.wrdPhase == 6)
-		if !skipHistory {
-			a.eHistory = append(a.eHistory, a.electricField)
-			a.pHistory = append(a.pHistory, a.polarization)
-			if len(a.eHistory) > a.maxHistory {
-				a.eHistory = a.eHistory[1:]
-				a.pHistory = a.pHistory[1:]
-			}
+	// Record history (skip RESET and BOOST phases in WRD mode to avoid visual spikes)
+	// WRD phases: 0=RESET, 1=HOLD_RESET, 2=WRITE, 3=HOLD_WRITE, 4=READ, 5=DISPLAY, 6=BOOST
+	skipHistory := a.waveform == WaveformWriteReadDemo && (a.wrdPhase <= 1 || a.wrdPhase == 6)
+	if !skipHistory {
+		a.eHistory = append(a.eHistory, a.electricField)
+		a.pHistory = append(a.pHistory, a.polarization)
+		if len(a.eHistory) > a.maxHistory {
+			a.eHistory = a.eHistory[1:]
+			a.pHistory = a.pHistory[1:]
 		}
+	}
 
 	// Update UI (must be on main thread)
 	fE := a.electricField
@@ -1510,8 +1507,8 @@ func (a *App) refreshGUI(fE float64, pV float64, dL int, eC float64, hE []float6
 		if currentMode == WaveformWriteReadDemo {
 			// Show target until point SETTLES at target level (not just crosses it)
 			// Settled = level matches target AND E-field is near zero
-			atTarget := (dL + 1) == currentWrdTrg                  // level is 0-indexed, target is 1-indexed
-			eFieldSettled := math.Abs(fE) < 0.01*matEcVal          // E-field near zero (1% of Ec)
+			atTarget := (dL + 1) == currentWrdTrg                     // level is 0-indexed, target is 1-indexed
+			eFieldSettled := math.Abs(fE) < 0.01*matEcVal             // E-field near zero (1% of Ec)
 			settled := atTarget && eFieldSettled && currentWrdPh >= 3 // Must be past WRITE phase
 
 			// Keep highlight on during active phases OR until settled at target
