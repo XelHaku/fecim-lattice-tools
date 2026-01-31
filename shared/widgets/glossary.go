@@ -378,6 +378,12 @@ var ReferencesData = []ReferenceEntry{
 		DOI:      "",
 		URL:      "/docs/videos/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md",
 	},
+	{
+		Title:    "FeCIM Lattice Tools Repository",
+		Citation: "Open Source Project (GitHub)",
+		DOI:      "",
+		URL:      "https://github.com/your-org/fecim-lattice-tools",
+	},
 }
 
 // ReferencesWidget displays key papers with clickable DOI links.

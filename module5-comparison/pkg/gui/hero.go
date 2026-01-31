@@ -21,12 +21,12 @@ var estimatedColor = color.RGBA{255, 191, 0, 255}
 
 // Technical briefing colors
 var (
-	heroTextColor   = color.RGBA{240, 244, 248, 255} // Off-white for maximum contrast
-	heroCyanColor   = color.RGBA{0, 212, 255, 255}   // FeCIM cyan accent
-	heroGreenColor  = color.RGBA{46, 204, 113, 255}  // Success green
-	heroRedColor    = color.RGBA{231, 76, 60, 255}   // GPU baseline red
-	heroAmberColor  = color.RGBA{243, 156, 18, 255}  // Warning/caution amber
-	heroMutedColor  = color.RGBA{160, 180, 200, 255} // Secondary text
+	heroTextColor  = color.RGBA{240, 244, 248, 255} // Off-white for maximum contrast
+	heroCyanColor  = color.RGBA{0, 212, 255, 255}   // FeCIM cyan accent
+	heroGreenColor = color.RGBA{46, 204, 113, 255}  // Success green
+	heroRedColor   = color.RGBA{231, 76, 60, 255}   // GPU baseline red
+	heroAmberColor = color.RGBA{243, 156, 18, 255}  // Warning/caution amber
+	heroMutedColor = color.RGBA{160, 180, 200, 255} // Secondary text
 )
 
 // Energy values in picojoules per MAC (from docs/videos/ironlattice-youtube-script.md)
@@ -54,15 +54,15 @@ type AnimatedEnergyRace struct {
 	needsTextUpdate   bool
 
 	// UI elements (cached for renderer reuse)
-	container     *fyne.Container
-	heroText      *canvas.Text
-	heroSubtext   *canvas.Text
-	gpuBar        *canvas.Rectangle
-	fecimBar      *canvas.Rectangle
-	gpuLabel      *canvas.Text
-	fecimLabel    *canvas.Text
-	statStrip     *canvas.Text
-	renderer      fyne.WidgetRenderer
+	container   *fyne.Container
+	heroText    *canvas.Text
+	heroSubtext *canvas.Text
+	gpuBar      *canvas.Rectangle
+	fecimBar    *canvas.Rectangle
+	gpuLabel    *canvas.Text
+	fecimLabel  *canvas.Text
+	statStrip   *canvas.Text
+	renderer    fyne.WidgetRenderer
 }
 
 // NewAnimatedEnergyRace creates a new energy race visualization.
@@ -139,8 +139,8 @@ func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
 	e.heroText.TextStyle = fyne.TextStyle{Bold: true}
 	e.heroText.Alignment = fyne.TextAlignCenter
 
-	e.heroSubtext = canvas.NewText("DATA CENTER ENERGY REDUCTION (PROJECTED - TRL 4 ESTIMATES)", heroCyanColor)
-	e.heroSubtext.TextSize = 16
+	e.heroSubtext = canvas.NewText("⚠️ SIMULATION ONLY | Laboratory Estimates | Not Production Verified", heroAmberColor)
+	e.heroSubtext.TextSize = 14
 	e.heroSubtext.TextStyle = fyne.TextStyle{Bold: true}
 	e.heroSubtext.Alignment = fyne.TextAlignCenter
 

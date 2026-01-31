@@ -117,8 +117,8 @@ func TestCalculation(t *testing.T) {
 	logger.Calculation("calculatePower", inputs, result)
 
 	output := buf.String()
-	if !strings.Contains(output, "[TRACE]") {
-		t.Errorf("Calculation log should contain [TRACE], got: %s", output)
+	if !strings.Contains(output, "[DEBUG]") {
+		t.Errorf("Calculation log should contain [DEBUG], got: %s", output)
 	}
 	if !strings.Contains(output, "CALC:") {
 		t.Errorf("Calculation log should contain CALC:, got: %s", output)
@@ -136,8 +136,8 @@ func TestCalculationVerbosityFiltering(t *testing.T) {
 	var buf strings.Builder
 	logger := createTestLogger(&buf, "test-calc-filter")
 
-	// Set verbosity below TRACE - calculation should not log
-	SetVerbosity(VerbosityDebug)
+	// Set verbosity below DEBUG - calculation should not log
+	SetVerbosity(VerbosityInfo)
 	defer SetVerbosity(VerbosityOff)
 
 	inputs := map[string]interface{}{"x": 10}
@@ -145,7 +145,7 @@ func TestCalculationVerbosityFiltering(t *testing.T) {
 
 	output := buf.String()
 	if strings.Contains(output, "CALC:") {
-		t.Errorf("Calculation should not log at DEBUG verbosity, got: %s", output)
+		t.Errorf("Calculation should not log at INFO verbosity, got: %s", output)
 	}
 }
 
@@ -154,7 +154,7 @@ func TestInput(t *testing.T) {
 	var buf strings.Builder
 	logger := createTestLogger(&buf, "test-input")
 
-	SetVerbosity(VerbosityTrace)
+	SetVerbosity(VerbosityDebug)
 	defer SetVerbosity(VerbosityOff)
 
 	params := map[string]interface{}{
@@ -166,8 +166,8 @@ func TestInput(t *testing.T) {
 	logger.Input("processArray", params)
 
 	output := buf.String()
-	if !strings.Contains(output, "[TRACE]") {
-		t.Errorf("Input log should contain [TRACE], got: %s", output)
+	if !strings.Contains(output, "[DEBUG]") {
+		t.Errorf("Input log should contain [DEBUG], got: %s", output)
 	}
 	if !strings.Contains(output, "INPUT:") {
 		t.Errorf("Input log should contain INPUT:, got: %s", output)

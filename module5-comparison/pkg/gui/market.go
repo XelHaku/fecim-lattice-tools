@@ -30,8 +30,8 @@ type MarketSegment struct {
 // Sources: WSTS Semiconductor Trade Statistics 2025, Gartner AI Semiconductor Forecasts 2025 (combined markets)
 // TOTAL: $98B + $220B + $403B = $721B (Dr. Tour COSM 2025)
 var marketData = []MarketSegment{
-	{Name: "NAND Flash", Y2024: 72, Y2026: 85, Y2030: 98, Color: color.RGBA{231, 76, 60, 255}},   // Red
-	{Name: "DRAM", Y2024: 130, Y2026: 165, Y2030: 220, Color: color.RGBA{243, 156, 18, 255}},     // Amber
+	{Name: "NAND Flash", Y2024: 72, Y2026: 85, Y2030: 98, Color: color.RGBA{231, 76, 60, 255}},           // Red
+	{Name: "DRAM", Y2024: 130, Y2026: 165, Y2030: 220, Color: color.RGBA{243, 156, 18, 255}},             // Amber
 	{Name: "AI Semiconductor", Y2024: 140, Y2026: 220, Y2030: 403, Color: color.RGBA{46, 204, 113, 255}}, // Green
 }
 
@@ -49,13 +49,13 @@ type MarketOpportunityChart struct {
 	lastProgressPct []int // Percentage values per segment
 	needsTextUpdate bool
 
-	container     *fyne.Container
-	heroText      *canvas.Text
-	heroSubtext   *canvas.Text
-	marketBoxes   []*canvas.Rectangle
-	marketLabels  []*canvas.Text
-	marketValues  []*canvas.Text
-	renderer      fyne.WidgetRenderer // BUG-M5-003 FIX: Cache renderer
+	container    *fyne.Container
+	heroText     *canvas.Text
+	heroSubtext  *canvas.Text
+	marketBoxes  []*canvas.Rectangle
+	marketLabels []*canvas.Text
+	marketValues []*canvas.Text
+	renderer     fyne.WidgetRenderer // BUG-M5-003 FIX: Cache renderer
 }
 
 // NewMarketOpportunityChart creates a new market chart.
@@ -135,8 +135,8 @@ func (m *MarketOpportunityChart) CreateRenderer() fyne.WidgetRenderer {
 	m.heroText.TextStyle = fyne.TextStyle{Bold: true}
 	m.heroText.Alignment = fyne.TextAlignCenter
 
-	m.heroSubtext = canvas.NewText("ADDRESSABLE MARKET BY 2030 (PROJECTION - ASSUMES TRL 4→9 SUCCESS)", heroCyanColor)
-	m.heroSubtext.TextSize = 14
+	m.heroSubtext = canvas.NewText("⚠️ SIMULATION ONLY | Market Projections Unverified | TRL 4→9 Required", heroAmberColor)
+	m.heroSubtext.TextSize = 13
 	m.heroSubtext.TextStyle = fyne.TextStyle{Bold: true}
 	m.heroSubtext.Alignment = fyne.TextAlignCenter
 
@@ -290,19 +290,19 @@ func (m *MarketOpportunityChart) Refresh() {
 
 // Competitor represents a competitor in the matrix.
 type Competitor struct {
-	Name        string
-	Energy      bool // Has green checkmark for energy
-	Speed       bool // Has green checkmark for speed
-	Endurance   bool // Has green checkmark for endurance
-	CMOS        bool // Has green checkmark for CMOS compatible
-	Scalable    bool // Has green checkmark for scalable
-	Highlight   bool
+	Name      string
+	Energy    bool // Has green checkmark for energy
+	Speed     bool // Has green checkmark for speed
+	Endurance bool // Has green checkmark for endurance
+	CMOS      bool // Has green checkmark for CMOS compatible
+	Scalable  bool // Has green checkmark for scalable
+	Highlight bool
 }
 
 // competitors data for the simplified competitive matrix.
 // INVESTOR MESSAGE: "Only FeCIM has ALL green checkmarks"
 var competitors = []Competitor{
-	{"FeCIM", true, true, true, true, true, true},       // ALL CHECKMARKS
+	{"FeCIM", true, true, true, true, true, true}, // ALL CHECKMARKS
 	{"Google TPU v5", false, true, true, true, true, false},
 	{"Intel Loihi 2", true, true, true, false, false, false},
 	{"IBM Analog AI", true, false, false, false, false, false},
