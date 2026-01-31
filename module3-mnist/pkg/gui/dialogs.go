@@ -62,7 +62,7 @@ func createWhy30LevelsContent() fyne.CanvasObject {
 		widget.NewLabel("ReRAM          | 4-16   | 2-4 bits  | Peer-reviewed"),
 		widget.NewLabel("FeFET (Oh 2017)| 32     | 5.0 bits  | IEEE EDL (VERIFIED)"),
 		widget.NewLabel("FeFET (Song'24)| 140    | 7.1 bits  | Adv. Science (VERIFIED)"),
-		widget.NewLabel("Tour FeCIM     | 30     | ~4.9 bits | COSM 2025 (UNVERIFIED)"),
+		widget.NewLabel("Tour FeCIM     | 30     | ~4.9 bits | COSM 2025 (UNVERIFIED, within 7-140 range)"),
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("Impact on MNIST Accuracy", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),

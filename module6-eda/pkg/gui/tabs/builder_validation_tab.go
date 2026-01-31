@@ -494,7 +494,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	logOutput.TextStyle.Monospace = true
 
 	addLog := func(msg string) {
-		logging.GlobalInfo(msg)
+		logging.GlobalInfo("%s", msg)
 		fyne.Do(func() {
 			logOutput.SetText(logOutput.Text + msg + "\n")
 		})

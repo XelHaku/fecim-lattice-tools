@@ -78,8 +78,8 @@ type ComparisonApp struct {
 	// Status
 	// IMPORTANT: All status updates MUST go through updateStatus() method to use cache
 	// and prevent redundant SetText calls that bypass Fyne's internal caching.
-	statusLabel     *widget.Label
-	lastStatusText  string // Cache to avoid redundant SetText calls
+	statusLabel    *widget.Label
+	lastStatusText string // Cache to avoid redundant SetText calls
 
 	// Current settings
 	currentWorkload   string
@@ -197,7 +197,6 @@ func (ca *ComparisonApp) animationLoop() {
 		if ca.dcTransformation != nil {
 			ca.dcTransformation.UpdateAnimation(dt)
 		}
-
 
 		// Refresh UI
 		fyne.Do(func() {
@@ -401,7 +400,7 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 // Dr. Tour recommendation: Show explicit energy numbers with units and citations
 func (ca *ComparisonApp) createVerifiedClaimsWidget() fyne.CanvasObject {
 	verifiedLabel := widget.NewLabelWithStyle("VERIFIED:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	verifiedItems := widget.NewLabel("• 30 analog levels\n• 96-98% MNIST (peer-reviewed)\n• CMOS compatible\n• Non-volatile")
+	verifiedItems := widget.NewLabel("• 30 analog levels (within 7-140 demonstrated range)\n• 96-98% MNIST (peer-reviewed)\n• CMOS compatible\n• Non-volatile")
 
 	// Explicit energy numbers with units (Dr. Tour recommendation)
 	energyLabel := widget.NewLabelWithStyle("ENERGY/MAC (pJ):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})

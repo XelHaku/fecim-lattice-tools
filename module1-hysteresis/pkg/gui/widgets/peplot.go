@@ -282,7 +282,8 @@ func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 	pLabelText.Move(fyne.NewPos(marginLeft-55, marginTop-18))
 	r.objects = append(r.objects, pLabelText)
 
-	// Ec markers (vertical dashed lines at ±Ec)
+	// Ec markers (vertical dashed lines at ±Ec) - M01: Ec threshold visualization
+	// Shows coercive field threshold where switching occurs
 	// Use actual Ec value if set, otherwise fall back to ratio
 	var ecRatio float32
 	if r.plot.ec > 0 && r.plot.eMax > 0 {
@@ -299,8 +300,8 @@ func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 	ecPosLine.Position2 = fyne.NewPos(ecPosX, marginTop+plotH)
 	ecPosLine.StrokeWidth = 2
 	r.objects = append(r.objects, ecPosLine)
-	// Label inside plot area
-	ecPosLabel := canvas.NewText("+Ec", color.RGBA{255, 150, 0, 255})
+	// Label inside plot area with "Coercive Field" tooltip context
+	ecPosLabel := canvas.NewText("+Ec (Coercive)", color.RGBA{255, 150, 0, 255})
 	ecPosLabel.TextSize = 11
 	ecPosLabel.Move(fyne.NewPos(ecPosX+4, marginTop+5))
 	r.objects = append(r.objects, ecPosLabel)
@@ -311,11 +312,23 @@ func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 	ecNegLine.Position2 = fyne.NewPos(ecNegX, marginTop+plotH)
 	ecNegLine.StrokeWidth = 2
 	r.objects = append(r.objects, ecNegLine)
-	// Label inside plot area
-	ecNegLabel := canvas.NewText("-Ec", color.RGBA{255, 150, 0, 255})
+	// Label inside plot area with "Coercive Field" tooltip context
+	ecNegLabel := canvas.NewText("-Ec (Coercive)", color.RGBA{255, 150, 0, 255})
 	ecNegLabel.TextSize = 11
-	ecNegLabel.Move(fyne.NewPos(ecNegX-28, marginTop+5))
+	ecNegLabel.Move(fyne.NewPos(ecNegX-75, marginTop+5))
 	r.objects = append(r.objects, ecNegLabel)
+
+	// No-switching zone shading (optional enhancement)
+	// Shows region below |Ec| where polarization remains stable
+	noSwitchRect := canvas.NewRectangle(color.RGBA{255, 100, 100, 15}) // Very subtle red
+	noSwitchRect.Resize(fyne.NewSize(ecPosX-ecNegX, plotH))
+	noSwitchRect.Move(fyne.NewPos(ecNegX, marginTop))
+	r.objects = append(r.objects, noSwitchRect)
+	// Label for no-switching zone
+	noSwitchLabel := canvas.NewText("No switching below |Ec|", color.RGBA{255, 150, 150, 180})
+	noSwitchLabel.TextSize = 9
+	noSwitchLabel.Move(fyne.NewPos(centerX-60, marginTop+plotH-20))
+	r.objects = append(r.objects, noSwitchLabel)
 
 	// Pr markers (horizontal dashed lines at ±Pr)
 	// Use actual Pr value if set, otherwise fall back to ratio

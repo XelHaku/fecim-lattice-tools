@@ -48,8 +48,8 @@ func (r *Runner) RunOpenROAD(scriptName string, workDir string, envVars map[stri
 	}
 }
 
-// runDockerOpenROAD runs OpenROAD in Docker container with correct --entrypoint pattern
-// Requires X display access for save_image command - passes through host DISPLAY
+// runDockerOpenROAD runs OpenROAD in Docker container with Xvfb for headless image export
+// Uses Xvfb (virtual framebuffer) to enable save_image without X11 forwarding
 func (r *Runner) runDockerOpenROAD(scriptName string, workDir string, envVars map[string]string) (*Result, error) {
 	// Docker requires absolute paths for volume mounts
 	absWorkDir, err := filepath.Abs(workDir)
@@ -57,20 +57,12 @@ func (r *Runner) runDockerOpenROAD(scriptName string, workDir string, envVars ma
 		return nil, fmt.Errorf("failed to get absolute path: %v", err)
 	}
 
-	// Build Docker command with --entrypoint openroad
-	// For FeCIM validation, we use our own cell LEF files - no external PDK required
+	// Build Docker command with --entrypoint sh to run Xvfb wrapper
 	args := []string{
 		"run", "--rm",
-		"--entrypoint", "openroad",
+		"--entrypoint", "sh",
 		"-v", fmt.Sprintf("%s:/design", absWorkDir),
 		"-w", "/design",
-	}
-
-	// Pass through X display for image export (required for save_image)
-	display := os.Getenv("DISPLAY")
-	if display != "" {
-		args = append(args, "-e", fmt.Sprintf("DISPLAY=%s", display))
-		args = append(args, "-v", "/tmp/.X11-unix:/tmp/.X11-unix:rw")
 	}
 
 	// Add environment variables (caller provides CELL_LEF, DEF_FILE, etc.)
@@ -78,9 +70,13 @@ func (r *Runner) runDockerOpenROAD(scriptName string, workDir string, envVars ma
 		args = append(args, "-e", fmt.Sprintf("%s=%s", k, v))
 	}
 
-	// Add image and OpenROAD flags
+	// Add image
 	args = append(args, r.manager.GetDockerImage())
-	args = append(args, "-no_splash", "-exit", fmt.Sprintf("/design/%s", scriptName))
+	args = append(args, "-c")
+
+	// Build OpenROAD command with Xvfb wrapper for headless operation
+	xvfbCmd := fmt.Sprintf("Xvfb :99 -screen 0 1024x768x24 -nolisten tcp > /dev/null 2>&1 & sleep 1 && export DISPLAY=:99 && openroad -no_splash -exit /design/%s", scriptName)
+	args = append(args, xvfbCmd)
 
 	return r.runWithTimeout("docker", args, workDir, r.config.TimeoutPlacement)
 }
@@ -163,44 +159,35 @@ func (r *Runner) RunKLayout(scriptPath string, workDir string, envVars map[strin
 	}
 }
 
-// runDockerKLayout runs KLayout in Docker container
+// runDockerKLayout runs KLayout in Docker container with Xvfb for headless image export
 // Uses -rd flags to pass variables to scripts (standard KLayout pattern)
-// Requires X display access for image export - passes through host DISPLAY
+// Uses Xvfb (virtual framebuffer) for headless GUI operations
 func (r *Runner) runDockerKLayout(scriptPath string, workDir string, envVars map[string]string) (*Result, error) {
 	absWorkDir, err := filepath.Abs(workDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get absolute path: %v", err)
 	}
 
-	// Build Docker command with --entrypoint klayout
-	// Pass through X display for GUI-based image export
+	// Build Docker command with --entrypoint sh to run Xvfb wrapper
 	args := []string{
 		"run", "--rm",
-		"--entrypoint", "klayout",
+		"--entrypoint", "sh",
 		"-v", fmt.Sprintf("%s:/design", absWorkDir),
 		"-w", "/design",
+		r.manager.GetDockerImage(),
+		"-c",
 	}
 
-	// Pass through X display for image export (required for save_image)
-	display := os.Getenv("DISPLAY")
-	if display != "" {
-		args = append(args, "-e", fmt.Sprintf("DISPLAY=%s", display))
-		args = append(args, "-v", "/tmp/.X11-unix:/tmp/.X11-unix:rw")
-	}
-
-	// Add image first
-	args = append(args, r.manager.GetDockerImage())
-
-	// KLayout flags: -z for batch mode with main window (required for image export)
-	args = append(args, "-z")
-
-	// Add variables using -rd (standard KLayout pattern per docs)
+	// Build KLayout command with Xvfb wrapper for headless operation
+	// Xvfb :99 creates virtual display, sleep ensures it's ready, then run klayout
+	klayoutArgs := "-z"
 	for k, v := range envVars {
-		args = append(args, "-rd", fmt.Sprintf("%s=%s", k, v))
+		klayoutArgs += fmt.Sprintf(" -rd %s=%s", k, v)
 	}
+	klayoutArgs += fmt.Sprintf(" -r /design/%s", filepath.Base(scriptPath))
 
-	// Add script
-	args = append(args, "-r", fmt.Sprintf("/design/%s", filepath.Base(scriptPath)))
+	xvfbCmd := fmt.Sprintf("Xvfb :99 -screen 0 1024x768x24 -nolisten tcp > /dev/null 2>&1 & sleep 1 && export DISPLAY=:99 && klayout %s", klayoutArgs)
+	args = append(args, xvfbCmd)
 
 	return r.runWithTimeout("docker", args, workDir, r.config.TimeoutPlacement)
 }
