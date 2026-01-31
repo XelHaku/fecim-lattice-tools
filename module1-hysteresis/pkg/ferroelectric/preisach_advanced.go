@@ -85,6 +85,10 @@ type MayergoyzPreisach struct {
 	// Ec_eff = Ec * (1 + strainShiftFactor * strain)
 	SubstrateStrain   float64 // Biaxial in-plane strain (negative = compressive)
 	strainShiftFactor float64 // Calculated from Q11, Q12 electrostrictive coefficients
+
+	// Cached effective Pr for normalization (computed on init and when parameters change)
+	// This is the actual remanent polarization achieved at E=0 after saturation
+	effectivePr float64
 }
 
 // NewMayergoyzPreisach creates a new full Preisach model.
@@ -147,8 +151,11 @@ func NewMayergoyzPreisach(material *HZOMaterial, gridSize int) *MayergoyzPreisac
 	m.initializeHysterons()
 	m.initializeDistribution()
 
-	log.Debug("NewMayergoyzPreisach: material=%s, grid=%dx%d, Ec=%.2f MV/cm, Ps=%.1f µC/cm²",
-		material.Name, gridSize, gridSize, material.Ec/1e8, material.Ps*100)
+	// Cache effective Pr for normalization (must be done after initialization)
+	m.updateEffectivePr()
+
+	log.Debug("NewMayergoyzPreisach: material=%s, grid=%dx%d, Ec=%.2f MV/cm, Ps=%.1f µC/cm², effPr=%.1f µC/cm²",
+		material.Name, gridSize, gridSize, material.Ec/1e8, material.Ps*100, m.effectivePr*100)
 
 	return m
 }
@@ -469,9 +476,30 @@ func (m *MayergoyzPreisach) Polarization() float64 {
 	return m.polarization
 }
 
-// NormalizedPolarization returns P/Ps in range [-1, +1].
+// NormalizedPolarization returns P/Pr in range [-1, +1].
+// Uses effective Pr (remanent polarization at E=0) for normalization so that
+// levels 1 and 30 are reachable at zero field. Ps is only achievable under
+// applied field, but Pr is the actual achievable range at E=0.
 func (m *MayergoyzPreisach) NormalizedPolarization() float64 {
-	return m.polarization / m.material.Ps
+	// Use effective Pr for normalization - this is what we actually achieve at E=0
+	effPr := m.effectivePr
+	if effPr <= 0 {
+		effPr = m.material.Pr // Fallback to nominal Pr
+	}
+	if effPr <= 0 {
+		effPr = m.material.Ps * 0.9 // Final fallback
+	}
+
+	normalizedP := m.polarization / effPr
+
+	// Clamp to [-1, 1] since polarization under field can exceed Pr
+	if normalizedP > 1.0 {
+		normalizedP = 1.0
+	}
+	if normalizedP < -1.0 {
+		normalizedP = -1.0
+	}
+	return normalizedP
 }
 
 // GetHysteresisLoop generates a complete P-E hysteresis loop.
@@ -602,6 +630,19 @@ func (m *MayergoyzPreisach) GetEffectivePr() float64 {
 	m.polarization = savedPol
 
 	return actualPr
+}
+
+// updateEffectivePr computes and caches the effective Pr for normalization.
+// This should be called after initialization or when parameters change.
+func (m *MayergoyzPreisach) updateEffectivePr() {
+	m.effectivePr = m.GetEffectivePr()
+	// Ensure we have a valid effectivePr
+	if m.effectivePr <= 0 {
+		m.effectivePr = m.material.Pr
+	}
+	if m.effectivePr <= 0 {
+		m.effectivePr = m.material.Ps * 0.9
+	}
 }
 
 // GetSwitchingTime returns the field-dependent switching time using Merz's law.

@@ -198,12 +198,19 @@ func (ca *CrossbarApp) analyzeSneakPaths() {
 	ca.modeIndicator.SetMode(DemoModeIdle)
 }
 
-// resetArray resets the array with new random weights.
+// resetArray resets the array to mid-level conductance.
 func (ca *CrossbarApp) resetArray() {
 	ca.modeIndicator.SetMode(DemoModeWrite)
-	ca.updateStatus("WRITE | Programming random conductance values (30 levels per cell)...")
+	ca.updateStatus("WRITE | Resetting all cells to mid-level (15/29)...")
 
-	ca.programRandomWeights()
+	// Reset all cells to mid-level (level 15 out of 0-29)
+	midLevel := 15
+	midWeight := float64(midLevel) / 29.0
+	for i := 0; i < ca.config.Rows; i++ {
+		for j := 0; j < ca.config.Cols; j++ {
+			ca.array.ProgramWeight(i, j, midWeight)
+		}
+	}
 	ca.updateConductanceDisplay()
 
 	// Protected clear of state
@@ -216,11 +223,11 @@ func (ca *CrossbarApp) resetArray() {
 	ca.sneakPathHeatmap.ClearSelection()
 	ca.statsLabel.SetText(fmt.Sprintf(
 		"Array Reset!\n\n"+
-			"New random weights programmed\n"+
-			"across all %d cells.\n\n"+
-			"Each cell randomly assigned\n"+
-			"to one of 30 discrete\n"+
-			"conductance levels.\n\n"+
+			"All %d cells reset to\n"+
+			"mid-level (15/29).\n\n"+
+			"This represents 50%%\n"+
+			"conductance - neutral\n"+
+			"starting state.\n\n"+
 			"Ready for MVM operations!",
 		ca.config.Rows*ca.config.Cols,
 	))

@@ -340,19 +340,20 @@ func (ca *CircuitsApp) onUnifiedAnimate() {
 	}()
 }
 
-// onUnifiedReset resets the array to random values
+// onUnifiedReset resets the array to mid-level (neutral state)
 func (ca *CircuitsApp) onUnifiedReset() {
-	// Clear undo history on reset (per code review recommendation)
-	ca.mu.Lock()
-	ca.undoHistory = nil
-	ca.hasUndoHistory = false
-	ca.mu.Unlock()
+	// Save current state to undo history before resetting
+	ca.saveUndoHistory()
 
-	fyne.Do(func() {
-		if ca.undoHistoryBtn != nil {
-			ca.undoHistoryBtn.Disable()
+	// Reset all array weights to mid-level (e.g., 15 for 30 levels)
+	midLevel := ca.quantLevels / 2
+	ca.mu.Lock()
+	for r := range ca.arrayWeights {
+		for c := range ca.arrayWeights[r] {
+			ca.arrayWeights[r][c] = midLevel
 		}
-	})
+	}
+	ca.mu.Unlock()
 
 	// Reset DAC to read preset (uses material-derived voltage range)
 	ca.deviceState.SetDACPreset(DACReadPreset)
@@ -371,7 +372,7 @@ func (ca *CircuitsApp) onUnifiedReset() {
 	ca.updateWLCheckboxes()
 
 	ca.recomputeAndRefresh()
-	ca.operationsStatusLabel.SetText("Reset complete")
+	ca.operationsStatusLabel.SetText("Reset to mid-level complete")
 }
 
 // onUnifiedRandomArray randomizes the array weights

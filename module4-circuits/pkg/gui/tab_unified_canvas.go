@@ -54,11 +54,16 @@ func (t *UnifiedTappableCanvas) Tapped(e *fyne.PointEvent) {
 	rows := t.ca.arrayRows
 	cols := t.ca.arrayCols
 	arch := t.ca.architecture
+	zoom := t.ca.zoomLevel
 	// Use stored offsets from the drawing function for precise click detection
 	cellSize := t.ca.sharedArrayCellSize
 	offsetX := t.ca.sharedArrayOffsetX
 	offsetY := t.ca.sharedArrayOffsetY
 	t.ca.mu.RUnlock()
+
+	if zoom == 0 {
+		zoom = 1.0
+	}
 
 	// If stored values not set yet, calculate them (fallback)
 	if cellSize == 0 {
@@ -83,21 +88,22 @@ func (t *UnifiedTappableCanvas) Tapped(e *fyne.PointEvent) {
 		availableW := w - leftMargin - rightMargin
 		availableH := h - topMargin - bottomMargin
 
+		// Scale max/min cell size based on array dimensions AND zoom (must match drawUnifiedArray)
+		maxCellSize := int(float64(70) * zoom)
+		minCellSize := int(float64(18) * zoom)
+		if cols > 32 || rows > 32 {
+			maxCellSize = int(float64(30) * zoom)
+			minCellSize = int(float64(8) * zoom)
+		} else if cols > 16 || rows > 16 {
+			maxCellSize = int(float64(40) * zoom)
+			minCellSize = int(float64(12) * zoom)
+		}
+
 		cellW := availableW / cols
 		cellH := availableH / rows
 		cellSize = min(cellW, cellH)
 
-		// Scale max/min cell size based on array dimensions (must match drawUnifiedArray)
-		maxCellSize := 70
-		minCellSize := 18
-		if cols > 32 || rows > 32 {
-			maxCellSize = 30
-			minCellSize = 8
-		} else if cols > 16 || rows > 16 {
-			maxCellSize = 40
-			minCellSize = 12
-		}
-
+		// Apply cell size limits (scaled by zoom)
 		if cellSize > maxCellSize {
 			cellSize = maxCellSize
 		}

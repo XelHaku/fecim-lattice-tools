@@ -193,6 +193,11 @@ type CircuitsApp struct {
 	stopChan        chan struct{} // Closed to signal all goroutines to stop
 	stopped         bool          // True when Stop() has been called
 
+	// Zoom state
+	zoomLevel  float64        // 1.0 = 100%, range 0.5 to 3.0
+	zoomSlider *widget.Slider
+	zoomLabel  *widget.Label
+
 	// UI update flags (prevent recursive callbacks)
 	updatingWLCheckboxes bool // True when programmatically updating WL checkboxes
 
@@ -279,6 +284,7 @@ func NewCircuitsApp() *CircuitsApp {
 		targetLevel:   15,
 		compArraySize: 8,                             // Start with 8x8 array for comparison
 		architecture:  sharedwidgets.Architecture0T1R, // Default to passive for educational demo
+		zoomLevel:     1.0,                            // Default zoom 100%
 	}
 
 	// Create Fyne app

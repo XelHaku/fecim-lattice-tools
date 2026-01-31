@@ -25,7 +25,13 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	levels := ca.quantLevels
 	arch := ca.architecture
 	animStep := ca.animationStep
+	zoom := ca.zoomLevel
 	ca.mu.RUnlock()
+
+	// Default zoom if not set
+	if zoom == 0 || zoom < 0.5 {
+		zoom = 1.0
+	}
 
 	if ca.deviceState == nil {
 		return img
@@ -58,23 +64,25 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	availableW := w - leftMargin - rightMargin
 	availableH := h - topMargin - bottomMargin
 
+	// Scale max/min cell size based on array dimensions AND zoom
+	maxCellSize := int(float64(70) * zoom) // Default for small arrays, scaled by zoom
+	minCellSize := int(float64(18) * zoom) // Default minimum, scaled by zoom
+
+	// For larger arrays, reduce cell size to fit
+	if cols > 32 || rows > 32 {
+		maxCellSize = int(float64(30) * zoom)
+		minCellSize = int(float64(8) * zoom)
+	} else if cols > 16 || rows > 16 {
+		maxCellSize = int(float64(40) * zoom)
+		minCellSize = int(float64(12) * zoom)
+	}
+
+	// Calculate cell size to fit in available space
 	cellW := availableW / cols
 	cellH := availableH / rows
 	cellSize := min(cellW, cellH)
 
-	// Scale max/min cell size based on array dimensions
-	maxCellSize := 70 // Default for small arrays
-	minCellSize := 18 // Default minimum
-
-	// For larger arrays, reduce cell size to fit
-	if cols > 32 || rows > 32 {
-		maxCellSize = 30
-		minCellSize = 8
-	} else if cols > 16 || rows > 16 {
-		maxCellSize = 40
-		minCellSize = 12
-	}
-
+	// Apply cell size limits (now scaled by zoom)
 	if cellSize > maxCellSize {
 		cellSize = maxCellSize
 	}

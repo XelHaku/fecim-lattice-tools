@@ -1303,10 +1303,11 @@ func (a *App) simulationLoop() {
 					if a.wrdPhaseTimer > phaseDuration*0.3 {
 						a.wrdReadLevel = a.discreteLevel + 1
 						levelError := a.wrdReadLevel - a.wrdTargetLevel
-						success := levelError == 0 // Exact match required - retry until we hit the exact target
 
-						// WRITE-VERIFY-RETRY LOOP (INFINITE UNTIL SUCCESS)
-						// MUST hit the target - no giving up!
+						// Exact match required - levels 1 and 30 are now reachable with Pr normalization
+						success := levelError == 0
+
+						// WRITE-VERIFY-RETRY LOOP
 						if success {
 							// SUCCESS: Proceed to DISPLAY phase
 							a.wrdPhase = 5
@@ -1668,8 +1669,21 @@ func (a *App) simulationLoop() {
 					a.polarization = a.timeResDataPols[idx]
 					a.electricField = 2.0 * a.material.Ec * (1.0 - math.Exp(-math.Pow(currentTime/(100e-9/10), 2.0)))
 
-					// Update discrete level
-					a.normalizedP = a.polarization / a.material.Ps
+					// Update discrete level - normalize by effective Pr (not Ps) so levels 1 and 30 are reachable
+					effPr := a.preisach.GetEffectivePr()
+					if effPr <= 0 {
+						effPr = a.material.Pr
+					}
+					if effPr <= 0 {
+						effPr = a.material.Ps * 0.9
+					}
+					a.normalizedP = a.polarization / effPr
+					if a.normalizedP > 1.0 {
+						a.normalizedP = 1.0
+					}
+					if a.normalizedP < -1.0 {
+						a.normalizedP = -1.0
+					}
 					maxLevel := a.numLevels - 1
 					a.discreteLevel = int(math.Round((a.normalizedP + 1) / 2 * float64(maxLevel)))
 					if a.discreteLevel < 0 {
@@ -2196,6 +2210,15 @@ func (a *App) calibrateLevels() {
 		a.relaxCompDown[i] = 0.0
 	}
 
+	// Get effective Pr for normalization (levels 1 and 30 must be reachable)
+	effPr := a.preisach.GetEffectivePr()
+	if effPr <= 0 {
+		effPr = a.material.Pr
+	}
+	if effPr <= 0 {
+		effPr = a.material.Ps * 0.9
+	}
+
 	// Helper function to test what level results from a given field
 	// starting from negative saturation (for ascending calibration)
 	testLevelAscending := func(testE float64) int {
@@ -2210,7 +2233,14 @@ func (a *App) calibrateLevels() {
 		a.preisach.Update(testE)
 		p := a.preisach.Update(0)
 
-		normalizedP := p / a.material.Ps
+		// Normalize by effective Pr so levels 1 and 30 are reachable
+		normalizedP := p / effPr
+		if normalizedP > 1.0 {
+			normalizedP = 1.0
+		}
+		if normalizedP < -1.0 {
+			normalizedP = -1.0
+		}
 		level := int(math.Round((normalizedP + 1) / 2 * float64(maxLevel)))
 		if level < 0 {
 			level = 0
@@ -2234,7 +2264,14 @@ func (a *App) calibrateLevels() {
 		a.preisach.Update(testE)
 		p := a.preisach.Update(0)
 
-		normalizedP := p / a.material.Ps
+		// Normalize by effective Pr so levels 1 and 30 are reachable
+		normalizedP := p / effPr
+		if normalizedP > 1.0 {
+			normalizedP = 1.0
+		}
+		if normalizedP < -1.0 {
+			normalizedP = -1.0
+		}
 		level := int(math.Round((normalizedP + 1) / 2 * float64(maxLevel)))
 		if level < 0 {
 			level = 0

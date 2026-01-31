@@ -259,7 +259,28 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 
 	go updateToolStatus()
 
-	// Row: Write | MVM | Sep | Undo | Random | Reset | Spacer | Tools status
+	// Zoom controls
+	ca.zoomLabel = widget.NewLabel("100%")
+	ca.zoomSlider = widget.NewSlider(0.5, 3.0)
+	ca.zoomSlider.Step = 0.1
+	ca.zoomSlider.Value = 1.0
+	ca.zoomSlider.OnChanged = func(v float64) {
+		ca.mu.Lock()
+		ca.zoomLevel = v
+		ca.mu.Unlock()
+		ca.zoomLabel.SetText(fmt.Sprintf("%.0f%%", v*100))
+		fyne.Do(func() {
+			if ca.sharedArrayCanvas != nil {
+				ca.sharedArrayCanvas.Refresh()
+			}
+		})
+	}
+
+	fitBtn := widget.NewButton("Fit", func() {
+		ca.zoomSlider.SetValue(1.0)
+	})
+
+	// Row: Write | MVM | Sep | Undo | Random | Reset | Sep | Zoom controls | Spacer | Tools status
 	return container.NewHBox(
 		ca.actionWriteCellBtn,
 		ca.actionComputeBtn,
@@ -267,6 +288,11 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 		ca.undoHistoryBtn,
 		randomBtn,
 		resetBtn,
+		widget.NewSeparator(),
+		widget.NewLabel("Zoom:"),
+		ca.zoomSlider,
+		ca.zoomLabel,
+		fitBtn,
 		layout.NewSpacer(),
 		crosssimStatus,
 		badcrossbarStatus,

@@ -507,7 +507,7 @@ preisach:
 calibration:
   # Binary search calibration
   iterations: 15                # Binary search iterations
-  field_min_ratio: 0.5          # Min field = 0.5 * Ec
+  field_min_ratio: 1.0          # Read max = 1.0 * Vc (allows 0-1V DAC range)
   field_max_ratio: 2.5          # Max field = 2.5 * Ec
 
   # Adaptive calibration

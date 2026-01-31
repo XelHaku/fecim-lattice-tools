@@ -25,7 +25,7 @@ const (
 type OpMode int
 
 const (
-	OpModeRead    OpMode = iota // READ: Single row active, safe voltage (0-0.5V)
+	OpModeRead    OpMode = iota // READ: Single row active, safe voltage (0-1.0V)
 	OpModeWrite                 // WRITE: Single row active, write voltage (Vc to 1.3*Vc)
 	OpModeCompute               // COMPUTE: All rows active, input vector (0-1V)
 )
@@ -79,9 +79,9 @@ type CalibrationParams struct {
 func loadCalibrationParams() CalibrationParams {
 	cfg, err := physics.Load()
 	if err != nil || cfg == nil {
-		// Fallback: field_min_ratio=0.5, field_max_ratio=2.5 from typical physics.yaml
+		// Fallback: field_min_ratio=1.0, field_max_ratio=2.5 (allows 0-1V DAC range)
 		return CalibrationParams{
-			FieldMinRatio: 0.5,
+			FieldMinRatio: 1.0,
 			FieldMaxRatio: 2.5,
 		}
 	}
@@ -702,7 +702,7 @@ func (ds *DeviceState) Compute(weights [][]int, quantLevels int) {
 
 		// TIA conversion with automatic gain scaling for MVM
 		// In MVM mode, multiple columns contribute current, so we need lower effective gain
-		// Max current = cols × Gmax × Vmax = cols × 100µS × 0.5V
+		// Max current = cols × Gmax × Vmax = cols × 100µS × 1.0V
 		// Scale TIA gain so max current maps to ~0.9V output
 		if ds.tia != nil {
 			currentA := totalCurrent * 1e-6 // µA to A
