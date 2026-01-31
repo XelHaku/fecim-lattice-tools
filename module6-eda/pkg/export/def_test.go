@@ -287,7 +287,7 @@ func TestDEFPassiveArchitecture(t *testing.T) {
 		t.Error("Passive should use fecim_bit cell")
 	}
 
-	// Count pins: 2 WL + 2 BL + VDD + VSS = 6
+	// Count pins: 2 WL + 2 BL + VPWR + VGND = 6
 	if !strings.Contains(def, "PINS 6") {
 		t.Error("Passive 2x2 array should have 6 pins")
 	}
@@ -312,7 +312,7 @@ func TestDEF1T1RArchitecture(t *testing.T) {
 	def := GenerateDEFWithDefaults(mapping)
 
 	// 1T1R should have WL, BL, AND SL pins
-	if !strings.Contains(def, "Architecture: 1T1R") {
+	if !strings.Contains(def, "Architecture: 1t1r") {
 		t.Error("Should indicate 1T1R architecture")
 	}
 	if !strings.Contains(def, "- WL[0]") {
@@ -333,7 +333,7 @@ func TestDEF1T1RArchitecture(t *testing.T) {
 		t.Error("1T1R should use fecim_1t1r cell")
 	}
 
-	// Count pins: 2 WL + 2 BL + 2 SL + VDD + VSS = 8
+	// Count pins: 2 WL + 2 BL + 2 SL + VPWR + VGND = 8
 	if !strings.Contains(def, "PINS 8") {
 		t.Error("1T1R 2x2 array should have 8 pins")
 	}

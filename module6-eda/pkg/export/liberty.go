@@ -29,6 +29,9 @@ func GenerateLiberty(cfg config.CellConfig) string {
 	if cfg.CellType == "1t1r" {
 		return Generate1T1RLiberty(cfg)
 	}
+	if cfg.CellType == "2t1r" {
+		return Generate2T1RLiberty(cfg)
+	}
 	area := cfg.Width * cfg.Height
 
 	return fmt.Sprintf(`library(fecim_cells) {
@@ -196,4 +199,132 @@ func Generate1T1RLiberty(cfg config.CellConfig) string {
   }
 }
 `, cellName, area, cfg.LeakagePower, cfg.InputCap, cfg.InputCap, cfg.RiseTime, cfg.FallTime, cfg.RiseTime, cfg.FallTime)
+}
+
+// Generate2T1RLiberty generates Liberty file for 2T1R FeCIM bitcell with CSL pin
+// 2T1R has WL (Word Line), CSL (Column Select Line), SL (Source Line), and BL (Bit Line)
+// CSL enables individual cell addressing, differentiating it from 1T1R
+func Generate2T1RLiberty(cfg config.CellConfig) string {
+	cellName := cfg.Name
+	if cellName == "fecim_bitcell" {
+		cellName = "fecim_2t1r_bitcell"
+	}
+	// Use larger dimensions for 2T1R (more transistors than 1T1R)
+	width := cfg.Width
+	height := cfg.Height
+	if width < 1.1 {
+		width = 1.200
+	}
+	if height < 3.5 {
+		height = 3.800
+	}
+	area := width * height
+
+	return fmt.Sprintf(`library(fecim_2t1r_cells) {
+  technology (cmos) ;
+  delay_model : table_lookup ;
+
+  time_unit : "1ns" ;
+  voltage_unit : "1V" ;
+  current_unit : "1mA" ;
+  capacitive_load_unit (1, pf) ;
+  leakage_power_unit : "1nW" ;
+
+  operating_conditions(typical) {
+    process : 1.0 ;
+    temperature : 25 ;
+    voltage : 1.8 ;
+  }
+  default_operating_conditions : typical ;
+
+  cell(%s) {
+    area : %.4f ;
+    cell_leakage_power : %.4f ;
+
+    pin(WL) {
+      direction : input ;
+      capacitance : %.4f ;
+    }
+
+    pin(CSL) {
+      direction : input ;
+      capacitance : %.4f ;
+    }
+
+    pin(SL) {
+      direction : input ;
+      capacitance : %.4f ;
+    }
+
+    pin(BL) {
+      direction : output ;
+      function : "(WL & CSL & SL)" ;
+
+      timing() {
+        related_pin : "WL" ;
+        timing_sense : positive_unate ;
+
+        cell_rise(scalar) {
+          values("%.3f") ;
+        }
+        cell_fall(scalar) {
+          values("%.3f") ;
+        }
+        rise_transition(scalar) {
+          values("0.070") ;
+        }
+        fall_transition(scalar) {
+          values("0.070") ;
+        }
+      }
+
+      timing() {
+        related_pin : "CSL" ;
+        timing_sense : positive_unate ;
+
+        cell_rise(scalar) {
+          values("%.3f") ;
+        }
+        cell_fall(scalar) {
+          values("%.3f") ;
+        }
+        rise_transition(scalar) {
+          values("0.070") ;
+        }
+        fall_transition(scalar) {
+          values("0.070") ;
+        }
+      }
+
+      timing() {
+        related_pin : "SL" ;
+        timing_sense : positive_unate ;
+
+        cell_rise(scalar) {
+          values("%.3f") ;
+        }
+        cell_fall(scalar) {
+          values("%.3f") ;
+        }
+        rise_transition(scalar) {
+          values("0.070") ;
+        }
+        fall_transition(scalar) {
+          values("0.070") ;
+        }
+      }
+    }
+
+    pin(VPWR) {
+      direction : inout ;
+      pg_type : primary_power ;
+    }
+
+    pin(VGND) {
+      direction : inout ;
+      pg_type : primary_ground ;
+    }
+  }
+}
+`, cellName, area, cfg.LeakagePower, cfg.InputCap, cfg.InputCap, cfg.InputCap, cfg.RiseTime, cfg.FallTime, cfg.RiseTime, cfg.FallTime, cfg.RiseTime, cfg.FallTime)
 }

@@ -89,8 +89,8 @@ func (m OperationMode) String() string {
 // Architecture types for crossbar array
 const (
 	ArchPassive = "passive" // Passive crossbar (WL, BL only)
-	Arch1T1R    = "1T1R"    // 1 Transistor 1 Resistor (WL, BL, SL)
-	Arch2T1R    = "2T1R"    // 2 Transistor 1 Resistor (WL, BL, SL, CSL)
+	Arch1T1R    = "1t1r"    // 1 Transistor 1 Resistor (WL, BL, SL)
+	Arch2T1R    = "2t1r"    // 2 Transistor 1 Resistor (WL, BL, SL, CSL)
 )
 
 // Technology nodes supported
@@ -330,6 +330,12 @@ func DefaultConfig() CompileConfig {
 // Deprecated: Use NewComputeConfig().With1T1R() instead
 func Config1T1R() CompileConfig {
 	cfg := NewComputeConfig(128, 128).With1T1R()
+	return *cfg
+}
+
+// Config2T1R returns a CompileConfig pre-configured for 2T1R architecture
+func Config2T1R() CompileConfig {
+	cfg := NewComputeConfig(128, 128).With2T1R()
 	return *cfg
 }
 

@@ -86,8 +86,8 @@ func GenerateDEF(design *compiler.ArrayDesign, config DEFConfig) string {
 	numRows := maxRow + 1
 	numCols := maxCol + 1
 
-	// Determine architecture
-	arch := design.Config.Architecture
+	// Determine architecture (normalize to lowercase for case-insensitive comparison)
+	arch := strings.ToLower(design.Config.Architecture)
 	if arch == "" {
 		arch = compiler.ArchPassive
 	}
@@ -189,9 +189,9 @@ func GenerateDEF(design *compiler.ArrayDesign, config DEFConfig) string {
 	sb.WriteString("\n")
 
 	// Calculate number of pins
-	// Passive: WL[] + BL[] + VDD + VSS
-	// 1T1R: WL[] + BL[] + SL[] + VDD + VSS
-	// 2T1R: WL[] + BL[] + SL[] + CSL[] + VDD + VSS
+	// Passive: WL[] + BL[] + VPWR + VGND
+	// 1T1R: WL[] + BL[] + SL[] + VPWR + VGND
+	// 2T1R: WL[] + BL[] + SL[] + CSL[] + VPWR + VGND
 	numPins := numRows + numCols + 2
 	if is1T1R {
 		numPins += numCols // Add SL[] pins
@@ -238,20 +238,20 @@ func GenerateDEF(design *compiler.ArrayDesign, config DEFConfig) string {
 		}
 	}
 
-	// Power pins
-	sb.WriteString("    - VDD + NET VDD + DIRECTION INPUT + USE POWER\n")
+	// Power pins (use VPWR/VGND to match LEF)
+	sb.WriteString("    - VPWR + NET VPWR + DIRECTION INPUT + USE POWER\n")
 	sb.WriteString(fmt.Sprintf("      + LAYER met1 ( 0 0 ) ( %d 160 ) + FIXED ( 0 %d ) N ;\n",
 		dieWidthDBU, dieHeightDBU-160))
-	sb.WriteString("    - VSS + NET VSS + DIRECTION INPUT + USE GROUND\n")
+	sb.WriteString("    - VGND + NET VGND + DIRECTION INPUT + USE GROUND\n")
 	sb.WriteString(fmt.Sprintf("      + LAYER met1 ( 0 0 ) ( %d 160 ) + FIXED ( 0 0 ) N ;\n", dieWidthDBU))
 
 	sb.WriteString("END PINS\n")
 	sb.WriteString("\n")
 
 	// Calculate number of nets
-	// Passive: WL nets + BL nets + VDD + VSS
-	// 1T1R: WL nets + BL nets + SL nets + VDD + VSS
-	// 2T1R: WL nets + BL nets + SL nets + CSL nets + VDD + VSS
+	// Passive: WL nets + BL nets + VPWR + VGND
+	// 1T1R: WL nets + BL nets + SL nets + VPWR + VGND
+	// 2T1R: WL nets + BL nets + SL nets + CSL nets + VPWR + VGND
 	numNets := numRows + numCols + 2
 	if is1T1R {
 		numNets += numCols
@@ -318,16 +318,16 @@ func GenerateDEF(design *compiler.ArrayDesign, config DEFConfig) string {
 		}
 	}
 
-	// Power nets
-	sb.WriteString("    - VDD ( PIN VDD )")
+	// Power nets (use VPWR/VGND to match LEF)
+	sb.WriteString("    - VPWR ( PIN VPWR )")
 	for _, cell := range cellsToExport {
-		sb.WriteString(fmt.Sprintf(" ( R_%d_%d VDD )", cell.Row, cell.Col))
+		sb.WriteString(fmt.Sprintf(" ( R_%d_%d VPWR )", cell.Row, cell.Col))
 	}
 	sb.WriteString(" ;\n")
 
-	sb.WriteString("    - VSS ( PIN VSS )")
+	sb.WriteString("    - VGND ( PIN VGND )")
 	for _, cell := range cellsToExport {
-		sb.WriteString(fmt.Sprintf(" ( R_%d_%d VSS )", cell.Row, cell.Col))
+		sb.WriteString(fmt.Sprintf(" ( R_%d_%d VGND )", cell.Row, cell.Col))
 	}
 	sb.WriteString(" ;\n")
 

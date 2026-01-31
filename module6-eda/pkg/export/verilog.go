@@ -1,6 +1,6 @@
 // pkg/export/verilog.go
 // Verilog netlist generator for FeCIM crossbar arrays
-// Supports both passive and 1T1R architectures
+// Supports passive, 1T1R, and 2T1R architectures
 
 package export
 
@@ -33,6 +33,7 @@ func DefaultVerilogConfig() VerilogConfig {
 // Architecture is determined from design.Config.Architecture:
 //   - "passive": WL[], BL[] ports (sneak path susceptible)
 //   - "1T1R": WL[], BL[], SL[] ports (sneak path mitigated)
+//   - "2T1R": WL[], BL[], SL[], CSL[] ports (enhanced control with column select)
 //
 // For compute mode with weights, only exports cells within weight matrix bounds.
 // For other modes, exports all cells in the physical array.
@@ -55,13 +56,18 @@ func GenerateVerilog(design *compiler.ArrayDesign, config VerilogConfig) string 
 	if arch == "" {
 		arch = compiler.ArchPassive // Default to passive if not specified
 	}
-	is1T1R := arch == compiler.Arch1T1R
-	logging.GlobalDebug("Architecture: %s (1T1R=%v)", arch, is1T1R)
+	// Normalize architecture for case-insensitive comparison
+	archNorm := strings.ToLower(arch)
+	is1T1R := archNorm == compiler.Arch1T1R
+	is2T1R := archNorm == compiler.Arch2T1R
+	logging.GlobalDebug("Architecture: %s (1T1R=%v, 2T1R=%v)", arch, is1T1R, is2T1R)
 
 	// Determine cell name based on architecture
 	cellName := config.CellName
 	if is1T1R && cellName == "fecim_bit" {
 		cellName = "fecim_1t1r" // Use 1T1R-specific cell
+	} else if is2T1R && cellName == "fecim_bit" {
+		cellName = "fecim_2t1r" // Use 2T1R-specific cell
 	}
 
 	// Check if this is compute mode with weights
@@ -85,6 +91,8 @@ func GenerateVerilog(design *compiler.ArrayDesign, config VerilogConfig) string 
 	}
 	if is1T1R {
 		sb.WriteString("// Note: 1T1R architecture includes Source Lines (SL) for sneak path mitigation\n")
+	} else if is2T1R {
+		sb.WriteString("// Note: 2T1R architecture includes Source Lines (SL) and Column Select Lines (CSL) for enhanced control\n")
 	}
 	sb.WriteString("\n")
 
@@ -94,6 +102,9 @@ func GenerateVerilog(design *compiler.ArrayDesign, config VerilogConfig) string 
 	sb.WriteString(fmt.Sprintf("    inout  wire [%d:0] BL,  // Bit Lines (column data)\n", numCols-1))
 	if is1T1R {
 		sb.WriteString(fmt.Sprintf("    input  wire [%d:0] SL,  // Source Lines (1T1R: transistor source)\n", numCols-1))
+	} else if is2T1R {
+		sb.WriteString(fmt.Sprintf("    input  wire [%d:0] SL,  // Source Lines (2T1R: transistor source)\n", numCols-1))
+		sb.WriteString(fmt.Sprintf("    input  wire [%d:0] CSL, // Column Select Lines (2T1R: column select transistor)\n", numCols-1))
 	}
 	sb.WriteString("    input  wire       VDD, // Power supply\n")
 	sb.WriteString("    input  wire       VSS  // Ground\n")
@@ -131,6 +142,9 @@ func GenerateVerilog(design *compiler.ArrayDesign, config VerilogConfig) string 
 		sb.WriteString(fmt.Sprintf("        .BL  (BL[%d]),\n", cell.Col))
 		if is1T1R {
 			sb.WriteString(fmt.Sprintf("        .SL  (SL[%d]),\n", cell.Col))
+		} else if is2T1R {
+			sb.WriteString(fmt.Sprintf("        .SL  (SL[%d]),\n", cell.Col))
+			sb.WriteString(fmt.Sprintf("        .CSL (CSL[%d]),\n", cell.Col))
 		}
 		sb.WriteString("        .VDD (VDD),\n")
 		sb.WriteString("        .VSS (VSS)\n")

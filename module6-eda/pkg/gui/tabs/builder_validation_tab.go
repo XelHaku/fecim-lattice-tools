@@ -45,16 +45,16 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	heightEntry.SetText("2.720")
 
 	riseEntry := widget.NewEntry()
-	riseEntry.SetText("0.1")
+	riseEntry.SetText("10.0")
 
 	fallEntry := widget.NewEntry()
-	fallEntry.SetText("0.1")
+	fallEntry.SetText("10.0")
 
 	capEntry := widget.NewEntry()
-	capEntry.SetText("0.002")
+	capEntry.SetText("0.015")
 
 	leakageEntry := widget.NewEntry()
-	leakageEntry.SetText("0.001")
+	leakageEntry.SetText("0.0003")
 
 	// Helper to parse cell config from inputs
 	getCellConfig := func() config.CellConfig {
@@ -68,19 +68,19 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		}
 		rise, err := strconv.ParseFloat(riseEntry.Text, 64)
 		if err != nil {
-			rise = 0.1 // Default value
+			rise = 10.0 // Default value
 		}
 		fall, err := strconv.ParseFloat(fallEntry.Text, 64)
 		if err != nil {
-			fall = 0.1 // Default value
+			fall = 10.0 // Default value
 		}
 		cap, err := strconv.ParseFloat(capEntry.Text, 64)
 		if err != nil {
-			cap = 0.002 // Default value
+			cap = 0.015 // Default value
 		}
 		leakage, err := strconv.ParseFloat(leakageEntry.Text, 64)
 		if err != nil {
-			leakage = 0.001 // Default value
+			leakage = 0.0003 // Default value
 		}
 
 		return config.CellConfig{
@@ -274,9 +274,9 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			return // Already selected
 		}
 		cfg.Architecture = "1t1r"
-		// Update to 1T1R cell dimensions (triggers updateStats via OnChanged)
-		widthEntry.SetText("0.920")
-		heightEntry.SetText("3.400")
+		// Update to 1T1R cell dimensions - SKY130 hvl standard (triggers updateStats via OnChanged)
+		widthEntry.SetText("0.460")
+		heightEntry.SetText("4.070")
 		updateArchButtons()
 		updateLayoutImage()
 	}
@@ -286,9 +286,9 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			return // Already selected
 		}
 		cfg.Architecture = "2t1r"
-		// Update to 2T1R cell dimensions (triggers updateStats via OnChanged)
-		widthEntry.SetText("1.380")
-		heightEntry.SetText("3.400")
+		// Update to 2T1R cell dimensions - two SKY130 sites wide, hvl height (triggers updateStats via OnChanged)
+		widthEntry.SetText("0.920")
+		heightEntry.SetText("4.070")
 		updateArchButtons()
 		updateLayoutImage()
 	}
@@ -388,7 +388,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			manager := openlane.NewManager()
 			config := openlane.DefaultConfig()
 
-			result, err := validation.GenerateYosysSchematic(verilogPath, outputPrefix, topModule, manager, config)
+			result, err := validation.GenerateYosysSchematic(verilogPath, outputPrefix, topModule, cfg.Architecture, manager, config)
 			if err != nil {
 				logging.GlobalInfo("ERROR: " + err.Error())
 			}

@@ -11,8 +11,6 @@ import (
 	"time"
 
 	"fyne.io/fyne/v2"
-
-	"fecim-lattice-tools/shared/physics"
 )
 
 // TempCalibration holds calibration data for a specific temperature
@@ -926,7 +924,6 @@ func (a *App) simulationLoop() {
 				rampRate := 3.0 * Emax * a.frequency
 				Ec := mat.Ec // Use local copy for thread safety
 				midLevel := a.numLevels / 2
-				maxLevelIdx := a.numLevels - 1
 
 				targetLevel := a.wrdTargetLevel // 1-indexed
 				// Note: startLevel (a.wrdStartLevel) no longer used for direction - we use absolute position
@@ -987,64 +984,75 @@ func (a *App) simulationLoop() {
 						a.wrdPhaseTimer = 0
 					}
 
-				case 2: // WRITE - ISPP (Incremental Step Pulse Programming)
-					// TRUE ISPP: Bidirectional incremental programming without initial RESET.
-					// Direction determined by current position vs target, not calibration-based midpoint.
+				case 2: // WRITE - Constant Step ISPP with Proper Voltage Estimation
+					// ISPP (Incremental Step Pulse Programming) with constant step sizes.
+					// Key insight: Calibration data assumes starting from SATURATION.
+					// When recovering from overshoot, we're NOT at saturation, so we must
+					// estimate voltage based on level distance, not raw calibration values.
 					//
-					// ISPP Sub-phases: 0=APPLY, 1=WAIT, 2=VERIFY, 3=ADJUST
+					// Sub-phases: 0=APPLY, 1=WAIT, 2=VERIFY
 					wrdTargetIdx := targetLevel - 1
 					currentLevel := a.discreteLevel + 1 // 1-indexed
-					// Direction based on current vs target (bidirectional ISPP)
 					goingUp := targetLevel > currentLevel
+					levelDiff := int(math.Abs(float64(targetLevel - currentLevel)))
 
-					// Initialize ISPP on first entry to WRITE phase (pulse count == 0)
+					// Initialize on first entry to WRITE phase (pulse count == 0)
 					if a.isppPulseCount == 0 {
-						// Set ISPP defaults if not configured
-						if a.isppMaxPulses == 0 {
-							a.isppMaxPulses = 10
-						}
+						var targetVoltage float64
 
-						// Reset oscillation/bisection tracking for new write target
-						a.isppLastError = 0
-						a.isppOscillationCount = 0
-						a.isppUseBisection = false
-						a.isppReversedOnce = false
-						a.isppLowVoltage = 0
-						a.isppHighVoltage = 0
+						// Check if we came from saturation (normal path) or from overshoot recovery
+						fromSaturation := (goingUp && currentLevel <= 2) || (!goingUp && currentLevel >= a.numLevels-1)
 
-						// Calculate starting voltage based on direction
-						// Use calibration as hint, but start conservatively
-						var calibratedE float64
-						if wrdTargetIdx >= 0 && wrdTargetIdx < len(a.calibrationUp) {
+						if fromSaturation && wrdTargetIdx >= 0 && wrdTargetIdx < len(a.calibrationUp) {
+							// NORMAL PATH: Starting from saturation, use calibration directly
 							if goingUp {
-								calibratedE = a.calibrationUp[wrdTargetIdx]
+								targetVoltage = a.calibrationUp[wrdTargetIdx]
 							} else {
-								calibratedE = a.calibrationDown[wrdTargetIdx]
+								targetVoltage = a.calibrationDown[wrdTargetIdx]
 							}
-						}
-						if calibratedE == 0 {
-							// Fallback: estimate based on distance to target
-							levelDiff := math.Abs(float64(targetLevel - currentLevel))
-							ratio := levelDiff / float64(maxLevelIdx)
+							log.Printf("ISPP FROM SATURATION: target=%d, current=%d, calibV=%.3f×Ec",
+								targetLevel, currentLevel, targetVoltage/Ec)
+						} else {
+							// OVERSHOOT RECOVERY: NOT at saturation, estimate voltage for level change
+							// Use voltage step proportional to level distance needed.
+							// Each level requires approximately (2*Ec)/(numLevels-1) voltage change.
+							//
+							// For going DOWN (e.g., from 21 to 19): need strong NEGATIVE field
+							// For going UP (e.g., from 15 to 19): need strong POSITIVE field
+							voltagePerLevel := (2.0 * Ec) / float64(a.numLevels-1)
+
 							if goingUp {
-								calibratedE = Ec * (0.5 + ratio*1.5) // Start lower, scale with distance
+								// Going up from mid-state: positive voltage proportional to distance
+								// Start with voltage that should move us most of the way
+								targetVoltage = voltagePerLevel * float64(levelDiff) * 1.2 // 20% overshoot margin
+								// But cap at reasonable maximum
+								if targetVoltage > 1.5*Ec {
+									targetVoltage = 1.5 * Ec
+								}
 							} else {
-								calibratedE = -Ec * (0.5 + ratio*1.5)
+								// Going down from mid-state: negative voltage proportional to distance
+								targetVoltage = -voltagePerLevel * float64(levelDiff) * 1.2
+								// Cap at reasonable minimum
+								if targetVoltage < -1.5*Ec {
+									targetVoltage = -1.5 * Ec
+								}
 							}
+							log.Printf("ISPP MID-STATE RECOVERY: target=%d, current=%d, diff=%d, estV=%.3f×Ec",
+								targetLevel, currentLevel, levelDiff, targetVoltage/Ec)
 						}
 
-						// Use shared ISPP calculator for voltage calculations
-						a.isppVoltageStep = a.isppCalc.CalculateVoltageStep()
-						a.isppStartVoltage = a.isppCalc.CalculateStartVoltage(calibratedE)
-						a.isppCurrentVoltage = a.isppStartVoltage
+						// Fallback if voltage is still zero
+						if targetVoltage == 0 {
+							levelRatio := float64(targetLevel-1) / float64(a.numLevels-1)
+							targetVoltage = Ec * (levelRatio*4.4 - 2.2)
+						}
+
+						a.isppCurrentVoltage = targetVoltage
 						a.isppPulseCount = 1
 						a.isppPhase = 0 // APPLY
 						a.isppPhaseTimer = 0
 						a.isppLastVerifyLvl = currentLevel
-						a.isppEnabled = true // Enable ISPP algorithm
-
-						log.Printf("ISPP INIT: target=%d, calibE=%.3f×Ec, startV=%.3f×Ec, step=%.3f×Ec",
-							targetLevel, calibratedE/Ec, a.isppStartVoltage/Ec, a.isppVoltageStep/Ec)
+						a.isppEnabled = true
 
 						// Update ISPP widget with initial state
 						if a.isppWidget != nil {
@@ -1052,18 +1060,18 @@ func (a *App) simulationLoop() {
 						}
 					}
 
-					// ISPP sub-phase timing
-					isppPulseDuration := phaseDuration * 0.08 // Each pulse is ~8% of total phase duration
+					// Sub-phase timing
+					pulseDur := phaseDuration * 0.08
 
 					a.isppPhaseTimer += dt
 
 					switch a.isppPhase {
-					case 0: // APPLY - ramp to current ISPP voltage
+					case 0: // APPLY - ramp to target voltage
 						writeE := a.isppCurrentVoltage
 
-						// Ramp to ISPP pulse voltage
+						// Ramp to pulse voltage
 						diff := writeE - a.electricField
-						step := rampRate * 1.5 * dt // Faster ramp for ISPP pulses
+						step := rampRate * 1.5 * dt // Faster ramp
 						if math.Abs(diff) < step {
 							a.electricField = writeE
 						} else if diff > 0 {
@@ -1073,21 +1081,19 @@ func (a *App) simulationLoop() {
 						}
 
 						// Transition to WAIT when voltage reached
-						if a.isppPhaseTimer > isppPulseDuration*0.4 && math.Abs(a.electricField-writeE) < 0.01*Emax {
+						if a.isppPhaseTimer > pulseDur*0.4 && math.Abs(a.electricField-writeE) < 0.01*Emax {
 							a.isppPhase = 1 // WAIT
 							a.isppPhaseTimer = 0
 						}
 
-					case 1: // WAIT - hold pulse briefly for domain switching
-						// Hold at current voltage (settling time for domains to switch)
-						// Transition to VERIFY after brief hold
-						if a.isppPhaseTimer > isppPulseDuration*0.3 {
+					case 1: // WAIT - hold for domain switching
+						if a.isppPhaseTimer > pulseDur*0.3 {
 							a.isppPhase = 2 // VERIFY
 							a.isppPhaseTimer = 0
 						}
 
-					case 2: // VERIFY - check current level against target
-						// Return to zero briefly for accurate level reading
+					case 2: // VERIFY - return to zero and check level
+						// Ramp back to zero for accurate level reading
 						step := rampRate * 1.5 * dt
 						if math.Abs(a.electricField) > step {
 							if a.electricField > 0 {
@@ -1099,163 +1105,90 @@ func (a *App) simulationLoop() {
 							a.electricField = 0
 						}
 
-						// Verify level once field is at zero
-						if a.isppPhaseTimer > isppPulseDuration*0.3 && math.Abs(a.electricField) < 0.01*Emax {
+						// Verify once field is at zero
+						if a.isppPhaseTimer > pulseDur*0.3 && math.Abs(a.electricField) < 0.01*Emax {
 							verifyLevel := a.discreteLevel + 1 // 1-indexed
 							levelError := verifyLevel - targetLevel
 
-							// Update ISPP widget animation
+							// Update ISPP widget
 							if a.isppWidget != nil {
 								isConverged := levelError == 0
 								a.isppWidget.SetAnimationState(a.isppPulseCount, targetLevel, verifyLevel, a.isppCurrentVoltage/Ec, isConverged)
 							}
 
 							if levelError == 0 {
-								// SUCCESS: Target level reached!
-								log.Printf("ISPP SUCCESS: pulse=%d, target=%d, verified=%d, finalV=%.3f×Ec",
-									a.isppPulseCount, targetLevel, verifyLevel, a.isppCurrentVoltage/Ec)
+								// SUCCESS
+								log.Printf("WRITE SUCCESS: target=%d, verified=%d, voltage=%.3f×Ec, pulses=%d",
+									targetLevel, verifyLevel, a.isppCurrentVoltage/Ec, a.isppPulseCount)
 
-								// Track total ISPP pulses for this write operation
 								a.isppTotalPulses += a.isppPulseCount
-
-								// Capture end-of-WRITE state for logging
-								a.wrdWriteEndP = a.polarization * 100
-								a.wrdWriteEndLvl = verifyLevel
-								a.wrdWriteE = a.isppCurrentVoltage // Store final ISPP voltage
-
-								// Reset ISPP state for next write (but keep isppTotalPulses until final success)
-								a.isppPulseCount = 0
-								a.isppPhase = 0
-
-								// Transition to HOLD_WRITE phase
-								a.wrdPhase = 3
-								a.wrdPhaseTimer = 0
-							} else if a.isppPulseCount >= a.isppMaxPulses {
-								// MAX PULSES EXCEEDED: Give up on ISPP, will retry via standard loop
-								log.Printf("ISPP MAX PULSES: pulse=%d, target=%d, verified=%d, err=%+d",
-									a.isppPulseCount, targetLevel, verifyLevel, levelError)
-
-								// Track total ISPP pulses (even on failure, for statistics)
-								a.isppTotalPulses += a.isppPulseCount
-
-								// Capture state and proceed (verification in READ phase will trigger retry)
 								a.wrdWriteEndP = a.polarization * 100
 								a.wrdWriteEndLvl = verifyLevel
 								a.wrdWriteE = a.isppCurrentVoltage
 
-								// Reset ISPP state (but keep isppTotalPulses for retry tracking)
+								// Reset for next write
 								a.isppPulseCount = 0
 								a.isppPhase = 0
-
-								// Transition to HOLD_WRITE phase (will retry if READ verification fails)
-								a.wrdPhase = 3
+								a.wrdPhase = 3 // HOLD_WRITE
 								a.wrdPhaseTimer = 0
+
+							} else if a.isppPulseCount >= 5 {
+								// Give up after 5 attempts - let verification loop handle retry with RESET/BOOST
+								log.Printf("WRITE MAX ATTEMPTS: target=%d, verified=%d, err=%+d, pulses=%d",
+									targetLevel, verifyLevel, levelError, a.isppPulseCount)
+
+								a.isppTotalPulses += a.isppPulseCount
+								a.wrdWriteEndP = a.polarization * 100
+								a.wrdWriteEndLvl = verifyLevel
+								a.wrdWriteE = a.isppCurrentVoltage
+
+								// Reset for retry
+								a.isppPulseCount = 0
+								a.isppPhase = 0
+								a.wrdPhase = 3 // HOLD_WRITE - verification will trigger RESET/retry
+								a.wrdPhaseTimer = 0
+
 							} else {
-								// Check for overshoot vs undershoot
-								// Use actual current vs target comparison (not midLevel-based)
-								isOvershoot := (verifyLevel > targetLevel && a.isppCurrentVoltage > 0) ||
-									(verifyLevel < targetLevel && a.isppCurrentVoltage < 0)
+								// CONSTANT STEP ISPP: Use fixed voltage step per level of error
+								// Step size = (2*Ec)/(numLevels-1) is the average voltage per level
+								// Use 1.5x this for faster convergence while avoiding overshoot
+								voltagePerLevel := (2.0 * Ec) / float64(a.numLevels-1)
+								stepSize := voltagePerLevel * 1.5 // Constant step per level
 
-								// OSCILLATION DETECTION: Track if error sign changed
-								if a.isppLastError != 0 && (a.isppLastError > 0) != (levelError > 0) {
-									// Sign changed - we're oscillating!
-									a.isppOscillationCount++
-									if a.isppOscillationCount >= 2 {
-										// Multiple oscillations - switch to bisection mode
-										a.isppUseBisection = true
-										log.Printf("ISPP OSCILLATION DETECTED: count=%d, switching to bisection mode",
-											a.isppOscillationCount)
-									}
-								}
-								a.isppLastError = levelError
+								// Calculate adjustment: step size * number of levels off
+								adjustment := stepSize * math.Abs(float64(levelError))
 
-								if isOvershoot {
-									// OVERSHOOT: Switch ISPP direction to come back
-									log.Printf("ISPP OVERSHOOT: pulse=%d, target=%d, verified=%d, V=%.3f×Ec -> REVERSE DIRECTION",
-										a.isppPulseCount, targetLevel, verifyLevel, a.isppCurrentVoltage/Ec)
-
-									// Track voltage bounds for bisection
-									if a.isppCurrentVoltage > 0 {
-										a.isppHighVoltage = a.isppCurrentVoltage // Overshot going up
-									} else {
-										a.isppLowVoltage = a.isppCurrentVoltage // Overshot going down
-									}
-
-									// Calculate proportional reverse voltage based on overshoot magnitude
-									overshootLevels := math.Abs(float64(verifyLevel - targetLevel))
-									totalLevels := float64(a.numLevels)
-
-									var newVoltage float64
-									if a.isppUseBisection && a.isppLowVoltage != 0 && a.isppHighVoltage != 0 {
-										// BISECTION MODE: Use midpoint of known bounds
-										newVoltage = (a.isppLowVoltage + a.isppHighVoltage) / 2
-										log.Printf("ISPP BISECTION: low=%.3f×Ec, high=%.3f×Ec, mid=%.3f×Ec",
-											a.isppLowVoltage/Ec, a.isppHighVoltage/Ec, newVoltage/Ec)
-									} else {
-										// PROPORTIONAL REVERSE: Scale by how far we overshot
-										reverseRatio := overshootLevels / totalLevels * 0.5 // Conservative
-										if reverseRatio < 0.02 {
-											reverseRatio = 0.02 // Minimum step
-										}
-										if reverseRatio > 0.3 {
-											reverseRatio = 0.3 // Maximum initial reverse
-										}
-
-										if a.isppCurrentVoltage > 0 {
-											// Was going positive (up), now go negative (down)
-											newVoltage = -Ec * reverseRatio
-										} else {
-											// Was going negative (down), now go positive (up)
-											newVoltage = Ec * reverseRatio
-										}
-									}
-
-									// If already reversed before, use finer steps
-									if a.isppReversedOnce {
-										a.isppVoltageStep = a.isppVoltageStep / 2 // Halve step for finer control
-										minStep := Ec * 0.005                      // Minimum step 0.5% Ec
-										if a.isppVoltageStep < minStep {
-											a.isppVoltageStep = minStep
-										}
-									}
-									a.isppReversedOnce = true
-									a.isppCurrentVoltage = newVoltage
-
-									a.isppPulseCount++
-									a.isppPhase = 0 // Back to APPLY with reversed direction
-									a.isppPhaseTimer = 0
-
-									log.Printf("ISPP REVERSE: nextV=%.3f×Ec, target=%d, bisection=%v",
-										a.isppCurrentVoltage/Ec, targetLevel, a.isppUseBisection)
+								// Apply in correct direction based on error sign and movement direction
+								// levelError > 0 means we're ABOVE target (overshot), need to go DOWN (more negative)
+								// levelError < 0 means we're BELOW target (undershot), need to go UP (more positive)
+								if levelError > 0 {
+									// Overshot - need more negative voltage to go down
+									a.isppCurrentVoltage -= adjustment
 								} else {
-									// UNDERSHOOT: Track lower bound and need more voltage -> ADJUST
-									if a.isppCurrentVoltage > 0 {
-										a.isppLowVoltage = a.isppCurrentVoltage // Undershot going up
-									} else {
-										a.isppHighVoltage = a.isppCurrentVoltage // Undershot going down
-									}
-									a.isppPhase = 3
-									a.isppPhaseTimer = 0
+									// Undershot - need more positive voltage to go up
+									a.isppCurrentVoltage += adjustment
+								}
+
+								// Clamp to reasonable range
+								if a.isppCurrentVoltage > 2.0*Ec {
+									a.isppCurrentVoltage = 2.0 * Ec
+								} else if a.isppCurrentVoltage < -2.0*Ec {
+									a.isppCurrentVoltage = -2.0 * Ec
+								}
+
+								log.Printf("ISPP STEP: target=%d, verified=%d, err=%+d, stepSize=%.3f×Ec, newV=%.3f×Ec, pulse=%d",
+									targetLevel, verifyLevel, levelError, stepSize/Ec, a.isppCurrentVoltage/Ec, a.isppPulseCount+1)
+
+								a.isppPulseCount++
+								a.isppPhase = 0 // Try again with adjusted voltage
+								a.isppPhaseTimer = 0
+
+								// Update widget
+								if a.isppWidget != nil {
+									a.isppWidget.SetAnimationState(a.isppPulseCount, targetLevel, verifyLevel, a.isppCurrentVoltage/Ec, false)
 								}
 							}
 							a.isppLastVerifyLvl = verifyLevel
-						}
-
-					case 3: // ADJUST - increment voltage for next pulse
-						// Use shared ISPP calculator to determine next voltage
-						direction := physics.GetDirection(currentLevel, targetLevel)
-						a.isppCurrentVoltage = a.isppCalc.CalculateNextVoltage(a.isppCurrentVoltage, direction)
-
-						a.isppPulseCount++
-						a.isppPhase = 0 // Back to APPLY
-						a.isppPhaseTimer = 0
-
-						log.Printf("ISPP ADJUST: pulse=%d, nextV=%.3f×Ec, target=%d",
-							a.isppPulseCount, a.isppCurrentVoltage/Ec, targetLevel)
-
-						// Update ISPP widget for new pulse
-						if a.isppWidget != nil {
-							a.isppWidget.SetAnimationState(a.isppPulseCount, targetLevel, a.discreteLevel+1, a.isppCurrentVoltage/Ec, false)
 						}
 					}
 
@@ -1477,12 +1410,15 @@ func (a *App) simulationLoop() {
 								a.wrdPhaseTimer = 0
 							} else {
 								// OVERSHOOT: Use ISPP in opposite direction to come back
-								// No full RESET needed - bidirectional ISPP handles it
-								log.Printf("WRD VERIFY OVERSHOOT RECOVERY: switching ISPP direction")
+								// Reset ISPP state so it reinitializes with voltage estimation
+								// based on current level (not saturation calibration)
+								log.Printf("WRD VERIFY OVERSHOOT RECOVERY: reinit ISPP from L=%d to target=%d",
+									a.discreteLevel+1, targetLevel)
 								a.wrdWriteStartP = a.polarization * 100
+								a.isppPulseCount = 0 // Reset so ISPP reinitializes with proper voltage
+								a.isppPhase = 0
 								a.wrdPhase = 2 // Go back to WRITE phase with ISPP
 								a.wrdPhaseTimer = 0
-								// ISPP will reinitialize with correct direction based on current vs target level
 							}
 						}
 					}
@@ -1571,35 +1507,34 @@ func (a *App) simulationLoop() {
 						}
 					}
 
-				case 6: // BOOST phase - undershoot retry, skip RESET and apply more field
-					// This phase handles small undershoots by directly applying more field
-					// without going through the full RESET cycle
-					var writeE float64
-					goingUp := targetLevel > midLevel
-					wrdTargetIdx := targetLevel - 1
+				case 6: // BOOST phase - undershoot retry with level-difference voltage
+					// BOOST handles undershoots by applying voltage proportional to the
+					// level difference needed, NOT using calibration (which assumes saturation).
+					currentLevel := a.discreteLevel + 1
+					levelDiff := targetLevel - currentLevel
+					goingUp := levelDiff > 0
 
-					if wrdTargetIdx < 0 || wrdTargetIdx >= len(a.calibrationUp) {
-						ratio := float64(targetLevel-1) / float64(maxLevelIdx)
-						if goingUp {
-							writeE = Ec * (1.0 + ratio*1.0) * 1.08 // 8% extra for boost
-						} else {
-							writeE = -Ec * (1.0 + ratio*1.0) * 1.08
+					// Voltage step proportional to level distance
+					voltagePerLevel := (2.0 * Ec) / float64(a.numLevels-1)
+
+					var writeE float64
+					if goingUp {
+						// Undershoot going up: need positive voltage for remaining distance
+						// Add 30% margin since we're on a minor loop, not saturation
+						writeE = voltagePerLevel * float64(levelDiff) * 1.3
+						if writeE > 1.8*Ec {
+							writeE = 1.8 * Ec
 						}
-					} else if goingUp {
-						targetE := a.calibrationUp[wrdTargetIdx]
-						if targetE == 0 {
-							ratio := float64(targetLevel-1) / float64(maxLevelIdx)
-							targetE = Ec * (1.0 + ratio*1.0)
-						}
-						writeE = targetE * 1.08 // 8% extra for boost
 					} else {
-						targetE := a.calibrationDown[wrdTargetIdx]
-						if targetE == 0 {
-							ratio := float64(a.numLevels-targetLevel) / float64(maxLevelIdx)
-							targetE = -Ec * (1.0 + ratio*1.0)
+						// Undershoot going down: need negative voltage for remaining distance
+						writeE = voltagePerLevel * float64(levelDiff) * 1.3 // levelDiff is negative
+						if writeE < -1.8*Ec {
+							writeE = -1.8 * Ec
 						}
-						writeE = targetE * 1.08 // 8% extra for boost
 					}
+
+					log.Printf("BOOST: current=%d, target=%d, diff=%d, voltage=%.3f×Ec",
+						currentLevel, targetLevel, levelDiff, writeE/Ec)
 					a.wrdWriteE = writeE
 
 					// Ramp to write field

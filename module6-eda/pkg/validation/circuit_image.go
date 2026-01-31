@@ -27,7 +27,7 @@ type CircuitImageResult struct {
 // GenerateYosysSchematic creates a circuit schematic SVG using Yosys show command
 // Requires: Verilog file
 // Output: SVG schematic diagram
-func GenerateYosysSchematic(verilogPath string, outputPrefix string, topModule string, manager *openlane.Manager, config *openlane.Config) (*CircuitImageResult, error) {
+func GenerateYosysSchematic(verilogPath string, outputPrefix string, topModule string, architecture string, manager *openlane.Manager, config *openlane.Config) (*CircuitImageResult, error) {
 	result := &CircuitImageResult{
 		Success:   false,
 		ImagePath: outputPrefix + ".dot", // DOT format - graphviz text file
@@ -66,22 +66,34 @@ func GenerateYosysSchematic(verilogPath string, outputPrefix string, topModule s
 	verilogName := filepath.Base(verilogPath)
 	outputName := filepath.Base(outputPrefix)
 
+	// Determine cell directory and filename based on architecture
+	cellDir := "fecim_bitcell"
+	cellFileName := "fecim_bitcell.v"
+	switch strings.ToLower(architecture) {
+	case "1t1r":
+		cellDir = "fecim_1t1r_bitcell"
+		cellFileName = "fecim_1t1r_bitcell.v"
+	case "2t1r":
+		cellDir = "fecim_2t1r_bitcell"
+		cellFileName = "fecim_2t1r_bitcell.v"
+	}
+
 	// Also need to read the cell Verilog file for hierarchy to work
 	// Try to find the cell file in cells/ directory
 	cellVerilog := ""
 	cellPaths := []string{
-		filepath.Join(workDir, "../cells/fecim_bitcell/fecim_bitcell.v"),
-		filepath.Join(workDir, "../../cells/fecim_bitcell/fecim_bitcell.v"),
-		"cells/fecim_bitcell/fecim_bitcell.v",
+		filepath.Join(workDir, "../cells", cellDir, cellFileName),
+		filepath.Join(workDir, "../../cells", cellDir, cellFileName),
+		filepath.Join("cells", cellDir, cellFileName),
 	}
 	for _, cp := range cellPaths {
 		if absCP, err := filepath.Abs(cp); err == nil {
 			if _, err := os.Stat(absCP); err == nil {
 				// Copy cell verilog to work directory for Docker access
 				cellData, _ := os.ReadFile(absCP)
-				cellDst := filepath.Join(absWorkDir, "fecim_bitcell.v")
+				cellDst := filepath.Join(absWorkDir, cellFileName)
 				os.WriteFile(cellDst, cellData, 0644)
-				cellVerilog = "fecim_bitcell.v"
+				cellVerilog = cellFileName
 				log.Info("  Cell Verilog found: %s", absCP)
 				break
 			}

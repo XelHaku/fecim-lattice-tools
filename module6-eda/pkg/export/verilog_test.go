@@ -193,7 +193,7 @@ func TestVerilog1T1RArchitecture(t *testing.T) {
 	verilog := GenerateVerilogWithDefaults(mapping)
 
 	// 1T1R should have WL, BL, AND SL
-	if !strings.Contains(verilog, "Architecture: 1T1R") {
+	if !strings.Contains(verilog, "Architecture: 1t1r") {
 		t.Error("Should indicate 1T1R architecture")
 	}
 	if !strings.Contains(verilog, "input  wire [1:0] WL") {
@@ -217,4 +217,58 @@ func TestVerilog1T1RArchitecture(t *testing.T) {
 	}
 
 	t.Log("1T1R architecture Verilog generated successfully with SL[] ports")
+}
+
+func TestVerilog2T1RArchitecture(t *testing.T) {
+	weights := [][]float64{
+		{0.1, 0.2},
+		{0.3, 0.4},
+	}
+
+	config := compiler.Config2T1R()
+	config.ArrayRows = 4
+	config.ArrayCols = 4
+	mapping, err := compiler.Compile(weights, config)
+	if err != nil {
+		t.Fatalf("Compile failed: %v", err)
+	}
+
+	verilog := GenerateVerilogWithDefaults(mapping)
+
+	// 2T1R should have WL, BL, SL, AND CSL
+	if !strings.Contains(verilog, "Architecture: 2t1r") {
+		t.Error("Should indicate 2T1R architecture")
+	}
+	if !strings.Contains(verilog, "input  wire [1:0] WL") {
+		t.Error("2T1R should have WL ports")
+	}
+	if !strings.Contains(verilog, "inout  wire [1:0] BL") {
+		t.Error("2T1R should have BL ports")
+	}
+	if !strings.Contains(verilog, "input  wire [1:0] SL") {
+		t.Error("2T1R architecture MUST have SL ports")
+	}
+	if !strings.Contains(verilog, "input  wire [1:0] CSL") {
+		t.Error("2T1R architecture MUST have CSL ports (Column Select Lines)")
+	}
+
+	// Should use fecim_2t1r cell
+	if !strings.Contains(verilog, "fecim_2t1r #(") {
+		t.Error("2T1R should use fecim_2t1r cell")
+	}
+
+	// Cell instances should have SL and CSL pin connections
+	if !strings.Contains(verilog, ".SL  (SL[") {
+		t.Error("2T1R cell instances should connect SL pins")
+	}
+	if !strings.Contains(verilog, ".CSL (CSL[") {
+		t.Error("2T1R cell instances should connect CSL pins")
+	}
+
+	// Should have the 2T1R note in comments
+	if !strings.Contains(verilog, "2T1R architecture includes Source Lines (SL) and Column Select Lines (CSL)") {
+		t.Error("2T1R should have descriptive comment about architecture")
+	}
+
+	t.Log("2T1R architecture Verilog generated successfully with SL[] and CSL[] ports")
 }

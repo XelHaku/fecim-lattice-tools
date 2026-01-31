@@ -55,9 +55,35 @@ puts "Placement validation finished successfully."
 exit
 `
 
+// detectArchitectureFromDEF reads DEF file and detects architecture from cell names
+func detectArchitectureFromDEF(defPath string) string {
+	data, err := os.ReadFile(defPath)
+	if err != nil {
+		return "passive"
+	}
+	content := string(data)
+	if strings.Contains(content, "fecim_2t1r") {
+		return "2t1r"
+	}
+	if strings.Contains(content, "fecim_1t1r") {
+		return "1t1r"
+	}
+	return "passive"
+}
+
 // RunPlacementCheck validates placement using OpenROAD with default cell LEF path
 func RunPlacementCheck(defPath string, manager *openlane.Manager, config *openlane.Config) (*PlacementResult, error) {
-	return RunPlacementCheckWithCell(defPath, "cells/fecim_bitcell/fecim_bitcell.lef", manager, config)
+	arch := detectArchitectureFromDEF(defPath)
+
+	lefPath := "cells/fecim_bitcell/fecim_bitcell.lef"
+	switch arch {
+	case "1t1r":
+		lefPath = "cells/fecim_1t1r_bitcell/fecim_1t1r_bitcell.lef"
+	case "2t1r":
+		lefPath = "cells/fecim_2t1r_bitcell/fecim_2t1r_bitcell.lef"
+	}
+
+	return RunPlacementCheckWithCell(defPath, lefPath, manager, config)
 }
 
 // RunPlacementCheckWithCell validates placement using OpenROAD with specified cell LEF
