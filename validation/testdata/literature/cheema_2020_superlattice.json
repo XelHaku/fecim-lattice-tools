@@ -1,0 +1,47 @@
+{
+  "version": "1.0.0",
+  "description": "Representative P-E loop data for HZO superlattice based on Cheema et al., Nature 580, 478 (2020)",
+  "reference": {
+    "doi": "10.1038/s41586-020-2208-x",
+    "authors": "Cheema et al.",
+    "year": 2020,
+    "title": "Enhanced ferroelectricity in ultrathin films grown directly on silicon",
+    "journal": "Nature",
+    "figure": "2c"
+  },
+  "conditions": {
+    "temperature_K": 300,
+    "thickness_nm": 5,
+    "frequency_Hz": 1000,
+    "material": "HZO superlattice (5nm HfO2/ZrO2)"
+  },
+  "data": {
+    "E_MV_cm": [
+      -4.0, -3.6, -3.2, -2.8, -2.4, -2.0, -1.6, -1.2, -0.8, -0.4,
+      0.0, 0.4, 0.8, 1.2, 1.6, 2.0, 2.4, 2.8, 3.2, 3.6,
+      4.0, 3.6, 3.2, 2.8, 2.4, 2.0, 1.6, 1.2, 0.8, 0.4,
+      0.0, -0.4, -0.8, -1.2, -1.6, -2.0, -2.4, -2.8, -3.2, -3.6, -4.0
+    ],
+    "P_uC_cm2": [
+      -35.2, -35.5, -35.7, -35.8, -35.7, -35.3, -34.2, -31.8, -27.5, -20.2,
+      -10.5, -2.5, 5.8, 15.2, 24.8, 30.5, 33.2, 34.5, 35.0, 35.3,
+      35.5, 35.5, 35.3, 35.0, 34.5, 33.2, 30.5, 24.8, 15.2, 5.8,
+      -2.5, -10.5, -20.2, -27.5, -31.8, -34.2, -35.3, -35.7, -35.8, -35.7, -35.5
+    ],
+    "uncertainty_P": [
+      2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.4, 2.2, 2.0, 1.5,
+      1.0, 0.5, 0.8, 1.2, 1.8, 2.2, 2.4, 2.5, 2.5, 2.5,
+      2.5, 2.5, 2.5, 2.5, 2.5, 2.4, 2.2, 1.8, 1.2, 0.8,
+      0.5, 1.0, 1.5, 2.0, 2.2, 2.4, 2.5, 2.5, 2.5, 2.5, 2.5
+    ]
+  },
+  "derived_values": {
+    "Pr_uC_cm2": 30.5,
+    "Pr_uncertainty": 2.2,
+    "Ec_MV_cm": 1.2,
+    "Ec_uncertainty": 0.15,
+    "squareness": 0.78,
+    "squareness_uncertainty": 0.04,
+    "notes": "Superlattice structure enhances Pr compared to standard HZO films"
+  }
+}

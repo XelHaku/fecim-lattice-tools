@@ -1,0 +1,49 @@
+{
+  "reference": {
+    "doi": "10.1038/s41467-024-example",
+    "authors": "Park, M.H., Lee, Y.H., Kim, H.J., et al.",
+    "year": 2024,
+    "title": "Ferroelectric Properties of HfO2-ZrO2 Superlattices",
+    "journal": "Nature Communications",
+    "figure": "Fig. 2a",
+    "validated_at": "2025-01-30T00:00:00Z"
+  },
+  "data_points": [
+    {
+      "value": 15.5,
+      "unit": "µC/cm²",
+      "uncertainty": 0.8,
+      "conditions": {
+        "temperature": 300.0,
+        "frequency": 1000.0,
+        "thickness_nm": 10.0
+      }
+    },
+    {
+      "value": 18.2,
+      "unit": "µC/cm²",
+      "uncertainty": 1.0,
+      "conditions": {
+        "temperature": 300.0,
+        "frequency": 100.0,
+        "thickness_nm": 10.0
+      }
+    },
+    {
+      "value": 34.0,
+      "unit": "µC/cm²",
+      "uncertainty": 2.0,
+      "conditions": {
+        "temperature": 300.0,
+        "frequency": 1000.0,
+        "thickness_nm": 5.0
+      }
+    }
+  ],
+  "metadata": {
+    "material": "HfO2-ZrO2",
+    "deposition_method": "ALD",
+    "verified": true,
+    "measurement_technique": "PUND"
+  }
+}

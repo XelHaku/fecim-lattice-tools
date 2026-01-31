@@ -1040,65 +1040,66 @@ func (a *App) simulationLoop() {
 								targetLevel, currentLevel, targetVoltage/Ec)
 						} else {
 							// OVERSHOOT RECOVERY: NOT at saturation, estimate voltage for level change
-							// Use voltage step proportional to level distance needed.
-							// Each level requires approximately (2*Ec)/(numLevels-1) voltage change.
+							// CRITICAL: Voltage SIGN must match direction needed:
+							//   - To go UP (increase level): POSITIVE field required
+							//   - To go DOWN (decrease level): NEGATIVE field required
 							//
-							// For going DOWN (e.g., from 21 to 19): need strong NEGATIVE field
-							// For going UP (e.g., from 15 to 19): need strong POSITIVE field
+							// Previous bug: scaling calibration values could produce wrong-sign voltages
 							voltagePerLevel := (2.0 * Ec) / float64(a.numLevels-1)
 
-							// CRITICAL FIX: Use calibration data to estimate voltage more accurately
-							// The calibration tells us what voltage reaches a target from saturation.
-							// For mid-state recovery, we scale by the level difference ratio.
 							if goingUp {
-								// Going up from mid-state: positive voltage proportional to distance
-								// Use calibration if available for better estimate
+								// Going UP from mid-state: MUST use POSITIVE voltage
+								// Start with conservative estimate based on level distance
+								baseVoltage := voltagePerLevel * float64(levelDiff) * 1.3
+
+								// Refine with calibration if available
 								if a.calibrated && wrdTargetIdx >= 0 && wrdTargetIdx < len(a.calibrationUp) {
-									// Scale calibration voltage by how far we need to go vs full range
 									calibV := a.calibrationUp[wrdTargetIdx]
-									// Calibration assumes from level 1; we're from currentLevel
-									// Scale factor: (target - current) / (target - 1)
-									if targetLevel > 1 {
+									// Only use calibration if it's positive (correct direction)
+									if calibV > 0 {
+										// Scale by distance ratio but ensure we don't undershoot
 										scaleFactor := float64(levelDiff) / float64(targetLevel-1)
-										if scaleFactor > 1.0 {
-											scaleFactor = 1.0
-										}
-										targetVoltage = calibV * scaleFactor * 1.1 // 10% margin
-									} else {
-										targetVoltage = voltagePerLevel * float64(levelDiff) * 1.2
+										scaleFactor = math.Max(0.3, math.Min(scaleFactor, 1.2))
+										baseVoltage = calibV * scaleFactor
 									}
-								} else {
-									targetVoltage = voltagePerLevel * float64(levelDiff) * 1.2
 								}
-								// Cap at reasonable maximum
-								if targetVoltage > 1.5*Ec {
-									targetVoltage = 1.5 * Ec
+
+								// ENSURE POSITIVE (physics requirement for going up)
+								targetVoltage = math.Abs(baseVoltage)
+								if targetVoltage < voltagePerLevel {
+									targetVoltage = voltagePerLevel * float64(levelDiff) // Minimum useful voltage
+								}
+								if targetVoltage > 1.8*Ec {
+									targetVoltage = 1.8 * Ec
 								}
 							} else {
-								// Going down from mid-state: negative voltage proportional to distance
-								// Use calibration if available for better estimate
+								// Going DOWN from mid-state: MUST use NEGATIVE voltage
+								// Start with conservative estimate based on level distance
+								baseVoltage := -voltagePerLevel * float64(levelDiff) * 1.3
+
+								// Refine with calibration if available
 								if a.calibrated && wrdTargetIdx >= 0 && wrdTargetIdx < len(a.calibrationDown) {
 									calibV := a.calibrationDown[wrdTargetIdx]
-									// Scale factor: (current - target) / (numLevels - target)
-									if targetLevel < a.numLevels {
+									// Only use calibration if it's negative (correct direction)
+									if calibV < 0 {
+										// Scale by distance ratio
 										scaleFactor := float64(levelDiff) / float64(a.numLevels-targetLevel)
-										if scaleFactor > 1.0 {
-											scaleFactor = 1.0
-										}
-										targetVoltage = calibV * scaleFactor * 1.1 // 10% margin
-									} else {
-										targetVoltage = -voltagePerLevel * float64(levelDiff) * 1.2
+										scaleFactor = math.Max(0.3, math.Min(scaleFactor, 1.2))
+										baseVoltage = calibV * scaleFactor
 									}
-								} else {
-									targetVoltage = -voltagePerLevel * float64(levelDiff) * 1.2
 								}
-								// Cap at reasonable minimum
-								if targetVoltage < -1.5*Ec {
-									targetVoltage = -1.5 * Ec
+
+								// ENSURE NEGATIVE (physics requirement for going down)
+								targetVoltage = -math.Abs(baseVoltage)
+								if targetVoltage > -voltagePerLevel {
+									targetVoltage = -voltagePerLevel * float64(levelDiff) // Minimum useful voltage
+								}
+								if targetVoltage < -1.8*Ec {
+									targetVoltage = -1.8 * Ec
 								}
 							}
-							log.Printf("ISPP MID-STATE RECOVERY: target=%d, current=%d, diff=%d, estV=%.3f×Ec",
-								targetLevel, currentLevel, levelDiff, targetVoltage/Ec)
+							log.Printf("ISPP MID-STATE RECOVERY: target=%d, current=%d, diff=%d, estV=%.3f×Ec, dir=%s",
+								targetLevel, currentLevel, levelDiff, targetVoltage/Ec, map[bool]string{true: "UP", false: "DOWN"}[goingUp])
 						}
 
 						// Fallback if voltage is still zero
@@ -1209,27 +1210,39 @@ func (a *App) simulationLoop() {
 								a.wrdPhaseTimer = 0
 
 							} else {
-								// CONSERVATIVE ISPP: Use capped voltage step to avoid oscillation
-								// Step size = (2*Ec)/(numLevels-1) is the average voltage per level
+								// DIRECTION-AWARE ISPP: Ensure voltage sign matches required direction
+								// PHYSICS: To go UP (higher level) → positive field; To go DOWN → negative field
+								// The previous code just adjusted magnitude without ensuring correct polarity!
 								voltagePerLevel := (2.0 * Ec) / float64(a.numLevels-1)
-								stepSize := voltagePerLevel * 1.5 // Base step per level
-
-								// CRITICAL FIX: Cap the adjustment factor to prevent oscillation
-								// Large errors (5-6 levels) would cause 0.5×Ec swings which overshoot badly
-								// Cap at 2 levels worth of adjustment per pulse for stability
 								absError := math.Abs(float64(levelError))
-								adjustFactor := math.Min(absError, 2.0) // Cap at 2× step per pulse
-								adjustment := stepSize * adjustFactor
 
-								// Apply in correct direction based on error sign and movement direction
-								// levelError > 0 means we're ABOVE target (overshot), need to go DOWN (more negative)
-								// levelError < 0 means we're BELOW target (undershot), need to go UP (more positive)
+								// Calculate step size with adaptive scaling
+								// Larger errors need bigger steps, but cap to prevent wild oscillation
+								stepSize := voltagePerLevel * math.Min(absError*0.8, 2.5)
+
 								if levelError > 0 {
-									// Overshot - need more negative voltage to go down
-									a.isppCurrentVoltage -= adjustment
+									// OVERSHOT: We're ABOVE target, need to go DOWN
+									// MUST apply NEGATIVE voltage to decrease polarization
+									// Don't just subtract - ensure we're actually negative!
+									if a.isppCurrentVoltage > 0 {
+										// Current voltage is positive but we need negative
+										// Jump to negative side proportional to error
+										a.isppCurrentVoltage = -stepSize
+									} else {
+										// Already negative, make more negative
+										a.isppCurrentVoltage -= stepSize * 0.5
+									}
 								} else {
-									// Undershot - need more positive voltage to go up
-									a.isppCurrentVoltage += adjustment
+									// UNDERSHOT: We're BELOW target, need to go UP
+									// MUST apply POSITIVE voltage to increase polarization
+									if a.isppCurrentVoltage < 0 {
+										// Current voltage is negative but we need positive
+										// Jump to positive side proportional to error
+										a.isppCurrentVoltage = stepSize
+									} else {
+										// Already positive, make more positive
+										a.isppCurrentVoltage += stepSize * 0.5
+									}
 								}
 
 								// Clamp to reasonable range
