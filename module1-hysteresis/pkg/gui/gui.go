@@ -18,6 +18,8 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
+	"fecim-lattice-tools/module1-hysteresis/pkg/algo"
+	"fecim-lattice-tools/module1-hysteresis/pkg/controller"
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 	"fecim-lattice-tools/module1-hysteresis/pkg/gui/widgets"
 	"fecim-lattice-tools/shared/logging"
@@ -41,6 +43,10 @@ func abs(x int) int {
 type App struct {
 	fyneApp    fyne.App
 	mainWindow fyne.Window
+
+	// Core Logic Components (Refactoring)
+	calibManager    *algo.CalibrationManager
+	writeController *controller.WriteController
 
 	// Physics
 	material  *ferroelectric.HZOMaterial
@@ -156,36 +162,36 @@ type App struct {
 	isppHighVoltage      float64 // Upper bound voltage for bisection
 
 	// Temperature-aware calibration (v2)
-	calibrationTemp  float64                   // Temperature of current active calibration (K)
-	tempCalibrations map[int]*TempCalibration  // Cache of calibrations at key temperatures (key: temp in K)
+	calibrationTemp  float64                  // Temperature of current active calibration (K)
+	tempCalibrations map[int]*TempCalibration // Cache of calibrations at key temperatures (key: temp in K)
 
 	// UI components
-	plot           *widgets.PEPlot
-	levelIndicator *widgets.LevelIndicator
-	cellViz        *widgets.CellVisualizer
-	phaseIndicator *widgets.PhaseIndicator // State machine phase indicator (RESET|SETTLE|WRITE|READ|VERIFY)
-	eFieldSlider   *widget.Slider
-	eFieldLabel    *widget.Label
+	plot            *widgets.PEPlot
+	levelIndicator  *widgets.LevelIndicator
+	cellViz         *widgets.CellVisualizer
+	phaseIndicator  *widgets.PhaseIndicator // State machine phase indicator (RESET|SETTLE|WRITE|READ|VERIFY)
+	eFieldSlider    *widget.Slider
+	eFieldLabel     *widget.Label
 	eFieldModeLabel *widget.Label // Shows "MANUAL" or "AUTO" for slider control mode
-	pLabel         *widget.Label
-	levelLabel     *widget.Label
-	stateLabel     *widget.Label // State description (Negative P, Intermediate, Positive P)
-	materialBtn *widget.Button // Opens material picker, shows current material name
-	waveformSelect *widget.Select
-	statusLabel    *widget.Label
-	pauseBtn       *widget.Button
+	pLabel          *widget.Label
+	levelLabel      *widget.Label
+	stateLabel      *widget.Label  // State description (Negative P, Intermediate, Positive P)
+	materialBtn     *widget.Button // Opens material picker, shows current material name
+	waveformSelect  *widget.Select
+	statusLabel     *widget.Label
+	pauseBtn        *widget.Button
 
 	// Wake-up/Fatigue display labels (Dr. Tour recommendation)
-	cyclesLabel    *widget.Label
-	wakeupLabel    *widget.Label
-	fatigueLabel   *widget.Label
+	cyclesLabel     *widget.Label
+	wakeupLabel     *widget.Label
+	fatigueLabel    *widget.Label
 	cyclePhaseLabel *widget.Label // L01: Shows current phase (WAKE-UP, STABLE, FATIGUE)
 
 	// Temperature-dependent metrics labels
-	effEcLabel       *widget.Label
-	effPrLabel       *widget.Label
-	squarenessLabel  *widget.Label
-	switchedLabel    *widget.Label
+	effEcLabel      *widget.Label
+	effPrLabel      *widget.Label
+	squarenessLabel *widget.Label
+	switchedLabel   *widget.Label
 
 	// Levels selector
 	levelsEntry *widget.Entry
@@ -197,8 +203,8 @@ type App struct {
 	logText      *widget.Label
 	logEntries   []string
 	maxLogLines  int
-	lastLogPhase int  // Track phase changes to avoid duplicate logs
-	logVerbose   bool // M07: Toggle between verbose and compact log views
+	lastLogPhase int            // Track phase changes to avoid duplicate logs
+	logVerbose   bool           // M07: Toggle between verbose and compact log views
 	logToggleBtn *widget.Button // M07: Button to toggle log verbosity
 
 	// Simulation vs Experiment comparison widget (H16)
@@ -360,11 +366,17 @@ func NewApp() *App {
 	materials := ferroelectric.AllMaterials()
 
 	mat := materials[0]
-	numLevels := 30                                        // Default: FeCIM's 30 discrete analog states
-	preisachGridSize := 200                                 // High-resolution physics simulation (independent of quantization)
+	numLevels := 30         // Default: FeCIM's 30 discrete analog states
+	preisachGridSize := 200 // High-resolution physics simulation (independent of quantization)
 	preisach := ferroelectric.NewMayergoyzPreisach(mat, preisachGridSize)
 
+	// Refactoring: Initialize managers
+	calibManager := algo.NewCalibrationManager(numLevels)
+	writeController := controller.NewWriteController(numLevels, mat.Ec, mat.Ec*2.5, calibManager)
+
 	return &App{
+		calibManager:     calibManager,
+		writeController:  writeController,
 		material:         mat,
 		preisach:         preisach,
 		materials:        materials,
@@ -423,11 +435,17 @@ func NewAppWithMaterial(materialName string) *App {
 		matIndex = 0
 	}
 
-	numLevels := 30                                        // Default: FeCIM's 30 discrete analog states
-	preisachGridSize := 200                                 // High-resolution physics simulation (independent of quantization)
+	numLevels := 30         // Default: FeCIM's 30 discrete analog states
+	preisachGridSize := 200 // High-resolution physics simulation (independent of quantization)
 	preisach := ferroelectric.NewMayergoyzPreisach(mat, preisachGridSize)
 
+	// Refactoring: Initialize managers
+	calibManager := algo.NewCalibrationManager(numLevels)
+	writeController := controller.NewWriteController(numLevels, mat.Ec, mat.Ec*2.5, calibManager)
+
 	return &App{
+		calibManager:     calibManager,
+		writeController:  writeController,
 		material:         mat,
 		preisach:         preisach,
 		materials:        materials,
@@ -444,12 +462,12 @@ func NewAppWithMaterial(materialName string) *App {
 		frequency:        0.5,
 		paused:           false,
 		// Write/Read Demo fields initialized to defaults
-		wrdPhase:         0,
-		wrdTargetLevel:   15,
-		wrdStartLevel:    15,
-		wrdBitsStored:    4.91,
+		wrdPhase:          0,
+		wrdTargetLevel:    15,
+		wrdStartLevel:     15,
+		wrdBitsStored:     4.91,
 		manualTargetLevel: 15,
-		isppCalc:         physics.NewISPPCalculator(preisach.GetEffectiveEc(), numLevels),
+		isppCalc:          physics.NewISPPCalculator(preisach.GetEffectiveEc(), numLevels),
 	}
 }
 
@@ -559,9 +577,9 @@ func (a *App) createUI() fyne.CanvasObject {
 	simEc := a.preisach.GetEffectiveEc()
 	// Calculate squareness from model
 	a.preisach.Reset()
-	a.preisach.Update(simEc * 2)  // Saturate
+	a.preisach.Update(simEc * 2) // Saturate
 	psat := a.preisach.Polarization()
-	a.preisach.Update(0)          // Return to zero
+	a.preisach.Update(0) // Return to zero
 	pr := a.preisach.Polarization()
 	squareness := 0.0
 	if psat > 0 {
@@ -580,7 +598,7 @@ func (a *App) createUI() fyne.CanvasObject {
 	cellTitle.Alignment = fyne.TextAlignCenter
 
 	cellUnderline := canvas.NewRectangle(color.RGBA{0, 212, 255, 200}) // More opaque
-	cellUnderline.SetMinSize(fyne.NewSize(140, 3)) // Wider and thicker
+	cellUnderline.SetMinSize(fyne.NewSize(140, 3))                     // Wider and thicker
 
 	cellHeader := container.NewVBox(
 		container.NewCenter(cellTitle),

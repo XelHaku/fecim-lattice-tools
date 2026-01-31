@@ -2,6 +2,7 @@ package gui
 
 import (
 	"encoding/json"
+	"fecim-lattice-tools/module1-hysteresis/pkg/controller"
 	"fmt"
 	"math"
 	"math/rand"
@@ -15,26 +16,26 @@ import (
 
 // TempCalibration holds calibration data for a specific temperature
 type TempCalibration struct {
-	Temperature     float64   `json:"temperature_k"`     // Temperature in Kelvin
-	CalibrationUp   []float64 `json:"calibration_up"`    // Ascending calibration values
-	CalibrationDown []float64 `json:"calibration_down"`  // Descending calibration values
-	CalibUpLow      []float64 `json:"calib_up_low"`      // Binary search lower bounds (ascending)
-	CalibUpHigh     []float64 `json:"calib_up_high"`     // Binary search upper bounds (ascending)
-	CalibDownLow    []float64 `json:"calib_down_low"`    // Binary search lower bounds (descending)
-	CalibDownHigh   []float64 `json:"calib_down_high"`   // Binary search upper bounds (descending)
-	LastErrorUp     []int     `json:"last_error_up"`     // Last error for oscillation detection
-	LastErrorDown   []int     `json:"last_error_down"`   // Last error for oscillation detection
-	RelaxCompUp     []float64 `json:"relax_comp_up"`     // Relaxation compensation factors (ascending)
-	RelaxCompDown   []float64 `json:"relax_comp_down"`   // Relaxation compensation factors (descending)
+	Temperature     float64   `json:"temperature_k"`    // Temperature in Kelvin
+	CalibrationUp   []float64 `json:"calibration_up"`   // Ascending calibration values
+	CalibrationDown []float64 `json:"calibration_down"` // Descending calibration values
+	CalibUpLow      []float64 `json:"calib_up_low"`     // Binary search lower bounds (ascending)
+	CalibUpHigh     []float64 `json:"calib_up_high"`    // Binary search upper bounds (ascending)
+	CalibDownLow    []float64 `json:"calib_down_low"`   // Binary search lower bounds (descending)
+	CalibDownHigh   []float64 `json:"calib_down_high"`  // Binary search upper bounds (descending)
+	LastErrorUp     []int     `json:"last_error_up"`    // Last error for oscillation detection
+	LastErrorDown   []int     `json:"last_error_down"`  // Last error for oscillation detection
+	RelaxCompUp     []float64 `json:"relax_comp_up"`    // Relaxation compensation factors (ascending)
+	RelaxCompDown   []float64 `json:"relax_comp_down"`  // Relaxation compensation factors (descending)
 }
 
 // CalibrationData holds persistent calibration state (v2: multi-temperature support)
 type CalibrationData struct {
-	Version      int                        `json:"version"`       // Schema version (2 = multi-temp)
-	MaterialName string                     `json:"material_name"` // Material these calibrations are for
-	NumLevels    int                        `json:"num_levels"`    // Number of discrete levels
-	Calibrations map[int]*TempCalibration   `json:"calibrations"`  // Key: temperature in Kelvin (rounded)
-	SavedAt      string                     `json:"saved_at"`      // Timestamp
+	Version      int                      `json:"version"`       // Schema version (2 = multi-temp)
+	MaterialName string                   `json:"material_name"` // Material these calibrations are for
+	NumLevels    int                      `json:"num_levels"`    // Number of discrete levels
+	Calibrations map[int]*TempCalibration `json:"calibrations"`  // Key: temperature in Kelvin (rounded)
+	SavedAt      string                   `json:"saved_at"`      // Timestamp
 
 	// Legacy v1 fields (for migration, not used in v2)
 	CalibrationUp   []float64 `json:"calibration_up,omitempty"`
@@ -368,6 +369,20 @@ func (a *App) loadTempCalibration(cal *TempCalibration) {
 		}
 	}
 
+	// Sync to CalibrationManager (Refactoring)
+	if a.calibManager != nil {
+		a.calibManager.CalibrationUp = append([]float64(nil), a.calibrationUp...)
+		a.calibManager.CalibrationDown = append([]float64(nil), a.calibrationDown...)
+		a.calibManager.CalibUpLow = append([]float64(nil), a.calibUpLow...)
+		a.calibManager.CalibUpHigh = append([]float64(nil), a.calibUpHigh...)
+		a.calibManager.CalibDownLow = append([]float64(nil), a.calibDownLow...)
+		a.calibManager.CalibDownHigh = append([]float64(nil), a.calibDownHigh...)
+		a.calibManager.LastErrorUp = append([]int(nil), a.lastErrorUp...)
+		a.calibManager.LastErrorDown = append([]int(nil), a.lastErrorDown...)
+		a.calibManager.RelaxCompUp = append([]float64(nil), a.relaxCompUp...)
+		a.calibManager.RelaxCompDown = append([]float64(nil), a.relaxCompDown...)
+	}
+
 	a.calibrated = true
 
 	// Validate calibration quality
@@ -654,7 +669,7 @@ func (a *App) simulationLoop() {
 			// 2: WRITE - apply calibrated field toward target
 			// 3: HOLD_WRITE - return to zero, polarization persists at target
 			if a.manualAnimating {
-				Ec := mat.Ec // Use local copy for thread safety
+				Ec := mat.Ec     // Use local copy for thread safety
 				Emax := Ec * 1.5 // Match calibration saturation field
 				phaseDuration := 0.6 / a.frequency
 				rampRate := 4.0 * Emax * a.frequency
@@ -1006,505 +1021,76 @@ func (a *App) simulationLoop() {
 						a.wrdWriteStartP = a.polarization * 100 // Convert to µC/cm²
 						log.Printf("WRD PHASE 1→2: SETTLE done | E=%.3f MV/cm | P=%.2f µC/cm² | L=%d | ready to write target=%d",
 							a.electricField/1e8, a.wrdWriteStartP, a.discreteLevel+1, targetLevel)
+
+						// Initialize WriteController (Refactoring)
+						// Determine if fromSaturation: Level 1 or MaxLevel
+						currentLevel := a.discreteLevel + 1
+						fromSaturation := currentLevel <= 2 || currentLevel >= a.numLevels-1
+						a.writeController.Start(targetLevel, fromSaturation)
+
 						a.wrdPhase = 2
 						a.wrdPhaseTimer = 0
 					}
 
-				case 2: // WRITE - Constant Step ISPP with Proper Voltage Estimation
-					// ISPP (Incremental Step Pulse Programming) with constant step sizes.
-					// Key insight: Calibration data assumes starting from SATURATION.
-					// When recovering from overshoot, we're NOT at saturation, so we must
-					// estimate voltage based on level distance, not raw calibration values.
-					//
-					// Sub-phases: 0=APPLY, 1=WAIT, 2=VERIFY
-					wrdTargetIdx := targetLevel - 1
-					currentLevel := a.discreteLevel + 1 // 1-indexed
-					goingUp := targetLevel > currentLevel
-					levelDiff := int(math.Abs(float64(targetLevel - currentLevel)))
+				case 2: // WRITE - Delegated to WriteController
+					// Refactored to use pkg/controller/WriteController
+					// This consolidates Write, Wait, Verify, and Retry logic
 
-					// Initialize on first entry to WRITE phase (pulse count == 0)
-					if a.isppPulseCount == 0 {
-						var targetVoltage float64
+					currentLevel := a.discreteLevel + 1
+					targetField, done := a.writeController.Update(dt, a.electricField, currentLevel)
 
-						// Check if we came from saturation (normal path) or from overshoot recovery
-						fromSaturation := (goingUp && currentLevel <= 2) || (!goingUp && currentLevel >= a.numLevels-1)
-
-						if fromSaturation && wrdTargetIdx >= 0 && wrdTargetIdx < len(a.calibrationUp) {
-							// NORMAL PATH: Starting from saturation, use calibration directly
-							if goingUp {
-								targetVoltage = a.calibrationUp[wrdTargetIdx]
-							} else {
-								targetVoltage = a.calibrationDown[wrdTargetIdx]
-							}
-							log.Printf("ISPP FROM SATURATION: target=%d, current=%d, calibV=%.3f×Ec",
-								targetLevel, currentLevel, targetVoltage/Ec)
-						} else {
-							// OVERSHOOT RECOVERY: NOT at saturation, estimate voltage for level change
-							// CRITICAL: Voltage SIGN must match direction needed:
-							//   - To go UP (increase level): POSITIVE field required
-							//   - To go DOWN (decrease level): NEGATIVE field required
-							//
-							// Previous bug: scaling calibration values could produce wrong-sign voltages
-							voltagePerLevel := (2.0 * Ec) / float64(a.numLevels-1)
-
-							if goingUp {
-								// Going UP from mid-state: MUST use POSITIVE voltage
-								// Start with conservative estimate based on level distance
-								baseVoltage := voltagePerLevel * float64(levelDiff) * 1.3
-
-								// Refine with calibration if available
-								if a.calibrated && wrdTargetIdx >= 0 && wrdTargetIdx < len(a.calibrationUp) {
-									calibV := a.calibrationUp[wrdTargetIdx]
-									// Only use calibration if it's positive (correct direction)
-									if calibV > 0 {
-										// Scale by distance ratio but ensure we don't undershoot
-										scaleFactor := float64(levelDiff) / float64(targetLevel-1)
-										scaleFactor = math.Max(0.3, math.Min(scaleFactor, 1.2))
-										baseVoltage = calibV * scaleFactor
-									}
-								}
-
-								// ENSURE POSITIVE (physics requirement for going up)
-								targetVoltage = math.Abs(baseVoltage)
-								if targetVoltage < voltagePerLevel {
-									targetVoltage = voltagePerLevel * float64(levelDiff) // Minimum useful voltage
-								}
-								if targetVoltage > 1.8*Ec {
-									targetVoltage = 1.8 * Ec
-								}
-							} else {
-								// Going DOWN from mid-state: MUST use NEGATIVE voltage
-								// Start with conservative estimate based on level distance
-								baseVoltage := -voltagePerLevel * float64(levelDiff) * 1.3
-
-								// Refine with calibration if available
-								if a.calibrated && wrdTargetIdx >= 0 && wrdTargetIdx < len(a.calibrationDown) {
-									calibV := a.calibrationDown[wrdTargetIdx]
-									// Only use calibration if it's negative (correct direction)
-									if calibV < 0 {
-										// Scale by distance ratio
-										scaleFactor := float64(levelDiff) / float64(a.numLevels-targetLevel)
-										scaleFactor = math.Max(0.3, math.Min(scaleFactor, 1.2))
-										baseVoltage = calibV * scaleFactor
-									}
-								}
-
-								// ENSURE NEGATIVE (physics requirement for going down)
-								targetVoltage = -math.Abs(baseVoltage)
-								if targetVoltage > -voltagePerLevel {
-									targetVoltage = -voltagePerLevel * float64(levelDiff) // Minimum useful voltage
-								}
-								if targetVoltage < -1.8*Ec {
-									targetVoltage = -1.8 * Ec
-								}
-							}
-							log.Printf("ISPP MID-STATE RECOVERY: target=%d, current=%d, diff=%d, estV=%.3f×Ec, dir=%s",
-								targetLevel, currentLevel, levelDiff, targetVoltage/Ec, map[bool]string{true: "UP", false: "DOWN"}[goingUp])
-						}
-
-						// Fallback if voltage is still zero
-						if targetVoltage == 0 {
-							levelRatio := float64(targetLevel-1) / float64(a.numLevels-1)
-							targetVoltage = Ec * (levelRatio*4.4 - 2.2)
-						}
-
-						a.isppCurrentVoltage = targetVoltage
-						a.isppPulseCount = 1
-						a.isppPhase = 0 // APPLY
-						a.isppPhaseTimer = 0
-						a.isppLastVerifyLvl = currentLevel
-						a.isppEnabled = true
-
-						// Update ISPP widget with initial state
-						if a.isppWidget != nil {
-							a.isppWidget.SetAnimationState(a.isppPulseCount, targetLevel, currentLevel, a.isppCurrentVoltage/Ec, false)
-						}
-					}
-
-					// Sub-phase timing
-					pulseDur := phaseDuration * 0.08
-
-					a.isppPhaseTimer += dt
-
-					switch a.isppPhase {
-					case 0: // APPLY - ramp to target voltage
-						writeE := a.isppCurrentVoltage
-
-						// Ramp to pulse voltage
-						diff := writeE - a.electricField
-						step := rampRate * 1.5 * dt // Faster ramp
-						if math.Abs(diff) < step {
-							a.electricField = writeE
-						} else if diff > 0 {
-							a.electricField += step
-						} else {
-							a.electricField -= step
-						}
-
-						// Transition to WAIT when voltage reached
-						if a.isppPhaseTimer > pulseDur*0.4 && math.Abs(a.electricField-writeE) < 0.01*Emax {
-							a.isppPhase = 1 // WAIT
-							a.isppPhaseTimer = 0
-						}
-
-					case 1: // WAIT - hold for domain switching
-						if a.isppPhaseTimer > pulseDur*0.3 {
-							a.isppPhase = 2 // VERIFY
-							a.isppPhaseTimer = 0
-						}
-
-					case 2: // VERIFY - return to zero and check level
-						// Ramp back to zero for accurate level reading
-						step := rampRate * 1.5 * dt
-						if math.Abs(a.electricField) > step {
-							if a.electricField > 0 {
-								a.electricField -= step
-							} else {
-								a.electricField += step
-							}
-						} else {
-							a.electricField = 0
-						}
-
-						// Verify once field is at zero
-						if a.isppPhaseTimer > pulseDur*0.3 && math.Abs(a.electricField) < 0.01*Emax {
-							verifyLevel := a.discreteLevel + 1 // 1-indexed
-							levelError := verifyLevel - targetLevel
-
-							// Update ISPP widget
-							if a.isppWidget != nil {
-								isConverged := levelError == 0
-								a.isppWidget.SetAnimationState(a.isppPulseCount, targetLevel, verifyLevel, a.isppCurrentVoltage/Ec, isConverged)
-							}
-
-							if levelError == 0 {
-								// SUCCESS
-								log.Printf("WRITE SUCCESS: target=%d, verified=%d, voltage=%.3f×Ec, pulses=%d",
-									targetLevel, verifyLevel, a.isppCurrentVoltage/Ec, a.isppPulseCount)
-
-								a.isppTotalPulses += a.isppPulseCount
-								a.wrdWriteEndP = a.polarization * 100
-								a.wrdWriteEndLvl = verifyLevel
-								a.wrdWriteE = a.isppCurrentVoltage
-
-								// Reset for next write
-								a.isppPulseCount = 0
-								a.isppPhase = 0
-								a.wrdPhase = 3 // HOLD_WRITE
-								a.wrdPhaseTimer = 0
-
-							} else if a.isppPulseCount >= 5 {
-								// Give up after 5 attempts - let verification loop handle retry with RESET/BOOST
-								log.Printf("WRITE MAX ATTEMPTS: target=%d, verified=%d, err=%+d, pulses=%d",
-									targetLevel, verifyLevel, levelError, a.isppPulseCount)
-
-								a.isppTotalPulses += a.isppPulseCount
-								a.wrdWriteEndP = a.polarization * 100
-								a.wrdWriteEndLvl = verifyLevel
-								a.wrdWriteE = a.isppCurrentVoltage
-
-								// Reset for retry
-								a.isppPulseCount = 0
-								a.isppPhase = 0
-								a.wrdPhase = 3 // HOLD_WRITE - verification will trigger RESET/retry
-								a.wrdPhaseTimer = 0
-
-							} else {
-								// DIRECTION-AWARE ISPP: Ensure voltage sign matches required direction
-								// PHYSICS: To go UP (higher level) → positive field; To go DOWN → negative field
-								// The previous code just adjusted magnitude without ensuring correct polarity!
-								voltagePerLevel := (2.0 * Ec) / float64(a.numLevels-1)
-								absError := math.Abs(float64(levelError))
-
-								// Calculate step size with adaptive scaling
-								// Larger errors need bigger steps, but cap to prevent wild oscillation
-								stepSize := voltagePerLevel * math.Min(absError*0.8, 2.5)
-
-								if levelError > 0 {
-									// OVERSHOT: We're ABOVE target, need to go DOWN
-									// MUST apply NEGATIVE voltage to decrease polarization
-									// Don't just subtract - ensure we're actually negative!
-									if a.isppCurrentVoltage > 0 {
-										// Current voltage is positive but we need negative
-										// Jump to negative side proportional to error
-										a.isppCurrentVoltage = -stepSize
-									} else {
-										// Already negative, make more negative
-										a.isppCurrentVoltage -= stepSize * 0.5
-									}
-								} else {
-									// UNDERSHOT: We're BELOW target, need to go UP
-									// MUST apply POSITIVE voltage to increase polarization
-									if a.isppCurrentVoltage < 0 {
-										// Current voltage is negative but we need positive
-										// Jump to positive side proportional to error
-										a.isppCurrentVoltage = stepSize
-									} else {
-										// Already positive, make more positive
-										a.isppCurrentVoltage += stepSize * 0.5
-									}
-								}
-
-								// Clamp to reasonable range
-								if a.isppCurrentVoltage > 2.0*Ec {
-									a.isppCurrentVoltage = 2.0 * Ec
-								} else if a.isppCurrentVoltage < -2.0*Ec {
-									a.isppCurrentVoltage = -2.0 * Ec
-								}
-
-								log.Printf("ISPP STEP: target=%d, verified=%d, err=%+d, stepSize=%.3f×Ec, newV=%.3f×Ec, pulse=%d",
-									targetLevel, verifyLevel, levelError, stepSize/Ec, a.isppCurrentVoltage/Ec, a.isppPulseCount+1)
-
-								a.isppPulseCount++
-								a.isppPhase = 0 // Try again with adjusted voltage
-								a.isppPhaseTimer = 0
-
-								// Update widget
-								if a.isppWidget != nil {
-									a.isppWidget.SetAnimationState(a.isppPulseCount, targetLevel, verifyLevel, a.isppCurrentVoltage/Ec, false)
-								}
-							}
-							a.isppLastVerifyLvl = verifyLevel
-						}
-					}
-
-				case 3: // HOLD_WRITE - return to zero, polarization persists
-					step := rampRate * dt
-					if math.Abs(a.electricField) < step {
-						a.electricField = 0
-					} else if a.electricField > 0 {
-						a.electricField -= step
-					} else {
-						a.electricField += step
-					}
-
-					// Transition to READ phase
-					if a.wrdPhaseTimer > phaseDuration*0.2 && math.Abs(a.electricField) < 0.01*Emax {
-						// Capture start-of-READ state for logging
-						a.wrdReadStartP = a.polarization * 100 // Convert to µC/cm²
-						log.Printf("WRD PHASE 3→4: HOLD done | E=%.3f MV/cm | P=%.2f µC/cm² | L=%d | ready to read",
-							a.electricField/1e8, a.wrdReadStartP, a.discreteLevel+1)
-						a.wrdPhase = 4
-						a.wrdPhaseTimer = 0
-					}
-
-				case 4: // READ phase - verify at zero field (no sense pulse)
-					// CRITICAL FIX: For stable verification of boundary states, don't apply ANY
-					// read pulse. Any non-zero field can disturb polarization at level boundaries,
-					// causing the quantization to flip between adjacent levels.
-					//
-					// Real ferroelectric sensing uses capacitance or current measurement,
-					// not field application. For simulation, just verify at E=0.
-					readE := 0.0 // No read pulse - verify at zero field
-					step := rampRate * 0.4 * dt
-					diff := readE - a.electricField
+					// Apply Voltage Ramp (Controller outputs target, Simulation handles physics ramp)
+					step := rampRate * 1.5 * dt // Faster ramp for write pulses
+					diff := targetField - a.electricField
 					if math.Abs(diff) < step {
-						a.electricField = readE
+						a.electricField = targetField
 					} else if diff > 0 {
 						a.electricField += step
 					} else {
 						a.electricField -= step
 					}
-					// Capture read level and VERIFY
-					if a.wrdPhaseTimer > phaseDuration*0.3 {
-						a.wrdReadLevel = a.discreteLevel + 1
-						levelError := a.wrdReadLevel - a.wrdTargetLevel
 
-						// BOUNDARY OSCILLATION FIX: After many retries with ±1 error, accept it
-						// This handles cases where polarization lands exactly at a level boundary
-						// and tiny perturbations cause the quantization to flip between adjacent levels.
-						// After 10 retries with consistent ±1 error, treat it as success.
-						boundaryTolerance := a.wrdRetryCount >= 10 && math.Abs(float64(levelError)) == 1
-						success := levelError == 0 || boundaryTolerance
-
-						if boundaryTolerance && levelError != 0 {
-							log.Printf("WRD BOUNDARY ACCEPT: L_read=%d L_target=%d err=%+d | accepting ±1 after %d retries",
-								a.wrdReadLevel, a.wrdTargetLevel, levelError, a.wrdRetryCount)
-						}
-
-						// WRITE-VERIFY-RETRY LOOP
-						if success {
+					if done {
+						switch a.writeController.State {
+						case controller.StateSuccess:
 							// SUCCESS: Proceed to DISPLAY phase
 							a.wrdPhase = 5
 							a.wrdPhaseTimer = 0
 
-							// Track metrics - 100% success rate guaranteed
+							// Logging and Metrics
 							a.wrdTotalWrites++
 							a.wrdSuccessWrites++
 							successRate := float64(a.wrdSuccessWrites) / float64(a.wrdTotalWrites) * 100
 
-							// Track ISPP statistics (H14) - use actual ISPP pulse count
-							if a.isppWidget != nil {
-								// Use isppTotalPulses which tracks actual ISPP pulses across all retries
-								pulsesUsed := a.isppTotalPulses
-								if pulsesUsed == 0 {
-									pulsesUsed = 1 // At minimum 1 pulse was used
-								}
-								hadOvershoot := a.wrdRetryCount > 0
-								a.isppWidget.RecordWrite(a.wrdTargetLevel, pulsesUsed, true, hadOvershoot)
-							}
+							log.Printf("WRD SUCCESS via Controller: target=%d, tries=%d", targetLevel, a.writeController.RetryCount)
 
-							// Reset ISPP total pulses for next write target
-							a.isppTotalPulses = 0
+							// Log result (replaces Case 4 success log)
+							log.Printf("WRD PHASE 4→5: TARGET HIT | L_read=%d L_target=%d | rate=%.1f%% (%d/%d)",
+								a.writeController.LastVerifyLevel, targetLevel,
+								successRate, a.wrdSuccessWrites, a.wrdTotalWrites)
 
-							if a.wrdRetryCount > 0 {
-								log.Printf("WRD PHASE 4→5: TARGET HIT after %d retries | L_read=%d L_target=%d | rate=%.1f%% (%d/%d)",
-									a.wrdRetryCount, a.wrdReadLevel, a.wrdTargetLevel,
-									successRate, a.wrdSuccessWrites, a.wrdTotalWrites)
-							} else {
-								log.Printf("WRD PHASE 4→5: TARGET HIT (1st try) | L_read=%d L_target=%d | rate=%.1f%% (%d/%d)",
-									a.wrdReadLevel, a.wrdTargetLevel,
-									successRate, a.wrdSuccessWrites, a.wrdTotalWrites)
-							}
+						case controller.StateForceReset:
+							// RETRY LIMIT: Trigger Full Reset
+							log.Printf("WRD RETRY LIMIT: Full RESET to saturation (retry %d)", a.writeController.RetryCount)
+							a.wrdPhase = 0 // RESET phase
+							a.wrdPhaseTimer = 0
 
-							// Reset retry count for next target
-							a.wrdRetryCount = 0
-
-							// Add accumulated energy for this cycle
-							a.wrdTotalEnergyfJ += a.wrdCycleEnergy
-							a.wrdCycleEnergy = 0
-
-							// Log this cycle for debugging
-							if a.wrdDebugLog != nil {
-								cycle := WriteReadCycle{
-									CycleNum:    len(a.wrdDebugLog.Cycles) + 1,
-									TargetLevel: a.wrdTargetLevel,
-									StartLevel:  a.wrdStartLevel,
-									ReadLevel:   a.wrdReadLevel,
-									Success:     true, // Always true now - we only get here on success
-									Phases: []WriteReadPhase{
-										{
-											Phase:      "RESET",
-											EFieldPeak: a.wrdSaturateE / 1e8,
-											PStart:     a.wrdResetStartP,
-											PEnd:       a.wrdResetEndP,
-											LevelStart: a.wrdStartLevel,
-											LevelEnd:   a.wrdResetEndLvl,
-										},
-										{
-											Phase:      "WRITE",
-											EFieldPeak: a.wrdWriteE / 1e8,
-											PStart:     a.wrdWriteStartP,
-											PEnd:       a.wrdWriteEndP,
-											LevelStart: a.wrdResetEndLvl,
-											LevelEnd:   a.wrdWriteEndLvl,
-										},
-										{
-											Phase:      "READ",
-											EFieldPeak: readE / 1e8,
-											PStart:     a.wrdReadStartP,
-											PEnd:       a.wrdReadStartP,
-											LevelStart: a.wrdWriteEndLvl,
-											LevelEnd:   a.wrdReadLevel,
-										},
-									},
-								}
-								a.wrdDebugLog.Cycles = append(a.wrdDebugLog.Cycles, cycle)
-
-								if len(a.wrdDebugLog.Cycles) > 100 {
-									a.wrdDebugLog.Cycles = a.wrdDebugLog.Cycles[len(a.wrdDebugLog.Cycles)-100:]
-								}
-
-								if len(a.wrdDebugLog.Cycles)%5 == 0 {
-									go a.saveDebugLog()
-								}
-							}
-						} else {
-							// FAILED: Update calibration and RETRY
-							a.wrdRetryCount++
-
-							// MAX RETRY LIMIT: Prevent infinite loops on difficult targets
-							if a.wrdRetryCount > maxWrdRetries {
-								log.Printf("WRD MAX RETRIES: giving up on target=%d after %d retries, accepting level=%d",
-									a.wrdTargetLevel, a.wrdRetryCount, a.wrdReadLevel)
-
-								// Accept current level and move on (partial success)
-								a.wrdPhase = 5 // Go to DISPLAY
-								a.wrdPhaseTimer = 0
-								a.wrdRetryCount = 0
-								a.isppTotalPulses = 0
-
-								// Reset ISPP oscillation tracking
-								a.isppLastError = 0
-								a.isppOscillationCount = 0
-								a.isppUseBisection = false
-								a.isppReversedOnce = false
-
-								// Track as partial success in stats
-								a.wrdTotalWrites++
-
-								// Record in ISPP widget as failed attempt
-								if a.isppWidget != nil {
-									a.isppWidget.RecordWrite(a.wrdTargetLevel, maxWrdRetries*a.isppMaxPulses, false, true)
-								}
-
-								break // Exit early from case 4
-							}
-
-							// Determine if overshoot or undershoot based on direction
-							// goingUp: positive field, higher levels
-							// goingDown: negative field, lower levels
-							goingUp := a.wrdTargetLevel > midLevel
-
-							// Undershoot: didn't apply enough field, might continue without reset
-							// Overshoot: went past target, MUST reset (hysteresis is path-dependent)
-							var isUndershoot bool
-							if goingUp {
-								// Going up (positive field): undershoot means read < target (levelError < 0)
-								isUndershoot = levelError < 0
-							} else {
-								// Going down (negative field): undershoot means read > target (levelError > 0)
-								isUndershoot = levelError > 0
-							}
-
-							// PHYSICS: Never reset for undershoots - just apply more field (BOOST)
-							// UNDERSHOOT = didn't apply enough field yet → apply BOOST (more field same direction)
-							// OVERSHOOT = went past target → MUST reset due to hysteresis path-dependence
-							canSkipReset := isUndershoot  // Never reset for undershoots, just BOOST with more field
-
-							if canSkipReset {
-								log.Printf("WRD VERIFY UNDERSHOOT: L_read=%d L_target=%d err=%+d | RETRY #%d (skip RESET, apply BOOST)",
-									a.wrdReadLevel, a.wrdTargetLevel, levelError, a.wrdRetryCount)
-							} else {
-								log.Printf("WRD VERIFY OVERSHOOT: L_read=%d L_target=%d err=%+d | RETRY #%d (must RESET)",
-									a.wrdReadLevel, a.wrdTargetLevel, levelError, a.wrdRetryCount)
-							}
-
-							// Update calibration BEFORE retry to converge on correct field
-							targetIdx := a.wrdTargetLevel - 1
-							if a.calibrated && targetIdx >= 0 && targetIdx < len(a.calibrationUp) {
-								if goingUp {
-									a.updateCalibrationUp(targetIdx, levelError, Ec)
-								} else {
-									a.updateCalibrationDown(targetIdx, levelError, Ec)
-								}
-							}
-
-							// NOTE: Don't clear history - let spike detection in plot handle discontinuities
-							// This allows the full hysteresis loop to build up over time
-
-							if canSkipReset {
-								// SMALL UNDERSHOOT: Skip RESET, use BOOST phase (phase 6)
-								// We're still on the same branch of the hysteresis loop
-								a.wrdWriteStartP = a.polarization * 100
-								a.wrdResetEndLvl = 0 // Mark that we skipped RESET (used by WRITE phase)
-								a.wrdPhase = 6       // BOOST phase (undershoot retry)
-								a.wrdPhaseTimer = 0
-							} else {
-								// OVERSHOOT: Use ISPP in opposite direction to come back
-								// Reset ISPP state so it reinitializes with voltage estimation
-								// based on current level (not saturation calibration)
-								log.Printf("WRD VERIFY OVERSHOOT RECOVERY: reinit ISPP from L=%d to target=%d",
-									a.discreteLevel+1, targetLevel)
-								a.wrdWriteStartP = a.polarization * 100
-								a.isppPulseCount = 0 // Reset so ISPP reinitializes with proper voltage
-								a.isppPhase = 0
-								a.wrdPhase = 2 // Go back to WRITE phase with ISPP
-								a.wrdPhaseTimer = 0
-							}
+						case controller.StateFailed:
+							// Generic failure (shouldn't happen with infinite retries enabled, but just in case)
+							log.Printf("WRD FAILED: Controller gave up on target %d", targetLevel)
+							a.wrdPhase = 5 // Display anyway
+							a.wrdPhaseTimer = 0
+							a.wrdTotalWrites++ // Count as attempt
 						}
 					}
 
+					// Cases 3 (HOLD) and 4 (VERIFY) are now internal to the Controller
+					// We stay in Case 2 until 'done' is true.
+
+				case 3, 4:
+					// Legacy states - should not be reached with new controller
+					// Jump to 2 just in case
+					a.wrdPhase = 2
 				case 5: // DISPLAY phase - return to zero, show result
 					step := rampRate * 0.4 * dt
 					if math.Abs(a.electricField) < step {
@@ -1523,8 +1109,8 @@ func (a *App) simulationLoop() {
 						if a.wrdTotalWrites > 0 && a.wrdTotalWrites%5 == 0 {
 							fecimEnergy := a.wrdTotalEnergyfJ / 1000 // pJ
 							// NOTE: 10M× is Dr. Tour's unverified claim. Peer-reviewed: 25-100× (Samsung Nature 2025)
-							nandEquiv := fecimEnergy * 50            // 25-100× better (conservative: use 50)
-							dramEquiv := fecimEnergy * 1000          // 1000× worse
+							nandEquiv := fecimEnergy * 50   // 25-100× better (conservative: use 50)
+							dramEquiv := fecimEnergy * 1000 // 1000× worse
 							bitsStored := float64(a.wrdTotalWrites) * 4.91
 							a.addLogEntry("━━ ENERGY COMPARISON ━━")
 							a.addLogEntry(fmt.Sprintf("FeCIM: %.0f pJ total", fecimEnergy))
@@ -1580,8 +1166,8 @@ func (a *App) simulationLoop() {
 						// Skip RESET phase - go directly to WRITE with ISPP
 						a.wrdPhase = 2
 						a.wrdPhaseTimer = 0
-						a.wrdCycleEnergy = 0    // Reset energy accumulator for next cycle
-						a.isppTotalPulses = 0   // Reset ISPP pulse counter for next target
+						a.wrdCycleEnergy = 0  // Reset energy accumulator for next cycle
+						a.isppTotalPulses = 0 // Reset ISPP pulse counter for next target
 
 						// Reset ISPP widget to idle state for new target
 						if a.isppWidget != nil {
@@ -1589,69 +1175,18 @@ func (a *App) simulationLoop() {
 						}
 					}
 
-				case 6: // BOOST phase - undershoot retry with progressive voltage
-					// BOOST handles undershoots by applying voltage proportional to the
-					// level difference needed, NOT using calibration (which assumes saturation).
-					//
-					// CRITICAL FIX: On minor loops, polarization is MUCH harder to change.
-					// Use retry count to progressively increase voltage when stuck.
-					currentLevel := a.discreteLevel + 1
-					levelDiff := targetLevel - currentLevel
-					absDiff := int(math.Abs(float64(levelDiff)))
-
-					// Progressive voltage based on retry count (key fix for stuck states)
-					// Each retry increases the base voltage to overcome minor loop stiffness
-					voltagePerLevel := (2.0 * Ec) / float64(a.numLevels-1)
-					retryBoost := 0.1 * Ec * float64(a.wrdRetryCount) // +0.1×Ec per retry
-					minBoost := 0.5*Ec + retryBoost                   // Increases with retries
-					scaledBoost := voltagePerLevel * float64(absDiff) * 1.5
-
-					var writeE float64
-					if levelDiff > 0 {
-						// Undershoot going up: need positive voltage
-						writeE = minBoost + scaledBoost
-						if writeE > 2.0*Ec {
-							writeE = 2.0 * Ec // Allow up to 2×Ec for stubborn states
-						}
-					} else {
-						// Undershoot going down: need negative voltage
-						writeE = -(minBoost + scaledBoost)
-						if writeE < -2.0*Ec {
-							writeE = -2.0 * Ec
-						}
-					}
-
-					a.wrdWriteE = writeE
-
-					// Ramp to write field
-					diff := writeE - a.electricField
-					step := rampRate * dt
-					if math.Abs(diff) < step {
-						a.electricField = writeE
-					} else if diff > 0 {
-						a.electricField += step
-					} else {
-						a.electricField -= step
-					}
-
-					// Transition to HOLD phase when field applied
-					if a.wrdPhaseTimer > phaseDuration*0.25 && math.Abs(a.electricField-writeE) < 0.01*Emax {
-						a.wrdWriteEndP = a.polarization * 100
-						a.wrdWriteEndLvl = a.discreteLevel + 1
-						log.Printf("BOOST: L=%d→%d (diff=%d), V=%.2f×Ec (retry=%d), P=%.2f→%.2f µC/cm²",
-							currentLevel, a.wrdWriteEndLvl, levelDiff, writeE/Ec, a.wrdRetryCount, a.wrdWriteStartP, a.wrdWriteEndP)
-						a.wrdPhase = 3 // Go to HOLD phase
-						a.wrdPhaseTimer = 0
-					}
+				case 6: // Legacy BOOST phase - redirect to Controller
+					// The generic WriteController handles retries/boost internally or via re-entry to Case 2
+					a.wrdPhase = 2
 				}
 			case WaveformTimeResolved:
 				// Time-resolved switching dynamics visualization
 				// Shows KAI (Kolmogorov-Avrami-Ishibashi) stretched exponential switching
 				if !a.timeResAnimating {
 					// Start new animation - simulate domain switching dynamics
-					Eapplied := 2.0 * a.material.Ec       // Write pulse at 2×Ec
-					duration := 100e-9         // 100 nanoseconds
-					steps := 100               // 100 time points
+					Eapplied := 2.0 * a.material.Ec // Write pulse at 2×Ec
+					duration := 100e-9              // 100 nanoseconds
+					steps := 100                    // 100 time points
 
 					times, pols, switched := a.preisach.SimulateDomainSwitching(Eapplied, duration, steps)
 
@@ -1755,7 +1290,7 @@ func (a *App) simulationLoop() {
 			if cellVolume <= 0 {
 				cellVolume = 2e-22 // Default: 100nm x 100nm x 20nm
 			}
-			energyJ := math.Abs(a.electricField * deltaP) * cellVolume
+			energyJ := math.Abs(a.electricField*deltaP) * cellVolume
 			energyfJ := energyJ * 1e15 // Convert J to fJ
 			a.wrdCycleEnergy += energyfJ
 		}
@@ -2102,8 +1637,8 @@ func (a *App) updateUI(eField, pol float64, level int, materialEc float64, eHist
 		if currentWaveform == WaveformWriteReadDemo {
 			// Show target until point SETTLES at target level (not just crosses it)
 			// Settled = level matches target AND E-field is near zero
-			atTarget := (level + 1) == currentWrdTarget // level is 0-indexed, target is 1-indexed
-			eFieldSettled := math.Abs(eField) < 0.01*materialEc // E-field near zero (1% of Ec)
+			atTarget := (level + 1) == currentWrdTarget                  // level is 0-indexed, target is 1-indexed
+			eFieldSettled := math.Abs(eField) < 0.01*materialEc          // E-field near zero (1% of Ec)
 			settled := atTarget && eFieldSettled && currentWrdPhase >= 3 // Must be past WRITE phase
 
 			// Keep highlight on during active phases OR until settled at target
@@ -2322,7 +1857,7 @@ func (a *App) calibrateLevels() {
 		initialGuess := Ec * (0.8 + ratio*1.2) // Range: 0.8*Ec to 2.0*Ec
 
 		// Binary search to find exact field - use full bounds range
-		lowE := Ec * 0.3  // Match initialized bounds for full coverage
+		lowE := Ec * 0.3 // Match initialized bounds for full coverage
 		highE := Emax
 		bestE := initialGuess
 		bestDiff := numLevels // Start with worst case
@@ -2454,6 +1989,22 @@ func (a *App) calibrateLevels() {
 	a.preisach.Reset()
 	a.electricField = 0
 	a.polarization = 0
+
+	// Sync to CalibrationManager (Refactoring)
+	if a.calibManager != nil {
+		a.calibManager.CalibrationUp = append([]float64(nil), a.calibrationUp...)
+		a.calibManager.CalibrationDown = append([]float64(nil), a.calibrationDown...)
+		a.calibManager.CalibUpLow = append([]float64(nil), a.calibUpLow...)
+		a.calibManager.CalibUpHigh = append([]float64(nil), a.calibUpHigh...)
+		a.calibManager.CalibDownLow = append([]float64(nil), a.calibDownLow...)
+		a.calibManager.CalibDownHigh = append([]float64(nil), a.calibDownHigh...)
+		// LastError and RelaxComp reset during calibration usually, so copying current state (likely zeros) is fine
+		a.calibManager.LastErrorUp = append([]int(nil), a.lastErrorUp...)
+		a.calibManager.LastErrorDown = append([]int(nil), a.lastErrorDown...)
+		a.calibManager.RelaxCompUp = append([]float64(nil), a.relaxCompUp...)
+		a.calibManager.RelaxCompDown = append([]float64(nil), a.relaxCompDown...)
+	}
+
 	a.calibrated = true
 }
 
@@ -2541,8 +2092,8 @@ func (a *App) updateCalibrationUp(targetIdx int, levelError int, Ec float64) {
 
 	// Soft constraints: guide towards reasonable range but don't hard-clamp
 	// This allows the binary search to explore beyond if physics requires it
-	minE := Ec * 0.3  // Absolute minimum: 0.3×Ec
-	maxE := Ec * 2.5  // Absolute maximum: 2.5×Ec
+	minE := Ec * 0.3 // Absolute minimum: 0.3×Ec
+	maxE := Ec * 2.5 // Absolute maximum: 2.5×Ec
 
 	if newVal < minE {
 		newVal = minE
