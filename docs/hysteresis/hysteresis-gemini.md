@@ -234,9 +234,9 @@ This creates the "Analog Levels." The nonlinearity ($\gamma_G$) of this mapping 
 ### 6. Cryogenic Performance (4K to 77K)
 
 *   **Wake-up Suppression:** At 4K, oxygen vacancy diffusion is frozen, suppressing "wake-up" effects. The simulation should model a "pristine" but stable state for cryogenic operations.
-*   **Remnant Polarization:** Increases by ~23% at 77K due to stabilization of the orthorhombic phase.
+*   **Remnant Polarization:** Increases by ~23% at 77K due to stabilization of orthorhombic phase.
 
-### 4. Critical "Bugs" to Avoid in Implementation
+### 7. Critical "Bugs" to Avoid in Implementation
 
 1.  **V vs E:** Ensure strict unit casting. $V_c \approx 1.0 V$ corresponds to $E_c \approx 1.0 MV/cm$ only if film thickness is exactly 10nm. $E = V/d$.
 2.  **Simplified Preisach:** Do not use a simple "clamping" model. You **must** implement the Stack/Wipe-Out logic, or minor loops will drift during read operations.
