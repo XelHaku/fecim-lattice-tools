@@ -44,7 +44,7 @@ func NewLKSolver() *LKSolver {
 		Stress: 1.0e9, // 1 GPa
 
 		// Depolarization for Polycrystalline Analog Behavior
-		K_dep: 1.5e9, // V*m/C - Creates slanted loop for 30-level operation (increased from 2.5e8)
+		K_dep: 2.5e8, // V*m/C - Default value (matches physics.yaml, within recommended 1-5×10⁸ range)
 
 		UseNLS:      true,
 		ActivationE: 0.7,
@@ -76,6 +76,20 @@ func (s *LKSolver) UpdateParams() {
 	alphaMech := 2 * s.Q12 * s.Stress
 
 	s.Alpha = alphaT - alphaMech
+}
+
+// ConfigureFromMaterial updates solver parameters from HZOMaterial.
+// This should be called after NewLKSolver() to override defaults with material-specific values.
+// Critical for ensuring the depolarization field (K_dep) matches the material configuration.
+func (s *LKSolver) ConfigureFromMaterial(mat *HZOMaterial) {
+	if mat.K_dep > 0 {
+		s.K_dep = mat.K_dep
+		// Debug logging to confirm configuration
+		matLog.Input("ConfigureFromMaterial", map[string]interface{}{
+			"K_dep": mat.K_dep,
+		})
+	}
+	// Future: Also load Beta, Gamma, Q12, stress, and other material-specific Landau params
 }
 
 // dPdT is the Master Differential Equation with Depolarization:

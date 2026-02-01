@@ -57,6 +57,7 @@ func NewEmbeddedApp() *EmbeddedApp {
 	
 	// Initialize L-K Solver and Adaptive ISPP
 	app.lkSolver = physics.NewLKSolver()
+	app.lkSolver.ConfigureFromMaterial(mat) // Load material-specific params (K_dep, etc.)
 	app.adaptiveISPP = physics.NewAdaptiveISPP(app.lkSolver, mat)
 
 	return &EmbeddedApp{App: app}
