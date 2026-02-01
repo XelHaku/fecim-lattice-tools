@@ -160,16 +160,12 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			wc.State = StateApply
 			wc.PhaseTimer = 0
 			// Back off CurrentField for next try
-			// We overshot, so reduce the drive magnitude
-			if goingUp {
-				// Was positive, make less positive
-				wc.CurrentField *= 0.8
-			} else {
-				// Was negative, make less negative
-				wc.CurrentField *= 0.8
-			}
+			// We overshot, which means the previous field was too strong.
+			// Instead of just reducing, we reset to 0 to be safe and let servo creep up again.
+			wc.CurrentField = 0
+			
 			// CRITICAL: Dampen step modifier to prevent immediate re-overshoot
-			wc.StepModifier = 0.2
+			wc.StepModifier = 0.1
 			wc.PulseCount++
 			log.Printf("ISPP RESET DONE. Retrying with E=%.3f, dampening servo", wc.CurrentField)
 		}
