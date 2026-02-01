@@ -58,6 +58,9 @@ type HZOMaterial struct {
 	Ea    float64 // Activation energy for switching (eV)
 	Alpha float64 // Switching exponent (KAI model)
 
+	// Depolarization (Polycrystalline Analog Behavior)
+	K_dep float64 // Depolarization coefficient (V*m/C) - creates "slant" for 30-level operation
+
 	// Temperature properties
 	CurieTemp   float64 // Curie temperature (K)
 	TempCoeffEc float64 // Temperature coefficient of Ec (V/m/K)
@@ -207,8 +210,8 @@ func FeCIMMaterial() *HZOMaterial {
 		CurieTemp:       723,
 		TempCoeffEc:     -1.8e5,
 		TempCoeffPr:     -4e-5,
-		EnduranceCycles: 1e9,  // 10^9 DEMONSTRATED (10^12 is TARGET)
-		RetentionTime:   1e7,  // 10^7 sec (~116 days) DEMONSTRATED
+		EnduranceCycles: 1e9, // 10^9 DEMONSTRATED (10^12 is TARGET)
+		RetentionTime:   1e7, // 10^7 sec (~116 days) DEMONSTRATED
 		ImrintField:     1e6,
 		NumLevels:       30,     // 30 discrete analog states - VERIFIED
 		Tau0NLS:         1e-10,  // 100 ps attempt time
@@ -243,15 +246,15 @@ func FeCIMMaterialTarget() *HZOMaterial {
 func CryogenicHZO() *HZOMaterial {
 	return &HZOMaterial{
 		Name:            "Cryogenic HZO (4K)",
-		Pr:              75e-2,   // 75 µC/cm² at 4K - RECORD (enhanced from RT!)
-		Ps:              80e-2,   // 80 µC/cm²
-		Ec:              1.5e8,   // 1.5 MV/cm (higher Ec at cryo)
-		Epsilon:         28,      // Slightly reduced at cryo
+		Pr:              75e-2, // 75 µC/cm² at 4K - RECORD (enhanced from RT!)
+		Ps:              80e-2, // 80 µC/cm²
+		Ec:              1.5e8, // 1.5 MV/cm (higher Ec at cryo)
+		Epsilon:         28,    // Slightly reduced at cryo
 		EpsilonLF:       35,
-		LossAngle:       0.008,   // Lower loss at cryo
+		LossAngle:       0.008, // Lower loss at cryo
 		Thickness:       10e-9,
 		Area:            100e-12,
-		Tau:             1e-9,    // ~1 ns maintained
+		Tau:             1e-9, // ~1 ns maintained
 		Tau0:            1e-13,
 		Ea:              0.7,
 		Alpha:           2.0,
@@ -276,29 +279,29 @@ func CryogenicHZO() *HZOMaterial {
 func HZOStandard32() *HZOMaterial {
 	return &HZOMaterial{
 		Name:            "HZO Standard (32 states)",
-		Pr:              20e-2,   // 20 µC/cm²
-		Ps:              25e-2,   // 25 µC/cm²
-		Ec:              1.0e8,   // 1.0 MV/cm
+		Pr:              20e-2, // 20 µC/cm²
+		Ps:              25e-2, // 25 µC/cm²
+		Ec:              1.0e8, // 1.0 MV/cm
 		Epsilon:         28,
 		EpsilonLF:       35,
 		LossAngle:       0.02,
 		Thickness:       10e-9,
 		Area:            100e-12,
-		Tau:             10e-9,   // 10 ns
+		Tau:             10e-9, // 10 ns
 		Tau0:            1e-13,
 		Ea:              0.7,
 		Alpha:           2.0,
 		CurieTemp:       723,
 		TempCoeffEc:     -2e5,
 		TempCoeffPr:     -5e-5,
-		EnduranceCycles: 1e8,     // 10^8 cycles (2017 era)
-		RetentionTime:   3.15e8,  // 10 years projected
+		EnduranceCycles: 1e8,    // 10^8 cycles (2017 era)
+		RetentionTime:   3.15e8, // 10 years projected
 		ImrintField:     1e6,
-		NumLevels:       32,      // 32 states - VERIFIED (Oh et al. 2017)
-		Tau0NLS:         1e-10,   // 100 ps attempt time
-		EaNLS:           12e8,    // 12 MV/cm activation field
-		Gmin:            2e-6,    // 2 µS at HRS (2017 era device)
-		Gmax:            80e-6,   // 80 µS at LRS, ~40x on/off ratio
+		NumLevels:       32,    // 32 states - VERIFIED (Oh et al. 2017)
+		Tau0NLS:         1e-10, // 100 ps attempt time
+		EaNLS:           12e8,  // 12 MV/cm activation field
+		Gmin:            2e-6,  // 2 µS at HRS (2017 era device)
+		Gmax:            80e-6, // 80 µS at LRS, ~40x on/off ratio
 	}
 }
 
@@ -310,29 +313,29 @@ func HZOStandard32() *HZOMaterial {
 func HZOFJT140() *HZOMaterial {
 	return &HZOMaterial{
 		Name:            "HZO FTJ (140 states)",
-		Pr:              25e-2,   // 25 µC/cm²
-		Ps:              30e-2,   // 30 µC/cm²
-		Ec:              1.2e8,   // 1.2 MV/cm
+		Pr:              25e-2, // 25 µC/cm²
+		Ps:              30e-2, // 30 µC/cm²
+		Ec:              1.2e8, // 1.2 MV/cm
 		Epsilon:         30,
 		EpsilonLF:       40,
 		LossAngle:       0.015,
-		Thickness:       4.5e-9,  // 4.5 nm - ULTRATHIN for tunneling
+		Thickness:       4.5e-9, // 4.5 nm - ULTRATHIN for tunneling
 		Area:            100e-12,
-		Tau:             20e-9,   // 20 ns switching
+		Tau:             20e-9, // 20 ns switching
 		Tau0:            1e-13,
-		Ea:              0.5,     // Lower barrier for tunneling
+		Ea:              0.5, // Lower barrier for tunneling
 		Alpha:           2.0,
 		CurieTemp:       723,
 		TempCoeffEc:     -2e5,
 		TempCoeffPr:     -5e-5,
-		EnduranceCycles: 1e7,     // 10^7 cycles demonstrated
-		RetentionTime:   3.15e8,  // 10 years extrapolated
+		EnduranceCycles: 1e7,    // 10^7 cycles demonstrated
+		RetentionTime:   3.15e8, // 10 years extrapolated
 		ImrintField:     1e6,
-		NumLevels:       140,     // 140 states - VERIFIED (Song et al. 2024)
-		Tau0NLS:         2e-10,   // 200 ps (FTJ tunneling)
-		EaNLS:           10e8,    // 10 MV/cm
-		Gmin:            0.1e-6,  // 0.1 µS at HRS (FTJ: tunneling → lower current)
-		Gmax:            10e-6,   // 10 µS at LRS (FTJ: ~100x on/off but lower absolute)
+		NumLevels:       140,    // 140 states - VERIFIED (Song et al. 2024)
+		Tau0NLS:         2e-10,  // 200 ps (FTJ tunneling)
+		EaNLS:           10e8,   // 10 MV/cm
+		Gmin:            0.1e-6, // 0.1 µS at HRS (FTJ: tunneling → lower current)
+		Gmax:            10e-6,  // 10 µS at LRS (FTJ: ~100x on/off but lower absolute)
 	}
 }
 
@@ -342,15 +345,15 @@ func HZOFJT140() *HZOMaterial {
 func HZOCustom14() *HZOMaterial {
 	return &HZOMaterial{
 		Name:            "HZO Custom (14 states)",
-		Pr:              25e-2,   // 25 µC/cm²
-		Ps:              30e-2,   // 30 µC/cm²
-		Ec:              1.1e8,   // 1.1 MV/cm
+		Pr:              25e-2, // 25 µC/cm²
+		Ps:              30e-2, // 30 µC/cm²
+		Ec:              1.1e8, // 1.1 MV/cm
 		Epsilon:         30,
 		EpsilonLF:       38,
 		LossAngle:       0.02,
 		Thickness:       10e-9,
 		Area:            100e-12,
-		Tau:             5e-9,    // 5 ns
+		Tau:             5e-9, // 5 ns
 		Tau0:            1e-13,
 		Ea:              0.65,
 		Alpha:           2.0,
@@ -360,7 +363,7 @@ func HZOCustom14() *HZOMaterial {
 		EnduranceCycles: 1e10,
 		RetentionTime:   3.15e9,
 		ImrintField:     1e6,
-		NumLevels:       14,     // 14 discrete levels (3.81 bits/cell)
+		NumLevels:       14, // 14 discrete levels (3.81 bits/cell)
 		Tau0NLS:         1e-10,
 		EaNLS:           12e8,
 		Gmin:            1e-6,
@@ -377,29 +380,29 @@ func HZOCustom14() *HZOMaterial {
 func AlScN() *HZOMaterial {
 	return &HZOMaterial{
 		Name:            "AlScN (8-16 states)",
-		Pr:              120e-2,  // 120 µC/cm² - VERY HIGH (range: 100-172)
-		Ps:              150e-2,  // 150 µC/cm²
-		Ec:              5.0e8,   // 5.0 MV/cm - VERY HIGH (limits granularity)
-		Epsilon:         10,      // Lower permittivity than HZO
+		Pr:              120e-2, // 120 µC/cm² - VERY HIGH (range: 100-172)
+		Ps:              150e-2, // 150 µC/cm²
+		Ec:              5.0e8,  // 5.0 MV/cm - VERY HIGH (limits granularity)
+		Epsilon:         10,     // Lower permittivity than HZO
 		EpsilonLF:       12,
 		LossAngle:       0.01,
-		Thickness:       20e-9,   // 20 nm typical
+		Thickness:       20e-9, // 20 nm typical
 		Area:            100e-12,
-		Tau:             10e-9,   // ~10 ns
+		Tau:             10e-9, // ~10 ns
 		Tau0:            1e-13,
-		Ea:              1.0,     // Higher barrier
+		Ea:              1.0, // Higher barrier
 		Alpha:           2.0,
-		CurieTemp:       1273,    // >1000°C - excellent thermal stability
+		CurieTemp:       1273, // >1000°C - excellent thermal stability
 		TempCoeffEc:     -1e5,
 		TempCoeffPr:     -2e-5,
-		EnduranceCycles: 1e9,     // 10^9 cycles
+		EnduranceCycles: 1e9, // 10^9 cycles
 		RetentionTime:   3.15e8,
 		ImrintField:     1e6,
-		NumLevels:       12,      // 8-16 states (high Ec limits granularity)
-		Tau0NLS:         1e-11,   // 10 ps (faster attempt time)
-		EaNLS:           22e8,    // 22 MV/cm (higher Ec material)
-		Gmin:            0.2e-6,  // 0.2 µS at HRS (high Pr → excellent off state)
-		Gmax:            300e-6,  // 300 µS at LRS (very high Pr → strong modulation)
+		NumLevels:       12,     // 8-16 states (high Ec limits granularity)
+		Tau0NLS:         1e-11,  // 10 ps (faster attempt time)
+		EaNLS:           22e8,   // 22 MV/cm (higher Ec material)
+		Gmin:            0.2e-6, // 0.2 µS at HRS (high Pr → excellent off state)
+		Gmax:            300e-6, // 300 µS at LRS (very high Pr → strong modulation)
 	}
 }
 
@@ -489,6 +492,7 @@ func MaterialFromConfig(m *physics.Material, cfg *physics.Config) *HZOMaterial {
 		RetentionTime:   m.RetentionTimeS,
 		ImrintField:     m.ImprintFieldVM,
 		NumLevels:       m.GetNumLevels(cfg),
+		K_dep:           m.DepolarizationFactorVMC,
 	}
 }
 
