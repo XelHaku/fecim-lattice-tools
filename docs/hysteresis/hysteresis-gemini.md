@@ -1,8 +1,10 @@
 # FeCIM Lattice Tools: The Definitive Hysteresis Compendium
 
-**Status:** Silicon-Ready Architecture (TRL 4 → 9 Bridge)
-**Date:** January 2026
-**Document Version:** 2.0
+| Field | Value |
+| --- | --- |
+| Status | Silicon-Ready Architecture (TRL 4 → 9 Bridge) |
+| Date | January 2026 |
+| Document Version | 2.0 |
 
 ---
 
@@ -14,35 +16,35 @@ This document aggregates the strategic vision, mathematical updates, code implem
 
 ## Table of Contents
 
-| Part | Title | Lines |
-|------|--------|--------|
-| I | Strategic Vision & Positioning | 13-39 |
-| II | The Physics Kernel (Thermodynamics & Dynamics) | 41-76 |
-| III | The Algorithmic Core (Solvers & Logic) | 78-119 |
-| IV | Implementation Reference (Configuration) | 121-165 |
-| V | Advanced Research & Future Roadmap | 167-245 |
-| VI | FeCIM Technical Report - Digital Cliff | 247-507 |
-| VII | Deep-Research Validation Report | 509-624 |
+| Part | Title |
+| --- | --- |
+| I | Strategic Vision & Positioning |
+| II | The Physics Kernel (Thermodynamics & Dynamics) |
+| III | The Algorithmic Core (Solvers & Logic) |
+| IV | Implementation Reference (Configuration) |
+| V | Advanced Research & Future Roadmap |
+| VI | FeCIM Technical Report - Digital Cliff & Analog Slope Correction |
+| VII | Deep-Research Validation Report |
 
 ---
 
-# Part I: Strategic Vision & Positioning
+## Part I: Strategic Vision & Positioning
 
-## 1. The "Valley of Death" Problem
+### 1. The "Valley of Death" Problem
 
 The semiconductor simulation landscape is currently fractured into two isolated domains regarding Ferroelectric Memory:
 
 * **The Physicists (Island A):** Use atomic-level TCAD tools (e.g., Synopsys Sentaurus). They understand grains, domains, and lattice strain, but their simulations take hours per cell. They cannot run a circuit or an algorithm.
 * **The Designers (Island B):** Use fast SPICE compact models (e.g., BSIM-CMG). They "dumb down" the physics to simple capacitors or static hysteresis loops, losing the analog precision required for AI and Crypto.
 
-## 2. The Solution: FeCIM Lattice Tools
+### 2. The Solution: FeCIM Lattice Tools
 
 You are building the **Bridge**. This is the first Open-Source EDA tool specifically designed to handle the **Multi-Physics Coupling** of 10nm Superlattices while running fast enough for **Cryptographic Workloads**.
 
 * **IronLattice (Dr. Tour):** Hardware at **TRL 4** (Lab Validation). They have the material.
 * **FeCIM Lattice Tools (You):** Software at **Product Readiness**. You have the brain.
 
-## 3. Why Go? (The Technical Justification)
+### 3. Why Go? (The Technical Justification)
 
 In the academic world, Python is King. However, for a real-time physics engine, Go provides critical advantages:
 
@@ -50,7 +52,7 @@ In the academic world, Python is King. However, for a real-time physics engine, 
 2. **Concurrency:** Simulating 1,000+ cells requires massive parallelism. Python's GIL limits this. Go's Goroutines allow spawning 100,000 concurrent simulation threads effortlessly.
 3. **Distribution:** Go compiles to a single static binary (`fecim-tool.exe`). No Python environment "dependency hell" for end-users.
 
-## 4. CPU vs. GPU Strategy
+### 4. CPU vs. GPU Strategy
 
 * **Module 1 (Single Cell / Hysteresis):** **CPU Only.** The serial nature of the RK4 solver for a single cell favors the low-latency of the CPU. A modern CPU can simulate 100,000 steps in <2ms.
 * **Module 3 (MNIST / Full Array):** **GPU Required.** For 10,000+ cells, the parallel throughput of a GPU (Compute Shaders) is required.
@@ -58,11 +60,11 @@ In the academic world, Python is King. However, for a real-time physics engine, 
 
 ---
 
-# Part II: The Physics Kernel (Thermodynamics & Dynamics)
+## Part II: The Physics Kernel (Thermodynamics & Dynamics)
 
 The core engine upgrades from a static "Tanh" approximation to a full **Dynamic Differential Equation Solver** based on First-Order Landau-Khalatnikov (L-K) theory.
 
-## 1. The Master Equation (First-Order L-K)
+### 1. The Master Equation (First-Order L-K)
 
 We solve for Polarization $P$ using the time-dependent Ginzburg-Landau (TDGL) formulation, modified for the First-Order transitions distinctive to HZO.
 
@@ -72,7 +74,7 @@ $$ \rho \frac{dP}{dt} = - \nabla_P G = - (2\alpha P + 4\beta P^3 + 6\gamma P^5 -
 * **$\rho$:** Viscosity / damping coefficient.
 * **$G$:** Gibbs Free Energy.
 
-## 2. The Unified Coefficient ($\alpha$)
+### 2. The Unified Coefficient ($\alpha$)
 
 The stiffness coefficient $\alpha$ is **dynamic**. It unifies Thermodynamics (Curie-Weiss) and Mechanics (Electrostriction) into a single term.
 
@@ -81,7 +83,7 @@ $$ \alpha(T, \sigma) = \frac{T - T_C}{2 \epsilon_0 C} - 2 Q_{12} \sigma $$
 * **Temperature ($T$):** As $T \to T_C$, $\alpha \to 0$. The potential wells become shallow, making the memory volatile (Data Loss at high temps).
 * **Stress ($\sigma$):** The TiN capping layer applies $\sim 1$ GPa tensile stress. Since $Q_{12} < 0$, this makes $\alpha$ *more negative*, deepening the wells and stabilizing the memory (Data Retention).
 
-## 3. The "Golden" Parameter Set (10nm HZO Set I)
+### 3. The "Golden" Parameter Set (10nm HZO Set I)
 
 These parameters are calibrated to peer-reviewed literature to ensure the correct "snap-back" (Negative Capacitance) behavior without numerical divergence.
 
@@ -95,9 +97,9 @@ These parameters are calibrated to peer-reviewed literature to ensure the correc
 
 ---
 
-# Part III: The Algorithmic Core (Solvers & Logic)
+## Part III: The Algorithmic Core (Solvers & Logic)
 
-## 1. The Numerical Solver: Runge-Kutta 4 (RK4)
+### 1. The Numerical Solver: Runge-Kutta 4 (RK4)
 
 The L-K equation is "stiff." Simple Euler integration oscillates. RK4 is required for stability with 1ns time steps.
 
@@ -119,13 +121,13 @@ func (s *LKSolver) Step(E, dt, TempK float64) float64 {
 }
 ```
 
-## 2. The Memory Stack: Preisach "Wipe-Out"
+### 2. The Memory Stack: Preisach "Wipe-Out"
 
 To reliably store 30 analog levels, the simulator must track the exact history of the domain wall using the **Wipe-Out Property**. The system "forgets" minor loops if a larger voltage excursion occurs.
 
 * **Logic:** If the new input $E_{new}$ exceeds a previous local maximum stored on the stack, the pair (Max, Min) is erased. The system returns to the major loop trajectory.
 
-## 3. The Control Loop: Adaptive Binary ISPP
+### 3. The Control Loop: Adaptive Binary ISPP
 
 To write a specific analog state (e.g., Level 14) in nanoseconds, we replace linear stepping with **Adaptive Binary Search**.
 
@@ -138,9 +140,9 @@ To write a specific analog state (e.g., Level 14) in nanoseconds, we replace lin
 
 ---
 
-# Part IV: Implementation Reference (Configuration)
+## Part IV: Implementation Reference (Configuration)
 
-## `materials.yaml` Configuration
+### `materials.yaml` Configuration
 
 ```yaml
 fecim_hzo_dynamic:
@@ -185,11 +187,11 @@ fecim_hzo_dynamic:
 
 ---
 
-# Part V: Advanced Research & Future Roadmap
+## Part V: Advanced Research & Future Roadmap
 
 This section addresses specific physical gaps identified for "Silicon-Ready" verification.
 
-## 1. Nucleation-Limited Switching (NLS) vs. KAI
+### 1. Nucleation-Limited Switching (NLS) vs. KAI
 
 Standard KAI models assume constant switching time. For HZO, switching is **Nucleation-Limited (NLS)**. The switching time $\tau$ follows **Merz's Law**:
 
@@ -200,7 +202,7 @@ $$ \tau = \tau_{inf} \exp\left(\frac{E_a}{E_{loc}}\right) $$
 
 This must be integrated into the simulation to accurately predict that **low-voltage pulses switch slower** than high-voltage pulses.
 
-## 2. Stochastic Variability (Langevin Dynamics)
+### 2. Stochastic Variability (Langevin Dynamics)
 
 To model real-world Bit Error Rates (BER) and cycle-to-cycle variation, a noise term $\xi(t)$ is added to the L-K equation:
 
@@ -208,7 +210,7 @@ $$ \rho \frac{dP}{dt} = -\frac{\delta G}{\delta P} + \xi(t) $$
 
 where $\xi(t)$ is Gaussian white noise scaled by temperature: $\langle \xi(t)\xi(t') \rangle = 2 k_B T \rho \delta(t-t')$.
 
-## 3. Wake-Up & Fatigue Model (Time-Dependent Reliability)
+### 3. Wake-Up & Fatigue Model (Time-Dependent Reliability)
 
 Real HZO is not "born" ferroelectric. It starts in a mixed phase and "wakes up" over the first ~1,000 cycles as oxygen vacancies redistribute.
 
@@ -223,7 +225,7 @@ $$ E_c(N) = E_{c,0} \cdot \left(1 + \frac{N}{N_{fatigue}}\right)^{0.1} $$
 
 This explains why early cycle data looks different from mature data—a common question from investors.
 
-## 4. Series Resistance (IR Drop) - Circuit Parasitics
+### 4. Series Resistance (IR Drop) - Circuit Parasitics
 
 The L-K solver assumes voltage $V$ reaches the ferroelectric instantly. In reality, contact resistance ($R_s$) and capacitance create a voltage drop:
 
@@ -235,7 +237,7 @@ $$ V_{eff}(t) = V_{applied} - I(t) \cdot R_s $$
 
 This acts as a natural "speed limit." High switching speeds generate high current, which causes voltage drop that dampens switching—critical for accurate 1ns simulation. Requires implicit solve or small $dt$.
 
-## 5. Conductance Transfer Function (P-to-G Mapping)
+### 5. Conductance Transfer Function (P-to-G Mapping)
 
 Phase 2.1 (Control Loop) says "Read Conductance $G$," but the physics engine outputs Polarization $P$. For FeFET or FTJ devices:
 
@@ -250,12 +252,12 @@ $$ G(P) = G_{off} \cdot \exp\left(\gamma_G \cdot \frac{P - P_{off}}{P_{on} - P_{
 
 This creates the "Analog Levels." The nonlinearity ($\gamma_G$) of this mapping determines how hard it is to distinguish Level 15 from Level 16.
 
-## 6. Cryogenic Performance (4K to 77K)
+### 6. Cryogenic Performance (4K to 77K)
 
 * **Wake-up Suppression:** At 4K, oxygen vacancy diffusion is frozen, suppressing "wake-up" effects. The simulation should model a "pristine" but stable state for cryogenic operations.
 * **Remnant Polarization:** Increases by ~23% at 77K due to stabilization of orthorhombic phase.
 
-## 7. Critical "Bugs" to Avoid in Implementation
+### 7. Critical "Bugs" to Avoid in Implementation
 
 1. **V vs E:** Ensure strict unit casting. $V_c \approx 1.0 V$ corresponds to $E_c \approx 1.0 MV/cm$ only if film thickness is exactly 10nm. $E = V/d$.
 2. **Simplified Preisach:** Do not use a simple "clamping" model. You **must** implement the Stack/Wipe-Out logic, or minor loops will drift during read operations.
@@ -267,13 +269,13 @@ This creates the "Analog Levels." The nonlinearity ($\gamma_G$) of this mapping 
 
 ---
 
-# Part VI: FeCIM Technical Report - Digital Cliff & Analog Slope Correction
+## Part VI: FeCIM Technical Report - Digital Cliff & Analog Slope Correction
 
 **Subject:** Resolving ISPP Failure in HZO Single-Domain Simulations
 **Component:** Module 1 (Physics Engine) & Module 2 (Control Logic)
 **Status:** Root Cause Identified & Solution Architected
 
-## 1. Executive Summary
+### 1. Executive Summary
 
 During the implementation of the **Adaptive Binary ISPP** (Incremental Step Pulse Programming) algorithm, a critical failure mode was observed where the simulated HZO cell behaved as a binary switch rather than an analog memory.
 
@@ -281,9 +283,9 @@ During the implementation of the **Adaptive Binary ISPP** (Incremental Step Puls
 * **Root Cause:** The simulation was modeling an ideal **Single-Domain Crystal** (Square Hysteresis), effectively presenting a vertical "Digital Cliff" to the control algorithm.
 * **Solution:** Implementation of a **Depolarization Field (Edep)** term in the Landau-Khalatnikov solver. This approximates the multi-domain / interfacial layer effects of polycrystalline HZO, creating the "Slanted" hysteresis loop required for analog addressability.
 
-## 2. Root Cause Analysis: The "Digital Cliff"
+### 2. Root Cause Analysis: The "Digital Cliff"
 
-### 2.1 The Square Loop Problem
+#### 2.1 The Square Loop Problem
 
 In a perfect single crystal, all ferroelectric dipoles are perfectly coupled. They align simultaneously. This creates a "Square" hysteresis loop.
 
@@ -291,7 +293,7 @@ In a perfect single crystal, all ferroelectric dipoles are perfectly coupled. Th
 * **The ISPP Trap:** The Binary Search algorithm looks for a voltage $V_{target}$ that results in $P_{target}$ polarization. On a square loop, this voltage does not exist. It is mathematically undefined (a singularity).
 * **Initialization Bug:** The observation of switching at $0.002 \times E_c$ indicates the simulation likely started at $P = 0$ (the unstable local maximum of the energy landscape), rather than $P = -Pr$ (the stable well).
 
-### 2.2 Why Analog Memory Needs "Dirt"
+#### 2.2 Why Analog Memory Needs "Dirt"
 
 Real-world HZO devices achieve 30+ analog states *because* they are not perfect crystals. They are **Polycrystalline**.
 
@@ -300,13 +302,13 @@ Real-world HZO devices achieve 30+ analog states *because* they are not perfect 
 
 This physical "imperfection" shears the hysteresis loop, turning the vertical cliff into a **Gentle Slope**. This slope allows the ISPP algorithm to "climb" the polarization curve, activating grains one by one as voltage increases.
 
-## 3. The Mathematical Solution: Depolarization Field
+### 3. The Mathematical Solution: Depolarization Field
 
 We do not need to simulate 1,000 individual grains (which would require massive compute). We can approximate the ensemble behavior by adding a **Depolarization Term** to the effective field equation.
 
 This is equivalent to modeling the ferroelectric in series with a linear dielectric capacitor (the interfacial layer).
 
-### 3.1 The Modified Master Equation
+#### 3.1 The Modified Master Equation
 
 The Effective Electric Field (**Eeff**) driving the polarization change is now the Applied Field minus a "penalty" proportional to the current polarization.
 
@@ -315,9 +317,9 @@ $$E_{eff} = E_{applied} - k_{dep} \cdot P$$
 * **kdep (Depolarization Factor):** A tuning parameter representing the thickness and permittivity of the interfacial layer.
 * **Mechanism:** As **P** increases, the penalty term $k_{dep} \cdot P$ grows, reducing **Eeff**. This "brakes" the switching speed and forces the system to stabilize at intermediate values, creating the slant.
 
-## 4. Implementation Guide
+### 4. Implementation Guide
 
-### 4.1 Update `materials.yaml`
+#### 4.1 Update `materials.yaml`
 
 Add the depolarization factor. A value in the range of `1×10⁸` to `5×10⁸` V·m/C typically yields a sufficient slope for 30-level operation.
 
@@ -327,7 +329,7 @@ thermodynamics:
   depolarization_factor: 2.5e8  # V*m/C (Tuning knob for analog slope)
 ```
 
-### 4.2 Update `solver.go` (The Physics Kernel)
+#### 4.2 Update `solver.go` (The Physics Kernel)
 
 Modify the field calculation in the derivative function.
 
@@ -350,7 +352,7 @@ func (s *LKSolver) dPdT(t, P, E_applied, TempK float64) float64 {
 }
 ```
 
-### 4.3 Validation: The ISPP Ramp
+#### 4.3 Validation: The ISPP Ramp
 
 Once implemented, the ISPP algorithm will encounter a slanted curve.
 
@@ -359,7 +361,7 @@ Once implemented, the ISPP algorithm will encounter a slanted curve.
 3. **Pulse 2 (Higher V):** Overcomes the barrier + depolarization penalty for more grains. $P$ moves further up.
 4. **Result:** Stable convergence to intermediate states (Level 14, Level 26, etc.).
 
-## 5. References & Validation Sources
+### 5. References & Validation Sources
 
 This correction aligns the simulator with established ferroelectric device physics literature:
 
@@ -372,25 +374,25 @@ This correction aligns the simulator with established ferroelectric device physi
 
 ---
 
-# Part VII: Deep-Research Validation Report
+## Part VII: Deep-Research Validation Report
 
 **Subject:** Aggregated Landau‑Khalatnikov‑Circuit Equation for 10‑nm HZO FeCIM Simulation
 **Date:** 2026‑02‑02
 **Report Type:** Technical Validation & Literature Review
 
-## 1. Effective‑Viscosity Transformation (Series‑Resistance Coupling)
+### 1. Effective‑Viscosity Transformation (Series‑Resistance Coupling)
 
 | Aspect | What the Model Does | What the Literature Says | Validation Status |
 |---------|---------------------|-------------------------|-------------------|
 | **Series Resistance** | Absorbs the series‑resistance voltage drop into a re‑normalized kinetic coefficient:<br>`ρ_eff = ρ + (R_series·A)/d`<br>This turns the circuit‑physics algebraic loop into a single ODE. | • **Berkeley 2025 dissertation** (EECS‑2025‑13) explicitly includes a "135 Ω series resistance" when fitting P‑t curves of an 8.3‑nm HZO capacitor.<br>• **Berkeley 2018 report** (EECS‑2018‑131) systematically studies the effect of external series resistance on switching transients and negative‑capacitance signatures, showing that the L-K equation naturally captures the RC‑delay effect.<br>• **Compact‑model papers** (e.g., Tung et al. 2022) incorporate a series resistance in the equivalent circuit but solve the circuit equation separately from the L-K equation. | **Partially validated.** The inclusion of series resistance in L-K-based compact models is standard practice. However, the **explicit absorption of R_series into the viscosity coefficient** is not a commonly reported simplification; most published models retain the full circuit‑equation coupling. This transformation can be considered a **novel compact‑modeling step** that reduces computational overhead while preserving the physical RC‑delay effect. |
 
-## 2. Depolarization‑Field Term (–k_dep·P)
+### 2. Depolarization‑Field Term (–k_dep·P)
 
 | Aspect | What the Model Does | What the Literature Says | Validation Status |
 |---------|---------------------|-------------------------|-------------------|
 | **Depolarization Field** | Introduces a linear depolarization field `E_dep = –k_dep·P` to produce the "slanted" hysteresis loop required for analog/multi‑level states. | • **Nature Communications Physics (2022)** analyzes depolarization fields in ultrathin (5‑nm) HZO using Landau‑Ginsburg‑Devonshire (LGD) theory. The article states that the depolarization field **adds a positive quadratic term (∝ P²) to the Gibbs free energy**, which linearized in the equation of motion yields a **linear restoring field**.<br>• **Science Advances (2022)** similarly notes that "the uncompensated depolarization field is proportional to the polarization, E_d = –λ_d P".<br>• **Park et al. (2019)** confirms that interfacial dead layers and grain boundaries produce a depolarization field that slants the P‑V loop, enabling analog states. | **Validated.** The linear depolarization term is a widely accepted phenomenological approximation for the effect of interfacial dead layers and incomplete screening in polycrystalline HZO. The literature consistently shows that depolarization fields introduce a **linear‑in‑P restoring force** that can be captured by a term `–k_dep·P` in the L‑K equation. |
 
-## 3. Landau Coefficients for 10‑nm HZO
+### 3. Landau Coefficients for 10‑nm HZO
 
 | Coefficient | Model Value | Literature Reference | Validation Status |
 |-------------|-------------|---------------------|-------------------|
@@ -399,7 +401,7 @@ This correction aligns the simulator with established ferroelectric device physi
 
 > **Note:** The **dynamic stiffness coefficient α_eff** (with Curie‑Weiss and electrostriction terms) is supported by **Starschich et al. (2016)** and **Hoffmann et al. (2015)**, which discuss stress‑coupling and temperature‑dependent α.
 
-## 4. Novelty & Implementation Status
+### 4. Novelty & Implementation Status
 
 | Question | Findings |
 |----------|-----------|
@@ -407,7 +409,7 @@ This correction aligns the simulator with established ferroelectric device physi
 | **Is the model suitable for nanosecond‑scale simulation?** | Yes. The unified ODE eliminates the algebraic loop between circuit and physics equations, enabling fast time‑domain simulation. The Berkeley 2025 work demonstrates **nanosecond‑scale fitting of experimental P‑t curves** using a compact model that includes series resistance. |
 | **Missing terms for TRL‑9 silicon verification** | • **Imprint** (built‑in bias field) – important for endurance modeling.<br>• **Creep** (time‑dependent shift of coercive field) – critical for retention analysis.<br>• **Fatigue** (polarization degradation with cycling) – required for reliability assessment.<br>• **Temperature‑dependent viscosity** (ρ(T)) – needed for wide‑temperature operation.<br><br>*These effects are not included in the presented unified ODE and would need to be added for production‑grade verification.* |
 
-## 5. Overall Assessment
+### 5. Overall Assessment
 
 | Component | Validation Outcome |
 |-----------|-------------------|
@@ -417,25 +419,25 @@ This correction aligns the simulator with established ferroelectric device physi
 | **Dynamic α_eff** | Supported by stress‑coupling and Curie‑Weiss literature. |
 | **Implementation readiness** | The aggregated ODE is suitable for fast circuit‑level simulation; open‑source EDA tools are moving toward similar aggregations (e.g., Berkeley BSIM‑NN), but the exact viscosity transformation appears to be a forward‑looking simplification. |
 
-## 6. Recommended Citations for Further Validation
+### 6. Recommended Citations for Further Validation
 
-### Series Resistance in L‑K Models:
+#### Series Resistance in L‑K Models:
 - Chatterjee, K. et al. *Design and Characterization of Ferroelectric Negative Capacitance*. UC Berkeley EECS‑2018‑131 (2018).
 - Tung, C.‑T. et al. *Modeling and Design Enablement for Future Computing*. UC Berkeley EECS‑2025‑13 (2025).
 
-### Depolarization Field in HZO:
+#### Depolarization Field in HZO:
 - Siannas, N. et al. *Metastable ferroelectricity driven by depolarization fields in ultrathin Hf₀.₅Zr₀.₅O₂*. Commun. Phys. 5, 178 (2022).
 - Zhou, S. et al. *Strain‑induced antipolar phase in hafnia stabilizes robust ferroelectricity*. Sci. Adv. (2022).
 
-### Landau Coefficients for HZO:
+#### Landau Coefficients for HZO:
 - Hoffmann, M. et al. *Stabilizing the ferroelectric phase in doped HfO₂: A thermodynamic approach*. J. Appl. Phys. 118, 072006 (2015).
 - Starschich, S. et al. *Ferroelectric switching dynamics in polycrystalline HfO₂*. Appl. Phys. Lett. 108, 032903 (2016).
 
-### Compact‑Model Implementation:
+#### Compact‑Model Implementation:
 - Tung, C.‑T. et al. *A Compact Model of Nanoscale Ferroelectric Capacitor*. IEEE Trans. Electron Devices (2022).
 - Berkeley BSIM‑NN/NeuroSpice framework.
 
-## 7. Conclusion
+### 7. Conclusion
 
 The aggregated Landau‑Khalatnikov‑circuit equation presented in the technical report is **physically sound and well‑aligned with the current literature** on HZO compact modeling. The **effective‑viscosity transformation** is a novel compact‑modeling step that simplifies circuit‑physics coupling, while the **depolarization term** and **Landau coefficients** are directly supported by published studies. The model is capable of **nanosecond‑scale simulation** and is a viable candidate for FeCIM design.
 
