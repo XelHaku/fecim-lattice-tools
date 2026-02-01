@@ -452,7 +452,7 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	a.matIndex = newIdx
 	a.material = hzoMat
 	// Use fixed high-resolution grid for physics accuracy
-	a.preisach = ferroelectric.NewMayergoyzPreisach(a.material, 60)
+	a.preisach = ferroelectric.NewPreisachModel(a.material)
 
 	// Restore temperature
 	a.preisach.SetTemperature(savedTemp)
@@ -492,7 +492,11 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	a.numLevels = newLevels
 
 	// Initialize ISPP calculator with new material parameters
-	a.isppCalc = sharedphysics.NewISPPCalculator(effEc, newLevels)
+	// a.isppCalc = sharedphysics.NewISPPCalculator(effEc, newLevels)
+	// Update Adaptive ISPP
+	if a.adaptiveISPP != nil {
+		a.adaptiveISPP = sharedphysics.NewAdaptiveISPP(a.lkSolver, a.material)
+	}
 	// Update level indicator and cell visualizer
 	if a.levelIndicator != nil {
 		a.levelIndicator.SetNumLevels(newLevels)
