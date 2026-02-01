@@ -582,6 +582,9 @@ func (a *App) hasCalibrationNear(tempK float64) bool {
 func (a *App) onTemperatureChanged(newTemp float64) {
 	// Update Preisach model temperature
 	a.preisach.SetTemperature(newTemp)
+	if a.lkSolver != nil {
+		a.lkSolver.Temperature = newTemp
+	}
 
 	// Check if we need new calibration or can use existing/interpolated
 	if a.hasCalibrationNear(newTemp) {

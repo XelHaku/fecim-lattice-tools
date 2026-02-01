@@ -128,6 +128,62 @@ WRITE: |E| > Ec  → Polarization changes (crosses coercive field)
 READ:  |E| < Ec  → Polarization unchanged, state sensed non-destructively
 ```
 
+### ISPP Write/Read Demo (Implementation Details)
+
+The Write/Read demo runs a multi‑phase **ISPP (Incremental Step Pulse Programming)**
+controller to reach a target discrete level. The implementation is split across:
+
+- `module1-hysteresis/pkg/gui/simulation.go` (phase sequencing)
+- `module1-hysteresis/pkg/controller/writer.go` (ISPP pulse/verify loop)
+
+#### Step Sequencing
+
+**Outer demo phases (simulation loop):**
+
+1. **RESET (Phase 0)**  
+   Drive to the opposite saturation branch so the device starts from a known remanent state.  
+   Target: `±2.0 × Ec` (field).
+2. **HOLD_RESET (Phase 1)**  
+   Ramp back to 0 V/m; polarization remains at the remanent state.
+3. **WRITE (Phase 2)**  
+   Delegates to `WriteController` for the ISPP pulse loop.
+4. **DISPLAY (Phase 5)**  
+   Report success/failure, update stats, and select the next target level.
+
+**ISPP pulse loop (inside `WriteController`):**
+
+- **Apply**: ramp to the next pulse field (`CurrentField`).
+- **Wait**: hold briefly so the field reaches the target.
+- **Verify**: return to 0 V/m and read the new level.
+- **Adjust**: binary‑search update of bounds (`VMin`, `VMax`) and compute the next pulse.
+- **Reset**: if overshoot is detected, apply a deep reset pulse and restart the search.
+
+#### Termination Criteria
+
+- **Success**: `currentLevel == targetLevel` (strict equality).
+- **Failure**: `PulseCount >= MaxRetries` (default 50 pulses).
+- **Overshoot**: crossing the target on the *wrong hysteresis branch* → immediate reset
+  and restart with a tighter upper bound.
+
+#### Parameter Choices (Physical Meaning)
+
+| Parameter | Location | Meaning |
+|-----------|----------|---------|
+| `EcField` | `writer.go` | Coercive field baseline (V/m). |
+| `MaxField` | `writer.go` | Maximum programming field; default `~2.5 × Ec`. |
+| `PulseDuration` | `simulation.go` | Pulse width per ISPP step; set to ~40% of the phase duration so the ramp can settle. |
+| `VMin`, `VMax` | `writer.go` | Binary‑search bounds for the **absolute** field magnitude. |
+| `FromSaturation` | `writer.go` | Determines whether calibration values are valid for the initial guess. |
+| `CalibManager` | `algo/calibration.go` | Stores per‑level calibrated fields; used only for the **first** ISPP pulse. |
+
+#### Constraints / Limits
+
+- **Field bounds**: `VMin ≥ 0`, `VMax ≤ MaxField`.
+- **Overshoot reset**: uses a **deep reset** of `±1.5 × MaxField`.
+- **Retry limit**: `MaxRetries = 50` (configurable).
+- **Directionality**: pulse sign derives from target level vs. initial level.
+- **Quantization**: level readout uses `normalizedP` → discrete level mapping (0–N‑1).
+
 ### Key Parameters (HZO Materials)
 
 | Parameter | Default HZO | Optimized | FeCIM |

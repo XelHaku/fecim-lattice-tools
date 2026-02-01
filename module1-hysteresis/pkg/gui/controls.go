@@ -313,6 +313,9 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		a.mu.Lock()
 		// Pass stress to physics engine
 		a.preisach.SetStress(v) // v is in GPa
+		if a.lkSolver != nil {
+			a.lkSolver.Stress = v * 1e9
+		}
 		a.mu.Unlock()
 		stressLabel.SetText(fmt.Sprintf("Stress: %.1f GPa", v))
 	}
@@ -493,6 +496,9 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	// Update Adaptive ISPP
 	if a.adaptiveISPP != nil {
 		a.adaptiveISPP = sharedphysics.NewAdaptiveISPP(a.lkSolver, a.material)
+	}
+	if a.lkSolver != nil {
+		a.lkSolver.ConfigureFromMaterial(a.material)
 	}
 	// Update level indicator and cell visualizer
 	if a.levelIndicator != nil {

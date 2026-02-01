@@ -8,8 +8,11 @@ import (
 
 var isppLog *logging.Logger
 
-func init() {
-	isppLog = logging.NewLogger("ispp")
+func getISPPLogger() *logging.Logger {
+	if isppLog == nil {
+		isppLog = logging.NewLogger("ispp")
+	}
+	return isppLog
 }
 
 type WriteController struct {
@@ -39,6 +42,8 @@ func NewWriteController(solver *LKSolver, material *HZOMaterial) *WriteControlle
 }
 
 func (c *WriteController) WriteTarget(targetG float64) (attempts int, success bool, overshootCount int) {
+	log := getISPPLogger()
+
 	targetP := ConductanceToPolarization(targetG, c.Material.Gmin, c.Material.Gmax, c.Material.Ps)
 
 	c.VMin = 0.0
@@ -50,7 +55,7 @@ func (c *WriteController) WriteTarget(targetG float64) (attempts int, success bo
 	overshoots := 0
 	success = false
 
-	isppLog.Input("WriteTarget", map[string]interface{}{
+	log.Input("WriteTarget", map[string]interface{}{
 		"targetG": targetG,
 		"targetP": targetP,
 	})
@@ -58,7 +63,7 @@ func (c *WriteController) WriteTarget(targetG float64) (attempts int, success bo
 	var vPulse float64
 	var i int
 	for i = 0; i < c.MaxIterations; i++ {
-		isppLog.Calculation("WriteTarget", map[string]interface{}{
+		log.Calculation("WriteTarget", map[string]interface{}{
 			"attempt":  i + 1,
 			"currentP": c.Solver.P,
 			"targetP":  targetP,
@@ -66,14 +71,14 @@ func (c *WriteController) WriteTarget(targetG float64) (attempts int, success bo
 
 		if i == 0 {
 			vPulse = (c.VMin + c.VMax) / 2.0
-			isppLog.Calculation("WriteTarget", map[string]interface{}{
+			log.Calculation("WriteTarget", map[string]interface{}{
 				"step":   "Predict",
 				"vPulse": vPulse,
 				"bounds": []float64{c.VMin, c.VMax},
 			}, nil)
 		} else {
 			vPulse = (c.VMin + c.VMax) / 2.0
-			isppLog.Calculation("WriteTarget", map[string]interface{}{
+			log.Calculation("WriteTarget", map[string]interface{}{
 				"step":   "BinarySearch",
 				"vPulse": vPulse,
 				"vMin":   c.VMin,
@@ -84,7 +89,7 @@ func (c *WriteController) WriteTarget(targetG float64) (attempts int, success bo
 		eField := vPulse / c.Material.Thickness
 		c.Solver.Step(eField, c.PulseWidth)
 
-		isppLog.Calculation("WriteTarget", map[string]interface{}{
+		log.Calculation("WriteTarget", map[string]interface{}{
 			"step":   "WritePulse",
 			"vPulse": vPulse,
 			"eField": eField,
@@ -92,11 +97,11 @@ func (c *WriteController) WriteTarget(targetG float64) (attempts int, success bo
 		}, nil)
 
 		currentP := c.Solver.GetState()
-		currentG := PolarizationToConductance(currentP, c.Material.Gmin, c.Material.Gmax, c.Material.Ps)
+		currentG := PolarizationToConductance(currentP, c.Material.Ps, c.Material.Gmin, c.Material.Gmax)
 
 		error := currentG - targetG
 
-		isppLog.Calculation("WriteTarget", map[string]interface{}{
+		log.Calculation("WriteTarget", map[string]interface{}{
 			"step":     "Verify",
 			"currentP": currentP,
 			"currentG": currentG,
@@ -105,7 +110,7 @@ func (c *WriteController) WriteTarget(targetG float64) (attempts int, success bo
 
 		if math.Abs(error) < c.Tolerance {
 			success = true
-			isppLog.Input("WriteTarget", map[string]interface{}{
+			log.Input("WriteTarget", map[string]interface{}{
 				"status":     "Success",
 				"attempts":   i + 1,
 				"finalG":     currentG,
@@ -117,7 +122,7 @@ func (c *WriteController) WriteTarget(targetG float64) (attempts int, success bo
 
 		if error < 0 {
 			c.VMin = math.Abs(vPulse)
-			isppLog.Calculation("WriteTarget", map[string]interface{}{
+			log.Calculation("WriteTarget", map[string]interface{}{
 				"decision": "Undershoot",
 				"vPulse":   vPulse,
 				"newVMin":  c.VMin,
@@ -130,7 +135,7 @@ func (c *WriteController) WriteTarget(targetG float64) (attempts int, success bo
 			eResetField := resetField / c.Material.Thickness
 			c.Solver.Step(eResetField, c.PulseWidth*2)
 
-			isppLog.Calculation("WriteTarget", map[string]interface{}{
+			log.Calculation("WriteTarget", map[string]interface{}{
 				"decision":    "Overshoot",
 				"overshoots":  overshoots,
 				"resetField":  resetField,
@@ -145,7 +150,7 @@ func (c *WriteController) WriteTarget(targetG float64) (attempts int, success bo
 	}
 
 	if !success {
-		isppLog.Input("WriteTarget", map[string]interface{}{
+		log.Input("WriteTarget", map[string]interface{}{
 			"status":     "Failed",
 			"attempts":   c.MaxIterations,
 			"overshoots": overshoots,

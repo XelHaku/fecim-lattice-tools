@@ -61,10 +61,22 @@ type HZOMaterial struct {
 	// Depolarization (Polycrystalline Analog Behavior)
 	K_dep float64 // Depolarization coefficient (V*m/C) - creates "slant" for 30-level operation
 
+	// Landau-Khalatnikov parameters (dynamic equation)
+	BetaLandau   float64 // Landau β coefficient (J m^5 / C^4)
+	GammaLandau  float64 // Landau γ coefficient (J m^9 / C^6)
+	RhoViscosity float64 // Viscosity / damping (Ohm·m)
+
+	// Circuit parasitics (for series resistance coupling)
+	SeriesResistanceOhm float64 // Series resistance (Ohms)
+
 	// Temperature properties
 	CurieTemp   float64 // Curie temperature (K)
+	CurieConst  float64 // Curie constant (K)
 	TempCoeffEc float64 // Temperature coefficient of Ec (V/m/K)
 	TempCoeffPr float64 // Temperature coefficient of Pr (C/m²/K)
+
+	// Mechanical stress (for electrostriction coupling)
+	StressGPa float64 // In-plane tensile stress (GPa)
 
 	// Reliability parameters
 	EnduranceCycles float64 // Endurance limit (cycles)

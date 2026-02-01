@@ -431,6 +431,7 @@ func main() {
 	forceFlag := flag.Bool("force", false, "Force recalibration even if calibration file exists")
 	verifyFlag := flag.Bool("verify", false, "Verify calibration accuracy after calibrating")
 	listMaterialsFlag := flag.Bool("list-materials", false, "List available materials and exit")
+	modeFlag := flag.String("mode", "", "Run a headless mode (e.g., hysteresis) and exit")
 	var moduleFlag = flag.String("module", "home", "Start module: home, hysteresis, crossbar, mnist, circuits, comparison, eda, docs")
 	flag.Parse()
 
@@ -472,6 +473,15 @@ func main() {
 	} else {
 		// File logging is disabled by default, no action needed
 		log = logging.NewNoOpLogger()
+	}
+
+	// Handle --mode (headless diagnostics) after logging is initialized
+	if *modeFlag != "" {
+		if err := runMode(*modeFlag); err != nil {
+			fmt.Fprintf(os.Stderr, "Mode error: %v\n", err)
+			os.Exit(1)
+		}
+		return
 	}
 
 	// Create Fyne app

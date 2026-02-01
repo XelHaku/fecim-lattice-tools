@@ -55,7 +55,7 @@ Each module demonstrates a layer in the FeCIM stack:
 
 | Module | Purpose | Physics | GUI Framework | Status |
 |--------|---------|---------|---------------|--------|
-| **1. Hysteresis** | Memory cell physics | Preisach model, 30-level quantization | Real-time P-E curve plotting | Stable |
+| **1. Hysteresis** | Memory cell physics | Preisach + Landau‑Khalatnikov (depole, series‑R, NLS) | Real-time P-E curve + ISPP demo | Stable |
 | **2. Crossbar** | Matrix-vector multiply | Ohm's law, IR drop, sneak paths, drift | Heatmap with MVM operations | Stable |
 | **3. MNIST** | Neural network application | Network inference with quantized weights | Digit drawing + recognition | Stable |
 | **4. Circuits** | Peripheral electronics | DAC/ADC/TIA circuit modeling | Schematic diagrams, waveforms | Stable |
@@ -286,6 +286,34 @@ func (p *MayergoyzPreisach) DiscreteStates(N int) []DiscreteState {
 }
 ```
 
+#### Landau‑Khalatnikov Solver (Dynamic Equation)
+
+For time‑domain physics (and equation‑level verification), the project includes a
+first‑order **Landau‑Khalatnikov (L‑K)** solver in `shared/physics/landau.go`.
+
+Core equation (as implemented):
+
+```
+ρ_eff * dP/dt = E_eff - (2αP + 4βP^3 + 6γP^5)
+E_eff = E_applied - K_dep * P
+α(T,σ) = (T - Tc) / (2 ε0 C) - 2 Q12 σ
+ρ_eff = ρ + (R_series * A / d)
+```
+
+Key parameter mapping (from `HZOMaterial` → `LKSolver`):
+
+- `BetaLandau`, `GammaLandau`, `RhoViscosity`
+- `K_dep` (depolarization slope)
+- `StressGPa` + `Q12` (electrostriction)
+- `SeriesResistanceOhm`, `Thickness`, `Area`
+- `CurieTemp`, `CurieConst`
+- `Tau0NLS`, `EaNLS` (Merz‑law incubation)
+
+Usage:
+
+- **Headless diagnostics**: `cmd/fecim-lattice-tools/mode.go` runs an L‑K sweep and ISPP write‑verify loop.
+- **ISPP physics**: `shared/physics/ispp_write.go` drives L‑K integration for write/verify sequences.
+
 #### Material System
 
 Eight built-in materials with peer-reviewed parameters:
@@ -306,15 +334,32 @@ Eight built-in materials with peer-reviewed parameters:
 
 type HZOMaterial struct {
     Name            string
-    Pr              float64  // Remanent polarization (µC/cm²)
-    Ps              float64  // Saturation polarization (µC/cm²)
-    Ec              float64  // Coercive field (MV/cm)
-    Thickness       float64  // Film thickness (nm)
-    Tc              float64  // Curie temperature (K)
-    Tau0            float64  // Intrinsic switching time (ns)
-    EnduranceCycles float64  // Cycles to 10% Pr loss
-    RetentionSec    float64  // Retention time at RT (s)
-    ImrintField     float64  // Imprint bias (MV/cm)
+    Pr              float64 // Remanent polarization (C/m²)
+    Ps              float64 // Saturation polarization (C/m²)
+    Ec              float64 // Coercive field (V/m)
+    Thickness       float64 // Film thickness (m)
+    Area            float64 // Active area (m²)
+    CurieTemp       float64 // Curie temperature (K)
+    CurieConst      float64 // Curie constant (K)
+
+    // Landau-Khalatnikov parameters
+    BetaLandau      float64 // J m^5 / C^4
+    GammaLandau     float64 // J m^9 / C^6
+    RhoViscosity    float64 // Ohm·m
+    K_dep           float64 // V·m/C
+
+    // Coupling / parasitics
+    Q12             float64 // m^4 / C^2
+    StressGPa       float64 // GPa
+    SeriesResistanceOhm float64 // Ohms
+
+    // NLS (Merz law)
+    Tau0NLS         float64 // s
+    EaNLS           float64 // V/m
+
+    EnduranceCycles float64 // Cycles to 10% Pr loss
+    RetentionTime   float64 // Retention time at RT (s)
+    ImrintField     float64 // Imprint field (V/m)
 }
 
 // Physics methods
@@ -649,22 +694,27 @@ User Input
 Auto-Mode / Manual Input
     │
     ├─ Generate E-field waveform
-    │   ├─ Sine, sawtooth, or custom
-    │   └─ Quantize to 8-bit DAC steps
+    │   ├─ Sine, triangle, or demo sequence
+    │   └─ Apply ramp limits (Ec-based bounds)
     │
-    ├─ For each time step:
-    │   ├─ Update Preisach model
-    │   │   └─ Apply E-field to all hysterons
-    │   ├─ Read polarization
-    │   ├─ Buffer point (E, P)
-    │   └─ Check for 30-level transitions
+    ├─ Physics path (per time step)
+    │   ├─ Preisach loop (GUI visualization)
+    │   │   └─ Apply E-field to hysteron stack → P
+    │   ├─ Landau-Khalatnikov diagnostics (headless mode)
+    │   │   └─ LKSolver.Step(E, dt) → P (logs equation terms)
+    │   └─ Quantize P → discrete level (0..N-1)
     │
-    └─ Render loop (every ~50ms):
-        ├─ P-E curve plot
-        ├─ 30-level histogram
+    ├─ Write/Read Demo (when enabled)
+    │   ├─ RESET to opposite saturation (±2×Ec)
+    │   ├─ ISPP loop (Apply → Wait → Verify → Adjust)
+    │   └─ Overshoot → deep reset → binary-search restart
+    │
+    └─ Render loop (every ~50ms)
+        ├─ P‑E curve plot
+        ├─ 30-level indicator
         ├─ Waveform display
         ├─ Material properties
-        └─ Statistics (Ec, Pr, etc.)
+        └─ Statistics (Ec, Pr, ISPP success rate)
 ```
 
 ---
