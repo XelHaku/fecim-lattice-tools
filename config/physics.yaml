@@ -116,11 +116,15 @@ materials:
     description: "Dr. Tour's FeCIM - DEMONSTRATED values only"
     reference: "Dr. external research group, COSM 2025 [17]"
     analog_states: 30           # 30 discrete states - VERIFIED (Dr. Tour)
-
+    
+    # Depolarization for Polycrystalline Analog Behavior
+    # Creates "slant" in hysteresis loop to enable 30-level operation
+    depolarization_factor_vm_c: 2.5e8  # V*m/C - Tuning knob for analog slope
+    
     # Polarization (estimated - not disclosed) [17][18]
     pr_c_m2: 0.30               # 30 µC/cm² (estimated from In2Se3 work)
     ps_c_m2: 0.35               # 35 µC/cm² (estimated)
-
+    
     # Field parameters (estimated) [17]
     ec_v_m: 1.0e8               # 1.0 MV/cm (estimated)
 

@@ -16,6 +16,9 @@ type LKSolver struct {
 	// Electrostriction & Stress
 	Q12    float64 // Electrostriction coefficient (m^4/C^2)
 	Stress float64 // In-plane tensile stress (Pa)
+	
+	// Depolarization (Polycrystalline Analog Behavior)
+	K_dep float64 // Depolarization coefficient (V*m/C) - creates "slant" for analog levels
 
 	// NLS Parameters
 	UseNLS        bool
@@ -39,6 +42,9 @@ func NewLKSolver() *LKSolver {
 		Rho:   0.05,
 		Q12:   -0.026,
 		Stress: 1.0e9, // 1 GPa
+		
+		// Depolarization for Polycrystalline Analog Behavior
+		K_dep: 2.5e8, // V*m/C - Creates slanted loop for 30-level operation
 		
 		UseNLS:      true,
 		ActivationE: 0.7,
@@ -68,17 +74,31 @@ func (s *LKSolver) UpdateParams() {
 }
 
 // dPdT is the Master Differential Equation:
-// rho * dP/dt = E - dG/dP
+// rho * dP/dt = E_total - dG/dP
+// where E_total = E_applied - E_dep (E_dep = K_dep * P)
 // dG/dP = 2*alpha*P + 4*beta*P^3 + 6*gamma*P^5
+//
+// The depolarization field (E_dep) represents the collective effect of grain boundaries
+// and domain interactions in a polycrystalline device. It opposes polarization growth,
+// creating a "slanted" hysteresis loop that enables analog (multi-level) operation.
 func (s *LKSolver) dPdT(t, P, E float64) float64 {
-	// Deterministic Force (Gradient of Free Energy)
+	// 1. Calculate Depolarization Field
+	// This represents the average effect of grain boundaries/interfacial layers
+	// Higher K_dep → More slanted loop → More analog levels
+	E_dep := s.K_dep * P
+	
+	// 2. Effective Field (Applied minus Depolarization)
+	E_total := E - E_dep
+	
+	// 3. Deterministic Force (Gradient of Free Energy)
 	dG_dP := (2 * s.Alpha * P) + (4 * s.Beta * math.Pow(P, 3)) + (6 * s.Gamma * math.Pow(P, 5))
 
-	// Stochastic Noise (Langevin) - Optional, scaled by Rho
+	// 4. Stochastic Noise (Langevin) - Optional, scaled by Rho
 	noise := 0.0
 	// TODO: Add EnableNoise flag and Box-Muller generator
 
-	return (E + noise - dG_dP) / s.Rho
+	// Use E_total (with depolarization) instead of raw E_applied
+	return (E_total + noise - dG_dP) / s.Rho
 }
 
 // Step performs one Runge-Kutta 4 (RK4) integration step.

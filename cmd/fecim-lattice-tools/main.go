@@ -431,6 +431,7 @@ func main() {
 	forceFlag := flag.Bool("force", false, "Force recalibration even if calibration file exists")
 	verifyFlag := flag.Bool("verify", false, "Verify calibration accuracy after calibrating")
 	listMaterialsFlag := flag.Bool("list-materials", false, "List available materials and exit")
+	var moduleFlag = flag.String("module", "home", "Start module: home, hysteresis, crossbar, mnist, circuits, comparison, eda, docs")
 	flag.Parse()
 
 	// Handle --list-materials
@@ -883,11 +884,29 @@ func main() {
 			window.SetContent(rootContainer)
 			fmt.Println("[STARTUP] Window content set")
 
-			// Always start at Home tab (index 0)
-			fmt.Println("[STARTUP] Starting at Home tab...")
-			selectView(0)
-			log.Debug("Started at Home tab (index 0)")
-			fmt.Println("[STARTUP] Home tab selected")
+			// Start at requested module
+			startIdx := 0
+			switch *moduleFlag {
+			case "hysteresis":
+				startIdx = 1
+			case "crossbar":
+				startIdx = 2
+			case "mnist":
+				startIdx = 3
+			case "circuits":
+				startIdx = 4
+			case "comparison":
+				startIdx = 5
+			case "eda":
+				startIdx = 6
+			case "docs":
+				startIdx = 7
+			}
+			
+			fmt.Printf("[STARTUP] Starting at module: %s (index %d)\n", *moduleFlag, startIdx)
+			selectView(startIdx)
+			log.Debug("Started at module %s (index %d)", *moduleFlag, startIdx)
+			fmt.Printf("[STARTUP] %s tab selected\n", *moduleFlag)
 		})
 	})
 

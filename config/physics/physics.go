@@ -53,16 +53,19 @@ type Material struct {
 	Reference   string `yaml:"reference"`
 
 	// Multi-level capability
-	AnalogStates int  `yaml:"analog_states,omitempty"` // Number of discrete states (e.g., 30, 32, 140)
-	TRLLevel     int  `yaml:"trl_level,omitempty"`     // Technology Readiness Level (1-9)
+	AnalogStates   int  `yaml:"analog_states,omitempty"`   // Number of discrete states (e.g., 30, 32, 140)
+	TRLLevel       int  `yaml:"trl_level,omitempty"`       // Technology Readiness Level (1-9)
 	CMOSCompatible bool `yaml:"cmos_compatible,omitempty"` // CMOS fabrication compatible
+
+	// Depolarization (Polycrystalline Analog Behavior)
+	DepolarizationFactorVMC float64 `yaml:"depolarization_factor_vm_c,omitempty"` // V*m/C - Creates "slant" for 30-level operation
 
 	// Polarization (C/m²)
 	PrCM2 float64 `yaml:"pr_c_m2"`
 	PsCM2 float64 `yaml:"ps_c_m2"`
 
 	// Field (V/m)
-	EcVM         float64 `yaml:"ec_v_m"`
+	EcVM          float64 `yaml:"ec_v_m"`
 	MemoryWindowV float64 `yaml:"memory_window_v,omitempty"` // Memory window voltage
 
 	// Dielectric
@@ -82,10 +85,10 @@ type Material struct {
 	KAIExponent        float64 `yaml:"kai_exponent"`
 
 	// Temperature
-	CurieTempK       float64 `yaml:"curie_temp_k"`
-	TempCoeffEc      float64 `yaml:"temp_coeff_ec"`
-	TempCoeffPr      float64 `yaml:"temp_coeff_pr"`
-	OperatingTempK   float64 `yaml:"operating_temp_k,omitempty"` // For cryogenic operation
+	CurieTempK     float64 `yaml:"curie_temp_k"`
+	TempCoeffEc    float64 `yaml:"temp_coeff_ec"`
+	TempCoeffPr    float64 `yaml:"temp_coeff_pr"`
+	OperatingTempK float64 `yaml:"operating_temp_k,omitempty"` // For cryogenic operation
 
 	// Reliability
 	EnduranceCycles float64 `yaml:"endurance_cycles"`
@@ -93,8 +96,8 @@ type Material struct {
 	ImprintFieldVM  float64 `yaml:"imprint_field_v_m"`
 
 	// FTJ-specific (Ferroelectric Tunnel Junction)
-	TERRatio       float64 `yaml:"ter_ratio,omitempty"`        // Tunneling electroresistance ratio
-	GmaxGminRatio  float64 `yaml:"gmax_gmin_ratio,omitempty"`  // Conductance on/off ratio
+	TERRatio      float64 `yaml:"ter_ratio,omitempty"`       // Tunneling electroresistance ratio
+	GmaxGminRatio float64 `yaml:"gmax_gmin_ratio,omitempty"` // Conductance on/off ratio
 
 	// AlScN-specific
 	ScFraction float64 `yaml:"sc_fraction,omitempty"` // Scandium fraction in AlScN
@@ -109,9 +112,9 @@ type Crossbar struct {
 	ADCBits            int `yaml:"adc_bits"`
 	DACBits            int `yaml:"dac_bits"`
 
-	ConductanceMinS   float64 `yaml:"conductance_min_s"`
-	ConductanceMaxS   float64 `yaml:"conductance_max_s"`
-	ConductanceRatio  float64 `yaml:"conductance_ratio"`
+	ConductanceMinS  float64 `yaml:"conductance_min_s"`
+	ConductanceMaxS  float64 `yaml:"conductance_max_s"`
+	ConductanceRatio float64 `yaml:"conductance_ratio"`
 
 	DeviceVariation float64 `yaml:"device_variation"`
 	ReadNoise       float64 `yaml:"read_noise"`
@@ -120,8 +123,8 @@ type Crossbar struct {
 	WordLineResistanceOhm float64 `yaml:"word_line_resistance_ohm"`
 	BitLineResistanceOhm  float64 `yaml:"bit_line_resistance_ohm"`
 
-	SneakPathEnabled       bool    `yaml:"sneak_path_enabled"`
-	SneakConductanceRatio  float64 `yaml:"sneak_conductance_ratio"`
+	SneakPathEnabled      bool    `yaml:"sneak_path_enabled"`
+	SneakConductanceRatio float64 `yaml:"sneak_conductance_ratio"`
 }
 
 // Training holds training configuration.
@@ -133,10 +136,10 @@ type Training struct {
 	DefaultBatchSize int     `yaml:"default_batch_size"`
 	GradientClip     float64 `yaml:"gradient_clip"`
 
-	WeightClipMin     float64 `yaml:"weight_clip_min"`
-	WeightClipMax     float64 `yaml:"weight_clip_max"`
-	UpdateNoiseSigma  float64 `yaml:"update_noise_sigma"`
-	AsymmetryRatio    float64 `yaml:"asymmetry_ratio"`
+	WeightClipMin    float64 `yaml:"weight_clip_min"`
+	WeightClipMax    float64 `yaml:"weight_clip_max"`
+	UpdateNoiseSigma float64 `yaml:"update_noise_sigma"`
+	AsymmetryRatio   float64 `yaml:"asymmetry_ratio"`
 
 	QuantizeForward  bool `yaml:"quantize_forward"`
 	QuantizeBackward bool `yaml:"quantize_backward"`
@@ -149,9 +152,9 @@ type Energy struct {
 	WriteEnergyJ float64 `yaml:"write_energy_j"`
 	MACEnergyJ   float64 `yaml:"mac_energy_j"`
 
-	NANDWriteEnergyJ   float64 `yaml:"nand_write_energy_j"`
-	DRAMAccessEnergyJ  float64 `yaml:"dram_access_energy_j"`
-	SRAMAccessEnergyJ  float64 `yaml:"sram_access_energy_j"`
+	NANDWriteEnergyJ  float64 `yaml:"nand_write_energy_j"`
+	DRAMAccessEnergyJ float64 `yaml:"dram_access_energy_j"`
+	SRAMAccessEnergyJ float64 `yaml:"sram_access_energy_j"`
 
 	StandbyPowerWPerCell float64 `yaml:"standby_power_w_per_cell"`
 }
