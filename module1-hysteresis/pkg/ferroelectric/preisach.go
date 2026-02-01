@@ -104,30 +104,24 @@ func NewPreisachModel(material *HZOMaterial) *PreisachModel {
 	}
 }
 
-// NewPreisachModel creates a new Preisach model with the given material.
-func NewPreisachModel(material *HZOMaterial) *PreisachModel {
-	log.Input("NewPreisachModel", map[string]interface{}{
-		"material_name": material.Name,
-		"Ec":            material.Ec,
-		"Ps":            material.Ps,
-	})
+// DiscreteState represents a single programmable state.
+type DiscreteState struct {
+	Level       int
+	Polarization float64
+	NormalizedP float64
+	Voltage     float64
+	Conductance float64
+}
 
-	// Configure Everett function based on material
-	everett := &TanhEverett{
-		Ps:    material.Ps,
-		Ec:    material.Ec,
-		Delta: material.Ec * 0.25, // 25% distribution width
+// DiscreteStates returns the polarization values for n evenly spaced discrete states.
+// This is a helper for testing and visualization.
+func (p *PreisachModel) DiscreteStates(n int) []float64 {
+	poles := make([]float64, n)
+	step := 2.0 * p.material.Ps / float64(n-1)
+	for i := 0; i < n; i++ {
+		poles[i] = -p.material.Ps + float64(i)*step
 	}
-	
-	// E_saturation should be > Ec. typically 3-5x Ec.
-	E_sat := material.Ec * 5.0
-
-	return &PreisachModel{
-		material:    material,
-		stack:       physics.NewPreisachStack(E_sat, everett),
-		everett:     everett,
-		Temperature: 300.0,
-	}
+	return poles
 }
 
 // Reset clears the history and sets polarization to negative saturation.

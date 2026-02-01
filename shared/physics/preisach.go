@@ -1,7 +1,7 @@
 package physics
 
 import (
-	"math"
+
 )
 
 // EverettFunction abstract interface for the density distribution

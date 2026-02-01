@@ -50,7 +50,7 @@ type App struct {
 
 	// Physics
 	material  *ferroelectric.HZOMaterial
-	preisach  *ferroelectric.MayergoyzPreisach
+	preisach  *ferroelectric.PreisachModel
 	materials []*ferroelectric.HZOMaterial
 	matIndex  int
 	numLevels int // Number of discrete analog levels (default 30)
@@ -369,8 +369,8 @@ func NewApp() *App {
 
 	mat := materials[0]
 	numLevels := 30         // Default: FeCIM's 30 discrete analog states
-	preisachGridSize := 200 // High-resolution physics simulation (independent of quantization)
-	preisach := ferroelectric.NewMayergoyzPreisach(mat, preisachGridSize)
+	// preisachGridSize := 200 // DEPRECATED: PhysicsStack uses adaptive steps
+	preisach := ferroelectric.NewPreisachModel(mat) // Use Wrapper
 
 	// Refactoring: Initialize managers
 	calibManager := algo.NewCalibrationManager(numLevels)
@@ -449,8 +449,8 @@ func NewAppWithMaterial(materialName string) *App {
 	}
 
 	numLevels := 30         // Default: FeCIM's 30 discrete analog states
-	preisachGridSize := 200 // High-resolution physics simulation (independent of quantization)
-	preisach := ferroelectric.NewMayergoyzPreisach(mat, preisachGridSize)
+	// preisachGridSize := 200 // DEPRECATED
+	preisach := ferroelectric.NewPreisachModel(mat) // Use Wrapper
 
 	// Refactoring: Initialize managers
 	calibManager := algo.NewCalibrationManager(numLevels)
