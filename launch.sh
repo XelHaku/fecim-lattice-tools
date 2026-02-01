@@ -7,7 +7,7 @@
 cd "$(dirname "$0")"
 rm -f fecim-lattice-tools
 echo "Building fecim-lattice-tools..."
-if go build -a -v ./cmd/fecim-lattice-tools 2>&1; then
+if go build -v ./cmd/fecim-lattice-tools 2>&1; then
     echo "Build successful, launching..."
     ./fecim-lattice-tools "$@"
 else
