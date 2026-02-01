@@ -119,14 +119,8 @@ func (ps *PreisachStack) Update(E float64) float64 {
 
 // ComputePolarization sums the hysterons based on the geometric shape of the stack
 func (ps *PreisachStack) ComputePolarization(currentE float64) float64 {
-	// Start with negative saturation
-	// P = -Ps + 2 * Sum( Area(Triangle_k) )
-	
-	// This simplified "Sum of Areas" relies on the Everett function properties
-	// P(t) = -Ps + 2 * [ E_func(alpha1, beta0) - E_func(alpha1, beta1) + E_func(alpha2, beta1) ... ]
-	
-	// Construct temporary full list of corners for calculation
-	// The "Active" corner is the current E
+	// P = -Ps + 2 * Sum
+	// Sum = E(M1, m0) - E(M1, m1) + E(M2, m1) - E(M2, m2) + ...
 	
 	// Create a temporary list of points including current E
 	points := make([]float64, 0, len(ps.Stack)+1)
@@ -135,46 +129,27 @@ func (ps *PreisachStack) ComputePolarization(currentE float64) float64 {
 	}
 	points = append(points, currentE)
 	
-	// Summation
-	// P = -Ps + 2 * Sum[ E(M_i, m_i-1) - E(M_i, m_i) ]
-	// Requires standardizing the sequence.
-	// We assume stack starts with Min (-Sat).
-	
-	// Placeholder for Ps (Saturation Polarization)
-	// Typically Everett(Sat, -Sat) = Ps
-	// So -Ps is the baseline.
-	
-	// For standard HZO, we can assume normalized output [-1, 1] and scale later,
-	// or assume Everett returns actual Polarization units.
+	// points[0] is always Min0 (-Sat)
+	// points[1] is Max1
+	// points[2] is Min1
+	// ...
 	
 	sum := 0.0
 	
-	// Iterate through pairs (Min, Max)
-	// Points: [Min0, Max1, Min2, Max3, ... Current]
-	
+	// Iterate over Max points (indices 1, 3, 5...)
 	for i := 1; i < len(points); i += 2 {
-		val_max := points[i]
-		val_min := points[i-1]
+		Max := points[i]
+		MinPrev := points[i-1] // always exists
 		
-		// If this is the last segment and it's incomplete (currentE is a Min going down)
-		// We might need special handling. But generally the sequence defines the boundary.
+		// Add the UP switching triangle
+		sum += ps.Everett.Calculate(Max, MinPrev)
 		
-		// Everett Formula: P = sum ( E(alpha_k, beta_k-1) - E(alpha_k, beta_k) )
-		// Here alpha is 'up switching' (vertical axis), beta is 'down switching' (horizontal)
-		// Triangle T(alpha, beta) is the area of hysterons switched UP.
-		
-		// Let's use the property:
-		// Contribution = Everett(Max, Min) - Everett(Max, Max) ??
-		// Ideally Everett(x, y) gives integral over triangle defined by tip (x,y)
-		
-		sum += ps.Everett.Calculate(val_max, val_min)
+		// Check for DOWN switching triangle (subtraction)
+		if i+1 < len(points) {
+			MinNext := points[i+1]
+			sum -= ps.Everett.Calculate(Max, MinNext)
+		}
 	}
 	
-	// Scale: Base is -Ps. Double the sum because we are switching from -1 to +1?
-	// Depends on Everett definition.
-	// Usually P = -Ps + 2 * Sum
-	
-	// Let's rely on the interface to handle the magnitude. 
-	// If Calculate returns P_switched_volume, then:
 	return -ps.Everett.Calculate(ps.SaturationE, -ps.SaturationE) + 2.0*sum
 }

@@ -19,6 +19,7 @@ const (
 	StateSuccess
 	StateFailed     // Needs external intervention (e.g. Reset)
 	StateForceReset // Explicitly requests a full system reset
+	StateResetting  // Internal reset due to overshoot
 )
 
 // WriteController manages the ISPP (Incremental Step Pulse Programming) loop
@@ -52,6 +53,9 @@ type WriteController struct {
 	PulseCount     int
 	TotalPulses    int // Accumulated pulses across retries
 	RetryCount     int // Number of times we've restarted the ISPP loop
+	
+	InitialLevel    int
+	InitialLevelSet bool
 
 	// Servo State
 	PreviousDiff int     // Difference from target in previous step
@@ -85,6 +89,9 @@ func (wc *WriteController) Start(targetLevel int, fromSaturation bool) {
 	// Reset Servo State
 	wc.PreviousDiff = 0
 	wc.StepModifier = 1.0
+	
+	wc.InitialLevel = 0 // Will be captured in Update
+	wc.InitialLevelSet = false
 
 	// Reset slope estimation state
 	wc.previousLevel = -1
@@ -106,6 +113,12 @@ func (wc *WriteController) ResetState() {
 // Update advances the controller state logic.
 func (wc *WriteController) Update(dt float64, currentField float64, currentLevel int) (targetField float64, done bool) {
 	wc.PhaseTimer += dt
+	
+	// Capture initial level on first update
+	if !wc.InitialLevelSet {
+		wc.InitialLevel = currentLevel
+		wc.InitialLevelSet = true
+	}
 
 	// Pulse duration constant (could be configurable)
 	pulseDur := wc.PulseDuration
@@ -129,6 +142,36 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			wc.PhaseTimer = 0
 		}
 		return targetField, false
+	
+	case StateResetting:
+		// Determine reset polarity based on direction
+		// If we were going UP and overshot, we are stuck High. Reset Low (-Max).
+		// If we were going DOWN and overshot, we are stuck Low. Reset High (+Max).
+		goingUp := wc.TargetLevel > wc.InitialLevel
+		
+		if goingUp {
+			targetField = -wc.MaxField * 1.5 // Deep Negative
+		} else {
+			targetField = wc.MaxField * 1.5 // Deep Positive
+		}
+		
+		// Wait for reset pulse
+		if wc.PhaseTimer > pulseDur*0.4 { // Short reset
+			wc.State = StateApply
+			wc.PhaseTimer = 0
+			// Back off CurrentField for next try
+			// We overshot, so reduce the drive magnitude
+			if goingUp {
+				// Was positive, make less positive
+				wc.CurrentField *= 0.8
+			} else {
+				// Was negative, make less negative
+				wc.CurrentField *= 0.8
+			}
+			wc.PulseCount++
+			log.Printf("ISPP RESET DONE. Retrying with E=%.3f", wc.CurrentField)
+		}
+		return targetField, false
 
 	case StateVerify:
 		// Target is 0V for verification
@@ -148,6 +191,20 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 				// Note: In real FeCIM, we'd be more careful about updating calib from "stubborn" writes
 				// as they might represent edges of the distribution.
 				return 0, true
+			}
+			
+			// Check for OVERSHOOT
+			// If we passed the target, we are on the wrong hysteresis branch.
+			// Standard servoing (reducing voltage) won't work due to remanence.
+			// Must RESET.
+			goingUp := wc.TargetLevel > wc.InitialLevel
+			overshoot := (goingUp && currentLevel > wc.TargetLevel) || (!goingUp && currentLevel < wc.TargetLevel)
+			
+			if overshoot {
+				log.Printf("ISPP OVERSHOOT detected! Resetting state...")
+				wc.State = StateResetting
+				wc.PhaseTimer = 0
+				return 0, false
 			}
 
 			// Not converged. Check retries.
@@ -247,9 +304,13 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 		wc.previousLevel = -1
 	} else {
 		// NO SIGN CHANGE - We haven't crossed target yet.
-		// If we made NO progress (level read same), kick it harder
-		if diff == wc.PreviousDiff {
-			// AGGRESSIVE KICK when stuck in sub-threshold or plateau
+		// If we made NO progress (level read same), we might be stuck.
+		// BUT: Only kick if the field itself is also not moving (or moving very slowly).
+		// If the servo is actively changing the field, let it work (it might be traversing a flat region).
+		fieldChanged := math.Abs(wc.CurrentField-wc.previousField) > 0.001*wc.EcField
+
+		if diff == wc.PreviousDiff && !fieldChanged {
+			// AGGRESSIVE KICK only when TRULY stuck (output same AND input not moving)
 			// If field is weak (<0.8*Ec), jump immediately to switching region
 			EcEst := wc.MaxField * 0.4
 			if math.Abs(wc.CurrentField) < 0.8*EcEst && math.Abs(float64(levelError)) > 2 {
@@ -263,9 +324,10 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 				wc.StepModifier *= 1.5 // Standard stuck recovery
 			}
 		} else {
-			// WE MADE PROGRESS - but are we moving fast enough?
+			// WE MADE PROGRESS (or are moving the field)
 			// Use slope estimation if we have two data points on the same branch
-			if wc.previousField != 0 && currentLevel != wc.previousLevel {
+			if wc.previousField != 0 && diff != wc.PreviousDiff {
+				// Only estimate slope if OUTPUT actually changed
 				slope := (wc.CurrentField - wc.previousField) / float64(currentLevel-wc.previousLevel)
 				if (levelError > 0 && slope < 0) || (levelError < 0 && slope > 0) {
 					// Predict field needed to close remaining level error
@@ -279,7 +341,18 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 					return
 				}
 			}
-			wc.StepModifier = 1.0
+			// If we are moving the field but output matches, we are traversing a flat region.
+			// Keep StepModifier normal or slightly aggressive?
+			if diff == wc.PreviousDiff {
+				// Flattening: we are moving field but output not changing.
+				// Accelerate slightly to cross the desert?
+				wc.StepModifier *= 1.1
+				if wc.StepModifier > 5.0 {
+					wc.StepModifier = 5.0
+				}
+			} else {
+				wc.StepModifier = 1.0
+			}
 		}
 	}
 

@@ -8,6 +8,7 @@
 //   - --tui: Terminal user interface (for SSH/remote)
 //   - --headless: ASCII terminal output (static, no interactivity)
 //   - --vulkan: Vulkan-based graphical interface (advanced)
+//
 package main
 
 import (
@@ -85,88 +86,6 @@ func getMaterialKey(m *ferroelectric.HZOMaterial) string {
 	}
 }
 
-func main() {
-	// Command line flags
-	materialName := flag.String("material", "default", "Material: default, fecim, superlattice, cryogenic, hzo32, ftj140, alscn")
-	freq := flag.Float64("freq", 1e6, "Waveform frequency in Hz")
-	headless := flag.Bool("headless", false, "Run in headless mode (static ASCII output)")
-	tuiMode := flag.Bool("tui", false, "Run terminal UI mode (for SSH/remote)")
-	vulkan := flag.Bool("vulkan", false, "Run with Vulkan graphics (GPU accelerated)")
-	listMats := flag.Bool("list-materials", false, "List available materials and exit")
-	flag.Parse()
-
-	// List materials and exit
-	if *listMats {
-		listMaterials()
-		return
-	}
-
-	// Get selected material
-	material := getMaterial(*materialName)
-
-	// Determine run mode based on flags
-	if *headless {
-		// Headless mode - static ASCII output
-		fmt.Println("===========================================")
-		fmt.Println("  FeCIM Hysteresis Visualizer")
-		fmt.Println("  Demo 1: Ferroelectric P-E Curve")
-		fmt.Println("===========================================")
-		fmt.Println()
-		fmt.Printf("Using: %s\n", material.Name)
-
-		printMaterialInfo(material)
-		engine := simulation.NewEngine(material)
-		engine.SetFrequency(*freq)
-		runHeadless(engine, material)
-		return
-	}
-
-	if *tuiMode {
-		// Terminal UI mode with selected material
-		if err := tui.RunWithMaterial(material.Name); err != nil {
-			log.Printf("TUI error: %v\n", err)
-			fmt.Println("\nFalling back to headless mode...")
-
-			engine := simulation.NewEngine(material)
-			engine.SetFrequency(*freq)
-			runHeadless(engine, material)
-		}
-		return
-	}
-
-	if *vulkan {
-		// Vulkan graphical mode
-		fmt.Println("===========================================")
-		fmt.Println("  FeCIM Hysteresis Visualizer")
-		fmt.Println("  Demo 1: Ferroelectric P-E Curve (Vulkan)")
-		fmt.Println("===========================================")
-		fmt.Println()
-		fmt.Printf("Using: %s\n", material.Name)
-
-		printMaterialInfo(material)
-		engine := simulation.NewEngine(material)
-		engine.SetFrequency(*freq)
-		runGraphical(engine, material)
-		return
-	}
-
-	// Default: Fyne GUI mode (recommended)
-	// Pass the selected material name to the GUI
-	if err := gui.RunWithMaterial(material.Name); err != nil {
-		log.Printf("GUI error: %v\n", err)
-		fmt.Println("\nFalling back to TUI mode...")
-
-		if err := tui.RunWithMaterial(material.Name); err != nil {
-			log.Printf("TUI error: %v\n", err)
-			fmt.Println("\nFalling back to headless mode...")
-
-			engine := simulation.NewEngine(material)
-			engine.SetFrequency(*freq)
-			runHeadless(engine, material)
-		}
-	}
-}
-
 func printMaterialInfo(m *ferroelectric.HZOMaterial) {
 	fmt.Println("\nMaterial Parameters:")
 	fmt.Printf("  Remanent Polarization (Pr): %.1f μC/cm²\n", m.Pr*100)
@@ -212,21 +131,16 @@ func runHeadless(engine *simulation.Engine, material *ferroelectric.HZOMaterial)
 	fmt.Println(renderer.RenderMaterialComparison())
 
 	// Summary
-	fmt.Println("═══════════════════════════════════════════════════════════════")
+	fmt.Println("═════════════════════════════════════════════════════════════════")
 	fmt.Println("                     SIMULATION SUMMARY")
-	fmt.Println("═══════════════════════════════════════════════════════════════")
-	fmt.Println()
-	fmt.Printf("  Material: %s\n", material.Name)
-	fmt.Printf("  Remanent Polarization: %.1f µC/cm²\n", material.Pr*100)
-	fmt.Printf("  Coercive Field: %.2f MV/cm\n", material.Ec/1e8)
-	fmt.Printf("  Switching Time: %.2f ns\n", material.Tau*1e9)
-	fmt.Printf("  Endurance: %.0e cycles\n", material.EnduranceCycles)
-	fmt.Printf("  30 Discrete States: %.1f bits/cell\n", 4.91)
-	fmt.Println()
-	fmt.Println("─────────────────────────────────────────────────────────────")
-	fmt.Println("  \"It's got 30 discrete states. So it's not 0-1-0-1.\"")
-	fmt.Println("  - Dr. external research group")
-	fmt.Println("─────────────────────────────────────────────────────────────")
+	fmt.Println("═══════════════════════════════════════════════════")
+	fmt.Println("  Material: %s", material.Name)
+	fmt.Printf("  Remanent Polarization: %.1f μC/cm²\n", material.Pr*100)
+	fmt.Printf("  Saturation Polarization ( Ps): %.1f μC/cm²\n", material.Ps*100)
+	fmt.Printf("  Coercive Field ( Ec): %.2f MV/cm\n", material.Ec/1e8)
+	fmt.Printf("  Coercive Voltage (Vc): %.2f V\n", m.CoerciveVoltage())
+	fmt.Printf("  Film Thickness: %.0f nm\n", m.Thickness*1e9)
+	fmt.Printf("  Relative Permittivity: %.0f\n", m.Epsilon)
 	fmt.Println()
 }
 
@@ -276,7 +190,70 @@ func runGraphical(engine *simulation.Engine, material *ferroelectric.HZOMaterial
 	// Run render loop
 	if err := renderer.Run(); err != nil {
 		log.Fatalf("Renderer error: %v", err)
+		}
+		fmt.Printf("\nSimulation completed. Rendered %d frames.\n", frameCount)
+	}
+}
+
+// Default: Fyne GUI mode (recommended)
+// Pass the selected material name to GUI
+	if err := gui.RunWithMaterial(material.Name); err != nil {
+		log.Printf("GUI error: %v\n", err)
+		fmt.Println("\nFalling back to TUI mode...")
+		
+		if err := tui.RunWithMaterial(material.Name); err != nil {
+			engine := simulation.NewEngine(material)
+			engine.SetFrequency(*freq)
+			runHeadless(engine, material)
+		} else {
+			log.Printf("TUI error: %v\n", err)
+			fmt.Println("\nFalling back to headless mode...")
+		}
+	} else {
+		log.Printf("GUI error: %v\n", err)
+		fmt.Println("\nFalling back to TUI mode...")
+	}
+}
+
+	// Initialize logging system if requested
+	if *logger {
+		// Enable file logging
+		logging.EnableFileLogging()
+
+		// Set verbosity level
+		switch *verbosity {
+		case "off":
+			// No change - already off
+		case "info":
+			logging.SetVerbosity(logging.VerbosityInfo)
+		case "debug":
+			logging.SetVerbosity(logging.VerbosityDebug)
+		case "trace":
+			logging.SetVerbosity(logging.VerbosityTrace)
+		default:
+			fmt.Printf("Unknown verbosity level: %s. Using 'info' instead.\n", *verbosity)
+			logging.SetVerbosity(logging.VerbosityInfo)
+		}
 	}
 
-	fmt.Printf("\nSimulation completed. Rendered %d frames.\n", frameCount)
-}
+	// Get selected material
+	material := getMaterial(*materialName)
+
+	// Determine run mode based on flags
+	if *headless {
+		// Headless mode - static ASCII output
+		fmt.Println("===========================================")
+		fmt.Println("  FeCIM Hysteresis Visualizer")
+		fmt.Println("  Demo 1: Ferroelectric P-E Curve")
+		fmt.Println("===========================================")
+		fmt.Println()
+
+		fmt.Printf("Using: %s\n", material.Name)
+
+		printMaterialInfo(material)
+
+		engine := simulation.NewEngine(material)
+		engine.SetFrequency(*freq)
+		runHeadless(engine, material)
+		return
+	}

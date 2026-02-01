@@ -237,10 +237,8 @@ func (a *App) getSlideText() string {
 }
 
 // addLogEntry adds a timestamped entry to the memory log
+// NOTE: Caller must hold a.mu lock to prevent race conditions or deadlocks
 func (a *App) addLogEntry(entry string) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-
 	// Add timestamp prefix
 	timestamp := fmt.Sprintf("t=%.1fs", a.simTime)
 	fullEntry := fmt.Sprintf("%s %s", timestamp, entry)
