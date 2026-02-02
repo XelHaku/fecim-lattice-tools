@@ -89,6 +89,31 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 				"vMax":     c.VMax,
 			}, nil)
 		}
+		if c.Material != nil && c.Material.Ps != 0 {
+			ratio := math.Abs(targetP / c.Material.Ps)
+			if ratio > 1 {
+				ratio = 1
+			}
+			tighten := 0.6 + 0.4*ratio
+			if tighten < 0.6 {
+				tighten = 0.6
+			}
+			if tighten > 1.0 {
+				tighten = 1.0
+			}
+			newVMax := c.VMin + tighten*(c.VMax-c.VMin)
+			if newVMax < c.VMax {
+				c.VMax = newVMax
+				log.Calculation("WriteTarget", map[string]interface{}{
+					"step":     "TightenBounds",
+					"crossing": crossingInitial,
+					"ratio":    ratio,
+					"tighten":  tighten,
+					"vMin":     c.VMin,
+					"vMax":     c.VMax,
+				}, nil)
+			}
+		}
 	}
 
 	directionLabel := "positive"
@@ -153,13 +178,13 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 			midpoint := c.VMin + bias*(c.VMax-c.VMin)
 			vPulse = direction * midpoint
 			log.Calculation("WriteTarget", map[string]interface{}{
-				"step":        "BinarySearch",
-				"vPulse":      vPulse,
-				"vMin":        c.VMin,
-				"vMax":        c.VMax,
-				"crossing":    crossingNow,
-				"midpoint":    midpoint,
-				"bias":        bias,
+				"step":     "BinarySearch",
+				"vPulse":   vPulse,
+				"vMin":     c.VMin,
+				"vMax":     c.VMax,
+				"crossing": crossingNow,
+				"midpoint": midpoint,
+				"bias":     bias,
 			}, nil)
 		}
 
@@ -223,6 +248,32 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 			c.VMin = 0.0
 
 			c.Solver.SetState(-direction * math.Abs(c.Material.Pr))
+
+			if c.Material != nil && c.Material.Ps != 0 {
+				ratio := math.Abs(targetP / c.Material.Ps)
+				if ratio > 1 {
+					ratio = 1
+				}
+				tighten := 0.6 + 0.4*ratio
+				if tighten < 0.6 {
+					tighten = 0.6
+				}
+				if tighten > 1.0 {
+					tighten = 1.0
+				}
+				newVMax := c.VMin + tighten*(c.VMax-c.VMin)
+				if newVMax < c.VMax {
+					c.VMax = newVMax
+					log.Calculation("WriteTarget", map[string]interface{}{
+						"step":    "TightenBounds",
+						"stage":   "OvershootReset",
+						"ratio":   ratio,
+						"tighten": tighten,
+						"vMin":    c.VMin,
+						"vMax":    c.VMax,
+					}, nil)
+				}
+			}
 		}
 	}
 

@@ -37,6 +37,11 @@ Screens:
                 icon: theme.ListIcon
                 purpose: Toggle ToC sidebar visibility
                 file: embedded.go:201-203
+            - SidebarToggleButton (Button):
+                type: widget.Button
+                icon: theme.MenuIcon
+                purpose: Toggle document tree visibility (mobile overlay / desktop sidebar)
+                file: embedded.go
             - SearchButton (Button):
                 type: widget.Button
                 icon: theme.SearchIcon

@@ -31,10 +31,10 @@ type LKSolver struct {
 	K_dep float64 // Depolarization coefficient (V*m/C) - creates "slant" for analog levels
 
 	// NLS Parameters
-	UseNLS        bool
+	UseNLS          bool
 	ActivationField float64 // Activation field (V/m) for Merz's Law
-	TauInf        float64 // Infinite field switching time (s)
-	IncubationEnd float64 // Time when switching can start (s),
+	TauInf          float64 // Infinite field switching time (s)
+	IncubationEnd   float64 // Time when switching can start (s),
 
 	// Thermodynamic constants
 	CurieTemp  float64 // Curie temperature (K)
@@ -68,16 +68,16 @@ func NewLKSolver() *LKSolver {
 		Stress: 1.0e9, // 1 GPa
 
 		// Circuit parasitics (from hysteresis-gemini.md)
-		SeriesResistance: 50.0,  // Ohms
-		Thickness:        10e-9, // 10 nm
-		Area:             100e-12,
+		SeriesResistance: 50.0,          // Ohms
+		Thickness:        10e-9,         // 10 nm
+		Area:             45e-9 * 45e-9, // 45 nm x 45 nm (FeCIM default cell)
 
 		// Depolarization for Polycrystalline Analog Behavior
 		K_dep: 2.5e8, // V*m/C - Default value (matches physics.yaml, within recommended 1-5×10⁸ range)
 
-		UseNLS:      true,
+		UseNLS:          true,
 		ActivationField: 1.9e9, // 19 MV/cm (Merz activation field)
-		TauInf:      1.0e-13,
+		TauInf:          1.0e-13,
 
 		CurieTemp:  723.0,
 		CurieConst: 1.5e5,
@@ -90,7 +90,7 @@ func NewLKSolver() *LKSolver {
 		// CRITICAL: Initialize to negative saturation (-Pr)
 		// If P0, then E_dep=K_dep*P=0, and depolarization has no effect!
 		// This causes binary switching instead of analog slope.
-		P: -0.25, // C/m² (Approximate -Pr for HZO at negative saturation)
+		P: -0.30, // C/m² (Approximate -Pr for FeCIM HZO at negative saturation)
 
 		logLimit: 25,
 	}
@@ -100,7 +100,7 @@ func NewLKSolver() *LKSolver {
 // the Unified Coefficient Formula: alpha = alpha_t(T) - 2*Q12*Stress
 func (s *LKSolver) UpdateParams() {
 	const (
-		Eps0       = 8.854e-12 // Vacuum Permittivity (F/m)
+		Eps0 = 8.854e-12 // Vacuum Permittivity (F/m)
 	)
 
 	// Thermodynamic contribution (Curie-Weiss)
@@ -168,20 +168,20 @@ func (s *LKSolver) ConfigureFromMaterial(mat *HZOMaterial) {
 
 	// Debug logging to confirm configuration
 	matLog.Input("ConfigureFromMaterial", map[string]interface{}{
-		"Beta":              s.Beta,
-		"Gamma":             s.Gamma,
-		"Rho":               s.Rho,
-		"Q12":               s.Q12,
-		"Stress_Pa":         s.Stress,
-		"K_dep":             s.K_dep,
-		"Thickness":         s.Thickness,
-		"Area":              s.Area,
-		"CurieTemp":         s.CurieTemp,
-		"CurieConst":        s.CurieConst,
-		"SeriesResistance":  s.SeriesResistance,
-		"ActivationField":   s.ActivationField,
-		"TauInf":            s.TauInf,
-		"InitPolarization":  s.P,
+		"Beta":             s.Beta,
+		"Gamma":            s.Gamma,
+		"Rho":              s.Rho,
+		"Q12":              s.Q12,
+		"Stress_Pa":        s.Stress,
+		"K_dep":            s.K_dep,
+		"Thickness":        s.Thickness,
+		"Area":             s.Area,
+		"CurieTemp":        s.CurieTemp,
+		"CurieConst":       s.CurieConst,
+		"SeriesResistance": s.SeriesResistance,
+		"ActivationField":  s.ActivationField,
+		"TauInf":           s.TauInf,
+		"InitPolarization": s.P,
 	})
 }
 

@@ -175,7 +175,9 @@ To write a specific analog state (e.g., Level 14) in nanoseconds, we replace lin
 subsequent steps continue from the prior state to exercise end‑to‑end multi‑step convergence, including a
 negative‑branch target. The initial pulse uses an inverse‑tanh estimate (`atanh(P_target/Ps)`), then clamps to
 `[VMin, VMax]` before binary search refinement. When crossing branches, the guess is biased low by
-`( |P_target| / Ps )^2` and `VMax` is clamped to the inverse‑tanh bound to reduce repeated overshoot resets.
+`( |P_target| / Ps )^2` and `VMax` is clamped to the inverse‑tanh bound. The initial upper bound is also
+tightened by a conservative factor that scales with `|P_target|/Ps` (0.6–1.0 of the bracket), and the
+tightening is re‑applied after overshoot resets to reduce repeated overshoot events.
 While still crossing, binary‑search midpoints are **biased low** with a factor that scales with
 `|P_target|/Ps` (clamped ~0.1–0.3 of the bracket) to further reduce overshoot resets before the branch is crossed.
 

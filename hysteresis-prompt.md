@@ -16,6 +16,30 @@ Objective
 - Make this task **repeatable indefinitely**: each run should improve physics fidelity and ISPP correctness,
   with headless validation as the single source of truth.
 
+Primary Focus (ranked)
+
+1) Physics correctness (highest priority)
+- Landau-Khalatnikov equation terms, units, signs, and parameter mapping.
+- Deterministic headless behavior (noise/NLS toggles) for reproducible validation.
+- Parameter defaults match `docs/hysteresis/hysteresis-gemini.md`.
+- Depolarization and effective-viscosity treatments are logged and verified.
+
+2) Algorithms (ISPP / control loop)
+- Multi-step ISPP end-to-end with state preservation between steps.
+- Branch-crossing robustness with minimal overshoot resets.
+- Conservative bounds and predictors; bias only while crossing.
+- Convergence and overshoot metrics tracked in logs and baseline.
+
+3) Documentation sync (tight coupling to physics)
+- Update `docs/hysteresis/hysteresis-gemini.md` when code/behavior changes.
+- Keep `docs/hysteresis/hysteresis.demo.md` and `docs/development/ARCHITECTURE.md` aligned with headless behavior.
+- Prefer clarifying exact equations, parameter values, and headless workflow.
+- Download missing open-access references to `docs/research-papers/...` when possible.
+
+4) UI (only if physics correctness requires it)
+- Avoid GUI changes unless they fix incorrect physics behavior or logging.
+- GUI is illustrative; headless logs are authoritative for acceptance.
+
 Tasks
 
 1) Equation fidelity (no approximations unless explicitly called out)
@@ -111,6 +135,21 @@ Deliverable
   - Any gaps, issues, or follow-ups needed.
 - Include the validation command, the log file path used, and 2-4 representative log lines.
 - Include a short **"next iteration target"** based on remaining physics gaps or ISPP inefficiencies.
+
+Task TODO (next iteration)
+
+- Reduce overshoot resets in branch-crossing steps (pos-1/neg-1) by tightening initial bounds and/or reset strategy.
+- Validate that low-bias midpoints only apply while crossing (`currentP * targetP < 0`) and record any overshoot deltas.
+- Attempt to download open-access versions or preprints for remaining paywalled/ambiguous references:
+  Park 2019, Hoffmann 2015, Starschich 2016, Tung 2022 (update `docs/research-papers/.../README.md` accordingly).
+- Re-run headless validation and update baseline with the newest log path + ISPP attempts/overshoots.
+
+Additional Focus Areas (if time allows, in order)
+
+- Physics: test sensitivity to K_dep and alpha(T, sigma) sign conventions; confirm no hidden approximations.
+- Algorithms: adaptive bounds per-target based on |P_target|/Ps; reduce overshoot reset amplitude when safe.
+- Logging: ensure LK terms and ISPP phase transitions always appear at debug verbosity; add missing terms if any disappear.
+- Docs: reconcile any mismatches between `docs/hysteresis/hysteresis-gemini.md` and runtime behavior after changes.
 
 Baseline (update each run)
 

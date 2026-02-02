@@ -32,11 +32,13 @@ func (app *DualModeApp) runInference(pixels []float64) {
 	quantWeights, _, _, _ := app.network().GetQuantWeights()
 
 	fyne.Do(func() {
-		// Update status line (not in updateResultDisplays since it's specific to runInference)
-		app.statusLabel.SetText(fmt.Sprintf("FP: %d (%.1f%%) | CIM: %d (%.1f%%) | %s",
-			result.FPPrediction, result.FPConfidence*100,
-			result.CIMPrediction, result.CIMConfidence*100,
-			map[bool]string{true: "MATCH", false: "Prediction Mismatch"}[result.Agree]))
+		if !app.quickDemoRunning {
+			// Update status line (not in updateResultDisplays since it's specific to runInference)
+			app.statusLabel.SetText(fmt.Sprintf("FP: %d (%.1f%%) | CIM: %d (%.1f%%) | %s",
+				result.FPPrediction, result.FPConfidence*100,
+				result.CIMPrediction, result.CIMConfidence*100,
+				map[bool]string{true: "MATCH", false: "Prediction Mismatch"}[result.Agree]))
+		}
 
 		// Update all result displays
 		app.updateResultDisplays(result, quantWeights)
@@ -51,27 +53,33 @@ func (app *DualModeApp) runInferenceAnimated(pixels []float64) {
 		if app.inferencePhaseLabel != nil {
 			app.inferencePhaseLabel.SetText("Phase 1: Processing input (784 pixels)...")
 		}
-		app.statusLabel.SetText("INFERENCE | Phase 1: Input → 784 neurons")
+		if !app.quickDemoRunning {
+			app.statusLabel.SetText("INFERENCE | Phase 1: Input → 784 neurons")
+		}
 	})
-	time.Sleep(150 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 
 	// Phase 2: Layer 1 MVM (200ms)
 	fyne.Do(func() {
 		if app.inferencePhaseLabel != nil {
 			app.inferencePhaseLabel.SetText("Phase 2: Layer 1 MVM (784×128 = 100,352 MACs)...")
 		}
-		app.statusLabel.SetText("INFERENCE | Phase 2: MVM 784→128 (100,352 parallel MACs)")
+		if !app.quickDemoRunning {
+			app.statusLabel.SetText("INFERENCE | Phase 2: MVM 784→128 (100,352 parallel MACs)")
+		}
 	})
-	time.Sleep(200 * time.Millisecond)
+	time.Sleep(700 * time.Millisecond)
 
 	// Phase 3: Layer 2 MVM (150ms)
 	fyne.Do(func() {
 		if app.inferencePhaseLabel != nil {
 			app.inferencePhaseLabel.SetText("Phase 3: Layer 2 MVM (128×10 = 1,280 MACs)...")
 		}
-		app.statusLabel.SetText("INFERENCE | Phase 3: MVM 128→10 (1,280 parallel MACs)")
+		if !app.quickDemoRunning {
+			app.statusLabel.SetText("INFERENCE | Phase 3: MVM 128→10 (1,280 parallel MACs)")
+		}
 	})
-	time.Sleep(150 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
 
 	// Phase 4: Result - run actual inference and display
 	result := app.network().Infer(pixels)
@@ -86,12 +94,14 @@ func (app *DualModeApp) runInferenceAnimated(pixels []float64) {
 		app.updateResultDisplays(result, quantWeights)
 
 		// Show dramatic match/mismatch feedback (UI-024 fix: better units, UI-023 fix: clearer wording)
-		if result.Agree {
-			app.statusLabel.SetText(fmt.Sprintf("MATCH | FP: %d | CIM: %d | Confidence: %.1f%% | 25-100× energy efficient (Samsung Nature 2025)",
-				result.FPPrediction, result.CIMPrediction, result.CIMConfidence*100))
-		} else {
-			app.statusLabel.SetText(fmt.Sprintf("Prediction Mismatch | FP: %d vs CIM: %d | Weight quantization may need tuning",
-				result.FPPrediction, result.CIMPrediction))
+		if !app.quickDemoRunning {
+			if result.Agree {
+				app.statusLabel.SetText(fmt.Sprintf("MATCH | FP: %d | CIM: %d | Confidence: %.1f%% | 25-100× energy efficient (Samsung Nature 2025)",
+					result.FPPrediction, result.CIMPrediction, result.CIMConfidence*100))
+			} else {
+				app.statusLabel.SetText(fmt.Sprintf("Prediction Mismatch | FP: %d vs CIM: %d | Weight quantization may need tuning",
+					result.FPPrediction, result.CIMPrediction))
+			}
 		}
 	})
 }
@@ -223,7 +233,9 @@ func (app *DualModeApp) loadRandomSample() {
 
 	fyne.Do(func() {
 		app.digitCanvas.SetPixels(pixels)
-		app.statusLabel.SetText(fmt.Sprintf("Loaded test sample #%d (true label: %d)", idx, label))
+		if !app.quickDemoRunning {
+			app.statusLabel.SetText(fmt.Sprintf("Loaded test sample #%d (true label: %d)", idx, label))
+		}
 		app.onDigitChanged(pixels)
 	})
 }
@@ -290,7 +302,9 @@ func (app *DualModeApp) updateWeightHeatmapWithProgress(done chan error) {
 
 	// Show loading progress
 	fyne.Do(func() {
-		app.statusLabel.SetText("Updating weight heatmap...")
+		if !app.quickDemoRunning {
+			app.statusLabel.SetText("Updating weight heatmap...")
+		}
 	})
 
 	// Update heatmap if it exists
@@ -315,6 +329,13 @@ func (app *DualModeApp) updateWeightHeatmapWithProgress(done chan error) {
 // Business logic is delegated to NetworkController; this method handles UI feedback.
 func (app *DualModeApp) tryLoadQATWeights(targetLevel int) {
 	result, err := app.networkCtrl.TryLoadQATWeights(targetLevel)
+
+	if app.quickDemoRunning {
+		if result == QATLoadError {
+			mnistLog.Printf("Quick demo: failed to load QAT weights for %d levels: %v", targetLevel, err)
+		}
+		return
+	}
 
 	switch result {
 	case QATAlreadyLoaded:

@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -41,8 +42,10 @@ type EmbeddedDocsApp struct {
 	searchDialog  *SearchDialog
 
 	// State
-	pathMap map[string]*docEntry
-	docs    []*docEntry
+	pathMap          map[string]*docEntry
+	docs             []*docEntry
+	lastStarToggle   string
+	lastStarToggleAt time.Time
 }
 
 // NewEmbeddedDocsApp creates a new embedded docs app instance
@@ -176,11 +179,14 @@ func (app *EmbeddedDocsApp) buildTopBar() fyne.CanvasObject {
 	tocToggleBtn := widget.NewButtonWithIcon("", theme.ListIcon(), func() {
 		app.layoutManager.ToggleToc()
 	})
+	sidebarToggleBtn := widget.NewButtonWithIcon("", theme.MenuIcon(), func() {
+		app.layoutManager.ToggleSidebar()
+	})
 
 	return container.NewBorder(
 		nil, nil,
 		widget.NewLabel("FeCIM Documentation"),
-		container.NewHBox(tocToggleBtn, searchBtn),
+		container.NewHBox(sidebarToggleBtn, tocToggleBtn, searchBtn),
 		nil,
 	)
 }
@@ -263,6 +269,8 @@ func (app *EmbeddedDocsApp) createDocTree() *widget.Tree {
 					// Capture path for closure
 					path := entry.path
 					starBtn.OnTapped = func() {
+						app.lastStarToggle = path
+						app.lastStarToggleAt = time.Now()
 						app.toggleFavorite(path)
 						app.tree.Refresh()
 					}
@@ -273,6 +281,9 @@ func (app *EmbeddedDocsApp) createDocTree() *widget.Tree {
 
 	// Handle selection - load markdown file or toggle folder
 	tree.OnSelected = func(uid widget.TreeNodeID) {
+		if uid == app.lastStarToggle && time.Since(app.lastStarToggleAt) < 300*time.Millisecond {
+			return
+		}
 		if entry, ok := app.pathMap[uid]; ok {
 			if entry.isDir {
 				// Toggle folder open/close when clicking anywhere on the row
@@ -380,8 +391,36 @@ func (app *EmbeddedDocsApp) scrollToSection(anchor string) {
 
 // navigateToFolder expands the tree to show a folder
 func (app *EmbeddedDocsApp) navigateToFolder(path string) {
+	if app.tree == nil || app.docsPath == "" || path == "" {
+		return
+	}
+
+	targetPath := path
+	if info, err := os.Stat(path); err == nil && !info.IsDir() {
+		if strings.HasSuffix(strings.ToLower(path), ".md") {
+			app.loadDocument(path)
+		}
+		targetPath = filepath.Dir(path)
+	}
+
+	relPath, err := filepath.Rel(app.docsPath, targetPath)
+	if err != nil {
+		return
+	}
+
+	parts := strings.Split(filepath.ToSlash(relPath), "/")
+	current := app.docsPath
+
 	fyne.Do(func() {
-		app.tree.OpenBranch(path)
+		for _, part := range parts {
+			if part == "" || part == "." {
+				continue
+			}
+			current = filepath.Join(current, part)
+			if _, ok := app.pathMap[current]; ok {
+				app.tree.OpenBranch(current)
+			}
+		}
 	})
 }
 

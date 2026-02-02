@@ -8,12 +8,26 @@ import (
 	"fyne.io/fyne/v2"
 )
 
-// StartQuickDemo runs an automated 30-second demonstration of FeCIM's key insight.
+// StartQuickDemo runs an automated ~30-second demonstration of FeCIM's key insight.
 // Shows: Ideal (30 levels) → Success → Break (2 levels) → Failure → Restore
 func (app *DualModeApp) StartQuickDemo() {
 	if app.quickDemoRunning {
 		return
 	}
+
+	const (
+		stepIntroHold      = 3 * time.Second
+		stepPresetHold     = 1 * time.Second
+		stepSampleHold     = 4 * time.Second
+		stepSuccessHold    = 4 * time.Second
+		stepBreakIntroHold = 2 * time.Second
+		stepBreakHold      = 1 * time.Second
+		stepFailureHold    = 4 * time.Second
+		stepExplainHold    = 4 * time.Second
+		stepRestoreHold    = 2 * time.Second
+		stepWrapHold       = 3 * time.Second
+		stepAfterInferHold = 3 * time.Second
+	)
 
 	app.quickDemoRunning = true
 	app.quickDemoStopChan = make(chan struct{})
@@ -25,48 +39,48 @@ func (app *DualModeApp) StartQuickDemo() {
 			app.animationEnabled = false
 		}()
 
-		// Step 1: Introduction (2s)
+		// Step 1: Introduction
 		fyne.Do(func() {
-			app.statusLabel.SetText("QUICK DEMO | Step 1/5: Welcome to FeCIM - Watch the magic of 30 analog levels!")
+			app.statusLabel.SetText("QUICK DEMO | Step 1/5: Welcome. We'll compare 30 levels vs 2 levels.")
 		})
-		if app.waitOrStop(2 * time.Second) {
+		if app.waitOrStop(stepIntroHold) {
 			return
 		}
 
-		// Step 2: Load sample and show ideal prediction (3s)
+		// Step 2: Load sample and show ideal prediction
 		fyne.Do(func() {
 			app.applyPreset(30, 0.01, 8, 8)
-			app.statusLabel.SetText("QUICK DEMO | Step 2/5: Loading test digit with 30 levels (ideal)...")
+			app.statusLabel.SetText("QUICK DEMO | Step 2/5: Loading a test digit with 30 levels (ideal).")
 		})
-		if app.waitOrStop(500 * time.Millisecond) {
+		if app.waitOrStop(stepPresetHold) {
 			return
 		}
 		fyne.Do(func() {
 			app.loadRandomSample()
 		})
-		if app.waitOrStop(2500 * time.Millisecond) {
+		if app.waitOrStop(stepSampleHold) {
 			return
 		}
 
-		// Step 3: Show success with 30 levels (3s)
+		// Step 3: Show success with 30 levels
 		fyne.Do(func() {
-			app.statusLabel.SetText("QUICK DEMO | Step 3/5: 30 LEVELS = HIGH ACCURACY! FP and CIM predictions match.")
+			app.statusLabel.SetText("QUICK DEMO | Step 3/5: 30 levels → FP and CIM match. Compare the results.")
 		})
-		if app.waitOrStop(3 * time.Second) {
+		if app.waitOrStop(stepSuccessHold) {
 			return
 		}
 
-		// Step 4: Break it with 2 levels (4s)
+		// Step 4: Break it with 2 levels
 		fyne.Do(func() {
-			app.statusLabel.SetText("QUICK DEMO | Step 4/5: Now watch what happens with only 2 levels (binary)...")
+			app.statusLabel.SetText("QUICK DEMO | Step 4/5: Switching to 2 levels (binary). Watch what changes.")
 		})
-		if app.waitOrStop(1 * time.Second) {
+		if app.waitOrStop(stepBreakIntroHold) {
 			return
 		}
 		fyne.Do(func() {
 			app.applyPreset(2, 0.01, 8, 8)
 		})
-		if app.waitOrStop(500 * time.Millisecond) {
+		if app.waitOrStop(stepBreakHold) {
 			return
 		}
 		// Re-run inference with same digit
@@ -75,24 +89,24 @@ func (app *DualModeApp) StartQuickDemo() {
 				app.runInference(app.lastPixels)
 			})
 		}
-		if app.waitOrStop(2500 * time.Millisecond) {
+		if app.waitOrStop(stepAfterInferHold) {
 			return
 		}
 
-		// Step 5: Show failure explanation (3s)
+		// Step 5: Show failure explanation
 		fyne.Do(func() {
-			app.statusLabel.SetText("QUICK DEMO | Step 5/5: 2 LEVELS = FAILURE! Binary weights cannot represent the network.")
+			app.statusLabel.SetText("QUICK DEMO | Step 5/5: 2 levels → quantization bottleneck. Accuracy drops.")
 		})
-		if app.waitOrStop(3 * time.Second) {
+		if app.waitOrStop(stepFailureHold) {
 			return
 		}
 
-		// Restore ideal settings (2s)
+		// Restore ideal settings
 		fyne.Do(func() {
 			app.applyPreset(30, 0.01, 8, 8)
-			app.statusLabel.SetText("DEMO COMPLETE | Key insight: 30 levels enable high accuracy with 25-100× energy efficiency (Samsung Nature 2025)")
+			app.statusLabel.SetText("RESTORE | Returning to 30 levels. Notice the predictions recover.")
 		})
-		if app.waitOrStop(500 * time.Millisecond) {
+		if app.waitOrStop(stepRestoreHold) {
 			return
 		}
 		// Re-run inference with restored settings
@@ -100,6 +114,15 @@ func (app *DualModeApp) StartQuickDemo() {
 			fyne.Do(func() {
 				app.runInference(app.lastPixels)
 			})
+		}
+		if app.waitOrStop(stepExplainHold) {
+			return
+		}
+		fyne.Do(func() {
+			app.statusLabel.SetText("DEMO COMPLETE | Key insight: 30 levels enable high accuracy and energy efficiency.")
+		})
+		if app.waitOrStop(stepWrapHold) {
+			return
 		}
 	}()
 }
