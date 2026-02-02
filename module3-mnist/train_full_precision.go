@@ -27,10 +27,10 @@ const (
 
 // SimpleNetwork is a 2-layer network trained with full precision
 type SimpleNetwork struct {
-	w1      [][]float64 // hiddenSize x inputSize
-	w2      [][]float64 // outputSize x hiddenSize
-	b1      []float64   // hiddenSize
-	b2      []float64   // outputSize
+	w1 [][]float64 // hiddenSize x inputSize
+	w2 [][]float64 // outputSize x hiddenSize
+	b1 []float64   // hiddenSize
+	b2 []float64   // outputSize
 }
 
 func newSimpleNetwork() *SimpleNetwork {
@@ -279,6 +279,27 @@ func (n *SimpleNetwork) saveQuantized(filename string) error {
 	return os.WriteFile(filename, jsonData, 0644)
 }
 
+// Save full-precision weights without quantization.
+func (n *SimpleNetwork) saveFP(filename string) error {
+	data := struct {
+		Layer1Weights [][]float64 `json:"layer1_weights"`
+		Layer2Weights [][]float64 `json:"layer2_weights"`
+		Biases1       []float64   `json:"biases1"`
+		Biases2       []float64   `json:"biases2"`
+	}{
+		Layer1Weights: n.w1,
+		Layer2Weights: n.w2,
+		Biases1:       n.b1,
+		Biases2:       n.b2,
+	}
+
+	jsonData, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filename, jsonData, 0644)
+}
+
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
@@ -359,13 +380,22 @@ func main() {
 	finalAcc := net.evaluate(testImages, testLabels)
 	fmt.Printf("Final Test Accuracy (full precision): %.1f%%\n", finalAcc*100)
 
-	// Quantize and save
-	weightsFile := "module3-mnist/data/pretrained_weights.json"
-	fmt.Printf("\nQuantizing to 30 levels and saving to %s...\n", weightsFile)
-	if err := net.saveQuantized(weightsFile); err != nil {
-		log.Printf("Failed to save: %v", err)
+	// Save full-precision weights for the FP path
+	fpWeightsFile := "module3-mnist/data/pretrained_weights.json"
+	fmt.Printf("\nSaving full-precision weights to %s...\n", fpWeightsFile)
+	if err := net.saveFP(fpWeightsFile); err != nil {
+		log.Printf("Failed to save FP weights: %v", err)
 	} else {
-		fmt.Println("Weights saved successfully.")
+		fmt.Println("FP weights saved successfully.")
+	}
+
+	// Quantize to 30 levels for reference
+	qWeightsFile := "module3-mnist/data/pretrained_weights_q30.json"
+	fmt.Printf("\nQuantizing to 30 levels and saving to %s...\n", qWeightsFile)
+	if err := net.saveQuantized(qWeightsFile); err != nil {
+		log.Printf("Failed to save quantized weights: %v", err)
+	} else {
+		fmt.Println("Quantized weights saved successfully.")
 	}
 
 	fmt.Println("\n============================================")

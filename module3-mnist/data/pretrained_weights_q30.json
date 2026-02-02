@@ -102056,8 +102056,5 @@
   "l1_scale": 14.264740440886627,
   "l1_offset": -9.006603127660725,
   "l2_scale": 14.141299763559317,
-  "l2_offset": -6.416220073815168,
-  "quant_levels": 30,
-  "layer1_quant_levels": 30,
-  "layer2_quant_levels": 30
+  "l2_offset": -6.416220073815168
 }

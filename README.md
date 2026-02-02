@@ -62,49 +62,7 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-too
 
 ## Installation
 
-### Prerequisites
-
-- **Go 1.24+** — [Download](https://go.dev/dl/)
-- **C compiler** (gcc/clang) for CGO
-- **OpenGL libraries**
-
-### Optional Dependencies
-
-- **Docker** — For Module 6 EDA tools (OpenLane/OpenROAD/KLayout)
-- **Graphviz** — For Yosys circuit schematic visualization (`sudo apt install graphviz`)
-
-### Linux (Ubuntu/Debian)
-
-```bash
-sudo apt-get update
-sudo apt-get install -y gcc libgl1-mesa-dev xorg-dev
-# Optional: for Module 6 Yosys schematic visualization
-sudo apt-get install -y graphviz
-go mod download
-./launch.sh
-```
-
-### Linux (Fedora/RHEL)
-
-```bash
-sudo dnf install -y gcc mesa-libGL-devel libX11-devel libXcursor-devel libXrandr-devel libXinerama-devel libXi-devel libXxf86vm-devel
-go mod download
-./launch.sh
-```
-
-### macOS
-
-```bash
-xcode-select --install  # Install command line tools
-go mod download
-./launch.sh
-```
-
-### Windows
-
-1. Install [MSYS2](https://www.msys2.org/) or [TDM-GCC](https://jmeubank.github.io/tdm-gcc/)
-2. Ensure `gcc` is in your PATH
-3. Run: `go build -o fecim-lattice-tools.exe ./cmd/fecim-lattice-tools`
+See `INSTALLATION.md` for prerequisites, optional dependencies, and platform-specific setup.
 
 ### Running Tests
 
