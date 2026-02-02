@@ -129,18 +129,19 @@ Deliverable
 Baseline (update each run)
 
 - Latest headless log path (always newest under `logs/`):
-  - logs/2026-02-02_15-34-23-fecim.log
+  - logs/2026-02-02_16-09-15-fecim.log
 - Headless status:
   - **SUCCESS**: LK term implementation verified (Beta/Gamma/Rho/K_dep/UseEffVisc all present in config log).
   - **ISPP 5/5 targets HIT**: targets 28, 5, 27, 3, 20 all hit with 100% success rate.
+  - **Real incremental ISPP** now implemented (not binary search).
   - LK config: Beta=-2.160e+08, Gamma=1.653e+10, Rho=5.000e-02, K_dep=2.500e+08, UseEffVisc=true
 - Latest WRD log path (always newest under `logs/`):
-  - logs/2026-02-02_15-34-23-fecim.log
+  - logs/2026-02-02_16-09-15-fecim.log
 - WRD status:
   - **SUCCESS**: WRD 5/5 targets hit at 100% success rate.
   - ISPP state machine working correctly (APPLY→WAIT→VERIFY→SUCCESS).
-  - Binary search bounds converging properly.
-  - Overshoot detection and reset logic functioning.
+  - Real incremental voltage stepping with dynamic step sizes.
+  - Overshoot detection triggers reverse-direction correction pulses.
 
 Fixes applied this session (2026-02-02):
 
@@ -176,8 +177,16 @@ Fixes applied this session (2026-02-02):
      - Previous bug: recalculated `skipPrep` each iteration → deadlock when P crossed threshold mid-PREP.
    - File: `module1-hysteresis/pkg/gui/simulation.go` lines 886-958, `gui.go` line 88.
 
+7. **Real incremental ISPP implementation**: Replaced binary search with true ISPP.
+   - **Incremental voltage stepping**: Start at calibration hint or Ec, increment by dynamic step.
+   - **Dynamic step sizes**: 0.20×Ec when far (>10 levels), 0.03×Ec when close (1 level).
+   - **Near-saturation boost**: Levels 1-3 and 28-30 start at 1.5×Ec with 0.08×Ec steps.
+   - **Calibration fallback**: If calibration returns 0, use Ec as starting point.
+   - **Overshoot recovery**: Reverse-direction pulses starting at 0.6×Ec with 0.10×Ec increments.
+   - File: `module1-hysteresis/pkg/controller/writer.go` calculateNextField() and StateResetting.
+
 Next run (resume here)
 
-- System working correctly. ISPP hits all targets reliably.
+- System working correctly. ISPP hits all targets reliably with real incremental stepping.
 - Rerun: `./fecim-lattice-tools --logger --verbosity debug --mode hysteresis` to validate.
-- Note: launch.sh may fail due to unrelated syntax error in module1-hysteresis/cmd/hysteresis/main.go.
+- Overshoot recovery logic implemented but not yet tested (no overshoots in current test sequence).
