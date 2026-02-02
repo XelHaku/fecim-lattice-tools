@@ -48,6 +48,9 @@ func main() {
 	if opts.outputPath == "" {
 		opts.outputPath = defaultOutputPath(opts.inputPath)
 	}
+	if absPath, err := filepath.Abs(opts.outputPath); err == nil {
+		opts.outputPath = absPath
+	}
 
 	if err := os.MkdirAll(filepath.Dir(opts.outputPath), 0755); err != nil {
 		exitError("failed to create output directory", err)
