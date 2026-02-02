@@ -57,6 +57,10 @@ type WriteController struct {
 	InitialLevel    int
 	InitialLevelSet bool
 
+	// Overshoot tracking (for autonomous recalibration)
+	OvershootCount int // Overshoots in current target cycle
+	OvershootTotal int // Overshoots across runtime
+
 	// Binary Search State (for ISPP)
 	VMin float64 // Lower bound of safe voltage (won't overshoot)
 	VMax float64 // Upper bound of voltage search space
@@ -86,6 +90,7 @@ func (wc *WriteController) Start(targetLevel int, fromSaturation bool) {
 	wc.State = StateApply
 	wc.PhaseTimer = 0
 	wc.PulseCount = 0
+	wc.OvershootCount = 0
 
 	// Initialize Binary Search Bounds
 	wc.VMin = 0
@@ -104,6 +109,8 @@ func (wc *WriteController) ResetState() {
 	wc.Attempts = 0
 	wc.SuccessCount = 0
 	wc.FailureCount = 0
+	wc.OvershootCount = 0
+	wc.OvershootTotal = 0
 }
 
 // Update advances the controller state logic.
@@ -217,7 +224,9 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 				currentLevel, wc.TargetLevel, wc.InitialLevel, goingUp, overshoot)
 
 			if overshoot {
-				log.Printf("ISPP OVERSHOOT detected! Resetting state...")
+				wc.OvershootCount++
+				wc.OvershootTotal++
+				log.Printf("ISPP OVERSHOOT detected! Resetting state... (count=%d)", wc.OvershootCount)
 				wc.State = StateResetting
 				wc.PhaseTimer = 0
 				return 0, false

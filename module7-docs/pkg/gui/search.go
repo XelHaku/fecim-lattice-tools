@@ -208,8 +208,13 @@ func (si *SearchIndex) detectCategory(path string) string {
 	filenameLower := strings.ToLower(filepath.Base(path))
 
 	// Check filename first (higher priority)
-	if strings.Contains(filenameLower, "eli5") {
+	switch filenameLower {
+	case "eli5.md":
 		return "ELI5"
+	case "physics.md":
+		return "Physics"
+	case "features.md", "opensource-tools.md":
+		return "Guide"
 	}
 	if strings.Contains(filenameLower, "research") {
 		return "Research"
@@ -219,6 +224,9 @@ func (si *SearchIndex) detectCategory(path string) string {
 	}
 
 	// Check path for folder names
+	if strings.Contains(pathLower, "/research-papers/") {
+		return "Research"
+	}
 	if strings.Contains(pathLower, "/cim/") || strings.Contains(pathLower, "/crossbar/") {
 		return "Physics"
 	}

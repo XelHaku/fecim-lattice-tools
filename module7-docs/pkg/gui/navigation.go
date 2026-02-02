@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -252,6 +253,82 @@ func (toc *TableOfContentsWidget) refresh() {
 	toc.container = container.NewVBox(items...)
 	// Note: Don't call toc.Refresh() here - it causes infinite recursion
 	// CreateRenderer -> refresh -> Refresh -> CreateRenderer -> ...
+}
+
+// ModuleShortcutsPanel provides quick access to the current module's core pages.
+type ModuleShortcutsPanel struct {
+	widget.BaseWidget
+	modulePath string
+	onSelect   func(path string)
+	container  *fyne.Container
+}
+
+// NewModuleShortcutsPanel creates a new module shortcuts panel.
+func NewModuleShortcutsPanel(onSelect func(string)) *ModuleShortcutsPanel {
+	panel := &ModuleShortcutsPanel{
+		onSelect:  onSelect,
+		container: container.NewVBox(),
+	}
+	panel.ExtendBaseWidget(panel)
+	return panel
+}
+
+// SetModulePath updates the active module path and refreshes shortcuts.
+func (m *ModuleShortcutsPanel) SetModulePath(path string) {
+	if m.modulePath == path {
+		return
+	}
+	m.modulePath = path
+	m.refresh()
+	m.Refresh()
+}
+
+// CreateRenderer implements fyne.Widget.
+func (m *ModuleShortcutsPanel) CreateRenderer() fyne.WidgetRenderer {
+	m.refresh()
+	return widget.NewSimpleRenderer(m.container)
+}
+
+func (m *ModuleShortcutsPanel) refresh() {
+	items := []fyne.CanvasObject{}
+
+	title := widget.NewLabelWithStyle("Current Module", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	items = append(items, title)
+
+	if m.modulePath == "" {
+		note := widget.NewLabel("Select a module page to enable shortcuts.")
+		note.Wrapping = fyne.TextWrapWord
+		items = append(items, note)
+		m.container = container.NewVBox(items...)
+		return
+	}
+
+	shortcuts := []struct {
+		label    string
+		filename string
+	}{
+		{label: "ELI5", filename: "ELI5.md"},
+		{label: "Physics", filename: "PHYSICS.md"},
+		{label: "Features", filename: "FEATURES.md"},
+		{label: "Tools", filename: "OPENSOURCE-TOOLS.md"},
+	}
+
+	for _, shortcut := range shortcuts {
+		path := filepath.Join(m.modulePath, shortcut.filename)
+		btn := widget.NewButton(shortcut.label, func() {
+			if m.onSelect != nil {
+				m.onSelect(path)
+			}
+		})
+		btn.Importance = widget.LowImportance
+		if _, err := os.Stat(path); err != nil {
+			btn.Disable()
+		}
+		items = append(items, btn)
+	}
+
+	m.container = container.NewVBox(items...)
+	// Note: Don't call m.Refresh() here - it causes infinite recursion
 }
 
 // QuickAccessPanel provides quick access to favorite documents

@@ -6,8 +6,9 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
+	"strconv"
 	"strings"
-	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -31,20 +32,20 @@ type EmbeddedDocsApp struct {
 	layoutManager *LayoutManager
 
 	// UI components
-	tree          *widget.Tree
-	contentText   *widget.RichText
-	contentScroll *container.Scroll
-	breadcrumbs   *BreadcrumbWidget
-	toc           *TableOfContentsWidget
-	docMetadata   *DocumentMetadataWidget
-	glossaryPills *GlossaryPillsWidget
-	searchDialog  *SearchDialog
+	tree            *widget.Tree
+	contentText     *widget.RichText
+	contentScroll   *container.Scroll
+	breadcrumbs     *BreadcrumbWidget
+	toc             *TableOfContentsWidget
+	docMetadata     *DocumentMetadataWidget
+	glossaryPills   *GlossaryPillsWidget
+	searchDialog    *SearchDialog
+	moduleShortcuts *ModuleShortcutsPanel
 
 	// State
-	pathMap          map[string]*docEntry
-	docs             []*docEntry
-	lastStarToggle   string
-	lastStarToggleAt time.Time
+	pathMap        map[string]*docEntry
+	docs           []*docEntry
+	suppressSelect map[string]bool
 }
 
 // NewEmbeddedDocsApp creates a new embedded docs app instance
@@ -64,7 +65,10 @@ type docEntry struct {
 func (app *EmbeddedDocsApp) BuildContent(fyneApp fyne.App, window fyne.Window) fyne.CanvasObject {
 	app.EmbeddedAppBase.Init(fyneApp, window)
 	app.window = window
-	app.docsPath = utils.FindDirectory("docs")
+	app.docsPath = utils.FindDirectory(filepath.Join("docs", "documentation"))
+	if app.docsPath == "" {
+		app.docsPath = utils.FindDirectory("docs")
+	}
 
 	// Initialize search index
 	app.searchIndex = NewSearchIndex(app.docsPath)
@@ -96,7 +100,7 @@ func (app *EmbeddedDocsApp) BuildContent(fyneApp fyne.App, window fyne.Window) f
 // createUIComponents initializes all UI widgets
 func (app *EmbeddedDocsApp) createUIComponents() {
 	// Content viewer
-	app.contentText = widget.NewRichTextFromMarkdown("# FeCIM Documentation\n\nSelect a document from the tree.")
+	app.contentText = widget.NewRichTextFromMarkdown("# FeCIM Curriculum\n\nSelect a document from the tree.")
 	app.contentText.Wrapping = fyne.TextWrapWord
 	app.contentScroll = container.NewVScroll(app.contentText)
 
@@ -118,6 +122,15 @@ func (app *EmbeddedDocsApp) createUIComponents() {
 	app.searchDialog = NewSearchDialog(app.searchIndex, app.window, func(path string) {
 		app.loadDocument(path)
 	})
+
+	// Module quick access shortcuts
+	app.moduleShortcuts = NewModuleShortcutsPanel(func(path string) {
+		app.loadDocument(path)
+	})
+
+	if app.suppressSelect == nil {
+		app.suppressSelect = make(map[string]bool)
+	}
 }
 
 // buildSidebar creates the left sidebar with tree
@@ -128,8 +141,14 @@ func (app *EmbeddedDocsApp) buildSidebar() fyne.CanvasObject {
 	app.buildPathMap(app.docs)
 	app.tree = app.createDocTree()
 
+	sidebarTop := container.NewVBox(
+		widget.NewLabelWithStyle("Curriculum", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		app.moduleShortcuts,
+		widget.NewSeparator(),
+	)
+
 	return container.NewBorder(
-		widget.NewLabelWithStyle("Documentation", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		sidebarTop,
 		nil, nil, nil,
 		app.tree,
 	)
@@ -186,7 +205,7 @@ func (app *EmbeddedDocsApp) buildTopBar() fyne.CanvasObject {
 
 	return container.NewBorder(
 		nil, nil,
-		widget.NewLabel("FeCIM Documentation"),
+		widget.NewLabel("FeCIM Curriculum"),
 		container.NewHBox(sidebarToggleBtn, tocToggleBtn, searchBtn),
 		nil,
 	)
@@ -270,8 +289,7 @@ func (app *EmbeddedDocsApp) createDocTree() *widget.Tree {
 					// Capture path for closure
 					path := entry.path
 					starBtn.OnTapped = func() {
-						app.lastStarToggle = path
-						app.lastStarToggleAt = time.Now()
+						app.suppressSelect[path] = true
 						app.toggleFavorite(path)
 						app.tree.Refresh()
 					}
@@ -282,11 +300,12 @@ func (app *EmbeddedDocsApp) createDocTree() *widget.Tree {
 
 	// Handle selection - load markdown file or toggle folder
 	tree.OnSelected = func(uid widget.TreeNodeID) {
-		if uid == app.lastStarToggle && time.Since(app.lastStarToggleAt) < 300*time.Millisecond {
+		if app.consumeSuppressSelect(uid) {
 			return
 		}
 		if entry, ok := app.pathMap[uid]; ok {
 			if entry.isDir {
+				app.updateModuleShortcuts(entry.path)
 				// Toggle folder open/close when clicking anywhere on the row
 				if tree.IsBranchOpen(uid) {
 					tree.CloseBranch(uid)
@@ -324,6 +343,7 @@ func (app *EmbeddedDocsApp) loadDocument(path string) {
 	})
 	app.currentFile = path
 	app.history.AddRecent(path)
+	app.updateModuleShortcuts(path)
 
 	// Update breadcrumbs
 	fyne.Do(func() {
@@ -376,6 +396,65 @@ func (app *EmbeddedDocsApp) toggleFavorite(path string) {
 	app.history.ToggleFavorite(path)
 }
 
+// updateModuleShortcuts refreshes the module quick-access panel for the given path.
+func (app *EmbeddedDocsApp) updateModuleShortcuts(path string) {
+	if app.moduleShortcuts == nil {
+		return
+	}
+	modulePath := app.findModulePath(path)
+	fyne.Do(func() {
+		app.moduleShortcuts.SetModulePath(modulePath)
+	})
+}
+
+// findModulePath resolves the module root for a given file or folder path.
+func (app *EmbeddedDocsApp) findModulePath(path string) string {
+	if app.docsPath == "" || path == "" {
+		return ""
+	}
+
+	target := path
+	if info, err := os.Stat(path); err == nil && !info.IsDir() {
+		target = filepath.Dir(path)
+	}
+
+	rel, err := filepath.Rel(app.docsPath, target)
+	if err != nil || rel == "." {
+		return ""
+	}
+	if strings.HasPrefix(rel, "..") {
+		return ""
+	}
+
+	parts := strings.Split(filepath.ToSlash(rel), "/")
+	if len(parts) == 0 {
+		return ""
+	}
+	root := parts[0]
+	if !strings.HasPrefix(strings.ToLower(root), "module") {
+		return ""
+	}
+
+	modulePath := filepath.Join(app.docsPath, root)
+	if info, err := os.Stat(modulePath); err == nil && info.IsDir() {
+		return modulePath
+	}
+
+	return ""
+}
+
+// consumeSuppressSelect returns true if selection should be ignored once.
+func (app *EmbeddedDocsApp) consumeSuppressSelect(uid string) bool {
+	if app.suppressSelect == nil {
+		return false
+	}
+	if app.suppressSelect[uid] {
+		delete(app.suppressSelect, uid)
+		return true
+	}
+	return false
+}
+
 // showSearch displays the search dialog
 func (app *EmbeddedDocsApp) showSearch() {
 	app.searchDialog.Show()
@@ -395,6 +474,7 @@ func (app *EmbeddedDocsApp) navigateToFolder(path string) {
 	if app.tree == nil || app.docsPath == "" || path == "" {
 		return
 	}
+	app.updateModuleShortcuts(path)
 
 	targetPath := path
 	if info, err := os.Stat(path); err == nil && !info.IsDir() {
@@ -448,6 +528,7 @@ func (app *EmbeddedDocsApp) scanDocsDirectory() []*docEntry {
 		}
 	}
 
+	app.sortEntries(entries, app.docsPath)
 	return entries
 }
 
@@ -497,6 +578,127 @@ func (app *EmbeddedDocsApp) scanEntry(path string, info os.DirEntry) *docEntry {
 	}
 
 	return nil
+}
+
+// sortEntries orders documentation entries based on curriculum-first rules.
+func (app *EmbeddedDocsApp) sortEntries(entries []*docEntry, parentPath string) {
+	sort.SliceStable(entries, func(i, j int) bool {
+		return app.entryLess(entries[i], entries[j], parentPath)
+	})
+
+	for _, entry := range entries {
+		if entry.isDir && len(entry.children) > 0 {
+			app.sortEntries(entry.children, entry.path)
+		}
+	}
+}
+
+func (app *EmbeddedDocsApp) entryLess(a, b *docEntry, parentPath string) bool {
+	if parentPath == app.docsPath {
+		rankA := app.rootRank(a)
+		rankB := app.rootRank(b)
+		if rankA != rankB {
+			return rankA < rankB
+		}
+		return strings.ToLower(a.name) < strings.ToLower(b.name)
+	}
+
+	if app.isModuleDir(parentPath) {
+		rankA := moduleFileRank(a)
+		rankB := moduleFileRank(b)
+		if rankA != rankB {
+			return rankA < rankB
+		}
+	}
+
+	// Default: directories first, then alphabetical
+	if a.isDir != b.isDir {
+		return a.isDir
+	}
+	return strings.ToLower(a.name) < strings.ToLower(b.name)
+}
+
+func (app *EmbeddedDocsApp) rootRank(entry *docEntry) int {
+	nameLower := strings.ToLower(entry.name)
+
+	if entry.isDir {
+		if idx, ok := moduleIndex(nameLower); ok {
+			return idx
+		}
+		if nameLower == "research-papers" {
+			return 100
+		}
+	}
+
+	switch nameLower {
+	case "readme.md":
+		return 110
+	case "modules.md":
+		return 111
+	}
+
+	return 200
+}
+
+func (app *EmbeddedDocsApp) isModuleDir(path string) bool {
+	if path == "" {
+		return false
+	}
+	base := strings.ToLower(filepath.Base(path))
+	if _, ok := moduleIndex(base); !ok {
+		return false
+	}
+	if app.docsPath == "" {
+		return false
+	}
+	rel, err := filepath.Rel(app.docsPath, path)
+	if err != nil || rel == "." {
+		return false
+	}
+	if strings.HasPrefix(rel, "..") {
+		return false
+	}
+	return true
+}
+
+func moduleIndex(name string) (int, bool) {
+	if !strings.HasPrefix(name, "module") {
+		return 0, false
+	}
+	rest := name[len("module"):]
+	digits := ""
+	for i := 0; i < len(rest); i++ {
+		if rest[i] < '0' || rest[i] > '9' {
+			break
+		}
+		digits += string(rest[i])
+	}
+	if digits == "" {
+		return 0, false
+	}
+	idx, err := strconv.Atoi(digits)
+	if err != nil {
+		return 0, false
+	}
+	return idx, true
+}
+
+func moduleFileRank(entry *docEntry) int {
+	if entry.isDir {
+		return 100
+	}
+	switch strings.ToLower(entry.name) {
+	case "eli5.md":
+		return 0
+	case "physics.md":
+		return 1
+	case "features.md":
+		return 2
+	case "opensource-tools.md":
+		return 3
+	default:
+		return 10
+	}
 }
 
 // Start is called when this demo tab is selected

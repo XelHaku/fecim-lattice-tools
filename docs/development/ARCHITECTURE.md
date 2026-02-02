@@ -172,6 +172,10 @@ Each module has a concrete implementation:
 | EDA | `EmbeddedEDAApp` | `module6-eda/pkg/gui/embedded.go` |
 | Documentation | `EmbeddedDocsApp` | `module7-docs/pkg/gui/embedded.go` |
 
+Module 7 (Documentation) is curriculum-first: it indexes `docs/documentation` by default, orders
+module folders first with the research-papers index next, and exposes module quick-access
+shortcuts for ELI5/PHYSICS/FEATURES/OPENSOURCE-TOOLS pages.
+
 ### 2. Application Composition
 
 The main app creates all modules and manages their lifecycle:

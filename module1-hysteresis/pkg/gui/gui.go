@@ -108,6 +108,13 @@ type App struct {
 	wrdRetentionTime float64 // Time at E=0 during retention demo
 	wrdBitsStored    float64 // log2(30) = 4.91 bits per cell
 
+	// Autonomous calibration (runtime)
+	autoRecalibrate         bool
+	recalibratePending      bool
+	recalibrateReason       string
+	recalibrateOvershootMax int
+	recalibratePulseMax     int
+
 	// Manual mode click-to-level animation (merged from Interactive mode)
 	manualAnimating   bool    // True when animating to clicked level
 	manualTargetLevel int     // Target level from click
@@ -377,27 +384,30 @@ func NewApp() *App {
 	writeController := controller.NewWriteController(numLevels, mat.Ec, mat.Ec*2.5, calibManager)
 
 	uiApp := &App{
-		calibManager:     calibManager,
-		writeController:  writeController,
-		material:         mat,
-		preisach:         preisach,
-		materials:        materials,
-		matIndex:         0,
-		numLevels:        numLevels,
-		calibrationUp:    make([]float64, numLevels),
-		calibrationDown:  make([]float64, numLevels),
-		calibrationTemp:  300, // Default room temperature
-		tempCalibrations: make(map[int]*TempCalibration),
-		maxHistory:       2000,
-		eHistory:         make([]float64, 0, 2000),
-		pHistory:         make([]float64, 0, 2000),
-		autoMode:         true,
-		waveform:         WaveformSine,
-		frequency:        0.5, // 0.5 Hz default
-		wrdTargetLevel:   28,  // Start high for dramatic first write
-		maxLogLines:      12,
-		logEntries:       make([]string, 0, 12),
-		lastLogPhase:     -1,
+		calibManager:            calibManager,
+		writeController:         writeController,
+		material:                mat,
+		preisach:                preisach,
+		materials:               materials,
+		matIndex:                0,
+		numLevels:               numLevels,
+		calibrationUp:           make([]float64, numLevels),
+		calibrationDown:         make([]float64, numLevels),
+		calibrationTemp:         300, // Default room temperature
+		tempCalibrations:        make(map[int]*TempCalibration),
+		maxHistory:              2000,
+		eHistory:                make([]float64, 0, 2000),
+		pHistory:                make([]float64, 0, 2000),
+		autoMode:                true,
+		waveform:                WaveformSine,
+		frequency:               0.5, // 0.5 Hz default
+		wrdTargetLevel:          28,  // Start high for dramatic first write
+		autoRecalibrate:         true,
+		recalibrateOvershootMax: 2,
+		recalibratePulseMax:     12,
+		maxLogLines:             12,
+		logEntries:              make([]string, 0, 12),
+		lastLogPhase:            -1,
 		// isppCalc:         physics.NewISPPCalculator(preisach.GetEffectiveEc(), numLevels),
 	}
 
@@ -453,23 +463,26 @@ func NewAppWithMaterial(materialName string) *App {
 	writeController := controller.NewWriteController(numLevels, mat.Ec, mat.Ec*2.5, calibManager)
 
 	uiApp := &App{
-		calibManager:     calibManager,
-		writeController:  writeController,
-		material:         mat,
-		preisach:         preisach,
-		materials:        materials,
-		matIndex:         matIndex,
-		numLevels:        numLevels,
-		calibrationUp:    make([]float64, numLevels),
-		calibrationDown:  make([]float64, numLevels),
-		calibrationTemp:  300, // Default room temperature
-		tempCalibrations: make(map[int]*TempCalibration),
-		maxHistory:       2000,
-		eHistory:         make([]float64, 0, 2000),
-		pHistory:         make([]float64, 0, 2000),
-		autoMode:         true,
-		frequency:        0.5,
-		paused:           false,
+		calibManager:            calibManager,
+		writeController:         writeController,
+		material:                mat,
+		preisach:                preisach,
+		materials:               materials,
+		matIndex:                matIndex,
+		numLevels:               numLevels,
+		calibrationUp:           make([]float64, numLevels),
+		calibrationDown:         make([]float64, numLevels),
+		calibrationTemp:         300, // Default room temperature
+		tempCalibrations:        make(map[int]*TempCalibration),
+		maxHistory:              2000,
+		eHistory:                make([]float64, 0, 2000),
+		pHistory:                make([]float64, 0, 2000),
+		autoMode:                true,
+		frequency:               0.5,
+		paused:                  false,
+		autoRecalibrate:         true,
+		recalibrateOvershootMax: 2,
+		recalibratePulseMax:     12,
 		// Write/Read Demo fields initialized to defaults
 		wrdPhase:          0,
 		wrdTargetLevel:    15,

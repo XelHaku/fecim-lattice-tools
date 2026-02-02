@@ -140,13 +140,13 @@ controller to reach a target discrete level. The implementation is split across:
 
 **Outer demo phases (simulation loop):**
 
-1. **RESET (Phase 0)**  
-   Drive to the opposite saturation branch so the device starts from a known remanent state.  
-   Target: `±2.0 × Ec` (field).
-2. **HOLD_RESET (Phase 1)**  
-   Ramp back to 0 V/m; polarization remains at the remanent state.
+1. **PREP (Phase 0)**  
+   Apply a **directional pre‑bias** of `±Ec` toward the next target.  
+   *No full saturation on every cycle.*  
+2. **HOLD_PREP (Phase 1)**  
+   Ramp back to 0 V/m; polarization remains at the pre‑biased remanent state.
 3. **WRITE (Phase 2)**  
-   Delegates to `WriteController` for the ISPP pulse loop.
+   Delegates to `WriteController` for the ISPP pulse loop (apply/wait/verify).
 4. **DISPLAY (Phase 5)**  
    Report success/failure, update stats, and select the next target level.
 
@@ -173,8 +173,19 @@ controller to reach a target discrete level. The implementation is split across:
 | `MaxField` | `writer.go` | Maximum programming field; default `~2.5 × Ec`. |
 | `PulseDuration` | `simulation.go` | Pulse width per ISPP step; set to ~40% of the phase duration so the ramp can settle. |
 | `VMin`, `VMax` | `writer.go` | Binary‑search bounds for the **absolute** field magnitude. |
-| `FromSaturation` | `writer.go` | Determines whether calibration values are valid for the initial guess. |
+| `FromSaturation` | `writer.go` | Determines whether calibration values are valid for the initial guess (most WRD cycles are **not** at saturation after PREP). |
 | `CalibManager` | `algo/calibration.go` | Stores per‑level calibrated fields; used only for the **first** ISPP pulse. |
+
+#### Autonomous Runtime Recalibration
+
+The WRD controller now recalibrates **during runtime** when convergence is poor:
+
+- **Trigger conditions** (defaults):
+  - `overshoots ≥ 2` in a single target cycle, or
+  - `pulses ≥ 12` without hitting the target.
+- **Execution**: recalibration runs **between targets** (DISPLAY phase) to avoid
+  corrupting the active hysteresis state.
+- **Persistence**: the new calibration is saved to `data/calibrations/*.json`.
 
 #### Constraints / Limits
 

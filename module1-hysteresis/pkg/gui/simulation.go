@@ -955,6 +955,19 @@ func (a *App) updatePhysics(dt float64) {
 				currentLevel := a.discreteLevel + 1
 				targetField, done := a.writeController.Update(dt, a.electricField, currentLevel)
 
+				// Autonomous runtime recalibration trigger (overshoots or too many pulses)
+				if a.autoRecalibrate && !a.recalibratePending {
+					if a.writeController.OvershootCount >= a.recalibrateOvershootMax {
+						a.recalibratePending = true
+						a.recalibrateReason = fmt.Sprintf("overshoots=%d target=%d", a.writeController.OvershootCount, targetLevel)
+						log.Printf("AUTO RECAL scheduled: %s", a.recalibrateReason)
+					} else if a.writeController.PulseCount >= a.recalibratePulseMax {
+						a.recalibratePending = true
+						a.recalibrateReason = fmt.Sprintf("pulses=%d target=%d", a.writeController.PulseCount, targetLevel)
+						log.Printf("AUTO RECAL scheduled: %s", a.recalibrateReason)
+					}
+				}
+
 				// Apply Voltage Ramp (Controller outputs target, Simulation handles physics ramp)
 				step := rampRate * 1.5 * dt // Faster ramp for write pulses
 				diff := targetField - a.electricField
@@ -1040,6 +1053,18 @@ func (a *App) updatePhysics(dt float64) {
 				}
 				// Transition to next cycle
 				if a.wrdPhaseTimer > phaseDuration*0.6 {
+					// Runtime auto recalibration (run between targets to avoid state disruption)
+					if a.autoRecalibrate && a.recalibratePending {
+						log.Printf("AUTO RECAL start: %s", a.recalibrateReason)
+						a.calibrateLevelsAtTemperature(a.preisach.Temperature)
+						if err := a.saveCalibration(); err != nil {
+							log.Printf("Warning: failed to save calibration: %v", err)
+						}
+						a.needsCalibration = false
+						a.recalibratePending = false
+						a.recalibrateReason = ""
+					}
+
 					// Record start level for next cycle
 					a.wrdStartLevel = a.discreteLevel + 1
 

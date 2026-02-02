@@ -8,7 +8,7 @@ Description: |
   In-app documentation viewer with full-text search, responsive layout,
   breadcrumb navigation, table of contents, glossary term detection,
   and favorites persistence.
-  Scans the docs/ directory for markdown files and renders them with
+  Scans docs/documentation for curriculum markdown files and renders them with
   navigation features. No physics simulation - utility module only.
 ---
 
@@ -57,11 +57,15 @@ Screens:
                 components:
                   - SidebarTitle (Label):
                       type: widget.Label
-                      text: "Documentation"
+                      text: "Curriculum"
                       style: Bold, centered
+                  - ModuleShortcuts (ModuleShortcutsPanel):
+                      type: ModuleShortcutsPanel
+                      purpose: Quick links to ELI5/PHYSICS/FEATURES/OPENSOURCE-TOOLS for current module
+                      file: navigation.go
                   - DocTree (Tree):
                       type: widget.Tree
-                      purpose: File tree navigation
+                      purpose: Curriculum tree navigation
                       file: embedded.go:200-290
             - MainContent (Border):
                 file: embedded.go:167-184
@@ -138,6 +142,16 @@ DataFlow:
       - glossaryPills.SetTerms()
       - docMetadata.SetMetadata()
 
+  - event: User selects module shortcut
+    trigger: ModuleShortcutsPanel button.OnTapped
+    flow:
+      1. loadDocument(path) called
+      2. Update quick-access state for current module
+      3. Update content, breadcrumbs, ToC, metadata
+    updates:
+      - contentText.ParseMarkdown()
+      - moduleShortcuts.SetModulePath()
+
   - event: User types in search dialog
     trigger: SearchDialog entry.OnChanged
     flow:
@@ -161,9 +175,10 @@ DataFlow:
   - event: Toggle favorite
     trigger: starBtn.OnTapped in tree
     flow:
-      1. history.ToggleFavorite(path)
-      2. Persist to JSON
-      3. Refresh tree to update star icon
+      1. suppressSelect[uid] set to true
+      2. history.ToggleFavorite(path)
+      3. Persist to JSON
+      4. Refresh tree to update star icon
     updates:
       - tree.Refresh()
 
@@ -237,6 +252,12 @@ CustomWidgets:
         - Category (ELI5, Physics, Research, Demo, Guide)
         - Reading time (minutes, based on word count / 200)
         - Glossary term count
+
+  - ModuleShortcutsPanel:
+      file: navigation.go
+      purpose: Quick links to the current module's ELI5/PHYSICS/FEATURES/OPENSOURCE-TOOLS pages
+      behavior:
+        - Disabled until a module page or folder is selected
 
   - SearchDialog:
       file: search.go
