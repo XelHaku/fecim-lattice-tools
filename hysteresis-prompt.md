@@ -129,12 +129,18 @@ Deliverable
 Baseline (update each run)
 
 - Latest headless log path (always newest under `logs/`):
-  - logs/<latest>-fecim.log
+  - logs/2026-02-02_14-09-35-fecim.log
 - Headless status:
-  - Summarize LK term logs + ISPP outcome from the newest headless run.
+  - LK term logs present (E_applied/E_dep/E_eff/dG_dP/rho_eff/Alpha/Beta/Gamma/K_dep). ISPP targets did **not** hit: step 1 (pos‑1) timed out before WRITE, step 2 (pos‑2) hit MaxRetries with level stuck at 21 vs target 27, step 3 (neg‑1) timed out with failures.
 - Latest WRD log path (always newest under `logs/`):
-  - logs/<latest>-fecim.log
+  - logs/2026-02-02_14-09-35-fecim.log
 - Latest WRD CSV path (always newest under `logs/`):
-  - logs/hysteresis-<material>-<timestamp>.csv
+  - logs/hysteresis-fecim-hzo-2026-02-02_14-09-35.csv
 - WRD status:
-  - Summarize target hits/overshoots from newest GUI run + CSV evidence.
+  - Headless WRD CSV shows `wrd_phase=RESET` stuck for target 23 (no WRITE reached). Need to fix headless phase progression and target sequencing before rerun.
+
+Next run (resume here)
+
+- Investigate why headless WRD stays in phase 0 for target 23 (check phaseDuration vs dt, prep ramp thresholds, and `fromSaturation` gating).
+- Verify that headless target steps correctly update `wrd_target_level` per step in CSV.
+- Rerun: `./launch.sh --logger --verbosity debug --mode hysteresis` and refresh baseline entries above.
