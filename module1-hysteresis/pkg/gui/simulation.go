@@ -11,8 +11,6 @@ import (
 	"strings"
 	"time"
 
-
-
 	"fyne.io/fyne/v2"
 )
 
@@ -31,9 +29,9 @@ type TempCalibration struct {
 	RelaxCompDown   []float64 `json:"relax_comp_down"`  // Relaxation compensation factors (descending)
 }
 
-// CalibrationData holds persistent calibration state (v2: multi-temperature support)
+// CalibrationData holds persistent calibration state (v2+: multi-temperature support)
 type CalibrationData struct {
-	Version      int                      `json:"version"`       // Schema version (2 = multi-temp)
+	Version      int                      `json:"version"`       // Schema version (3 = Ps-normalized calib)
 	MaterialName string                   `json:"material_name"` // Material these calibrations are for
 	NumLevels    int                      `json:"num_levels"`    // Number of discrete levels
 	Calibrations map[int]*TempCalibration `json:"calibrations"`  // Key: temperature in Kelvin (rounded)
@@ -52,7 +50,7 @@ type CalibrationData struct {
 	RelaxCompDown   []float64 `json:"relax_comp_down,omitempty"`
 }
 
-const calibrationVersion = 2
+const calibrationVersion = 3
 
 // Key temperatures for automotive range calibration (Kelvin)
 var keyTemperatures = []float64{
@@ -264,7 +262,12 @@ func (a *App) loadCalibration() bool {
 		return true
 	}
 
-	// v2 format: multi-temperature calibration
+	if data.Version != calibrationVersion {
+		log.Printf("Calibration version mismatch (got %d, want %d), will recalibrate", data.Version, calibrationVersion)
+		return false
+	}
+
+	// v2+ format: multi-temperature calibration
 	if data.Calibrations == nil || len(data.Calibrations) == 0 {
 		log.Printf("Empty calibrations map in v2 file, will recalibrate")
 		return false
@@ -637,7 +640,7 @@ func (a *App) simulationLoop() {
 
 		// --- Adaptive Sub-Stepping Loop ---
 		remainingDt := frameDt
-		
+
 		// Safety break to prevent infinite loops if calculation is too slow
 		const maxSubSteps = 1000
 		subSteps := 0
@@ -650,9 +653,9 @@ func (a *App) simulationLoop() {
 		for remainingDt > 0 && subSteps < maxSubSteps {
 			// Determine step size based on physics state
 			// If E-field is near Ec, use smaller steps to capture switching dynamics
-			
+
 			currentStep := dtNominal
-			
+
 			// Check proximity to Ec (switching region)
 			// Switching happens at +Ec (increasing) and -Ec (decreasing)
 			// But effective Ec varies. Use material Ec as baseline proxy.
@@ -662,12 +665,12 @@ func (a *App) simulationLoop() {
 				minDist := math.Min(distPlus, distMinus)
 
 				// User requirement: If |E - Ec| < 0.1 MV/cm: dt = dt_min
-				// 0.1 MV/cm = 0.1e6 V/cm = 1e5 V/m (Units in material are V/m? Wait. 
+				// 0.1 MV/cm = 0.1e6 V/cm = 1e5 V/m (Units in material are V/m? Wait.
 				// Ec is ~1 MV/cm = 1e8 V/m. 0.1 MV/cm = 1e7 V/m.
 				// User said: "0.1 MV/cm". 1 MV/cm = 10^6 V/cm = 10^8 V/m.
 				// So 0.1 MV/cm = 10^7 V/m.
 				// Let's use 10 MV/m (1e7) as threshold.
-				
+
 				threshold := 1e7 // 0.1 MV/cm
 				if minDist < threshold {
 					currentStep = dtMin
@@ -683,10 +686,10 @@ func (a *App) simulationLoop() {
 			remainingDt -= currentStep
 			subSteps++
 		}
-		
+
 		// Update UI once per frame with the final state
 		a.updateUI()
-		
+
 		a.mu.Unlock()
 	}
 }
@@ -1172,7 +1175,7 @@ func (a *App) updatePhysics(dt float64) {
 	}
 }
 
-// updateUI prepares data and calls refreshGUI. 
+// updateUI prepares data and calls refreshGUI.
 // MUST be called with a.mu held.
 func (a *App) updateUI() {
 	// Update UI (must be on main thread)
@@ -1185,11 +1188,11 @@ func (a *App) updateUI() {
 	copy(eHist, a.eHistory)
 	copy(pHist, a.pHistory)
 
-	// Release lock temporarily if needed? 
-	// No, refreshGUI uses fyne.Do which schedules on main thread. 
+	// Release lock temporarily if needed?
+	// No, refreshGUI uses fyne.Do which schedules on main thread.
 	// The copy operations above are safe under lock.
 	// We invoke refreshGUI which takes VALUES (copies).
-	
+
 	a.refreshGUI(fE, pV, dL, materialEc, eHist, pHist)
 }
 
@@ -1647,13 +1650,13 @@ func (a *App) calibrateLevels() {
 		a.relaxCompDown[i] = 0.0
 	}
 
-	// Get material Pr for normalization (levels 1 and 30 must be reachable)
-	effPr := a.material.Pr
-	if effPr <= 0 {
-		effPr = a.material.Pr
+	// Normalize using Ps to match runtime discrete-level mapping
+	effPs := a.material.Ps
+	if effPs <= 0 {
+		effPs = a.material.Pr
 	}
-	if effPr <= 0 {
-		effPr = a.material.Ps * 0.9
+	if effPs <= 0 {
+		effPs = 1.0
 	}
 
 	// Helper function to test what level results from a given field
@@ -1670,8 +1673,8 @@ func (a *App) calibrateLevels() {
 		a.preisach.Update(testE)
 		p := a.preisach.Update(0)
 
-		// Normalize by effective Pr so levels 1 and 30 are reachable
-		normalizedP := p / effPr
+		// Normalize by Ps to match runtime discrete-level mapping
+		normalizedP := p / effPs
 		if normalizedP > 1.0 {
 			normalizedP = 1.0
 		}
@@ -1701,8 +1704,8 @@ func (a *App) calibrateLevels() {
 		a.preisach.Update(testE)
 		p := a.preisach.Update(0)
 
-		// Normalize by effective Pr so levels 1 and 30 are reachable
-		normalizedP := p / effPr
+		// Normalize by Ps to match runtime discrete-level mapping
+		normalizedP := p / effPs
 		if normalizedP > 1.0 {
 			normalizedP = 1.0
 		}

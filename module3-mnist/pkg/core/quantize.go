@@ -17,6 +17,10 @@ import (
 // Re-exported from shared/physics for backward compatibility.
 const FeCIMLevels = physics.DefaultLevels
 
+// MaxDemoLevels allows a small overspec range for diminishing-returns comparisons.
+// Keep this close to FeCIMLevels to avoid implying unsupported hardware capability.
+const MaxDemoLevels = FeCIMLevels + 1
+
 // QuantizeWeights quantizes FP weights to N discrete levels
 // using symmetric range [-W_max, +W_max] with linear mapping.
 //

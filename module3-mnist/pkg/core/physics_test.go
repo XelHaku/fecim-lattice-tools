@@ -136,9 +136,9 @@ func TestQuantizationCliff(t *testing.T) {
 	}
 
 	testCases := []struct {
-		levels       int
+		levels         int
 		maxExpectedMSE float64
-		description  string
+		description    string
 	}{
 		{2, 0.5, "Binary (quantization cliff)"},
 		{4, 0.15, "2-bit"},
@@ -658,9 +658,9 @@ func TestPerLayerQuantizationConfig(t *testing.T) {
 	}
 
 	// Test clamping
-	net.SetLayer1Levels(100) // Should clamp to 30
-	if net.GetLayer1Levels() > 30 {
-		t.Error("Layer1Levels should be clamped to max 30")
+	net.SetLayer1Levels(100) // Should clamp to MaxDemoLevels
+	if net.GetLayer1Levels() > MaxDemoLevels {
+		t.Errorf("Layer1Levels should be clamped to max %d", MaxDemoLevels)
 	}
 
 	net.SetLayer2Levels(1) // Should clamp to 2

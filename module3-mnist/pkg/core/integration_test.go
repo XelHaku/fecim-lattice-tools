@@ -90,9 +90,9 @@ func TestFullInferencePipeline(t *testing.T) {
 // TestPresetConfigurations tests the 4 failure mode presets.
 func TestPresetConfigurations(t *testing.T) {
 	presets := []struct {
-		name   string
-		levels int
-		noise  float64
+		name    string
+		levels  int
+		noise   float64
 		adcBits int
 		dacBits int
 	}{
@@ -195,13 +195,13 @@ func TestNetworkConfigBounds(t *testing.T) {
 
 	// Test NumLevels bounds
 	net.SetNumLevels(0)
-	if net.Config.NumLevels < 1 {
-		t.Error("NumLevels should be >= 1")
+	if net.Config.NumLevels < 2 {
+		t.Error("NumLevels should be >= 2")
 	}
 
 	net.SetNumLevels(100)
-	if net.Config.NumLevels > 30 {
-		t.Error("NumLevels should be <= 30")
+	if net.Config.NumLevels > MaxDemoLevels {
+		t.Errorf("NumLevels should be <= %d", MaxDemoLevels)
 	}
 
 	// Test NoiseLevel bounds
@@ -559,7 +559,7 @@ func TestPerLayerQuantizationE2E(t *testing.T) {
 	// Create synthetic input
 	input := make([]float64, 784)
 	for i := range input {
-		input[i] = math.Sin(float64(i)*0.1) * 0.5 + 0.5
+		input[i] = math.Sin(float64(i)*0.1)*0.5 + 0.5
 	}
 
 	result := net.Infer(input)
@@ -700,8 +700,8 @@ func TestEnergyCalculationVerification(t *testing.T) {
 	}
 
 	// Verify MAC counts: Layer 1: 784*128, Layer 2: 128*10
-	macs1 := 784 * 128 // 100,352 MACs
-	macs2 := 128 * 10  // 1,280 MACs
+	macs1 := 784 * 128         // 100,352 MACs
+	macs2 := 128 * 10          // 1,280 MACs
 	totalMACs := macs1 + macs2 // 101,632 MACs
 
 	// Test energy scaling with different levels
@@ -710,10 +710,10 @@ func TestEnergyCalculationVerification(t *testing.T) {
 		expectedBits  float64
 		expectedFJMAC float64
 	}{
-		{2, 1.0, 10.0},      // 1 bit
-		{8, 3.0, 30.0},      // 3 bits
-		{16, 4.0, 40.0},     // 4 bits
-		{30, 4.9, 49.0},     // ~4.9 bits
+		{2, 1.0, 10.0},  // 1 bit
+		{8, 3.0, 30.0},  // 3 bits
+		{16, 4.0, 40.0}, // 4 bits
+		{30, 4.9, 49.0}, // ~4.9 bits
 	}
 
 	for _, test := range levelsToTest {

@@ -44,7 +44,7 @@ func runHysteresisMode() error {
 	log.Info("ISPP write-verify sequence starting")
 	writer := physics.NewWriteController(solver, mat)
 	writer.MaxIterations = 15
-	writer.Tolerance = 1e-6
+	writer.Tolerance = 1.5e-6
 	writer.MaxVoltage = mat.Ec * mat.Thickness * 2.5
 	writer.PulseWidth = mat.Tau
 

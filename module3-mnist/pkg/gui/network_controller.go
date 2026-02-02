@@ -17,8 +17,9 @@ import (
 // Extracted from DualModeApp to separate concerns (ARCH-001).
 type NetworkController struct {
 	// Network
-	network *core.DualModeNetwork
-	dataDir string
+	network    *core.DualModeNetwork
+	dataDir    string // MNIST dataset directory
+	weightsDir string // Quantized weight files directory
 
 	// Test data cache
 	testImages [][]float64
@@ -39,12 +40,30 @@ type NetworkController struct {
 
 // NewNetworkController creates a new network controller.
 func NewNetworkController(inputSize, hiddenSize, outputSize int) *NetworkController {
-	dataDir := utils.FindModuleDataDir("module3-mnist", "pretrained_weights.json")
+	dataDir := utils.FindModuleDataDir("module3-mnist", "train-images-idx3-ubyte.gz")
 	if dataDir == "" {
 		dataDir = "module3-mnist/data" // Default fallback
 	}
+
+	weightsDir := ""
+	weightCandidates := []string{
+		filepath.Join("data", "pretrained-weigths"),
+		filepath.Join("data", "pretrained-weights"),
+		filepath.Join("module3-mnist", "data"),
+	}
+	for _, candidate := range weightCandidates {
+		if _, err := os.Stat(filepath.Join(candidate, "pretrained_weights.json")); err == nil {
+			weightsDir = candidate
+			break
+		}
+	}
+	if weightsDir == "" {
+		weightsDir = dataDir
+	}
+
 	nc := &NetworkController{
 		dataDir:             dataDir,
+		weightsDir:          weightsDir,
 		currentQATLevel:     FeCIMDefaultLevels,
 		warnedMissingLevels: make(map[int]bool),
 	}
@@ -53,7 +72,7 @@ func NewNetworkController(inputSize, hiddenSize, outputSize int) *NetworkControl
 	nc.network = core.NewDualModeNetwork(inputSize, hiddenSize, outputSize)
 
 	// Load pretrained weights
-	weightsPath := filepath.Join(nc.dataDir, "pretrained_weights.json")
+	weightsPath := filepath.Join(nc.weightsDir, "pretrained_weights.json")
 	if _, err := os.Stat(weightsPath); err == nil {
 		if err := nc.network.LoadWeights(weightsPath); err != nil {
 			mnistLog.Printf("Warning: Failed to load weights from %s: %v", weightsPath, err)
@@ -73,6 +92,11 @@ func (nc *NetworkController) Network() *core.DualModeNetwork {
 // DataDir returns the data directory path.
 func (nc *NetworkController) DataDir() string {
 	return nc.dataDir
+}
+
+// WeightsDir returns the weights directory path.
+func (nc *NetworkController) WeightsDir() string {
+	return nc.weightsDir
 }
 
 // Infer runs dual-path inference on the input.
@@ -258,7 +282,7 @@ func (nc *NetworkController) TryLoadQATWeights(targetLevel int) (QATLoadResult, 
 	}
 
 	// Find the weights file for this level
-	weightsPath := core.GetWeightsFilename(nc.dataDir, targetLevel)
+	weightsPath := core.GetWeightsFilename(nc.weightsDir, targetLevel)
 
 	// Check if the file exists
 	if _, err := os.Stat(weightsPath); os.IsNotExist(err) {

@@ -273,8 +273,8 @@ func TestDualModeNetwork_SetParameters(t *testing.T) {
 	}
 
 	net.SetNumLevels(100)
-	if net.Config.NumLevels != 30 {
-		t.Errorf("NumLevels should be clamped to 30, got %d", net.Config.NumLevels)
+	if net.Config.NumLevels != MaxDemoLevels {
+		t.Errorf("NumLevels should be clamped to %d, got %d", MaxDemoLevels, net.Config.NumLevels)
 	}
 
 	// Test SetNoiseLevel

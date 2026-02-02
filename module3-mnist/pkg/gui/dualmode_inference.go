@@ -244,7 +244,7 @@ func (app *DualModeApp) loadRandomSample() {
 func (app *DualModeApp) changeHiddenSize(size int) {
 	// Map size to weight file
 	weightsFile := fmt.Sprintf("pretrained_30_h%d.json", size)
-	weightsPath := filepath.Join(app.dataDir(), weightsFile)
+	weightsPath := filepath.Join(app.weightsDir(), weightsFile)
 
 	// Show loading progress
 	fyne.Do(func() {
@@ -254,7 +254,7 @@ func (app *DualModeApp) changeHiddenSize(size int) {
 	// Check if file exists, fallback to default
 	if _, err := os.Stat(weightsPath); os.IsNotExist(err) {
 		// Try default weights file
-		weightsPath = filepath.Join(app.dataDir(), "pretrained_weights.json")
+		weightsPath = filepath.Join(app.weightsDir(), "pretrained_weights.json")
 		fyne.Do(func() {
 			app.statusLabel.SetText(fmt.Sprintf("Note: Using default weights (h%d weights not found)", size))
 		})

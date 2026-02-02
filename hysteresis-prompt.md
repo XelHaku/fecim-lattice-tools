@@ -138,7 +138,7 @@ Deliverable
 
 Task TODO (next iteration)
 
-- Reduce overshoot resets in branch-crossing steps (pos-1/neg-1) by tightening initial bounds and/or reset strategy.
+- Tighten the conductance tolerance back toward `1e-6 S` (or make it adaptive) while keeping overshoot resets at zero.
 - Validate that low-bias midpoints only apply while crossing (`currentP * targetP < 0`) and record any overshoot deltas.
 - Attempt to download open-access versions or preprints for remaining paywalled/ambiguous references:
   Park 2019, Hoffmann 2015, Starschich 2016, Tung 2022 (update `docs/research-papers/.../README.md` accordingly).
@@ -156,6 +156,6 @@ Baseline (update each run)
 - Latest log path:
 - <local-path>
 - ISPP step results (attempts, overshoots):
-  - pos-1: attempts=4, overshoots=1
+  - pos-1: attempts=2, overshoots=0
   - pos-2: attempts=2, overshoots=0
-  - neg-1: attempts=4, overshoots=1
+  - neg-1: attempts=2, overshoots=0

@@ -57,20 +57,23 @@
    *Source:* IEEE Trans. Electron Devices 69, 4761-4764
    *DOI:* [10.1109/ted.2022.3181573](https://doi.org/10.1109/ted.2022.3181573)
    *Status:* Paywalled (IEEE)
+   *OA attempt:* NYCU Academic Hub entry has metadata only; no open PDF located (2026-02-02)
 
 10. **Starschich, S. et al. (2016)**
    *Title:* Evidence for oxygen vacancies movement during wake-up in ferroelectric hafnium oxide (Note: Referenced as "Ferroelectric switching dynamics..." in doc)
    *Source:* Appl. Phys. Lett. 108, 032903
    *DOI:* [10.1063/1.4940370](https://doi.org/10.1063/1.4940370)
    *Status:* Paywalled (AIP)
+   *OA attempt:* AIP article-pdf link returned paywall HTML (2026-02-02)
 
 11. **Hoffmann, M. et al. (2015)**
     *Title:* Stabilizing the ferroelectric phase in doped HfO2: A thermodynamic approach
     *Source:* J. Appl. Phys. 118, 072006
     *DOI:* 10.1063/1.4927805 (inferred)
     *Status:* Paywalled (AIP)
+    *OA attempt:* AIP article-pdf link returned paywall HTML; ResearchGate download requires login (429) (2026-02-02)
 
 12. **Park, M. H. et al. (2019)**
     *Title:* (Topic: Slanted loop / Depolarization in HZO)
-    *Possible Match:* "Depolarization of multidomain ferroelectric materials" (Zhao et al., Nat. Commun. 10, 2547, 2019)? Or a different Park paper.
-    *Status:* Ambiguous citation in source doc.
+    *Possible Match:* Park et al., *Understanding ferroelectric phase formation in doped HfO2 thin films based on classical nucleation theory* (Nanoscale 2019) — not explicitly depolarization-focused.
+    *Status:* Ambiguous citation in source doc; no confirmed open-access PDF located (2026-02-02).

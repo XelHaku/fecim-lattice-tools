@@ -7,12 +7,15 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"math"
 	"math/rand"
 	"os"
+	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -38,6 +41,9 @@ func main() {
 	saveWeights := flag.String("save", "", "Save weights to file")
 	coreEvaluate := flag.Bool("core-eval", false, "Evaluate using dual-mode core network (FP vs CIM)")
 	coreSamples := flag.Int("core-samples", 1000, "Samples for core-eval (0=all)")
+	coreLevels := flag.String("core-levels", "", "Comma-separated levels for core-eval sweep (e.g., 8,16,24,31)")
+	exportLevels := flag.String("export-levels", "", "Comma-separated levels to export (pretrained_weights_{N}.json)")
+	exportDir := flag.String("export-dir", "", "Comma-separated output directories for export-levels (default: data/pretrained-weigths,module3-mnist/data)")
 	flag.Parse()
 
 	fmt.Println("================================================")
@@ -52,8 +58,30 @@ func main() {
 	fmt.Printf("  Discrete levels: 30 (FeCIM advantage)\n")
 	fmt.Printf("  Target accuracy: Physics-limited\n")
 
+	if *exportLevels != "" {
+		levels, err := parseLevelList(*exportLevels)
+		if err != nil {
+			log.Fatalf("Invalid export levels: %v", err)
+		}
+		outDirs, err := parseDirList(*exportDir)
+		if err != nil {
+			log.Fatalf("Invalid export directories: %v", err)
+		}
+		if len(outDirs) == 0 {
+			outDirs = []string{filepath.Join("data", "pretrained-weigths"), "module3-mnist/data"}
+		}
+		if err := runExportQuantizedWeights(levels, *loadWeights, outDirs, *hiddenSize); err != nil {
+			log.Fatalf("Export failed: %v", err)
+		}
+		return
+	}
+
 	if *coreEvaluate {
-		runCoreEvaluation(*hiddenSize, *noiseLevel, *loadWeights, *coreSamples)
+		levels, err := parseLevelList(*coreLevels)
+		if err != nil {
+			log.Fatalf("Invalid core levels: %v", err)
+		}
+		runCoreEvaluation(*hiddenSize, *noiseLevel, *loadWeights, *coreSamples, levels)
 		return
 	}
 
@@ -211,7 +239,18 @@ func runEvaluation(net *training.MNISTNetwork) {
 	}
 }
 
-func runCoreEvaluation(hiddenSize int, noiseLevel float64, loadFile string, maxSamples int) {
+type coreEvalMetrics struct {
+	fpAcc      float64
+	cimAcc     float64
+	agreeRate  float64
+	avgKL      float64
+	avgEnergy  float64
+	sample0    *core.InferenceResult
+	sample0Hit bool
+	samples    int
+}
+
+func runCoreEvaluation(hiddenSize int, noiseLevel float64, loadFile string, maxSamples int, levels []int) {
 	fmt.Println("\n=== Core Dual-Path Evaluation (FP vs CIM) ===")
 
 	testImages, testLabels, err := mnist.LoadMNIST("module3-mnist/data", false)
@@ -234,15 +273,10 @@ func runCoreEvaluation(hiddenSize int, noiseLevel float64, loadFile string, maxS
 	net.Config.ADCBits = 8
 	net.Config.DACBits = 8
 
-	weightsPath := loadFile
-	if weightsPath == "" {
-		defaultWeights := "module3-mnist/data/pretrained_weights.json"
-		if _, err := os.Stat(defaultWeights); err == nil {
-			weightsPath = defaultWeights
-		}
-	}
-
-	if weightsPath != "" {
+	weightsPath, err := resolveWeightsPath(loadFile)
+	if err != nil {
+		log.Printf("Warning: %v", err)
+	} else {
 		fmt.Printf("\nLoading weights from: %s\n", weightsPath)
 		if err := net.LoadWeights(weightsPath); err != nil {
 			log.Printf("Warning: Failed to load weights: %v", err)
@@ -255,26 +289,70 @@ func runCoreEvaluation(hiddenSize int, noiseLevel float64, loadFile string, maxS
 	// Ensure noise level is aligned with CLI after loading weights.
 	net.Config.NoiseLevel = noiseLevel
 
+	if len(levels) == 0 {
+		levels = []int{net.Config.NumLevels}
+	}
+
 	perLayerEnabled, l1Levels, l2Levels := net.GetPerLayerQuantInfo()
 	log.Printf("Core eval config: levels=%d l1Levels=%d l2Levels=%d perLayer=%v noise=%.4f adcBits=%d dacBits=%d singleLayer=%v samples=%d",
 		net.Config.NumLevels, l1Levels, l2Levels, perLayerEnabled,
 		net.Config.NoiseLevel, net.Config.ADCBits, net.Config.DACBits,
 		net.Config.SingleLayer, totalSamples)
 
+	if len(levels) > 1 {
+		fmt.Println("\nLevels | FP Acc | CIM Acc | Agree | Avg KL | Avg Energy (uJ)")
+		fmt.Println("------------------------------------------------------------")
+	}
+
+	for _, level := range levels {
+		net.SetNumLevels(level)
+		metrics := evaluateCoreMetrics(net, testImages, testLabels)
+		if metrics.samples == 0 {
+			fmt.Printf("Levels %d: no samples evaluated\n", level)
+			continue
+		}
+		if metrics.sample0Hit && metrics.sample0 != nil {
+			log.Printf("Core eval sample0 (levels=%d): fpPred=%d (conf=%.4f) cimPred=%d (conf=%.4f) agree=%v kl=%.6f energy_uJ=%.6f",
+				level,
+				metrics.sample0.FPPrediction, metrics.sample0.FPConfidence,
+				metrics.sample0.CIMPrediction, metrics.sample0.CIMConfidence,
+				metrics.sample0.Agree, metrics.sample0.Disagreement, metrics.sample0.EnergyUsed)
+		}
+
+		if len(levels) > 1 {
+			fmt.Printf("%6d | %6.1f%% | %7.1f%% | %5.1f%% | %6.4f | %13.6f\n",
+				level, metrics.fpAcc*100, metrics.cimAcc*100,
+				metrics.agreeRate*100, metrics.avgKL, metrics.avgEnergy)
+		} else {
+			fmt.Printf("\nFP Accuracy: %.1f%%\n", metrics.fpAcc*100)
+			fmt.Printf("CIM Accuracy: %.1f%%\n", metrics.cimAcc*100)
+			fmt.Printf("Agreement Rate: %.1f%%\n", metrics.agreeRate*100)
+			fmt.Printf("Average KL Divergence: %.6f\n", metrics.avgKL)
+			fmt.Printf("Average Energy: %.6f μJ\n", metrics.avgEnergy)
+		}
+
+		log.Printf("Core evaluation complete (levels=%d): fpAcc=%.1f%% cimAcc=%.1f%% agree=%.1f%% avgKL=%.6f avgEnergy_uJ=%.6f samples=%d",
+			level, metrics.fpAcc*100, metrics.cimAcc*100, metrics.agreeRate*100,
+			metrics.avgKL, metrics.avgEnergy, metrics.samples)
+	}
+}
+
+func evaluateCoreMetrics(net *core.DualModeNetwork, images [][]float64, labels []int) coreEvalMetrics {
 	var fpCorrect, cimCorrect, agreeCount int
 	var totalKL, totalEnergy float64
 	var evaluated int
+	var sample0 *core.InferenceResult
 
-	for i := 0; i < totalSamples; i++ {
-		result := net.Infer(testImages[i])
+	for i := 0; i < len(images); i++ {
+		result := net.Infer(images[i])
 		if result == nil {
 			continue
 		}
 		evaluated++
-		if result.FPPrediction == testLabels[i] {
+		if result.FPPrediction == labels[i] {
 			fpCorrect++
 		}
-		if result.CIMPrediction == testLabels[i] {
+		if result.CIMPrediction == labels[i] {
 			cimCorrect++
 		}
 		if result.Agree {
@@ -284,33 +362,234 @@ func runCoreEvaluation(hiddenSize int, noiseLevel float64, loadFile string, maxS
 		totalEnergy += result.EnergyUsed
 
 		if i == 0 {
-			log.Printf("Core eval sample0: fpPred=%d (conf=%.4f) cimPred=%d (conf=%.4f) agree=%v kl=%.6f energy_uJ=%.6f",
-				result.FPPrediction, result.FPConfidence,
-				result.CIMPrediction, result.CIMConfidence,
-				result.Agree, result.Disagreement, result.EnergyUsed)
+			sample0 = result
 		}
 	}
 
 	if evaluated == 0 {
-		fmt.Println("No samples evaluated (input length mismatch).")
-		log.Printf("Core evaluation complete: no valid samples evaluated")
-		return
+		return coreEvalMetrics{}
 	}
 
-	fpAcc := float64(fpCorrect) / float64(evaluated)
-	cimAcc := float64(cimCorrect) / float64(evaluated)
-	agreeRate := float64(agreeCount) / float64(evaluated)
-	avgKL := totalKL / float64(evaluated)
-	avgEnergy := totalEnergy / float64(evaluated)
+	return coreEvalMetrics{
+		fpAcc:      float64(fpCorrect) / float64(evaluated),
+		cimAcc:     float64(cimCorrect) / float64(evaluated),
+		agreeRate:  float64(agreeCount) / float64(evaluated),
+		avgKL:      totalKL / float64(evaluated),
+		avgEnergy:  totalEnergy / float64(evaluated),
+		sample0:    sample0,
+		sample0Hit: sample0 != nil,
+		samples:    evaluated,
+	}
+}
 
-	fmt.Printf("\nFP Accuracy: %.1f%%\n", fpAcc*100)
-	fmt.Printf("CIM Accuracy: %.1f%%\n", cimAcc*100)
-	fmt.Printf("Agreement Rate: %.1f%%\n", agreeRate*100)
-	fmt.Printf("Average KL Divergence: %.6f\n", avgKL)
-	fmt.Printf("Average Energy: %.6f μJ\n", avgEnergy)
+func runExportQuantizedWeights(levels []int, loadFile string, outDirs []string, hiddenSize int) error {
+	fmt.Println("\n=== Export Quantized Weights ===")
 
-	log.Printf("Core evaluation complete: fpAcc=%.1f%% cimAcc=%.1f%% agree=%.1f%% avgKL=%.6f avgEnergy_uJ=%.6f samples=%d",
-		fpAcc*100, cimAcc*100, agreeRate*100, avgKL, avgEnergy, evaluated)
+	if len(levels) == 0 {
+		return fmt.Errorf("no levels specified")
+	}
+
+	if len(outDirs) == 0 {
+		outDirs = []string{"module3-mnist/data"}
+	}
+	for _, outDir := range outDirs {
+		if err := os.MkdirAll(outDir, 0o755); err != nil {
+			return fmt.Errorf("create output dir %s: %w", outDir, err)
+		}
+	}
+
+	net := core.NewDualModeNetwork(784, hiddenSize, 10)
+
+	weightsPath, err := resolveWeightsPath(loadFile)
+	if err != nil {
+		return err
+	}
+	baseBytes, err := os.ReadFile(weightsPath)
+	if err != nil {
+		return fmt.Errorf("read base weights: %w", err)
+	}
+	if err := net.LoadWeights(weightsPath); err != nil {
+		return fmt.Errorf("load weights: %w", err)
+	}
+
+	for _, outDir := range outDirs {
+		baseOut := filepath.Join(outDir, "pretrained_weights.json")
+		if err := os.WriteFile(baseOut, baseBytes, 0o644); err != nil {
+			return fmt.Errorf("write %s: %w", baseOut, err)
+		}
+		fmt.Printf("Wrote %s\n", baseOut)
+	}
+
+	w1Min, w1Max := weightRange(net.FPWeights1)
+	w2Min, w2Max := weightRange(net.FPWeights2)
+
+	for _, level := range levels {
+		if level < 2 {
+			return fmt.Errorf("levels must be >= 2, got %d", level)
+		}
+
+		qW1, l1Scale, l1Offset := quantizeNormalized(net.FPWeights1, w1Min, w1Max, level)
+		qW2, l2Scale, l2Offset := quantizeNormalized(net.FPWeights2, w2Min, w2Max, level)
+
+		data := core.WeightsFile{
+			Layer1Weights:     qW1,
+			Layer2Weights:     qW2,
+			Biases1:           net.FPBias1,
+			Biases2:           net.FPBias2,
+			L1Scale:           l1Scale,
+			L1Offset:          l1Offset,
+			L2Scale:           l2Scale,
+			L2Offset:          l2Offset,
+			QuantLevels:       level,
+			Layer1QuantLevels: level,
+			Layer2QuantLevels: level,
+		}
+
+		jsonData, err := json.MarshalIndent(data, "", "  ")
+		if err != nil {
+			return fmt.Errorf("marshal weights for level %d: %w", level, err)
+		}
+
+		for _, outDir := range outDirs {
+			outPath := filepath.Join(outDir, fmt.Sprintf("pretrained_weights_%d.json", level))
+			if err := os.WriteFile(outPath, jsonData, 0o644); err != nil {
+				return fmt.Errorf("write %s: %w", outPath, err)
+			}
+			fmt.Printf("Wrote %s\n", outPath)
+		}
+	}
+
+	fmt.Println("Export complete.")
+	return nil
+}
+
+func weightRange(weights [][]float64) (float64, float64) {
+	if len(weights) == 0 || len(weights[0]) == 0 {
+		return 0, 0
+	}
+	minVal := weights[0][0]
+	maxVal := weights[0][0]
+	for i := range weights {
+		for j := range weights[i] {
+			if weights[i][j] < minVal {
+				minVal = weights[i][j]
+			}
+			if weights[i][j] > maxVal {
+				maxVal = weights[i][j]
+			}
+		}
+	}
+	return minVal, maxVal
+}
+
+func quantizeNormalized(weights [][]float64, minVal, maxVal float64, levels int) ([][]float64, float64, float64) {
+	scale := maxVal - minVal
+	offset := minVal
+	rows := len(weights)
+	if rows == 0 {
+		return weights, 0, 0
+	}
+	cols := len(weights[0])
+	q := make([][]float64, rows)
+
+	if scale == 0 {
+		scale = 1
+		for i := range weights {
+			q[i] = make([]float64, cols)
+		}
+		return q, scale, offset
+	}
+
+	for i := range weights {
+		q[i] = make([]float64, cols)
+		for j := range weights[i] {
+			norm := (weights[i][j] - minVal) / scale
+			if norm < 0 {
+				norm = 0
+			}
+			if norm > 1 {
+				norm = 1
+			}
+			if levels > 1 {
+				q[i][j] = math.Round(norm*float64(levels-1)) / float64(levels-1)
+			} else {
+				q[i][j] = norm
+			}
+		}
+	}
+	return q, scale, offset
+}
+
+func parseLevelList(levelsStr string) ([]int, error) {
+	trimmed := strings.TrimSpace(levelsStr)
+	if trimmed == "" {
+		return nil, nil
+	}
+	parts := strings.Split(trimmed, ",")
+	levelSet := make(map[int]struct{})
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		level, err := strconv.Atoi(part)
+		if err != nil {
+			return nil, fmt.Errorf("invalid level %q", part)
+		}
+		levelSet[level] = struct{}{}
+	}
+	if len(levelSet) == 0 {
+		return nil, fmt.Errorf("no valid levels found")
+	}
+	result := make([]int, 0, len(levelSet))
+	for level := range levelSet {
+		result = append(result, level)
+	}
+	sort.Ints(result)
+	return result, nil
+}
+
+func parseDirList(dirsStr string) ([]string, error) {
+	trimmed := strings.TrimSpace(dirsStr)
+	if trimmed == "" {
+		return nil, nil
+	}
+	parts := strings.Split(trimmed, ",")
+	dirSet := make(map[string]struct{})
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		dirSet[filepath.Clean(part)] = struct{}{}
+	}
+	if len(dirSet) == 0 {
+		return nil, fmt.Errorf("no valid directories found")
+	}
+	result := make([]string, 0, len(dirSet))
+	for dir := range dirSet {
+		result = append(result, dir)
+	}
+	sort.Strings(result)
+	return result, nil
+}
+
+func resolveWeightsPath(loadFile string) (string, error) {
+	if loadFile != "" {
+		return loadFile, nil
+	}
+
+	candidates := []string{
+		filepath.Join("data", "pretrained-weigths", "pretrained_weights.json"),
+		filepath.Join("data", "pretrained-weights", "pretrained_weights.json"),
+		filepath.Join("module3-mnist", "data", "pretrained_weights.json"),
+	}
+	for _, candidate := range candidates {
+		if _, err := os.Stat(candidate); err == nil {
+			return candidate, nil
+		}
+	}
+	return "", fmt.Errorf("default weights not found (checked %s)", strings.Join(candidates, ", "))
 }
 
 func runInteractive(net *training.MNISTNetwork) {

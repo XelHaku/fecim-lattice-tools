@@ -157,111 +157,34 @@ func (ca *CrossbarApp) createControlWidgets() {
 	// This affects sneak path and IR drop physics calculations
 	ca.architecture = sharedwidgets.Architecture0T1R // Default to passive
 
-	// Create toggle buttons (text only)
-	ca.archPassiveBtn = widget.NewButton("PASSIVE", nil)
-	ca.arch1T1RBtn = widget.NewButton("1T1R", nil)
-	ca.arch2T1RBtn = widget.NewButton("2T1R", nil)
+	toggle := sharedwidgets.NewArchitectureToggle(sharedwidgets.ArchitectureToggleOptions{
+		Initial:      ca.architecture,
+		Style:        sharedwidgets.ArchitectureToggleStyleBullet,
+		LabelPassive: "PASSIVE",
+		Label1T1R:    "1T1R GATE",
+		Label2T1R:    "2T1R",
+		OnChanged: func(arch string) {
+			switch arch {
+			case sharedwidgets.Architecture1T1R:
+				getDebug().Printf("[ARCH TOGGLE] Switched to: 1T1R GATE")
+			case sharedwidgets.Architecture2T1R:
+				getDebug().Printf("[ARCH TOGGLE] Switched to: 2T1R")
+			default:
+				getDebug().Printf("[ARCH TOGGLE] Switched to: PASSIVE (0T1R)")
+			}
 
-	// m4 UX fix: Helper to update button styles with clear selected/unselected states
-	updateArchButtons := func() {
-		// Reset all buttons to unselected state
-		ca.archPassiveBtn.Importance = widget.LowImportance
-		ca.arch1T1RBtn.Importance = widget.LowImportance
-		ca.arch2T1RBtn.Importance = widget.LowImportance
+			ca.stateMu.Lock()
+			ca.architecture = arch
+			ca.stateMu.Unlock()
 
-		// Set selected button with bullet indicator
-		switch ca.architecture {
-		case sharedwidgets.Architecture0T1R:
-			ca.archPassiveBtn.SetText("● PASSIVE")
-			ca.archPassiveBtn.Importance = widget.HighImportance
-			ca.arch1T1RBtn.SetText("1T1R GATE")
-			ca.arch2T1RBtn.SetText("2T1R")
-		case sharedwidgets.Architecture1T1R:
-			ca.archPassiveBtn.SetText("PASSIVE")
-			ca.arch1T1RBtn.SetText("● 1T1R GATE")
-			ca.arch1T1RBtn.Importance = widget.HighImportance
-			ca.arch2T1RBtn.SetText("2T1R")
-		case sharedwidgets.Architecture2T1R:
-			ca.archPassiveBtn.SetText("PASSIVE")
-			ca.arch1T1RBtn.SetText("1T1R GATE")
-			ca.arch2T1RBtn.SetText("● 2T1R")
-			ca.arch2T1RBtn.Importance = widget.HighImportance
-		default:
-			ca.archPassiveBtn.SetText("● PASSIVE")
-			ca.archPassiveBtn.Importance = widget.HighImportance
-			ca.arch1T1RBtn.SetText("1T1R GATE")
-			ca.arch2T1RBtn.SetText("2T1R")
-		}
-		ca.archPassiveBtn.Refresh()
-		ca.arch1T1RBtn.Refresh()
-		ca.arch2T1RBtn.Refresh()
-	}
-
-	// Set initial state
-	updateArchButtons()
-
-	// Wire up callbacks
-	ca.archPassiveBtn.OnTapped = func() {
-		if ca.architecture == sharedwidgets.Architecture0T1R {
-			return // Already selected
-		}
-		getDebug().Printf("[ARCH TOGGLE] Switched to: PASSIVE (0T1R)")
-
-		ca.stateMu.Lock()
-		ca.architecture = sharedwidgets.Architecture0T1R
-		ca.stateMu.Unlock()
-
-		updateArchButtons()
-
-		// Update educational content
-		title, content := sharedwidgets.ArchitectureInfo(sharedwidgets.Architecture0T1R)
-		ca.setEducationalContent(title, content)
-
-		// Re-run MVM
-		ca.runEnhancedMVMWithCurrentInput()
-	}
-
-	ca.arch1T1RBtn.OnTapped = func() {
-		if ca.architecture == sharedwidgets.Architecture1T1R {
-			return // Already selected
-		}
-		getDebug().Printf("[ARCH TOGGLE] Switched to: 1T1R GATE")
-
-		ca.stateMu.Lock()
-		ca.architecture = sharedwidgets.Architecture1T1R
-		ca.stateMu.Unlock()
-
-		updateArchButtons()
-
-		// Update educational content
-		title, content := sharedwidgets.ArchitectureInfo(sharedwidgets.Architecture1T1R)
-		ca.setEducationalContent(title, content)
-
-		// Re-run MVM
-		ca.runEnhancedMVMWithCurrentInput()
-	}
-
-	ca.arch2T1RBtn.OnTapped = func() {
-		if ca.architecture == sharedwidgets.Architecture2T1R {
-			return // Already selected
-		}
-		getDebug().Printf("[ARCH TOGGLE] Switched to: 2T1R")
-
-		ca.stateMu.Lock()
-		ca.architecture = sharedwidgets.Architecture2T1R
-		ca.stateMu.Unlock()
-
-		updateArchButtons()
-
-		// Update educational content
-		title, content := sharedwidgets.ArchitectureInfo(sharedwidgets.Architecture2T1R)
-		ca.setEducationalContent(title, content)
-
-		// Re-run MVM
-		ca.runEnhancedMVMWithCurrentInput()
-	}
-
-	// Create horizontal container for toggle
+			title, content := sharedwidgets.ArchitectureInfo(arch)
+			ca.setEducationalContent(title, content)
+			ca.runEnhancedMVMWithCurrentInput()
+		},
+	})
+	ca.archPassiveBtn = toggle.PassiveButton
+	ca.arch1T1RBtn = toggle.OneT1RButton
+	ca.arch2T1RBtn = toggle.TwoT1RButton
 	ca.archToggle = container.NewGridWithColumns(3, ca.archPassiveBtn, ca.arch1T1RBtn, ca.arch2T1RBtn)
 }
 
@@ -319,68 +242,22 @@ func (ca *CrossbarApp) createRightPanel(metricsScroll *container.Scroll) fyne.Ca
 	actionButtons := container.NewGridWithColumns(2, ca.resetButton, exportButton)
 
 	// === EXTERNAL TOOLS VALIDATION ===
-	crosssimStatus := widget.NewLabel("○")
-	badcrossbarStatus := widget.NewLabel("○")
-	crosssimStatus.TextStyle = fyne.TextStyle{Monospace: true}
-	badcrossbarStatus.TextStyle = fyne.TextStyle{Monospace: true}
-
-	updateToolStatus := func() {
-		crosssimInfo := validation.CrossSimInfo()
-		badcrossbarInfo := validation.BadCrossbarInfo()
-		fyne.Do(func() {
-			crosssimStatus.SetText(crosssimInfo.Status.Symbol())
-			badcrossbarStatus.SetText(badcrossbarInfo.Status.Symbol())
-		})
-	}
-
-	// Combined install/validate button - installs if needed, then validates
-	toolsBtn := widget.NewButton("Validate Tools", func() {
-		go func() {
-			fyne.Do(func() {
-				crosssimStatus.SetText("...")
-				badcrossbarStatus.SetText("...")
-			})
-
-			// First install if needed
-			installResults := validation.InstallToolsIfNeeded()
-
-			// Then validate
-			validateResults := validation.ValidateAllTools()
-
-			var messages []string
-			for i, r := range validateResults {
-				installMsg := ""
-				if i < len(installResults) && installResults[i].Output != "Already installed" && installResults[i].Success {
-					installMsg = " (installed)"
-				}
-				status := "✗ FAIL"
-				if r.Passed {
-					status = "✓ PASS"
-				} else if r.Error != nil && strings.Contains(r.Error.Error(), "not installed") {
-					status = "○ NOT INSTALLED"
-				}
-				messages = append(messages, fmt.Sprintf("%s: %s%s", r.Tool, status, installMsg))
-			}
-
-			fyne.Do(func() {
-				updateToolStatus()
-				if ca.window != nil {
-					content := widget.NewLabel(strings.Join(messages, "\n"))
-					dialog.ShowCustom("External Crossbar Tools", "Close", content, ca.window)
-				}
-			})
-		}()
+	toolWidgets := sharedwidgets.NewToolValidationWidgets(sharedwidgets.ToolValidationOptions{
+		Window:              ca.window,
+		ButtonLabel:         "Validate Tools",
+		DialogTitle:         "External Crossbar Tools",
+		StatusLabelMode:     sharedwidgets.ToolStatusSymbolOnly,
+		MessageStyle:        sharedwidgets.ToolMessageUnicode,
+		IncludeInstall:      true,
+		IncludeInstallNotes: true,
 	})
-	toolsBtn.Importance = widget.LowImportance
-
-	// Initial status check in background
-	go updateToolStatus()
+	toolWidgets.Button.Importance = widget.LowImportance
 
 	toolsRow := container.NewHBox(
-		widget.NewLabel("CrossSim:"), crosssimStatus,
-		widget.NewLabel("BadCrossbar:"), badcrossbarStatus,
+		widget.NewLabel("CrossSim:"), toolWidgets.CrossSimStatus,
+		widget.NewLabel("BadCrossbar:"), toolWidgets.BadCrossbarStatus,
 		layout.NewSpacer(),
-		toolsBtn,
+		toolWidgets.Button,
 	)
 
 	// === ASSEMBLE CONTROLS ===

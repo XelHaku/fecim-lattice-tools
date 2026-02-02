@@ -89,31 +89,6 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 				"vMax":     c.VMax,
 			}, nil)
 		}
-		if c.Material != nil && c.Material.Ps != 0 {
-			ratio := math.Abs(targetP / c.Material.Ps)
-			if ratio > 1 {
-				ratio = 1
-			}
-			tighten := 0.6 + 0.4*ratio
-			if tighten < 0.6 {
-				tighten = 0.6
-			}
-			if tighten > 1.0 {
-				tighten = 1.0
-			}
-			newVMax := c.VMin + tighten*(c.VMax-c.VMin)
-			if newVMax < c.VMax {
-				c.VMax = newVMax
-				log.Calculation("WriteTarget", map[string]interface{}{
-					"step":     "TightenBounds",
-					"crossing": crossingInitial,
-					"ratio":    ratio,
-					"tighten":  tighten,
-					"vMin":     c.VMin,
-					"vMax":     c.VMax,
-				}, nil)
-			}
-		}
 	}
 
 	directionLabel := "positive"
@@ -202,6 +177,7 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 		currentG := PolarizationToConductance(currentP, c.Material.Ps, c.Material.Gmin, c.Material.Gmax)
 
 		error := currentG - targetG
+		crossingAfter := currentP*targetP < 0
 
 		log.Calculation("WriteTarget", map[string]interface{}{
 			"step":     "Verify",
@@ -224,6 +200,32 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 
 		if direction*error < 0 {
 			c.VMin = math.Abs(vPulse)
+			if crossingInitial && i == 0 && !crossingAfter && c.Material != nil && c.Material.Ps != 0 {
+				ratio := math.Abs(targetP / c.Material.Ps)
+				if ratio > 1 {
+					ratio = 1
+				}
+				tighten := 0.2 + 0.4*ratio
+				if tighten < 0.2 {
+					tighten = 0.2
+				}
+				if tighten > 0.6 {
+					tighten = 0.6
+				}
+				newVMax := c.VMin + tighten*(c.VMax-c.VMin)
+				if newVMax < c.VMax {
+					c.VMax = newVMax
+					log.Calculation("WriteTarget", map[string]interface{}{
+						"step":     "PostCrossTighten",
+						"ratio":    ratio,
+						"tighten":  tighten,
+						"vMin":     c.VMin,
+						"vMax":     c.VMax,
+						"attempt":  i + 1,
+						"crossing": crossingInitial,
+					}, nil)
+				}
+			}
 			log.Calculation("WriteTarget", map[string]interface{}{
 				"decision": "Undershoot",
 				"vPulse":   vPulse,
@@ -248,32 +250,6 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 			c.VMin = 0.0
 
 			c.Solver.SetState(-direction * math.Abs(c.Material.Pr))
-
-			if c.Material != nil && c.Material.Ps != 0 {
-				ratio := math.Abs(targetP / c.Material.Ps)
-				if ratio > 1 {
-					ratio = 1
-				}
-				tighten := 0.6 + 0.4*ratio
-				if tighten < 0.6 {
-					tighten = 0.6
-				}
-				if tighten > 1.0 {
-					tighten = 1.0
-				}
-				newVMax := c.VMin + tighten*(c.VMax-c.VMin)
-				if newVMax < c.VMax {
-					c.VMax = newVMax
-					log.Calculation("WriteTarget", map[string]interface{}{
-						"step":    "TightenBounds",
-						"stage":   "OvershootReset",
-						"ratio":   ratio,
-						"tighten": tighten,
-						"vMin":    c.VMin,
-						"vMax":    c.VMax,
-					}, nil)
-				}
-			}
 		}
 	}
 

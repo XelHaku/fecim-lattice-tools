@@ -25,7 +25,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	app.levelsLabel = widget.NewLabel(fmt.Sprintf("%d", FeCIMDefaultLevels))
 
 	// Build options from available QAT levels (scanned from data directory)
-	availableLevels := core.ScanAvailableQATLevels(app.dataDir())
+	availableLevels := core.ScanAvailableQATLevels(app.weightsDir())
 	levelOptions := make([]string, len(availableLevels))
 	for i, l := range availableLevels {
 		levelOptions[i] = fmt.Sprintf("%d", l)

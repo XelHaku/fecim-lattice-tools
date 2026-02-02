@@ -29,9 +29,9 @@ const (
 
 	// FeCIM hardware parameters
 	FeCIMDefaultLevels = physics.DefaultLevels // Default levels (can be changed in UI)
-	FeCIMDefaultNoise  = 0.01 // 1% standard deviation (typical production)
-	FeCIMDefaultADC    = 8    // 8-bit ADC resolution
-	FeCIMDefaultDAC    = 8    // 8-bit DAC resolution
+	FeCIMDefaultNoise  = 0.01                  // 1% standard deviation (typical production)
+	FeCIMDefaultADC    = 8                     // 8-bit ADC resolution
+	FeCIMDefaultDAC    = 8                     // 8-bit DAC resolution
 
 	// Energy efficiency (Samsung Nature 2025: 25-100× vs NAND)
 	FeCIMEnergyPerMAC = 50e-15  // 50 fJ/MAC (femtojoules)
@@ -152,6 +152,11 @@ func (app *DualModeApp) network() *core.DualModeNetwork {
 // dataDir returns the data directory path.
 func (app *DualModeApp) dataDir() string {
 	return app.networkCtrl.DataDir()
+}
+
+// weightsDir returns the weights directory path.
+func (app *DualModeApp) weightsDir() string {
+	return app.networkCtrl.WeightsDir()
 }
 
 // testImages returns the cached test images.

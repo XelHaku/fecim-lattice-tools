@@ -1,7 +1,7 @@
 package core
 
 // SetNumLevels updates the quantization levels and re-quantizes weights.
-// Minimum is 2 levels (required by QuantizeWeights), maximum is FeCIMLevels (30).
+// Minimum is 2 levels (required by QuantizeWeights), maximum is MaxDemoLevels.
 func (net *DualModeNetwork) SetNumLevels(levels int) {
 	oldLevels := net.Config.NumLevels
 	net.mu.Lock()
@@ -10,12 +10,15 @@ func (net *DualModeNetwork) SetNumLevels(levels int) {
 	if levels < 2 {
 		levels = 2
 	}
-	if levels > FeCIMLevels {
-		levels = FeCIMLevels
+	if levels > MaxDemoLevels {
+		levels = MaxDemoLevels
 	}
 	net.Config.NumLevels = levels
 	net.requantizeWeightsLocked()
 
+	if levels > FeCIMLevels {
+		log.Info("Using overspec quantization level %d (FeCIM max %d) for comparison only", levels, FeCIMLevels)
+	}
 	log.Debug("SetNumLevels: %d -> %d", oldLevels, levels)
 }
 
@@ -117,12 +120,15 @@ func (net *DualModeNetwork) SetLayer1Levels(levels int) {
 	if levels < 2 {
 		levels = 2
 	}
-	if levels > FeCIMLevels {
-		levels = FeCIMLevels
+	if levels > MaxDemoLevels {
+		levels = MaxDemoLevels
 	}
 	net.Config.Layer1Levels = levels
 	if net.Config.PerLayerQuant {
 		net.requantizeWeightsLocked()
+		if levels > FeCIMLevels {
+			log.Info("Using overspec L1 quantization level %d (FeCIM max %d) for comparison only", levels, FeCIMLevels)
+		}
 		log.Debug("SetLayer1Levels: %d -> %d (requantized)", oldLevels, levels)
 	}
 }
@@ -143,12 +149,15 @@ func (net *DualModeNetwork) SetLayer2Levels(levels int) {
 	if levels < 2 {
 		levels = 2
 	}
-	if levels > FeCIMLevels {
-		levels = FeCIMLevels
+	if levels > MaxDemoLevels {
+		levels = MaxDemoLevels
 	}
 	net.Config.Layer2Levels = levels
 	if net.Config.PerLayerQuant {
 		net.requantizeWeightsLocked()
+		if levels > FeCIMLevels {
+			log.Info("Using overspec L2 quantization level %d (FeCIM max %d) for comparison only", levels, FeCIMLevels)
+		}
 		log.Debug("SetLayer2Levels: %d -> %d (requantized)", oldLevels, levels)
 	}
 }
@@ -168,14 +177,14 @@ func (net *DualModeNetwork) SetPerLayerLevels(layer1, layer2 int) {
 	if layer1 < 2 {
 		layer1 = 2
 	}
-	if layer1 > FeCIMLevels {
-		layer1 = FeCIMLevels
+	if layer1 > MaxDemoLevels {
+		layer1 = MaxDemoLevels
 	}
 	if layer2 < 2 {
 		layer2 = 2
 	}
-	if layer2 > FeCIMLevels {
-		layer2 = FeCIMLevels
+	if layer2 > MaxDemoLevels {
+		layer2 = MaxDemoLevels
 	}
 
 	net.Config.Layer1Levels = layer1
@@ -183,6 +192,9 @@ func (net *DualModeNetwork) SetPerLayerLevels(layer1, layer2 int) {
 	net.Config.PerLayerQuant = true
 	net.requantizeWeightsLocked()
 
+	if layer1 > FeCIMLevels || layer2 > FeCIMLevels {
+		log.Info("Using overspec per-layer levels L1=%d L2=%d (FeCIM max %d) for comparison only", layer1, layer2, FeCIMLevels)
+	}
 	log.Debug("SetPerLayerLevels: L1=%d, L2=%d (enabled per-layer quant)", layer1, layer2)
 }
 
