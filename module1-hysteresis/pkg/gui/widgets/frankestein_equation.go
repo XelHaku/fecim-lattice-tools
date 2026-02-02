@@ -23,16 +23,16 @@ const (
 // TermChip is a small hoverable label that shows a tooltip for a coefficient.
 type TermChip struct {
 	widget.BaseWidget
-	parent   fyne.Window
+	termID   string
 	tooltip  string
 	label    *widget.Label
-	onSelect func(string)
+	onSelect func(string, string)
 }
 
 // NewTermChip creates a new term chip with hover tooltip text.
-func NewTermChip(parent fyne.Window, text, tooltip string, onSelect func(string)) *TermChip {
+func NewTermChip(termID, text, tooltip string, onSelect func(string, string)) *TermChip {
 	t := &TermChip{
-		parent:   parent,
+		termID:   termID,
 		tooltip:  tooltip,
 		onSelect: onSelect,
 	}
@@ -64,7 +64,7 @@ func (t *TermChip) MouseOut() {
 // Tapped notifies the selected term without showing hover tooltips.
 func (t *TermChip) Tapped(_ *fyne.PointEvent) {
 	if t.onSelect != nil {
-		t.onSelect(t.tooltip)
+		t.onSelect(t.termID, t.tooltip)
 	}
 }
 
@@ -90,10 +90,11 @@ func NewFrankesteinEquationWidget(parent fyne.Window) fyne.CanvasObject {
 }
 
 func newFrankesteinEquationTextWidget(parent fyne.Window) fyne.CanvasObject {
-	statusLabel := newEquationStatusLabel()
-	selectTerm := func(text string) {
-		statusLabel.SetText(text)
+	detailPanel, detailCard := newTermDetailPanel()
+	selectTerm := func(termID, fallback string) {
+		detailPanel.SetDetail(termID, fallback)
 	}
+	infoTabs := buildEquationInfoTabs()
 
 	title := widget.NewLabelWithStyle(
 		"Frankestein Equation (Module 1)",
@@ -102,38 +103,38 @@ func newFrankesteinEquationTextWidget(parent fyne.Window) fyne.CanvasObject {
 	)
 
 	line1 := container.NewHBox(
-		NewTermChip(parent, "\\rho_{eff}", "Effective viscosity: intrinsic damping plus series-resistance RC delay.", selectTerm),
+		NewTermChip("rho_eff_main", "\\rho_{eff}", "Effective viscosity: intrinsic damping plus series-resistance RC delay.", selectTerm),
 		mathLabel(" dP/dt = "),
-		NewTermChip(parent, "E_{applied}", "Applied electric field drive term (external voltage across the film).", selectTerm),
+		NewTermChip("e_applied", "E_{applied}", "Applied electric field drive term (external voltage across the film).", selectTerm),
 		mathLabel(" - "),
-		NewTermChip(parent, "k_{dep}", "Depolarization factor: models interfacial layer; slants the loop for analog states.", selectTerm),
+		NewTermChip("k_dep", "k_{dep}", "Depolarization factor: models interfacial layer; slants the loop for analog states.", selectTerm),
 		mathLabel(" P - ("),
 	)
 
 	line2 := container.NewHBox(
-		NewTermChip(parent, "2\\alpha", "Dynamic stiffness: temperature + stress dependent curvature of energy wells.", selectTerm),
+		NewTermChip("alpha", "2\\alpha", "Dynamic stiffness: temperature + stress dependent curvature of energy wells.", selectTerm),
 		mathLabel(" P + "),
-		NewTermChip(parent, "4\\beta", "First-order nonlinearity: negative for HZO to create the switching barrier.", selectTerm),
+		NewTermChip("beta", "4\\beta", "First-order nonlinearity: negative for HZO to create the switching barrier.", selectTerm),
 		mathLabel(" P^3 + "),
-		NewTermChip(parent, "6\\gamma", "Sixth-order stabilizer: keeps energy bounded at large polarization.", selectTerm),
+		NewTermChip("gamma", "6\\gamma", "Sixth-order stabilizer: keeps energy bounded at large polarization.", selectTerm),
 		mathLabel(" P^5)"),
 	)
 
 	lkRow := container.NewHBox(
-		NewTermChip(parent, "LK nonlinearity", "Landau-Khalatnikov nonlinear energy term: 2αP + 4βP^3 + 6γP^5.", selectTerm),
+		NewTermChip("lk_terms", "LK nonlinearity", "Landau-Khalatnikov nonlinear energy term: 2αP + 4βP^3 + 6γP^5.", selectTerm),
 	)
 
 	line3 := container.NewHBox(
 		mathLabel("+ "),
-		NewTermChip(parent, "\\xi(t)", "Stochastic noise term (optional): captures thermal variability.", selectTerm),
+		NewTermChip("noise", "\\xi(t)", "Stochastic noise term (optional): captures thermal variability.", selectTerm),
 	)
 
 	line4 := container.NewHBox(
-		NewTermChip(parent, "\\rho_{eff}", "Effective viscosity definition used in the headless hysteresis path.", selectTerm),
+		NewTermChip("rho_eff_def", "\\rho_{eff}", "Effective viscosity definition used in the headless hysteresis path.", selectTerm),
 		mathLabel(" = "),
-		NewTermChip(parent, "\\rho", "Intrinsic viscosity / damping coefficient.", selectTerm),
+		NewTermChip("rho", "\\rho", "Intrinsic viscosity / damping coefficient.", selectTerm),
 		mathLabel(" + ("),
-		NewTermChip(parent, "R_{series}", "Series resistance: absorbs RC delay into viscosity.", selectTerm),
+		NewTermChip("r_series", "R_{series}", "Series resistance: absorbs RC delay into viscosity.", selectTerm),
 		mathLabel(" A) / d"),
 	)
 
@@ -148,7 +149,8 @@ func newFrankesteinEquationTextWidget(parent fyne.Window) fyne.CanvasObject {
 		line3,
 		line4,
 		caption,
-		statusLabel,
+		detailCard,
+		infoTabs,
 	)
 }
 
@@ -188,15 +190,15 @@ func (l *normalizedHotspotLayout) MinSize(_ []fyne.CanvasObject) fyne.Size {
 
 type Hotspot struct {
 	widget.BaseWidget
-	parent   fyne.Window
+	termID   string
 	tooltip  string
-	onSelect func(string)
+	onSelect func(string, string)
 	debug    bool
 }
 
-func NewHotspot(parent fyne.Window, tooltip string, debug bool, onSelect func(string)) *Hotspot {
+func NewHotspot(termID, tooltip string, debug bool, onSelect func(string, string)) *Hotspot {
 	h := &Hotspot{
-		parent:   parent,
+		termID:   termID,
 		tooltip:  tooltip,
 		onSelect: onSelect,
 		debug:    debug,
@@ -231,7 +233,7 @@ func (h *Hotspot) MouseOut() {
 
 func (h *Hotspot) Tapped(_ *fyne.PointEvent) {
 	if h.onSelect != nil {
-		h.onSelect(h.tooltip)
+		h.onSelect(h.termID, h.tooltip)
 	}
 }
 
@@ -240,10 +242,11 @@ func (h *Hotspot) TappedSecondary(_ *fyne.PointEvent) {
 }
 
 func newFrankesteinEquationImageWidget(parent fyne.Window, svgPath string) fyne.CanvasObject {
-	statusLabel := newEquationStatusLabel()
-	selectTerm := func(text string) {
-		statusLabel.SetText(text)
+	detailPanel, detailCard := newTermDetailPanel()
+	selectTerm := func(termID, fallback string) {
+		detailPanel.SetDetail(termID, fallback)
 	}
+	infoTabs := buildEquationInfoTabs()
 
 	title := widget.NewLabelWithStyle(
 		"Frankestein Equation (Module 1)",
@@ -256,7 +259,7 @@ func newFrankesteinEquationImageWidget(parent fyne.Window, svgPath string) fyne.
 
 	var hotspotWidgets []fyne.CanvasObject
 	for _, spot := range hotspots {
-		hotspotWidgets = append(hotspotWidgets, NewHotspot(parent, spot.Tooltip, debug, selectTerm))
+		hotspotWidgets = append(hotspotWidgets, NewHotspot(spot.ID, spot.Tooltip, debug, selectTerm))
 	}
 
 	image := loadFrankesteinEquationSVG(svgPath)
@@ -281,7 +284,8 @@ func newFrankesteinEquationImageWidget(parent fyne.Window, svgPath string) fyne.
 		title,
 		stack,
 		caption,
-		statusLabel,
+		detailCard,
+		infoTabs,
 	)
 }
 
@@ -297,13 +301,6 @@ func loadFrankesteinEquationSVG(svgPath string) *canvas.Image {
 	}
 	resource := fyne.NewStaticResource(filepath.Base(svgPath), recolored)
 	return canvas.NewImageFromResource(resource)
-}
-
-func newEquationStatusLabel() *widget.Label {
-	label := widget.NewLabel("Tap a term to see its description.")
-	label.Wrapping = fyne.TextWrapWord
-	label.TextStyle = fyne.TextStyle{Italic: true}
-	return label
 }
 
 func loadFrankesteinHotspots() ([]hotspotDef, fyne.Size) {
