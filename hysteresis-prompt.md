@@ -166,7 +166,13 @@ Fixes applied this session (2026-02-02):
    - Upper targets (>15): saturate NEGATIVE first, then write UP.
    - Lower targets (<=15): saturate POSITIVE first, then write DOWN.
    - Uses 0.75×Ps saturation threshold and 2.0×Ec drive field.
-   - File: `module1-hysteresis/pkg/gui/simulation.go` lines 886-926.
+   - File: `module1-hysteresis/pkg/gui/simulation.go` lines 886-955.
+
+6. **GUI PREP skip optimization**: Skip saturation when already at valid remanent state.
+   - If |P| > 0.7×Ps AND correct polarity for target direction, skip PREP phase.
+   - Logs "WRD PREP SKIP: already at valid remanent" when skipping.
+   - Reduces write latency for consecutive writes that maintain remanent state.
+   - File: `module1-hysteresis/pkg/gui/simulation.go` lines 894-943.
 
 Next run (resume here)
 
