@@ -91,6 +91,10 @@ type WriteController struct {
 	VMin float64 // Lower bound of safe voltage (won't overshoot)
 	VMax float64 // Upper bound of voltage search space
 
+	// Bound tracking for bisection (set after verified undershoot/overshoot)
+	VMinSet bool
+	VMaxSet bool
+
 	// Outputs
 	LastVerifyLevel int
 	LastError       int
@@ -127,6 +131,8 @@ func (wc *WriteController) Start(targetLevel int, fromSaturation bool) {
 	// Initialize Binary Search Bounds
 	wc.VMin = 0
 	wc.VMax = wc.MaxField
+	wc.VMinSet = false
+	wc.VMaxSet = false
 
 	wc.InitialLevel = 0 // Will be captured in Update
 	wc.InitialLevelSet = false
@@ -286,6 +292,7 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			}
 			log.Printf("ISPP READ: currentLevel=%d targetLevel=%d prevLevel=%d currentField=%.3f×Ec",
 				currentLevel, wc.TargetLevel, prevLevel, currentField/wc.EcField)
+			prevError := wc.LastError
 			wc.LastError = currentLevel - wc.TargetLevel
 
 			// STRICT CONVERGENCE: Only accept exact match
@@ -312,6 +319,29 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 				overshoot = prevLevel >= wc.TargetLevel && currentLevel < wc.TargetLevel
 			}
 
+			// Update search bounds based on whether we need more or less magnitude.
+			absField := math.Abs(wc.CurrentField)
+			needMore := false
+			needLess := false
+			if pulseDir >= 0 {
+				needMore = wc.LastError < 0
+				needLess = wc.LastError > 0
+			} else {
+				needMore = wc.LastError > 0
+				needLess = wc.LastError < 0
+			}
+			if needMore {
+				if !wc.VMinSet || absField > wc.VMin {
+					wc.VMin = absField
+					wc.VMinSet = true
+				}
+			} else if needLess {
+				if !wc.VMaxSet || absField < wc.VMax {
+					wc.VMax = absField
+					wc.VMaxSet = true
+				}
+			}
+
 			// DEBUG: Always log the overshoot check
 			log.Printf("ISPP VERIFY: currentLevel=%d, targetLevel=%d, prevLevel=%d, pulseDir=%d, overshoot=%v",
 				currentLevel, wc.TargetLevel, prevLevel, pulseDir, overshoot)
@@ -331,6 +361,12 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 				wc.State = StateResetting
 				wc.PhaseTimer = 0
 				return 0, false
+			}
+
+			// If error sign flipped, tighten bracket for bisection.
+			if prevError != 0 && wc.LastError != 0 && (prevError > 0) != (wc.LastError > 0) {
+				wc.VMinSet = wc.VMinSet || wc.VMin > 0
+				wc.VMaxSet = wc.VMaxSet || wc.VMax < wc.MaxField
 			}
 
 			// Not converged. Check retries.
@@ -456,7 +492,6 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 		}
 
 		wc.CurrentField = initialField
-		wc.VMin = math.Abs(initialField) // Track last voltage for incrementing
 		return
 	}
 
@@ -519,6 +554,28 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 		}
 		// Forward direction after overshoot - use fine steps
 		stepSize = 0.03 * wc.EcField
+	}
+
+	// If we have bounds from verify, use bisection for faster convergence.
+	if wc.VMinSet && wc.VMaxSet && wc.VMax > wc.VMin {
+		prevVoltage := math.Abs(wc.CurrentField)
+		nextVoltage := 0.5 * (wc.VMin + wc.VMax)
+		// Nudge if midpoint is too close to current voltage (avoid stalling).
+		minStep := 0.02 * wc.EcField
+		if math.Abs(nextVoltage-prevVoltage) < minStep {
+			if wc.LastError < 0 {
+				nextVoltage = math.Min(wc.VMax, prevVoltage+minStep)
+			} else if wc.LastError > 0 {
+				nextVoltage = math.Max(wc.VMin, prevVoltage-minStep)
+			}
+		}
+		if direction < 0 {
+			nextVoltage = -nextVoltage
+		}
+		wc.CurrentField = nextVoltage
+		log.Printf("ISPP BISECT: level=%d→%d, E=%.3f×Ec→%.3f×Ec bounds=[%.3f, %.3f]×Ec",
+			currentLevel, targetLevel, prevVoltage/wc.EcField, math.Abs(nextVoltage)/wc.EcField, wc.VMin/wc.EcField, wc.VMax/wc.EcField)
+		return
 	}
 
 	// Undershoot: increase voltage by step
