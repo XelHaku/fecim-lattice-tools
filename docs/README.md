@@ -12,6 +12,7 @@
 | [RUNBOOK.md](RUNBOOK.md) | Build, run, and deploy |
 | [FEATURES.md](FEATURES.md) | Complete feature reference |
 | [CONTRIB.md](CONTRIB.md) | How to contribute |
+| [project/STATUS.md](project/STATUS.md) | Project phase, validation, and CI status |
 
 ## Build & Run
 
