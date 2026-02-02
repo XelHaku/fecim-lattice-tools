@@ -55,7 +55,7 @@ Each module demonstrates a layer in the FeCIM stack:
 
 | Module | Purpose | Physics | GUI Framework | Status |
 |--------|---------|---------|---------------|--------|
-| **1. Hysteresis** | Memory cell physics | Preisach + Landau‑Khalatnikov (depole, series‑R, NLS) | Real-time P-E curve + ISPP demo | Stable |
+| **1. Hysteresis** | Memory cell physics | Preisach (GUI) + Landau‑Khalatnikov (headless) | Real-time P-E curve + ISPP demo | Stable |
 | **2. Crossbar** | Matrix-vector multiply | Ohm's law, IR drop, sneak paths, drift | Heatmap with MVM operations | Stable |
 | **3. MNIST** | Neural network application | Network inference with quantized weights | Digit drawing + recognition | Stable |
 | **4. Circuits** | Peripheral electronics | DAC/ADC/TIA circuit modeling | Schematic diagrams, waveforms | Stable |
@@ -246,6 +246,8 @@ This is used everywhere weights are programmed.
 ### 2. Hysteresis Model (Module 1)
 
 Module 1 implements ferroelectric hysteresis simulation with two complementary models and comprehensive material support.
+The **GUI path** renders the Preisach model in real time; the **headless diagnostics path**
+(`cmd/fecim-lattice-tools --mode hysteresis`) exercises the L‑K solver and ISPP loop in `shared/physics/`.
 
 #### Preisach Model Architecture
 
@@ -311,7 +313,7 @@ Key parameter mapping (from `HZOMaterial` → `LKSolver`):
 
 Usage:
 
-- **Headless diagnostics**: `cmd/fecim-lattice-tools/mode.go` runs an L‑K sweep and ISPP write‑verify loop.
+- **Headless diagnostics**: `cmd/fecim-lattice-tools/mode.go` runs an L‑K sweep and a **multi‑target ISPP sequence**.
 - **ISPP physics**: `shared/physics/ispp_write.go` drives L‑K integration for write/verify sequences.
 
 #### Material System

@@ -1,6 +1,19 @@
 # FeCIM Lattice Tools - GUI Documentation
 
-Welcome to the GUI module documentation. This directory contains comprehensive specifications, architecture guides, and troubleshooting information for all interactive visualizations in the FeCIM Lattice Tools project.
+Welcome to the GUI module documentation. This directory contains specifications, architecture guides, and troubleshooting information for all interactive visualizations in the FeCIM Lattice Tools project.
+
+## Scope & Audience
+
+- Internal development reference for engineers working on GUI modules
+- Assumes familiarity with Fyne, module code structure, and Go conventions
+- File paths are repo-relative unless a module root is explicitly called out
+
+## Conventions Used in This Folder
+
+- **file** paths are relative to the module root unless stated otherwise
+- **state** lists local widget or app state
+- **bindings** lists event handlers or state updates
+- **data flow** lists triggers and their downstream updates
 
 ## Quick Navigation
 
@@ -44,9 +57,9 @@ Each module documentation file contains:
 
 Bugs are tracked using a standardized format:
 
-```
+```text
 BUG-MX-NNN
-├─ M = Module number (1-6)
+├─ M = Module number (1-7)
 ├─ X = Module identifier (always matches module number)
 └─ NNN = Sequential bug number (001, 002, ...)
 
@@ -346,6 +359,6 @@ For questions about GUI documentation or implementation:
 
 ## Document Version
 
-- **Last Updated**: 2026-01-29
+- **Last Updated**: 2026-02-02
 - **Coverage**: Modules 1-7 (Hysteresis, Crossbar, MNIST, Circuits, Comparison, EDA, Documentation)
 - **Status**: Active maintenance

@@ -3,9 +3,14 @@ Module: module2-crossbar
 Name: "Crossbar Array MVM Visualization"
 Entry: cmd/crossbar-gui/main.go
 Package: module2-crossbar/pkg/gui
-Last Updated: 2026-01-29
+Last Updated: 2026-02-02
 Description: "Interactive visualization of FeCIM crossbar array matrix-vector multiplication with non-ideality analysis"
 ---
+
+Conventions:
+  - File paths are relative to module2-crossbar unless noted
+  - Widget types refer to Fyne (`widget.*`, `container.*`, `canvas.*`) or shared widgets
+  - Bindings list event handlers or UI update calls impacting the component
 
 Bugs:
   - [x] BUG-M2-001: Potential race condition on lastInput/lastOutput - FIXED (2026-01-26): Added mutex protection
@@ -28,7 +33,7 @@ Bugs:
 # UI Structure
 
 ## Main Layout
-```
+```text
 +-----------------------------------------------------------------------------------+
 |                         FeCIM Crossbar Array Visualization                         |
 +-----------------------------------------------------------------------------------+
@@ -166,7 +171,7 @@ Bugs:
 ### Auto-Run MVM (No Manual Button)
 All parameter changes automatically trigger MVM recalculation:
 
-```
+```text
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
 │ Array Size      │────▶│ recreateArray() │────▶│ runEnhancedMVM  │
 │ Slider Change   │     │ + reset baseline│     │ Instant()       │
@@ -186,7 +191,7 @@ All parameter changes automatically trigger MVM recalculation:
 ### Baseline Scaling System
 IR Drop and Sneak Path heatmaps use passive (0T1R) worst-case as baseline:
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                    BASELINE COMPUTATION                          │
 ├─────────────────────────────────────────────────────────────────┤
@@ -207,7 +212,7 @@ Result: 1T1R shows ~0.1% of legend, 2T1R shows ~0.01% of legend
 ```
 
 ### Cell Selection Sync
-```
+```text
 User clicks cell on ANY heatmap
         │
         ▼

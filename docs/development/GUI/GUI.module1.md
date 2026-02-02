@@ -3,8 +3,13 @@ Module: module1-hysteresis
 Name: Hysteresis Visualizer
 Entry: cmd/hysteresis/main.go
 Package: fecim-lattice-tools/module1-hysteresis/pkg/gui
-Last Updated: 2026-01-29
+Last Updated: 2026-02-02
 ---
+
+Conventions:
+  - File paths are relative to module1-hysteresis unless noted
+  - Widget types refer to Fyne (`widget.*`, `container.*`, `canvas.*`) or shared widgets
+  - Bindings list event handlers or UI update calls impacting the component
 
 Bugs:
   - [x] BUG-M1-001: UI updates from goroutine without fyne.Do() wrapper in saveDebugLog (gui.go:279) - Low risk: only file I/O

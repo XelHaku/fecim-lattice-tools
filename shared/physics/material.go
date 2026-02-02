@@ -129,6 +129,7 @@ func DefaultHZO() *HZOMaterial {
 		Ea:              0.7,     // Activation energy ~0.7 eV
 		Alpha:           2.0,     // KAI exponent (2D growth)
 		CurieTemp:       723,     // ~450°C
+		CurieConst:      1.5e5,   // Curie constant (K)
 		TempCoeffEc:     -2e5,    // Ec decreases with T
 		TempCoeffPr:     -5e-5,   // Pr decreases with T
 		EnduranceCycles: 1e10,    // 10^10 cycles
@@ -139,8 +140,15 @@ func DefaultHZO() *HZOMaterial {
 		EaNLS:           12e8,    // 12 MV/cm activation field
 		Gmin:            1e-6,    // 1 µS at HRS (P = -Ps)
 		Gmax:            100e-6,  // 100 µS at LRS (P = +Ps), ~100x on/off ratio
-		Q11:             0.089,   // Longitudinal electrostriction (m⁴/C²)
-		Q12:             -0.026,  // Transverse electrostriction (m⁴/C²)
+		// Landau-Khalatnikov parameters (Golden Set I, 10nm HZO)
+		BetaLandau:          -2.160e8,
+		GammaLandau:         1.653e10,
+		RhoViscosity:        0.05,
+		SeriesResistanceOhm: 50.0,
+		K_dep:               2.5e8, // Depolarization factor for analog slope
+		StressGPa:           1.0,
+		Q11:                 0.089,  // Longitudinal electrostriction (m⁴/C²)
+		Q12:                 -0.026, // Transverse electrostriction (m⁴/C²)
 	}
 }
 
@@ -169,6 +177,7 @@ func LiteratureSuperlattice() *HZOMaterial {
 		Ea:              0.5, // Lower activation energy
 		Alpha:           2.5,
 		CurieTemp:       773, // Higher Tc
+		CurieConst:      1.5e5,
 		TempCoeffEc:     -1.5e5,
 		TempCoeffPr:     -3e-5,
 		EnduranceCycles: 1e12, // Literature best-case
@@ -179,6 +188,13 @@ func LiteratureSuperlattice() *HZOMaterial {
 		EaNLS:           10e8,    // 10 MV/cm (lower barrier)
 		Gmin:            0.5e-6,  // 0.5 µS at HRS (lower due to better control)
 		Gmax:            150e-6,  // 150 µS at LRS (higher Pr → better modulation)
+		// Landau-Khalatnikov parameters (superlattice-enhanced)
+		BetaLandau:          -3.8e8,
+		GammaLandau:         2.1e10,
+		RhoViscosity:        0.02,
+		SeriesResistanceOhm: 50.0,
+		K_dep:               2.5e8,
+		StressGPa:           1.5,
 	}
 }
 
@@ -220,6 +236,7 @@ func FeCIMMaterial() *HZOMaterial {
 		Ea:              0.6,
 		Alpha:           2.0,
 		CurieTemp:       723,
+		CurieConst:      1.5e5,
 		TempCoeffEc:     -1.8e5,
 		TempCoeffPr:     -4e-5,
 		EnduranceCycles: 1e9, // 10^9 DEMONSTRATED (10^12 is TARGET)
@@ -230,8 +247,15 @@ func FeCIMMaterial() *HZOMaterial {
 		EaNLS:           12e8,   // 12 MV/cm activation field
 		Gmin:            1e-6,   // 1 µS at HRS
 		Gmax:            100e-6, // 100 µS at LRS, on/off ~100x
-		Q11:             0.089,  // Longitudinal electrostriction (m⁴/C²)
-		Q12:             -0.026, // Transverse electrostriction (m⁴/C²)
+		// Landau-Khalatnikov parameters (Golden Set I, 10nm HZO)
+		BetaLandau:          -2.160e8,
+		GammaLandau:         1.653e10,
+		RhoViscosity:        0.05,
+		SeriesResistanceOhm: 50.0,
+		K_dep:               2.5e8,
+		StressGPa:           1.0,
+		Q11:                 0.089,  // Longitudinal electrostriction (m⁴/C²)
+		Q12:                 -0.026, // Transverse electrostriction (m⁴/C²)
 	}
 }
 

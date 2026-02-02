@@ -2,6 +2,9 @@
 
 Comprehensive Mermaid diagram documentation for the Peripheral Circuits GUI, including current layout, proposed refactor, component hierarchy, state machines, and data flow.
 
+**Last Updated:** 2026-02-02  
+**Conventions:** Component names match `module4-circuits/pkg/gui` identifiers; diagrams reflect UI structure, not exact pixel geometry.
+
 ---
 
 ## 1. Current Layout Diagram (Before Refactor)
@@ -953,5 +956,6 @@ Thread safety with `sync.RWMutex` required because:
 
 ---
 
-*Last Updated: 2026-01-30*
+*Last Updated: 2026-02-02*
+*Last Verification: 2026-01-30*
 *Module 4: Peripheral Circuits GUI Architecture*

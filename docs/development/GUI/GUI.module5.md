@@ -3,7 +3,7 @@ Module: module5-comparison
 Name: Technology Comparison & Technical Briefing
 Entry: cmd/comparison-gui/main.go
 Package: fecim-lattice-tools/module5-comparison/pkg/gui
-Last Updated: 2026-01-29
+Last Updated: 2026-02-02
 Description: |
   Technical briefing comparison demo showing FeCIM vs CPU/GPU architectures.
   Features animated energy comparisons, market analysis, ROI calculator,
@@ -12,6 +12,12 @@ Description: |
   CRITICAL: Energy claims are TRL 4 (laboratory validation only) and
   pending independent verification. CPU/GPU specs are verified from
   published datasheets.
+---
+
+Conventions:
+  - File paths are relative to module5-comparison unless noted
+  - Widget types refer to Fyne (`widget.*`, `container.*`, `canvas.*`) or shared widgets
+  - Bindings list event handlers or UI update calls impacting the component
 
 Bugs:
   - [x] BUG-M5-001: Animation mutex lock ordering in animationLoop

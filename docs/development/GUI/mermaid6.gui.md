@@ -2,6 +2,9 @@
 
 Comprehensive Mermaid diagrams documenting the FeCIM EDA GUI architecture, component hierarchy, data flow, and state machines.
 
+**Last Updated:** 2026-02-02  
+**Conventions:** Component names match `module6-eda/pkg/gui` identifiers; diagrams focus on structure and data flow, not exact sizing.
+
 Source: Codebase analysis - module6-eda/pkg/gui/ (embedded.go, app.go, tabs/builder_validation_tab.go, tabs/learn_tab.go)
 
 ## Diagram Index

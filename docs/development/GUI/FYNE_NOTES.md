@@ -2,6 +2,13 @@
 
 Best practices for Fyne GUI development in FeCIM Lattice Tools.
 
+## Quick Checklist (Before You Ship)
+
+- UI updates from goroutines always wrapped in `fyne.Do()`
+- No nested scroll containers (unless strictly required)
+- `MinSize` set once for dynamic widgets to prevent layout oscillation
+- Frequent updates rate-limited (30 FPS max) with a single `Refresh()` call
+
 ## Layout Best Practices
 
 ### Container Types & When to Use

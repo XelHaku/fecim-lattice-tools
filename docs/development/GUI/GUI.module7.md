@@ -3,7 +3,7 @@ Module: module7-docs
 Name: FeCIM Documentation Viewer
 Entry: N/A (embedded only, accessed via toolbar icon)
 Package: fecim-lattice-tools/module7-docs/pkg/gui
-Last Updated: 2026-01-29
+Last Updated: 2026-02-02
 Description: |
   In-app documentation viewer with full-text search, responsive layout,
   breadcrumb navigation, table of contents, glossary term detection,
@@ -11,6 +11,11 @@ Description: |
   Scans the docs/ directory for markdown files and renders them with
   navigation features. No physics simulation - utility module only.
 ---
+
+Conventions:
+  - File paths are relative to module7-docs unless noted
+  - Widget types refer to Fyne (`widget.*`, `container.*`, `canvas.*`) or shared widgets
+  - Bindings list event handlers or UI update calls impacting the component
 
 Bugs:
   (None currently tracked)

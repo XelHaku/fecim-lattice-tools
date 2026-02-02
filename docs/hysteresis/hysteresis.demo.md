@@ -184,6 +184,32 @@ controller to reach a target discrete level. The implementation is split across:
 - **Directionality**: pulse sign derives from target level vs. initial level.
 - **Quantization**: level readout uses `normalizedP` → discrete level mapping (0–N‑1).
 
+#### Headless L‑K ISPP (`--mode hysteresis`)
+
+The headless diagnostics path uses `shared/physics/ispp_write.go` with the
+Landau‑Khalatnikov solver (`shared/physics/landau.go`). It exercises the same
+write‑verify logic, but in **conductance space** rather than discrete levels.
+
+**Sequence:**
+1. **Optional reset** to `-Pr` (first step only).
+2. **Pulse**: apply `V_pulse` → `E = V/Thickness`, integrate L‑K for `PulseWidth`.
+3. **Verify**: map `P → G` (linear mapping with `P = ±Ps` endpoints).
+4. **Adjust**: binary search update (`VMin`, `VMax`).
+5. **Overshoot**: apply negative reset pulse and restart with tighter bounds.
+
+**Termination:**
+- **Success**: `|G - G_target| < Tolerance`.
+- **Failure**: `MaxIterations` exceeded.
+
+**Headless defaults (Feb 2026):**
+| Parameter | Value | Meaning |
+|-----------|-------|---------|
+| `MaxVoltage` | `2.5 × Ec × Thickness` | Safe upper bound in volts |
+| `PulseWidth` | `τ` | Characteristic switching time (material) |
+| `MaxStep` | `1e-12 s` | L-K integration substep (stability) |
+| `Tolerance` | `1e-6 S` | Acceptable conductance error |
+| `MaxIterations` | `15` | Max program‑verify pulses |
+
 ### Key Parameters (HZO Materials)
 
 | Parameter | Default HZO | Optimized | FeCIM |

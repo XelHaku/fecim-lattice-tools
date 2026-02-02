@@ -2,6 +2,9 @@
 
 > Mermaid diagrams for Peripheral Circuits Visualizer UI architecture
 
+**Last Updated:** 2026-02-02  
+**Conventions:** Diagram labels map to `module4-circuits/pkg/gui` widgets and views.
+
 ---
 
 ## 1. Main View Hierarchy

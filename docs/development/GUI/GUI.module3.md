@@ -3,8 +3,13 @@ Module: module3-mnist
 Name: MNIST Neural Network Visualization
 Entry: cmd/mnist-gui/main.go
 Package: module3-mnist/pkg/gui
-Last Updated: 2026-01-29
+Last Updated: 2026-02-02
 ---
+
+Conventions:
+  - File paths are relative to module3-mnist unless noted
+  - Widget types refer to Fyne (`widget.*`, `container.*`, `canvas.*`) or shared widgets
+  - Bindings list event handlers or UI update calls impacting the component
 
 Bugs:
   - [x] BUG-M3-001: Canvas mouse events may not use fyne.Do() consistently

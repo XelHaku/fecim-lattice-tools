@@ -74,6 +74,33 @@ $$ \rho \frac{dP}{dt} = - \nabla_P G = - (2\alpha P + 4\beta P^3 + 6\gamma P^5 -
 * **$\rho$:** Viscosity / damping coefficient.
 * **$G$:** Gibbs Free Energy.
 
+#### Frankestein Equation Widget (Module 1)
+
+<div class="frankestein-equation" data-widget="frankestein-equation" id="frankestein-equation">
+  <div class="frankestein-equation__title"><strong>Frankestein Equation (Unified L-K + Depolarization + Series Resistance)</strong></div>
+  <div class="frankestein-equation__math">
+    <abbr class="feq-term" title="Effective viscosity: intrinsic damping plus series-resistance RC delay." data-tooltip="Effective viscosity: intrinsic damping plus series-resistance RC delay.">\( \rho_{\mathrm{eff}} \)</abbr>
+    <span class="feq-chunk">\( \frac{dP}{dt} = \)</span>
+    <abbr class="feq-term" title="Applied electric field drive term (external voltage across the film)." data-tooltip="Applied electric field drive term (external voltage across the film).">\( E_{\mathrm{applied}} \)</abbr>
+    <span class="feq-chunk">\( - \)</span>
+    <abbr class="feq-term" title="Depolarization factor: models interfacial layer; slants the loop for analog states." data-tooltip="Depolarization factor: models interfacial layer; slants the loop for analog states.">\( k_{\mathrm{dep}} P \)</abbr>
+    <span class="feq-chunk">\( - ( \)</span>
+    <abbr class="feq-term" title="Dynamic stiffness: temperature and stress dependent curvature of the energy wells." data-tooltip="Dynamic stiffness: temperature and stress dependent curvature of the energy wells.">\( 2\alpha P \)</abbr>
+    <span class="feq-chunk">\( + \)</span>
+    <abbr class="feq-term" title="First-order nonlinearity: negative for HZO to create the switching barrier." data-tooltip="First-order nonlinearity: negative for HZO to create the switching barrier.">\( 4\beta P^3 \)</abbr>
+    <span class="feq-chunk">\( + \)</span>
+    <abbr class="feq-term" title="Sixth-order stabilizer: keeps energy bounded at large polarization." data-tooltip="Sixth-order stabilizer: keeps energy bounded at large polarization.">\( 6\gamma P^5 \)</abbr>
+    <span class="feq-chunk">\( ) \)</span>
+    <span class="feq-chunk">\( + \)</span>
+    <abbr class="feq-term" title="Stochastic noise term (optional): captures thermal variability." data-tooltip="Stochastic noise term (optional): captures thermal variability.">\( \xi(t) \)</abbr>
+  </div>
+  <div class="frankestein-equation__math">
+    <abbr class="feq-term" title="Effective viscosity definition used in the headless hysteresis path." data-tooltip="Effective viscosity definition used in the headless hysteresis path.">\( \rho_{\mathrm{eff}} \)</abbr>
+    <span class="feq-chunk">\( = \rho + \frac{R_{\mathrm{series}} A}{d} \)</span>
+  </div>
+  <div class="frankestein-equation__caption">Hover any coefficient to see its purpose in Module 1.</div>
+</div>
+
 ### 2. The Unified Coefficient ($\alpha$)
 
 The stiffness coefficient $\alpha$ is **dynamic**. It unifies Thermodynamics (Curie-Weiss) and Mechanics (Electrostriction) into a single term.
@@ -121,6 +148,11 @@ func (s *LKSolver) Step(E, dt, TempK float64) float64 {
 }
 ```
 
+**Implementation note (current code):** The headless hysteresis mode uses **E-field units** and folds series resistance into
+an effective viscosity term, `ρ_eff = ρ + (R_series · A / d)`, which preserves the RC-delay effect without an explicit
+algebraic loop. See `shared/physics/landau.go` for the exact implementation.
+For numerical stability, write pulses are **sub-stepped** (default max step `1e-12 s`) in `shared/physics/ispp_write.go`.
+
 ### 2. The Memory Stack: Preisach "Wipe-Out"
 
 To reliably store 30 analog levels, the simulator must track the exact history of the domain wall using the **Wipe-Out Property**. The system "forgets" minor loops if a larger voltage excursion occurs.
@@ -140,50 +172,34 @@ To write a specific analog state (e.g., Level 14) in nanoseconds, we replace lin
 
 ---
 
-## Part IV: Implementation Reference (Configuration)
+## Part IV: Implementation Reference (Runtime Mapping)
 
-### `materials.yaml` Configuration
+### HZOMaterial Defaults (Used by `--mode hysteresis`)
 
-```yaml
-fecim_hzo_dynamic:
-  name: "FeCIM HZO (L-K Enabled)"
-  description: "Dynamic model for high-speed analog compute"
+The headless L‑K path (`cmd/fecim-lattice-tools --mode hysteresis`) uses `FeCIMMaterial()` to configure
+`LKSolver` via `ConfigureFromMaterial` in `shared/physics/landau.go`. The active defaults (Golden Set I)
+are defined in `shared/physics/material.go`:
 
-  # Thermodynamics (The Engine)
-  thermodynamics:
-    beta_landau: -2.160e8       # First-order barrier (Negative)
-    gamma_landau: 1.653e10      # Stability (Positive)
-    rho_viscosity: 0.05         # 1ns switching speed
-
-  # Coupling (The Environment)
-  coupling:
-    q12_electrostriction: -0.026 # Tensile stability
-    stress_gpa: 1.0              # TiN Capping Stress
-
-  # Circuit Parasitics (Speed Limit)
-  electrical:
-    series_resistance_ohms: 50.0  # Contact + wire resistance
-    thickness_nm: 10.0             # Film thickness for E = V/d
-
-  # Conductance Mapping (Device Physics)
-  device:
-    g_min_conductance: 1e-9      # Off state conductance (S)
-    g_max_conductance: 1e-4      # On state conductance (S)
-    p_min_remnant: -20.0e-6      # C/cm² at off state
-    p_max_remnant: 20.0e-6       # C/cm² at on state
-    gamma_nonlinearity: 2.0        # Transfer function exponent
-
-  # Reliability (Wake-Up & Fatigue)
-  reliability:
-    wake_up_cycles: 1000          # N_wakeup characteristic cycles
-    fatigue_cycles: 1e12           # N_fatigue breakdown cycles
-    p_saturation_remnant: 22.0e-6  # P_r,∞ asymptotic value
-
-  # Statistics (The 30 Levels)
-  distribution:
-    activation_field_mean: 19.0e6
-    activation_field_sigma: 4.5e6
 ```
+FeCIM HZO (L-K Enabled)
+  BetaLandau:        -2.160e8   J·m^5/C^4
+  GammaLandau:        1.653e10  J·m^9/C^6
+  RhoViscosity:       0.05      Ω·m
+  K_dep:              2.5e8     V·m/C
+  SeriesResistance:   50        Ω
+  Q12:               -0.026     m^4/C^2
+  Stress:             1.0       GPa
+  CurieTemp:          723       K
+  CurieConst:         1.5e5     K
+  Thickness:          10        nm
+  Gmin/Gmax:          1e-6 / 1e-4  S
+```
+
+**Notes:**
+- The GUI hysteresis demo still uses the **Preisach** model; L‑K parameters are exercised in headless mode.
+- Conductance mapping in hysteresis mode is **linear** between `P = -Ps` and `P = +Ps` (see §5).
+- The extended reliability and distribution blocks below remain a roadmap item; they are documented but not yet wired
+  into the runtime.
 
 ---
 
@@ -252,6 +268,10 @@ $$ G(P) = G_{off} \cdot \exp\left(\gamma_G \cdot \frac{P - P_{off}}{P_{on} - P_{
 
 This creates the "Analog Levels." The nonlinearity ($\gamma_G$) of this mapping determines how hard it is to distinguish Level 15 from Level 16.
 
+**Implementation status:** The headless hysteresis mode currently uses the **linear** mapping with
+`P_{min} = -P_s` and `P_{max} = +P_s` (see `shared/physics/transfer.go`). The exponential form is documented
+for FTJ/FeFET extensions but is not enabled in `--mode hysteresis` yet.
+
 ### 6. Cryogenic Performance (4K to 77K)
 
 * **Wake-up Suppression:** At 4K, oxygen vacancy diffusion is frozen, suppressing "wake-up" effects. The simulation should model a "pristine" but stable state for cryogenic operations.
@@ -319,22 +339,19 @@ $$E_{eff} = E_{applied} - k_{dep} \cdot P$$
 
 ### 4. Implementation Guide
 
-#### 4.1 Update `materials.yaml`
+#### 4.1 Runtime Parameter Mapping (Current Implementation)
 
-Add the depolarization factor. A value in the range of `1×10⁸` to `5×10⁸` V·m/C typically yields a sufficient slope for 30-level operation.
+The depolarization factor is wired to `HZOMaterial.K_dep` and set in
+`shared/physics/material.go` for FeCIM HZO (default `2.5e8 V·m/C`).
+The headless mode (`--mode hysteresis`) uses that value directly.
 
-```yaml
-thermodynamics:
-  # ... existing params ...
-  depolarization_factor: 2.5e8  # V*m/C (Tuning knob for analog slope)
-```
+#### 4.2 L‑K Solver Implementation (`shared/physics/landau.go`)
 
-#### 4.2 Update `solver.go` (The Physics Kernel)
-
-Modify the field calculation in the derivative function.
+The derivative function applies the depolarization field and uses an
+effective viscosity (`ρ_eff`) to include series resistance.
 
 ```go
-func (s *LKSolver) dPdT(t, P, E_applied, TempK float64) float64 {
+func (s *LKSolver) dPdT(t, P, E_applied, noise, rhoEff float64) float64 {
     // 1. Calculate Depolarization Field (The "Slant")
     // This represents the average effect of grain boundaries/interfacial layers
     E_dep := s.K_dep * P
@@ -348,7 +365,7 @@ func (s *LKSolver) dPdT(t, P, E_applied, TempK float64) float64 {
     // ... noise ...
 
     // Use E_total instead of E_applied to drive the viscosity logic
-    return (E_total + noise - dG_dP) / s.Rho
+    return (E_total + noise - dG_dP) / rhoEff
 }
 ```
 

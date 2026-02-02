@@ -5,8 +5,13 @@ Entry: cmd/circuits-gui/main.go
 Package: fecim-lattice-tools/module4-circuits/pkg/gui
 Theme: FeCIMTheme
 Architecture: Unified 3-view design with embedded interface
-Last Updated: 2026-01-29
+Last Updated: 2026-02-02
 ---
+
+Conventions:
+  - File paths are relative to module4-circuits unless noted
+  - Widget types refer to Fyne (`widget.*`, `container.*`, `canvas.*`) or shared widgets
+  - Bindings list event handlers or UI update calls impacting the component
 
 ## Bugs Summary
 

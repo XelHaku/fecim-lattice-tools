@@ -24,6 +24,7 @@ type WriteController struct {
 	PulseWidth    float64
 	Tolerance     float64
 	MaxIterations int
+	MaxStep       float64 // Maximum integration step size (s) for stability
 
 	VMin float64
 	VMax float64
@@ -38,10 +39,21 @@ func NewWriteController(solver *LKSolver, material *HZOMaterial) *WriteControlle
 		PulseWidth:    10e-9,
 		Tolerance:     0.01,
 		MaxIterations: 20,
+		MaxStep:       1e-12,
 	}
 }
 
 func (c *WriteController) WriteTarget(targetG float64) (attempts int, success bool, overshootCount int) {
+	return c.writeTarget(targetG, true)
+}
+
+// WriteTargetWithReset writes a target conductance with optional reset to -Pr before starting.
+// reset=true matches the original behavior (start from negative saturation).
+func (c *WriteController) WriteTargetWithReset(targetG float64, reset bool) (attempts int, success bool, overshootCount int) {
+	return c.writeTarget(targetG, reset)
+}
+
+func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int, success bool, overshootCount int) {
 	log := getISPPLogger()
 
 	targetP := ConductanceToPolarization(targetG, c.Material.Gmin, c.Material.Gmax, c.Material.Ps)
@@ -49,15 +61,40 @@ func (c *WriteController) WriteTarget(targetG float64) (attempts int, success bo
 	c.VMin = 0.0
 	c.VMax = c.MaxVoltage
 
-	c.Solver.P = -c.Material.Pr
-	c.Solver.SetState(-c.Material.Pr)
+	currentP := c.Solver.GetState()
+	currentG := PolarizationToConductance(currentP, c.Material.Ps, c.Material.Gmin, c.Material.Gmax)
+
+	direction := 1.0
+	if reset {
+		if targetP < 0 {
+			direction = -1.0
+		}
+	} else if targetG < currentG {
+		direction = -1.0
+	}
+
+	if reset {
+		pr := math.Abs(c.Material.Pr)
+		c.Solver.SetState(-direction * pr)
+		currentP = c.Solver.GetState()
+		currentG = PolarizationToConductance(currentP, c.Material.Ps, c.Material.Gmin, c.Material.Gmax)
+	}
+
+	directionLabel := "positive"
+	if direction < 0 {
+		directionLabel = "negative"
+	}
 
 	overshoots := 0
 	success = false
 
 	log.Input("WriteTarget", map[string]interface{}{
-		"targetG": targetG,
-		"targetP": targetP,
+		"targetG":   targetG,
+		"targetP":   targetP,
+		"reset":     reset,
+		"direction": directionLabel,
+		"startP":    currentP,
+		"startG":    currentG,
 	})
 
 	var vPulse float64
@@ -70,14 +107,14 @@ func (c *WriteController) WriteTarget(targetG float64) (attempts int, success bo
 		}, nil)
 
 		if i == 0 {
-			vPulse = (c.VMin + c.VMax) / 2.0
+			vPulse = direction * (c.VMin + c.VMax) / 2.0
 			log.Calculation("WriteTarget", map[string]interface{}{
 				"step":   "Predict",
 				"vPulse": vPulse,
 				"bounds": []float64{c.VMin, c.VMax},
 			}, nil)
 		} else {
-			vPulse = (c.VMin + c.VMax) / 2.0
+			vPulse = direction * (c.VMin + c.VMax) / 2.0
 			log.Calculation("WriteTarget", map[string]interface{}{
 				"step":   "BinarySearch",
 				"vPulse": vPulse,
@@ -87,7 +124,7 @@ func (c *WriteController) WriteTarget(targetG float64) (attempts int, success bo
 		}
 
 		eField := vPulse / c.Material.Thickness
-		c.Solver.Step(eField, c.PulseWidth)
+		c.applyPulse(eField, c.PulseWidth)
 
 		log.Calculation("WriteTarget", map[string]interface{}{
 			"step":   "WritePulse",
@@ -120,7 +157,7 @@ func (c *WriteController) WriteTarget(targetG float64) (attempts int, success bo
 			break
 		}
 
-		if error < 0 {
+		if direction*error < 0 {
 			c.VMin = math.Abs(vPulse)
 			log.Calculation("WriteTarget", map[string]interface{}{
 				"decision": "Undershoot",
@@ -131,9 +168,9 @@ func (c *WriteController) WriteTarget(targetG float64) (attempts int, success bo
 		} else {
 			overshoots++
 
-			resetField := -c.MaxVoltage * 1.5
+			resetField := -direction * c.MaxVoltage * 1.5
 			eResetField := resetField / c.Material.Thickness
-			c.Solver.Step(eResetField, c.PulseWidth*2)
+			c.applyPulse(eResetField, c.PulseWidth*2)
 
 			log.Calculation("WriteTarget", map[string]interface{}{
 				"decision":    "Overshoot",
@@ -145,7 +182,7 @@ func (c *WriteController) WriteTarget(targetG float64) (attempts int, success bo
 			c.VMax = math.Abs(vPulse)
 			c.VMin = 0.0
 
-			c.Solver.SetState(-c.Material.Pr)
+			c.Solver.SetState(-direction * math.Abs(c.Material.Pr))
 		}
 	}
 
@@ -159,4 +196,22 @@ func (c *WriteController) WriteTarget(targetG float64) (attempts int, success bo
 	}
 
 	return i + 1, success, overshoots
+}
+
+func (c *WriteController) applyPulse(eField float64, duration float64) {
+	if duration <= 0 {
+		return
+	}
+	if c.MaxStep <= 0 || duration <= c.MaxStep {
+		c.Solver.Step(eField, duration)
+		return
+	}
+	steps := int(math.Ceil(duration / c.MaxStep))
+	if steps < 1 {
+		steps = 1
+	}
+	dt := duration / float64(steps)
+	for i := 0; i < steps; i++ {
+		c.Solver.Step(eField, dt)
+	}
 }

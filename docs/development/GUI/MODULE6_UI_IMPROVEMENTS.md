@@ -1,8 +1,8 @@
 # Module 6 EDA Design Suite - UI Improvement Proposals
 
-**Document Version:** 1.0
-**Date:** 2026-01-30
-**Status:** Proposal & Planning
+**Document Version:** 1.1
+**Date:** 2026-02-02
+**Status:** Proposal & Planning (Revised)
 **Target Release:** v2.0
 
 ---
@@ -20,6 +20,13 @@ The FeCIM Array Builder (Module 6 EDA Design Suite) provides powerful functional
 Implement three-tier improvements: (1) fix critical Docker/X11 integration, (2) enhance accessibility and readability, (3) refine visual polish and information hierarchy. Estimated 26-36 development hours.
 
 ---
+
+## Assumptions & Constraints
+
+- Docker-based OpenLane toolchain is the default execution path.
+- Layout image generation relies on X11/Xvfb for headless rendering.
+- Timing values remain placeholders until validated SPICE models are available.
+- Improvements focus on UI/UX and tooling integration, not device physics.
 
 ## Priority 1: Critical Fixes (8-12 hours)
 
