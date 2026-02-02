@@ -861,18 +861,16 @@ func (a *App) updatePhysics(dt float64) {
 				a.electricField = Emax * (4*p - 4)
 			}
 		case WaveformWriteReadDemo:
-			// Write/read demo with directional pre-bias + ISPP:
-			// - Do NOT saturate every cycle.
-			// - Apply ±Ec in direction of next target, return to 0.
-			// - Full saturation is only used on overshoot recovery inside WriteController.
+			// Write/read demo with deterministic pre-bias + ISPP:
+			// - Always pre-saturate to the opposite polarity of the target (matches headless).
+			// - Skip HOLD_RESET to avoid depolarization relaxation.
+			// - WriteController handles APPLY/WAIT/VERIFY/RESETTING internally.
 			//
 			// Phase mapping:
-			// 0 = PREP (apply ±Ec bias toward target)
-			// 1 = HOLD_PREP (return to zero)
-			// 2 = WRITE (apply calibrated/ISPP field toward target)
-			// 3 = HOLD_WRITE (return to zero, polarization persists)
-			// 4 = READ (small sense pulse below Ec)
-			// 5 = DISPLAY (show result, pick next target)
+			// 0 = PREP (saturate opposite polarity)
+			// 1 = HOLD_PREP (unused; kept for compatibility)
+			// 2 = WRITE (delegated to WriteController)
+			// 5 = DISPLAY (return to zero, pick next target)
 
 			a.wrdPhaseTimer += dt
 			phaseDuration := 1.0 / a.frequency
@@ -885,116 +883,58 @@ func (a *App) updatePhysics(dt float64) {
 
 			switch a.wrdPhase {
 			case 0: // PREP (wake-up) - prepare starting state before writing
-				// REAL ISPP MODE: Skip saturation and use incremental stepping from current level
-				// Only saturate if we're at the WRONG polarity for the target direction
-				// (e.g., at +Pr but need to write UP, or at -Pr but need to write DOWN)
-				saturationThreshold := 0.5 * mat.Ps // Only saturate if strongly wrong polarity
+				// Headless-aligned pre-saturation to the opposite polarity of the target.
+				saturationThreshold := 0.75 * mat.Ps
+				prepE := Ec * 2.0
+				if targetLevel > midLevel {
+					prepE = -Ec * 2.0 // Upper targets: saturate NEGATIVE first
+				}
+				a.wrdPrepE = prepE
 
-				// Decide skip vs saturate ONLY at phase start, store in a.wrdPrepSkip
-				if a.wrdPhaseTimer < 0.001 {
-					currentLevel := a.discreteLevel + 1
-
-					// Check if we're on the WRONG side of the hysteresis for the target
-					// Wrong side = need to cross the full loop, not just move along current branch
-					needSaturation := false
-
-					if targetLevel > currentLevel {
-						// Writing UP: only need saturation if at POSITIVE saturation
-						// (because we can't increase P from +Pr without reset)
-						if a.polarization >= saturationThreshold {
-							needSaturation = true
-							a.wrdPrepE = -Ec * 2.0 // Saturate negative first
-						}
-					} else if targetLevel < currentLevel {
-						// Writing DOWN: only need saturation if at NEGATIVE saturation
-						// (because we can't decrease P from -Pr without reset)
-						if a.polarization <= -saturationThreshold {
-							needSaturation = true
-							a.wrdPrepE = Ec * 2.0 // Saturate positive first
-						}
-					}
-					// If targetLevel == currentLevel, no saturation needed (early exit will handle it)
-
-					a.wrdPrepSkip = !needSaturation
-
-					// If skipping, transition immediately to SETTLE
-					if a.wrdPrepSkip {
-						log.Printf("WRD PREP SKIP: using incremental ISPP from L=%d | P=%.2f µC/cm² | target=%d",
-							currentLevel, a.polarization*100, targetLevel)
-						a.wrdResetEndP = a.polarization * 100
-						a.wrdResetEndLvl = currentLevel
-						a.wrdPhase = 1
-						a.wrdPhaseTimer = 0
-					} else {
-						log.Printf("WRD PREP SATURATE: wrong polarity, need reset | P=%.2f µC/cm² | L=%d | target=%d",
-							a.polarization*100, currentLevel, targetLevel)
-					}
+				// Capture start-of-PREP state for logging
+				if a.wrdPhaseTimer <= dt {
+					a.wrdResetStartP = a.polarization * 100
+					a.wrdStartLevel = a.discreteLevel + 1
 				}
 
-				// Ramp to saturation field (if not skipping)
-				if !a.wrdPrepSkip {
-					prepE := a.wrdPrepE
-					diff := prepE - a.electricField
-					step := rampRate * dt
-					if math.Abs(diff) < step {
-						a.electricField = prepE
-					} else if diff > 0 {
-						a.electricField += step
-					} else {
-						a.electricField -= step
-					}
-
-					// Check if saturated (use stored prepE direction)
-					var saturated bool
-					if prepE < 0 {
-						saturated = a.polarization <= -saturationThreshold
-					} else {
-						saturated = a.polarization >= saturationThreshold
-					}
-
-					// Transition when field reached AND polarization saturated
-					if a.wrdPhaseTimer > phaseDuration*0.25 && math.Abs(a.electricField-prepE) < 0.01*Emax && saturated {
-						// Capture end-of-PREP state for logging
-						a.wrdResetEndP = a.polarization * 100 // Convert to µC/cm²
-						a.wrdResetEndLvl = a.discreteLevel + 1
-						log.Printf("WRD PHASE 0→1: PREP done | E=%.3f MV/cm | P=%.2f→%.2f µC/cm² | L=%d→%d | target=%d",
-							a.electricField/1e8, a.wrdResetStartP, a.wrdResetEndP, a.wrdStartLevel, a.wrdResetEndLvl, targetLevel)
-						a.wrdPhase = 1
-						a.wrdPhaseTimer = 0
-					}
-				}
-
-			case 1: // SETTLE - return to zero (now at known saturated remanent state)
+				diff := prepE - a.electricField
 				step := rampRate * dt
-				if math.Abs(a.electricField) < step {
-					a.electricField = 0
-				} else if a.electricField > 0 {
-					a.electricField -= step
-				} else {
+				if math.Abs(diff) < step {
+					a.electricField = prepE
+				} else if diff > 0 {
 					a.electricField += step
+				} else {
+					a.electricField -= step
 				}
 
-				// Now at known saturated remanent state (level ~1 or ~30)
-				if a.wrdPhaseTimer > phaseDuration*0.15 && math.Abs(a.electricField) < 0.01*Emax {
-					// Capture start-of-WRITE state for logging
-					a.wrdWriteStartP = a.polarization * 100 // Convert to µC/cm²
-					log.Printf("WRD PHASE 1→2: SETTLE done | E=%.3f MV/cm | P=%.2f µC/cm² | L=%d | ready to write target=%d",
-						a.electricField/1e8, a.wrdWriteStartP, a.discreteLevel+1, targetLevel)
+				// Check if saturated (use prepE direction)
+				var saturated bool
+				if prepE < 0 {
+					saturated = a.polarization <= -saturationThreshold
+				} else {
+					saturated = a.polarization >= saturationThreshold
+				}
 
-					// Initialize WriteController
-					// fromSaturation=true only if PREP actually saturated; false if skipped
-					// When false, ISPP uses incremental stepping from current level instead of calibration
-					currentLevel := a.discreteLevel + 1
-					fromSaturation := !a.wrdPrepSkip // Use incremental ISPP if PREP was skipped
-					_ = currentLevel // Used by WriteController.Start
+				// Transition when field reached AND polarization saturated
+				if a.wrdPhaseTimer > phaseDuration*0.25 && math.Abs(a.electricField-prepE) < 0.01*Emax && saturated {
+					// Capture end-of-PREP state for logging
+					a.wrdResetEndP = a.polarization * 100 // Convert to µC/cm²
+					a.wrdResetEndLvl = a.discreteLevel + 1
+					log.Printf("WRD PHASE 0→2: PREP done | E=%.3f MV/cm | P=%.2f→%.2f µC/cm² | L=%d→%d | target=%d",
+						a.electricField/1e8, a.wrdResetStartP, a.wrdResetEndP, a.wrdStartLevel, a.wrdResetEndLvl, targetLevel)
 
-					// SYNC TIMING: Pulse duration should be ~40% of phase duration to allow ramp-up
+					// Initialize WriteController directly (skip HOLD_RESET)
 					a.writeController.PulseDuration = phaseDuration * 0.4
-					a.writeController.Start(targetLevel, fromSaturation)
+					a.writeController.Start(targetLevel, true)
 
 					a.wrdPhase = 2
 					a.wrdPhaseTimer = 0
 				}
+
+			case 1: // SETTLE - return to zero (now at known saturated remanent state)
+				// HOLD_RESET removed to prevent polarization relaxation; jump to WRITE.
+				a.wrdPhase = 2
+				a.wrdPhaseTimer = 0
 
 			case 2: // WRITE - Delegated to WriteController
 				// Refactored to use pkg/controller/WriteController

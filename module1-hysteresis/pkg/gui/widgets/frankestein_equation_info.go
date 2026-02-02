@@ -361,7 +361,7 @@ func buildDynamicsSection() fyne.CanvasObject {
 		sectionTitle("Numerical Solver & Write Loop"),
 		bodyLabel("RK4 integration is used to stabilize the stiff L-K dynamics at sub-ns steps."),
 		bodyLabel("Effective viscosity aggregates series resistance: rho_eff = rho + (R_series*A/d)."),
-		bodyLabel("Headless mode runs adaptive binary ISPP with overshoot handling."),
+		bodyLabel("Headless and GUI use the same real incremental ISPP with overshoot handling."),
 		bodyLabel("Optional NLS (Merz's law) modulates switching time at low fields."),
 	)
 }

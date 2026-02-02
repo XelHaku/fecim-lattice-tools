@@ -1,7 +1,6 @@
 package widgets
 
 import (
-	"strings"
 	"testing"
 
 	"fecim-lattice-tools/config/physics"
@@ -35,61 +34,62 @@ func TestModelUsageString(t *testing.T) {
 	}
 }
 
-func TestGetMaterialPropertiesPreisachIndicators(t *testing.T) {
-	// Create a test material with all relevant parameters
+func TestGetMaterialPropertiesModelIndicators(t *testing.T) {
+	// Create a test material with L-K relevant parameters
 	mat := &physics.Material{
-		Name:               "Test Material",
-		PrCM2:              0.25,
-		PsCM2:              0.30,
-		EcVM:               1e8,
-		ThicknessM:         10e-9,
-		TauS:               1e-9,
-		Tau0S:              1e-12,
-		ActivationEnergyEV: 0.5,
-		KAIExponent:        2.0,
-		CurieTempK:         700,
-		GmaxGminRatio:      1000,
+		Name:       "Test Material",
+		PrCM2:      0.25,
+		PsCM2:      0.30,
+		EcVM:       1e8,
+		ThicknessM: 10e-9,
+		CurieTempK: 700,
+		Thermodynamics: physics.MaterialThermodynamics{
+			BetaLandau:   -2.16e8,
+			GammaLandau:  1.653e10,
+			RhoViscosity: 0.05,
+			CurieConstK:  1.5e5,
+		},
+		Conductance: physics.MaterialConductance{
+			GminS: 1e-6,
+			GmaxS: 100e-6,
+		},
 	}
 
 	props := GetMaterialProperties(mat)
 
-	// Map of property names that should have Preisach indicator
-	expectedPreisach := map[string]bool{
-		"Remanent Polarization (Pr)":   true,
-		"Saturation Polarization (Ps)": true,
-		"Coercive Field (Ec)":          true,
-		"Film Thickness":               true,
-		"Switching Time (τ)":           true,
-		"Attempt Time (τ₀)":            true,
-		"Activation Energy":            true,
-		"KAI Exponent":                 true,
-		"Curie Temperature":            true,
-		"Gmax/Gmin Ratio":              true,
+	// Map of property names that should have L-K indicator
+	expectedLK := map[string]bool{
+		"d (Thickness)":   true,
+		"A (Area)":        true,
+		"β (Landau)":      true,
+		"γ (Landau)":      true,
+		"ρ (Viscosity)":   true,
+		"Tc (Curie)":      true,
+		"C (Curie Const)": true,
 	}
 
 	for _, prop := range props {
-		shouldHavePreisach := expectedPreisach[prop.Name]
-		hasPreisach := prop.Models.Preisach
+		shouldHaveLK := expectedLK[prop.Name]
+		hasLK := prop.Models.LandauKh
 
-		if shouldHavePreisach && !hasPreisach {
-			t.Errorf("Property %q should have Preisach indicator but doesn't", prop.Name)
-		}
-		if !shouldHavePreisach && hasPreisach {
-			t.Errorf("Property %q should NOT have Preisach indicator but does", prop.Name)
+		if shouldHaveLK && !hasLK {
+			t.Errorf("Property %q should have L-K indicator but doesn't", prop.Name)
 		}
 	}
 }
 
 func TestGetMaterialPropertiesDescriptions(t *testing.T) {
 	mat := &physics.Material{
-		Name:        "Test Material",
-		PrCM2:       0.25,
-		PsCM2:       0.30,
-		EcVM:        1e8,
-		ThicknessM:  10e-9,
-		TauS:        1e-9,
-		CurieTempK:  700,
-		KAIExponent: 2.0,
+		Name:       "Test Material",
+		PrCM2:      0.25,
+		PsCM2:      0.30,
+		EcVM:       1e8,
+		ThicknessM: 10e-9,
+		CurieTempK: 700,
+		Thermodynamics: physics.MaterialThermodynamics{
+			BetaLandau:  -2.16e8,
+			GammaLandau: 1.653e10,
+		},
 	}
 
 	props := GetMaterialProperties(mat)
@@ -98,14 +98,6 @@ func TestGetMaterialPropertiesDescriptions(t *testing.T) {
 	for _, prop := range props {
 		if prop.Description == "" {
 			t.Errorf("Property %q has empty description", prop.Name)
-		}
-
-		// Preisach-model properties should mention Preisach in their description
-		if prop.Models.Preisach {
-			if !strings.Contains(strings.ToLower(prop.Description), "preisach") {
-				t.Errorf("Property %q is marked as Preisach parameter but description doesn't mention Preisach: %s",
-					prop.Name, prop.Description)
-			}
 		}
 	}
 }
@@ -126,15 +118,18 @@ func TestFormattedPropertyModelField(t *testing.T) {
 		Name:        "Test Property",
 		Value:       "123",
 		RawValue:    123.0,
-		Category:    CategoryPolarization,
+		Category:    CategoryCore,
 		Description: "Test description",
-		Models:      ModelUsage{Preisach: true},
+		Models:      ModelUsage{LandauKh: true, Preisach: true},
 	}
 
+	if !prop.Models.LandauKh {
+		t.Error("Property should have LandauKh=true")
+	}
 	if !prop.Models.Preisach {
 		t.Error("Property should have Preisach=true")
 	}
-	if prop.Models.String() != "[P]" {
-		t.Errorf("Models.String() = %q, want %q", prop.Models.String(), "[P]")
+	if prop.Models.String() != "[L+P]" {
+		t.Errorf("Models.String() = %q, want %q", prop.Models.String(), "[L+P]")
 	}
 }

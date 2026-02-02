@@ -169,20 +169,16 @@ func TestGetMaterialProperties(t *testing.T) {
 		t.Fatal("GetMaterialProperties returned no properties")
 	}
 
-	// Check that we have properties in expected categories
+	// Check that we have properties in expected L-K equation categories
 	categories := make(map[string]int)
 	for _, p := range props {
 		categories[p.Category]++
 	}
 
 	expectedCategories := []string{
-		CategoryPolarization,
-		CategoryField,
-		CategoryDielectric,
+		CategoryCore,
 		CategoryGeometry,
-		CategoryDynamics,
-		CategoryTemperature,
-		CategoryReliability,
+		CategoryAlpha,
 	}
 
 	for _, cat := range expectedCategories {
@@ -194,7 +190,7 @@ func TestGetMaterialProperties(t *testing.T) {
 	// Check specific property values
 	var prProp *FormattedProperty
 	for _, p := range props {
-		if p.Name == "Remanent Polarization (Pr)" {
+		if p.Name == "Pr (Remanent)" {
 			prProp = &p
 			break
 		}
@@ -211,25 +207,25 @@ func TestGetMaterialProperties(t *testing.T) {
 
 func TestGetPropertiesByCategory(t *testing.T) {
 	props := []FormattedProperty{
-		{Name: "Pr", Category: CategoryPolarization},
-		{Name: "Ps", Category: CategoryPolarization},
-		{Name: "Ec", Category: CategoryField},
+		{Name: "Pr", Category: CategoryCore},
+		{Name: "Ps", Category: CategoryCore},
+		{Name: "Ec", Category: CategoryCore},
 		{Name: "Thickness", Category: CategoryGeometry},
 	}
 
-	polProps := GetPropertiesByCategory(props, CategoryPolarization)
-	if len(polProps) != 2 {
-		t.Errorf("Got %d polarization properties, want 2", len(polProps))
+	coreProps := GetPropertiesByCategory(props, CategoryCore)
+	if len(coreProps) != 3 {
+		t.Errorf("Got %d core properties, want 3", len(coreProps))
 	}
 
-	fieldProps := GetPropertiesByCategory(props, CategoryField)
-	if len(fieldProps) != 1 {
-		t.Errorf("Got %d field properties, want 1", len(fieldProps))
+	geoProps := GetPropertiesByCategory(props, CategoryGeometry)
+	if len(geoProps) != 1 {
+		t.Errorf("Got %d geometry properties, want 1", len(geoProps))
 	}
 
-	specialProps := GetPropertiesByCategory(props, CategorySpecial)
-	if len(specialProps) != 0 {
-		t.Errorf("Got %d special properties, want 0", len(specialProps))
+	landauProps := GetPropertiesByCategory(props, CategoryLandau)
+	if len(landauProps) != 0 {
+		t.Errorf("Got %d Landau properties, want 0", len(landauProps))
 	}
 }
 

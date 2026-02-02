@@ -29,6 +29,7 @@ func runHysteresisMode() error {
 	if numLevels <= 0 {
 		numLevels = 30
 	}
+	midLevel := numLevels / 2
 
 	gmin := mat.Gmin
 	gmax := mat.Gmax
@@ -269,6 +270,23 @@ func runHysteresisMode() error {
 						wrdSuccessWrites++
 						wrd.totalWrites = wrdTotalWrites
 						wrd.successWrites = wrdSuccessWrites
+
+						// Learn calibration from successful write (match GUI behavior)
+						learnedE := writeController.CurrentField
+						targetIdx := targetLevel - 1
+						if calibManager != nil && targetIdx >= 0 && targetIdx < len(calibManager.CalibrationUp) {
+							if targetLevel > midLevel {
+								// Ascending (written from reset negative)
+								calibManager.UpdateCalibrationUp(targetIdx, 0, mat.Ec)
+								calibManager.CalibrationUp[targetIdx] = learnedE
+							} else {
+								// Descending (written from reset positive)
+								calibManager.UpdateCalibrationDown(targetIdx, 0, mat.Ec)
+								calibManager.CalibrationDown[targetIdx] = learnedE
+							}
+							log.Info("CALIB LEARN: target=%d learnedE=%.3f×Ec (updated via CM)", targetLevel, learnedE/mat.Ec)
+						}
+
 						wrd.phase = 5
 						wrd.phaseTimer = 0
 					case controller.StateForceReset:

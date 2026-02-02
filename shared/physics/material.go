@@ -479,6 +479,7 @@ func AllMaterialsFromConfig(cfg *physics.Config) []*HZOMaterial {
 		"hzo_standard_32",
 		"hzo_ftj_140",
 		"alscn",
+		"in2se3",
 	}
 
 	var materials []*HZOMaterial

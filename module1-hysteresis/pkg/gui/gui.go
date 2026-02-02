@@ -79,13 +79,12 @@ type App struct {
 	simTime   float64
 
 	// Write/Read Demo state (improved physics)
-	wrdPhase       int     // 0=prep, 1=hold-prep, 2=write, 3=hold-write, 4=read, 5=display
+	wrdPhase       int     // 0=prep, 1=unused (hold-prep), 2=write, 3/4=unused, 5=display
 	wrdTargetLevel int     // Target level to write (1-30)
 	wrdReadLevel   int     // Level read back
 	wrdPhaseTimer  float64 // Time in current phase
 	wrdWriteE      float64 // E-field during write
 	wrdPrepE       float64 // Pre-bias E-field (±Ec) toward target
-	wrdPrepSkip    bool    // True if PREP was skipped (already at valid remanent)
 	wrdSettleE     float64 // Settle E-field (determines final level)
 	wrdStartLevel  int     // Level at start of write cycle
 	wrdDebugLog    *WriteReadDebugLog

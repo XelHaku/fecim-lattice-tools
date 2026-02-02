@@ -9,32 +9,35 @@ import (
 	"fecim-lattice-tools/config/physics"
 )
 
-// Property categories for organizing material data display.
+// Property categories organized by role in the Frankenstein L-K equation:
+//   ρ_eff·dP/dt = E_applied - k_dep·P - (2αP + 4βP³ + 6γP⁵) + ξ(t)
+//   ρ_eff = ρ + (R_series·A)/d
+//   α(T,σ) = (T-Tc)/(2ε₀C) - 2Q₁₂σ
 const (
-	CategoryPolarization   = "Polarization"
-	CategoryField          = "Field"
-	CategoryDielectric     = "Dielectric"
-	CategoryGeometry       = "Geometry"
-	CategoryDynamics       = "Dynamics"
-	CategoryTemperature    = "Temperature"
-	CategoryReliability    = "Reliability"
-	CategoryThermodynamics = "Thermodynamics"
-	CategoryCoupling       = "Coupling"
-	CategoryCircuit        = "Circuit"
-	CategoryConductance    = "Conductance"
-	Category2DMaterial     = "2D Material"
-	CategorySynaptic       = "Synaptic"
-	CategorySpecial        = "Special"
+	CategoryCore         = "Core (Pr, Ps, Ec)"      // Reference polarization/field
+	CategoryGeometry     = "Geometry (A, d)"        // For ρ_eff calculation
+	CategoryLandau       = "Landau (β, γ, ρ)"       // L-K coefficients
+	CategoryAlpha        = "Alpha (Tc, C, Q₁₂, σ)"  // Dynamic stiffness α(T,σ)
+	CategoryDepol        = "Depolarization (k_dep)" // Slanted loop
+	CategoryCircuit      = "Circuit (R_series)"     // Series resistance
+	CategoryNLS          = "NLS (τ∞, Ea)"           // Merz law dynamics
+	CategoryConductance  = "Conductance (G)"        // P→G mapping
 )
 
 // ModelUsage indicates which physics models use a parameter.
 type ModelUsage struct {
 	Preisach bool // Used in Preisach hysteresis model
-	// Landau   bool // Reserved for future Landau model implementation
+	LandauKh bool // Used in Landau-Khalatnikov solver
 }
 
-// String returns the model indicator string (e.g., "[P]" or "").
+// String returns the model indicator string.
 func (m ModelUsage) String() string {
+	if m.LandauKh && m.Preisach {
+		return "[L+P]"
+	}
+	if m.LandauKh {
+		return "[L-K]"
+	}
 	if m.Preisach {
 		return "[P]"
 	}
@@ -43,17 +46,23 @@ func (m ModelUsage) String() string {
 
 // FormattedProperty holds a material property with display formatting.
 type FormattedProperty struct {
-	Name        string     // Display name (e.g., "Remanent Polarization")
-	Value       string     // Formatted value with units (e.g., "25 µC/cm²")
+	Name        string     // Display name
+	Value       string     // Formatted value with units
 	RawValue    float64    // Raw value for sorting/comparison
 	Category    string     // Physics category
 	Description string     // Tooltip/help text
 	Models      ModelUsage // Which physics models use this parameter
 }
 
+// Model usage markers
+var (
+	lkModel      = ModelUsage{LandauKh: true}
+	preisachModel = ModelUsage{Preisach: true}
+	bothModels   = ModelUsage{LandauKh: true, Preisach: true}
+)
+
 // FormatPolarization converts C/m² to µC/cm² display string.
 func FormatPolarization(cM2 float64) string {
-	// C/m² to µC/cm²: multiply by 100
 	microCcm2 := cM2 * 100
 	if microCcm2 >= 100 {
 		return fmt.Sprintf("%.0f µC/cm²", microCcm2)
@@ -63,7 +72,6 @@ func FormatPolarization(cM2 float64) string {
 
 // FormatField converts V/m to MV/cm display string.
 func FormatField(vM float64) string {
-	// V/m to MV/cm: divide by 1e8
 	mvCm := vM / 1e8
 	if mvCm >= 1 {
 		return fmt.Sprintf("%.1f MV/cm", mvCm)
@@ -88,7 +96,6 @@ func FormatArea(m2 float64) string {
 	} else if nm2 >= 1 {
 		return fmt.Sprintf("%.1f nm²", nm2)
 	}
-	// Very small areas (sub-nm²)
 	return fmt.Sprintf("%.3f nm²", nm2)
 }
 
@@ -121,7 +128,7 @@ func FormatTime(s float64) string {
 	if s < 86400 {
 		return fmt.Sprintf("%.1f hr", s/3600)
 	}
-	if s < 31536000 { // < 1 year
+	if s < 31536000 {
 		return fmt.Sprintf("%.0f days", s/86400)
 	}
 	years := s / 31536000
@@ -138,7 +145,6 @@ func FormatEndurance(cycles float64) string {
 	}
 	exp := math.Log10(cycles)
 	if exp >= 1 && math.Abs(exp-math.Round(exp)) < 0.01 {
-		// Clean power of 10
 		return fmt.Sprintf("10^%.0f cycles", exp)
 	}
 	if cycles >= 1e12 {
@@ -156,9 +162,6 @@ func FormatEndurance(cycles float64) string {
 // FormatTemperature converts K to display string with Celsius.
 func FormatTemperature(k float64) string {
 	celsius := k - 273.15
-	if celsius < 0 {
-		return fmt.Sprintf("%.0f K (%.0f°C)", k, celsius)
-	}
 	return fmt.Sprintf("%.0f K (%.0f°C)", k, celsius)
 }
 
@@ -205,247 +208,231 @@ func FormatPercent(v float64) string {
 	return fmt.Sprintf("%.1f%%", v*100)
 }
 
-// preisachModel is a helper for marking Preisach model parameters.
-var preisachModel = ModelUsage{Preisach: true}
-
-// GetMaterialProperties extracts all properties from a Material into formatted display structs.
-// Properties used in the Preisach hysteresis model are marked with [P].
+// GetMaterialProperties extracts properties relevant to the Frankenstein L-K equation.
+// Parameters are organized by their role in:
+//   ρ_eff·dP/dt = E_applied - k_dep·P - (2αP + 4βP³ + 6γP⁵) + ξ(t)
 func GetMaterialProperties(mat *physics.Material) []FormattedProperty {
 	props := []FormattedProperty{}
 
-	// Polarization properties
-	// Pr is used in Preisach for initialization logging and normalization
+	// ═══════════════════════════════════════════════════════════════════════════
+	// CORE: Reference polarization and field (for normalization and comparison)
+	// ═══════════════════════════════════════════════════════════════════════════
 	props = append(props, FormattedProperty{
-		Name:        "Remanent Polarization (Pr)",
+		Name:        "Pr (Remanent)",
 		Value:       FormatPolarization(mat.PrCM2),
 		RawValue:    mat.PrCM2,
-		Category:    CategoryPolarization,
-		Description: "Polarization remaining after field removal. Used in Preisach model initialization.",
-		Models:      preisachModel,
+		Category:    CategoryCore,
+		Description: "Remanent polarization. Reference for P→G mapping normalization.",
+		Models:      bothModels,
 	})
-	// Ps is a primary Preisach parameter for saturation and normalization
 	props = append(props, FormattedProperty{
-		Name:        "Saturation Polarization (Ps)",
+		Name:        "Ps (Saturation)",
 		Value:       FormatPolarization(mat.PsCM2),
 		RawValue:    mat.PsCM2,
-		Category:    CategoryPolarization,
-		Description: "Maximum achievable polarization. Primary parameter in Preisach model for hysteresis loop normalization.",
-		Models:      preisachModel,
+		Category:    CategoryCore,
+		Description: "Saturation polarization. Sets P_max for conductance mapping: G = f(P/Ps).",
+		Models:      bothModels,
+	})
+	props = append(props, FormattedProperty{
+		Name:        "Ec (Coercive)",
+		Value:       FormatField(mat.EcVM),
+		RawValue:    mat.EcVM,
+		Category:    CategoryCore,
+		Description: "Coercive field. Reference for E_applied normalization. Vc = Ec × d.",
+		Models:      bothModels,
 	})
 	if mat.AnalogStates > 0 {
 		props = append(props, FormattedProperty{
 			Name:        "Analog States",
 			Value:       fmt.Sprintf("%d (%.1f bits)", mat.AnalogStates, math.Log2(float64(mat.AnalogStates))),
 			RawValue:    float64(mat.AnalogStates),
-			Category:    CategoryPolarization,
-			Description: "Number of discrete programmable states achievable through partial polarization switching.",
+			Category:    CategoryCore,
+			Description: "Number of discrete programmable states via partial polarization switching.",
 		})
 	}
 
-	// Field properties
-	// Ec is the primary Preisach parameter for coercive field distribution
+	// ═══════════════════════════════════════════════════════════════════════════
+	// GEOMETRY: Film dimensions for ρ_eff = ρ + (R_series·A)/d
+	// ═══════════════════════════════════════════════════════════════════════════
 	props = append(props, FormattedProperty{
-		Name:        "Coercive Field (Ec)",
-		Value:       FormatField(mat.EcVM),
-		RawValue:    mat.EcVM,
-		Category:    CategoryField,
-		Description: "Field required to switch polarization. Primary Preisach parameter - sets distribution mean and width (σ = 0.25·Ec).",
-		Models:      preisachModel,
-	})
-	if mat.MemoryWindowV > 0 {
-		props = append(props, FormattedProperty{
-			Name:        "Memory Window",
-			Value:       FormatVoltage(mat.MemoryWindowV),
-			RawValue:    mat.MemoryWindowV,
-			Category:    CategoryField,
-			Description: "Voltage window between on/off states. Determines margin for reliable state detection.",
-		})
-	}
-
-	// Dielectric properties
-	props = append(props, FormattedProperty{
-		Name:        "Permittivity (HF)",
-		Value:       FormatDimensionless(mat.EpsilonHF),
-		RawValue:    mat.EpsilonHF,
-		Category:    CategoryDielectric,
-		Description: "High-frequency relative permittivity (ε∞). Affects capacitance at MHz-GHz frequencies.",
-	})
-	props = append(props, FormattedProperty{
-		Name:        "Permittivity (LF)",
-		Value:       FormatDimensionless(mat.EpsilonLF),
-		RawValue:    mat.EpsilonLF,
-		Category:    CategoryDielectric,
-		Description: "Low-frequency relative permittivity (εs). Affects DC capacitance and charge storage.",
-	})
-	props = append(props, FormattedProperty{
-		Name:        "Loss Tangent (tan δ)",
-		Value:       FormatPercent(mat.LossTangent),
-		RawValue:    mat.LossTangent,
-		Category:    CategoryDielectric,
-		Description: "Dielectric loss factor. Ratio of energy dissipated to energy stored per cycle.",
-	})
-
-	// Geometry properties
-	// Thickness is used in advanced Preisach for voltage calculations
-	props = append(props, FormattedProperty{
-		Name:        "Film Thickness",
+		Name:        "d (Thickness)",
 		Value:       FormatThickness(mat.ThicknessM),
 		RawValue:    mat.ThicknessM,
 		Category:    CategoryGeometry,
-		Description: "Ferroelectric layer thickness. Used in Preisach DiscreteStates() for field-to-voltage conversion.",
-		Models:      preisachModel,
+		Description: "Film thickness. Used in ρ_eff = ρ + (R·A)/d and E = V/d conversion.",
+		Models:      lkModel,
 	})
 	props = append(props, FormattedProperty{
-		Name:        "Cell Area",
+		Name:        "A (Area)",
 		Value:       FormatArea(mat.AreaM2),
 		RawValue:    mat.AreaM2,
 		Category:    CategoryGeometry,
-		Description: "Active device area. Determines total charge capacity (Q = P × A).",
+		Description: "Active cell area. Used in ρ_eff = ρ + (R·A)/d calculation.",
+		Models:      lkModel,
 	})
-	if mat.CellPitchNm > 0 {
+
+	// ═══════════════════════════════════════════════════════════════════════════
+	// LANDAU: Core L-K coefficients (β, γ, ρ) in dP/dt equation
+	// ═══════════════════════════════════════════════════════════════════════════
+	if mat.Thermodynamics.BetaLandau != 0 {
 		props = append(props, FormattedProperty{
-			Name:        "Cell Pitch",
-			Value:       fmt.Sprintf("%.0f nm", mat.CellPitchNm),
-			RawValue:    mat.CellPitchNm,
-			Category:    CategoryGeometry,
-			Description: "Center-to-center cell spacing. Determines array density and potential crosstalk.",
+			Name:        "β (Landau)",
+			Value:       fmt.Sprintf("%.3e J·m⁵/C⁴", mat.Thermodynamics.BetaLandau),
+			RawValue:    mat.Thermodynamics.BetaLandau,
+			Category:    CategoryLandau,
+			Description: "First-order barrier. NEGATIVE for HZO → creates 4βP³ switching barrier.",
+			Models:      lkModel,
+		})
+	}
+	if mat.Thermodynamics.GammaLandau != 0 {
+		props = append(props, FormattedProperty{
+			Name:        "γ (Landau)",
+			Value:       fmt.Sprintf("%.3e J·m⁹/C⁶", mat.Thermodynamics.GammaLandau),
+			RawValue:    mat.Thermodynamics.GammaLandau,
+			Category:    CategoryLandau,
+			Description: "Stability term. POSITIVE → prevents runaway at high P via 6γP⁵.",
+			Models:      lkModel,
+		})
+	}
+	if mat.Thermodynamics.RhoViscosity > 0 {
+		props = append(props, FormattedProperty{
+			Name:        "ρ (Viscosity)",
+			Value:       fmt.Sprintf("%.3f Ω·m", mat.Thermodynamics.RhoViscosity),
+			RawValue:    mat.Thermodynamics.RhoViscosity,
+			Category:    CategoryLandau,
+			Description: "Khalatnikov damping. ρ<0.1 for GHz operation. Enters ρ_eff = ρ + R·A/d.",
+			Models:      lkModel,
 		})
 	}
 
-	// Dynamics properties
-	// Tau is used in Preisach KAI dynamics for domain switching simulation
+	// ═══════════════════════════════════════════════════════════════════════════
+	// ALPHA: Dynamic stiffness α(T,σ) = (T-Tc)/(2ε₀C) - 2Q₁₂σ
+	// ═══════════════════════════════════════════════════════════════════════════
 	props = append(props, FormattedProperty{
-		Name:        "Switching Time (τ)",
-		Value:       FormatTime(mat.TauS),
-		RawValue:    mat.TauS,
-		Category:    CategoryDynamics,
-		Description: "Characteristic switching time constant. Used in Preisach KAI dynamics: P(t) = Ps·(1 - exp(-(t/τ)^n)).",
-		Models:      preisachModel,
-	})
-	// Tau0 is used in Preisach Merz law for field-dependent switching time
-	props = append(props, FormattedProperty{
-		Name:        "Attempt Time (τ₀)",
-		Value:       FormatTime(mat.Tau0S),
-		RawValue:    mat.Tau0S,
-		Category:    CategoryDynamics,
-		Description: "Thermal activation attempt time. Used in Preisach Merz law: τ(E) = τ₀·exp(Ea/|E|).",
-		Models:      preisachModel,
-	})
-	// Activation energy is used in Preisach Merz law
-	props = append(props, FormattedProperty{
-		Name:        "Activation Energy",
-		Value:       FormatEnergy(mat.ActivationEnergyEV),
-		RawValue:    mat.ActivationEnergyEV,
-		Category:    CategoryDynamics,
-		Description: "Energy barrier for domain nucleation. Used in Preisach NLS dynamics for field-dependent switching.",
-		Models:      preisachModel,
-	})
-	// KAI exponent is used in Preisach domain switching simulation
-	props = append(props, FormattedProperty{
-		Name:        "KAI Exponent",
-		Value:       FormatDimensionless(mat.KAIExponent),
-		RawValue:    mat.KAIExponent,
-		Category:    CategoryDynamics,
-		Description: "Kolmogorov-Avrami-Ishibashi exponent (n). n≈2 for 2D domain growth, n≈3 for 3D. Used in Preisach dynamics.",
-		Models:      preisachModel,
-	})
-
-	// Temperature properties
-	// Curie temperature is used in advanced Preisach for temperature-dependent Ec
-	props = append(props, FormattedProperty{
-		Name:        "Curie Temperature",
+		Name:        "Tc (Curie)",
 		Value:       FormatTemperature(mat.CurieTempK),
 		RawValue:    mat.CurieTempK,
-		Category:    CategoryTemperature,
-		Description: "Ferroelectric transition temperature. Used in Preisach: Ec(T) = Ec·(1 - T/Tc)^0.5.",
-		Models:      preisachModel,
+		Category:    CategoryAlpha,
+		Description: "Curie temperature. α → 0 as T → Tc (wells become shallow → data loss).",
+		Models:      lkModel,
 	})
-	props = append(props, FormattedProperty{
-		Name:        "Temp. Coeff. Ec",
-		Value:       fmt.Sprintf("%.1e V/m/K", mat.TempCoeffEc),
-		RawValue:    mat.TempCoeffEc,
-		Category:    CategoryTemperature,
-		Description: "Temperature dependence of coercive field. Linear approximation: Ec(T) ≈ Ec + α·(T - T₀).",
-	})
-	props = append(props, FormattedProperty{
-		Name:        "Temp. Coeff. Pr",
-		Value:       fmt.Sprintf("%.1e C/m²/K", mat.TempCoeffPr),
-		RawValue:    mat.TempCoeffPr,
-		Category:    CategoryTemperature,
-		Description: "Temperature dependence of remanent polarization. Pr decreases as T approaches Tc.",
-	})
-	if mat.OperatingTempK > 0 {
+	if mat.Thermodynamics.CurieConstK > 0 {
 		props = append(props, FormattedProperty{
-			Name:        "Operating Temperature",
-			Value:       FormatTemperature(mat.OperatingTempK),
-			RawValue:    mat.OperatingTempK,
-			Category:    CategoryTemperature,
-			Description: "Designed operating temperature. Properties are optimized for this temperature.",
+			Name:        "C (Curie Const)",
+			Value:       fmt.Sprintf("%.2e K", mat.Thermodynamics.CurieConstK),
+			RawValue:    mat.Thermodynamics.CurieConstK,
+			Category:    CategoryAlpha,
+			Description: "Curie-Weiss constant. α = (T-Tc)/(2ε₀C) - 2Q₁₂σ.",
+			Models:      lkModel,
+		})
+	}
+	if mat.Coupling.Q12Electrostriction != 0 {
+		props = append(props, FormattedProperty{
+			Name:        "Q₁₂ (Electrostric.)",
+			Value:       fmt.Sprintf("%.3f m⁴/C²", mat.Coupling.Q12Electrostriction),
+			RawValue:    mat.Coupling.Q12Electrostriction,
+			Category:    CategoryAlpha,
+			Description: "Transverse electrostriction. α includes -2Q₁₂σ term. Q₁₂<0 typical.",
+			Models:      lkModel,
+		})
+	}
+	if mat.Coupling.StressGPa > 0 {
+		props = append(props, FormattedProperty{
+			Name:        "σ (Stress)",
+			Value:       fmt.Sprintf("%.1f GPa", mat.Coupling.StressGPa),
+			RawValue:    mat.Coupling.StressGPa,
+			Category:    CategoryAlpha,
+			Description: "In-plane stress (TiN capping). Tensile σ>0 with Q₁₂<0 raises α.",
+			Models:      lkModel,
 		})
 	}
 
-	// Reliability properties
-	props = append(props, FormattedProperty{
-		Name:        "Endurance",
-		Value:       FormatEndurance(mat.EnduranceCycles),
-		RawValue:    mat.EnduranceCycles,
-		Category:    CategoryReliability,
-		Description: "Maximum write cycles before significant degradation. HZO typically achieves 10⁹-10¹² cycles.",
-	})
-	props = append(props, FormattedProperty{
-		Name:        "Retention Time",
-		Value:       FormatTime(mat.RetentionTimeS),
-		RawValue:    mat.RetentionTimeS,
-		Category:    CategoryReliability,
-		Description: "Data retention time at specified temperature. Typically >10 years at 85°C for mature devices.",
-	})
-	if mat.ImprintFieldVM > 0 {
+	// ═══════════════════════════════════════════════════════════════════════════
+	// DEPOLARIZATION: k_dep term for slanted hysteresis (analog states)
+	// ═══════════════════════════════════════════════════════════════════════════
+	if mat.DepolarizationFactorVMC > 0 {
 		props = append(props, FormattedProperty{
-			Name:        "Imprint Field",
-			Value:       FormatField(mat.ImprintFieldVM),
-			RawValue:    mat.ImprintFieldVM,
-			Category:    CategoryReliability,
-			Description: "Voltage shift from polarization aging. Causes asymmetric hysteresis loop over time.",
+			Name:        "k_dep",
+			Value:       fmt.Sprintf("%.2e V·m/C", mat.DepolarizationFactorVMC),
+			RawValue:    mat.DepolarizationFactorVMC,
+			Category:    CategoryDepol,
+			Description: "Depolarization factor. E_eff = E_applied - k_dep·P creates slanted loop.",
+			Models:      lkModel,
 		})
 	}
 
-	// Special properties (FTJ, AlScN, etc.)
-	if mat.TERRatio > 0 {
+	// ═══════════════════════════════════════════════════════════════════════════
+	// CIRCUIT: Series resistance for ρ_eff = ρ + (R_series·A)/d
+	// ═══════════════════════════════════════════════════════════════════════════
+	if mat.Circuit.SeriesResistanceOhm > 0 {
 		props = append(props, FormattedProperty{
-			Name:        "TER Ratio",
-			Value:       FormatConductanceRatio(mat.TERRatio),
-			RawValue:    mat.TERRatio,
-			Category:    CategorySpecial,
-			Description: "Tunneling electroresistance ratio for FTJ devices. High/low resistance state ratio.",
+			Name:        "R_series",
+			Value:       fmt.Sprintf("%.0f Ω", mat.Circuit.SeriesResistanceOhm),
+			RawValue:    mat.Circuit.SeriesResistanceOhm,
+			Category:    CategoryCircuit,
+			Description: "Series resistance (contact + wire). ρ_eff = ρ + (R·A)/d adds RC delay.",
+			Models:      lkModel,
 		})
 	}
-	// Gmax/Gmin ratio is used in advanced Preisach for conductance mapping
-	if mat.GmaxGminRatio > 0 {
+
+	// ═══════════════════════════════════════════════════════════════════════════
+	// NLS: Nucleation-Limited Switching (Merz law) τ = τ∞·exp(Ea/|E|)
+	// ═══════════════════════════════════════════════════════════════════════════
+	if mat.NLS.TauInfS > 0 {
 		props = append(props, FormattedProperty{
-			Name:        "Gmax/Gmin Ratio",
-			Value:       FormatConductanceRatio(mat.GmaxGminRatio),
-			RawValue:    mat.GmaxGminRatio,
-			Category:    CategorySpecial,
-			Description: "Conductance on/off ratio. Used in Preisach polarizationToConductance() for FeFET modeling.",
-			Models:      preisachModel,
+			Name:        "τ∞ (NLS)",
+			Value:       FormatTime(mat.NLS.TauInfS),
+			RawValue:    mat.NLS.TauInfS,
+			Category:    CategoryNLS,
+			Description: "NLS attempt time. τ(E) = τ∞·exp(Ea/|E|). ~100ps for HZO.",
+			Models:      lkModel,
 		})
 	}
-	if mat.ScFraction > 0 {
+	if mat.NLS.ActivationFieldVM > 0 {
 		props = append(props, FormattedProperty{
-			Name:        "Sc Fraction",
-			Value:       fmt.Sprintf("%.0f%% (Al%.2fSc%.2fN)", mat.ScFraction*100, 1-mat.ScFraction, mat.ScFraction),
-			RawValue:    mat.ScFraction,
-			Category:    CategorySpecial,
-			Description: "Scandium fraction in AlScN alloy. Higher Sc increases piezoelectric response but reduces stability.",
+			Name:        "Ea (NLS)",
+			Value:       FormatField(mat.NLS.ActivationFieldVM),
+			RawValue:    mat.NLS.ActivationFieldVM,
+			Category:    CategoryNLS,
+			Description: "NLS activation field. τ(E) = τ∞·exp(Ea/|E|). 10-20 MV/cm for HZO.",
+			Models:      lkModel,
 		})
 	}
-	if mat.TRLLevel > 0 {
+
+	// ═══════════════════════════════════════════════════════════════════════════
+	// CONDUCTANCE: P→G mapping for analog level readout
+	// G = Gmin + (Gmax-Gmin)·(P/Ps + 1)/2
+	// ═══════════════════════════════════════════════════════════════════════════
+	if mat.Conductance.GminS > 0 {
 		props = append(props, FormattedProperty{
-			Name:        "TRL Level",
-			Value:       fmt.Sprintf("TRL %d", mat.TRLLevel),
-			RawValue:    float64(mat.TRLLevel),
-			Category:    CategorySpecial,
-			Description: "Technology Readiness Level (1-9). 1=basic research, 9=flight proven/production.",
+			Name:        "Gmin (HRS)",
+			Value:       fmt.Sprintf("%.1f µS", mat.Conductance.GminS*1e6),
+			RawValue:    mat.Conductance.GminS,
+			Category:    CategoryConductance,
+			Description: "High resistance state at P=-Ps. G = Gmin + (Gmax-Gmin)·(P/Ps+1)/2.",
+			Models:      bothModels,
+		})
+	}
+	if mat.Conductance.GmaxS > 0 {
+		props = append(props, FormattedProperty{
+			Name:        "Gmax (LRS)",
+			Value:       fmt.Sprintf("%.1f µS", mat.Conductance.GmaxS*1e6),
+			RawValue:    mat.Conductance.GmaxS,
+			Category:    CategoryConductance,
+			Description: "Low resistance state at P=+Ps. G = Gmin + (Gmax-Gmin)·(P/Ps+1)/2.",
+			Models:      bothModels,
+		})
+	}
+	// Show on/off ratio if both Gmin and Gmax are set
+	if mat.Conductance.GminS > 0 && mat.Conductance.GmaxS > 0 {
+		ratio := mat.Conductance.GmaxS / mat.Conductance.GminS
+		props = append(props, FormattedProperty{
+			Name:        "Gmax/Gmin",
+			Value:       FormatConductanceRatio(ratio),
+			RawValue:    ratio,
+			Category:    CategoryConductance,
+			Description: "On/off ratio. Higher → more distinguishable analog levels.",
+			Models:      bothModels,
 		})
 	}
 
@@ -463,22 +450,16 @@ func GetPropertiesByCategory(props []FormattedProperty, category string) []Forma
 	return filtered
 }
 
-// CategoryOrder defines the display order for categories.
+// CategoryOrder defines the display order matching the L-K equation structure.
 var CategoryOrder = []string{
-	CategoryPolarization,
-	CategoryField,
-	CategoryDielectric,
+	CategoryCore,
 	CategoryGeometry,
-	CategoryDynamics,
-	CategoryTemperature,
-	CategoryReliability,
-	CategoryThermodynamics,
-	CategoryCoupling,
+	CategoryLandau,
+	CategoryAlpha,
+	CategoryDepol,
 	CategoryCircuit,
+	CategoryNLS,
 	CategoryConductance,
-	Category2DMaterial,
-	CategorySynaptic,
-	CategorySpecial,
 }
 
 // HasCategory checks if any properties exist in the given category.

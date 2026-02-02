@@ -129,7 +129,7 @@ Deliverable
 Baseline (update each run)
 
 - Latest headless log path (always newest under `logs/`):
-  - logs/2026-02-02_16-47-00-fecim.log
+  - logs/2026-02-02_16-58-26-fecim.log
 - Headless status:
   - **SUCCESS**: LK term implementation verified (Beta/Gamma/Rho/K_dep/UseEffVisc all present in config log).
   - **ISPP 5/5 targets HIT**: targets 28, 5, 27, 3, 20 all hit with 100% success rate.
@@ -138,7 +138,7 @@ Baseline (update each run)
 - Latest WRD log path (always newest under `logs/`):
   - logs/2026-02-02_16-49-46-fecim.log
 - WRD status:
-  - **NOT VERIFIED**: GUI run timed out during startup; no WRD target-hit lines captured.
+  - **NOT VERIFIED**: GUI not re-run after algorithm unification; no WRD target-hit lines captured.
   - Requires interactive GUI run to exercise WRD cycle and log "TARGET HIT".
 
 Fixes applied this session (2026-02-02):
@@ -182,6 +182,11 @@ Fixes applied this session (2026-02-02):
    - **Calibration fallback**: If calibration returns 0, use Ec as starting point.
    - **Overshoot recovery**: Reverse-direction pulses starting at 0.6×Ec with 0.10×Ec increments.
    - File: `module1-hysteresis/pkg/controller/writer.go` calculateNextField() and StateResetting.
+
+8. **GUI/Headless algorithm unification**:
+   - GUI PREP now always saturates opposite polarity (same as headless), no PREP-skip or HOLD_RESET.
+   - Saturation threshold aligned to 0.75×Ps with 2.0×Ec drive.
+   - Headless now learns calibration on success (same as GUI).
 
 Next run (resume here)
 

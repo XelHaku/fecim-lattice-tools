@@ -142,13 +142,11 @@ controller to reach a target discrete level. The implementation is split across:
 **Outer demo phases (simulation loop):**
 
 1. **PREP (Phase 0)**  
-   Apply a **directional pre‑bias** of `±Ec` toward the next target.  
-   *No full saturation on every cycle.*  
-2. **HOLD_PREP (Phase 1)**  
-   Ramp back to 0 V/m; polarization remains at the pre‑biased remanent state.
-3. **WRITE (Phase 2)**  
+   **Saturate to the opposite polarity** of the target using `±2 × Ec` until
+   `|P| ≥ 0.75 × Ps` (upper targets → negative saturation, lower targets → positive).
+2. **WRITE (Phase 2)**  
    Delegates to `WriteController` for the ISPP pulse loop (apply/wait/verify).
-4. **DISPLAY (Phase 5)**  
+3. **DISPLAY (Phase 5)**  
    Report success/failure, update stats, and select the next target level.
 
 **ISPP pulse loop (inside `WriteController`):**
@@ -156,15 +154,15 @@ controller to reach a target discrete level. The implementation is split across:
 - **Apply**: ramp to the next pulse field (`CurrentField`).
 - **Wait**: hold briefly so the field reaches the target.
 - **Verify**: return to 0 V/m and read the new level.
-- **Adjust**: binary‑search update of bounds (`VMin`, `VMax`) and compute the next pulse.
-- **Reset**: if overshoot is detected, apply a deep reset pulse and restart the search.
+- **Adjust**: incremental step sizing based on level error; use calibration on the first pulse.
+- **Resetting**: overshoot recovery uses **reverse‑direction correction pulses** (no full saturation).
 
 #### Termination Criteria
 
 - **Success**: `currentLevel == targetLevel` (strict equality).
 - **Failure**: `PulseCount >= MaxRetries` (default 50 pulses).
-- **Overshoot**: crossing the target on the *wrong hysteresis branch* → immediate reset
-  and restart with a tighter upper bound.
+- **Overshoot**: crossing the target on the *wrong hysteresis branch* → enter `RESETTING`
+  and apply reverse‑direction correction pulses.
 
 #### Parameter Choices (Physical Meaning)
 
@@ -173,8 +171,8 @@ controller to reach a target discrete level. The implementation is split across:
 | `EcField` | `writer.go` | Coercive field baseline (V/m). |
 | `MaxField` | `writer.go` | Maximum programming field; default `~2.5 × Ec`. |
 | `PulseDuration` | `simulation.go` | Pulse width per ISPP step; set to ~40% of the phase duration so the ramp can settle. |
-| `VMin`, `VMax` | `writer.go` | Binary‑search bounds for the **absolute** field magnitude. |
-| `FromSaturation` | `writer.go` | Determines whether calibration values are valid for the initial guess (most WRD cycles are **not** at saturation after PREP). |
+| `VMin`, `VMax` | `writer.go` | Tracking bounds for the **absolute** field magnitude (diagnostics + step sizing). |
+| `FromSaturation` | `writer.go` | `true` after PREP saturation; enables calibration hints for the first pulse. |
 | `CalibManager` | `algo/calibration.go` | Stores per‑level calibrated fields; used only for the **first** ISPP pulse. |
 
 #### Autonomous Runtime Recalibration
@@ -207,17 +205,13 @@ levels** from the conductance mapping (Gmin/Gmax), then the controller steers fi
 pulses to hit those levels exactly.
 
 **Sequence:**
-1. **PREP**: apply **±Ec** toward the target (no full saturation).
-2. **HOLD_RESET**: ramp back to 0 and capture the **start level**. `fromSaturation`
-   is computed here (`level ≤ 2` or `level ≥ N-1`), matching the GUI.
-3. **WRITE (controller)**: Apply → Wait → Verify
-   - **Apply**: pick pulse field from calibration (if available) or a 1×Ec step toward target.
+1. **PREP**: saturate to the **opposite polarity** of the target (`±2 × Ec`, threshold `0.75 × Ps`).
+2. **WRITE (controller)**: Apply → Wait → Verify
+   - **Apply**: pulse field from calibration (if available) or `~1 × Ec` toward target.
    - **Wait**: hold field near target for the pulse window.
    - **Verify**: settle to 0, read level via L‑K (`P → G → level`).
-4. **Adjust**: update binary‑search bounds (`VMin`, `VMax`) on **field magnitude**.
-5. **Overshoot**: if the level crosses the target in the wrong direction, issue a **resetting** pulse to the opposite branch,
-   shrink `VMax` to the failed pulse, and restart.
-6. **DISPLAY**: ramp to 0 and advance to the next target.
+3. **Resetting**: if the level crosses the target in the wrong direction, apply reverse‑direction correction pulses.
+4. **DISPLAY**: ramp to 0 and advance to the next target.
 
 **Termination:**
 - **Success**: exact level match.
