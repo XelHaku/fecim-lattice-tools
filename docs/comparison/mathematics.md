@@ -484,7 +484,7 @@ func (a *Array) AnalyzeSneakPaths(selectedRow, selectedCol int) *SneakPathAnalys
 
 ### 4.1 Linear Quantization (30 Levels)
 
-FeCIM uses 30 discrete conductance levels per Dr. Tour's specifications.
+This demo uses a 30-level baseline (conference claim per Dr. Tour; pending peer review).
 
 **Quantization formula:**
 ```
