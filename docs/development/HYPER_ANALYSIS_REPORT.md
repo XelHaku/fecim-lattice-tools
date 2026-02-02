@@ -908,13 +908,13 @@ PROGRESS: 65/65 screenshots complete (Modules 1-5)
 - ✓ `TestHysteresisLoopExists` - P-E curve generation
 - ✓ `TestHysteresisAsymmetry` - Path-dependent behavior
 - ✓ `TestCoerciveFieldSwitching` - Polarization switching at Ec
-- ✓ `TestDiscreteStatesCount` - **30 discrete states (Dr. Tour spec)**
+- ✓ `TestDiscreteStatesCount` - **30 discrete states (conference claim baseline)**
 - ✓ `TestMaterialParameters` - HZO material validation
 - ✓ `TestPreisachModelReset` - Model state management
 - ✓ `TestNormalizedPolarization` - Output range validation
 
 **Module 2 - Crossbar** (`module2-crossbar/pkg/crossbar/`):
-- ✓ `TestQuantizeTo30LevelsProducesExactly30Values` - **30 FeCIM levels**
+- ✓ `TestQuantizeTo30LevelsProducesExactly30Values` - **30-level demo baseline**
 - ✓ `TestQuantizeTo30LevelsRange` - Output bounds [0,1]
 - ✓ `TestQuantizeTo30LevelsSpecificValues` - Key quantization points
 - ✓ `TestGetLevelReturns0To29` - Level index validation
@@ -929,7 +929,7 @@ PROGRESS: 65/65 screenshots complete (Modules 1-5)
 
 **Module 4 - Circuits** (`module4-circuits/pkg/peripherals/`):
 - ✓ `TestDACConversion` - Digital-to-analog conversion
-- ✓ `TestDACLevels` - **30 FeCIM levels supported**
+- ✓ `TestDACLevels` - **30-level demo baseline supported**
 - ✓ `TestADCConversion` - Analog-to-digital conversion
 - ✓ `TestADCENOB` - Effective number of bits
 - ✓ `TestTIAConversion` - Transimpedance amplifier
@@ -957,10 +957,10 @@ ok  	fecim-lattice-tools/shared/logging
 ok  	fecim-lattice-tools/shared/theme
 ```
 
-### Dr. Tour Specifications Verified by Tests
+### Baseline Specifications Covered by Tests
 | Specification | Test Coverage | Status |
 |--------------|---------------|--------|
-| 30 discrete levels | `TestQuantizeTo30Levels*`, `TestDiscreteStatesCount` | ✓ |
+| 30 discrete levels (conference claim baseline) | `TestQuantizeTo30Levels*`, `TestDiscreteStatesCount` | ✓ |
 | 4.9 bits/cell | log₂(30) = 4.91 bits, verified in quantization | ✓ |
 | Pr ~25 µC/cm² | `TestMaterialParameters` | ✓ |
 | Ec ~1 MV/cm | `TestCoerciveFieldSwitching` | ✓ |
@@ -978,4 +978,3 @@ ok  	fecim-lattice-tools/shared/theme
 ---
 
 DONE HYPER ANALYSIS
-

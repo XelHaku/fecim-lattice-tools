@@ -884,38 +884,67 @@ func (a *App) updatePhysics(dt float64) {
 			// Note: startLevel (a.wrdStartLevel) no longer used for direction - we use absolute position
 
 			switch a.wrdPhase {
-			case 0: // PREP - saturate to OPPOSITE polarity before writing
-				// For upper targets (>midLevel): saturate NEGATIVE first, then write UP
-				// For lower targets (<=midLevel): saturate POSITIVE first, then write DOWN
-				// This ensures a known starting point for ISPP binary search.
+			case 0: // PREP (wake-up) - ensure known starting state before writing
+				// OPTIMIZED: Skip saturation if already at valid remanent state for target direction
+				// For upper targets (>midLevel): need NEGATIVE remanent to write UP
+				// For lower targets (<=midLevel): need POSITIVE remanent to write DOWN
 				var prepE float64
 				var saturated bool
-				saturationThreshold := 0.75 * mat.Ps // Use 0.75 (not 0.9) due to depolarization effects
+				var skipPrep bool
+				saturationThreshold := 0.7 * mat.Ps // Threshold for "already saturated"
 
 				if targetLevel > midLevel {
-					// Upper target: drive to negative saturation first
-					prepE = -Ec * 2.0
-					saturated = a.polarization <= -saturationThreshold
+					// Upper target: need negative starting point to write UP
+					if a.polarization <= -saturationThreshold {
+						// Already at negative remanent - can skip PREP
+						skipPrep = true
+						saturated = true
+						prepE = 0
+					} else {
+						// Need to saturate negative first
+						prepE = -Ec * 2.0
+						saturated = a.polarization <= -saturationThreshold
+					}
 				} else {
-					// Lower target: drive to positive saturation first
-					prepE = Ec * 2.0
-					saturated = a.polarization >= saturationThreshold
+					// Lower target: need positive starting point to write DOWN
+					if a.polarization >= saturationThreshold {
+						// Already at positive remanent - can skip PREP
+						skipPrep = true
+						saturated = true
+						prepE = 0
+					} else {
+						// Need to saturate positive first
+						prepE = Ec * 2.0
+						saturated = a.polarization >= saturationThreshold
+					}
 				}
 				a.wrdPrepE = prepE // Store for logging
 
-				// Ramp to saturation field
-				diff := prepE - a.electricField
-				step := rampRate * dt
-				if math.Abs(diff) < step {
-					a.electricField = prepE
-				} else if diff > 0 {
-					a.electricField += step
-				} else {
-					a.electricField -= step
+				// If already at valid state, skip directly to SETTLE
+				if skipPrep && a.wrdPhaseTimer < 0.001 {
+					log.Printf("WRD PREP SKIP: already at valid remanent | P=%.2f µC/cm² | L=%d | target=%d",
+						a.polarization*100, a.discreteLevel+1, targetLevel)
+					a.wrdResetEndP = a.polarization * 100
+					a.wrdResetEndLvl = a.discreteLevel + 1
+					a.wrdPhase = 1
+					a.wrdPhaseTimer = 0
+				}
+
+				// Ramp to saturation field (if not skipping)
+				if !skipPrep {
+					diff := prepE - a.electricField
+					step := rampRate * dt
+					if math.Abs(diff) < step {
+						a.electricField = prepE
+					} else if diff > 0 {
+						a.electricField += step
+					} else {
+						a.electricField -= step
+					}
 				}
 
 				// Transition when field reached AND polarization saturated
-				if a.wrdPhaseTimer > phaseDuration*0.25 && math.Abs(a.electricField-prepE) < 0.01*Emax && saturated {
+				if !skipPrep && a.wrdPhaseTimer > phaseDuration*0.25 && math.Abs(a.electricField-prepE) < 0.01*Emax && saturated {
 					// Capture end-of-PREP state for logging
 					a.wrdResetEndP = a.polarization * 100 // Convert to µC/cm²
 					a.wrdResetEndLvl = a.discreteLevel + 1

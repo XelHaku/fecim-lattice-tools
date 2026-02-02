@@ -72,7 +72,7 @@ go test -race ./...
 **Location:** `module2-crossbar/pkg/crossbar/physics_test.go`, `module3-mnist/pkg/core/physics_test.go`
 
 #### FeCIM 30-Level Quantization
-- `TestFeCIM30LevelPhysics` - Verifies max 30 discrete levels (Dr. Tour's spec)
+- `TestFeCIM30LevelPhysics` - Verifies 30-level demo baseline (conference claim)
 - `TestLevelSpacingUniformity` - Linear DAC spacing verification
 - `TestQuantizationSymmetry` - Symmetric bipolar quantization q(-x) ≈ -q(x)
 - `TestQuantizationCliff` - Validates 2→30 level MSE/PSNR improvement
@@ -112,7 +112,7 @@ go test -race ./...
 - `TestHysteresisLoopExists` - P-E curve generation
 - `TestHysteresisAsymmetry` - Path-dependent polarization
 - `TestCoerciveFieldSwitching` - Polarization switching around Ec
-- `TestDiscreteStatesCount` - 30 discrete states verification
+- `TestDiscreteStatesCount` - 30-level demo baseline verification
 - `TestMaterialParameters` - HZO parameter validation
 - `TestCoerciveFieldTemperatureDependence` - Ec vs temperature
 - `TestPolarizationTemperatureDependence` - Pr vs temperature
