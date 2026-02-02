@@ -59,7 +59,7 @@ Generated designs are compatible with OpenLane's automated flow:
 
 ### Basic Usage
 
-Generate a 64x64 compute array with 30 levels:
+Generate a 64x64 compute array with the 30-level demo baseline (conference claim):
 
 ```bash
 go run ./cmd/eda-cli -mode compute -rows 64 -cols 64 -output ./output
@@ -135,7 +135,7 @@ Core design generation engine supporting all operation modes.
 - `NewArrayConfig(mode, rows, cols)` - Create configuration for specified mode
 - `GenerateDesign(config)` - Generate complete design with optional weight mapping
 - `GenerateBlank(config)` - Create unprogrammed array
-- Weight quantization and mapping to 30 conductance levels
+- Weight quantization and mapping to 30 conductance levels (demo baseline; conference claim)
 
 **Configuration Options**:
 ```go

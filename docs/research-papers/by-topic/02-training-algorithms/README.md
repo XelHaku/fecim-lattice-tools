@@ -4,6 +4,8 @@
 
 This directory contains research on training algorithms specifically designed for analog AI hardware, with emphasis on quantization-aware training (QAT), low-precision neural networks, and hardware-software co-design approaches. These techniques are critical for deploying neural networks on analog compute-in-memory (CIM) systems where continuous weight values must be discretized to finite analog states, and where hardware non-idealities affect accuracy.
 
+**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+
 ## Papers in this Directory
 
 ### Quantization-Aware Training

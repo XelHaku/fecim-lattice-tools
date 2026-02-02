@@ -220,7 +220,7 @@ class QuantizedMLP(nn.Module):
         super().__init__()
         self.fc1 = qnn.QuantLinear(
             784, 128,
-            weight_bit_width=5,  # ~30 levels
+            weight_bit_width=5,  # ~30 levels (demo baseline)
             bias=True
         )
         self.fc2 = qnn.QuantLinear(
@@ -236,7 +236,7 @@ class QuantizedMLP(nn.Module):
         return x
 ```
 
-**Relevance to FeCIM:** Brevitas can train at exactly 5-bit precision (32 levels ≈ 30 levels).
+**Relevance to FeCIM:** Brevitas can train at exactly 5-bit precision (32 levels ≈ 30-level demo baseline).
 
 ---
 
@@ -903,7 +903,7 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 | Use Case | Recommended Tool | Reason |
 |----------|------------------|--------|
 | **Training MNIST** | PyTorch + torchvision | Simplest setup |
-| **QAT with arbitrary bits** | Brevitas | 5-bit ≈ FeCIM 30 levels |
+| **QAT with arbitrary bits** | Brevitas | 5-bit ≈ FeCIM 30-level demo baseline |
 | **Hardware-aware training** | AIHWKIT | Most realistic noise model |
 | **CIM inference simulation** | FeCIM (Ours) | Real-time visualization |
 | **Crossbar validation** | CrossSim | Comprehensive non-idealities |

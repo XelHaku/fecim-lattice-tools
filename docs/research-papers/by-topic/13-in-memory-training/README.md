@@ -85,7 +85,7 @@ Most CIM demonstrations only show inference. True on-chip training with backprop
 - 6-bit weight precision sufficient for most CV tasks
 - Stochastic rounding during weight updates improves convergence
 - Training-aware quantization: 1-2% accuracy loss vs full precision
-- FeFET 30-level states provide 4.9-bit effective precision
+- FeFET 30-level states (demo baseline; conference claim) provide 4.9-bit effective precision
 
 **Relevance:** Validates FeFET's 30-state capability for training.
 
@@ -125,7 +125,7 @@ Most CIM demonstrations only show inference. True on-chip training with backprop
 ### Hardware Requirements for Training
 - **Symmetric LTP/LTD:** >90% symmetry needed
 - **Endurance:** 10⁹-10¹² cycles for full training
-- **Update precision:** 6-bit effective (FeFET: 4.9-bit from 30 levels)
+- **Update precision:** 6-bit effective (FeFET: 4.9-bit from 30-level demo baseline)
 - **Write time:** <1 µs per update
 - **Variation tolerance:** <10% cycle-to-cycle
 
@@ -271,7 +271,7 @@ func UpdateWeights(weights, gradients [][]float64, lr float64) [][]float64 {
 | Challenge | Solution | Status |
 |-----------|----------|--------|
 | Weight update asymmetry | Symmetric pulse schemes | **Solved** (Adv Mat 2024) |
-| Limited precision (30 levels) | Quantization-aware training | **Solved** |
+| Limited precision (30 levels; demo baseline) | Quantization-aware training | **Solved** |
 | Endurance for training | Wear leveling, sparse updates | **Partial** |
 | Gradient noise | Batch averaging | **Solved** |
 | Non-ideal transfer function | Hardware-in-the-loop training | **Research** |

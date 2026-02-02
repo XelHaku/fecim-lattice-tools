@@ -35,7 +35,9 @@ Review of wafer-scale integration techniques and challenges, relevant for unders
 
 These industry reports inform the FeCIM Lattice Tools project in several critical ways:
 
-- **Competitive Positioning**: Understanding where 30-level ferroelectric cells fit against commercial alternatives (Flash, ReRAM, PCM)
+**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+
+- **Competitive Positioning**: Understanding where 30-level demo baseline ferroelectric cells fit against commercial alternatives (Flash, ReRAM, PCM)
 - **Use Case Validation**: Real-world deployments (face classification) validate the MNIST and neural network modules in this toolkit
 - **Manufacturing Context**: IRDS roadmap data helps ground our simulations in realistic process assumptions
 - **Market Timing**: Industry surveys indicate current market readiness for ferroelectric CIM solutions

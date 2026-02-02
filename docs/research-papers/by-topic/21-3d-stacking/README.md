@@ -398,7 +398,7 @@ func (c *Crossbar3D) VerticalMVM(input []float64) []float64 {
 | Metric | 3D FeCIM (512L, 2027) | 3D NAND (300L, 2026) | FeCIM Advantage |
 |--------|----------------------|---------------------|-----------------|
 | **Density** | 51.2 Gb/mm² | 32.0 Gb/mm² | **+60% higher** |
-| **Bits/Cell** | 4.9 (30 levels) | 4.0 (QLC) | **+22% more** |
+| **Bits/Cell** | 4.9 (30 levels; demo baseline) | 4.0 (QLC) | **+22% more** |
 | **Layers Needed (same capacity)** | 512 | 767 | **33% fewer layers** |
 | **Read Latency** | 10 ns | 25 µs | **2500× faster** |
 | **Write Latency** | 100 ns | 1 ms | **10,000× faster** |

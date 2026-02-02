@@ -17,7 +17,7 @@ Tasks
 
   1. Physics fidelity (no approximations unless explicitly called out)
 
-  - Verify conductance models (linear, exponential, lookup), quantization to 30 levels, and Gmin/Gmax bounds.
+  - Verify conductance models (linear, exponential, lookup), quantization to 30 levels (demo baseline; conference claim), and Gmin/Gmax bounds.
   - Validate MVM/VMM equations, Ohm's law application, DAC/ADC quantization, and output normalization.
   - Confirm IR drop solver (wire params, iterative relaxation, effective voltage) matches docs.
   - Confirm sneak path modeling (3-cell paths, simplified vs full modes) and SNR math.

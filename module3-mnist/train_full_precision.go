@@ -391,7 +391,7 @@ func main() {
 
 	// Quantize to 30 levels for reference
 	qWeightsFile := "module3-mnist/data/pretrained_weights_q30.json"
-	fmt.Printf("\nQuantizing to 30 levels and saving to %s...\n", qWeightsFile)
+	fmt.Printf("\nQuantizing to 30 levels (demo baseline) and saving to %s...\n", qWeightsFile)
 	if err := net.saveQuantized(qWeightsFile); err != nil {
 		log.Printf("Failed to save quantized weights: %v", err)
 	} else {

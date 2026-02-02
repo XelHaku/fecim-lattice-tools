@@ -24,7 +24,7 @@ func main() {
 	fmt.Println("============================================")
 	fmt.Println("FeCIM MNIST Training (MNISTNetwork)")
 	fmt.Println("Target: Physics-limited (typically >85%)")
-	fmt.Println("30 discrete analog levels")
+	fmt.Println("30 discrete analog levels (demo baseline; conference claim)")
 	fmt.Println("============================================")
 	fmt.Println()
 

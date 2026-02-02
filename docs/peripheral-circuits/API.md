@@ -31,6 +31,8 @@ The `peripherals` package provides models for key analog circuits used in FeCIM 
 
 All peripherals are designed for the 30-level FeCIM demo baseline (conference claim; 5-bit storage with 2 levels reserved).
 
+**Note:** References to 30 levels refer to this demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+
 ### Default Configuration
 
 All peripheral types provide `Default*()` constructors with practical values for FeCIM:

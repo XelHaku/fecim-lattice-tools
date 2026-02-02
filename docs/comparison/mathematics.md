@@ -568,7 +568,7 @@ where:
 - `||W||_F` = Frobenius norm of weights
 - `||x||_2` = L2 norm of input
 
-**Practical rule:** Each additional layer adds ~0.1-0.2% error for 30-level quantization.
+**Practical rule:** Each additional layer adds ~0.1-0.2% error for 30-level demo baseline quantization.
 
 ### 4.6 Code Implementation
 

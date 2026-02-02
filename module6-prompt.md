@@ -29,7 +29,7 @@ Current Baselines (keep aligned in code + docs)
   - Power pins: VPWR/VGND (not VDD/VSS) in Verilog/LEF/Liberty/DEF.
   - 1T1R geometry: 0.92 × 3.40 μm cell; row height 3.40 μm.
   - Verilog BL buses are inout (passive + 1T1R); SL is input for 1T1R.
-  - 30 levels => 4.91 bits/cell (log2(30)).
+- 30 levels (demo baseline; conference claim) => 4.91 bits/cell (log2(30)).
 
 Tasks
 
@@ -37,7 +37,7 @@ Tasks
 
   - Verify ArrayConfig/CellConfig defaults (rows, cols, levels, gmin/gmax, vdd, tech, architecture).
   - Validate storage/memory/compute mode behavior and mode-specific parameters.
-  - Confirm weight mapping and quantization to 30 levels (and N-level support), including sign handling.
+- Confirm weight mapping and quantization to 30 levels (demo baseline; conference claim) and N-level support, including sign handling.
   - Ensure architecture toggles (passive, 1T1R, 2T1R) produce correct nets/pins (WL, BL, SL, CSL).
   - Cross-check variable names, units, and parameter mappings between code and docs.
   - Validate that Module 6 uses the same physics constants and quantization behavior as module2-crossbar
@@ -84,7 +84,7 @@ Validation
 Expected CLI output checks (sanity)
 
   - Header shows "FeCIM Array Generator - Compute Mode".
-  - Levels line shows: "Levels:       30 (4.91 bits/cell)".
+  - Levels line shows: "Levels:       30 (4.91 bits/cell, claim)".
   - Conductance line shows: "Conductance:  10.0 - 100.0 μS".
   - Exports include: data/fecim_array_design.json, data/fecim_array_cells.csv, data/fecim_array.sp, data/fecim_array.v, data/fecim_array.def.
   - CLI log file lives at ~/.fecim/logs/module6-eda-cli.log (stdout still the primary evidence).

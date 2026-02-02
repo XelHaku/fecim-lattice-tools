@@ -6,6 +6,8 @@
 
 ---
 
+**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+
 ## Table of Contents
 
 1. [Executive Summary](#executive-summary)

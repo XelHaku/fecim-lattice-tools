@@ -184,7 +184,7 @@ GPU (complex ops) ← 10 pJ/bit → HBM (temporary data)
 - **HBM power**: 150 W (thermal challenge)
 
 **FeCIM Solution (Speculative):**
-- **Weight storage**: 7 GB in FeCIM (30 states ≈ INT8)
+- **Weight storage**: 7 GB in FeCIM (30 states demo baseline ≈ INT8)
 - **Power**: <1 W (1000× less data movement)
 - **Instant-on**: Non-volatile, no weight loading
 - **Footprint**: <100 mm² (128-layer 3D FeCIM)

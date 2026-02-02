@@ -657,7 +657,7 @@ DefaultConfig = CompileConfig{
 | File | Type/Function | Purpose |
 |------|---------------|---------|
 | pkg/peripherals/dac.go | `DAC` | Digital-to-analog converter model |
-| pkg/peripherals/dac.go | `DefaultDAC()` | Default DAC (30 levels) |
+| pkg/peripherals/dac.go | `DefaultDAC()` | Default DAC (30-level demo baseline) |
 | pkg/peripherals/dac.go | `Levels()` | Number of output levels |
 | pkg/peripherals/dac.go | `Convert()` | Digital to analog conversion |
 | pkg/peripherals/dac.go | `ConvertWithNonlinearity()` | With INL/DNL |

@@ -118,6 +118,25 @@ type Material struct {
 	// AlScN-specific
 	ScFraction float64 `yaml:"sc_fraction,omitempty"` // Scandium fraction in AlScN
 
+	// In2Se3-specific (2D ferroelectric)
+	PrInplaneCM2       float64 `yaml:"pr_inplane_c_m2,omitempty"`       // In-plane Pr for 2D materials
+	EcThinVM           float64 `yaml:"ec_thin_v_m,omitempty"`           // Ec for ultrathin films
+	EcThickVM          float64 `yaml:"ec_thick_v_m,omitempty"`          // Ec for thicker films
+	BandgapEV          float64 `yaml:"bandgap_ev,omitempty"`            // Bandgap for semiconductor FE
+	MinThicknessM      float64 `yaml:"min_thickness_m,omitempty"`       // Minimum viable thickness
+	QuintupleLayerNm   float64 `yaml:"quintuple_layer_nm,omitempty"`    // QL thickness for 2D
+	VdWMaterial        bool    `yaml:"vdw_material,omitempty"`          // Van der Waals layered
+	Stacking           string  `yaml:"stacking,omitempty"`              // Stacking type (3R, 2H)
+	Phase              string  `yaml:"phase,omitempty"`                 // Crystal phase (alpha, beta)
+	AlphaToBetaTempK   float64 `yaml:"alpha_to_beta_temp_k,omitempty"`  // Phase transition temp
+	LinearityImprovement bool  `yaml:"linearity_improvement,omitempty"` // Better linearity at cryo
+
+	// Synaptic device parameters
+	Synaptic MaterialSynaptic `yaml:"synaptic,omitempty"`
+
+	// Synthesis method
+	Synthesis MaterialSynthesis `yaml:"synthesis,omitempty"`
+
 	// Landau-Khalatnikov / Thermodynamics
 	Thermodynamics MaterialThermodynamics `yaml:"thermodynamics,omitempty"`
 
@@ -162,8 +181,28 @@ type MaterialNLS struct {
 
 // MaterialConductance holds conductance mapping parameters.
 type MaterialConductance struct {
-	GminS float64 `yaml:"gmin_s"`
-	GmaxS float64 `yaml:"gmax_s"`
+	GminS      float64 `yaml:"gmin_s"`
+	GmaxS      float64 `yaml:"gmax_s"`
+	OnOffRatio float64 `yaml:"on_off_ratio,omitempty"` // Gmax/Gmin ratio
+}
+
+// MaterialSynaptic holds synaptic device parameters for neuromorphic computing.
+type MaterialSynaptic struct {
+	PotentiationPulses int     `yaml:"potentiation_pulses,omitempty"` // Pulses for LTP
+	DepressionPulses   int     `yaml:"depression_pulses,omitempty"`   // Pulses for LTD
+	PulseWidthS        float64 `yaml:"pulse_width_s,omitempty"`       // Programming pulse width
+	PulseVoltageV      float64 `yaml:"pulse_voltage_v,omitempty"`     // Programming voltage
+	NonlinearityLTP    float64 `yaml:"nonlinearity_ltp,omitempty"`    // LTP nonlinearity
+	NonlinearityLTD    float64 `yaml:"nonlinearity_ltd,omitempty"`    // LTD nonlinearity
+}
+
+// MaterialSynthesis holds synthesis method information.
+type MaterialSynthesis struct {
+	Method          string   `yaml:"method,omitempty"`           // Synthesis method (FWF, ALD, etc.)
+	Scale           string   `yaml:"scale,omitempty"`            // Production scale
+	Precursors      []string `yaml:"precursors,omitempty"`       // Precursor materials
+	SynthesisTimeS  float64  `yaml:"synthesis_time_s,omitempty"` // Synthesis time
+	EnergyReduction float64  `yaml:"energy_reduction,omitempty"` // Energy reduction vs conventional
 }
 
 // Crossbar holds crossbar array configuration.

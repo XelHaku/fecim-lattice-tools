@@ -129,19 +129,17 @@ Deliverable
 Baseline (update each run)
 
 - Latest headless log path (always newest under `logs/`):
-  - logs/2026-02-02_16-09-15-fecim.log
+  - logs/2026-02-02_16-47-00-fecim.log
 - Headless status:
   - **SUCCESS**: LK term implementation verified (Beta/Gamma/Rho/K_dep/UseEffVisc all present in config log).
   - **ISPP 5/5 targets HIT**: targets 28, 5, 27, 3, 20 all hit with 100% success rate.
   - **Real incremental ISPP** now implemented (not binary search).
   - LK config: Beta=-2.160e+08, Gamma=1.653e+10, Rho=5.000e-02, K_dep=2.500e+08, UseEffVisc=true
 - Latest WRD log path (always newest under `logs/`):
-  - logs/2026-02-02_16-09-15-fecim.log
+  - logs/2026-02-02_16-49-46-fecim.log
 - WRD status:
-  - **SUCCESS**: WRD 5/5 targets hit at 100% success rate.
-  - ISPP state machine working correctly (APPLY→WAIT→VERIFY→SUCCESS).
-  - Real incremental voltage stepping with dynamic step sizes.
-  - Overshoot detection triggers reverse-direction correction pulses.
+  - **NOT VERIFIED**: GUI run timed out during startup; no WRD target-hit lines captured.
+  - Requires interactive GUI run to exercise WRD cycle and log "TARGET HIT".
 
 Fixes applied this session (2026-02-02):
 
@@ -188,5 +186,7 @@ Fixes applied this session (2026-02-02):
 Next run (resume here)
 
 - System working correctly. ISPP hits all targets reliably with real incremental stepping.
-- Rerun: `./fecim-lattice-tools --logger --verbosity debug --mode hysteresis` to validate.
+- Rerun: `./launch.sh --logger --verbosity debug --mode hysteresis` to validate headless.
 - Overshoot recovery logic implemented but not yet tested (no overshoots in current test sequence).
+- Investigate why CSV `dt_s` shows only 0/1e-12 (adaptive sub-stepping not visible).
+- Run GUI WRD with interaction to capture "TARGET HIT" lines and verify WRD sequencing.

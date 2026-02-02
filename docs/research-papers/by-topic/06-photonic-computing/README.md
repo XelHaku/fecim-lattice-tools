@@ -39,7 +39,7 @@ Matrix-Vector Multiplication using Mach-Zehnder Interferometers (MZI):
 1. **Analog-to-optical conversion**: Modulators consume significant power
 2. **Photodetection**: ADC at output still required (electronic bottleneck)
 3. **Phase noise**: Thermal fluctuations cause phase drift (calibration needed)
-4. **Limited precision**: Typically 4-8 bit effective precision (vs. 30 states for FeCIM)
+4. **Limited precision**: Typically 4-8 bit effective precision (vs. 30 states for FeCIM demo baseline; conference claim)
 5. **Large footprint**: On-chip photonics requires ~100 µm² per MZI (vs. <1 µm² for FeFET)
 
 ### Performance Comparison: Photonic vs. Electronic CIM
@@ -50,7 +50,7 @@ Matrix-Vector Multiplication using Mach-Zehnder Interferometers (MZI):
 | **Modulator Energy** | 100 fJ/bit | N/A | - |
 | **Photodetector Energy** | 10 pJ/conversion | N/A | - |
 | **Total Energy/MAC** | ~10 pJ | ~1 pJ | **FeCIM** |
-| **Precision** | 4-8 bits | 4.9 bits (30 states) | Comparable |
+| **Precision** | 4-8 bits | 4.9 bits (30 states; demo baseline) | Comparable |
 | **Speed (Latency)** | 1 ns | 10 ns (analog) + 100 ns (ADC) | Photonic |
 | **Throughput** | 1 TMAC/s | 10 GMAC/s | Photonic |
 | **Area** | 10 mm² (64×64) | 0.1 mm² (128×128) | **FeCIM** |

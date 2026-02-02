@@ -107,7 +107,7 @@ With 3σ separation requirement, 30 levels is a **conservative demo baseline** (
 
 | Non-Ideality | Modeled Here | Notes |
 |--------------|-------------|-------|
-| Weight quantization | ✓ | 30-level symmetric quantization |
+| Weight quantization | ✓ | 30-level symmetric quantization (demo baseline) |
 | Read noise | ✓ | σ/μ multiplicative noise (configurable) |
 | IR drop | ⚠️ Simplified | Not part of CIM inference path yet |
 | Sneak paths | ⚠️ Simplified | Not part of CIM inference path yet |
@@ -154,7 +154,7 @@ ADC resolution is fixed in the Dual‑Mode UI. To explore ADC artifacts, adjust 
 ### Energy Model (MAC-Level Estimate)
 
 **Calculation (Jerry et al. IEDM 2017):**
-- Energy per MAC: ~10 fJ/bit × log2(levels) (≈50 fJ @ 30 levels)
+- Energy per MAC: ~10 fJ/bit × log2(levels) (≈50 fJ @ 30-level demo baseline)
 - MACs per inference: (784×128) + (128×10) = 101,632
 - **FeCIM Energy:** 101,632 × 50 fJ ≈ **5.08 μJ** (plus small ADC/DAC overhead)
 
@@ -192,7 +192,7 @@ ADC resolution is fixed in the Dual‑Mode UI. To explore ADC artifacts, adjust 
 | Configuration | Accuracy | Source |
 |---------------|----------|--------|
 | FP (float32) | 98.1% | Training script |
-| 30-level quantized (sim) | 96.8% | Quantize weights |
+| 30-level quantized (sim) | 96.8% | Quantize weights (demo baseline) |
 | Conference-only claim (unverified) | ~87% | Dr. Tour (Nov 2024, not peer-reviewed) |
 
 ---

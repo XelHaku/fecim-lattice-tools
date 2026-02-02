@@ -602,8 +602,8 @@ func (h *HardwareDashboard) updatePredictions() {
 
 | Element | Tooltip |
 |---------|---------|
-| 30 Levels slider | "FeCIM stores weights in 30 discrete polarization states (4.9 bits/cell). Binary memory uses only 2 states (1 bit). More levels = better precision = higher accuracy, but harder to manufacture." |
-| Prediction confidence | "FP uses infinite precision (32-bit float). CIM quantizes to 30 levels, introducing small errors (±2% typical). Both correctly predict '8' here!" |
+| 30 Levels slider | "FeCIM stores weights in 30 discrete polarization states (demo baseline; conference claim, 4.9 bits/cell). Binary memory uses only 2 states (1 bit). More levels = better precision = higher accuracy, but harder to manufacture." |
+| Prediction confidence | "FP uses infinite precision (32-bit float). CIM quantizes to 30 levels (demo baseline), introducing small errors (±2% typical). Both correctly predict '8' here!" |
 | Layer activation heatmap | "Brighter pixels = higher neuron activation. Layer 1 detects edges and curves. Layer 2 combines features into digit patterns. Watch the '8' pattern emerge!" |
 | Energy counter | "CIM saves energy by computing WHERE data is stored. GPU must move weights from memory to processor for every inference. No data movement = 10,000× energy savings!" |
 

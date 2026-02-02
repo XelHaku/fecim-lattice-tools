@@ -26,7 +26,7 @@ COMPASS (2025): Crossbar compiler that automatically maps DNN models to analog C
 
 These compiler tools are directly relevant to the FeCIM Lattice Tools project:
 
-- **Module3 MNIST Implementation**: Our neural network module can benefit from mapping algorithms that optimize layer assignments to 30-level ferroelectric cells
+- **Module3 MNIST Implementation**: Our neural network module can benefit from mapping algorithms that optimize layer assignments to 30-level demo baseline ferroelectric cells
 - **Crossbar Simulation Validation**: COMPASS IR drop models validate our module2 crossbar non-ideality simulations
 - **Quantization Strategy**: CIM-Explorer's quantization methods inform how we leverage the 30-level demo baseline (conference claim) versus binary/ternary alternatives
 - **Future Compiler Integration**: These papers provide roadmap for adding automatic model-to-hardware compilation to our toolkit

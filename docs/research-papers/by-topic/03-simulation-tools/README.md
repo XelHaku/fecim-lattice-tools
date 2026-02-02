@@ -2,7 +2,9 @@
 
 ## Overview
 
-This directory contains documentation and research on software frameworks for simulating analog compute-in-memory (CIM) systems, including ferroelectric devices. These tools enable hardware-software co-design by modeling device physics, circuit-level non-idealities, and system-level performance before fabrication. Critical for FeCIM development, as they allow validation of the 30-state analog approach and prediction of MNIST accuracy under realistic hardware constraints.
+This directory contains documentation and research on software frameworks for simulating analog compute-in-memory (CIM) systems, including ferroelectric devices. These tools enable hardware-software co-design by modeling device physics, circuit-level non-idealities, and system-level performance before fabrication. Critical for FeCIM development, as they allow validation of the 30-level demo baseline (conference claim) and prediction of MNIST accuracy under realistic hardware constraints.
+
+**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
 
 See also: **[OPENSOURCE_TOOLS.md](./OPENSOURCE_TOOLS.md)** for a curated guide to available open-source simulation platforms.
 

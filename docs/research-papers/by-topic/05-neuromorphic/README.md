@@ -38,7 +38,7 @@ This directory contains research on neuromorphic computing implementations using
 4. **Paired-pulse facilitation**: Enhanced response to closely spaced spikes
 
 **FeFET Advantages for Synapses:**
-- **Multi-level states**: 8-30 levels enable analog-like weight storage
+- **Multi-level states**: 8-30 levels enable analog-like weight storage (30 is demo baseline; conference claim)
 - **Non-volatility**: Weights persist without power (unlike SRAM-based synapses)
 - **Low energy**: ~1 fJ/spike for weight update (1000× less than digital)
 - **Scalability**: CMOS-compatible, 3D stackable

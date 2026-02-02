@@ -38,7 +38,7 @@ Spiking Neural Networks are biologically-inspired and dramatically more energy-e
 
 **Key Findings:**
 - FeFET can implement both LTP and LTD with voltage pulse polarity
-- 30-level conductance states enable precise weight updates
+- 30-level conductance states (demo baseline; conference claim) enable precise weight updates
 - Supervised STDP achieves 92% MNIST accuracy
 - 10¹⁰ cycle endurance sufficient for training applications
 
@@ -189,7 +189,7 @@ Spiking Neural Networks are biologically-inspired and dramatically more energy-e
 
 | Property | Value | Biological Equivalent |
 |----------|-------|----------------------|
-| Weight levels | 30 states | ~100 levels |
+| Weight levels | 30 states (demo baseline; conference claim) | ~100 levels |
 | STDP window | 1-100 µs | 10-100 ms |
 | LTP threshold | +2V | Correlation |
 | LTD threshold | -2V | Anti-correlation |

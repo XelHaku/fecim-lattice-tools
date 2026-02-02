@@ -40,7 +40,7 @@ func main() {
 	fmt.Printf("  Layers: %d\n", *numLayers)
 	fmt.Printf("  Noise level: %.2f%%\n", *noiseLevel*100)
 	fmt.Printf("  ADC bits: %d (DAC bits: 8)\n", *adcBits)
-	fmt.Printf("  Discrete levels: 30\n")
+	fmt.Printf("  Discrete levels: 30 (demo baseline; conference claim)\n")
 
 	// Create crossbar array configuration
 	arrayCfg := &crossbar.Config{

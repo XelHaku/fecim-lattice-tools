@@ -20,11 +20,10 @@ That is matrix-vector multiplication happening in parallel, in hardware.
 ## What the Simulator Simplifies
 
 - Ohm's law is treated as linear in the core model.
-- Conductance is quantized to 30 levels (model choice).
+- Conductance is quantized to 30 levels (demo baseline; conference claim).
 - IR drop and sneak paths are modeled with simplified wire parameters.
 
 ## Next Steps
 
 - Read the formal model in [PHYSICS.md](PHYSICS.md).
 - Connect to implementation details in [FEATURES.md](FEATURES.md).
-

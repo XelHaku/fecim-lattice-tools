@@ -6,6 +6,8 @@ Generate physical chip layouts for FeCIM arrays ready for OpenLane/OpenROAD fabr
 
 ## Overview
 
+**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+
 The FeCIM Design Suite is a universal chip design tool supporting three distinct FeCIM operation modes:
 
 | Mode | Application | Description |
@@ -227,7 +229,7 @@ See [eda.integration.md](./eda.integration.md) for detailed OpenLane integration
 
 ### 30-Level Quantization
 
-FeCIM cells support 30 discrete conductance states (not binary), enabling ~4.9 bits/cell:
+FeCIM cells support a 30‑level demo baseline (conference claim; not binary), enabling ~4.9 bits/cell:
 
 ```
 Level 0  → G_min (lowest conductance, highest resistance)

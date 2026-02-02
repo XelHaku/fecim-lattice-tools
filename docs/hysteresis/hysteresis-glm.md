@@ -5,6 +5,8 @@
 
 ---
 
+**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+
 ## 📊 Current State Summary
 
 | Aspect | Status | Rating |

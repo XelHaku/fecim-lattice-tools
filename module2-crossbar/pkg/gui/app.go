@@ -459,7 +459,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 			ca.setEducationalContent("Conductance Matrix",
 				"Each cell = one FeFET\n\n"+
 					"Conductance G (1-100 µS)\n"+
-					"stored as 30 discrete levels\n"+
+					"stored as 30 discrete levels (claim)\n"+
 					"(conference claim baseline)\n\n"+
 					"This is your weight matrix W.\n"+
 					"Brighter = higher conductance\n\n"+

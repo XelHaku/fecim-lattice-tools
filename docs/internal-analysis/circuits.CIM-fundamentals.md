@@ -218,7 +218,7 @@ G = Gmin + (Gmax - Gmin) × sigmoid(k × (P - P_threshold))
 
 ### 5.3 ADC Requirements
 
-For 30-level FeCIM:
+For 30-level FeCIM demo baseline (conference claim):
 - **Minimum bits**: 5-bit (32 levels)
 - **Effective bits**: 4.5-bit with INL/DNL
 - **Power trade-off**: Higher resolution = higher power

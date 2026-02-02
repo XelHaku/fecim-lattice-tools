@@ -32,7 +32,7 @@ Review of non-volatile memory applications in machine learning, covering both in
 
 These survey papers provide essential context for the FeCIM Lattice Tools project:
 
-- **Design Space Validation**: Our 30-level quantization choice aligns with survey findings on optimal analog resolution for DNN workloads
+- **Design Space Validation**: Our 30-level demo baseline (conference claim) aligns with survey findings on optimal analog resolution for DNN workloads
 - **Comparison Module Accuracy**: Survey data informs the technology comparison parameters in module5
 - **Architecture Decisions**: CIM survey insights guide our crossbar non-ideality modeling (IR drop, sneak paths)
 - **Benchmark Selection**: Survey-identified standard benchmarks (MNIST, CIFAR-10) justify our neural network test cases

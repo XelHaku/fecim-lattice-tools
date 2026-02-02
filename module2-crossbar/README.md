@@ -13,7 +13,7 @@ This module uses **30 discrete analog states per cell** (~4.9 bits/cell) as a **
 ## Key Features
 
 ### Analog Computation
-- **30-level quantization**: Discrete conductance states matching ferroelectric memory cells
+- **30-level quantization**: Demo baseline (conference claim) for discrete conductance states
 - **Matrix-Vector Multiplication (MVM)**: I = G × V (Ohm's law) + Kirchhoff's current summation
 - **Differential arrays**: Dual positive/negative weight arrays for signed computations
 - **Configurable DAC/ADC**: 4-12 bit conversion with quantization effects

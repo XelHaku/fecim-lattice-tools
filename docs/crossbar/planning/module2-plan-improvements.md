@@ -21,7 +21,7 @@
 
 | Feature | Implementation | Quality |
 |---------|----------------|---------|
-| **30-level quantization** | `QuantizeToLevels()` | Excellent - matches FeCIM spec |
+| **30-level quantization** | `QuantizeToLevels()` | Excellent - matches demo baseline (conference claim) |
 | **MVM physics** | Ohm's Law + KCL summation | Correct |
 | **DAC/ADC quantization** | Configurable bits (4-12) | Good |
 | **IR drop model** | Cumulative WL/BL resistance | Good |

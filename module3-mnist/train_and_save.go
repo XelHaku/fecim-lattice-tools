@@ -281,7 +281,7 @@ func main() {
 	fmt.Println("============================================")
 	fmt.Println("FeCIM MNIST Training")
 	fmt.Println("Target: Physics-limited (typically >85%)")
-	fmt.Println("30 discrete analog levels")
+	fmt.Println("30 discrete analog levels (demo baseline; conference claim)")
 	fmt.Println("============================================")
 	fmt.Println()
 
@@ -364,7 +364,7 @@ func main() {
 	}
 
 	// Create crossbar arrays and export quantized weights
-	fmt.Println("\nCreating crossbar arrays and quantizing to 30 levels...")
+	fmt.Println("\nCreating crossbar arrays and quantizing to 30 levels (demo baseline)...")
 	layer1, _ := crossbar.NewArray(&crossbar.Config{
 		Rows: 128, Cols: 784, NoiseLevel: 0.01, ADCBits: 8, DACBits: 8,
 	})

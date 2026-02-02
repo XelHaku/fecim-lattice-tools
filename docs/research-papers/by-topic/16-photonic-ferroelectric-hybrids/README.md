@@ -113,7 +113,7 @@ Photonic neural networks offer 1000× higher bandwidth than electrical interconn
 
 **FeFET Solution:**
 - ✅ **Non-volatile optical weights** (zero refresh power)
-- ✅ **Multi-level states** (30 levels = precise phase control)
+- ✅ **Multi-level states** (30 levels, demo baseline; conference claim = precise phase control)
 - ✅ **Fast switching** (10-100 ns reconfiguration)
 - ✅ **CMOS compatible** (co-integration possible)
 
@@ -172,7 +172,7 @@ Input ──┤             ├── Output (Interference)
          Phase Shift (θ)
               ↑
          FeFET Voltage
-         (30 levels)
+         (30 levels; demo baseline)
 ```
 
 **How it works:**
@@ -302,7 +302,7 @@ FeFET stores Q, K, V projection weights non-volatilely
 | Phase shift | 0-2π | Full range |
 | Switching time | 10 ns | Fast reconfiguration |
 | Retention | >10 years | Non-volatile weights |
-| States | 30 levels | Multi-level optical weights |
+| States | 30 levels (demo baseline; conference claim) | Multi-level optical weights |
 | Wavelength | 1550 nm | Telecom compatible |
 
 ### Photonic MVM Performance
@@ -378,7 +378,7 @@ func (p *PhotonicCrossbar) MVM(input []complex128) []complex128 {
 
 1. **Non-volatile Optical Weights**: Unlike volatile optical memory
 2. **Fast Reconfiguration**: FeFET switches in ~10ns
-3. **Multi-level Weights**: 30 states for precise phase control
+3. **Multi-level Weights**: 30 states (demo baseline; conference claim) for precise phase control
 4. **Zero Standby Power**: FeFET retains weight without power
 5. **CMOS Compatible**: Can integrate with electronics
 

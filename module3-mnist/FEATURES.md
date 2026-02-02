@@ -54,6 +54,6 @@ Neural Network Digit Recognition Demo
 | Configuration | Accuracy |
 |---------------|----------|
 | FP32 (ideal) | ~98% |
-| 30-level baseline, low noise | 92-96% |
+| 30-level demo baseline (claim), low noise | 92-96% |
 | Peer-reviewed FeCIM | 96.6-98.24% |
 | 2 levels (binary) | ~50% |

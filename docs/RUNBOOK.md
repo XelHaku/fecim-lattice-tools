@@ -392,7 +392,7 @@ go tool pprof cpu.prof
 
 # Expected results:
 # Float32 baseline:           98.1%
-# 30-level quant, no noise:   96.8%
+# 30-level demo baseline quant, no noise:   96.8%
 # 30-level quant, noise=0.08: 87.0% (matches conference claim; unverified)
 ```
 

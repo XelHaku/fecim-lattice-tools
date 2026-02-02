@@ -10,6 +10,8 @@
 
 This meta-study synthesizes research from 40+ papers focused on neural network inference on analog crossbar arrays, weight quantization techniques, MNIST benchmark implementations, and ferroelectric compute-in-memory (FeCIM) demonstrations. The analysis identifies key findings, accuracy trade-offs, and actionable recommendations for the FeCIM Visualizer project's MNIST demo module.
 
+**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+
 ### Key Findings
 
 1. **Conference-only claim (~87%)** exists for FeCIM hardware with 30 levels, but is unverified; peer‑reviewed simulations report **96.6–98.24%**

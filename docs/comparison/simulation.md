@@ -4,6 +4,8 @@
 
 This document covers the simulation hierarchy, industry-standard tools (CrossSim, NeuroSim), and validation methodology for Compute-in-Memory (CIM) architectures. It compares our FeCIM simulator against established tools and provides a rigorous validation protocol.
 
+**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+
 ---
 
 ## 1. Simulation Hierarchy

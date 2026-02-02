@@ -710,7 +710,7 @@ ngspice -b 1t1c_cell.cir -o 1t1c_cell.log
 ### HfO₂ Preset Configuration
 
 ```spice
-* HfO₂ ferroelectric capacitor (30 levels, Dr. Tour COSM 2025)
+* HfO₂ ferroelectric capacitor (30 levels, conference claim; COSM 2025)
 .model hfo2_fc pfecap (
 +   Pr=20e-6         W=10e-9 L=10e-9
 +   Ps=25e-6

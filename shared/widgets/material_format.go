@@ -11,14 +11,20 @@ import (
 
 // Property categories for organizing material data display.
 const (
-	CategoryPolarization = "Polarization"
-	CategoryField        = "Field"
-	CategoryDielectric   = "Dielectric"
-	CategoryGeometry     = "Geometry"
-	CategoryDynamics     = "Dynamics"
-	CategoryTemperature  = "Temperature"
-	CategoryReliability  = "Reliability"
-	CategorySpecial      = "Special"
+	CategoryPolarization   = "Polarization"
+	CategoryField          = "Field"
+	CategoryDielectric     = "Dielectric"
+	CategoryGeometry       = "Geometry"
+	CategoryDynamics       = "Dynamics"
+	CategoryTemperature    = "Temperature"
+	CategoryReliability    = "Reliability"
+	CategoryThermodynamics = "Thermodynamics"
+	CategoryCoupling       = "Coupling"
+	CategoryCircuit        = "Circuit"
+	CategoryConductance    = "Conductance"
+	Category2DMaterial     = "2D Material"
+	CategorySynaptic       = "Synaptic"
+	CategorySpecial        = "Special"
 )
 
 // ModelUsage indicates which physics models use a parameter.
@@ -466,6 +472,12 @@ var CategoryOrder = []string{
 	CategoryDynamics,
 	CategoryTemperature,
 	CategoryReliability,
+	CategoryThermodynamics,
+	CategoryCoupling,
+	CategoryCircuit,
+	CategoryConductance,
+	Category2DMaterial,
+	CategorySynaptic,
 	CategorySpecial,
 }
 

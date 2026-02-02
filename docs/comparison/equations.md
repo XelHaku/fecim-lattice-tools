@@ -269,7 +269,7 @@ G_level = G_min + (level/(N-1)) × (G_max - G_min)
 
 **Source:** Standard quantization
 
-**Example (30 levels):**
+**Example (30 levels; demo baseline):**
 - Level 0: G = 1 µS
 - Level 15: G = 51.5 µS (midpoint)
 - Level 29: G = 100 µS
@@ -313,12 +313,12 @@ Mean_error ≈ (G_max - G_min) / (2 × N)
 
 **Source:** Quantization theory
 
-**Example (30 levels, G_range = 99 µS):**
+**Example (30 levels; demo baseline, G_range = 99 µS):**
 ```
 Mean_error = 99 / (2 × 30) = 1.65 µS
 ```
 
-**Typical accuracy impact:** 0.5-1% for neural networks with 30 levels.
+**Typical accuracy impact:** 0.5-1% for neural networks with 30 levels (demo baseline).
 
 ---
 
@@ -518,7 +518,7 @@ acc_loss ≈ f(q_error, ir_drop, sneak_ratio, noise_σ)
 ```
 
 **Where:**
-- `q_error`: Quantization error (0.5-1% for 30 levels)
+- `q_error`: Quantization error (0.5-1% for 30 levels; demo baseline)
 - `ir_drop`: IR drop percentage (1-3% for 128×128)
 - `sneak_ratio`: Sneak current fraction (0-5% for passive, 0% for 1T1R)
 - `noise_σ`: Read noise std deviation (0.5-2%)
@@ -633,7 +633,7 @@ Effective resolution ≈ 5 bits despite 6-bit ADC.
 
 **Statistical requirement:** 3σ separation between adjacent levels for reliable read.
 
-**Example calculation (30 levels):**
+**Example calculation (30 levels; demo baseline):**
 - Total variation: σ_total = √(σ_D2D² + σ_C2C² + σ_read²) = √(3² + 1² + 0.5²) ≈ 3.2%
 - Level spacing: 100% / 29 = 3.45% (just meets 3σ ≈ 9.6% separation)
 
@@ -697,7 +697,7 @@ Effective resolution ≈ 5 bits despite 6-bit ADC.
 - **Self-rectifying 0T1R**: FeFET advantage (1-5% sneak, highest density)
 
 ### Noise Budget
-- **Total variation < 3%**: Required for 30-level operation
+- **Total variation < 3%**: Required for 30-level demo baseline operation
 - **Dominant sources**: Device variation (3%), thermal noise (0.5%), drift (< 1%)
 
 ### Energy Targets

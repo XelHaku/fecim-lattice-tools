@@ -10,6 +10,8 @@
 
 This document catalogs open-source tools, libraries, and frameworks for designing and simulating peripheral circuits for compute-in-memory systems. It covers ADC/DAC design, analog simulation, mixed-signal verification, and related tools from academic research and the open-source community.
 
+**Note:** References to 30 levels refer to the demo baseline (conference claim; pending peer review). Peer‑reviewed devices report 32–140 states.
+
 ---
 
 ## 1. SPICE Simulators

@@ -92,7 +92,7 @@ where G is conductance matrix (stored weights)
 **3. Cell Conductance Levels:**
 - **2-4 levels**: Binary/ternary, extreme efficiency, low accuracy
 - **8-16 levels**: Good accuracy, manageable peripheral circuits
-- **30 levels (FeCIM)**: Near-optimal accuracy, requires 5-bit DAC/8-bit ADC
+- **30 levels (FeCIM demo baseline; conference claim)**: Near-optimal accuracy, requires 5-bit DAC/8-bit ADC
 - **64+ levels**: Marginal accuracy gain, complex peripherals
 
 ### Non-Ideality Hierarchy (Impact on Accuracy)
@@ -163,7 +163,7 @@ Recent findings (Temperature_Resilient_FeFET_CIM_2024.pdf):
 - **GPU (NVIDIA T4)**: ~10 mJ/inference (1000× worse)
 
 **Area (28nm CMOS + FeFET BEOL):**
-- **Weight storage**: 128×128×30 states = 80 kb (FeFET)
+- **Weight storage**: 128×128×30 states (demo baseline; conference claim) = 80 kb (FeFET)
 - **Peripheral circuits**: ~2× area overhead (DAC/ADC/TIA)
 - **Total**: <0.5 mm² (vs. 10 mm² for SRAM equivalent)
 

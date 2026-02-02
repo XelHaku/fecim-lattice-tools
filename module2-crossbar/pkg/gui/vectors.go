@@ -687,7 +687,7 @@ func (d *DiscreteLevel30Indicator) CreateRenderer() fyne.WidgetRenderer {
 	levelLabel.Alignment = fyne.TextAlignCenter
 
 	content := container.NewVBox(
-		widget.NewLabel("30 Discrete FeCIM Levels"),
+		widget.NewLabel("30 Discrete FeCIM Levels (claim)"),
 		d.raster,
 		levelLabel,
 	)

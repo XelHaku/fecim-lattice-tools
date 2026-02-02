@@ -368,7 +368,7 @@ func (li *LevelIndicator) SetLevel(level int) {
 // CreateRenderer implements fyne.Widget.
 func (li *LevelIndicator) CreateRenderer() fyne.WidgetRenderer {
 	labels := make([]fyne.CanvasObject, 0)
-	labels = append(labels, widget.NewLabel("30 Discrete Levels:"))
+	labels = append(labels, widget.NewLabel("30 Discrete Levels (claim):"))
 
 	// Create level indicators
 	levelStr := ""
