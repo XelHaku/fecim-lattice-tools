@@ -1,5 +1,9 @@
 # Module 6 EDA GUI - Mermaid Diagram Reference
 
+> **Status (2026-02-03):** This reference targets the earlier multi-panel GUI design.  
+> The current GUI exposes two views only: **Builder & Validation** and **Learn**.  
+> Treat the rest as legacy reference; see `module6-eda/pkg/gui/app.go` for the live structure.
+
 ## Overview
 
 This document provides a quick reference to all Mermaid diagrams documenting the Module 6 EDA GUI structure, created from analysis of:
@@ -515,4 +519,3 @@ View interactive graph
 2. **Study the index** - Read `GUI_INDEX.md` for context and common tasks
 3. **Reference as needed** - Use this file to find the right diagram
 4. **Share with team** - All files are markdown and GitHub-compatible
-

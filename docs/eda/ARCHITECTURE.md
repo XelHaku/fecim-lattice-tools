@@ -2,9 +2,9 @@
 
 ## Overview
 
-Module 6 (EDA - Electronic Design Automation) is the fabrication-grade design infrastructure for the FeCIM Lattice Tools suite. It converts neural network weights and design specifications into complete, fabrication-ready chip layouts through a modular pipeline of compilation, format export, and multi-stage validation.
+Module 6 (EDA - Electronic Design Automation) is the **educational** design infrastructure for the FeCIM Lattice Tools suite. It converts array specifications (and optional weights in compute mode) into **illustrative** EDA artifacts through a modular pipeline of compilation, format export, and validation.
 
-**Core Purpose**: Transform high-level FeCIM array specifications into industry-standard physical design files (GDSII via OpenLane) for semiconductor fabrication.
+**Core Purpose**: Transform high-level FeCIM array specifications into **syntactically valid** design artifacts for learning and early exploration. OpenLane integration is optional and **not** signoff-grade.
 
 **Supported Technology Nodes**: SkyWater 130nm (SKY130), GlobalFoundries 180nm (GF180MCU), IHP 130nm (IHP_SG13G2)
 
@@ -63,8 +63,8 @@ Design      Formats     Checks      Integration
    ├─ Manager (PDK discovery)
    └─ Config (flow parameters)
 
-6. Physical Design Generation
-   └─ OpenLane flow → GDSII (fabrication-ready)
+6. Physical Design Generation (Optional)
+   └─ OpenLane flow → GDSII (illustrative; not fabrication-ready)
 ```
 
 ---

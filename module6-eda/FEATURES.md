@@ -1,63 +1,34 @@
 # Module 6: EDA Tools - Features
 
-Chip Design Suite for FeCIM Arrays
+Educational design-suite for FeCIM arrays (exploration, not signoff).
 
 ---
 
 ## Features
 
-- **Three Operation Modes** - Storage (NAND), Memory (DRAM), Compute (AI)
-- **8 Export Formats** - JSON, CSV, SPICE, Verilog, DEF, LEF, Liberty, SVG
-- **Architecture Support** - Passive (0T1R), 1T1R, 2T1R
+- **Three Operation Modes** - Storage, Memory, Compute
+- **Export Formats** - JSON, CSV, SPICE, Verilog, DEF
+- **Programmatic Generators** - LEF, Liberty, SVG via `pkg/export`
+- **Architecture Support** - Passive, 1T1R, 2T1R (API); CLI supports passive + 1T1R
 - **PDK Support** - SKY130, GF180MCU, IHP_SG13G2
-- **OpenLane Integration** - RTL-to-GDSII flow ready
-- **Weight Mapping** - Quantize trained weights to 30 conductance levels
-- **Validation Tools** - Yosys, DEF checker, cross-file consistency
-- **3 Preview Windows** - KLayout, OpenROAD, Yosys visualization
-- **Learn Tab** - Interactive OpenLane flow diagram, educational references
+- **OpenLane Integration** - DEF + OpenLane config helpers
+- **Validation Tools** - Yosys checks, DEF validation, cross-file consistency
+- **GUI** - Builder/validation tab + learning visuals
 
-## Operation Modes
+---
 
-| Mode | Purpose | Key Feature |
-|------|---------|-------------|
-| **Storage** | NAND replacement | 30-level baseline = 4.9 bits/cell (conference claim), ECC support |
-| **Memory** | DRAM replacement | Zero refresh, 10ns target access |
-| **Compute** | AI accelerator | MVM with optional pre-programmed weights |
+## Key Defaults (From Code)
 
-## Export Formats
+| Parameter | Default | Notes |
+|---|---:|---|
+| Levels | 30 | Demo baseline |
+| Gmin / Gmax | 10 / 100 uS | Conductance range |
+| Vprog | 2.0-5.0 V | Programming window |
+| Cell pitch / height | 0.46 / 2.72 um | SKY130 defaults |
 
-| Format | Tool Target |
-|--------|-------------|
-| Verilog (.v) | Yosys, synthesis |
-| SPICE (.sp) | ngspice, HSPICE |
-| DEF (.def) | OpenLane, place-and-route |
-| LEF (.lef) | Abstract cell views |
-| Liberty (.lib) | STA (placeholder timing) |
-| SVG (.svg) | Visual layout |
-| JSON/CSV | Data exchange |
-
-## Key Parameters
-
-| Parameter | Value | Notes |
-|-----------|-------|-------|
-| Levels | 30 | FeCIM standard |
-| Conductance | 10-100 µS | Gmin/Gmax range |
-| Prog Voltage | 2-5V | Configurable |
-| Cell Pitch | 0.46 µm | SKY130 compatible |
-| Cell Height | 2.72 µm | Standard cell |
-| Max Array | 512×512 | Tested |
-
-## Architecture Comparison
-
-| Arch | Nets | Density | Sneak Paths |
-|------|------|---------|-------------|
-| Passive | WL, BL | Highest | Susceptible |
-| 1T1R | WL, BL, SL | Medium | Mitigated |
-| 2T1R | WL, BL, SL, CSL | Lower | Eliminated |
+---
 
 ## Limitations
 
-- Liberty timing values are placeholders (need SPICE characterization)
-- LEF provides abstract views only (need Magic for tape-out)
-- Ready for: Research, algorithm validation
-- Not ready for: Production tape-out without characterization
+- Liberty timing values are placeholders (require SPICE characterization).
+- Exports are educational artifacts, not tape-out ready.

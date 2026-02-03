@@ -1,55 +1,39 @@
 # Module 5: Comparison - Features
 
-FeCIM vs CPU/GPU Business Case Analysis
+FeCIM vs CPU/GPU business-case visualization (model-based, not measured).
 
 ---
 
 ## Features
 
 - **Architecture Comparison** - CPU+DRAM vs GPU+HBM vs FeCIM CIM
-- **5 Neural Network Workloads** - MNIST to LLM-70B
-- **Data Center Scaling** - Chip count, power, cost, CO2 projections
-- **Animated Visualizations** - Energy race, market charts, ROI calculator
-- **Market Analysis** - $721B addressable market by 2030
-- **4 Presentation Modes** - Manual, Auto Demo, Investor, Engineer
-- **Data Center Calculator** - Real-time CPU vs GPU vs FeCIM projections
+- **Workload Library** - MNIST, ResNet-50, BERT-Base, GPT-2, LLM-70B
+- **Data-Center Scaling** - Power, cost, CO2 projections from model inputs
+- **Animated Visuals** - Energy race, market chart, ROI summary
+- **Presentation Modes** - Manual, Auto Demo, Investor, Engineer
 
-## Comparison Metrics
+---
 
-| Metric | CPU+DRAM | GPU+HBM | FeCIM (Est.) |
-|--------|----------|---------|--------------|
-| Energy/MAC | 1000 pJ | 100 pJ | ~1 pJ |
-| Process Node | 5nm | 4nm | 45nm (est.) |
-| TDP | 125W | 400W | 5W (est.) |
-| Peak TOPS | 1.0 | 100 | 50 (est.) |
-| TOPS/Watt | 0.008 | 0.25 | 10 (est.) |
+## Default Architecture Models (From Code)
 
-## Workloads
+| Architecture | Node | TDP | Peak TOPS | Notes |
+|---|---:|---:|---:|---|
+| CPU+DRAM | 5 nm | 125 W | 1 | Baseline model |
+| GPU+HBM | 4 nm | 400 W | 100 | Baseline model |
+| FeCIM CIM | 45 nm | 5 W | 50 | **Estimated** (visualization only) |
 
-| Network | MACs | Use Case |
-|---------|------|----------|
-| MNIST | 101K | Digit recognition |
-| ResNet-50 | 4B | Image classification |
-| BERT-Base | 11B | NLP |
-| GPT-2 | 35B | Language model |
-| LLM-70B | 140T | Large language model |
+> FeCIM values are explicitly marked **estimated** in code and should not be treated as measured device specs.
 
-## Key Parameters
+---
 
-| Parameter | Value | Source |
-|-----------|-------|--------|
-| CPU Energy | 1000 pJ/MAC | Verified |
-| GPU Energy | 100 pJ/MAC | Verified |
-| FeCIM Energy | ~1 pJ/MAC | Unverified (TRL 4) |
-| Electricity | $0.10/kWh | Data center cost |
-| PUE | 1.5× | Power overhead |
-| CO2 Factor | 0.4 kg/kWh | Emissions |
+## Market Chart
 
-## Market Data (2030 Projections)
+- Market segments and totals are **scenario inputs** used for visualization.
+- The code comments cite WSTS/Gartner as sources; verify before external use.
 
-| Segment | Value |
-|---------|-------|
-| NAND Flash | $98B |
-| DRAM | $220B |
-| AI Semiconductors | $403B |
-| **Total** | $721B |
+---
+
+## Known Limitations
+
+- Cross-architecture comparisons depend on assumed parameters.
+- No hardware benchmarking or silicon validation is performed.

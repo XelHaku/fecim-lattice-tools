@@ -1,5 +1,9 @@
 # Module 6 EDA GUI Architecture
 
+> **Status (2026-02-03):** This document reflects the earlier multi-panel GUI design.  
+> The current GUI exposes two views only: **Builder & Validation** and **Learn**.  
+> Treat the rest as legacy reference; see `module6-eda/pkg/gui/app.go` for the live structure.
+
 ## Overview
 
 Module 6 EDA provides two deployment modes with identical functionality:

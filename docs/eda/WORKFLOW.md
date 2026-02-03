@@ -1,6 +1,9 @@
-# FeCIM EDA Workflow: RTL to GDSII
+# FeCIM EDA Workflow: RTL to GDSII (Educational)
 
-Complete end-to-end workflow for transforming neural network weights into fabrication-ready GDSII files using the FeCIM compiler and OpenLane.
+> **Status (2026-02-03):** This workflow is an **educational walkthrough**.  
+> Outputs are illustrative and **not** fabrication-ready; OpenLane steps are optional.
+
+Complete end-to-end workflow for transforming neural network weights into **illustrative** GDSII files using the FeCIM compiler and OpenLane.
 
 ## Table of Contents
 
@@ -22,14 +25,14 @@ The FeCIM workflow transforms trained neural network weights into a complete phy
 
 ```
 Weights (weights.json)
-         ↓
+         v
     [EDA CLI]
-         ↓
+         v
 Design Files (Verilog, DEF, SPICE)
-         ↓
+         v
     [OpenLane]
-         ↓
-GDSII (fabrication-ready)
+         v
+GDSII (illustrative)
 ```
 
 ### Key Concepts
@@ -117,7 +120,7 @@ The compiler automatically:
 3. Quantizes to integer level (0-29)
 4. Maps level to conductance value (G_min to G_max)
 
-No manual quantization needed—the CLI handles it automatically.
+No manual quantization needed-the CLI handles it automatically.
 
 ### Example: Creating Weight Files
 
@@ -225,8 +228,8 @@ go build -o eda-cli ./cmd/eda-cli
 | `-tech` | SKY130 | Technology node: `SKY130`, `GF180MCU`, `IHP_SG13G2` |
 | `-arch` | passive | Architecture: `passive` or `1t1r` |
 | `-vdd` | 1.8 | Supply voltage (V) |
-| `-gmin` | 10.0 | Minimum conductance (μS) |
-| `-gmax` | 100.0 | Maximum conductance (μS) |
+| `-gmin` | 10.0 | Minimum conductance (uS) |
+| `-gmax` | 100.0 | Maximum conductance (uS) |
 | `-json` | true | Export JSON mapping |
 | `-csv` | true | Export CSV cells |
 | `-spice` | true | Export SPICE netlist |
@@ -266,27 +269,27 @@ Loaded weights: mnist_layer1 (32x32 = 1024 weights)
 
 Configuration:
   Mode:         Compute
-  Array Size:   32 × 32 (1024 cells)
+  Array Size:   32 x 32 (1024 cells)
   Technology:   SKY130
   Architecture: passive
   Levels:       30 (4.90 bits/cell)
-  Conductance:  10.0 - 100.0 μS
+  Conductance:  10.0 - 100.0 uS
 
 Design Statistics:
   Total Cells:  1024
   Active Cells: 1024
-  Area:         0.1234 mm²
+  Area:         0.1234 mm^2
   Est. Power:   0.10 mW
   Throughput:   8.23 GOPS
   Weight Range: [-0.9000, +0.9000]
   Quant PSNR:   42.35 dB
 
 Exporting files to ./output/
-  ✓ my_design_design.json
-  ✓ my_design_cells.csv
-  ✓ my_design.sp
-  ✓ my_design.v
-  ✓ my_design.def
+  OK my_design_design.json
+  OK my_design_cells.csv
+  OK my_design.sp
+  OK my_design.v
+  OK my_design.def
 
 Done!
 ```
@@ -440,8 +443,8 @@ END DESIGN
 
 **Fields:**
 - `FIXED`: Locks cell position (cannot be moved by router)
-- Coordinates: (X, Y) in database units (default: 1000 units = 1 μm)
-- Orientation: `N` (normal), `FN` (flipped), `W` (90° rotate), etc.
+- Coordinates: (X, Y) in database units (default: 1000 units = 1 um)
+- Orientation: `N` (normal), `FN` (flipped), `W` (90 deg rotate), etc.
 
 ### 5. crossbar.sp (fecim_array.sp)
 
@@ -551,9 +554,9 @@ grep -o "fecim_[a-z0-9]*" output/my_design.v | sort | uniq
 # 3. Module definitions in behavioral Verilog
 
 # For example, if Verilog uses fecim_bit:
-# ✓ DEF must have: - cell_0_0 fecim_bit + ...
-# ✓ LEF must define: MACRO fecim_bit
-# ✓ Liberty must define: cell(fecim_bit)
+# OK DEF must have: - cell_0_0 fecim_bit + ...
+# OK LEF must define: MACRO fecim_bit
+# OK Liberty must define: cell(fecim_bit)
 ```
 
 ## Step 5: OpenLane Integration
@@ -850,7 +853,7 @@ cp ~/OpenLane/designs/my_fecim/runs/v1/results/final/sdc/*.sdc .
 
 ## Example Workflows
 
-### Example 1: Basic 8×8 Crossbar
+### Example 1: Basic 8x8 Crossbar
 
 See `<local-path>`
 
@@ -861,7 +864,7 @@ cd module6-eda/examples/01-basic-8x8
 bash run.sh
 ```
 
-**Outputs:** Fully validated 8×8 design with reference outputs
+**Outputs:** Fully validated 8x8 design with reference outputs
 
 ---
 
@@ -880,7 +883,7 @@ cd output
 ngspice -b ../testbench.sp -o sim_results.log
 ```
 
-**Outputs:** 32×32 MNIST layer with simulation validation
+**Outputs:** 32x32 MNIST layer with simulation validation
 
 ---
 
@@ -926,7 +929,7 @@ with open("weights.json") as f:
     assert "rows" in data and "cols" in data and "weights" in data
     assert len(data["weights"]) == data["rows"]
     assert all(len(row) == data["cols"] for row in data["weights"])
-    print("✓ Valid weights file")
+    print("OK Valid weights file")
 EOF
 ```
 
@@ -1086,8 +1089,8 @@ cat ~/OpenLane/designs/my_fecim/runs/v1/reports/signoff/drc.rpt
 # Profile the CLI
 time ./eda-cli -rows 128 -cols 128 -output /tmp/large
 
-# For 128×128: ~5-10 seconds expected
-# For 256×256: ~30-60 seconds expected
+# For 128x128: ~5-10 seconds expected
+# For 256x256: ~30-60 seconds expected
 # If slower, check disk I/O and memory
 ```
 
@@ -1152,7 +1155,7 @@ grep "instantiate" output/my_design.v | head -1
 2. **Integrate with OpenLane:** Complete Example 3
 3. **Design Real Cells:** Use Magic VLSI for production layouts
 4. **Characterize Timing:** Extract parasitic RC, generate accurate Liberty
-5. **Scale Up:** Test 64×64, 128×128, 256×256 arrays
+5. **Scale Up:** Test 64x64, 128x128, 256x256 arrays
 6. **Top-Level Integration:** Create SoC with crossbar + peripherals + control logic
 7. **DRC/LVS Cleanup:** Fix all violations for tape-out
 

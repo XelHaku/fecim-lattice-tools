@@ -1,5 +1,9 @@
 # Module 6 EDA GUI - Complete Mermaid Diagram
 
+> **Status (2026-02-03):** This diagram reflects the earlier multi-panel GUI design.  
+> The current GUI exposes two views only: **Builder & Validation** and **Learn**.  
+> Treat the rest as legacy reference; see `module6-eda/pkg/gui/app.go` for the live structure.
+
 ## Complete GUI Architecture Flow
 
 ```mermaid
@@ -592,4 +596,3 @@ graph LR
 | DockerStatus | Manager.DetectMode | Label | App startup |
 | LogOutput | addLog | Text append | All operations |
 | TopicSelector | Learn state | Content | OnSelected |
-

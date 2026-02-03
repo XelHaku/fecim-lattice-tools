@@ -12,8 +12,13 @@ func (a *App) ensureHistoryCapacityLocked() {
 		return
 	}
 	if len(a.eHistory) != a.maxHistory {
-		a.eHistory = make([]float64, a.maxHistory)
-		a.pHistory = make([]float64, a.maxHistory)
+		if cap(a.eHistory) >= a.maxHistory && cap(a.pHistory) >= a.maxHistory {
+			a.eHistory = a.eHistory[:a.maxHistory]
+			a.pHistory = a.pHistory[:a.maxHistory]
+		} else {
+			a.eHistory = make([]float64, a.maxHistory)
+			a.pHistory = make([]float64, a.maxHistory)
+		}
 		a.historyHead = 0
 		a.historySize = 0
 	}

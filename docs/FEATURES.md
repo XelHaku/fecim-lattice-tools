@@ -1,117 +1,87 @@
 # FeCIM Lattice Tools - Features
 
-End-to-end toolchain for Ferroelectric Compute-in-Memory (FeCIM) based on Dr. external research group's HfO₂-ZrO₂ superlattice research.
+End-to-end educational toolchain for Ferroelectric Compute-in-Memory (FeCIM).
 
-**Core Concept:** Multi-level analog states per cell (8-140 levels depending on material)
+**Core Concept:** Discrete analog states per cell (demo baseline: 30; material presets include 32 and 140).
 
 ---
 
 ## Module Summary
 
 | Module | Purpose |
-|--------|---------|
-| 1. Hysteresis | P-E Curve Simulator |
-| 2. Crossbar | MVM Simulator with Non-Idealities |
-| 3. MNIST | Neural Network Demo |
-| 4. Circuits | Peripheral Circuit Design |
-| 5. Comparison | Business Case Analysis |
-| 6. EDA | Chip Design Suite |
+|---|---|
+| 1. Hysteresis | P-E curve simulator + material presets |
+| 2. Crossbar | MVM simulator with non-idealities |
+| 3. MNIST | FP vs CIM inference demo |
+| 4. Circuits | DAC/ADC/TIA signal-chain demo |
+| 5. Comparison | Business-case visualization (model-based) |
+| 6. EDA | Array compiler + export pipeline |
+| 7. Docs | In-app documentation browser |
 
 ---
 
-## Module 1: Hysteresis
+## Module Highlights
 
-P-E curve simulator for ferroelectric memory physics.
+### Module 1: Hysteresis
 
-- 5 physics models (Preisach, Mayergoyz, KAI, Temperature, Fatigue)
-- 8+ material library (HZO variants, AlScN, cryogenic, FTJ)
-- Interactive P-E loop visualization
-- Multi-level analog memory demo (8-140 levels per material)
-- Calibration system with temperature awareness
-- Multiple run modes (GUI, TUI, headless, Vulkan)
+- Preisach and Landau-Khalatnikov engines
+- Multi-level write/read/verify with calibration
+- Temperature-aware calibration cache
 
----
+### Module 2: Crossbar
 
-## Module 2: Crossbar Array
+- Analog MVM/VMM with 30-level quantization
+- IR drop, sneak paths, drift, RC delay, variation, endurance
+- Optional GPU MVM acceleration + tool validation widgets
 
-Matrix-vector multiply simulator with realistic non-idealities.
+### Module 3: MNIST
 
-- Analog MVM computation (I = G × V)
-- Non-ideality simulation (IR drop, sneak paths, drift, temperature, variation)
-- Architecture comparison (0T1R, 1T1R, 2T1R)
-- Real-time heatmaps with 8 colormaps
-- Before/after comparison toggle
-- GPU acceleration (Vulkan)
+- Dual-mode FP vs CIM inference
+- Quantization and noise controls
+- Confusion matrix + activation views + energy widget
 
----
+### Module 4: Circuits
 
-## Module 3: MNIST
+- DAC -> Pump -> FeFET -> TIA -> ADC pipeline
+- INL/DNL analysis, voltage-zone visualization
+- Architecture voltage-rule visualization (0T1R/1T1R/2T1R)
 
-Neural network digit recognition demonstrating FeCIM inference.
+### Module 5: Comparison
 
-- Dual-mode inference (FP32 vs CIM side-by-side)
-- 28×28 drawing canvas
-- Configurable quantization and noise
-- Layer activation visualization
-- Educational tour and auto demo modes
+- CPU/GPU/FeCIM modeled comparisons
+- Workload library (MNIST -> LLM-70B)
+- Data-center scaling and market visualization (scenario inputs)
 
----
+### Module 6: EDA
 
-## Module 4: Peripheral Circuits
+- Storage/Memory/Compute modes
+- JSON/CSV/SPICE/Verilog/DEF exports
+- OpenLane integration helpers and validation tools
 
-DAC/ADC/TIA signal chain for FeCIM arrays.
+### Module 7: Docs
 
-- Three operation modes (READ, WRITE, COMPUTE)
-- Complete signal chain (DAC → Pump → FeFET → TIA → ADC)
-- Architecture support (0T1R, 1T1R, 2T1R)
-- Voltage zone visualization
-- INL/DNL analysis
-
----
-
-## Module 5: Technology Comparison
-
-Business case analysis for FeCIM vs CPU/GPU.
-
-- Architecture comparison (CPU+DRAM, GPU+HBM, FeCIM)
-- 5 workloads (MNIST to LLM-70B)
-- Data center calculator (power, cost, CO2)
-- Animated visualizations
-- 4 presentation modes (Manual, Auto, Investor, Engineer)
-
----
-
-## Module 6: EDA Tools
-
-Chip design suite for FeCIM arrays.
-
-- 8 export formats (Verilog, SPICE, DEF, LEF, Liberty, SVG, JSON, CSV)
-- 3 PDK support (SKY130, GF180MCU, IHP_SG13G2)
-- OpenLane RTL-to-GDSII integration
-- 3 operation modes (Storage, Memory, Compute)
-- Validation tools (Yosys, DEF checker)
+- Curriculum-first documentation viewer with search, ToC, glossary
 
 ---
 
 ## Shared Infrastructure
 
 - Unified FeCIM theme
-- CI-tested (see GitHub Actions)
 - Centralized logging
-- Physics library with material database
+- Shared physics and peripherals libraries
 
 ---
 
 ## Cross-Module Workflow
 
 ```
-Module 1 (Calibrate) → Module 2 (Simulate) → Module 3 (Train)
-                                ↓
-                        Module 4 (Design Circuits)
-                                ↓
-                        Module 5 (Business Case)
-                                ↓
-                        Module 6 (Export for Fab)
+Module 1 (Calibrate) -> Module 2 (Simulate) -> Module 3 (Infer)
+                                v
+                        Module 4 (Circuits)
+                                v
+                        Module 5 (Comparison)
+                                v
+                        Module 6 (Export)
 ```
 
 ---

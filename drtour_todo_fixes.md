@@ -2,9 +2,9 @@
 ## Comprehensive Scientific and Educational Review
 
 **Reviewer**: Dr. James M. Tour (simulated critique perspective)
-**Date**: January 27, 2026
-**Scope**: Complete review of 43 screenshots across all 6 modules
-**Reference Documents**: CLAUDE.md, HONESTY_AUDIT.md, ironlattice-transcript.md
+**Date**: February 3, 2026
+**Scope**: Review of 14 referenced screenshots across Modules 1-6 plus Home screen (Module 7 docs not in this capture set)
+**Reference Documents**: `CLAUDE.md`, `docs/comparison/HONESTY_AUDIT.md`, `docs/video-transcripts/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md`
 
 ---
 
@@ -13,6 +13,39 @@
 This is an **impressive educational tool** that demonstrates genuine understanding of ferroelectric compute-in-memory physics. However, as someone who has spent 18 months developing actual FeCIM hardware at external research institution, I must point out several areas where the simulation diverges from physical reality, where educational messaging could be clearer, and where scientific rigor demands corrections.
 
 **Overall Grade: B+** - Excellent educational intent, good physics foundation, but needs refinement in accuracy claims and user communication.
+
+---
+
+## Status Update (2026-02-03)
+
+**Verified against current codebase** (not just screenshots):
+
+**Critical**
+- ✅ **CRIT-001** implemented — prominent TRL banner and “SIMULATION ONLY” subtitle. (`module5-comparison/pkg/gui/hero.go`, `module5-comparison/pkg/gui/app.go`)
+- ✅ **CRIT-002** implemented — header now separates verified literature from projected demo. (`module3-mnist/pkg/gui/dualmode.go`)
+- ✅ **CRIT-003** implemented — “Why 30 Levels?” dialog includes verification status and peer‑reviewed context. (`module3-mnist/pkg/gui/dialogs.go`)
+- ✅ **CRIT-004** implemented — temperature slider drives physics + calibration; cryogenic preset included. (`module1-hysteresis/pkg/gui/controls.go`, `module1-hysteresis/pkg/gui/simulation.go`)
+- ✅ **CRIT-005** implemented — accuracy waterfall references peer‑reviewed ranges and removes fixed 87% target. (`module2-crossbar/pkg/gui/app_tabs.go`, `module2-crossbar/pkg/gui/app_analysis.go`)
+
+**High**
+- ✅ **HIGH-001** implemented — home screen copy adds simulation caveats. (`cmd/fecim-lattice-tools/launcher.go`)
+- ✅ **HIGH-002** implemented — explicit N² parallelism explanation in Crossbar UI. (`module2-crossbar/pkg/gui/app_tabs.go`)
+- ⚠️ **HIGH-003** partial — voltages derived from Ec×thickness but no explicit citation for thickness dependence or sub‑1V demo. (`module4-circuits/pkg/gui/tab_reference_voltage.go`)
+- ⚠️ **HIGH-004** pending — read‑disturb thresholds not explicitly sourced/marked “assumed”. (`module4-circuits/pkg/gui/tab_reference_voltage.go`)
+- ✅ **HIGH-005** implemented — market chart has projection/TRL disclaimers. (`module5-comparison/pkg/gui/market.go`)
+
+**Medium**
+- ✅ **MED-001** implemented — log toggle (verbose/compact). (`module1-hysteresis/pkg/gui/info.go`)
+- ✅ **MED-002** implemented — sneak path side‑by‑side compare widget. (`module2-crossbar/pkg/gui/widgets_sneak_compare.go`)
+- ✅ **MED-003** implemented — weight error contextualized as % of range. (`module3-mnist/pkg/gui/weight_comparison.go`)
+- ⚠️ **MED-004** pending — GPU comparison still lacks explicit batching/throughput caveat. (`module4-circuits/pkg/gui/tab_comparison.go`)
+- ✅ **MED-005** implemented — EDA status made more explicit on Home. (`cmd/fecim-lattice-tools/launcher.go`)
+
+**Low**
+- ✅ **LOW-001** implemented — wake‑up/stable/fatigue labels. (`module1-hysteresis/pkg/gui/info.go`, `module1-hysteresis/pkg/gui/simulation.go`)
+- ⚠️ **LOW-002** partial — About docs exist, but no unified “About the Science” entry point across all modules. (`docs/about/About.App.md`)
+- ✅ **LOW-003** implemented — screenshot metadata embedded. (`cmd/fecim-lattice-tools/main.go`, `shared/utils/png_metadata.go`)
+- ✅ **LOW-004** implemented — accessibility helpers + keyboard help. (`shared/widgets/accessibility.go`)
 
 ---
 
@@ -27,11 +60,11 @@ This is an **impressive educational tool** that demonstrates genuine understandi
 
 **My Concern**: In my COSM presentation, I was careful to say we're at TRL 4. But this UI makes the energy claim the HERO while the caveat is a footnote. A student might screenshot just the "1000x" and share it without context.
 
-**Fix Required**:
+**Fix Applied (2026-02-03)**:
 ```
-BEFORE: "1000x LESS ENERGY*" (giant text) + tiny asterisk note
-AFTER:  "1000x LESS ENERGY (PROJECTED)" with equal-sized subtitle:
-        "Laboratory estimates only - not independently verified"
+Hero text: "80-90%"
+Subtitle:  "⚠️ SIMULATION ONLY | TRL 4 Lab Estimates | Not Production Verified"
+Stat strip: "1000x less than CPU | 100x less than GPU | ~1 pJ/MAC (TRL 4 est.)"
 ```
 
 **Reference**: `HONESTY_AUDIT.md` Section 6.2 - "Tour's 10M× Claim" analysis shows even 1000× needs verification
@@ -52,12 +85,9 @@ AFTER:  "1000x LESS ENERGY (PROJECTED)" with equal-sized subtitle:
 
 **Why This Matters**: A student using this tool might think 87% is impressive. It's actually **11% below** what others have demonstrated with similar technology. This undersells FeCIM's potential.
 
-**Fix Required**:
+**Fix Applied (2026-02-03)**:
 ```markdown
-CURRENT HEADER: "FeCIM MNIST: 30 Levels = 87% Accuracy"
-
-PROPOSED HEADER: "FeCIM MNIST Demo: 30 Levels"
-PROPOSED SUBTITLE: "Simulating Tour 2025 claims (87%) | Peer-reviewed best: 98.24%"
+HEADER: "FeCIM MNIST Demo | Literature: 96.6-98.24% (verified) | Demo: projected"
 ```
 
 **Reference**: `HONESTY_AUDIT.md` Section 5.4 - MNIST Accuracy table
@@ -71,27 +101,12 @@ PROPOSED SUBTITLE: "Simulating Tour 2025 claims (87%) | Peer-reviewed best: 98.2
 
 **Observation**: I see a "Why 30?" button in the interface. **EXCELLENT** - but is the content scientifically accurate?
 
-**Required Content for "Why 30?" Dialog**:
-```markdown
-## Why 30 Discrete States?
-
-### Tour's Claim (COSM 2025) - UNVERIFIED
-- 30 states demonstrated in proprietary superlattice
-- Source: Conference presentation, not peer-reviewed
-
-### Peer-Reviewed Context
-- 32 states: Oh et al., IEEE EDL 2017 (VERIFIED)
-- 140 states: Song et al., Adv. Science 2024 (VERIFIED)
-- 7 states sufficient for 96.6% MNIST (Nature Commun. 2023)
-
-### Why 30 is Plausible
-30 states falls within the demonstrated range (7-140).
-Tour's specific device is unverified, but the physics is sound.
-
-### Bits per Cell
-30 states ≈ log₂(30) ≈ 4.9 bits/cell
-This is competitive with MLC NAND (3-4 bits/cell)
-```
+**Implemented Content (2026-02-03)**:
+- Verification status section (Tour claim unverified; peer‑reviewed 32–140 range)
+- Peer‑reviewed MNIST context (7 states → 96.6%, FTJ reservoir → 98.24%)
+- Bits‑per‑cell comparison table
+- Accuracy vs levels (projected vs verified)
+- Noise/ADC constraints with 3σ separation rationale
 
 **Reference**: `CLAUDE.md` - "30 analog states (Tour device) | UNVERIFIED"
 
@@ -112,11 +127,10 @@ This is competitive with MLC NAND (3-4 bits/cell)
 
 **Current UI**: Shows "T: 300 K (27°C)" but appears to be cosmetic only
 
-**Fix Required**:
-- Make temperature slider FUNCTIONAL
-- When T changes, Pr and Ec should change according to literature
-- Add "Cryogenic Mode" preset showing enhanced performance at 4K
-- Display: "Pr increases ~30% at cryogenic temperatures (Adv. Elec. Mat. 2024)"
+**Fix Applied (2026-02-03)**:
+- Temperature slider drives simulation + calibration (Ec/Pr scale with temperature)
+- Cryogenic material preset added ("Cryogenic HZO (4K)")
+- Temperature-dependent metrics displayed in UI and logs
 
 **Reference**: `HONESTY_AUDIT.md` Section 4.3, Section 5.7
 
@@ -140,17 +154,10 @@ This is competitive with MLC NAND (3-4 bits/cell)
 2. The degradation percentages aren't sourced
 3. No error bars or confidence intervals
 
-**Fix Required**:
-```markdown
-CHART TITLE: "Accuracy Degradation Analysis (Simulation)"
-
-ADD FOOTER: "Degradation estimates based on literature review.
-             Actual values vary by architecture and process node.
-             See: docs/cim/simulation.md for methodology"
-
-CHANGE: "Target: 87% (Hardware)"
-TO:     "Simulated: ~87% | Peer-reviewed range: 92-98%"
-```
+**Fix Applied (2026-02-03)**:
+- “Target: 87%” removed
+- Peer‑reviewed range shown in Accuracy Analysis text (“Peer‑reviewed: 96–98%”)
+- Waterfall breakdown labels added to stats panel
 
 ---
 
@@ -427,16 +434,14 @@ This would set a gold standard for educational software honesty.
 | Crossbar | 1T1R eliminates sneak paths | Device physics | ✅ CORRECT |
 | MNIST | Quantization affects accuracy | Neural network theory | ✅ CORRECT |
 | Circuits | DAC→FeFET→TIA→ADC path | Standard CIM architecture | ✅ CORRECT |
-| Comparison | Energy advantage vs DRAM | Peer-reviewed (25-100×) | ⚠️ OVERSTATED |
+| Comparison | Energy advantage vs NAND | Peer-reviewed (25-100×) | ✅ CAVEATED (TRL 4, projections labeled) |
 
-### Claims Requiring Correction:
+### Open Items Requiring Clarification (2026-02-03):
 
 | Module | Claim | Issue | Required Fix |
 |--------|-------|-------|--------------|
-| MNIST | 87% accuracy | Unverified, below SOTA | Add peer-reviewed context |
-| Comparison | 1000× energy | TRL 4 estimate | More prominent caveat |
-| Comparison | All green checkmarks | Assumes production | Add "projected" label |
-| Circuits | 0.5V read threshold | No citation | Add source or mark assumed |
+| Circuits | Read voltage safe range (0.1-0.5V) | Derived from Vc but no explicit citation | Add citation or mark as assumed |
+| Circuits | Sub‑1V switching at 3.6nm | Not surfaced in UI | Add thickness‑dependent footnote and source |
 
 ---
 
@@ -465,30 +470,30 @@ This would set a gold standard for educational software honesty.
 
 ### CRITICAL (Fix Before Any Public Demo):
 - [x] **CRIT-001**: Energy claim asterisk prominence ✅ (hero.go - added TRL warning)
-- [x] **CRIT-002**: 87% vs 98.24% accuracy context ✅ (dualmode.go - header updated)
-- [x] **CRIT-003**: "Why 30?" content verification ✅ (dialogs.go - added verification status)
-- [x] **CRIT-004**: Temperature dependence in hysteresis ✅ (VERIFIED: already functional)
-- [x] **CRIT-005**: Accuracy degradation chart sources ✅ (widgets_waterfall.go - added context)
+- [x] **CRIT-002**: 87% claim removed; header shows verified literature vs projected demo ✅ (`module3-mnist/pkg/gui/dualmode.go`)
+- [x] **CRIT-003**: "Why 30?" content verification ✅ (`module3-mnist/pkg/gui/dialogs.go`)
+- [x] **CRIT-004**: Temperature dependence functional ✅ (`module1-hysteresis/pkg/gui/controls.go`, `module1-hysteresis/pkg/gui/simulation.go`)
+- [x] **CRIT-005**: Accuracy degradation chart context ✅ (`module2-crossbar/pkg/gui/app_tabs.go`, `module2-crossbar/pkg/gui/app_analysis.go`)
 
 ### HIGH (Fix Before Academic Use):
 - [x] **HIGH-001**: Home screen descriptions ✅ (launcher.go - updated 3 descriptions)
-- [x] **HIGH-002**: MAC count explanation ✅ (tab_operations_compute.go - added parallelism section)
-- [x] **HIGH-003**: Voltage range citations ✅ (tab_operations_write.go - added thickness context)
-- [x] **HIGH-004**: Read parameter sources ✅ (tab_operations_read.go - marked as empirical)
+- [x] **HIGH-002**: MAC count explanation ✅ (`module2-crossbar/pkg/gui/app_tabs.go`)
+- [ ] **HIGH-003**: Voltage range citations ⏳ (needs explicit thickness-dependent source in UI; `module4-circuits/pkg/gui/tab_reference_voltage.go`)
+- [ ] **HIGH-004**: Read parameter sources ⏳ (needs explicit citation/assumption label; `module4-circuits/pkg/gui/tab_reference_voltage.go`)
 - [x] **HIGH-005**: Market chart disclaimers ✅ (market.go - added TRL and projection warnings)
 
 ### MEDIUM (Fix For Polish):
-- [ ] **MED-001**: Simplified log toggle (substantial UI work - deferred)
-- [ ] **MED-002**: Sneak path comparison view (substantial UI work - deferred)
-- [x] **MED-003**: Weight error context ✅ (weight_comparison.go - added % of range)
-- [x] **MED-004**: GPU comparison nuance ✅ (tooltips.go - added comparison context)
-- [x] **MED-005**: EDA status prominence ✅ (addressed in HIGH-001 description update)
+- [x] **MED-001**: Simplified log toggle ✅ (`module1-hysteresis/pkg/gui/info.go`)
+- [x] **MED-002**: Sneak path comparison view ✅ (`module2-crossbar/pkg/gui/widgets_sneak_compare.go`)
+- [x] **MED-003**: Weight error context ✅ (`module3-mnist/pkg/gui/weight_comparison.go`)
+- [ ] **MED-004**: GPU comparison nuance ⏳ (add batching/throughput caveat; `module4-circuits/pkg/gui/tab_comparison.go`)
+- [x] **MED-005**: EDA status prominence ✅ (`cmd/fecim-lattice-tools/launcher.go`)
 
 ### LOW (Nice to Have):
-- [ ] **LOW-001**: Hysteresis cycle labels
-- [ ] **LOW-002**: About the Science section
-- [ ] **LOW-003**: Screenshot metadata
-- [ ] **LOW-004**: Accessibility audit
+- [x] **LOW-001**: Hysteresis cycle labels ✅ (`module1-hysteresis/pkg/gui/info.go`)
+- [ ] **LOW-002**: About the Science section ⏳ (docs exist, no global entry across modules; `docs/about/About.App.md`)
+- [x] **LOW-003**: Screenshot metadata ✅ (`cmd/fecim-lattice-tools/main.go`, `shared/utils/png_metadata.go`)
+- [x] **LOW-004**: Accessibility audit ✅ (`shared/widgets/accessibility.go`)
 
 ---
 

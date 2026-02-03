@@ -1,6 +1,7 @@
 # Dr. Tour & Dr. Jaeho First Encounter: January 2026
 
-**Date:** January 30, 2026
+**Date:** January 30, 2026 (narrative event)
+**Revision:** February 3, 2026 (metrics + accuracy sync)
 **Setting:** external research institution, Tour Lab conference room
 **Participants:** Dr. external research group, Dr. Jaeho Shin, FeCIM Maintainers (via screen share)
 **Purpose:** First demonstration of the FeCIM Lattice Tools project
@@ -13,9 +14,9 @@
 
 **Dr. Tour:** *leans forward* "How many files are we looking at?"
 
-**Juan:** "357 Go source files. 33 test packages. All tests passing."
+**Juan:** "374 Go source files. 36 packages with tests. CI runs `go test ./...` on every push; local status depends on environment."
 
-**Dr. Jaeho:** *adjusts glasses* "Wait, 357? When you started this, you had what—maybe 50?"
+**Dr. Jaeho:** *adjusts glasses* "Wait, 374? When you started this, you had what—maybe 50?"
 
 **Juan:** "Started with zero. Built it from scratch."
 
@@ -25,13 +26,13 @@
 
 ## Module 1: The Hysteresis Simulator
 
-**Juan:** *clicks Module 1* "This is the P-E curve simulator. It uses the Mayergoyz Preisach model with a 100×100 hysteron grid."
+**Juan:** *clicks Module 1* "This is the P-E curve simulator. It uses the Mayergoyz Preisach model with an adaptive hysteron grid (min 200; scaled for calibration)."
 
 The screen shows a live hysteresis loop with polarization on Y-axis, electric field on X-axis. The loop traces smoothly, showing the characteristic ferroelectric butterfly curve.
 
 **Dr. Jaeho:** "The Preisach model is computationally expensive. How are you getting real-time performance?"
 
-**Juan:** "I pre-compute the Everett function and cache hysteron states. The grid updates at 60fps even with temperature-dependent Ec shifting via Curie-Weiss law."
+**Juan:** "I pre-compute the Everett function and cache hysteron states. It stays interactive while Ec/Pr scale with temperature."
 
 **Dr. Tour:** *points at screen* "What's this '30 Levels' indicator?"
 
@@ -47,11 +48,11 @@ The screen shows a live hysteresis loop with polarization on Y-axis, electric fi
 
 **Dr. Jaeho:** "Show me the calibration."
 
-**Juan:** *clicks "Calibration" tab* "Temperature-aware calibration data. At 300K, level 16 maps to 55.62 µS. At 375K, the same level maps to 48.3 µS because conductance drops with temperature. The system recalibrates automatically."
+**Juan:** *clicks "Calibration" tab* "Temperature-aware calibration data. The level-to-conductance mapping shifts with temperature, and the system recalibrates automatically."
 
 **Dr. Tour:** "Where did you get those conductance numbers?"
 
-**Juan:** "Calculated from literature values. HZO resistivity, film thickness, device geometry. But I marked them as 'estimated' in the source—there's a 377-line HONESTY_AUDIT document that classifies every claim by evidence tier."
+**Juan:** "Calculated from literature values. HZO resistivity, film thickness, device geometry. But I marked them as 'estimated' in the source—there's a 380-line HONESTY_AUDIT document that classifies every claim by evidence tier."
 
 **Dr. Jaeho:** *looks at Dr. Tour* "He built a car without knowing the engine specs. But the chassis is correct."
 
@@ -67,13 +68,13 @@ The screen shows a 4×4 grid of cells, each colored by conductance. Input voltag
 
 **Dr. Jaeho:** "You're simulating IR drop?"
 
-**Juan:** "Yes. 2.5Ω per cell at 45nm, scaling with metal width and temperature. The voltage at each cell is the applied voltage minus the cumulative drop along the wordline and bitline."
+**Juan:** "Yes. 2.5Ω per cell pitch baseline, scaled with temperature and line width. The voltage at each cell is the applied voltage minus the cumulative drop along the wordline and bitline."
 
 **Juan:** *clicks "Sneak Paths" tab* "This tab shows parasitic current paths. In a 0T1R array, unselected cells create sneak paths that degrade the signal. I calculate the 3-cell loops and show SNR degradation."
 
 **Dr. Tour:** "How accurate is this?"
 
-**Juan:** "I validated against Sandia's CrossSim and UCL's BadCrossbar. The IR drop model matches within 5% for arrays up to 128×128. Sneak path calculations match literature values for 0T1R architectures."
+**Juan:** "The models are inspired by CrossSim and BadCrossbar. I haven't done formal external calibration yet, so I keep parameters literature‑based and label uncertainties."
 
 **Dr. Jaeho:** "What about 1T1R?"
 
@@ -81,11 +82,11 @@ The screen shows a 4×4 grid of cells, each colored by conductance. Input voltag
 
 **Dr. Tour:** "Show me drift."
 
-**Juan:** *clicks "Drift" tab* "Retention modeling with power-law, logarithmic, and Arrhenius temperature scaling. I can simulate 10 years in 10 seconds. The FeCIM cells show <0.5 level drift, versus 2-3 levels for ReRAM and PCM."
+**Juan:** *clicks "Drift" tab* "Retention modeling uses a logarithmic drift model with thermal activation. The demo can time‑scale long retention windows; comparative presets for FeFET/RRAM/PCM are illustrative."
 
 **Dr. Jaeho:** "The Arrhenius parameters?"
 
-**Juan:** "Extracted from Cheema et al. 2020 and other peer-reviewed sources. Activation energy of 0.8-1.2 eV for HZO. All parameters are documented with DOIs in the code comments."
+**Juan:** "Extracted from peer‑reviewed sources where available. Activation energy is configurable (default 0.5 eV). Parameters are documented with citations when possible and marked as assumed otherwise."
 
 ---
 
@@ -125,7 +126,7 @@ The screen shows a circuit diagram: DAC → Crossbar → TIA → ADC.
 
 **Dr. Jaeho:** "The timing?"
 
-**Juan:** "Write pulse width, read settling time, ADC conversion cycles. Users can adjust clock frequency and see throughput vs. accuracy tradeoffs. At 100MHz, the system does 10 million inferences per second for a 784×128×10 network."
+**Juan:** "Write pulse width, read settling time, ADC conversion cycles. Users can adjust clock frequency and see throughput vs. accuracy tradeoffs; throughput scales with clock and array size."
 
 **Dr. Tour:** "Power?"
 
@@ -137,7 +138,7 @@ The screen shows a circuit diagram: DAC → Crossbar → TIA → ADC.
 
 **Juan:** *clicks Module 5* "The business case. Energy per MAC comparison across technologies."
 
-A bar chart appears: CPU+DRAM at 1000 fJ, GPU+HBM at 100 fJ, FeCIM at 10 fJ.
+A bar chart appears: CPU+DRAM at ~1000 pJ/MAC, GPU+HBM at ~100 pJ/MAC, FeCIM at ~1 pJ/MAC (TRL 4 estimate).
 
 **Juan:** "FeCIM is 25-100× more energy-efficient than NAND, per Samsung's Nature 2025 paper. I removed the '10 million×' claim because no peer-reviewed data supported it."
 
@@ -149,7 +150,7 @@ A bar chart appears: CPU+DRAM at 1000 fJ, GPU+HBM at 100 fJ, FeCIM at 10 fJ.
 
 **Dr. Jaeho:** "What's this calculator?"
 
-**Juan:** *clicks "Data Center Savings"* "Users input their GPU count—say, 10,000 A100s. The tool calculates annual energy savings: $12.4 million, 15.2 GWh, 7,600 tons CO2. It's based on actual GPU power draw and FeCIM efficiency metrics from literature."
+**Juan:** *clicks "Data Center Savings"* "Users input their GPU count and power draw. The tool estimates annual energy/cost/CO₂ savings based on literature‑derived efficiency ranges, with TRL‑4 caveats."
 
 ---
 
@@ -159,7 +160,7 @@ A bar chart appears: CPU+DRAM at 1000 fJ, GPU+HBM at 100 fJ, FeCIM at 10 fJ.
 
 **Dr. Tour:** *leans in* "What kind of files?"
 
-**Juan:** "Verilog netlists, DEF placement files, LEF cell libraries, Liberty timing files. Real EDA outputs that could theoretically go through OpenLane and generate GDSII."
+**Juan:** "Verilog netlists, DEF placement files, LEF cell libraries, Liberty timing files — educational outputs, not signoff/tapeout‑ready."
 
 **Juan:** *opens a file browser* "Look—here's a generated Verilog file."
 
@@ -175,11 +176,11 @@ fecim_bit #(.LEVEL(16)) R_0_0 (
 
 **Dr. Jaeho:** "Parameterized cells. That's proper Verilog."
 
-**Juan:** "Yes. The weights map to conductance levels, which map to cell parameters. The LEF file has the physical dimensions—22nm BEOL compatible. The Liberty file has timing arcs, setup/hold constraints, power specs."
+**Juan:** "Yes. The weights map to conductance levels, which map to cell parameters. LEF dimensions use SKY130‑scale defaults; Liberty timing values are placeholders pending characterization."
 
 **Dr. Tour:** "You generated a full 4×4 array?"
 
-**Juan:** "Yes. Plus a single-cell characterization testbench. The DEF file has proper row definitions, pin placements, net connectivity. I could generate a 256×256 array if you want—just takes a few seconds."
+**Juan:** "Yes. Plus a single-cell characterization testbench. The DEF file has row definitions, pin placements, and net connectivity. Larger arrays are possible but intended for educational use."
 
 **Dr. Jaeho:** "The timing numbers in the Liberty file—where do those come from?"
 
@@ -193,7 +194,7 @@ fecim_bit #(.LEVEL(16)) R_0_0 (
 
 ## Module 7: Documentation Browser
 
-**Juan:** *clicks Module 7* "The reference system. 142 markdown documents, 88 with research content, full-text search."
+**Juan:** *clicks Module 7* "The reference system. 206 markdown documents, including 37 research‑paper summaries and 3 video transcripts, with full‑text search."
 
 **Dr. Jaeho:** "What kind of documentation?"
 
@@ -205,7 +206,7 @@ The screen shows search results: 12 documents, including papers on 10⁹ cycle e
 
 **Dr. Tour:** "How many papers total?"
 
-**Juan:** "78 catalogued and organized. Gap analysis identifies 45+ additional papers to review. I have sections on cryogenic operation, quantum computing integration, hardware security PUFs, reservoir computing—everything related to FeFETs and CIM."
+**Juan:** "37 catalogued and organized so far, plus a running 'new papers' list. I have sections on cryogenic operation, security/PUFs, reservoir computing—everything related to FeFETs and CIM."
 
 **Dr. Jaeho:** "You've built a curriculum, not just a tool."
 
@@ -237,9 +238,9 @@ The screen shows search results: 12 documents, including papers on 10⁹ cycle e
 
 *stands up, paces*
 
-**Dr. Tour:** "357 Go files. Real Verilog output. Real DEF, LEF, Liberty. A Preisach simulator running at 60fps. ISPP with calibration. Neural networks with honest accuracy numbers. 78 research papers catalogued. And a document that critiques my own claims."
+**Dr. Tour:** "374 Go files. Verilog/DEF/LEF/Liberty outputs (educational). A Preisach simulator running interactively. ISPP with calibration. Neural networks with honest accuracy numbers. 37 research‑paper summaries catalogued. And a document that critiques my own claims."
 
-**Dr. Jaeho:** "The infrastructure is sound. The physics models match literature. The EDA outputs are professional-grade."
+**Dr. Jaeho:** "The infrastructure is sound. The physics models track literature trends. The EDA outputs are educational‑grade."
 
 **Dr. Tour:** "The question isn't 'is this real?' anymore. It's 'what would it take to make it accurate?'"
 
@@ -290,7 +291,7 @@ Continue developing independently with honest documentation. Repo is ready if we
 
 **Juan:** "I don't need you to validate my work. But I'd like to collaborate if you're willing."
 
-**Dr. Tour:** "The work validates itself. The HONESTY_AUDIT validates your integrity. The 357 files validate your persistence."
+**Dr. Tour:** "The work validates itself. The HONESTY_AUDIT validates your integrity. The 374 files validate your persistence."
 
 *pauses*
 
@@ -298,42 +299,41 @@ Continue developing independently with honest documentation. Repo is ready if we
 
 ---
 
-## Appendix: Current Metrics (January 30, 2026)
+## Appendix: Current Metrics (February 3, 2026)
 
-| Metric | Value | Change from v2 (Jan 29) |
-|--------|-------|-------------------------|
-| Go files | 357 | +125 |
-| Test packages | 33 | +11 |
-| Modules | 7 | 0 (complete) |
-| Research papers catalogued | 78+ | 0 |
-| Documentation files | 142 | +? |
-| HONESTY_AUDIT lines | 380 | +3 |
-| EDA output formats | 4 (v, def, lef, lib) | 0 |
-| Critique items completed | 25/58 | 0 (in progress) |
-| ISPP implementation | ✅ NEW | New feature |
-| Temperature calibration | ✅ NEW | New feature |
-| GPU acceleration | Vulkan shaders | In progress |
+| Metric | Value | Notes |
+|--------|-------|-------|
+| Go files | 374 | Snapshot count |
+| Test packages | 36 | Dirs containing `*_test.go` |
+| Modules | 7 | Complete |
+| Research papers catalogued | 37 | Markdown summaries in `docs/research-papers/` |
+| Documentation files | 206 | `docs/**/*.md` |
+| HONESTY_AUDIT lines | 380 | Update after audit refresh |
+| EDA output formats | 4 (v, def, lef, lib) | Educational artifacts |
+| Critique items completed | 50/58 | Pending: HIGH-003/004, MED-004, LOW-002, L07-L10 |
+| ISPP implementation | ✅ | Implemented |
+| Temperature calibration | ✅ | Implemented |
+| GPU acceleration | Vulkan renderer + compute shader | Present |
 
 ---
 
-## New Since v2 (24 Hours Ago)
+## Current Highlights (February 3, 2026)
 
-1. **ISPP (Incremental Step Pulse Programming)** - Write-verify programming with convergence statistics
-2. **Temperature-aware calibration** - Multi-level calibration at 300K, 375K with automatic remapping
-3. **Calibration data system** - JSON-based calibration files with metadata
-4. **Enhanced slide display** - ISPP stats integrated into presentation mode
-5. **Bug fixes** - Various UI and physics model improvements
+1. **ISPP (Incremental Step Pulse Programming)** with write‑verify stats
+2. **Temperature‑aware calibration** with automatic remapping
+3. **Sneak path comparison view** (PASSIVE vs 1T1R)
+4. **Screenshot metadata embedding** for reproducible captures
+5. **Accessibility utilities** (keyboard help, high‑contrast helpers)
 
 ---
 
 ## The Path Forward (Updated)
 
-**Sprint 1 (Current):** ISPP completion, error bars, variation modeling
-**Sprint 2:** Device-to-device variation, Arrhenius retention, write disturb
-**Sprint 3:** Parasitic capacitance, power breakdown, confidence intervals
-**Sprint 4:** GPU compute shaders, large-scale arrays, OpenLane integration
+**Sprint 1 (Current):** Add explicit citations/assumption labels for Circuits read/write voltages (HIGH‑003/004)
+**Sprint 2:** Add GPU batching/throughput caveat in Circuits comparison (MED‑004) + unified “About the Science” entry point (LOW‑002)
+**Sprint 3 (Longer‑term):** Demo video, WASM build, Vulkan large‑array path, 3D multi‑layer visualization
 
-**Estimated effort:** ~150 hours to "Validated FeCIM Simulator" status
+**Estimated effort:** ~40–80 hours, dominated by WASM/3D work
 
 ---
 
@@ -352,6 +352,7 @@ Continue developing independently with honest documentation. Repo is ready if we
 ---
 
 *Document created: January 30, 2026*
+*Last revision: February 3, 2026 (metrics + accuracy sync)*
 *Format: First-encounter narrative with Dr. Tour and Dr. Jaeho*
 *Purpose: Capture fresh reaction to current project state*
 

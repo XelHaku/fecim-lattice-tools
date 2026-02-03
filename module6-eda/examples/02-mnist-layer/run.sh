@@ -6,6 +6,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUTPUT_DIR="$SCRIPT_DIR/output"
+DESIGN_NAME="fecim_array"
 
 echo "=== FeCIM Example 02: MNIST First Layer ==="
 echo ""
@@ -20,6 +21,7 @@ go run ./cmd/eda-cli \
   -cols 32 \
   -levels 30 \
   -vdd 1.8 \
+  -name "$DESIGN_NAME" \
   -json=true \
   -csv=true \
   -spice=true \
@@ -28,16 +30,17 @@ go run ./cmd/eda-cli \
 
 echo ""
 echo "=== Statistics ==="
-if [ -f "$OUTPUT_DIR/mapping.json" ]; then
+DESIGN_JSON="$OUTPUT_DIR/${DESIGN_NAME}_design.json"
+if [ -f "$DESIGN_JSON" ]; then
   echo "Extracting compilation stats..."
   python3 -c "
 import json
-with open('$OUTPUT_DIR/mapping.json') as f:
+with open('$DESIGN_JSON') as f:
     data = json.load(f)
     stats = data.get('stats', {})
     print(f\"  Total Cells: {stats.get('total_cells', 'N/A')}\")
-    print(f\"  Utilization: {stats.get('utilization', 0)*100:.1f}%\")
-    print(f\"  PSNR: {stats.get('psnr_db', 'N/A'):.1f} dB\")
+    print(f\"  Active Cells: {stats.get('active_cells', 'N/A')}\")
+    print(f\"  Quant PSNR: {stats.get('quant_psnr_db', 'N/A')} dB\")
 " 2>/dev/null || echo "  (Install python3 for detailed stats)"
 fi
 
@@ -48,4 +51,3 @@ ls -la "$OUTPUT_DIR"
 echo ""
 echo "=== Done ==="
 echo ""
-echo "Next: Run ngspice simulation with testbench.sp"

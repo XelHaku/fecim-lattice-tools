@@ -6,6 +6,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OUTPUT_DIR="$SCRIPT_DIR/output"
+DESIGN_NAME="crossbar"
 
 echo "=== FeCIM Example 03: OpenLane Integration ==="
 echo ""
@@ -20,21 +21,22 @@ go run ./cmd/eda-cli \
   -cols 16 \
   -levels 30 \
   -vdd 1.8 \
+  -name "$DESIGN_NAME" \
   -verilog=true \
   -def=true
 
 echo ""
 echo "Step 2: Verifying output files..."
 
-if [ -f "$OUTPUT_DIR/crossbar.v" ]; then
-  echo "  ✓ crossbar.v created"
-  MODULES=$(grep -c "fecim_bit cell_" "$OUTPUT_DIR/crossbar.v" || true)
+if [ -f "$OUTPUT_DIR/${DESIGN_NAME}.v" ]; then
+  echo "  ✓ ${DESIGN_NAME}.v created"
+  MODULES=$(grep -c "fecim_bit cell_" "$OUTPUT_DIR/${DESIGN_NAME}.v" || true)
   echo "    Contains $MODULES cell instantiations"
 fi
 
-if [ -f "$OUTPUT_DIR/crossbar.def" ]; then
-  echo "  ✓ crossbar.def created"
-  FIXED=$(grep -c "+ FIXED" "$OUTPUT_DIR/crossbar.def" || true)
+if [ -f "$OUTPUT_DIR/${DESIGN_NAME}.def" ]; then
+  echo "  ✓ ${DESIGN_NAME}.def created"
+  FIXED=$(grep -c "+ FIXED" "$OUTPUT_DIR/${DESIGN_NAME}.def" || true)
   echo "    Contains $FIXED FIXED placements"
 fi
 

@@ -2,31 +2,31 @@
 
 ## What This Module Does
 
-- Compiles networks into crossbar mappings.
-- Exports mappings to CSV, JSON, and SPICE formats.
-- Provides a GUI for compiler configuration and visualization.
+- Compiles arrays for storage, memory, or compute modes.
+- Exports mappings to JSON, CSV, SPICE, Verilog, and DEF.
+- Provides a GUI for configuration, validation, and learning visuals.
 
 ## Primary Components
 
 - `module6-eda/pkg/compiler/compiler.go`
-- `module6-eda/pkg/export/csv.go`
-- `module6-eda/pkg/export/json.go`
-- `module6-eda/pkg/export/spice.go`
+- `module6-eda/pkg/export/*.go`
+- `module6-eda/pkg/validation/*.go`
+- `module6-eda/pkg/gui/app.go`
 
 ## Key Workflows
 
-- Configure compiler settings and run compile.
-- Export mapping to CSV/JSON for analysis.
-- Generate SPICE netlists for downstream tools.
+- Configure array settings and generate a design.
+- Export mapping to files for downstream tools.
+- Validate outputs (Yosys, DEF checks, cross-file consistency).
 
 ## Extension Points
 
-- Add new export formats or mapping constraints.
-- Improve tiling or placement strategies.
-- Integrate with external layout workflows.
+- Add export formats or mapping constraints.
+- Improve placement/tiling strategies.
+- Integrate additional layout workflows.
 
 ## Known Limitations
 
-- No physical placement or routing optimization.
-- SPICE export is structural, not calibrated to a PDK.
-- Assumes array sizes and levels are already defined.
+- Liberty timing values are placeholders (need characterization).
+- Exports are educational artifacts, not tape-out ready.
+- CLI supports passive/1T1R; 2T1R is available via API only.

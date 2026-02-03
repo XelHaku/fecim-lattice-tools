@@ -3,7 +3,7 @@
 ## What This Module Does
 
 - Builds architecture profiles for CPU, GPU, and FeCIM.
-- Runs workload estimates and compares metrics.
+- Runs workload estimates and compares modeled metrics.
 - Renders charts and summary advantages.
 
 ## Primary Components
@@ -15,7 +15,7 @@
 ## Key Workflows
 
 - Select a workload and compare architectures.
-- Scale results to data center assumptions.
+- Scale results to data-center assumptions.
 - Render charts for energy, latency, and throughput.
 
 ## Extension Points

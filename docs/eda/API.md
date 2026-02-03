@@ -126,7 +126,7 @@ type ArrayConfig struct {
 
     // Technology
     Technology   string // "SKY130", "GF180MCU", "IHP_SG13G2"
-    Architecture string // "passive", "1T1R", "2T1R"
+    Architecture string // "passive", "1t1r", "2t1r"
 
     // Physical parameters
     CellPitch float64 // Cell width in microns (default: 0.46)
@@ -165,8 +165,8 @@ const (
 ```go
 const (
     ArchPassive = "passive" // WL[], BL[] only (sneak-path susceptible)
-    Arch1T1R    = "1T1R"    // WL[], BL[], SL[] (sneak-path mitigated)
-    Arch2T1R    = "2T1R"    // WL[], BL[], SL[], CSL[] (full control)
+    Arch1T1R    = "1t1r"    // WL[], BL[], SL[] (sneak-path mitigated)
+    Arch2T1R    = "2t1r"    // WL[], BL[], SL[], CSL[] (full control)
 )
 ```
 

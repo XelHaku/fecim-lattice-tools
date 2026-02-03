@@ -1,5 +1,9 @@
 # Module 6 EDA GUI - Complete Documentation
 
+> **Status (2026-02-03):** This document describes the earlier multi-panel GUI architecture.  
+> The current GUI exposes two views only: **Builder & Validation** and **Learn**.  
+> Treat the rest of this document as **legacy reference**; see `module6-eda/pkg/gui/app.go` for the live structure.
+
 ## Quick Start
 
 This directory contains comprehensive documentation of the Module 6 EDA GUI architecture, created through detailed analysis of the codebase.

@@ -1,5 +1,9 @@
 # Module 6 EDA GUI - Complete Documentation Index
 
+> **Status (2026-02-03):** This index targets an earlier multi-panel GUI design.  
+> The current GUI exposes two views only: **Builder & Validation** and **Learn**.  
+> Use this as legacy reference; see `module6-eda/pkg/gui/app.go` for the live structure.
+
 ## Quick Navigation
 
 | Document | Purpose | Best For |

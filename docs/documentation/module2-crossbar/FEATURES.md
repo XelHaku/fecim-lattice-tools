@@ -2,8 +2,8 @@
 
 ## What This Module Does
 
-- Simulates crossbar array MVM and non-idealities.
-- Provides IR drop, sneak path, and drift analyses.
+- Simulates crossbar array MVM/VMM with discrete conductance levels.
+- Provides IR drop, sneak-path, and drift analyses.
 - Visualizes conductance heatmaps and live MVM steps.
 
 ## Primary Components
@@ -16,17 +16,17 @@
 ## Key Workflows
 
 - Program weights, run MVM, compare ideal vs non-ideal.
-- Sweep wire parameters to study IR drop sensitivity.
+- Sweep wire parameters to study IR-drop sensitivity.
 - Visualize drift over time and quantify error.
 
 ## Extension Points
 
 - Add new non-ideality models in `pkg/crossbar`.
 - Extend GUI tabs for additional analyses.
-- Change quantization or ADC/DAC parameters in array config.
+- Enable GPU acceleration via config (`UseGPU`).
 
 ## Known Limitations
 
-- No full transistor-level or SPICE transient simulation.
+- No transistor-level or SPICE transient simulation.
 - Wire models are simplified and not process-specific.
 - Default parameters are for teaching, not calibration.

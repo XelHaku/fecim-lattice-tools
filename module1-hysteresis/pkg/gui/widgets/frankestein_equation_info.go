@@ -336,6 +336,10 @@ func buildPreisachInfoTabs() fyne.CanvasObject {
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Overview", scrollSection(buildPreisachSection())),
 		container.NewTabItem("Model Notes", scrollSection(buildPreisachNotesSection())),
+		container.NewTabItem("alpha(T,sigma)", scrollSection(buildPreisachAlphaSection())),
+		container.NewTabItem("Parameters", scrollSection(buildPreisachParametersSection())),
+		container.NewTabItem("Materials", scrollSection(buildMaterialDefaultsSection())),
+		container.NewTabItem("Dynamics", scrollSection(buildPreisachDynamicsSection())),
 		container.NewTabItem("Assumptions", scrollSection(buildAssumptionsSection())),
 		container.NewTabItem("References", scrollSection(buildReferencesSection())),
 	)
@@ -388,6 +392,39 @@ func buildPreisachSection() fyne.CanvasObject {
 	)
 
 	return container.NewVBox(section...)
+}
+
+func buildPreisachAlphaSection() fyne.CanvasObject {
+	return container.NewVBox(
+		sectionTitle("alpha(T,sigma) in Preisach"),
+		bodyLabel("The Preisach model here does not use the L-K alpha(T,sigma) stiffness term."),
+		bodyLabel("Temperature and stress are handled by scaling the effective coercive field Ec and saturation polarization Ps."),
+		bodyLabel("See the Parameters tab for how Ec and Ps are updated in the Everett distribution."),
+	)
+}
+
+func buildPreisachParametersSection() fyne.CanvasObject {
+	rows := [][]string{
+		{"Parameter", "Meaning", "Notes"},
+		{"Ec", "Effective coercive field", "Scaled with temperature and stress."},
+		{"Ps", "Saturation polarization", "Scaled with temperature; used as Everett amplitude."},
+		{"Delta", "Distribution width", "Set to 0.25 * Ec in TanhEverett."},
+		{"E_sat", "Saturation field", "Set to 5 * Ec for the Preisach stack."},
+	}
+	return container.NewVBox(
+		sectionTitle("Preisach Parameter Mapping"),
+		bodyLabel("Parameters are mapped into the Everett function and Preisach stack:"),
+		tableFromRows(rows, []float32{120, 240, 260}),
+	)
+}
+
+func buildPreisachDynamicsSection() fyne.CanvasObject {
+	return container.NewVBox(
+		sectionTitle("Quasi-Static Dynamics"),
+		bodyLabel("Preisach uses a turning-point stack to encode history (wipe-out property)."),
+		bodyLabel("There is no explicit time integration or dP/dt term, so results are rate-independent."),
+		bodyLabel("To model switching delay or inertia, use the L-K dynamics tab."),
+	)
 }
 
 func loadPreisachEquationSVG() *canvas.Image {

@@ -1,53 +1,47 @@
 # Module 2: Crossbar - Features
 
-Matrix-Vector Multiply Simulator with Non-Idealities
+Matrix-Vector Multiply (MVM) simulator with non-idealities and visualization.
 
 ---
 
 ## Features
 
-- **Analog Matrix-Vector Multiply (MVM)** - Physics-based I = G × V computation
-- **30-Level Quantization** - Discrete conductance states [0/29 ... 29/29]
-- **Non-Ideality Simulation** - IR drop, sneak paths, drift, temperature, device variation
-- **Architecture Comparison** - 0T1R (passive) vs 1T1R (gated) vs 2T1R (dual)
-- **Real-Time Heatmaps** - Conductance, IR drop, sneak paths, drift visualization (8 colormaps)
-- **GPU Acceleration** - Optional Vulkan compute shaders for MVM
-- **Neural Network Integration** - Multi-layer networks with hardware-aware training
-- **Before/After Toggle** - Compare ideal vs non-ideal instantly
-- **Accuracy Waterfall** - Timeline of degradation effects
-- **Weight Serialization** - Save/load trained weights
-- **External Tool Validation** - CrossSim (Sandia) and BadCrossbar (UCL) integration
+- **Analog MVM/VMM** - Kirchhoff-law current summation (I = G x V)
+- **30-Level Quantization** - Demo baseline (conference claim; pending peer review)
+- **Conductance Models** - Linear, exponential, and lookup-table mapping
+- **Non-Idealities** - IR drop, sneak paths, drift, RC delay, process variation, endurance, half-select disturb
+- **GPU Acceleration (Optional)** - Compute-shader MVM with CPU fallback
+- **Heatmaps & Tabs** - Conductance, IR drop, sneak paths, drift
+- **External Tool Checks** - CrossSim and BadCrossbar install/status validation
+- **Weight I/O** - Save/load weight matrices and stats
 
-## Physics Models
+---
 
-| Non-Ideality | Model | Impact |
-|--------------|-------|--------|
-| **IR Drop** | WL/BL resistance (2.5Ω/cell @ 45nm) | 10-20% voltage loss in large arrays |
-| **Sneak Paths** | 3-cell parasitic loops | 5-20% error (0T1R), ~0.001% (1T1R) |
-| **Drift** | Power-law + logarithmic + Arrhenius | <0.5 level over 10 years |
-| **Temperature** | Arrhenius activation (4K-500K) | Cryogenic: 1.5× window |
-| **Variation** | Gaussian + spatial gradients | 2% device-to-device |
+## GUI Tabs
 
-## Key Parameters
+| Tab | Focus |
+|---|---|
+| **Conductance** | Ideal MVM and heatmap visualization |
+| **IR Drop** | Line resistance + voltage drop analysis |
+| **Sneak Paths** | Parasitic current analysis |
+| **Drift** | Conductance drift over time |
 
-| Parameter | Value | Notes |
-|-----------|-------|-------|
-| Levels | 30 | Quantized analog states |
-| Gmin | 10 µS | OFF-state conductance |
-| Gmax | 100 µS | ON-state conductance |
-| R_wire | 2.5 Ω/cell | Word/bit line resistance (45nm) |
-| Drift coeff | 0.0005-0.001 | Literature vs assumed |
+---
 
-## Conductance Models
+## Default Parameters (From Code)
 
-1. **Linear** — G = Gmin + norm × (Gmax - Gmin)
-2. **Exponential** — G = Gmin × exp(ln(Gmax/Gmin) × norm)
-3. **Lookup** — Calibration table from measurements
+| Parameter | Default | Notes |
+|---|---:|---|
+| Levels | 30 | Demo baseline (conference claim) |
+| Gmin / Gmax | 10 uS / 100 uS | Conductance range |
+| Wire R | 2.5 Ohm/cell | `DefaultWireParams()` |
+| Wire C | 0.2 fF/cell | `DefaultWireParams()` |
+| ADC / DAC | 6 bits / 8 bits | GUI defaults |
+| Noise | 1% | GUI default |
 
-## Architecture Comparison
+---
 
-| Metric | 0T1R (Passive) | 1T1R (Gated) |
-|--------|----------------|--------------|
-| Density | 4F² | 8-12F² |
-| Sneak Error | 5-20% | ~0.001% |
-| Complexity | Lowest | Higher |
+## Notes
+
+- Non-idealities are configurable; several are disabled by default for performance.
+- GPU acceleration is optional and auto-falls back to CPU when unavailable.

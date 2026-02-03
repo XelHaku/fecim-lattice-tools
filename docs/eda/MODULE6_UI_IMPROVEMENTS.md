@@ -2,6 +2,7 @@
 
 > Generated: 2026-01-30
 > Status: Proposal for review
+> Note: Targets a broader multi-panel GUI than the current 2-view implementation.
 
 ## Executive Summary
 

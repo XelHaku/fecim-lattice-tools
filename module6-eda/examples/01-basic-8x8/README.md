@@ -4,12 +4,12 @@ A minimal example demonstrating FeCIM weight compilation for an 8x8 crossbar arr
 
 ## Overview
 
-This example compiles a simple 8x8 weight matrix with mixed positive and negative values, showcasing the full range of 30-level quantization.
+This example compiles a simple 8x8 weight matrix with mixed positive and negative values, showcasing 30-level quantization.
 
 ## Files
 
 | File | Description |
-|------|-------------|
+|---|---|
 | `weights.json` | 8x8 weight matrix with values from -0.9 to +0.9 |
 | `run.sh` | Script to compile and export all formats |
 | `expected_output/` | Reference output for validation |
@@ -30,36 +30,34 @@ go run ./cmd/eda-cli \
   -rows 8 -cols 8 -levels 30
 ```
 
-## Expected Output
+## Expected Output (Summary)
 
-After running, you should see:
+You should see a compute-mode run with export confirmations similar to:
 
 ```
-FeCIM Macro Compiler v1.0
-Loading weights from: examples/01-basic-8x8/weights.json
-Compiling 8x8 array with 30 levels...
-
-Compilation Statistics:
-  Total Cells:    64
-  Utilized:       64 (100.0%)
-  PSNR:           42.3 dB
-  Level Range:    0 - 29
-
-Exporting to: examples/01-basic-8x8/output/
-  ✓ mapping.json
-  ✓ cells.csv
-  ✓ crossbar.sp
-  ✓ crossbar.v
-  ✓ crossbar.def
-
-Done!
+FeCIM Array Generator - Compute Mode
+Configuration:
+  Array Size:   8 x 8
+  Levels:       30
+Exporting files to examples/01-basic-8x8/output/
+  OK ..._design.json
+  OK ..._cells.csv
+  OK ... .sp
+  OK ... .v
+  OK ... .def
 ```
 
 ## Output Files
 
-### mapping.json
+Default file names (if `-name` is not provided):
 
-Complete compilation result with statistics:
+- `fecim_array_design.json`
+- `fecim_array_cells.csv`
+- `fecim_array.sp`
+- `fecim_array.v`
+- `fecim_array.def`
+
+### `fecim_array_design.json`
 
 ```json
 {
@@ -67,52 +65,45 @@ Complete compilation result with statistics:
     "array_rows": 8,
     "array_cols": 8,
     "levels": 30,
-    "g_min": 1.0,
+    "g_min": 10.0,
     "g_max": 100.0
   },
   "cells": [
-    {"row": 0, "col": 0, "weight": 0.1, "level": 16, "conductance": 55.17},
+    {"row": 0, "col": 0, "level": 16, "conductance": 55.17, "program_v": 3.12, "initial_weight": 0.10},
     ...
   ],
   "stats": {
     "total_cells": 64,
-    "utilized_cells": 64,
-    "utilization": 1.0,
-    "psnr_db": 42.3
+    "active_cells": 64,
+    "quant_psnr_db": 42.3
   }
 }
 ```
 
-### cells.csv
-
-Spreadsheet-compatible format:
+### `fecim_array_cells.csv`
 
 ```csv
-row,col,weight,level,conductance_us,resistance_ohm
-0,0,0.100,16,55.17,18125
-0,1,-0.200,13,44.83,22319
+row,col,weight,level,conductance_uS,resistance_ohm,program_V
+0,0,0.100000,16,55.1700,18125.00,3.1200
+0,1,-0.200000,13,44.8300,22319.00,2.9400
 ...
 ```
 
-### crossbar.v
-
-Structural Verilog for simulation:
+### `fecim_array.v`
 
 ```verilog
-module fecim_crossbar_8x8 (
-    input  wire [7:0] WL,
-    output wire [7:0] BL,
-    inout  wire VPWR,
-    inout  wire VGND
+module fecim_crossbar (
+    input wire [7:0] WL,
+    inout wire [7:0] BL,
+    inout wire VPWR,
+    inout wire VGND
 );
     fecim_bit cell_0_0 (.WL(WL[0]), .BL(BL[0]), .VPWR(VPWR), .VGND(VGND));
     // ... 64 cells total
 endmodule
 ```
 
-### crossbar.def
-
-Physical placement for OpenLane:
+### `fecim_array.def`
 
 ```def
 COMPONENTS 64 ;
@@ -124,31 +115,16 @@ END COMPONENTS
 
 ## Validation
 
-### Check SPICE Netlist
-
 ```bash
-# Verify syntax with ngspice
-ngspice -b -c 'source output/crossbar.sp; listing'
-```
+# Verify SPICE syntax
+ngspice -b -c 'source output/fecim_array.sp; listing'
 
-### Check Verilog
-
-```bash
-# Compile with iverilog
-iverilog -o /dev/null output/crossbar.v
+# Verify Verilog syntax
+iverilog -o /dev/null output/fecim_array.v
 echo "Verilog syntax OK"
 ```
 
-### Visual Inspection
-
-Open `mapping.json` and verify:
-- All 64 cells have valid levels (0-29)
-- Conductance values are within [1, 100] μS
-- Level distribution spans the full range
-
 ## Weight Matrix
-
-The test weights are designed to exercise the full quantization range:
 
 ```
      Col 0   Col 1   Col 2   Col 3   Col 4   Col 5   Col 6   Col 7
@@ -164,9 +140,7 @@ Row 7: -0.2    0.3   -0.4    0.5   -0.6    0.7   -0.8    0.9
 
 ## Next Steps
 
-After validating this example:
-
-1. Try with different array sizes (16x16, 32x32)
-2. Modify weights.json with your own values
-3. Run ngspice simulation (see `02-mnist-layer` for testbench)
-4. Integrate with OpenLane (see `03-openlane-integration`)
+1. Try larger arrays (16x16, 32x32).
+2. Modify `weights.json` with your own values.
+3. Run ngspice on the SPICE netlist.
+4. See `03-openlane-integration` for OpenLane steps.

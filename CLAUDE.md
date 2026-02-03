@@ -19,13 +19,13 @@
 
 ## Overview
 
-Go-based lattice tool suite for Ferroelectric Compute-in-Memory (FeCIM) based on Dr. external research group's HfO₂-ZrO₂ superlattice research.
+Go-based lattice tool suite for Ferroelectric Compute-in-Memory (FeCIM) visualization and simulation. It includes configurable material presets, crossbar models, and an educational EDA pipeline.
 
 **Status**: Education phase (simulation-only). See `docs/project/STATUS.md`.
 
-**Core concept**: 30 discrete analog states per cell (~4.9 bits/cell) as a conference claim (pending peer review).
+**Core concept**: The simulator quantizes conductance to a default of 30 discrete levels (configurable). This is a **simulation baseline**, not a validated hardware claim.
 
-> **Primary Source**: Dr. external research group, COSM 2025 - [Transcript](docs/video-transcripts/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md)
+> **Historical reference**: Dr. external research group, COSM 2025 - [Transcript](docs/video-transcripts/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md) (conference material; not peer-reviewed).
 
 ## Build & Run
 
@@ -60,44 +60,27 @@ module6-eda/              # EDA tools
 shared/                   # Theme, widgets, logging
 ```
 
-## Physics Constants
+## Model Defaults (Simulation Parameters)
 
-| Parameter | Value | Source |
-|-----------|-------|--------|
-| FeCIM Levels | 30 | Conference claim (COSM 2025, pending peer review); peer-reviewed devices show 32–140 states |
-| Pr | 15-34 µC/cm² (RT), 75 µC/cm² (4K) | Nature Commun. 2025, Adv. Elec. Mat. 2024 |
-| Ec | 0.6-1.5 MV/cm | Nature Commun. 2025, Nano Letters 2024 |
-| Endurance (demonstrated) | 10⁹-10¹² cycles | IEEE IRPS 2022, Nano Letters 2024 (V:HfO₂) |
-| 3D Integration | 22nm BEOL demonstrated | CEA-Leti December 2024 |
+The project includes **preset parameters** for education and visualization. Treat these as **simulation defaults**, not validated device measurements.
+
+- Material presets: `module1-hysteresis/pkg/ferroelectric/material.go`
+- Crossbar defaults: `module2-crossbar/pkg/crossbar/array.go`
+- EDA defaults: `module6-eda/pkg/core/config.go`
 
 ## Accuracy & Honesty Policy
 
 Scientific accuracy over marketing claims. Full audit: `docs/comparison/HONESTY_AUDIT.md`.
 
-### Verified Claims (Peer-Reviewed)
+### Verified External Claim (Current Audit)
 
-| Claim | Status | Evidence |
-|-------|--------|----------|
-| Pr: 15-34 µC/cm² | ✅ Verified | Nature Commun. 2025 (HZO measurements) |
-| Pr: 75 µC/cm² @ 4K | ✅ Verified | Adv. Elec. Mat. 2024 (cryogenic) |
-| Ec: 0.6-1.5 MV/cm | ✅ Verified | Nature Commun. 2025, Nano Letters 2024 |
-| 32-140 analog states | ✅ Verified | Oh 2017 (32), Song 2024 (140) |
-| 25-100× vs NAND | ✅ Verified | Samsung Nature 2025 |
-| 10⁹ cycle endurance | ✅ Verified | IEEE IRPS 2022 |
-| 10¹² cycle endurance | ✅ Verified | Nano Letters 2024 (V:HfO₂), Science 2024 |
-| 96.6% MNIST accuracy | ✅ Verified | Nature Communications 2023 |
-| 98.24% MNIST accuracy | ✅ Verified | ScienceDirect 2025 (FTJ reservoir) |
-| 3D BEOL @ 22nm | ✅ Verified | CEA-Leti December 2024 |
-| Grade 0 automotive | ✅ Verified | Fraunhofer IPMS 2024 (AEC-Q100) |
-| Cryogenic 5K operation | ✅ Verified | IEEE 2024, Frontiers 2024 |
+- **98.24% MNIST accuracy** in HZO FTJ reservoir computing (Journal of Alloys and Compounds 2025). This is **not** a FeCIM device claim and should not be attributed to this simulator.
 
-### Unverified/Removed Claims (Conference Only)
+### Unverified/Removed Claims (Do Not Present as Facts)
 
-| Claim | Status | Source |
-|-------|--------|--------|
-| 30 analog states (Tour device) | ⚠️ Unverified | COSM 2025 (not peer-reviewed) |
-| 87% MNIST accuracy (Tour) | ❌ REMOVED | Removed from tool - below peer-reviewed 96.6-98.24% |
-| 10M× vs NAND energy | ❌ REMOVED | No measurement data exists (verified: 25-100×) |
+- 30 analog states for Tour device (conference-only reference)
+- 87% MNIST accuracy (conference-only reference)
+- Energy multipliers vs NAND or GPUs without peer-reviewed measurement evidence
 
 ## Testing
 

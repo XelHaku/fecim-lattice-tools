@@ -1,59 +1,54 @@
 # Module 3: MNIST - Features
 
-Neural Network Digit Recognition Demo
+Neural-network digit recognition demo with FP vs CIM comparison.
 
 ---
 
 ## Features
 
-- **Dual-Mode Inference** - Side-by-side FP32 vs CIM (quantized + noise) comparison
-- **Drawing Canvas** - 28×28 pixel digit input with 3 brush sizes
-- **Quantization Control** - Levels selector (available QAT weights); per-layer PTQ supported in core
-- **Noise Injection** - Adjustable Gaussian read noise (0-20% in UI)
-- **DAC/ADC Simulation** - 3-16 bit resolution (core; fixed in Dual‑Mode UI)
-- **Quick Demo** - 5-step automated walkthrough (includes 2-level quantization cliff)
-- **Failure Mode Demos** - Binary weights + high noise via Quick Demo/Noisy preset
-- **Layer Activation View** - Visualize hidden layer activations
-- **Confusion Matrix** - Classification error heatmap
-- **Weight Comparison Widget** - FP32 vs quantized weight visualization
+- **Dual-Mode Inference** - Side-by-side FP32 vs CIM (quantized + noise)
+- **Drawing Canvas** - 28x28 input with brush sizes and smoothing
+- **Quantization Controls** - Levels selector (shows only available QAT weights)
+- **Noise Injection** - Gaussian multiplicative read noise (UI: 0-20%)
+- **DAC/ADC Modeling** - Adjustable bit-depth (core 3-16; UI defaults to 8-bit)
+- **Quick Demo** - Guided 5-step walkthrough (ideal -> failure modes -> recover)
+- **Activation & Metrics** - Hidden-layer activations, confusion matrix, per-class stats
+- **Energy Widget** - Model-based energy estimate (not measured hardware)
+- **Weight Comparison** - FP vs quantized weight visualization
+
+---
 
 ## GUI Variants
 
-- **MNISTApp** (single‑mode): activations + confusion matrix + per‑class metrics
-- **DualModeApp** (FP vs CIM): comparison card, quantization/energy widgets, quick demo
+- **MNISTApp** (single-mode): activations + confusion matrix + metrics
+- **DualModeApp** (FP vs CIM): side-by-side comparison + presets + quick demo
 
-## Physics Models
+---
+
+## Physics/Modeling (Core)
 
 | Model | Description |
-|-------|-------------|
+|---|---|
 | **Weight Quantization** | Symmetric linear mapping to N discrete levels |
-| **Read Noise** | Gaussian multiplicative (σ/μ) |
+| **Read Noise** | Gaussian multiplicative (sigma/u) |
 | **DAC Quantization** | Input voltage resolution (2^bits levels) |
 | **ADC Quantization** | Output current resolution (2^bits levels) |
-| **Energy Model** | 10 fJ/bit per MAC (≈50 fJ @ 30-level baseline) + ADC/DAC overhead |
+| **Energy Model** | 10 fJ x log2(levels) per MAC + ADC/DAC overhead |
 
-## Key Parameters
+---
 
-| Parameter | Default | Range |
-|-----------|---------|-------|
-| FeCIM Levels | 30 | 2-30 |
-| Noise σ/μ | 0.01 (1%) | 0.0-0.20 (UI), 0.0-0.5 (core clamp) |
-| ADC Bits | 8 | 3-16 (core) |
-| DAC Bits | 8 | 3-16 (core) |
-| Hidden Size | 128 | CLI/weights (GUI fixed) |
-| Input | 784 | Fixed (28×28) |
-| Output | 10 | Fixed (digits 0-9) |
+## Key Defaults
 
-## Network Architectures
+| Parameter | Default | Notes |
+|---|---:|---|
+| Levels | 30 | Demo baseline (conference claim) |
+| Noise sigma/u | 0.01 | UI default (1%) |
+| ADC / DAC | 8 / 8 | UI defaults |
+| Hidden Size | 128 | 784 -> 128 -> 10 network |
 
-- **Standard**: 784 → 128 (ReLU) → 10 (Softmax)
-- **Calibration**: 784 → 10 (Softmax) — Single layer
+---
 
-## Accuracy Benchmarks
+## Accuracy Notes
 
-| Configuration | Accuracy |
-|---------------|----------|
-| FP32 (ideal) | ~98% |
-| 30-level demo baseline (claim), low noise | 92-96% |
-| Peer-reviewed FeCIM | 96.6-98.24% |
-| 2 levels (binary) | ~50% |
+- Reported accuracy is computed from the current weights and settings.
+- Literature benchmarks and verified claims are tracked in `docs/comparison/HONESTY_AUDIT.md`.

@@ -1,55 +1,44 @@
 # Module 4: Circuits - Features
 
-DAC/ADC/TIA Signal Chain for FeCIM Arrays
+Peripheral-circuit demo: DAC -> charge pump -> FeFET array -> TIA -> ADC.
 
 ---
 
 ## Features
 
-- **Three Operation Modes** - READ (sense), WRITE (program), COMPUTE (MVM)
-- **Complete Signal Chain** - DAC → ChargePump → FeFET → TIA → ADC
-- **Architecture Support** - 0T1R (passive), 1T1R (gated), 2T1R (dual)
-- **Material Calibration** - Voltage ranges from physics.yaml (Ec, thickness)
-- **INL/DNL Analysis** - Linearity metrics for converters
-- **GPU Acceleration** - Vulkan compute shaders for batch operations
-- **Voltage Zone Canvas** - Safe read vs write regions visualization
-- **Pulse Waveform Display** - Programming pulse visualization
-- **Array Heatmap** - Current programmed states
-- **External Tool Validation** - CrossSim (Sandia) and BadCrossbar (UCL) integration
+- **Three Operation Modes** - READ, WRITE, COMPUTE
+- **Signal-Chain Visualization** - DAC, charge pump, FeFET array, TIA, ADC
+- **Architecture Modes (UI)** - 0T1R (passive), 1T1R, 2T1R voltage-rule visualization
+- **Linearity Analysis** - INL/DNL plots for DAC and ADC
+- **Timing & Power Models** - Derived from peripheral defaults (not silicon-calibrated)
+- **Voltage-Zone Panels** - Safe read vs write windows
+- **Array State View** - Programmed level heatmap and step-through compute view
+- **GPU Batch Peripherals (Experimental)** - Optional GPU batch conversion utilities (not wired into GUI)
 
-## Circuit Models
+---
 
-| Circuit | Specs |
-|---------|-------|
-| **DAC** | 5-bit, ±1.5V range, 10ns settle, 15 fJ |
-| **ADC** | 5-bit SAR, 0-1V range, 50ns convert, 25 fJ |
-| **TIA** | 10 kΩ gain, 100 MHz BW, 1 pA/√Hz noise |
-| **Charge Pump** | 2-stage Dickson, 1V→1.5V, 70% efficiency |
+## Default Circuit Models (From `shared/peripherals`)
+
+| Circuit | Default Specs |
+|---|---|
+| **DAC** | 5-bit, +/-1.5 V range, 10 ns settle, INL 0.5 LSB, DNL 0.25 LSB |
+| **ADC** | 5-bit SAR, 0-1.0 V range, 50 ns convert, INL 0.5 LSB, DNL 0.25 LSB |
+| **TIA** | 10 kOhm gain, 100 MHz BW, 1 pA/sqrtHz input noise |
+| **Charge Pump** | 2-stage Dickson, 1.0 V -> 1.5 V, 70% efficiency |
+
+---
 
 ## Key Parameters
 
-| Parameter | Value | Notes |
-|-----------|-------|-------|
-| DAC Resolution | 5-bit (32 levels) | Uses 30 for FeCIM |
-| ADC Resolution | 5-bit | ENOB: 4.87 bits |
-| Read Zone | 0 to 0.5×Vc | Safe sensing |
-| Write Zone | Vc to 2.5×Vc | Programming window |
-| Max Voltage | 3.0V | Hardware limit |
+| Parameter | Default | Notes |
+|---|---:|---|
+| DAC / ADC bits | 5 / 5 | 32 levels, demo uses 30 |
+| Read zone | 0 to 0.5xVc | Safe sensing window |
+| Write zone | Vc to 2.5xVc | Programming window |
 
-## Timing
+---
 
-| Operation | Duration |
-|-----------|----------|
-| Write Cycle | ~170 ns |
-| Read Cycle | ~65 ns |
-| Throughput | ~4.7 GOPS |
+## Notes
 
-## Energy Budget
-
-| Component | Energy |
-|-----------|--------|
-| DAC | 15 fJ |
-| ADC | 25 fJ |
-| TIA | ~5 fJ |
-| Pump | ~10 fJ |
-| **Total** | ~50 fJ/op |
+- Architecture modes affect voltage rules and visualization; device-level transistor physics is not modeled.
+- Timing and power outputs are model-based estimates for education.

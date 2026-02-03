@@ -2,16 +2,17 @@
 
 ## What This Module Does
 
-- Models DAC, ADC, TIA, and charge pump behavior.
+- Models DAC, ADC, TIA, and charge-pump behavior for FeCIM arrays.
 - Estimates timing and power for peripheral operations.
-- Visualizes signal flow and circuit-level effects.
+- Visualizes signal flow, voltage zones, and architecture-specific rules.
 
 ## Primary Components
 
-- `module4-circuits/pkg/peripherals/dac.go`
-- `module4-circuits/pkg/peripherals/adc.go`
-- `module4-circuits/pkg/peripherals/tia.go`
-- `module4-circuits/pkg/peripherals/analysis.go`
+- `shared/peripherals/dac.go`
+- `shared/peripherals/adc.go`
+- `shared/peripherals/tia.go`
+- `shared/peripherals/analysis.go`
+- `module4-circuits/pkg/gui/app.go`
 
 ## Key Workflows
 
@@ -23,7 +24,7 @@
 
 - Add new ADC/DAC architectures or nonlinearity models.
 - Extend power analysis with additional blocks.
-- Connect to exported SPICE netlists from module 6.
+- Connect to exported SPICE netlists from Module 6.
 
 ## Known Limitations
 
