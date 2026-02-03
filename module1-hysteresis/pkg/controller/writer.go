@@ -105,6 +105,9 @@ type WriteController struct {
 	// Progress detection (error not improving across verifies)
 	LastAbsError   int
 	NoImproveCount int
+
+	// Step floor to break out of quantization stalls (in E-field units).
+	stepFloor float64
 }
 
 func NewWriteController(numLevels int, ec, emax float64, calib *algo.CalibrationManager) *WriteController {
@@ -137,6 +140,7 @@ func (wc *WriteController) Start(targetLevel int, fromSaturation bool) {
 	wc.previousField = 0
 	wc.resetDirection = 0
 	wc.StuckCount = 0
+	wc.stepFloor = 0
 
 	// Initialize Binary Search Bounds
 	wc.VMin = 0
@@ -164,6 +168,7 @@ func (wc *WriteController) ResetState() {
 	wc.OvershootTotal = 0
 	wc.LastAbsError = -1
 	wc.NoImproveCount = 0
+	wc.stepFloor = 0
 }
 
 // ResetDirection exposes the current sticky reset direction for diagnostics/logging.
@@ -327,6 +332,26 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			}
 			wc.LastAbsError = absErr
 
+			// Escalate minimum step size if we are not making observable progress.
+			if currentLevel != prevLevel {
+				if wc.stepFloor != 0 {
+					log.Printf("ISPP STEP FLOOR CLEARED: level change %d→%d", prevLevel, currentLevel)
+				}
+				wc.stepFloor = 0
+			} else {
+				switch {
+				case wc.StuckCount >= 6:
+					wc.raiseStepFloor(0.18*wc.EcField, "stuck>=6")
+				case wc.StuckCount >= 4:
+					wc.raiseStepFloor(0.12*wc.EcField, "stuck>=4")
+				case wc.StuckCount >= 2:
+					wc.raiseStepFloor(0.08*wc.EcField, "stuck>=2")
+				}
+			}
+			if wc.NoImproveCount >= 2 {
+				wc.raiseStepFloor(0.10*wc.EcField, "no-improve>=2")
+			}
+
 			// STRICT CONVERGENCE: Only accept exact match
 			if wc.LastError == 0 {
 				log.Printf("ISPP VERIFY RESULT: hit target level %d", currentLevel)
@@ -406,6 +431,7 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 				wc.VMaxSet = false
 				wc.StuckCount = 0
 				wc.NoImproveCount = 0
+				wc.stepFloor = 0
 				wc.State = StateResetting
 				wc.PhaseTimer = 0
 				return 0, false
@@ -605,7 +631,7 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 	}
 
 	// If we have bounds from verify, use bisection for faster convergence.
-	if wc.VMinSet && wc.VMaxSet && wc.VMax > wc.VMin && wc.StuckCount < 3 && wc.NoImproveCount < 3 {
+	if wc.VMinSet && wc.VMaxSet && wc.VMax > wc.VMin && wc.StuckCount < 3 && wc.NoImproveCount < 3 && wc.stepFloor == 0 {
 		prevVoltage := math.Abs(wc.CurrentField)
 		nextVoltage := 0.5 * (wc.VMin + wc.VMax)
 		// Nudge if midpoint is too close to current voltage (avoid stalling).
@@ -628,9 +654,7 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 
 	// Stuck or no-improvement escalation: boost step and clear bounds.
 	if wc.StuckCount >= 3 || wc.NoImproveCount >= 3 {
-		if stepSize < 0.12*wc.EcField {
-			stepSize = 0.12 * wc.EcField
-		}
+		wc.raiseStepFloor(0.12*wc.EcField, "stuck/no-improve>=3")
 		// Reset bounds to avoid being trapped by stale bracket.
 		wc.VMin = 0
 		wc.VMax = wc.MaxField
@@ -638,7 +662,12 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 		wc.VMaxSet = false
 		wc.StuckCount = 0
 		wc.NoImproveCount = 0
-		log.Printf("ISPP STUCK: boosting step to %.3f×Ec and clearing bounds", stepSize/wc.EcField)
+		log.Printf("ISPP STUCK: boosting step (floor=%.3f×Ec) and clearing bounds", wc.stepFloor/wc.EcField)
+	}
+
+	// Enforce step floor if set (prevents tiny steps that never cross quantization boundaries).
+	if wc.stepFloor > 0 && stepSize < wc.stepFloor {
+		stepSize = wc.stepFloor
 	}
 
 	// Undershoot: increase voltage by step

@@ -1031,7 +1031,12 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 					log.Printf("WRD TARGET APPLY: active=%d queued=%d phase=%d level=%d ctrlTarget=%d E=%.3f MV/cm P=%.2f µC/cm²",
 						a.wrdTargetLevel, nextTarget, a.wrdPhase, a.discreteLevel+1, ctrlTarget, a.electricField/1e8, a.polarization*100)
 				}
-				if a.wrdPhase == 2 && a.writeController != nil {
+				forcePrep := nextTarget <= 3 || nextTarget >= (a.numLevels-2)
+				if a.wrdPhase == 2 && forcePrep {
+					// Near saturation targets are more stable with a deterministic PREP.
+					a.wrdPhase = 0
+					a.wrdPhaseTimer = 0
+				} else if a.wrdPhase == 2 && a.writeController != nil {
 					// Skip PREP: start controller directly from current state.
 					a.writeController.PulseDuration = phaseDuration * 0.4
 					a.writeController.Start(a.wrdTargetLevel, false)
@@ -1048,7 +1053,8 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 
 			switch a.wrdPhase {
 			case 0: // PREP (wake-up) - prepare starting state before writing
-				if a.wrdSkipPrep {
+				forcePrep := targetLevel <= 3 || targetLevel >= (a.numLevels-2)
+				if a.wrdSkipPrep && !forcePrep {
 					// Skip PREP entirely and jump to WRITE.
 					if a.writeController != nil {
 						a.writeController.PulseDuration = phaseDuration * 0.4
@@ -1358,7 +1364,8 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 					} else if nextTarget < currentLevel {
 						nextBranch = -1
 					}
-					usePrep := !a.wrdSkipPrep && (a.wrdForceReset || (a.wrdLastBranch != 0 && a.wrdLastBranch != nextBranch))
+					forcePrep := nextTarget <= 3 || nextTarget >= (a.numLevels-2)
+					usePrep := forcePrep || (!a.wrdSkipPrep && (a.wrdForceReset || (a.wrdLastBranch != 0 && a.wrdLastBranch != nextBranch)))
 					a.wrdForceReset = false
 					// NOTE: Don't clear history - let the trail accumulate to show full hysteresis loop
 					// Spike detection in plot widget handles any discontinuities
@@ -1405,6 +1412,17 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 				solverDur = time.Since(stepStart)
 			} else {
 				a.polarization = a.lkSolver.Step(a.electricField, dt)
+			}
+			if math.IsNaN(a.polarization) || math.IsInf(a.polarization, 0) {
+				fallback := prevP
+				if math.IsNaN(fallback) || math.IsInf(fallback, 0) {
+					fallback = 0
+				}
+				a.polarization = fallback
+				a.lkSolver.SetState(fallback)
+				if log != nil {
+					log.Printf("LK solver returned invalid polarization; reset to %.3e", fallback)
+				}
 			}
 		} else {
 			a.polarization = 0

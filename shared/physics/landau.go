@@ -49,12 +49,17 @@ type LKSolver struct {
 	// Dynamic State
 	Alpha       float64 // Calculated stiffness (Temperature + Stress dependent)
 	P           float64 // Current Polarization (C/m^2)
+	PMax        float64 // Saturation polarization clamp for numerical stability (C/m^2)
 	Temperature float64 // Current Temperature (K)
 	Time        float64 // Simulation time
 
 	// Internal logging controls
 	logCount int
 	logLimit int
+
+	// Numerical stability logging (rate-limited)
+	nanCount int
+	nanLimit int
 }
 
 // NewLKSolver creates a new solver with default "Golden Set" parameters for 10nm HZO.
@@ -90,9 +95,11 @@ func NewLKSolver() *LKSolver {
 		// CRITICAL: Initialize to negative saturation (-Pr)
 		// If P0, then E_dep=K_dep*P=0, and depolarization has no effect!
 		// This causes binary switching instead of analog slope.
-		P: -0.30, // C/m² (Approximate -Pr for FeCIM HZO at negative saturation)
+		P:    -0.30, // C/m² (Approximate -Pr for FeCIM HZO at negative saturation)
+		PMax: 0.30,  // C/m² (Default clamp, overridden by material config)
 
 		logLimit: 25,
+		nanLimit: 5,
 	}
 }
 
@@ -165,6 +172,14 @@ func (s *LKSolver) ConfigureFromMaterial(mat *HZOMaterial) {
 	if mat.Pr != 0 {
 		s.P = -math.Abs(mat.Pr)
 	}
+	// Configure saturation clamp using material Ps/Pr when available.
+	pMax := math.Max(math.Abs(mat.Ps), math.Abs(mat.Pr))
+	if pMax > 0 {
+		s.PMax = pMax
+	}
+	if s.PMax <= 0 {
+		s.PMax = math.Abs(s.P)
+	}
 
 	// Debug logging to confirm configuration
 	matLog.Input("ConfigureFromMaterial", map[string]interface{}{
@@ -214,6 +229,13 @@ func (s *LKSolver) Step(E, dt float64) float64 {
 
 	rhoEff := s.effectiveRho()
 	noise := s.noiseTerm(dt, rhoEff)
+	if invalidFloat(s.P) {
+		s.logNumericalIssue("state", E, dt, rhoEff, noise, s.P)
+		s.P = 0
+	}
+	if s.PMax > 0 {
+		s.P = s.clampP(s.P)
+	}
 
 	// Nucleation-Limited Switching (NLS) Check
 	if s.UseNLS {
@@ -226,13 +248,33 @@ func (s *LKSolver) Step(E, dt float64) float64 {
 	}
 
 	// RK4 Integration
+	prevP := s.P
 	k1 := s.dPdT(0, s.P, E, noise, rhoEff)
 	k2 := s.dPdT(dt/2, s.P+0.5*dt*k1, E, noise, rhoEff)
 	k3 := s.dPdT(dt/2, s.P+0.5*dt*k2, E, noise, rhoEff)
 	k4 := s.dPdT(dt, s.P+dt*k3, E, noise, rhoEff)
 
+	if invalidFloat(k1) || invalidFloat(k2) || invalidFloat(k3) || invalidFloat(k4) {
+		s.logNumericalIssue("k", E, dt, rhoEff, noise, prevP)
+		s.Time += dt
+		return s.P
+	}
+
 	dP := (dt / 6.0) * (k1 + 2*k2 + 2*k3 + k4)
-	s.P += dP
+	if invalidFloat(dP) {
+		s.logNumericalIssue("dP", E, dt, rhoEff, noise, prevP)
+		s.Time += dt
+		return s.P
+	}
+	nextP := prevP + dP
+	if invalidFloat(nextP) {
+		s.logNumericalIssue("P", E, dt, rhoEff, noise, prevP)
+		s.Time += dt
+		return s.P
+	}
+	nextP = s.clampP(nextP)
+
+	s.P = nextP
 	s.Time += dt
 
 	s.logStep(E, dt, rhoEff, noise, k1)
@@ -329,8 +371,50 @@ func (s *LKSolver) logStep(E, dt, rhoEff, noise, dPdt float64) {
 	}, dPdt)
 }
 
+func invalidFloat(v float64) bool {
+	return math.IsNaN(v) || math.IsInf(v, 0)
+}
+
+func (s *LKSolver) clampP(P float64) float64 {
+	if s.PMax <= 0 {
+		return P
+	}
+	limit := s.PMax * 1.2
+	if limit <= 0 {
+		return P
+	}
+	if P > limit {
+		return limit
+	}
+	if P < -limit {
+		return -limit
+	}
+	return P
+}
+
+func (s *LKSolver) logNumericalIssue(stage string, E, dt, rhoEff, noise, prevP float64) {
+	if !logging.IsVerbose(logging.VerbosityDebug) {
+		return
+	}
+	if s.nanLimit > 0 && s.nanCount >= s.nanLimit {
+		return
+	}
+	s.nanCount++
+	if lkLog == nil {
+		lkLog = logging.NewLogger("lk-solver")
+	}
+	if lkLog == nil {
+		return
+	}
+	lkLog.Debug("LK numerical issue (%s): E=%.3e dt=%.3e P=%.3e rho=%.3e noise=%.3e alpha=%.3e beta=%.3e gamma=%.3e",
+		stage, E, dt, prevP, rhoEff, noise, s.Alpha, s.Beta, s.Gamma)
+}
+
 func (s *LKSolver) SetState(P float64) {
-	s.P = P
+	if invalidFloat(P) {
+		return
+	}
+	s.P = s.clampP(P)
 }
 
 func (s *LKSolver) GetState() float64 {

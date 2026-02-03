@@ -283,10 +283,19 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		a.wrdStartLevel = a.numLevels / 2
 		a.wrdReadLevel = 0
 		a.wrdRetryCount = 0
+		a.wrdLastControllerState = controller.StateIdle
+		a.wrdLastControllerPulse = 0
+		a.wrdLastProgressLog = 0
+		a.wrdLastBranch = 0
+		a.wrdForceReset = false
+		a.wrdSkipPrep = true
 		a.wrdTotalWrites = 0
 		a.wrdSuccessWrites = 0
 		a.wrdTotalEnergyfJ = 0
 		a.wrdCycleEnergy = 0
+		if a.writeController != nil {
+			a.writeController.ResetState()
+		}
 
 		// Reset manual mode animation state
 		a.manualAnimating = false

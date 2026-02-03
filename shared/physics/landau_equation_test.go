@@ -59,3 +59,21 @@ func TestLKSolver_effectiveRho_Disabled(t *testing.T) {
 		t.Fatalf("expected rho without series contribution: got %.12f, expected %.12f", got, s.Rho)
 	}
 }
+
+func TestLKSolver_SetState_Clamp(t *testing.T) {
+	s := NewLKSolver()
+	s.PMax = 0.5
+	s.SetState(10)
+	if math.Abs(s.GetState()) > s.PMax*1.2+1e-12 {
+		t.Fatalf("expected polarization to be clamped within limit: got %.4f, limit %.4f", s.GetState(), s.PMax*1.2)
+	}
+}
+
+func TestLKSolver_SetState_IgnoresInvalid(t *testing.T) {
+	s := NewLKSolver()
+	s.SetState(0.1)
+	s.SetState(math.NaN())
+	if math.IsNaN(s.GetState()) {
+		t.Fatal("solver should ignore invalid polarization values")
+	}
+}
