@@ -1491,12 +1491,12 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 }
 
 type uiSnapshot struct {
-	fE float64
-	pV float64
-	dL int
-	eC float64
-	hE []float64
-	hP []float64
+	fE          float64
+	pV          float64
+	dL          int
+	eC          float64
+	hE          []float64
+	hP          []float64
 	effEc       float64
 	effPr       float64
 	materialPs  float64

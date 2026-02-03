@@ -12,6 +12,8 @@ Objective
   - Make any required code + documentation updates to achieve fidelity and verify via CLI output and logs.
   - Improve Module 2 documentation quality and ensure referenced papers are downloaded into the repo's
     research-papers area when possible.
+  - If any write-verify / ISPP logic is introduced for Module 2 arrays, reuse shared/physics ISPP (fast level-based)
+    and keep any physics-based L-K option explicit and off by default for large arrays.
 
 Tasks
 
@@ -32,6 +34,7 @@ Tasks
   - Confirm voltage rules for read/write/half-select and differential array handling are consistent.
   - Ensure MVMWithNonIdealities pipeline ordering matches the documented signal flow.
   - Confirm options toggles (IR drop, sneak, drift, variation, temperature) produce expected deltas.
+  - If programming loops are added, keep fast ISPP as default and align with Module 4 toggle semantics.
 
   3. Architecture documentation
 

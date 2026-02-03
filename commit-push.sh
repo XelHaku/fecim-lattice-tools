@@ -2,11 +2,11 @@
 
 # commit-push.sh - Schedule a git commit and push after N hours
 # Usage: ./commit-push.sh -12  (commits and pushes in 12 hours)
-#        ./commit-push.sh --periodically  (commits and pushes every hour)
+#        ./commit-push.sh --periodically  (commits and pushes every 30 minutes)
 
 cd "$(dirname "$0")" || exit 1
 
-# Periodic mode: commit and push every hour (runs in background)
+# Periodic mode: commit and push every 30 minutes (runs in background)
 if [[ "$1" == "--periodically" ]]; then
     # Store log and PID files outside the repo to avoid git tracking
     LOGFILE="/tmp/commit-push-$(basename "$(pwd)").log"
@@ -19,7 +19,7 @@ if [[ "$1" == "--periodically" ]]; then
         exit 1
     fi
 
-    echo "Starting periodic commit-push mode (every hour) in background..."
+    echo "Starting periodic commit-push mode (every 30 minutes) in background..."
 
     nohup bash -c "
         cd \"$(dirname "$0")\" || exit 1
@@ -37,8 +37,8 @@ if [[ "$1" == "--periodically" ]]; then
                 git reset HEAD -- .commit-push.pid 2>/dev/null || true
                 echo \"No real changes to commit at \$(date)\"
             fi
-            echo \"Next commit-push in 1 hour...\"
-            sleep 3600
+            echo \"Next commit-push in 30 minutes...\"
+            sleep 1800
         done
     " > "$LOGFILE" 2>&1 &
 

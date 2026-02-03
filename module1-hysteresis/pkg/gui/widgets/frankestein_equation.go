@@ -250,14 +250,7 @@ func buildLkEquationImagePanel(parent fyne.Window, selectTerm func(string, strin
 
 	overlay := container.New(&normalizedHotspotLayout{hotspots: hotspots}, hotspotWidgets...)
 	stack := container.NewStack(image, overlay)
-
-	caption := widget.NewLabel("Tap a coefficient or the LK nonlinearity row to see its purpose in Module 1.")
-	caption.TextStyle = fyne.TextStyle{Italic: true}
-
-	return container.NewVBox(
-		stack,
-		caption,
-	)
+	return stack
 }
 
 func buildPreisachEquationPanel(parent fyne.Window, selectTerm func(string, string)) fyne.CanvasObject {
