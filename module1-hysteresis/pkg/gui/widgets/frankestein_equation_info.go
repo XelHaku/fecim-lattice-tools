@@ -259,6 +259,7 @@ func termDetails() map[string]termDetail {
 func buildEquationInfoTabs() fyne.CanvasObject {
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Overview", scrollSection(buildOverviewSection())),
+		container.NewTabItem("Preisach", scrollSection(buildPreisachSection())),
 		container.NewTabItem("alpha(T,sigma)", scrollSection(buildAlphaSection())),
 		container.NewTabItem("Parameters", scrollSection(buildGoldenSetSection())),
 		container.NewTabItem("Materials", scrollSection(buildMaterialDefaultsSection())),
@@ -278,6 +279,17 @@ func buildOverviewSection() fyne.CanvasObject {
 		equationBlock("E_eff = E_applied - k_dep P"),
 		equationBlock("dG/dP = 2alphaP + 4betaP^3 + 6gammaP^5"),
 		bodyLabel("This widget adds depolarization and series-resistance aggregation used in the headless L-K path."),
+	)
+}
+
+func buildPreisachSection() fyne.CanvasObject {
+	return container.NewVBox(
+		sectionTitle("Preisach Model (Quasi-Static)"),
+		bodyLabel("The quasi-static Preisach model represents polarization as a weighted sum of bistable hysterons:"),
+		equationBlock("P(E) = double_integral mu(alpha,beta) * gamma_{alpha,beta}(E) d alpha d beta"),
+		bodyLabel("Each hysteron switches based on its thresholds and retains memory between them:"),
+		equationBlock("gamma_{alpha,beta}(E) = +1 if E >= alpha; -1 if E <= beta; else hold state"),
+		bodyLabel("Quasi-static means rate-independent: there is no explicit dP/dt term and switching depends on input history."),
 	)
 }
 

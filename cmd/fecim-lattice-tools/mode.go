@@ -66,11 +66,61 @@ func runHysteresisMode() error {
 	Emax := mat.Ec * 1.2
 	dt := 1e-12
 
+	perfEnabled := logging.IsVerbose(logging.VerbosityDebug)
+	perfSteps := 0
+	perfDtMin := math.MaxFloat64
+	perfDtMax := 0.0
+	perfDtSum := 0.0
+	perfStepTime := time.Duration(0)
+
+	resetPerf := func() {
+		if !perfEnabled {
+			return
+		}
+		perfSteps = 0
+		perfDtMin = math.MaxFloat64
+		perfDtMax = 0
+		perfDtSum = 0
+		perfStepTime = 0
+	}
+
+	recordPerf := func(step float64, elapsed time.Duration) {
+		if !perfEnabled {
+			return
+		}
+		perfSteps++
+		if step < perfDtMin {
+			perfDtMin = step
+		}
+		if step > perfDtMax {
+			perfDtMax = step
+		}
+		perfDtSum += step
+		perfStepTime += elapsed
+	}
+
+	logPerf := func(label string) {
+		if !perfEnabled || perfSteps == 0 {
+			return
+		}
+		dtMean := perfDtSum / float64(perfSteps)
+		log.Info("LK_PERF %s: steps=%d dtMin=%.3e dtMean=%.3e dtMax=%.3e solverMs=%.2f",
+			label, perfSteps, perfDtMin, dtMean, perfDtMax, perfStepTime.Seconds()*1000.0)
+	}
+
 	log.Info("Landau-Khalatnikov diagnostic sweep starting")
+	resetPerf()
 	for _, E := range []float64{-Emax, -0.5 * Emax, 0, 0.5 * Emax, Emax} {
-		solver.Step(E, dt)
+		if perfEnabled {
+			stepStart := time.Now()
+			solver.Step(E, dt)
+			recordPerf(dt, time.Since(stepStart))
+		} else {
+			solver.Step(E, dt)
+		}
 		recordHeadlessSnapshot(dataLogger, solver, mat, gmin, gmax, numLevels, nil, dt, E, "LK_SWEEP", "SWEEP", nil)
 	}
+	logPerf("SWEEP")
 
 	log.Info("ISPP write-verify sequence starting")
 	calibManager := algo.NewCalibrationManager(numLevels)
@@ -125,6 +175,7 @@ func runHysteresisMode() error {
 	wrdSuccessWrites := 0
 
 	for i, step := range steps {
+		resetPerf()
 		_, targetLevel := headlessLevelFromConductance(step.targetG, gmin, gmax, numLevels)
 		currentField := 0.0
 		currentP := solver.GetState()
@@ -317,13 +368,20 @@ func runHysteresisMode() error {
 
 			wrd.retryCount = writeController.RetryCount
 
-			solver.Step(currentField, currentStep)
+			if perfEnabled {
+				stepStart := time.Now()
+				solver.Step(currentField, currentStep)
+				recordPerf(currentStep, time.Since(stepStart))
+			} else {
+				solver.Step(currentField, currentStep)
+			}
 			recordHeadlessSnapshot(dataLogger, solver, mat, gmin, gmax, numLevels, writeController, currentStep, currentField, "ISPP", "", wrd)
 		}
 
 		if !targetDone {
 			log.Info("ISPP step %d (%s): timed out after %.3fs", i+1, step.label, solver.Time-stepStart)
 		}
+		logPerf(fmt.Sprintf("ISPP_%s", step.label))
 
 		// Use the captured success state if available, otherwise use relaxed state
 		finalP := solver.GetState()

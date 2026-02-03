@@ -35,26 +35,28 @@ func NewEmbeddedApp() *EmbeddedApp {
 	writeController := controller.NewWriteController(numLevels, mat.Ec, mat.Ec*2.5, calibManager)
 
 	app := &App{
-		calibManager:    calibManager,
-		writeController: writeController,
-		material:        mat,
-		preisach:        preisach,
-		materials:       materials,
-		matIndex:        0,
-		numLevels:       numLevels,
-		calibrationUp:   make([]float64, numLevels),
-		calibrationDown: make([]float64, numLevels),
-		maxHistory:      50000,
-		eHistory:        make([]float64, 0, 2000),
-		pHistory:        make([]float64, 0, 2000),
-		autoMode:        true,
-		waveform:        WaveformSine,
-		physicsEngine:   PhysicsLandau,
-		frequency:       0.5, // 0.5 Hz default
-		wrdTargetLevel:  28,  // Start high for dramatic first write
-		maxLogLines:     12,
-		logEntries:      make([]string, 0, 12),
-		lastLogPhase:    -1,
+		calibManager:       calibManager,
+		writeController:    writeController,
+		material:           mat,
+		preisach:           preisach,
+		materials:          materials,
+		matIndex:           0,
+		numLevels:          numLevels,
+		calibrationUp:      make([]float64, numLevels),
+		calibrationDown:    make([]float64, numLevels),
+		maxHistory:         50000,
+		eHistory:           make([]float64, 0, 2000),
+		pHistory:           make([]float64, 0, 2000),
+		autoMode:           true,
+		waveform:           WaveformSine,
+		physicsEngine:      PhysicsPreisach,
+		frequency:          0.5, // 0.5 Hz default
+		timeScale:          1.0,
+		wrdTargetLevel:     28, // Start high for dramatic first write
+		wrdNextTargetLevel: 0,
+		maxLogLines:        12,
+		logEntries:         make([]string, 0, 12),
+		lastLogPhase:       -1,
 		// isppCalc:        physics.NewISPPCalculator(preisach.GetEffectiveEc(), numLevels),
 	}
 

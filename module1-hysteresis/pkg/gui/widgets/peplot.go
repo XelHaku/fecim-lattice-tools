@@ -4,6 +4,7 @@ package widgets
 import (
 	"fmt"
 	"image/color"
+	"math"
 	"sync"
 
 	"fyne.io/fyne/v2"
@@ -17,16 +18,17 @@ import (
 type PEPlot struct {
 	widget.BaseWidget
 
-	mu       sync.RWMutex
-	eData    []float64
-	pData    []float64
-	currentE float64
-	currentP float64
-	eMax     float64
-	pMax     float64
-	ec       float64 // Actual coercive field for markers
-	pr       float64 // Actual remanent polarization for markers
-	minSize  fyne.Size
+	mu           sync.RWMutex
+	eData        []float64
+	pData        []float64
+	currentE     float64
+	currentP     float64
+	eMax         float64
+	pMax         float64
+	ec           float64 // Actual coercive field for markers
+	pr           float64 // Actual remanent polarization for markers
+	minSize      fyne.Size
+	filterSpikes bool
 
 	// Color scheme (passed in during construction or via setters)
 	ColorBackground color.RGBA
@@ -43,6 +45,7 @@ func NewPEPlot(eMax, pMax float64, colorBg, colorGrid, colorAxis, colorPos, colo
 		eMax:            eMax,
 		pMax:            pMax,
 		minSize:         fyne.NewSize(400, 300),
+		filterSpikes:    true,
 		ColorBackground: colorBg,
 		ColorGrid:       colorGrid,
 		ColorAxis:       colorAxis,
@@ -76,6 +79,14 @@ func (p *PEPlot) SetMaterialParams(ec, pr float64) {
 	p.pr = pr
 	p.mu.Unlock()
 	p.Refresh() // Redraw with new marker positions
+}
+
+// SetSpikeFiltering toggles spike/discontinuity filtering for line segments.
+// Disable for L-K mode to avoid dropping legitimate rapid transitions.
+func (p *PEPlot) SetSpikeFiltering(enabled bool) {
+	p.mu.Lock()
+	p.filterSpikes = enabled
+	p.mu.Unlock()
 }
 
 func (p *PEPlot) SetData(eData, pData []float64, currentE, currentP float64) {
@@ -406,11 +417,15 @@ func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 			// discontinuities between cycles while preserving the steep switching region
 			// Typical WRD discontinuity: E≈0, ΔP > 100% (cycle boundary)
 			// Typical steep switch: ΔE≈2%, ΔP≈10% (legitimate curve)
+			// Also treat large diagonal jumps as discontinuities (missing PREP points).
+			jumpMag := math.Hypot(normE, normP)
 			isSpike := (normE < 0.05 && normP > 0.30) || // Vertical spike (P jumps while E stays)
 				(normE > 0.30 && normP < 0.05) || // Horizontal spike (E jumps while P stays)
-				normP > 0.50 // Any P jump > 50% is definitely a discontinuity
+				normP > 0.50 || // Any P jump > 50% is definitely a discontinuity
+				jumpMag > 0.35 || // Large diagonal jump (skip connecting line)
+				(normE > 0.20 && normP > 0.20) // Moderate diagonal jump
 
-			if !isSpike {
+			if !r.plot.filterSpikes || !isSpike {
 				line := canvas.NewLine(lineColor)
 				line.Position1 = fyne.NewPos(x1, y1)
 				line.Position2 = fyne.NewPos(x2, y2)

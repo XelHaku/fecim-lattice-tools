@@ -2,7 +2,6 @@ package gui
 
 import (
 	"encoding/json"
-	"fecim-lattice-tools/module1-hysteresis/pkg/controller"
 	"fmt"
 	"math"
 	"math/rand"
@@ -11,6 +10,9 @@ import (
 	"strings"
 	"time"
 
+	"fecim-lattice-tools/module1-hysteresis/pkg/controller"
+	"fecim-lattice-tools/module1-hysteresis/pkg/gui/widgets"
+	"fecim-lattice-tools/shared/logging"
 	sharedphysics "fecim-lattice-tools/shared/physics"
 	"fyne.io/fyne/v2"
 )
@@ -613,6 +615,76 @@ func (a *App) simulationLoop() {
 	defer ticker.Stop()
 
 	lastTime := time.Now()
+	perfEnabled := logging.IsVerbose(logging.VerbosityDebug)
+	perfWindowStart := time.Time{}
+	perfFrames := 0
+	perfSubSteps := 0
+	perfDtCount := 0
+	perfDtMin := 0.0
+	perfDtMax := 0.0
+	perfDtSum := 0.0
+	perfPhysics := time.Duration(0)
+	perfRender := time.Duration(0)
+	perfEngine := "L-K"
+
+	resetPerfWindow := func(now time.Time) {
+		perfWindowStart = now
+		perfFrames = 0
+		perfSubSteps = 0
+		perfDtCount = 0
+		perfDtMin = math.MaxFloat64
+		perfDtMax = 0
+		perfDtSum = 0
+		perfPhysics = 0
+		perfRender = 0
+	}
+
+	recordPhysicsStep := func(step float64) {
+		if perfEnabled {
+			if step < perfDtMin {
+				perfDtMin = step
+			}
+			if step > perfDtMax {
+				perfDtMax = step
+			}
+			perfDtSum += step
+			perfDtCount++
+			stepStart := time.Now()
+			a.updatePhysics(step)
+			perfPhysics += time.Since(stepStart)
+			return
+		}
+		a.updatePhysics(step)
+	}
+
+	logPerfWindow := func(now time.Time) {
+		if !perfEnabled || perfWindowStart.IsZero() {
+			return
+		}
+		if now.Sub(perfWindowStart) < time.Second {
+			return
+		}
+		if perfFrames == 0 || perfDtCount == 0 {
+			resetPerfWindow(now)
+			return
+		}
+		avgSubSteps := float64(perfSubSteps) / float64(perfFrames)
+		dtMean := perfDtSum / float64(perfDtCount)
+		physicsMs := perfPhysics.Seconds() * 1000.0
+		renderMs := perfRender.Seconds() * 1000.0
+		totalMs := physicsMs + renderMs
+		physicsShare := 0.0
+		if totalMs > 0 {
+			physicsShare = (physicsMs / totalMs) * 100.0
+		}
+		log.Debug("LK perf (%s): frames=%d avgSubSteps=%.1f dtMin=%.3e dtMean=%.3e dtMax=%.3e physicsMs=%.2f renderMs=%.2f physicsShare=%.1f%%",
+			perfEngine, perfFrames, avgSubSteps, perfDtMin, dtMean, perfDtMax, physicsMs, renderMs, physicsShare)
+		resetPerfWindow(now)
+	}
+
+	if perfEnabled {
+		resetPerfWindow(time.Now())
+	}
 
 	// Adaptive Time-Stepping Constants
 	const (
@@ -625,19 +697,23 @@ func (a *App) simulationLoop() {
 		<-ticker.C
 
 		now := time.Now()
-		frameDt := now.Sub(lastTime).Seconds()
+		frameDtRaw := now.Sub(lastTime).Seconds()
 		lastTime = now
 
 		if a.paused {
 			continue
 		}
 
+		// Lock ONCE for the entire frame's physics burst
+		a.mu.Lock()
+		timeScale := a.timeScale
+		if timeScale <= 0 {
+			timeScale = 1.0
+		}
+		frameDt := frameDtRaw * timeScale
 		if frameDt > dtMax {
 			frameDt = dtMax
 		}
-
-		// Lock ONCE for the entire frame's physics burst
-		a.mu.Lock()
 
 		// --- Adaptive Sub-Stepping Loop ---
 		remainingDt := frameDt
@@ -646,21 +722,36 @@ func (a *App) simulationLoop() {
 		const maxSubSteps = 1000
 		subSteps := 0
 		fastPreisach := a.physicsEngine == PhysicsPreisach
+		if fastPreisach {
+			perfEngine = "Preisach"
+		} else {
+			perfEngine = "L-K"
+		}
 
 		matEc := 0.0
 		if a.material != nil {
 			matEc = a.material.Ec
 		}
 
-		for remainingDt > 0 && subSteps < maxSubSteps {
-			// Determine step size based on physics state
-			// If E-field is near Ec, use smaller steps to capture switching dynamics.
-			// Preisach is quasi-static: use a single step per frame for performance.
+		if fastPreisach {
+			// Quasi-static visualization still needs enough points to avoid straight segments.
+			const preisachSubSteps = 24
+			steps := preisachSubSteps
+			if steps < 1 {
+				steps = 1
+			}
+			for i := 0; i < steps && remainingDt > 0; i++ {
+				step := remainingDt / float64(steps-i)
+				recordPhysicsStep(step)
+				remainingDt -= step
+			}
+			subSteps = steps
+		} else {
+			for remainingDt > 0 && subSteps < maxSubSteps {
+				// Determine step size based on physics state
+				// If E-field is near Ec, use smaller steps to capture switching dynamics.
 
-			currentStep := dtNominal
-			if fastPreisach {
-				currentStep = remainingDt
-			} else {
+				currentStep := dtNominal
 				// Check proximity to Ec (switching region)
 				// Switching happens at +Ec (increasing) and -Ec (decreasing)
 				// But effective Ec varies. Use material Ec as baseline proxy.
@@ -681,22 +772,32 @@ func (a *App) simulationLoop() {
 						currentStep = dtMin
 					}
 				}
-			}
 
-			// Don't step past the frame time
-			if currentStep > remainingDt {
-				currentStep = remainingDt
-			}
+				// Don't step past the frame time
+				if currentStep > remainingDt {
+					currentStep = remainingDt
+				}
 
-			a.updatePhysics(currentStep)
-			remainingDt -= currentStep
-			subSteps++
+				recordPhysicsStep(currentStep)
+				remainingDt -= currentStep
+				subSteps++
+			}
 		}
 
 		a.mu.Unlock()
 
 		// Update UI once per frame with the final state (without holding a.mu).
+		renderStart := time.Time{}
+		if perfEnabled {
+			renderStart = time.Now()
+		}
 		a.updateUI()
+		if perfEnabled {
+			perfRender += time.Since(renderStart)
+			perfFrames++
+			perfSubSteps += subSteps
+			logPerfWindow(time.Now())
+		}
 	}
 }
 
@@ -884,6 +985,11 @@ func (a *App) updatePhysics(dt float64) {
 			Ec := mat.Ec // Use local copy for thread safety
 			midLevel := a.numLevels / 2
 
+			// Apply queued target at the start of PREP so UI and controller stay aligned.
+			if a.wrdPhase == 0 && a.wrdPhaseTimer <= dt && a.wrdNextTargetLevel > 0 {
+				a.wrdTargetLevel = a.wrdNextTargetLevel
+				a.wrdNextTargetLevel = 0
+			}
 			targetLevel := a.wrdTargetLevel // 1-indexed
 			// Note: startLevel (a.wrdStartLevel) no longer used for direction - we use absolute position
 
@@ -901,6 +1007,9 @@ func (a *App) updatePhysics(dt float64) {
 				if a.wrdPhaseTimer <= dt {
 					a.wrdResetStartP = a.polarization * 100
 					a.wrdStartLevel = a.discreteLevel + 1
+					a.wrdWriteStartP = a.polarization * 100
+					log.Printf("WRD CYCLE START: cycle=%d | startLevel=%d | target=%d | P=%.2f µC/cm²",
+						a.wrdTotalWrites+1, a.wrdStartLevel, a.wrdTargetLevel, a.wrdWriteStartP)
 				}
 
 				diff := prepE - a.electricField
@@ -1088,9 +1197,6 @@ func (a *App) updatePhysics(dt float64) {
 						a.recalibrateReason = ""
 					}
 
-					// Record start level for next cycle
-					a.wrdStartLevel = a.discreteLevel + 1
-
 					// Add comparison callout every 5 cycles
 					if a.wrdTotalWrites > 0 && a.wrdTotalWrites%5 == 0 {
 						fecimEnergy := a.wrdTotalEnergyfJ / 1000 // pJ
@@ -1130,23 +1236,21 @@ func (a *App) updatePhysics(dt float64) {
 					if rangeSize < 2 {
 						rangeSize = 2
 					}
+					nextTarget := a.wrdTargetLevel
 					if a.wrdTargetLevel > midLvl {
 						// Low range: 2 to rangeSize+1 (avoid extremes)
-						a.wrdTargetLevel = rand.Intn(rangeSize) + 2
-						if a.wrdTargetLevel > a.numLevels-1 {
-							a.wrdTargetLevel = a.numLevels - 1
+						nextTarget = rand.Intn(rangeSize) + 2
+						if nextTarget > a.numLevels-1 {
+							nextTarget = a.numLevels - 1
 						}
 					} else {
 						// High range: (numLevels - rangeSize) to numLevels-1
-						a.wrdTargetLevel = a.numLevels - rangeSize + rand.Intn(rangeSize)
-						if a.wrdTargetLevel < 2 {
-							a.wrdTargetLevel = 2
+						nextTarget = a.numLevels - rangeSize + rand.Intn(rangeSize)
+						if nextTarget < 2 {
+							nextTarget = 2
 						}
 					}
-					// Capture start state for next cycle logging
-					a.wrdWriteStartP = a.polarization * 100 // Convert to µC/cm²
-					log.Printf("WRD CYCLE START: cycle=%d | startLevel=%d | newTarget=%d | P=%.2f µC/cm²",
-						a.wrdTotalWrites+1, a.discreteLevel+1, a.wrdTargetLevel, a.wrdWriteStartP)
+					a.wrdNextTargetLevel = nextTarget
 					// NOTE: Don't clear history - let the trail accumulate to show full hysteresis loop
 					// Spike detection in plot widget handles any discontinuities
 					// Go to RESET phase to ensure clean state and proper initialization
@@ -1238,10 +1342,65 @@ func (a *App) updatePhysics(dt float64) {
 	a.recordDataSnapshot(dt)
 }
 
-// updateUI prepares data and calls refreshGUI.
-// MUST be called with a.mu held.
+type uiSnapshot struct {
+	fE float64
+	pV float64
+	dL int
+	eC float64
+	hE []float64
+	hP []float64
+}
+
+// ensureUIUpdateLoop starts the async UI update loop exactly once.
+func (a *App) ensureUIUpdateLoop() {
+	a.uiUpdateOnce.Do(func() {
+		a.uiUpdates = make(chan uiSnapshot, 1)
+		go a.uiUpdateLoop()
+	})
+}
+
+// queueUIUpdate sends the latest UI snapshot without blocking physics.
+func (a *App) queueUIUpdate(snapshot uiSnapshot) {
+	a.ensureUIUpdateLoop()
+	select {
+	case a.uiUpdates <- snapshot:
+		return
+	default:
+		// Drop stale update and enqueue the latest.
+		select {
+		case <-a.uiUpdates:
+		default:
+		}
+		select {
+		case a.uiUpdates <- snapshot:
+		default:
+		}
+	}
+}
+
+// uiUpdateLoop serializes UI updates on the main thread and coalesces frames.
+func (a *App) uiUpdateLoop() {
+	for snapshot := range a.uiUpdates {
+		// Coalesce to the most recent snapshot if multiple are queued.
+		for {
+			select {
+			case newer := <-a.uiUpdates:
+				snapshot = newer
+			default:
+				goto Apply
+			}
+		}
+	Apply:
+		fyne.Do(func() {
+			a.refreshGUI(snapshot.fE, snapshot.pV, snapshot.dL, snapshot.eC, snapshot.hE, snapshot.hP)
+		})
+	}
+}
+
+// updateUI prepares data and queues refreshGUI on the main thread.
+// Safe to call without holding a.mu (it snapshots under a read lock).
 func (a *App) updateUI() {
-	// Update UI (must be on main thread) - take a snapshot under lock.
+	// Take a snapshot under lock.
 	a.mu.RLock()
 	fE := a.electricField
 	pV := a.polarization
@@ -1256,349 +1415,367 @@ func (a *App) updateUI() {
 	copy(pHist, a.pHistory)
 	a.mu.RUnlock()
 
-	a.refreshGUI(fE, pV, dL, materialEc, eHist, pHist)
+	a.queueUIUpdate(uiSnapshot{
+		fE: fE,
+		pV: pV,
+		dL: dL,
+		eC: materialEc,
+		hE: eHist,
+		hP: pHist,
+	})
 }
 
 // refreshGUI updates all UI elements with the latest simulation data.
+// Must be called on the main/UI thread.
 func (a *App) refreshGUI(fE float64, pV float64, dL int, eC float64, hE []float64, hP []float64) {
-	fyne.Do(func() {
-		// Update labels
-		a.eFieldLabel.SetText(fmt.Sprintf("E-field: %.3f MV/cm", fE/1e8))
-		a.pLabel.SetText(fmt.Sprintf("%.2f µC/cm²", pV*100))
-		a.mu.RLock()
-		numLevels := a.numLevels
-		a.mu.RUnlock()
-		a.levelLabel.SetText(fmt.Sprintf("%d/%d", dL+1, numLevels))
+	// Update labels
+	a.eFieldLabel.SetText(fmt.Sprintf("E-field: %.3f MV/cm", fE/1e8))
+	a.pLabel.SetText(fmt.Sprintf("%.2f µC/cm²", pV*100))
+	a.mu.RLock()
+	numLevels := a.numLevels
+	a.mu.RUnlock()
+	a.levelLabel.SetText(fmt.Sprintf("%d/%d", dL+1, numLevels))
 
-		// Update state descriptor (divide into thirds)
-		var stateText string
-		lowThird := numLevels / 3
-		highThird := numLevels * 2 / 3
-		if dL < lowThird {
-			stateText = "Negative P"
-		} else if dL >= highThird {
-			stateText = "Positive P"
+	// Update state descriptor (divide into thirds)
+	var stateText string
+	lowThird := numLevels / 3
+	highThird := numLevels * 2 / 3
+	if dL < lowThird {
+		stateText = "Negative P"
+	} else if dL >= highThird {
+		stateText = "Positive P"
+	} else {
+		stateText = "Intermediate"
+	}
+	if a.stateLabel != nil {
+		a.stateLabel.SetText(stateText)
+	}
+
+	// Update stability indicator (M12)
+	if a.stabilityIndicator != nil {
+		a.stabilityIndicator.SetLevel(dL+1, numLevels)
+	}
+
+	// Update wake-up/fatigue labels (Dr. Tour recommendation)
+	// Update wake-up/fatigue labels (Dr. Tour recommendation)
+	cycles, degradation, wakeup := 0, 0.0, 1.0 // Placeholder for clean-up
+	if a.cyclesLabel != nil {
+		if cycles >= 1000000 {
+			a.cyclesLabel.SetText(fmt.Sprintf("%.1fM", float64(cycles)/1e6))
+		} else if cycles >= 1000 {
+			a.cyclesLabel.SetText(fmt.Sprintf("%.1fK", float64(cycles)/1e3))
 		} else {
-			stateText = "Intermediate"
+			a.cyclesLabel.SetText(fmt.Sprintf("%d", cycles))
 		}
-		if a.stateLabel != nil {
-			a.stateLabel.SetText(stateText)
-		}
-
-		// Update stability indicator (M12)
-		if a.stabilityIndicator != nil {
-			a.stabilityIndicator.SetLevel(dL+1, numLevels)
-		}
-
-		// Update wake-up/fatigue labels (Dr. Tour recommendation)
-		// Update wake-up/fatigue labels (Dr. Tour recommendation)
-		cycles, degradation, wakeup := 0, 0.0, 1.0 // Placeholder for clean-up
-		if a.cyclesLabel != nil {
-			if cycles >= 1000000 {
-				a.cyclesLabel.SetText(fmt.Sprintf("%.1fM", float64(cycles)/1e6))
-			} else if cycles >= 1000 {
-				a.cyclesLabel.SetText(fmt.Sprintf("%.1fK", float64(cycles)/1e3))
-			} else {
-				a.cyclesLabel.SetText(fmt.Sprintf("%d", cycles))
-			}
-		}
-		if a.wakeupLabel != nil {
-			a.wakeupLabel.SetText(fmt.Sprintf("%.1f%%", wakeup*100))
-		}
-		if a.fatigueLabel != nil {
-			a.fatigueLabel.SetText(fmt.Sprintf("%.4f%%", degradation*100))
-		}
-		// L01: Update cycle phase indicator based on wakeup and degradation
-		if a.cyclePhaseLabel != nil {
-			var phase string
-			if wakeup < 0.95 {
-				phase = "WAKE-UP"
-			} else if degradation < 0.0001 { // < 0.01% degradation
-				phase = "STABLE"
-			} else {
-				phase = "FATIGUE"
-			}
-			a.cyclePhaseLabel.SetText(phase)
-		}
-
-		// Update temperature-dependent metrics (must hold lock during preisach access)
-		a.mu.RLock()
-		effEc := a.effectiveEc()
-		// Use material's nominal Pr for plot delimiters (not GetEffectivePr which recalculates from current state)
-		effPr := a.material.Pr
-		switchedFraction := (a.normalizedP + 1) / 2
-
-		// Calculate squareness (Pr/Ps ratio)
-		squareness := 0.0
-		if a.material != nil && a.material.Ps > 0 {
-			squareness = effPr / a.material.Ps
-		}
-		a.mu.RUnlock()
-
-		if a.effEcLabel != nil {
-			// Show Ec with ±15% uncertainty (typical device-to-device variation)
-			ecVal := effEc / 1e8
-			a.effEcLabel.SetText(fmt.Sprintf("Ec(T): %.2f±%.2f MV/cm", ecVal, ecVal*0.15))
-		}
-		if a.effPrLabel != nil {
-			// Show Pr with ±20% uncertainty (typical device-to-device variation)
-			prVal := effPr * 100
-			a.effPrLabel.SetText(fmt.Sprintf("Pr(T): %.1f±%.1f µC/cm²", prVal, prVal*0.20))
-		}
-		if a.squarenessLabel != nil {
-			a.squarenessLabel.SetText(fmt.Sprintf("Squareness: %.2f", squareness))
-		}
-		if a.switchedLabel != nil {
-			a.switchedLabel.SetText(fmt.Sprintf("Switched: %.0f%%", switchedFraction*100))
-		}
-
-		// Update phase indicator based on current mode and phase
-		a.mu.RLock()
-		waveform := a.waveform
-		wrdPhaseVal := a.wrdPhase
-		manPhaseVal := a.manualPhase
-		animating := a.manualAnimating
-		a.mu.RUnlock()
-
-		if a.phaseIndicator != nil {
-			switch waveform {
-			case WaveformWriteReadDemo:
-				a.phaseIndicator.SetPhase(wrdPhaseVal, "wrd")
-			case WaveformManual:
-				if animating {
-					a.phaseIndicator.SetPhase(manPhaseVal, "manual")
-				} else {
-					a.phaseIndicator.SetPhase(-1, "") // Idle
-				}
-			default:
-				a.phaseIndicator.SetPhase(-1, "") // Idle for sine/triangle
-			}
-		}
-
-		// Update slider to match current E-field (only if not being manually controlled)
-		// During Manual animation, the slider reflects the animated E-field
-		// Normalize by Ec for display (-1.5 to +1.5 range)
-		a.mu.RLock()
-		shouldUpdateSlider := a.waveform != WaveformManual || a.manualAnimating
-		a.mu.RUnlock()
-		if shouldUpdateSlider {
-			a.eFieldSlider.SetValue(fE / eC)
-		}
-
-		// Update status and logging
-		if a.paused {
-			a.statusLabel.SetText("⏸ Paused")
+	}
+	if a.wakeupLabel != nil {
+		a.wakeupLabel.SetText(fmt.Sprintf("%.1f%%", wakeup*100))
+	}
+	if a.fatigueLabel != nil {
+		a.fatigueLabel.SetText(fmt.Sprintf("%.4f%%", degradation*100))
+	}
+	// L01: Update cycle phase indicator based on wakeup and degradation
+	if a.cyclePhaseLabel != nil {
+		var phase string
+		if wakeup < 0.95 {
+			phase = "WAKE-UP"
+		} else if degradation < 0.0001 { // < 0.01% degradation
+			phase = "STABLE"
 		} else {
-			a.mu.RLock()
-			currentWaveform := a.waveform
-			wrdPhase := a.wrdPhase
-			wrdTarget := a.wrdTargetLevel
-			wrdRead := a.wrdReadLevel
-			lastPhase := a.lastLogPhase
-			wrdTotalWrites := a.wrdTotalWrites
-			wrdSuccessWrites := a.wrdSuccessWrites
-			wrdTotalEnergyfJ := a.wrdTotalEnergyfJ
-			midLevel := a.numLevels / 2 // Dynamic middle level for direction logic
-			a.mu.RUnlock()
+			phase = "FATIGUE"
+		}
+		a.cyclePhaseLabel.SetText(phase)
+	}
 
-			switch currentWaveform {
-			case WaveformWriteReadDemo:
-				var phaseStr string
-				// Log phase transitions (6 phases: RESET, HOLD_RESET, WRITE, HOLD_WRITE, READ, DISPLAY)
-				if wrdPhase != lastPhase {
-					a.mu.Lock()
-					a.lastLogPhase = wrdPhase
-					switch wrdPhase {
-					case 0:
-						// RESET: Saturate in opposite direction
-						direction := "-sat"
-						if wrdTarget <= midLevel {
-							direction = "+sat"
-						}
-						a.addLogEntry(fmt.Sprintf("◆◆ RESET   | %s | prep", direction))
-					case 1:
-						// HOLD_RESET: Return to zero (known state)
-						a.addLogEntry("░░ SETTLE  | E=0 | prep done")
-					case 2:
-						// WRITE: Apply calibrated field to reach target
-						direction := "+"
-						if wrdTarget <= midLevel {
-							direction = "-"
-						}
-						a.addLogEntry(fmt.Sprintf("▓▓ WRITE L%d | %sE>Ec | ~10fJ", wrdTarget, direction))
-					case 3:
-						// HOLD_WRITE: Return to zero, polarization persists
-						a.addLogEntry(fmt.Sprintf("░░ HOLD L%d | E=0 | 0 fJ!", dL+1))
-					case 4:
-						// READ: Non-destructive sense
-						a.addLogEntry("▒▒ READ    | E<Ec | ~1fJ")
-					case 5:
-						// DISPLAY: Show result
-						status := "✓ MATCH"
-						if wrdRead != wrdTarget {
-							diff := abs(wrdRead - wrdTarget)
-							if diff == 1 {
-								status = fmt.Sprintf("△ ±1 (got %d)", wrdRead)
-							} else {
-								status = fmt.Sprintf("✗ miss (got %d)", wrdRead)
-							}
-						}
-						successRate := 0.0
-						if wrdTotalWrites > 0 {
-							successRate = float64(wrdSuccessWrites) / float64(wrdTotalWrites) * 100
-						}
-						a.addLogEntry(fmt.Sprintf("●● L%d %s [%.0f%% rate]", wrdTarget, status, successRate))
-					}
-					a.mu.Unlock()
-				}
+	// Update temperature-dependent metrics (must hold lock during preisach access)
+	a.mu.RLock()
+	effEc := a.effectiveEc()
+	// Use material's nominal Pr for plot delimiters (not GetEffectivePr which recalculates from current state)
+	effPr := a.material.Pr
+	switchedFraction := (a.normalizedP + 1) / 2
 
-				// Enhanced status with energy metrics (using local copies from RLock above)
-				energyTotal := wrdTotalEnergyfJ
-				writeCount := wrdTotalWrites
+	// Calculate squareness (Pr/Ps ratio)
+	squareness := 0.0
+	if a.material != nil && a.material.Ps > 0 {
+		squareness = effPr / a.material.Ps
+	}
+	a.mu.RUnlock()
 
+	if a.effEcLabel != nil {
+		// Show Ec with ±15% uncertainty (typical device-to-device variation)
+		ecVal := effEc / 1e8
+		a.effEcLabel.SetText(fmt.Sprintf("Ec(T): %.2f±%.2f MV/cm", ecVal, ecVal*0.15))
+	}
+	if a.effPrLabel != nil {
+		// Show Pr with ±20% uncertainty (typical device-to-device variation)
+		prVal := effPr * 100
+		a.effPrLabel.SetText(fmt.Sprintf("Pr(T): %.1f±%.1f µC/cm²", prVal, prVal*0.20))
+	}
+	if a.squarenessLabel != nil {
+		a.squarenessLabel.SetText(fmt.Sprintf("Squareness: %.2f", squareness))
+	}
+	if a.switchedLabel != nil {
+		a.switchedLabel.SetText(fmt.Sprintf("Switched: %.0f%%", switchedFraction*100))
+	}
+
+	// Update phase indicator based on current mode and phase
+	a.mu.RLock()
+	waveform := a.waveform
+	wrdPhaseVal := a.wrdPhase
+	manPhaseVal := a.manualPhase
+	animating := a.manualAnimating
+	a.mu.RUnlock()
+
+	if a.phaseIndicator != nil {
+		switch waveform {
+		case WaveformWriteReadDemo:
+			a.phaseIndicator.SetPhase(wrdPhaseVal, "wrd")
+		case WaveformManual:
+			if animating {
+				a.phaseIndicator.SetPhase(manPhaseVal, "manual")
+			} else {
+				a.phaseIndicator.SetPhase(-1, "") // Idle
+			}
+		default:
+			a.phaseIndicator.SetPhase(-1, "") // Idle for sine/triangle
+		}
+	}
+
+	// Update slider to match current E-field (only if not being manually controlled)
+	// During Manual animation, the slider reflects the animated E-field
+	// Normalize by Ec for display (-1.5 to +1.5 range)
+	a.mu.RLock()
+	shouldUpdateSlider := a.waveform != WaveformManual || a.manualAnimating
+	a.mu.RUnlock()
+	if shouldUpdateSlider {
+		a.eFieldSlider.SetValue(fE / eC)
+	}
+
+	// Update status and logging
+	if a.paused {
+		a.statusLabel.SetText("⏸ Paused")
+	} else {
+		a.mu.RLock()
+		currentWaveform := a.waveform
+		wrdPhase := a.wrdPhase
+		wrdTarget := a.wrdTargetLevel
+		wrdRead := a.wrdReadLevel
+		lastPhase := a.lastLogPhase
+		wrdTotalWrites := a.wrdTotalWrites
+		wrdSuccessWrites := a.wrdSuccessWrites
+		wrdTotalEnergyfJ := a.wrdTotalEnergyfJ
+		midLevel := a.numLevels / 2 // Dynamic middle level for direction logic
+		a.mu.RUnlock()
+
+		switch currentWaveform {
+		case WaveformWriteReadDemo:
+			var phaseStr string
+			// Log phase transitions (6 phases: RESET, HOLD_RESET, WRITE, HOLD_WRITE, READ, DISPLAY)
+			if wrdPhase != lastPhase {
+				a.mu.Lock()
+				a.lastLogPhase = wrdPhase
 				switch wrdPhase {
 				case 0:
+					// RESET: Saturate in opposite direction
 					direction := "-sat"
 					if wrdTarget <= midLevel {
 						direction = "+sat"
 					}
-					phaseStr = fmt.Sprintf("◆ RESET | %s | preparing", direction)
+					a.addLogEntry(fmt.Sprintf("◆◆ RESET   | %s | prep", direction))
 				case 1:
-					phaseStr = "░ SETTLE | E=0 | at known state"
+					// HOLD_RESET: Return to zero (known state)
+					a.addLogEntry("░░ SETTLE  | E=0 | prep done")
 				case 2:
+					// WRITE: Apply calibrated field to reach target
 					direction := "+"
 					if wrdTarget <= midLevel {
 						direction = "-"
 					}
-					phaseStr = fmt.Sprintf("▓ WRITE L%d | %sE>Ec | ~10fJ", wrdTarget, direction)
+					a.addLogEntry(fmt.Sprintf("▓▓ WRITE L%d | %sE>Ec | ~10fJ", wrdTarget, direction))
 				case 3:
-					phaseStr = fmt.Sprintf("░ HOLD L%d | E=0 | ZERO POWER", dL+1)
+					// HOLD_WRITE: Return to zero, polarization persists
+					a.addLogEntry(fmt.Sprintf("░░ HOLD L%d | E=0 | 0 fJ!", dL+1))
 				case 4:
-					phaseStr = fmt.Sprintf("▒ READ | Sense L%d | ~1fJ", dL+1)
+					// READ: Non-destructive sense
+					a.addLogEntry("▒▒ READ    | E<Ec | ~1fJ")
 				case 5:
-					successRate := 0.0
-					if writeCount > 0 {
-						successRate = float64(wrdSuccessWrites) / float64(writeCount) * 100
-					}
-					if wrdRead == wrdTarget {
-						phaseStr = fmt.Sprintf("● L%d ✓ | Ops:%d | %.0f%% | %.0fpJ", wrdRead, writeCount, successRate, energyTotal/1000)
-					} else {
-						phaseStr = fmt.Sprintf("● L%d (want %d) | Ops:%d | %.0f%%", wrdRead, wrdTarget, writeCount, successRate)
-					}
-				}
-				a.statusLabel.SetText(fmt.Sprintf("⚡ FeCIM Write/Read | %s", phaseStr))
-			case WaveformManual:
-				// Manual mode status with RESET-AND-RETRY physics
-				a.mu.RLock()
-				animAnimating := a.manualAnimating
-				manPhase := a.manualPhase
-				manTarget := a.manualTargetLevel
-				manStart := a.manualStartLevel
-				a.mu.RUnlock()
-
-				if animAnimating {
-					var phaseStr string
-					switch manPhase {
-					case 0:
-						// RESET phase
-						if manTarget > manStart {
-							phaseStr = "RESET -sat..."
+					// DISPLAY: Show result
+					status := "✓ MATCH"
+					if wrdRead != wrdTarget {
+						diff := abs(wrdRead - wrdTarget)
+						if diff == 1 {
+							status = fmt.Sprintf("△ ±1 (got %d)", wrdRead)
 						} else {
-							phaseStr = "RESET +sat..."
+							status = fmt.Sprintf("✗ miss (got %d)", wrdRead)
 						}
-					case 1:
-						phaseStr = "SETTLE E=0..."
-					case 2:
-						phaseStr = fmt.Sprintf("WRITE → L%d...", manTarget)
-					case 3:
-						phaseStr = fmt.Sprintf("HOLD L%d...", dL+1)
-					default:
-						phaseStr = fmt.Sprintf("Current: L%d", dL+1)
 					}
-					a.statusLabel.SetText(fmt.Sprintf("TARGET L%d | %s", manTarget, phaseStr))
-				} else {
-					a.statusLabel.SetText(fmt.Sprintf("Manual L%d | Click level bar", dL+1))
+					successRate := 0.0
+					if wrdTotalWrites > 0 {
+						successRate = float64(wrdSuccessWrites) / float64(wrdTotalWrites) * 100
+					}
+					a.addLogEntry(fmt.Sprintf("●● L%d %s [%.0f%% rate]", wrdTarget, status, successRate))
 				}
-			case WaveformTimeResolved:
+				a.mu.Unlock()
+			}
+
+			// Enhanced status with energy metrics (using local copies from RLock above)
+			energyTotal := wrdTotalEnergyfJ
+			writeCount := wrdTotalWrites
+
+			switch wrdPhase {
+			case 0:
+				direction := "-sat"
+				if wrdTarget <= midLevel {
+					direction = "+sat"
+				}
+				phaseStr = fmt.Sprintf("◆ RESET | %s | preparing", direction)
+			case 1:
+				phaseStr = "░ SETTLE | E=0 | at known state"
+			case 2:
+				direction := "+"
+				if wrdTarget <= midLevel {
+					direction = "-"
+				}
+				phaseStr = fmt.Sprintf("▓ WRITE L%d | %sE>Ec | ~10fJ", wrdTarget, direction)
+			case 3:
+				phaseStr = fmt.Sprintf("░ HOLD L%d | E=0 | ZERO POWER", dL+1)
+			case 4:
+				phaseStr = fmt.Sprintf("▒ READ | Sense L%d | ~1fJ", dL+1)
+			case 5:
+				successRate := 0.0
+				if writeCount > 0 {
+					successRate = float64(wrdSuccessWrites) / float64(writeCount) * 100
+				}
+				if wrdRead == wrdTarget {
+					phaseStr = fmt.Sprintf("● L%d ✓ | Ops:%d | %.0f%% | %.0fpJ", wrdRead, writeCount, successRate, energyTotal/1000)
+				} else {
+					phaseStr = fmt.Sprintf("● L%d (want %d) | Ops:%d | %.0f%%", wrdRead, wrdTarget, writeCount, successRate)
+				}
+			}
+			a.statusLabel.SetText(fmt.Sprintf("⚡ FeCIM Write/Read | %s", phaseStr))
+		case WaveformManual:
+			// Manual mode status with RESET-AND-RETRY physics
+			a.mu.RLock()
+			animAnimating := a.manualAnimating
+			manPhase := a.manualPhase
+			manTarget := a.manualTargetLevel
+			manStart := a.manualStartLevel
+			a.mu.RUnlock()
+
+			if animAnimating {
+				var phaseStr string
+				switch manPhase {
+				case 0:
+					// RESET phase
+					if manTarget > manStart {
+						phaseStr = "RESET -sat..."
+					} else {
+						phaseStr = "RESET +sat..."
+					}
+				case 1:
+					phaseStr = "SETTLE E=0..."
+				case 2:
+					phaseStr = fmt.Sprintf("WRITE → L%d...", manTarget)
+				case 3:
+					phaseStr = fmt.Sprintf("HOLD L%d...", dL+1)
+				default:
+					phaseStr = fmt.Sprintf("Current: L%d", dL+1)
+				}
+				a.statusLabel.SetText(fmt.Sprintf("TARGET L%d | %s", manTarget, phaseStr))
+			} else {
+				a.statusLabel.SetText(fmt.Sprintf("Manual L%d | Click level bar", dL+1))
+			}
+		case WaveformTimeResolved:
+			a.mu.RLock()
+			animating := a.timeResAnimating
+			idx := a.timeResIndex
+			dataLen := len(a.timeResDataTimes)
+			a.mu.RUnlock()
+
+			if animating && dataLen > 0 && idx < dataLen {
 				a.mu.RLock()
-				animating := a.timeResAnimating
-				idx := a.timeResIndex
-				dataLen := len(a.timeResDataTimes)
+				currentTime := a.timeResDataTimes[idx]
+				switchedCount := a.timeResDataSwitch[idx]
+				totalHysterons := len(a.timeResDataSwitch)
 				a.mu.RUnlock()
 
-				if animating && dataLen > 0 && idx < dataLen {
-					a.mu.RLock()
-					currentTime := a.timeResDataTimes[idx]
-					switchedCount := a.timeResDataSwitch[idx]
-					totalHysterons := len(a.timeResDataSwitch)
-					a.mu.RUnlock()
-
-					switchedFrac := float64(switchedCount) / float64(totalHysterons) * 100
-					a.statusLabel.SetText(fmt.Sprintf("⚡ Time-Resolved | t=%.1f ns | %.0f%% switched | L%d",
-						currentTime*1e9, switchedFrac, dL+1))
-				} else {
-					a.statusLabel.SetText("⚡ Time-Resolved Switching (KAI Dynamics)")
-				}
-			default:
-				frac := (a.normalizedP + 1) / 2 * 100
-				a.statusLabel.SetText(fmt.Sprintf("● Running | t=%.2fs | Switched: %.1f%%", a.simTime, frac))
+				switchedFrac := float64(switchedCount) / float64(totalHysterons) * 100
+				a.statusLabel.SetText(fmt.Sprintf("⚡ Time-Resolved | t=%.1f ns | %.0f%% switched | L%d",
+					currentTime*1e9, switchedFrac, dL+1))
+			} else {
+				a.statusLabel.SetText("⚡ Time-Resolved Switching (KAI Dynamics)")
 			}
+		default:
+			frac := (a.normalizedP + 1) / 2 * 100
+			a.statusLabel.SetText(fmt.Sprintf("● Running | t=%.2fs | Switched: %.1f%%", a.simTime, frac))
 		}
+	}
 
-		// Slide panel removed - was distracting and flickering
+	// Slide panel removed - was distracting and flickering
 
-		// Update log text
-		a.mu.RLock()
-		logText := a.getLogText()
-		a.mu.RUnlock()
-		a.logText.SetText(logText)
+	// Update log text
+	a.mu.RLock()
+	logText := a.getLogText()
+	a.mu.RUnlock()
+	a.logText.SetText(logText)
 
-		// Update plot
-		a.plot.SetData(hE, hP, fE, pV)
-		a.plot.Refresh()
+	// Update plot
+	a.mu.RLock()
+	engine := a.physicsEngine
+	a.mu.RUnlock()
+	a.plot.SetSpikeFiltering(engine != PhysicsLandau)
+	a.plot.SetData(hE, hP, fE, pV)
+	a.plot.Refresh()
 
-		// Update level indicator (level is 0-indexed, display is 1-indexed)
-		a.levelIndicator.SetLevel(dL)
+	// Update level indicator (level is 0-indexed, display is 1-indexed)
+	a.levelIndicator.SetLevel(dL)
 
-		// Highlight target level during animations
-		a.mu.RLock()
-		currentMode := a.waveform
-		currentWrdPh := a.wrdPhase
-		currentWrdTrg := a.wrdTargetLevel
-		manAnim := a.manualAnimating
-		manTrg := a.manualTargetLevel
-		matEcVal := a.material.Ec // For settled threshold
-		a.mu.RUnlock()
+	// Highlight target level during animations
+	a.mu.RLock()
+	currentMode := a.waveform
+	currentWrdPh := a.wrdPhase
+	currentWrdTrg := a.wrdTargetLevel
+	ctrlState := controller.StateIdle
+	if a.writeController != nil {
+		ctrlState = a.writeController.State
+	}
+	manAnim := a.manualAnimating
+	manTrg := a.manualTargetLevel
+	matEcVal := a.material.Ec // For settled threshold
+	a.mu.RUnlock()
 
-		if currentMode == WaveformWriteReadDemo {
-			// Show target until point SETTLES at target level (not just crosses it)
-			// Settled = level matches target AND E-field is near zero
-			atTarget := (dL + 1) == currentWrdTrg                     // level is 0-indexed, target is 1-indexed
-			eFieldSettled := math.Abs(fE) < 0.01*matEcVal             // E-field near zero (1% of Ec)
-			settled := atTarget && eFieldSettled && currentWrdPh >= 3 // Must be past WRITE phase
+	if currentMode == WaveformWriteReadDemo {
+		// Show target until point SETTLES at target level (not just crosses it)
+		// Settled = level matches target AND E-field is near zero
+		atTarget := (dL + 1) == currentWrdTrg                     // level is 0-indexed, target is 1-indexed
+		eFieldSettled := math.Abs(fE) < 0.01*matEcVal             // E-field near zero (1% of Ec)
+		settled := atTarget && eFieldSettled && currentWrdPh >= 3 // Must be past WRITE phase
 
-			// Keep highlight on during active phases OR until settled at target
-			highlight := currentWrdPh >= 0 && currentWrdPh <= 5 && !settled
-			a.levelIndicator.SetTargetLevel(currentWrdTrg, highlight)
-		} else if currentMode == WaveformManual && manAnim {
-			// Show target until point SETTLES at target level in Manual mode
-			atTarget := (dL + 1) == manTrg // level is 0-indexed, target is 1-indexed
-			eFieldSettled := math.Abs(fE) < 0.01*matEcVal
-			settled := atTarget && eFieldSettled
-
-			// Keep highlight on until settled at target
-			a.levelIndicator.SetTargetLevel(manTrg, !settled)
-		} else {
-			// Clear target highlight
-			a.levelIndicator.SetTargetLevel(0, false)
+		// Keep highlight on from WRITE through DISPLAY, until settled at target
+		highlight := currentWrdPh >= 2 && currentWrdPh <= 5 && !settled
+		mode := widgets.TargetModeWrite
+		if ctrlState == controller.StateVerify || ctrlState == controller.StateSuccess {
+			mode = widgets.TargetModeVerify
 		}
+		a.levelIndicator.SetTargetLevelMode(currentWrdTrg, highlight, mode)
+	} else if currentMode == WaveformManual && manAnim {
+		// Show target until point SETTLES at target level in Manual mode
+		atTarget := (dL + 1) == manTrg // level is 0-indexed, target is 1-indexed
+		eFieldSettled := math.Abs(fE) < 0.01*matEcVal
+		settled := atTarget && eFieldSettled
 
-		a.levelIndicator.Refresh()
+		// Keep highlight on until settled at target
+		a.levelIndicator.SetTargetLevelMode(manTrg, !settled, widgets.TargetModeManual)
+	} else {
+		// Clear target highlight
+		a.levelIndicator.SetTargetLevelMode(0, false, widgets.TargetModeNone)
+	}
 
-		// Update cell visualizer
-		a.cellViz.SetLevel(dL)
-		a.cellViz.Refresh()
-	})
+	a.levelIndicator.Refresh()
+
+	// Update cell visualizer
+	a.cellViz.SetLevel(dL)
+	a.cellViz.Refresh()
 }
 
 // calibrateLevelsAtTemperature performs calibration at a specific temperature.

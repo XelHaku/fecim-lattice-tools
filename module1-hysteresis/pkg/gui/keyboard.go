@@ -97,11 +97,12 @@ func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 		log.Info("Temperature decreased to %.0f K", newTemp)
 
 	case fyne.KeyF:
-		// Double frequency (up to 1.0 Hz)
+		// Double frequency
 		a.mu.Lock()
 		newFreq := a.frequency * 2.0
-		if newFreq > 1.0 {
-			newFreq = 1.0
+		const minFreq = 1e-9
+		if newFreq < minFreq {
+			newFreq = minFreq
 		}
 		a.frequency = newFreq
 		// Reset trail when frequency changes
@@ -109,14 +110,15 @@ func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 		a.pHistory = a.pHistory[:0]
 		a.simTime = 0
 		a.mu.Unlock()
-		log.Info("Frequency increased to %.2f Hz", newFreq)
+		log.Info("Frequency increased to %.3g Hz", newFreq)
 
 	case fyne.KeyV:
-		// Halve frequency (down to 0.01 Hz)
+		// Halve frequency
 		a.mu.Lock()
 		newFreq := a.frequency / 2.0
-		if newFreq < 0.01 {
-			newFreq = 0.01
+		const minFreq = 1e-9
+		if newFreq < minFreq {
+			newFreq = minFreq
 		}
 		a.frequency = newFreq
 		// Reset trail when frequency changes
@@ -124,7 +126,7 @@ func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 		a.pHistory = a.pHistory[:0]
 		a.simTime = 0
 		a.mu.Unlock()
-		log.Info("Frequency decreased to %.2f Hz", newFreq)
+		log.Info("Frequency decreased to %.3g Hz", newFreq)
 
 	case fyne.KeyW:
 		// Cycle to next waveform (5 modes: Manual, Sine, Triangle, Write/Read, Time-Resolved)
@@ -195,8 +197,8 @@ Temperature Control:
   G         Decrease temperature by 25K
 
 Frequency Control:
-  F         Double frequency (max 1.0 Hz)
-  V         Halve frequency (min 0.01 Hz)
+  F         Double frequency
+  V         Halve frequency (min 1e-9 Hz)
 
 Waveform & Simulation:
   W         Cycle to next waveform

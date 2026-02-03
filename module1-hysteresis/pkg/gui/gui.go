@@ -73,25 +73,29 @@ type App struct {
 	// UI state
 	running       bool
 	paused        bool
+	uiUpdateOnce  sync.Once
+	uiUpdates     chan uiSnapshot
 	autoMode      bool
 	waveform      WaveformType
 	physicsEngine PhysicsEngine
 	physicsSelect *widget.Select
 	frequency     float64
+	timeScale     float64 // Simulation time scaling (1.0 = real-time)
 	simTime       float64
 
 	// Write/Read Demo state (improved physics)
-	wrdPhase       int     // 0=prep, 1=unused (hold-prep), 2=write, 3/4=unused, 5=display
-	wrdTargetLevel int     // Target level to write (1-30)
-	wrdReadLevel   int     // Level read back
-	wrdPhaseTimer  float64 // Time in current phase
-	wrdWriteE      float64 // E-field during write
-	wrdPrepE       float64 // Pre-bias E-field (±Ec) toward target
-	wrdSettleE     float64 // Settle E-field (determines final level)
-	wrdStartLevel  int     // Level at start of write cycle
-	wrdDebugLog    *WriteReadDebugLog
-	wrdPrevP       float64 // Previous polarization for energy calculation (E·dP integration)
-	wrdCycleEnergy float64 // Energy for current write/read cycle
+	wrdPhase           int     // 0=prep, 1=unused (hold-prep), 2=write, 3/4=unused, 5=display
+	wrdTargetLevel     int     // Target level to write (1-30)
+	wrdNextTargetLevel int     // Queued next target (applied at next PREP start)
+	wrdReadLevel       int     // Level read back
+	wrdPhaseTimer      float64 // Time in current phase
+	wrdWriteE          float64 // E-field during write
+	wrdPrepE           float64 // Pre-bias E-field (±Ec) toward target
+	wrdSettleE         float64 // Settle E-field (determines final level)
+	wrdStartLevel      int     // Level at start of write cycle
+	wrdDebugLog        *WriteReadDebugLog
+	wrdPrevP           float64 // Previous polarization for energy calculation (E·dP integration)
+	wrdCycleEnergy     float64 // Energy for current write/read cycle
 
 	// Write-Verify-Retry loop tracking (retries indefinitely until target hit)
 	wrdRetryCount int // Current retry count for this target
@@ -427,9 +431,11 @@ func NewApp() *App {
 		pHistory:                make([]float64, 0, 2000),
 		autoMode:                true,
 		waveform:                WaveformSine,
-		physicsEngine:           PhysicsLandau,
+		physicsEngine:           PhysicsPreisach,
 		frequency:               0.5, // 0.5 Hz default
-		wrdTargetLevel:          28,  // Start high for dramatic first write
+		timeScale:               1.0,
+		wrdTargetLevel:          28, // Start high for dramatic first write
+		wrdNextTargetLevel:      0,
 		autoRecalibrate:         true,
 		recalibrateOvershootMax: 2,
 		recalibratePulseMax:     12,
@@ -506,18 +512,20 @@ func NewAppWithMaterial(materialName string) *App {
 		eHistory:                make([]float64, 0, 2000),
 		pHistory:                make([]float64, 0, 2000),
 		autoMode:                true,
-		physicsEngine:           PhysicsLandau,
+		physicsEngine:           PhysicsPreisach,
 		frequency:               0.5,
+		timeScale:               1.0,
 		paused:                  false,
 		autoRecalibrate:         true,
 		recalibrateOvershootMax: 2,
 		recalibratePulseMax:     12,
 		// Write/Read Demo fields initialized to defaults
-		wrdPhase:          0,
-		wrdTargetLevel:    15,
-		wrdStartLevel:     15,
-		wrdBitsStored:     4.91,
-		manualTargetLevel: 15,
+		wrdPhase:           0,
+		wrdTargetLevel:     15,
+		wrdNextTargetLevel: 0,
+		wrdStartLevel:      15,
+		wrdBitsStored:      4.91,
+		manualTargetLevel:  15,
 		// isppCalc:          physics.NewISPPCalculator(preisach.GetEffectiveEc(), numLevels),
 	}
 

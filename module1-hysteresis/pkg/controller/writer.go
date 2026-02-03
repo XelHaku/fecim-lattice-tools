@@ -98,6 +98,9 @@ type WriteController struct {
 	// Outputs
 	LastVerifyLevel int
 	LastError       int
+
+	// Stuck detection (no level change across verifies)
+	StuckCount int
 }
 
 func NewWriteController(numLevels int, ec, emax float64, calib *algo.CalibrationManager) *WriteController {
@@ -127,6 +130,7 @@ func (wc *WriteController) Start(targetLevel int, fromSaturation bool) {
 	wc.previousLevel = 0
 	wc.previousField = 0
 	wc.resetDirection = 0
+	wc.StuckCount = 0
 
 	// Initialize Binary Search Bounds
 	wc.VMin = 0
@@ -295,6 +299,13 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			prevError := wc.LastError
 			wc.LastError = currentLevel - wc.TargetLevel
 
+			// Stuck detection: no level change since last verify
+			if currentLevel == prevLevel {
+				wc.StuckCount++
+			} else {
+				wc.StuckCount = 0
+			}
+
 			// STRICT CONVERGENCE: Only accept exact match
 			if wc.LastError == 0 {
 				log.Printf("ISPP VERIFY RESULT: hit target level %d", currentLevel)
@@ -342,6 +353,15 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 				}
 			}
 
+			// If bounds collapse or invert, reset them to avoid deadlocks.
+			if wc.VMinSet && wc.VMaxSet && wc.VMin >= wc.VMax {
+				wc.VMin = 0
+				wc.VMax = wc.MaxField
+				wc.VMinSet = false
+				wc.VMaxSet = false
+				log.Printf("ISPP BOUNDS RESET: invalid bracket (vmin>=vmax), clearing bounds")
+			}
+
 			// DEBUG: Always log the overshoot check
 			log.Printf("ISPP VERIFY: currentLevel=%d, targetLevel=%d, prevLevel=%d, pulseDir=%d, overshoot=%v",
 				currentLevel, wc.TargetLevel, prevLevel, pulseDir, overshoot)
@@ -358,6 +378,12 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 					wc.resetDirection = -wc.directionToTarget(currentLevel)
 				}
 				log.Printf("ISPP OVERSHOOT detected! Resetting state... (count=%d)", wc.OvershootCount)
+				// Clear bounds after overshoot; hysteresis branch changed.
+				wc.VMin = 0
+				wc.VMax = wc.MaxField
+				wc.VMinSet = false
+				wc.VMaxSet = false
+				wc.StuckCount = 0
 				wc.State = StateResetting
 				wc.PhaseTimer = 0
 				return 0, false
@@ -557,7 +583,7 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 	}
 
 	// If we have bounds from verify, use bisection for faster convergence.
-	if wc.VMinSet && wc.VMaxSet && wc.VMax > wc.VMin {
+	if wc.VMinSet && wc.VMaxSet && wc.VMax > wc.VMin && wc.StuckCount < 3 {
 		prevVoltage := math.Abs(wc.CurrentField)
 		nextVoltage := 0.5 * (wc.VMin + wc.VMax)
 		// Nudge if midpoint is too close to current voltage (avoid stalling).
@@ -576,6 +602,20 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 		log.Printf("ISPP BISECT: level=%d→%d, E=%.3f×Ec→%.3f×Ec bounds=[%.3f, %.3f]×Ec",
 			currentLevel, targetLevel, prevVoltage/wc.EcField, math.Abs(nextVoltage)/wc.EcField, wc.VMin/wc.EcField, wc.VMax/wc.EcField)
 		return
+	}
+
+	// Stuck escalation: if we haven't moved levels for several verifies, increase step.
+	if wc.StuckCount >= 3 {
+		if stepSize < 0.12*wc.EcField {
+			stepSize = 0.12 * wc.EcField
+		}
+		// Reset bounds to avoid being trapped by stale bracket.
+		wc.VMin = 0
+		wc.VMax = wc.MaxField
+		wc.VMinSet = false
+		wc.VMaxSet = false
+		wc.StuckCount = 0
+		log.Printf("ISPP STUCK: boosting step to %.3f×Ec and clearing bounds", stepSize/wc.EcField)
 	}
 
 	// Undershoot: increase voltage by step

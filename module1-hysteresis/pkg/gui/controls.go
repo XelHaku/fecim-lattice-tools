@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand"
 	"strconv"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -111,6 +112,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			a.wrdPhase = 0
 			a.wrdPhaseTimer = 0
 			a.wrdTargetLevel = rand.Intn(a.numLevels) + 1
+			a.wrdNextTargetLevel = 0
 			a.wrdStartLevel = a.discreteLevel + 1
 			// Reset Dr. Tour demo metrics
 			a.wrdTotalWrites = 0
@@ -210,6 +212,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			a.discreteLevel = n / 2
 			// Reset target levels to be within new bounds
 			a.wrdTargetLevel = n / 2
+			a.wrdNextTargetLevel = 0
 			a.wrdStartLevel = n / 2
 			a.manualTargetLevel = n / 2
 			// Mark calibration as stale (need new level->field mapping)
@@ -272,6 +275,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		a.wrdPhase = 0
 		a.wrdPhaseTimer = 0
 		a.wrdTargetLevel = a.numLevels / 2
+		a.wrdNextTargetLevel = 0
 		a.wrdStartLevel = a.numLevels / 2
 		a.wrdReadLevel = 0
 		a.wrdRetryCount = 0
@@ -320,13 +324,67 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	})
 	eqBtn.Importance = widget.LowImportance
 
+	formatHz := func(v float64) string {
+		if v <= 0 {
+			return "0 Hz"
+		}
+		switch {
+		case v >= 1e9:
+			return fmt.Sprintf("%.3g GHz", v/1e9)
+		case v >= 1e6:
+			return fmt.Sprintf("%.3g MHz", v/1e6)
+		case v >= 1e3:
+			return fmt.Sprintf("%.3g kHz", v/1e3)
+		default:
+			return fmt.Sprintf("%.3g Hz", v)
+		}
+	}
+
+	unitFactors := map[string]float64{
+		"Hz":  1,
+		"kHz": 1e3,
+		"MHz": 1e6,
+		"GHz": 1e9,
+	}
+	currentUnit := "Hz"
+
 	// Frequency slider
 	freqSlider := widget.NewSlider(0.01, 1.0)
 	freqSlider.Step = 0.01
 	freqSlider.Value = 0.5
-	freqLabel := widget.NewLabel("Freq: 0.50 Hz")
-	freqSlider.OnChanged = func(v float64) {
-		log.SliderChange("Frequency", v)
+	freqLabel := widget.NewLabel(fmt.Sprintf("Freq: %s", formatHz(freqSlider.Value)))
+	freqEntry := widget.NewEntry()
+	freqEntry.SetPlaceHolder("Value")
+	freqEntry.SetText(fmt.Sprintf("%.3g", freqSlider.Value))
+	updatingFreq := false
+	unitSelect := widget.NewSelect([]string{"Hz", "kHz", "MHz", "GHz"}, func(s string) {
+		if s == "" {
+			return
+		}
+		currentUnit = s
+		a.mu.RLock()
+		current := a.frequency
+		a.mu.RUnlock()
+		if updatingFreq {
+			return
+		}
+		updatingFreq = true
+		freqEntry.SetText(fmt.Sprintf("%.3g", current/unitFactors[currentUnit]))
+		updatingFreq = false
+	})
+	unitSelect.SetSelected("Hz")
+	displayFreqLabel := widget.NewLabel("Display: 0.50 Hz")
+	updateDisplayLabel := func(freq, scale float64) {
+		displayFreqLabel.SetText(fmt.Sprintf("Display: %s (scale %.3gx)", formatHz(freq*scale), scale))
+	}
+	setFrequency := func(v float64, source string) {
+		if v <= 0 || math.IsNaN(v) || math.IsInf(v, 0) {
+			return
+		}
+		if updatingFreq {
+			return
+		}
+		updatingFreq = true
 		a.mu.Lock()
 		a.frequency = v
 		// Reset trail when frequency changes
@@ -334,8 +392,58 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		a.pHistory = a.pHistory[:0]
 		a.simTime = 0
 		a.mu.Unlock()
-		freqLabel.SetText(fmt.Sprintf("Freq: %.2f Hz", v))
+		freqLabel.SetText(fmt.Sprintf("Freq: %s", formatHz(v)))
+		updateDisplayLabel(v, a.timeScale)
+		if source != "slider" && v >= freqSlider.Min && v <= freqSlider.Max {
+			freqSlider.SetValue(v)
+		}
+		if source != "entry" {
+			freqEntry.SetText(fmt.Sprintf("%.3g", v/unitFactors[currentUnit]))
+		}
+		updatingFreq = false
 	}
+	freqSlider.OnChanged = func(v float64) {
+		log.SliderChange("Frequency", v)
+		setFrequency(v, "slider")
+	}
+	freqEntry.OnSubmitted = func(text string) {
+		value, err := strconv.ParseFloat(strings.TrimSpace(text), 64)
+		if err != nil {
+			a.mu.RLock()
+			current := a.frequency
+			a.mu.RUnlock()
+			freqEntry.SetText(fmt.Sprintf("%.3g", current/unitFactors[currentUnit]))
+			return
+		}
+		a.mu.RLock()
+		current := a.frequency
+		a.mu.RUnlock()
+		log.ValueChange("FrequencyEntry", current, value)
+		setFrequency(value*unitFactors[currentUnit], "entry")
+	}
+
+	// Time scale slider (slow-motion playback without changing physics)
+	timeScaleSlider := widget.NewSlider(0, 9)
+	timeScaleSlider.Step = 0.5
+	timeScaleSlider.Value = 0
+	timeScaleLabel := widget.NewLabel("Time Scale: 1x")
+	timeScaleSlider.OnChanged = func(v float64) {
+		scale := math.Pow(10, -v)
+		log.SliderChange("TimeScale", scale)
+		a.mu.Lock()
+		a.timeScale = scale
+		a.mu.Unlock()
+		timeScaleLabel.SetText(fmt.Sprintf("Time Scale: %.3gx", scale))
+		a.mu.RLock()
+		current := a.frequency
+		a.mu.RUnlock()
+		updateDisplayLabel(current, scale)
+	}
+	a.mu.RLock()
+	initialFreq := a.frequency
+	initialScale := a.timeScale
+	a.mu.RUnlock()
+	updateDisplayLabel(initialFreq, initialScale)
 	// Stress slider (Phase 4.1: Electrostriction control)
 	stressSlider := widget.NewSlider(0, 5.0) // 0 to 5 GPa
 	stressSlider.Step = 0.1
@@ -426,6 +534,10 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		a.eFieldSlider,
 		freqLabel,
 		freqSlider,
+		container.NewHBox(freqEntry, unitSelect),
+		timeScaleLabel,
+		timeScaleSlider,
+		displayFreqLabel,
 		tempLabel,
 		tempSlider,
 		trailLabel,
@@ -552,6 +664,7 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	a.discreteLevel = newLevels / 2
 	// Reset target levels
 	a.wrdTargetLevel = newLevels / 2
+	a.wrdNextTargetLevel = 0
 	a.wrdStartLevel = newLevels / 2
 	a.manualTargetLevel = newLevels / 2
 	// Update bits stored

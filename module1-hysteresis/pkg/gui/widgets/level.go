@@ -34,6 +34,7 @@ type LevelIndicator struct {
 	// Target level highlighting (for Write/Read Demo)
 	targetLevel     int
 	highlightTarget bool
+	targetMode      TargetMode
 
 	// Animation state for pulsing highlight
 	pulseAnim     *fyne.Animation
@@ -43,6 +44,16 @@ type LevelIndicator struct {
 	polBarAnim     *fyne.Animation
 	polBarProgress float32
 }
+
+// TargetMode identifies how to render the target highlight.
+type TargetMode int
+
+const (
+	TargetModeNone TargetMode = iota
+	TargetModeWrite
+	TargetModeVerify
+	TargetModeManual
+)
 
 // NewLevelIndicator creates a new level indicator with default 30 levels
 func NewLevelIndicator() *LevelIndicator {
@@ -117,10 +128,21 @@ func (l *LevelIndicator) IsInteractive() bool {
 // SetTargetLevel sets the target level to highlight (for Write/Read Demo).
 // When highlight is true, starts a pulsing animation that auto-refreshes.
 func (l *LevelIndicator) SetTargetLevel(level int, highlight bool) {
+	l.SetTargetLevelMode(level, highlight, TargetModeWrite)
+}
+
+// SetTargetLevelMode sets the target level and rendering mode for clearer feedback.
+func (l *LevelIndicator) SetTargetLevelMode(level int, highlight bool, mode TargetMode) {
 	l.mu.Lock()
 	wasHighlighting := l.highlightTarget
+	modeChanged := l.targetLevel != level || l.targetMode != mode || l.highlightTarget != highlight
 	l.targetLevel = level
 	l.highlightTarget = highlight
+	if highlight {
+		l.targetMode = mode
+	} else {
+		l.targetMode = TargetModeNone
+	}
 	l.mu.Unlock()
 
 	// Manage animation lifecycle
@@ -130,6 +152,9 @@ func (l *LevelIndicator) SetTargetLevel(level int, highlight bool) {
 	} else if !highlight && wasHighlighting {
 		// Stop pulsing animation
 		l.stopPulseAnimation()
+	}
+	if modeChanged {
+		l.Refresh()
 	}
 }
 
@@ -280,6 +305,7 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 	numLevels := r.indicator.numLevels
 	targetLevel := r.indicator.targetLevel
 	highlightTarget := r.indicator.highlightTarget
+	targetMode := r.indicator.targetMode
 	pulseProgress := r.indicator.pulseProgress
 	polBarProgress := r.indicator.polBarProgress
 	interactive := r.indicator.interactive
@@ -294,6 +320,7 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 	// Suppress unused variable warnings (vars used later in drawing loop)
 	_ = targetLevel
 	_ = highlightTarget
+	_ = targetMode
 	_ = pulseProgress
 
 	// Allow level indicator to expand to match plot height
@@ -328,13 +355,32 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 	bitsLabel.Move(fyne.NewPos(10, 26))
 	r.objects = append(r.objects, bitsLabel)
 
+	// Target mode label for clarity
+	if highlightTarget && targetLevel > 0 {
+		modeText := ""
+		switch targetMode {
+		case TargetModeWrite:
+			modeText = "WRITE"
+		case TargetModeVerify:
+			modeText = "VERIFY"
+		case TargetModeManual:
+			modeText = "MANUAL"
+		default:
+			modeText = "TARGET"
+		}
+		label := canvas.NewText(fmt.Sprintf("Target L%d (%s)", targetLevel, modeText), color.RGBA{255, 200, 120, 255})
+		label.TextSize = 11
+		label.Move(fyne.NewPos(8, 42))
+		r.objects = append(r.objects, label)
+	}
+
 	// Draw 30 level segments
 	// Match P-E plot margins for proper Y-axis alignment
 	// The plot uses marginTop=50, marginBottom=35
 	// However, the plot's legend (at marginTop+10) and +Ec/+Pr labels cause
 	// the visual data area to appear shifted down by ~15px
 	// Shift level bars down to align with plot's visual ±Pr positions
-	visualOffset := float32(15) // Offset to align with plot's +Pr/-Pr visual positions
+	visualOffset := float32(15)                // Offset to align with plot's +Pr/-Pr visual positions
 	marginH := float32(50) + visualOffset      // Increased top margin shifts levels down
 	marginBottom := float32(35) - visualOffset // Decreased bottom margin compensates
 	marginW := float32(6)
@@ -362,8 +408,10 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 	levelTop := centerY - levelRangeH/2
 
 	// Color constants
-	colorCurrent := color.RGBA{50, 255, 100, 255}  // Green for current level
-	colorTarget := color.RGBA{255, 220, 0, 255}    // Yellow for target
+	colorCurrent := color.RGBA{50, 255, 100, 255} // Green for current level
+	colorTarget := color.RGBA{255, 220, 0, 255}   // Yellow for verify/target
+	colorTargetWrite := color.RGBA{255, 140, 0, 255}
+	colorTargetManual := color.RGBA{140, 200, 255, 255}
 	colorAxis := color.RGBA{150, 180, 200, 255}
 
 	for i := 0; i < numLevels; i++ {
@@ -398,18 +446,27 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 
 		// Target level gets pulsing YELLOW border (if highlighted)
 		if highlightTarget && i == (targetLevel-1) {
+			targetColor := colorTarget
+			switch targetMode {
+			case TargetModeWrite:
+				targetColor = colorTargetWrite
+			case TargetModeManual:
+				targetColor = colorTargetManual
+			case TargetModeVerify:
+				targetColor = colorTarget
+			}
 			// Pulsing effect using animation-driven pulseProgress (0.0 to 1.0)
 			// Convert to alpha: pulses between 100 and 255
 			pulseAlpha := uint8(100 + 155*pulseProgress)
 
 			// Outer pulse glow - yellow
-			targetGlow := canvas.NewRectangle(color.RGBA{colorTarget.R, colorTarget.G, 0, pulseAlpha})
+			targetGlow := canvas.NewRectangle(color.RGBA{targetColor.R, targetColor.G, targetColor.B, pulseAlpha})
 			targetGlow.Resize(fyne.NewSize(barW+10, segH+8))
 			targetGlow.Move(fyne.NewPos(marginW-5, y-4))
 			r.objects = append(r.objects, targetGlow)
 
 			// Inner border - solid yellow
-			targetBorder := canvas.NewRectangle(colorTarget)
+			targetBorder := canvas.NewRectangle(targetColor)
 			targetBorder.Resize(fyne.NewSize(barW+4, segH+2))
 			targetBorder.Move(fyne.NewPos(marginW-2, y-1))
 			r.objects = append(r.objects, targetBorder)
