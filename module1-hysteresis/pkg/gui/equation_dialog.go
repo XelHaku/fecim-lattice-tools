@@ -22,18 +22,16 @@ func (a *App) showFrankesteinEquationDialog() {
 	}
 
 	content := widgets.NewFrankesteinEquationWidget(a.mainWindow)
-	scroll := container.NewScroll(content)
-	scroll.Direction = container.ScrollBoth
 	canvasSize := a.mainWindow.Canvas().Size()
-	width := canvasSize.Width * 0.9
-	height := canvasSize.Height * 0.6
+	width := canvasSize.Width * 0.92
+	height := canvasSize.Height * 0.72
 	if width <= 0 {
-		width = 640
+		width = 900
 	}
 	if height <= 0 {
-		height = 360
+		height = 520
 	}
-	scroll.SetMinSize(fyne.NewSize(width, height))
+	framed := container.NewPadded(content)
 
 	var dialog *widget.PopUp
 	closeBtn := widget.NewButton("Close", func() {
@@ -50,11 +48,12 @@ func (a *App) showFrankesteinEquationDialog() {
 
 	dialog = widget.NewModalPopUp(
 		container.NewVBox(
-			container.NewPadded(scroll),
+			framed,
 			closeBtn,
 		),
 		a.mainWindow.Canvas(),
 	)
+	dialog.Resize(fyne.NewSize(width, height))
 
 	dialog.Show()
 }

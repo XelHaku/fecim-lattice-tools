@@ -67,6 +67,7 @@ var keyTemperatures = []float64{
 // temperatureTolerance is the max distance from a cached calibration to interpolate
 const temperatureTolerance = 25.0 // Kelvin
 const calibrationDir = "data/calibrations"
+const lkHistorySampleInterval = 5e-4 // 0.5ms sim-time between history points (L-K)
 
 // maxWrdRetries is the maximum number of WRD retry attempts before accepting current level
 // This prevents infinite loops when targeting difficult levels (e.g., level 26)
@@ -631,9 +632,10 @@ func (a *App) simulationLoop() {
 
 	// Adaptive Time-Stepping Constants
 	const (
-		dtMax     = 0.025 // 25ms cap to prevent explosion after pause
-		dtNominal = 1e-4  // 0.1ms nominal physics step (good for standard loop)
-		dtMin     = 1e-6  // 1µs minimum step near critical field (Ec)
+		dtMax         = 0.025 // 25ms cap to prevent explosion after pause
+		dtNominal     = 1e-4  // 0.1ms nominal physics step (good for standard loop)
+		dtMin         = 1e-6  // 1µs minimum step near critical field (Ec)
+		lkMaxSubSteps = 400
 	)
 
 	resetPerfWindow := func(now time.Time) {
@@ -736,7 +738,7 @@ func (a *App) simulationLoop() {
 		remainingDt := frameDt
 
 		// Safety break to prevent infinite loops if calculation is too slow
-		const maxSubSteps = 1000
+		const maxSubSteps = lkMaxSubSteps
 		subSteps := 0
 		fastPreisach := a.physicsEngine == PhysicsPreisach
 		if fastPreisach {
@@ -787,6 +789,15 @@ func (a *App) simulationLoop() {
 					threshold := 1e7 // 0.1 MV/cm
 					if minDist < threshold {
 						currentStep = dtMin
+					}
+				}
+
+				// Ensure we can consume the remaining time within our substep budget.
+				remainingBudget := maxSubSteps - subSteps
+				if remainingBudget > 0 {
+					minStep := remainingDt / float64(remainingBudget)
+					if currentStep < minStep {
+						currentStep = minStep
 					}
 				}
 
@@ -1029,6 +1040,16 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 
 			switch a.wrdPhase {
 			case 0: // PREP (wake-up) - prepare starting state before writing
+				if a.wrdSkipPrep {
+					// Skip PREP entirely and jump to WRITE.
+					if a.writeController != nil {
+						a.writeController.PulseDuration = phaseDuration * 0.4
+						a.writeController.Start(targetLevel, false)
+					}
+					a.wrdPhase = 2
+					a.wrdPhaseTimer = 0
+					break
+				}
 				// Headless-aligned pre-saturation to the opposite polarity of the target.
 				saturationThreshold := 0.75 * mat.Ps
 				prepE := Ec * 2.0
@@ -1088,6 +1109,17 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 			case 2: // WRITE - Delegated to WriteController
 				// Refactored to use pkg/controller/WriteController
 				// This consolidates Write, Wait, Verify, and Retry logic
+
+				if a.wrdSkipPrep && a.wrdPhaseTimer <= dt && a.writeController != nil {
+					if a.writeController.State == controller.StateIdle || a.writeController.TargetLevel != targetLevel {
+						a.writeController.PulseDuration = phaseDuration * 0.4
+						a.writeController.Start(targetLevel, false)
+						a.wrdStartLevel = a.discreteLevel + 1
+						a.wrdWriteStartP = a.polarization * 100
+						log.Printf("WRD SKIP PREP: start=%d target=%d P=%.2f µC/cm²",
+							a.wrdStartLevel, a.wrdTargetLevel, a.wrdWriteStartP)
+					}
+				}
 
 				currentLevel := a.discreteLevel + 1
 				targetField, done := a.writeController.Update(dt, a.electricField, currentLevel)
@@ -1158,7 +1190,7 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 						successRate := float64(a.wrdSuccessWrites) / float64(a.wrdTotalWrites) * 100
 
 						log.Printf("WRD SUCCESS via Controller: target=%d, tries=%d", targetLevel, a.writeController.RetryCount)
-						if a.writeController.OvershootCount > 0 {
+						if !a.wrdSkipPrep && a.writeController.OvershootCount > 0 {
 							a.wrdForceReset = true
 						}
 						if targetLevel > a.wrdStartLevel {
@@ -1308,7 +1340,7 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 					} else if nextTarget < currentLevel {
 						nextBranch = -1
 					}
-					usePrep := a.wrdForceReset || (a.wrdLastBranch != 0 && a.wrdLastBranch != nextBranch)
+					usePrep := !a.wrdSkipPrep && (a.wrdForceReset || (a.wrdLastBranch != 0 && a.wrdLastBranch != nextBranch))
 					a.wrdForceReset = false
 					// NOTE: Don't clear history - let the trail accumulate to show full hysteresis loop
 					// Spike detection in plot widget handles any discontinuities
@@ -1405,12 +1437,37 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 	// Record history (skip RESET and BOOST phases in WRD mode to avoid visual spikes)
 	// WRD phases: 0=RESET, 1=HOLD_RESET, 2=WRITE, 3=HOLD_WRITE, 4=READ, 5=DISPLAY, 6=BOOST
 	skipHistory := a.waveform == WaveformWriteReadDemo && (a.wrdPhase <= 1 || a.wrdPhase == 6)
+	if a.waveform == WaveformWriteReadDemo {
+		// Suppress verify/hold segments to avoid zig-zag in the P-E trace.
+		if a.writeController != nil {
+			switch a.writeController.State {
+			case controller.StateVerify, controller.StateWait, controller.StateHold:
+				skipHistory = true
+			}
+		}
+		// Also skip near-zero E-field (verify/readback) samples.
+		if Ec > 0 && math.Abs(a.electricField) < 0.15*Ec {
+			skipHistory = true
+		}
+	}
 	if !skipHistory {
-		a.eHistory = append(a.eHistory, a.electricField)
-		a.pHistory = append(a.pHistory, a.polarization)
-		if len(a.eHistory) > a.maxHistory {
-			a.eHistory = a.eHistory[1:]
-			a.pHistory = a.pHistory[1:]
+		shouldAppend := true
+		if a.physicsEngine == PhysicsLandau {
+			if a.lastHistorySample < 0 || len(a.eHistory) == 0 {
+				a.lastHistorySample = a.simTime
+			} else if (a.simTime - a.lastHistorySample) < lkHistorySampleInterval {
+				shouldAppend = false
+			} else {
+				a.lastHistorySample = a.simTime
+			}
+		}
+		if shouldAppend {
+			a.eHistory = append(a.eHistory, a.electricField)
+			a.pHistory = append(a.pHistory, a.polarization)
+			if len(a.eHistory) > a.maxHistory {
+				a.eHistory = a.eHistory[1:]
+				a.pHistory = a.pHistory[1:]
+			}
 		}
 	}
 
@@ -1495,6 +1552,13 @@ func (a *App) uiUpdateLoop() {
 // updateUI prepares data and queues refreshGUI on the main thread.
 // Safe to call without holding a.mu (it snapshots under a read lock).
 func (a *App) updateUI() {
+	const uiMinInterval = 33 * time.Millisecond
+	const uiMaxPlotPoints = 2000
+	if !a.lastUIUpdate.IsZero() && time.Since(a.lastUIUpdate) < uiMinInterval {
+		return
+	}
+	a.lastUIUpdate = time.Now()
+
 	// Take a snapshot under lock.
 	a.mu.RLock()
 	fE := a.electricField
@@ -1522,10 +1586,21 @@ func (a *App) updateUI() {
 	if a.material != nil {
 		materialEc = a.material.Ec
 	}
-	eHist := make([]float64, len(a.eHistory))
-	pHist := make([]float64, len(a.pHistory))
-	copy(eHist, a.eHistory)
-	copy(pHist, a.pHistory)
+	histLen := len(a.eHistory)
+	stride := 1
+	if histLen > uiMaxPlotPoints {
+		stride = histLen / uiMaxPlotPoints
+		if histLen%uiMaxPlotPoints != 0 {
+			stride++
+		}
+	}
+	points := (histLen + stride - 1) / stride
+	eHist := make([]float64, 0, points)
+	pHist := make([]float64, 0, points)
+	for i := 0; i < histLen; i += stride {
+		eHist = append(eHist, a.eHistory[i])
+		pHist = append(pHist, a.pHistory[i])
+	}
 	a.mu.RUnlock()
 
 	a.queueUIUpdate(uiSnapshot{
@@ -1703,36 +1778,36 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 		switch currentWaveform {
 		case WaveformWriteReadDemo:
 			var phaseStr string
-			// Log phase transitions (6 phases: RESET, HOLD_RESET, WRITE, HOLD_WRITE, READ, DISPLAY)
+			// Log phase transitions (PREP, SETTLE, PROG/VERIFY, HOLD, READBACK, RESULT)
 			if wrdPhase != lastPhase {
 				a.mu.Lock()
 				a.lastLogPhase = wrdPhase
 				switch wrdPhase {
 				case 0:
-					// RESET: Saturate in opposite direction
+					// PREP: Pre-bias to set branch (if enabled)
 					direction := "-sat"
 					if wrdTarget <= midLevel {
 						direction = "+sat"
 					}
-					a.addLogEntry(fmt.Sprintf("◆◆ RESET   | %s | prep", direction))
+					a.addLogEntry(fmt.Sprintf("◆◆ PREP    | %s | bias", direction))
 				case 1:
-					// HOLD_RESET: Return to zero (known state)
-					a.addLogEntry("░░ SETTLE  | E=0 | prep done")
+					// SETTLE: Return to zero (known state)
+					a.addLogEntry("░░ SETTLE  | E=0 | ready")
 				case 2:
-					// WRITE: Apply calibrated field to reach target
+					// PROGRAM/VERIFY: ISPP apply+verify loop
 					direction := "+"
 					if wrdTarget <= midLevel {
 						direction = "-"
 					}
-					a.addLogEntry(fmt.Sprintf("▓▓ WRITE L%d | %sE>Ec | ~10fJ", wrdTarget, direction))
+					a.addLogEntry(fmt.Sprintf("▓▓ PROG/VERIFY L%d | %sE>Ec", wrdTarget, direction))
 				case 3:
-					// HOLD_WRITE: Return to zero, polarization persists
-					a.addLogEntry(fmt.Sprintf("░░ HOLD L%d | E=0 | 0 fJ!", dL+1))
+					// HOLD: Return to zero, polarization persists
+					a.addLogEntry(fmt.Sprintf("░░ HOLD L%d | E=0", dL+1))
 				case 4:
-					// READ: Non-destructive sense
-					a.addLogEntry("▒▒ READ    | E<Ec | ~1fJ")
+					// READBACK: Non-destructive sense
+					a.addLogEntry("▒▒ READBACK | E<Ec")
 				case 5:
-					// DISPLAY: Show result
+					// RESULT: Show outcome
 					status := "✓ MATCH"
 					if wrdRead != wrdTarget {
 						diff := abs(wrdRead - wrdTarget)
@@ -1746,7 +1821,9 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 					if wrdTotalWrites > 0 {
 						successRate = float64(wrdSuccessWrites) / float64(wrdTotalWrites) * 100
 					}
-					a.addLogEntry(fmt.Sprintf("●● L%d %s [%.0f%% rate]", wrdTarget, status, successRate))
+					a.addLogEntry(fmt.Sprintf("●● RESULT L%d %s [%.0f%% rate]", wrdTarget, status, successRate))
+				case 6:
+					a.addLogEntry("▓▓ RETRY   | adjust pulse")
 				}
 				a.mu.Unlock()
 			}
@@ -1761,29 +1838,31 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 				if wrdTarget <= midLevel {
 					direction = "+sat"
 				}
-				phaseStr = fmt.Sprintf("◆ RESET | %s | preparing", direction)
+				phaseStr = fmt.Sprintf("◆ PREP | %s | biasing", direction)
 			case 1:
-				phaseStr = "░ SETTLE | E=0 | at known state"
+				phaseStr = "░ SETTLE | E=0 | ready"
 			case 2:
 				direction := "+"
 				if wrdTarget <= midLevel {
 					direction = "-"
 				}
-				phaseStr = fmt.Sprintf("▓ WRITE L%d | %sE>Ec | ~10fJ", wrdTarget, direction)
+				phaseStr = fmt.Sprintf("▓ PROG/VERIFY L%d | %sE>Ec", wrdTarget, direction)
 			case 3:
-				phaseStr = fmt.Sprintf("░ HOLD L%d | E=0 | ZERO POWER", dL+1)
+				phaseStr = fmt.Sprintf("░ HOLD L%d | E=0", dL+1)
 			case 4:
-				phaseStr = fmt.Sprintf("▒ READ | Sense L%d | ~1fJ", dL+1)
+				phaseStr = fmt.Sprintf("▒ READBACK | Sense L%d", dL+1)
 			case 5:
 				successRate := 0.0
 				if writeCount > 0 {
 					successRate = float64(wrdSuccessWrites) / float64(writeCount) * 100
 				}
 				if wrdRead == wrdTarget {
-					phaseStr = fmt.Sprintf("● L%d ✓ | Ops:%d | %.0f%% | %.0fpJ", wrdRead, writeCount, successRate, energyTotal/1000)
+					phaseStr = fmt.Sprintf("● RESULT L%d ✓ | Ops:%d | %.0f%% | %.0fpJ", wrdRead, writeCount, successRate, energyTotal/1000)
 				} else {
-					phaseStr = fmt.Sprintf("● L%d (want %d) | Ops:%d | %.0f%%", wrdRead, wrdTarget, writeCount, successRate)
+					phaseStr = fmt.Sprintf("● RESULT L%d (want %d) | Ops:%d | %.0f%%", wrdRead, wrdTarget, writeCount, successRate)
 				}
+			case 6:
+				phaseStr = "▓ RETRY | adjust pulse"
 			}
 			a.statusLabel.SetText(fmt.Sprintf("⚡ FeCIM Write/Read | %s", phaseStr))
 		case WaveformManual:

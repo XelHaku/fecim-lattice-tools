@@ -195,12 +195,14 @@ func (a *App) getSlideText() string {
 
 		switch wrdPhase {
 		case 0:
-			return fmt.Sprintf("WRITE → L%d\n|E| > Ec", wrdTarget)
+			return fmt.Sprintf("PREP → L%d\nPre-bias to set branch", wrdTarget)
 		case 1:
-			return fmt.Sprintf("HOLD L%d\nE=0, P persists", level)
+			return fmt.Sprintf("SETTLE L%d\nE=0, P persists", level)
 		case 2:
-			return fmt.Sprintf("READ L%d\n|E| < Ec, non-destructive", level)
-		case 3:
+			return fmt.Sprintf("PROGRAM/VERIFY L%d\nISPP pulses + verify", wrdTarget)
+		case 4:
+			return fmt.Sprintf("READBACK L%d\n|E| < Ec, non-destructive", level)
+		case 5:
 			if level == wrdTarget {
 				return fmt.Sprintf("OK L%d\nWrites: %d (%.0f%%)\nEnergy: %.1f pJ\nAvg: %.1f pulses | Fail: %.2f%%",
 					level, wrdTotalWrites, successRate, wrdTotalEnergyfJ/1000, avgPulses, failRate)

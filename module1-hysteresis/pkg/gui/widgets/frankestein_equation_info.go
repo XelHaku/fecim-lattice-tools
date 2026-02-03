@@ -258,14 +258,22 @@ func termDetails() map[string]termDetail {
 	}
 }
 
-func buildEquationInfoTabs() fyne.CanvasObject {
+func buildLkInfoTabs() fyne.CanvasObject {
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Overview", scrollSection(buildOverviewSection())),
-		container.NewTabItem("Preisach", scrollSection(buildPreisachSection())),
 		container.NewTabItem("alpha(T,sigma)", scrollSection(buildAlphaSection())),
 		container.NewTabItem("Parameters", scrollSection(buildGoldenSetSection())),
 		container.NewTabItem("Materials", scrollSection(buildMaterialDefaultsSection())),
 		container.NewTabItem("Dynamics", scrollSection(buildDynamicsSection())),
+		container.NewTabItem("Assumptions", scrollSection(buildAssumptionsSection())),
+		container.NewTabItem("References", scrollSection(buildReferencesSection())),
+	)
+	return tabs
+}
+
+func buildPreisachInfoTabs() fyne.CanvasObject {
+	tabs := container.NewAppTabs(
+		container.NewTabItem("Overview", scrollSection(buildPreisachSection())),
 		container.NewTabItem("Assumptions", scrollSection(buildAssumptionsSection())),
 		container.NewTabItem("References", scrollSection(buildReferencesSection())),
 	)

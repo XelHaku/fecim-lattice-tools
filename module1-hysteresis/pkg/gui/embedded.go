@@ -47,6 +47,7 @@ func NewEmbeddedApp() *EmbeddedApp {
 		maxHistory:         50000,
 		eHistory:           make([]float64, 0, 2000),
 		pHistory:           make([]float64, 0, 2000),
+		lastHistorySample:  -1,
 		autoMode:           true,
 		waveform:           WaveformSine,
 		physicsEngine:      PhysicsPreisach,
@@ -54,6 +55,7 @@ func NewEmbeddedApp() *EmbeddedApp {
 		timeScale:          1.0,
 		wrdTargetLevel:     28, // Start high for dramatic first write
 		wrdNextTargetLevel: 0,
+		wrdSkipPrep:        true,
 		maxLogLines:        12,
 		logEntries:         make([]string, 0, 12),
 		lastLogPhase:       -1,

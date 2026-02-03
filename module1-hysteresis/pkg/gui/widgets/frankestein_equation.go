@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -18,6 +19,15 @@ import (
 const (
 	frankesteinEquationSVGPath     = "shared/assets/equations/frankestein.svg"
 	frankesteinEquationHotspotPath = "shared/assets/equations/frankestein.hotspots.json"
+)
+
+var (
+	equationSVGCacheMu sync.Mutex
+	equationSVGCache   = map[string]fyne.Resource{}
+
+	frankesteinHotspotsOnce sync.Once
+	cachedFrankesteinSpots  []hotspotDef
+	cachedFrankesteinSize   fyne.Size
 )
 
 // TermChip is a small hoverable label that shows a tooltip for a coefficient.
@@ -81,27 +91,78 @@ func mathLabel(text string) *widget.Label {
 
 // NewFrankesteinEquationWidget builds the equation display with tooltips.
 func NewFrankesteinEquationWidget(parent fyne.Window) fyne.CanvasObject {
-	if _, err := os.Stat(frankesteinEquationSVGPath); err == nil {
-		if widget := newFrankesteinEquationImageWidget(parent, frankesteinEquationSVGPath); widget != nil {
-			return widget
-		}
-	}
-	return newFrankesteinEquationTextWidget(parent)
+	tabs := container.NewAppTabs(
+		container.NewTabItem("L-K Equation", buildLkEquationTab(parent)),
+		container.NewTabItem("Preisach Equation", buildPreisachEquationTab(parent)),
+	)
+	tabs.SetTabLocation(container.TabLocationTop)
+	return container.NewVBox(tabs)
 }
 
-func newFrankesteinEquationTextWidget(parent fyne.Window) fyne.CanvasObject {
+func buildLkEquationTab(parent fyne.Window) fyne.CanvasObject {
 	detailPanel, detailCard := newTermDetailPanel()
 	selectTerm := func(termID, fallback string) {
 		detailPanel.SetDetail(termID, fallback)
 	}
-	infoTabs := buildEquationInfoTabs()
+
+	eqPanel := buildLkEquationPanel(parent, selectTerm)
+
+	detailScroll := container.NewVScroll(detailCard)
+	detailScroll.SetMinSize(fyne.NewSize(320, 260))
+
+	split := container.NewHSplit(eqPanel, detailScroll)
+	split.Offset = 0.62
+
+	infoTabs := buildLkInfoTabs()
 
 	title := widget.NewLabelWithStyle(
-		"Frankestein Equation (Module 1)",
+		"Landau-Khalatnikov Equation (Module 1)",
 		fyne.TextAlignLeading,
 		fyne.TextStyle{Bold: true},
 	)
 
+	return container.NewPadded(container.NewVBox(
+		title,
+		split,
+		infoTabs,
+	))
+}
+
+func buildPreisachEquationTab(parent fyne.Window) fyne.CanvasObject {
+	eqPanel := buildPreisachEquationPanel(parent)
+	summaryCard := buildPreisachSummaryCard()
+
+	summaryScroll := container.NewVScroll(summaryCard)
+	summaryScroll.SetMinSize(fyne.NewSize(320, 220))
+
+	split := container.NewHSplit(eqPanel, summaryScroll)
+	split.Offset = 0.6
+
+	infoTabs := buildPreisachInfoTabs()
+
+	title := widget.NewLabelWithStyle(
+		"Preisach Equation (Module 1)",
+		fyne.TextAlignLeading,
+		fyne.TextStyle{Bold: true},
+	)
+
+	return container.NewPadded(container.NewVBox(
+		title,
+		split,
+		infoTabs,
+	))
+}
+
+func buildLkEquationPanel(parent fyne.Window, selectTerm func(string, string)) fyne.CanvasObject {
+	if _, err := os.Stat(frankesteinEquationSVGPath); err == nil {
+		if widget := buildLkEquationImagePanel(parent, selectTerm); widget != nil {
+			return widget
+		}
+	}
+	return buildLkEquationTextPanel(selectTerm)
+}
+
+func buildLkEquationTextPanel(selectTerm func(string, string)) fyne.CanvasObject {
 	line1 := container.NewHBox(
 		NewTermChip("rho_eff_main", "\\rho_{eff}", "Effective viscosity: intrinsic damping plus series-resistance RC delay.", selectTerm),
 		mathLabel(" dP/dt = "),
@@ -142,16 +203,93 @@ func newFrankesteinEquationTextWidget(parent fyne.Window) fyne.CanvasObject {
 	caption.TextStyle = fyne.TextStyle{Italic: true}
 
 	return container.NewVBox(
-		title,
 		line1,
 		line2,
 		lkRow,
 		line3,
 		line4,
 		caption,
-		detailCard,
-		infoTabs,
 	)
+}
+
+func buildLkEquationImagePanel(parent fyne.Window, selectTerm func(string, string)) fyne.CanvasObject {
+	hotspots, minSize := loadFrankesteinHotspots()
+	debug := os.Getenv("FECIM_EQUATION_DEBUG") == "1"
+
+	var hotspotWidgets []fyne.CanvasObject
+	for _, spot := range hotspots {
+		hotspotWidgets = append(hotspotWidgets, NewHotspot(spot.ID, spot.Tooltip, debug, selectTerm))
+	}
+
+	image := loadFrankesteinEquationSVG(frankesteinEquationSVGPath)
+	if image == nil {
+		return nil
+	}
+	image.FillMode = canvas.ImageFillContain
+	if minSize.Width > 0 && minSize.Height > 0 {
+		canvasSize := fyne.NewSize(0, 0)
+		if parent != nil {
+			canvasSize = parent.Canvas().Size()
+		}
+		targetWidth := minSize.Width
+		if canvasSize.Width > 0 {
+			targetWidth = canvasSize.Width * 0.6
+		}
+		scale := targetWidth / minSize.Width
+		image.SetMinSize(fyne.NewSize(targetWidth, minSize.Height*scale))
+	}
+
+	overlay := container.New(&normalizedHotspotLayout{hotspots: hotspots}, hotspotWidgets...)
+	stack := container.NewStack(image, overlay)
+
+	caption := widget.NewLabel("Tap a coefficient or the LK nonlinearity row to see its purpose in Module 1.")
+	caption.TextStyle = fyne.TextStyle{Italic: true}
+
+	return container.NewVBox(
+		stack,
+		caption,
+	)
+}
+
+func buildPreisachEquationPanel(parent fyne.Window) fyne.CanvasObject {
+	if img := loadPreisachEquationSVG(); img != nil {
+		img.FillMode = canvas.ImageFillContain
+		if parent != nil {
+			canvasSize := parent.Canvas().Size()
+			if canvasSize.Width > 0 {
+				targetWidth := canvasSize.Width * 0.6
+				minSize := img.MinSize()
+				if minSize.Width > 0 && minSize.Height > 0 {
+					scale := targetWidth / minSize.Width
+					img.SetMinSize(fyne.NewSize(targetWidth, minSize.Height*scale))
+				} else {
+					img.SetMinSize(fyne.NewSize(targetWidth, 140))
+				}
+			}
+		}
+
+		caption := widget.NewLabel("Quasi-static hysteron superposition model (no explicit dP/dt term).")
+		caption.TextStyle = fyne.TextStyle{Italic: true}
+		return container.NewVBox(img, caption)
+	}
+
+	return container.NewVBox(
+		equationBlock("P(E) = double_integral mu(alpha,beta) * gamma_{alpha,beta}(E) d alpha d beta"),
+		equationBlock("gamma_{alpha,beta}(E) = +1 if E >= alpha; -1 if E <= beta; hold if beta < E < alpha"),
+	)
+}
+
+func buildPreisachSummaryCard() fyne.CanvasObject {
+	summary := container.NewVBox(
+		bodyLabel("Preisach treats hysteresis as a weighted sum of bistable hysterons:"),
+		bodyLabel(bullets([]string{
+			"Each hysteron flips at thresholds (alpha, beta) and retains memory between them.",
+			"Quasi-static means rate-independent: no explicit dP/dt term or inertial delay.",
+			"Output depends only on the input history ordering, not the sweep speed.",
+			"Use Preisach for static loop shape; use L-K for switching dynamics.",
+		})),
+	)
+	return widget.NewCard("Model Notes", "", summary)
 }
 
 type hotspotDef struct {
@@ -241,92 +379,72 @@ func (h *Hotspot) TappedSecondary(_ *fyne.PointEvent) {
 	h.Tapped(nil)
 }
 
-func newFrankesteinEquationImageWidget(parent fyne.Window, svgPath string) fyne.CanvasObject {
-	detailPanel, detailCard := newTermDetailPanel()
-	selectTerm := func(termID, fallback string) {
-		detailPanel.SetDetail(termID, fallback)
+func loadEquationSVGResource(svgPath string) (fyne.Resource, bool) {
+	equationSVGCacheMu.Lock()
+	if res, ok := equationSVGCache[svgPath]; ok {
+		equationSVGCacheMu.Unlock()
+		return res, true
 	}
-	infoTabs := buildEquationInfoTabs()
+	equationSVGCacheMu.Unlock()
 
-	title := widget.NewLabelWithStyle(
-		"Frankestein Equation (Module 1)",
-		fyne.TextAlignLeading,
-		fyne.TextStyle{Bold: true},
-	)
-
-	hotspots, minSize := loadFrankesteinHotspots()
-	debug := os.Getenv("FECIM_EQUATION_DEBUG") == "1"
-
-	var hotspotWidgets []fyne.CanvasObject
-	for _, spot := range hotspots {
-		hotspotWidgets = append(hotspotWidgets, NewHotspot(spot.ID, spot.Tooltip, debug, selectTerm))
-	}
-
-	image := loadFrankesteinEquationSVG(svgPath)
-	image.FillMode = canvas.ImageFillContain
-	if minSize.Width > 0 && minSize.Height > 0 {
-		canvasSize := parent.Canvas().Size()
-		targetWidth := minSize.Width
-		if canvasSize.Width > 0 {
-			targetWidth = canvasSize.Width * 0.85
-		}
-		scale := targetWidth / minSize.Width
-		image.SetMinSize(fyne.NewSize(targetWidth, minSize.Height*scale))
-	}
-
-	overlay := container.New(&normalizedHotspotLayout{hotspots: hotspots}, hotspotWidgets...)
-	stack := container.NewStack(image, overlay)
-
-	caption := widget.NewLabel("Tap a coefficient or the LK nonlinearity row to see its purpose in Module 1.")
-	caption.TextStyle = fyne.TextStyle{Italic: true}
-
-	return container.NewVBox(
-		title,
-		stack,
-		caption,
-		detailCard,
-		infoTabs,
-	)
-}
-
-func loadFrankesteinEquationSVG(svgPath string) *canvas.Image {
 	data, err := os.ReadFile(svgPath)
 	if err != nil {
-		return canvas.NewImageFromFile(svgPath)
+		return nil, false
 	}
 	white := color.NRGBA{R: 255, G: 255, B: 255, A: 255}
 	recolored, err := canvas.RecolorSVG(data, white)
 	if err != nil {
 		recolored = data
 	}
-	resource := fyne.NewStaticResource(filepath.Base(svgPath), recolored)
-	return canvas.NewImageFromResource(resource)
+	res := fyne.NewStaticResource(filepath.Base(svgPath), recolored)
+
+	equationSVGCacheMu.Lock()
+	equationSVGCache[svgPath] = res
+	equationSVGCacheMu.Unlock()
+
+	return res, true
+}
+
+func loadFrankesteinEquationSVG(svgPath string) *canvas.Image {
+	if res, ok := loadEquationSVGResource(svgPath); ok {
+		return canvas.NewImageFromResource(res)
+	}
+	return canvas.NewImageFromFile(svgPath)
 }
 
 func loadFrankesteinHotspots() ([]hotspotDef, fyne.Size) {
-	defaultHotspots, defaultSize := defaultFrankesteinHotspots()
-	data, err := os.ReadFile(frankesteinEquationHotspotPath)
-	if err != nil {
-		return defaultHotspots, defaultSize
-	}
+	frankesteinHotspotsOnce.Do(func() {
+		defaultHotspots, defaultSize := defaultFrankesteinHotspots()
+		data, err := os.ReadFile(frankesteinEquationHotspotPath)
+		if err != nil {
+			cachedFrankesteinSpots = defaultHotspots
+			cachedFrankesteinSize = defaultSize
+			return
+		}
 
-	var cfg hotspotConfig
-	if err := json.Unmarshal(data, &cfg); err != nil {
-		log.Printf("failed to parse hotspots file: %v", err)
-		return defaultHotspots, defaultSize
-	}
+		var cfg hotspotConfig
+		if err := json.Unmarshal(data, &cfg); err != nil {
+			log.Printf("failed to parse hotspots file: %v", err)
+			cachedFrankesteinSpots = defaultHotspots
+			cachedFrankesteinSize = defaultSize
+			return
+		}
 
-	hotspots := defaultHotspots
-	if len(cfg.Hotspots) > 0 {
-		hotspots = cfg.Hotspots
-	}
+		hotspots := defaultHotspots
+		if len(cfg.Hotspots) > 0 {
+			hotspots = cfg.Hotspots
+		}
 
-	size := defaultSize
-	if cfg.BaseWidth > 0 && cfg.BaseHeight > 0 {
-		size = fyne.NewSize(cfg.BaseWidth, cfg.BaseHeight)
-	}
+		size := defaultSize
+		if cfg.BaseWidth > 0 && cfg.BaseHeight > 0 {
+			size = fyne.NewSize(cfg.BaseWidth, cfg.BaseHeight)
+		}
 
-	return hotspots, size
+		cachedFrankesteinSpots = hotspots
+		cachedFrankesteinSize = size
+	})
+
+	return cachedFrankesteinSpots, cachedFrankesteinSize
 }
 
 func defaultFrankesteinHotspots() ([]hotspotDef, fyne.Size) {

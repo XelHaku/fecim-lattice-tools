@@ -11,7 +11,7 @@ import (
 )
 
 // PhaseIndicator displays the current state machine phase prominently.
-// Shows phases: WRITE, HOLD, READ, DISPLAY with color-coded backgrounds.
+// Shows phases: PREP, PROGRAM/VERIFY, READBACK, RESULT with color-coded backgrounds.
 type PhaseIndicator struct {
 	widget.BaseWidget
 
@@ -23,14 +23,14 @@ type PhaseIndicator struct {
 
 // Phase constants for Write/Read Demo (7 phases)
 const (
-	PhaseReset     = 0
-	PhaseSettle    = 1
-	PhaseWrite     = 2
-	PhaseHold      = 3
-	PhaseRead      = 4
-	PhaseDisplay   = 5
-	PhaseBoost     = 6 // Undershoot retry - skip RESET, apply more field
-	NumWRDPhases   = 7
+	PhaseReset   = 0
+	PhaseSettle  = 1
+	PhaseWrite   = 2
+	PhaseHold    = 3
+	PhaseRead    = 4
+	PhaseDisplay = 5
+	PhaseBoost   = 6 // Undershoot retry - skip RESET, apply more field
+	NumWRDPhases = 7
 )
 
 // Manual mode phases (4 phases)
@@ -63,13 +63,13 @@ var manualPhaseColors = map[int]color.RGBA{
 
 // Phase names for Write/Read Demo
 var wrdPhaseNames = map[int]string{
-	PhaseReset:   "RESET",
+	PhaseReset:   "PREP",
 	PhaseSettle:  "SETTLE",
-	PhaseWrite:   "WRITE",
+	PhaseWrite:   "PROG/VERIFY",
 	PhaseHold:    "HOLD",
-	PhaseRead:    "READ",
-	PhaseDisplay: "VERIFY",
-	PhaseBoost:   "BOOST",
+	PhaseRead:    "READBACK",
+	PhaseDisplay: "RESULT",
+	PhaseBoost:   "RETRY",
 }
 
 // Phase names for Manual mode

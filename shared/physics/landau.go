@@ -199,7 +199,10 @@ func (s *LKSolver) dPdT(t, P, E_applied, noise, rhoEff float64) float64 {
 	E_eff := E_applied - E_depolarization
 
 	// Deterministic Force (Gradient of Free Energy)
-	dG_dP := (2 * s.Alpha * P) + (4 * s.Beta * math.Pow(P, 3)) + (6 * s.Gamma * math.Pow(P, 5))
+	P2 := P * P
+	P3 := P2 * P
+	P5 := P3 * P2
+	dG_dP := (2 * s.Alpha * P) + (4 * s.Beta * P3) + (6 * s.Gamma * P5)
 
 	return (E_eff + noise - dG_dP) / rhoEff
 }

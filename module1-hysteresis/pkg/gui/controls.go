@@ -109,13 +109,14 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 				a.needsCalibration = false
 			}
 			// Reset write/read demo state with improved physics
-			a.wrdPhase = 0
+			a.wrdPhase = 2
 			a.wrdPhaseTimer = 0
 			a.wrdTargetLevel = rand.Intn(a.numLevels) + 1
 			a.wrdNextTargetLevel = 0
 			a.wrdStartLevel = a.discreteLevel + 1
 			a.wrdLastBranch = 0
-			a.wrdForceReset = true
+			a.wrdForceReset = false
+			a.wrdSkipPrep = true
 			// Reset Dr. Tour demo metrics
 			a.wrdTotalWrites = 0
 			a.wrdSuccessWrites = 0
@@ -271,6 +272,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		// Reset trail history
 		a.eHistory = a.eHistory[:0]
 		a.pHistory = a.pHistory[:0]
+		a.lastHistorySample = -1
 		a.simTime = 0
 
 		// Reset WRD (Write/Read Demo) state
@@ -392,6 +394,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		// Reset trail when frequency changes
 		a.eHistory = a.eHistory[:0]
 		a.pHistory = a.pHistory[:0]
+		a.lastHistorySample = -1
 		a.simTime = 0
 		a.mu.Unlock()
 		freqLabel.SetText(fmt.Sprintf("Freq: %s", formatHz(v)))
@@ -488,6 +491,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			if math.Abs(currentTemp-previousTemp) > 25 {
 				a.eHistory = a.eHistory[:0]
 				a.pHistory = a.pHistory[:0]
+				a.lastHistorySample = -1
 			}
 
 			// Get plot markers with temperature-corrected Ec and nominal Pr
@@ -610,6 +614,7 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	// Clear history for new material
 	a.eHistory = a.eHistory[:0]
 	a.pHistory = a.pHistory[:0]
+	a.lastHistorySample = -1
 
 	// Reset simulation state
 	a.electricField = 0

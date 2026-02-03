@@ -63,9 +63,10 @@ type App struct {
 	discreteLevel int
 
 	// History for plotting
-	eHistory   []float64
-	pHistory   []float64
-	maxHistory int
+	eHistory          []float64
+	pHistory          []float64
+	maxHistory        int
+	lastHistorySample float64
 
 	// Full data logging (CSV)
 	dataLogger *HysteresisDataLogger
@@ -113,6 +114,10 @@ type App struct {
 	wrdLastProgressLog     float64
 	wrdLastBranch          int  // -1 lower branch, +1 upper branch, 0 unknown
 	wrdForceReset          bool // Force PREP on next cycle (overshoot/direction change)
+	wrdSkipPrep            bool // Skip PREP/RESET and write directly from current state
+
+	// UI update throttling
+	lastUIUpdate time.Time
 
 	// Dr. Tour Demo Metrics (impressive stats!)
 	wrdTotalWrites   int     // Total write operations
@@ -431,6 +436,7 @@ func NewApp() *App {
 		maxHistory:              50000,
 		eHistory:                make([]float64, 0, 2000),
 		pHistory:                make([]float64, 0, 2000),
+		lastHistorySample:       -1,
 		autoMode:                true,
 		waveform:                WaveformSine,
 		physicsEngine:           PhysicsPreisach,
@@ -438,6 +444,7 @@ func NewApp() *App {
 		timeScale:               1.0,
 		wrdTargetLevel:          28, // Start high for dramatic first write
 		wrdNextTargetLevel:      0,
+		wrdSkipPrep:             true,
 		autoRecalibrate:         true,
 		recalibrateOvershootMax: 2,
 		recalibratePulseMax:     12,
@@ -513,6 +520,7 @@ func NewAppWithMaterial(materialName string) *App {
 		maxHistory:              50000,
 		eHistory:                make([]float64, 0, 2000),
 		pHistory:                make([]float64, 0, 2000),
+		lastHistorySample:       -1,
 		autoMode:                true,
 		physicsEngine:           PhysicsPreisach,
 		frequency:               0.5,

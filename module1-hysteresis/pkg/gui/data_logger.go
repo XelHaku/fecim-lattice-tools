@@ -369,19 +369,19 @@ func sanitizeMaterialName(name string) string {
 func wrdPhaseName(phase int) string {
 	switch phase {
 	case 0:
-		return "RESET"
+		return "PREP"
 	case 1:
-		return "HOLD_RESET"
+		return "SETTLE"
 	case 2:
-		return "WRITE"
+		return "PROG_VERIFY"
 	case 3:
-		return "HOLD_WRITE"
+		return "HOLD"
 	case 4:
-		return "READ"
+		return "READBACK"
 	case 5:
-		return "DISPLAY"
+		return "RESULT"
 	case 6:
-		return "BOOST"
+		return "RETRY"
 	default:
 		return "UNKNOWN"
 	}
