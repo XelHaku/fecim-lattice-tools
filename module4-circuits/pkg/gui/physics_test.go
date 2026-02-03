@@ -579,6 +579,7 @@ func TestWritePhaseSequence(t *testing.T) {
 	ds := NewDeviceState(8, 8, tia, adc)
 
 	// Start write sequence
+	ds.forceResetNextSeq = true
 	ds.StartWriteSequence(2, 3, 25, 0)
 
 	info := ds.GetWritePhaseInfo()

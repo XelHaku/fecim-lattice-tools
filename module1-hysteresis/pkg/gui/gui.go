@@ -111,6 +111,8 @@ type App struct {
 	wrdLastControllerState controller.WriteState
 	wrdLastControllerPulse int
 	wrdLastProgressLog     float64
+	wrdLastBranch          int  // -1 lower branch, +1 upper branch, 0 unknown
+	wrdForceReset          bool // Force PREP on next cycle (overshoot/direction change)
 
 	// Dr. Tour Demo Metrics (impressive stats!)
 	wrdTotalWrites   int     // Total write operations

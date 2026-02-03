@@ -479,6 +479,8 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 func (ma *MNISTApp) onDigitChanged(pixels []float64) {
 	debug.Println("onDigitChanged: Starting inference")
 
+	pixels = preprocessIfUserInput(ma.digitCanvas, pixels)
+
 	// Run animated inference in goroutine for smooth UI
 	go ma.runInferenceAnimated(pixels)
 }

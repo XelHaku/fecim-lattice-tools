@@ -16,6 +16,7 @@ import (
 
 // onDigitChanged handles canvas drawing updates.
 func (app *DualModeApp) onDigitChanged(pixels []float64) {
+	pixels = preprocessIfUserInput(app.digitCanvas, pixels)
 	app.lastPixels = pixels
 	if app.animationEnabled {
 		go app.runInferenceAnimated(pixels)

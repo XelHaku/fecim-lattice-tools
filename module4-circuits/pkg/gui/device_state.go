@@ -1114,15 +1114,18 @@ func (ds *DeviceState) StartWriteSequence(row, col, targetLevel, currentLevel in
 	// Ensure voltage calibration is initialized
 	ds.initVoltageCalibrationInternal()
 
-	// Skip RESET if staying on the same hysteresis branch and no overshoot flag.
+	// Skip RESET when staying on the same branch, or after the first ISPP pulse.
+	// Only force RESET on direction change (first pulse) or explicit overshoot flag.
 	lastDir := DirectionUnknown
 	if dir, exists := ds.hysteresisState.Direction[cellKey(row, col)]; exists {
 		lastDir = dir
 	}
-	sameBranch := lastDir != DirectionUnknown && lastDir == direction
+	sameBranch := lastDir == DirectionUnknown || lastDir == direction
 	startPhase := PhaseReset
-	if sameBranch && !ds.forceResetNextSeq {
-		startPhase = PhaseHold1
+	if !ds.forceResetNextSeq {
+		if ds.isppState.Iteration > 0 || sameBranch {
+			startPhase = PhaseHold1
+		}
 	}
 	ds.forceResetNextSeq = false
 

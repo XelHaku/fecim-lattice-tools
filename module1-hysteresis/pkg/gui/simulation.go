@@ -1003,8 +1003,8 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 			Ec := mat.Ec // Use local copy for thread safety
 			midLevel := a.numLevels / 2
 
-			// Apply queued target at the start of PREP so UI and controller stay aligned.
-			if a.wrdPhase == 0 && a.wrdPhaseTimer <= dt && a.wrdNextTargetLevel > 0 {
+			// Apply queued target at the start of PREP or WRITE so UI and controller stay aligned.
+			if (a.wrdPhase == 0 || a.wrdPhase == 2) && a.wrdPhaseTimer <= dt && a.wrdNextTargetLevel > 0 {
 				nextTarget := a.wrdNextTargetLevel
 				a.wrdTargetLevel = nextTarget
 				a.wrdNextTargetLevel = 0
@@ -1014,6 +1014,15 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 				}
 				log.Printf("WRD TARGET APPLY: active=%d queued=%d phase=%d level=%d ctrlTarget=%d E=%.3f MV/cm P=%.2f µC/cm²",
 					a.wrdTargetLevel, nextTarget, a.wrdPhase, a.discreteLevel+1, ctrlTarget, a.electricField/1e8, a.polarization*100)
+				if a.wrdPhase == 2 && a.writeController != nil {
+					// Skip PREP: start controller directly from current state.
+					a.writeController.PulseDuration = phaseDuration * 0.4
+					a.writeController.Start(a.wrdTargetLevel, false)
+					a.wrdStartLevel = a.discreteLevel + 1
+					a.wrdWriteStartP = a.polarization * 100
+					log.Printf("WRD SKIP PREP: start=%d target=%d P=%.2f µC/cm²",
+						a.wrdStartLevel, a.wrdTargetLevel, a.wrdWriteStartP)
+				}
 			}
 			targetLevel := a.wrdTargetLevel // 1-indexed
 			// Note: startLevel (a.wrdStartLevel) no longer used for direction - we use absolute position
@@ -1149,6 +1158,14 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 						successRate := float64(a.wrdSuccessWrites) / float64(a.wrdTotalWrites) * 100
 
 						log.Printf("WRD SUCCESS via Controller: target=%d, tries=%d", targetLevel, a.writeController.RetryCount)
+						if a.writeController.OvershootCount > 0 {
+							a.wrdForceReset = true
+						}
+						if targetLevel > midLevel {
+							a.wrdLastBranch = 1
+						} else {
+							a.wrdLastBranch = -1
+						}
 
 						// Log result (replaces Case 4 success log)
 						log.Printf("WRD PHASE 4→5: TARGET HIT | L_read=%d L_target=%d | rate=%.1f%% (%d/%d)",
@@ -1276,10 +1293,20 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 						}
 					}
 					a.wrdNextTargetLevel = nextTarget
+					nextBranch := -1
+					if nextTarget > midLvl {
+						nextBranch = 1
+					}
+					usePrep := a.wrdForceReset || (a.wrdLastBranch != 0 && a.wrdLastBranch != nextBranch)
+					a.wrdForceReset = false
 					// NOTE: Don't clear history - let the trail accumulate to show full hysteresis loop
 					// Spike detection in plot widget handles any discontinuities
-					// Go to RESET phase to ensure clean state and proper initialization
-					a.wrdPhase = 0
+					// Use PREP only on branch change or overshoot.
+					if usePrep {
+						a.wrdPhase = 0
+					} else {
+						a.wrdPhase = 2
+					}
 					a.wrdPhaseTimer = 0
 					a.wrdCycleEnergy = 0  // Reset energy accumulator for next cycle
 					a.isppTotalPulses = 0 // Reset ISPP pulse counter for next target

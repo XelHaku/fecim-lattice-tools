@@ -39,6 +39,9 @@ type DigitCanvas struct {
 	// Pixel count tracking
 	activePixels int // Count of pixels with value > 0.1
 
+	// Input tracking
+	lastInputSource InputSource
+
 	// Callback when digit changes
 	OnDigitChanged func(pixels []float64)
 
@@ -49,8 +52,9 @@ type DigitCanvas struct {
 // NewDigitCanvas creates a new digit drawing canvas.
 func NewDigitCanvas() *DigitCanvas {
 	dc := &DigitCanvas{
-		brushRadius: 1.5,
-		brushSize:   BrushMedium,
+		brushRadius:     1.5,
+		brushSize:       BrushMedium,
+		lastInputSource: InputProgrammatic,
 	}
 	dc.ExtendBaseWidget(dc)
 	return dc
@@ -104,6 +108,7 @@ func (dc *DigitCanvas) Clear() {
 			dc.pixels[i][j] = 0
 		}
 	}
+	dc.lastInputSource = InputProgrammatic
 	dc.activePixels = 0
 	fyne.Do(func() {
 		dc.Refresh()
@@ -132,6 +137,7 @@ func (dc *DigitCanvas) SetPixels(pixels []float64) {
 			dc.pixels[i][j] = pixels[i*28+j]
 		}
 	}
+	dc.lastInputSource = InputProgrammatic
 	dc.updatePixelCount()
 	fyne.Do(func() {
 		dc.Refresh()
@@ -303,6 +309,7 @@ func (dc *DigitCanvas) MouseUp(e *desktop.MouseEvent) {
 // Note: This is always called from Fyne event handlers (Tapped, Dragged, MouseDown),
 // which are dispatched on the main thread, so no fyne.Do() wrapper is needed.
 func (dc *DigitCanvas) draw(pos fyne.Position) {
+	dc.lastInputSource = InputUser
 	size := dc.Size()
 	cellW := size.Width / 28.0
 	cellH := size.Height / 28.0
@@ -341,6 +348,11 @@ func (dc *DigitCanvas) notifyChange() {
 	if dc.OnDigitChanged != nil {
 		dc.OnDigitChanged(dc.GetPixels())
 	}
+}
+
+// LastInputSource returns the most recent input source (user vs programmatic).
+func (dc *DigitCanvas) LastInputSource() InputSource {
+	return dc.lastInputSource
 }
 
 // clamp restricts a value to a range.

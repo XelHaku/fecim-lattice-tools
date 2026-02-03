@@ -421,8 +421,8 @@ func TestStartWriteSequence_Initialization(t *testing.T) {
 	if !ws.Active {
 		t.Error("write sequence should be active")
 	}
-	if ws.Phase != PhaseReset {
-		t.Errorf("initial phase: got %d, want PhaseReset (%d)", ws.Phase, PhaseReset)
+	if ws.Phase != PhaseHold1 {
+		t.Errorf("initial phase: got %d, want PhaseHold1 (%d)", ws.Phase, PhaseHold1)
 	}
 	if ws.TargetRow != 2 {
 		t.Errorf("target row: got %d, want 2", ws.TargetRow)
@@ -433,8 +433,8 @@ func TestStartWriteSequence_Initialization(t *testing.T) {
 	if ws.TargetLevel != 15 {
 		t.Errorf("target level: got %d, want 15", ws.TargetLevel)
 	}
-	if ws.Progress != 0.0 {
-		t.Errorf("initial progress: got %.2f, want 0.0", ws.Progress)
+	if math.Abs(ws.Progress-0.2) > testEpsilon {
+		t.Errorf("initial progress: got %.2f, want 0.2", ws.Progress)
 	}
 	if ws.WriteVoltage <= 0 {
 		t.Error("write voltage should be calculated")
@@ -497,6 +497,7 @@ func TestAdvanceWritePhase_Progression(t *testing.T) {
 	resetGlobalState()
 	ds := newTestDeviceState(8, 8)
 
+	ds.forceResetNextSeq = true
 	ds.StartWriteSequence(0, 0, 15, 0)
 
 	expectedPhases := []WritePhase{PhaseHold1, PhaseWrite, PhaseHold2, PhaseVerify, PhaseIdle}
@@ -526,6 +527,7 @@ func TestAdvanceWritePhase_Completion(t *testing.T) {
 	resetGlobalState()
 	ds := newTestDeviceState(8, 8)
 
+	ds.forceResetNextSeq = true
 	ds.StartWriteSequence(0, 0, 15, 0)
 
 	// Advance 5 times (RESET -> HOLD1 -> WRITE -> HOLD2 -> VERIFY -> IDLE)
@@ -552,6 +554,7 @@ func TestCancelWriteSequence_Reset(t *testing.T) {
 	resetGlobalState()
 	ds := newTestDeviceState(8, 8)
 
+	ds.forceResetNextSeq = true
 	ds.StartWriteSequence(0, 0, 15, 0)
 	ds.AdvanceWritePhase() // Move to HOLD1
 
