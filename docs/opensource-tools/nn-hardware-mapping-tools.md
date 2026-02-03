@@ -1099,7 +1099,7 @@ array.set_wire_resistance(2.5)  # Match Go: 2.5 Ω per cell
 2. **AIHWKIT:** "In-Memory Analog Computing" - IBM Research white paper
 3. **CrossSim:** "CrossSim: A Framework for Mapping Deep Learning Inference Workloads on Hardware-like Simulators" - Sandia 2024
 4. **HAWQ:** "HAWQ: Hessian AWare Quantization of Neural Networks With Mixed Precision" - Dong et al., 2019
-5. **FeCIM Foundations:** "Ferroelectric FETs for Neuromorphic Computing" - Dr. external research group, COSM 2025
+5. **FeCIM Foundations:** "Ferroelectric FETs for Neuromorphic Computing" - COSM 2025 (archival)
 
 ### Community Resources
 

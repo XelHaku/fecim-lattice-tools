@@ -2,8 +2,10 @@
 
 **Reviewer Lenses**: Principal Investigator (materials) + Device/Process Engineer (internal stand-ins; not statements by Dr. Tour or Dr. Jaeho)
 **Review Date**: January 31, 2026
-**Project Status**: TRL 4 (Lab Validation)
+**Project Status**: Simulation-only (internal review)
 **Overall Rating**: ⭐⭐⭐⭐ (4.25/5 stars)
+
+> **Note:** This is an internal, subjective review. Ratings and claims are not independently verified.
 
 ---
 
@@ -15,16 +17,16 @@ This comprehensive technical review evaluates the **FeCIM Lattice Tools** projec
 2. **Device/Process Engineer lens** - device physics, manufacturability, and implementation risk
 
 **Key Findings**:
-- ✅ **Scientific Integrity**: Project rigorously separates verified (reported in literature) from unverified claims, with 27 removed/updated assertions
-- ✅ **Code Quality**: Modular architecture with CI‑verified test suite (see GitHub Actions)
-- ✅ **Physics Accuracy**: All models based on reported in literature literature with validation tests
+- ✅ **Scientific Integrity**: Project separates reported claims from unverified claims (counts approximate)
+- ✅ **Code Quality**: Modular architecture with CI test suite (see GitHub Actions)
+- ✅ **Physics Accuracy**: Models based on reported literature with validation tests
 - ✅ **Completeness**: 7 modules covering complete FeCIM ecosystem from physics to EDA
 - ✅ **Educational Value**: Excellent visualization tool suitable for teaching and research outreach
 - ✅ **Technical Achievement**: Full FeCIM technology stack simulation using a 30‑level demo baseline (configurable)
 
 **Major Achievements**:
-- Removed 2 unverified claims (87% MNIST, 10M× vs NAND energy)
-- Adopted reported in literature benchmarks (96.6-98.24% MNIST, 25-100× vs NAND energy)
+- Removed unverified claims from prominent UI surfaces
+- Adopted reported literature benchmarks (as references, not verified)
 - Comprehensive documentation system (glossary + research index)
 - Extensive test coverage (see CI for current totals)
 
@@ -401,7 +403,9 @@ func AnalyzeINLDNL() INLDNLAnalysis {
 | **10-Year Retention** | N/A | 99%+ | Nano Letters 2024 (FeFET) | ✅ FeCIM superior to RRAM/PCM |
 | **20-Year @ 85°C** | N/A | 95%+ | IEEE IRPS 2022 (baseline) | ✅ Demonstrated stability |
 
-### 4.3 Energy Efficiency
+### 4.3 Energy Efficiency (Reported, Not Verified)
+
+> **Note:** Values below are reported from sources and are not independently verified by this project.
 
 | Comparison | Conference Claim | Peer-Reviewed Evidence | Source | DOI | Status |
 |--------|---------------|-------------------|--------|---------|
@@ -409,17 +413,19 @@ func AnalyzeINLDNL() INLDNLAnalysis {
 | **vs NAND Speed** | 1,000,000× | Plausible | N/A | 10 ns switching plausible | ⚠️ Needs verification |
 | **90% Voltage Reduction** | ✅ Plausible | Ferroelectric advantage | ⚠️ Needs measurement |
 
-### 4.4 Technology Readiness
+### 4.4 Archival Readiness Statements
+
+> **Note:** TRL statements below reflect historical conference context, not current project status.
 
 | Metric | Status | Description |
 |--------|--------|----------|
-| **TRL 4** | ✅ Current | Component validation in lab environment (COSM 2025 statement) |
-| **TRL 5** | ⏸️ Next | Device-level prototyping with foundry collaboration |
-| **TRL 6** | ⏸️ Future | Component integration and system-level testing |
-| **TRL 7** | ⏸️ Future | Pre-production pilot lines and yield optimization |
-| **TRL 8** | ⏸️ Future | Full-scale manufacturing and commercial deployment |
+| **TRL 4** | Reported | Component validation in lab environment (COSM 2025 statement) |
+| **TRL 5** | Speculative | Device-level prototyping with foundry collaboration |
+| **TRL 6** | Speculative | Component integration and system-level testing |
+| **TRL 7** | Speculative | Pre-production pilot lines and yield optimization |
+| **TRL 8** | Speculative | Full-scale manufacturing and commercial deployment |
 
-**Current Project Position**: Appropriately positioned at TRL 4 with clear path to TRL 5.
+**Archival Note**: TRL positioning above is not a current project status.
 
 ---
 
@@ -629,7 +635,7 @@ func (s *SafeState) Update(newValue float64) {
 | **Maintain Scientific Integrity** | All Contributors | Ongoing | Continue rigorous claim verification |
 | **Expand Physics Validation** | Physics Team | Short-term | Add cryogenic validation, advanced material models |
 | **Improve Non-Ideality Modeling** | Device team | Medium-term | Enhanced 3D sneak path algorithms, statistical drift analysis |
-| **Foundry Partnership** | Business Team | Short-term | Initiate TRL 5 conversations |
+| **Foundry Partnership** | Business Team | Short-term | Initiate prototype discussions |
 | **Community Engagement** | Documentation Team | Ongoing | Expand term glossary, solicit research papers |
 
 ---
@@ -640,9 +646,9 @@ func (s *SafeState) Update(newValue float64) {
 
 | Category | Score | Out of 5 | Weight |
 |---------|--------|-----------|---------|
-| **Scientific Rigor** | ⭐⭐⭐⭐ | 4.25 | 35% | Exceptional integrity, verified claim classification |
+| **Scientific Rigor** | ⭐⭐⭐⭐ | 4.25 | 35% | Exceptional integrity, clear claim classification |
 | **Technical Completeness** | ⭐⭐⭐⭐⭐ | 5.00 | 40% | Full FeCIM ecosystem implementation |
-| **Code Quality** | ⭐⭐⭐⭐⭐ | 4.75 | 35% | Modular architecture, CI-verified tests, thread-safe |
+| **Code Quality** | ⭐⭐⭐⭐⭐ | 4.75 | 35% | Modular architecture, CI test suite, thread-safe |
 | **Educational Value** | ⭐⭐⭐⭐⭐ | 4.00 | 30% | Superior visualization for complex concepts |
 | **Innovation** | ⭐⭐⭐⭐⭐⭐ | 4.50 | 50% | 30-level demo baseline + comprehensive tooling |
 
@@ -651,7 +657,7 @@ func (s *SafeState) Update(newValue float64) {
 ### 8.2 Strengths
 
 **Exceptional Scientific Integrity**:
-- First project to systematically separate verified from unverified FeCIM claims
+- First project to systematically separate reported from unverified FeCIM claims
 - Honest documentation of 27 claim modifications with reported in literature justification
 - Transparent claim classification system enabling clear technology assessment
 - Sets industry standard for research-to-production tools
@@ -669,7 +675,7 @@ func (s *SafeState) Update(newValue float64) {
 **FeCIM Lattice Tools represents best-in-class execution** of a complex research concept, combining:
 - Clear scientific integrity with reported in literature benchmarks and explicit conference-claim labeling
 - Comprehensive engineering implementation across physics, crossbar, MNIST, and EDA modules
-- Professional code quality with CI‑verified tests and documentation
+- Professional code quality with CI test suite and documentation
 
 **For Academic Research**: 10/10 - Excellent visualization tool for understanding FeCIM physics and architecture
 - For Commercialization**: 9/10 - Solid foundation for TRL 5 progress (device validation, foundry partnerships)

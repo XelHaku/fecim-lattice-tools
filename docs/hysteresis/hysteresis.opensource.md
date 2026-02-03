@@ -412,7 +412,7 @@ double conductance = G_min + (G_max - G_min) * polarization_level / 29.0;
 
 | Tool | Level | Hysteresis Model | Speed | Open Source |
 |------|-------|------------------|-------|-------------|
-| **This Project (Go)** | Macro | Preisach | 60 FPS | Yes |
+| **This Project (Go)** | Macro | Preisach | Real-time (hardware-dependent) | Yes |
 | PyPreisach | Macro | Preisach | Fast | Yes |
 | FerroX | Micro | TDGL | Slow (GPU) | Yes |
 | FERRET | Micro | Landau | Slow | Yes |

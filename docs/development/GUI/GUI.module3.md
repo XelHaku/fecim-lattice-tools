@@ -212,7 +212,7 @@ Screens:
         purpose: Title + Quick Demo + Info
         file: dualmode.go:336-391
         children:
-          - titleLabel: "FeCIM MNIST Demo | Literature: 96.6-98.24% (verified) | Demo: projected"
+          - titleLabel: "FeCIM MNIST Demo | Literature: reported ranges | Demo: projected"
           - quickDemoBtn (WarningImportance):
               purpose: 30-second automated demo
               file: dualmode.go:344-352

@@ -1,10 +1,12 @@
 # Research Synthesis: Crossbar Arrays and Matrix-Vector Multiplication (MVM)
 
+> **Note:** Internal analysis note. Values are reported/illustrative and not validated by this codebase.
+
 **Internal Analysis Document - FeCIM Lattice Tools Project**
 
 ## 1. Executive Summary
 
-Ferroelectric Compute-in-Memory (FeCIM) leverages crossbar array architectures to perform analog Matrix-Vector Multiplication (MVM) directly within the memory fabric. This project uses a 30-level demo baseline (configurable) while literature reports multi-level states (unverified). While passive (0T1R) architectures offer maximum density (4F²), non-idealities such as IR drop and sneak paths necessitate the use of isolated architectures (1T1R, 2T1R) for large-scale deployments. Peer-reviewed results demonstrate MNIST accuracies up to 98.24% with energy improvements of 25-100× over traditional NAND-based systems.
+Ferroelectric Compute-in-Memory (FeCIM) leverages crossbar array architectures to perform analog Matrix-Vector Multiplication (MVM) directly within the memory fabric. This project uses a 30-level demo baseline (configurable) while literature reports multi-level states (unverified). While passive (0T1R) architectures offer maximum density (4F²), non-idealities such as IR drop and sneak paths necessitate the use of isolated architectures (1T1R, 2T1R) for large-scale deployments. Literature reports high-accuracy MNIST results and energy improvements vs NAND, but those values are **not** validated here.
 
 ---
 
@@ -118,9 +120,8 @@ Scaling limits are determined primarily by IR drop and peripheral circuit overhe
 
 FeCIM performance is benchmarked using standard neural network tasks.
 
-- **96.6% MNIST**: Nature Communications 2023 (HZO Superlattice).
-- **98.24% MNIST**: ScienceDirect 2025 (HZO FTJ Reservoir).
-- **Inference Accuracy**: Typically drops 1-3% when moving from software FP32 to 30-level CIM.
+- **Reported MNIST results**: See cited literature in references (not validated here).
+- **Inference Accuracy**: Can drop with quantization and non-idealities; magnitude is model-dependent (illustrative).
 
 ---
 

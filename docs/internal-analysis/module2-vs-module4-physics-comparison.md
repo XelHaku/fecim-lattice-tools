@@ -1,5 +1,7 @@
 # Research Report: Module 2 vs Module 4 Physics Comparison
 
+> **Note:** Internal analysis note. Values are reported/illustrative and not validated by this codebase.
+
 **Date:** 2026-01-27
 **Research Goal:** Compare the physics and electronics foundations of Module 2 (Crossbar) and Module 4 (Circuits), focusing on Kirchhoff's laws for read, write, and compute operations.
 

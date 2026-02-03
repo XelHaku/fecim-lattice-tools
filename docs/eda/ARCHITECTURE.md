@@ -590,7 +590,7 @@ Liberty files contain estimated timing (0.1 ns rise time). Real values require:
 
 ### With Module 3 (MNIST)
 - MNIST weights are exported to Compute ArrayConfig
-- Quantization stats help assess network accuracy loss
+- Quantization stats are proxies for quantization error (not a guaranteed accuracy predictor)
 
 ### With Module 4 (Peripherals)
 - DAC/ADC/TIA specifications set DACBits, ADCBits, TIAGain

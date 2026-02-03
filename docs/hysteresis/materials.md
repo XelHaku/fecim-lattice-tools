@@ -2,6 +2,8 @@
 
 This document explains all physical parameters in `config/physics.yaml` for ferroelectric compute-in-memory (FeCIM) simulation.
 
+> **Note:** Parameters here are simulation defaults and literature-inspired ranges. They are not validated hardware specs.
+
 ## Table of Contents
 
 1. [Fundamental Constants](#1-fundamental-constants)

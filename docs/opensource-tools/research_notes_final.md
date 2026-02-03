@@ -1,5 +1,7 @@
 # Research Notes: Open Source Ferroelectric Tools
 
+> **Note:** Internal notes only. Any numeric claims are reported from sources and not independently verified.
+
 ## 1. CrossSim
 **Repository:** https://github.com/sandialabs/cross-sim
 **Description:** A GPU-accelerated simulator for analog in-memory computing, modeling device/circuit non-idealities for crossbar arrays.

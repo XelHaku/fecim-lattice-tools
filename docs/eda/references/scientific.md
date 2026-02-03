@@ -7,6 +7,7 @@ This tool implements simulation models based on published research. It is **not 
 - All models are based on **published literature**, not validated against actual hardware
 - Performance claims (energy, speed, endurance) are **from cited papers**, not independently verified
 - This is **educational/research software**, not a production tool
+- Treat all numeric values below as **reported** and **unverified** within this project
 
 ---
 
@@ -15,7 +16,7 @@ This tool implements simulation models based on published research. It is **not 
 *Published research that our simulation models are based on.*
 
 * **30-State FeFET Device:** *"Flash In2Se3 for Neuromorphic Computing"* (Shin, Tour, et al., 2025). [View](https://www.researchgate.net/publication/388360521_Flash_In2Se3_for_neuromorphic_computing)
-  * *How we use it:* We treat 30 levels as a **demo baseline** (configurable) for the simulator.
+  * *How we use it:* We treat 30 levels as a **demo baseline** (configurable), not a validated device claim.
 
 * **Flash Joule Heating Synthesis:** *"Stoichiometric Engineering... by Flash-within-Flash"* (2025).
   * *How we use it:* Referenced for material properties; we do not implement this manufacturing process.
@@ -61,11 +62,10 @@ This tool implements simulation models based on published research. It is **not 
 
 | Claim | Source | Our Status |
 |-------|--------|------------|
-| 30 discrete states | Tour Lab 2024/2025 | Simulated, not validated |
-| 87% MNIST accuracy | Tour COSM presentation | Target, not achieved |
-| 10^9 endurance cycles | Tour Lab (demonstrated) | Used in models |
-| 10^12 endurance cycles | Tour Lab (target) | Not demonstrated |
-| 10ns switching | Various HZO papers | Used in models |
+| 30 discrete states | Conference/lab reports | Demo baseline only (unverified) |
+| 87% MNIST accuracy | Conference presentation | Archival claim (not used) |
+| Endurance cycles | Literature reports | Reported ranges (not validated) |
+| Switching time | Literature reports | Reported ranges (not validated) |
 
 ---
 
@@ -79,6 +79,8 @@ This tool implements simulation models based on published research. It is **not 
 ---
 
 ## 6. Latest Research (2024-2026)
+
+> **Note:** Findings below are reported in papers and are **not** verified by this project.
 
 *Recently published papers extending the state of the art.*
 

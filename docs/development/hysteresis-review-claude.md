@@ -5,20 +5,22 @@
 **Module:** `module1-hysteresis/`
 **Scope:** Physics accuracy, algorithm flow, ISPP implementation, materials, UX
 
+> **Note:** Internal review memo. Ratings and claims are subjective and not independently verified.
+
 ---
 
 ## Executive Summary
 
-The hysteresis module is a well-architected ferroelectric simulation system implementing the Preisach hysteresis model for HfO₂-ZrO₂ (HZO) materials. The module demonstrates strong physics foundations with reported in literature parameter accuracy, comprehensive test coverage (179 tests), and proper thread-safe GUI design. However, several areas warrant attention:
+The hysteresis module is a ferroelectric simulation system implementing the Preisach hysteresis model for HfO₂-ZrO₂ (HZO) materials. The module demonstrates strong physics foundations with reported parameter ranges, comprehensive test coverage (count may vary), and thread-safe GUI design. However, several areas warrant attention:
 
 | Area | Rating | Key Finding |
 |------|--------|-------------|
 | **Physics Accuracy** | ★★★★☆ | MayergoyzPreisach is correct; simplified model has history issues |
-| **Material Parameters** | ★★★★★ | All parameters verified against reported in literature literature |
+| **Material Parameters** | ★★★★★ | Parameters compared against reported literature ranges |
 | **ISPP Algorithm** | ★★★★☆ | Solid servo control; voltage/field unit confusion |
 | **Code Architecture** | ★★★★★ | Excellent separation of concerns, thread-safe |
 | **UX/GUI** | ★★★☆☆ | Information overload; needs progressive disclosure |
-| **Test Coverage** | ★★★★★ | 179 tests including physics validation |
+| **Test Coverage** | ★★★★★ | Test suite includes physics validation (count may vary) |
 
 ---
 
@@ -144,7 +146,7 @@ Ec_eff = Ec0 * math.Pow(1-T/Tc, TempExponent)  // TempExponent = 0.5
 Ec_eff = Ec_temp * (1 + strainFactor * strain)
 ```
 
-**References verified:** Haun et al. 1987, Materlik et al. 2015
+**References checked:** Haun et al. 1987, Materlik et al. 2015
 
 ### 2.3 Remanent Polarization (Pr) Calculation
 

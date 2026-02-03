@@ -528,7 +528,7 @@ acc_loss ≈ f(q_error, ir_drop, sneak_ratio, noise_σ)
 
 **Typical total accuracy loss:** 0.5-1.5% for well-designed systems (128×128, 1T1R, 6-bit ADC)
 
-**Source:** Placeholder benchmarks (update with verified sources)
+**Source:** Placeholder benchmarks (update with primary sources)
 
 ---
 

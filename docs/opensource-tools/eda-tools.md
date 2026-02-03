@@ -64,7 +64,7 @@ control_fsm.v (behavioral Verilog)
     ↓ [OpenROAD]
 → Placed on silicon, routed with metal
     ↓ [Magic]
-→ Layout verified against design rules
+→ Layout checked against design rules
     ↓ [GDSII]
 → Ready to tape out
 ```
@@ -1576,5 +1576,5 @@ For FeCIM chip design, these tools allow digital control logic and standard anal
 ---
 
 **Document maintained by:** FeCIM Documentation Team
-**Last verified:** 2026-01-27
+**Last updated:** 2026-01-27
 **Status:** Comprehensive reference guide

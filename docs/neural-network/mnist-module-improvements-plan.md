@@ -980,7 +980,7 @@ var (
 4. ✓ Experiment with hardware parameters confidently
 5. ✓ Identify when/why CIM makes errors
 
-**Scientific accuracy verified by**:
+**Scientific accuracy tracked by**:
 - Cross-reference energy calculations with research papers
 - Validate quantization math against `crossbar.QuantizeTo30Levels()`
 - Test accuracy predictions against actual evaluation results

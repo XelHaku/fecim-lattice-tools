@@ -2,6 +2,8 @@
 
 **Speculative Technical Analysis of IronLattice/FeCIM Proprietary Material**
 
+> **Note:** Speculative analysis only. Claims are not independently verified by this project.
+
 ---
 
 ## Executive Summary
@@ -109,7 +111,7 @@ Referenced in `tour-group-ironlattice-research.md` based on published papers.
 | Exotic? | Selenium compounds are relatively exotic |
 | Standard tools | Requires different deposition (MBE/CVD) |
 | Scalability | 2D materials face integration challenges |
-| Maturity | TRL lower than HZO-based devices |
+| Maturity | Reported lower maturity than HZO-based devices |
 
 #### Why In2Se3 Might Still Be Relevant
 
@@ -168,7 +170,7 @@ Partial polarization switching within domains creates continuous states quantize
 | Low voltage | Yes (~2V) | Yes (~2V) | Tie |
 | 30 states | Simulation baseline (unverified) | Simulation baseline (unverified) | Tie |
 | Endurance | 10^9-10^11 | 10^6-10^9 | HZO |
-| Production ready | TRL 4-5 | TRL 2-3 | HZO |
+| Production ready | Higher (reported) | Lower (reported) | HZO |
 
 ---
 
@@ -176,12 +178,12 @@ Partial polarization switching within domains creates continuous states quantize
 
 ### Primary Assessment
 
-**The COSM 2025 FeCIM device is most likely based on HfO2/ZrO2 superlattice technology.**
+**Hypothesis:** The COSM 2025 FeCIM device may be based on HfO2/ZrO2 superlattice technology.
 
 This conclusion is supported by:
 1. CLAUDE.md explicitly states "HfO2-ZrO2 superlattice"
 2. All stated constraints (CMOS, standard tools, not exotic) match HZO
-3. HZO is at appropriate TRL for "component validation in lab" (TRL 4)
+3. HZO is reported at a higher maturity level than In2Se3 (see literature)
 4. Market entry strategy (replace NAND first) requires production-ready materials
 
 ### Secondary Assessment

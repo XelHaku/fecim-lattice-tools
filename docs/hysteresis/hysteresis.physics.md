@@ -380,7 +380,7 @@ Phase 1: WRITE     Phase 2: HOLD      Phase 3: READ      Phase 4: DISPLAY
 
 ## Part 8: How Demo 1 Actually Implements the Physics
 
-This section documents exactly what the code does — verified by source analysis.
+This section documents what the code does — based on code review.
 
 ### Core Model: Mayergoyz Preisach
 
@@ -495,7 +495,7 @@ if math.Abs(eField) > a.material.Ec {
 
 **No — the real-time loop uses instantaneous switching.**
 
-The simulation runs at 60 FPS (`dt ≈ 16ms`) and calls:
+The simulation targets real-time frame rates (often ~60 FPS on typical hardware) and calls:
 ```go
 a.polarization = a.preisach.Update(a.electricField)
 ```
@@ -527,14 +527,14 @@ Where Tc = 723 K (~450°C) is the Curie temperature. Above Tc, the material lose
 
 | Aspect | Implementation | Status |
 |--------|---------------|--------|
-| P from E | Preisach model (hysteron sum) | ✅ Physics-accurate |
-| Hysteresis | Emergent from hysteron memory | ✅ Physics-accurate |
+| P from E | Preisach model (hysteron sum) | ✅ Model-based |
+| Hysteresis | Emergent from hysteron memory | ✅ Model-based |
 | Loop shape | From Gaussian distribution (σ=20%) | ✅ Emergent, not forced |
 | 30 levels (baseline) | Linear discretization of P | ✅ Simple & correct |
 | Minor loops | Implicit via hysteron states | ✅ Works correctly |
-| Write vs Read | |E| > Ec threshold detection | ✅ Physics-accurate |
+| Write vs Read | |E| > Ec threshold detection | ✅ Model-based |
 | τ switching | Defined but not used in viz | ⚠️ Quasistatic approx |
-| Temperature | Ec(T) scaling implemented | ✅ Physics-accurate |
+| Temperature | Ec(T) scaling implemented | ✅ Model-based |
 
 ---
 

@@ -1,5 +1,7 @@
 # Dr. Tour & Dr. Jaeho First Encounter: January 2026
 
+> **Note:** This is a fictional narrative created for storytelling. Any numbers or claims inside are illustrative and should not be treated as verified facts.
+
 **Date:** January 30, 2026 (narrative event)
 **Revision:** February 3, 2026 (metrics + accuracy sync)
 **Setting:** external research institution, Tour Lab conference room

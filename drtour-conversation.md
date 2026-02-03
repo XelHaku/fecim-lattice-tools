@@ -1,5 +1,7 @@
 # Dr. Tour Conversation: Brutal Honesty Session
 
+> **Note:** This is a internal draft/critique exercise. Any numbers or claims inside are illustrative and should not be treated as verified facts.
+
 **Date:** January 2025
 **Context:** Self-critique exercise before reaching out to Dr. external research group's team about ferroelectric CIM visualization project
 fecim-lattice-tools

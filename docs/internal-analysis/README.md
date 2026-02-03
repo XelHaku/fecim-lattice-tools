@@ -1,7 +1,7 @@
 # Internal Analysis Documents
 
-> **Purpose**: Synthesized research analysis for the FeCIM Lattice Tools project.
-> These documents integrate findings from 230+ reported in literature papers in `/docs/research-papers/`.
+> **Purpose**: Synthesized research notes for the FeCIM Lattice Tools project.
+> These documents summarize reported literature and are **not** independently verified.
 
 ## Document Index
 
@@ -28,26 +28,22 @@ docs/internal-analysis/        ← Synthesized analysis (this folder)
     *.md                       ← Topic syntheses with extracted data
 ```
 
-## Key Physics Constants
+## Key Physics Constants (Reported Examples)
 
 | Parameter | Value | Source |
 |-----------|-------|--------|
-| FeCIM Levels | 30 | Dr. Tour COSM 2025 (unverified) |
-| Peer-reviewed levels | multi-level (reported) | Oh 2017, Song 2024 |
-| Pr (RT) | 15-34 µC/cm² | Nature Commun. 2025 |
-| Pr (4K) | 75 µC/cm² | Adv. Elec. Mat. 2024 |
-| Ec | 0.6-1.5 MV/cm | Nature Commun. 2025 |
-| Endurance | 10⁹-10¹² cycles | IEEE IRPS 2022, Nano Letters 2024 |
-| MNIST accuracy | 96.6-98.24% | Nature Commun. 2023, ScienceDirect 2025 |
-| Energy efficiency | 25-100× vs NAND | Samsung Nature 2025 |
+| FeCIM Levels | 30 (demo baseline) | Simulator default (configurable) |
+| Multi-level states | multi-level (reported) | Literature summaries |
+| Pr (RT) | reported ranges | Literature summaries |
+| Pr (4K) | reported ranges | Literature summaries |
+| Ec | reported ranges | Literature summaries |
+| Endurance | reported ranges | Literature summaries |
+| MNIST accuracy | reported ranges | Literature summaries |
+| Energy efficiency | reported ranges | Literature summaries |
 
 ## Accuracy & Honesty
 
-All claims in these documents follow the project's honesty policy:
-
-- **Verified claims** include DOIs and reported in literature sources
-- **Unverified claims** (e.g., the 30-state simulation baseline) are explicitly marked
-- Full audit: [/docs/comparison/HONESTY_AUDIT.md](/docs/comparison/HONESTY_AUDIT.md)
+All claims in these documents are **reported** or **illustrative** and should not be treated as verified by this project. For current policy, see `docs/comparison/HONESTY_AUDIT.md`.
 
 ## Contributing
 

@@ -1,7 +1,9 @@
 # New Research Papers Found - 2026-01-29
 
+> **Note:** Bibliographic list only. Reported values are copied from sources and are not independently verified by this project.
+
 **Research conducted by:** Claude Code Research Agents
-**Total NEW papers identified:** 60+
+**Total NEW papers identified:** ~60 (approx.)
 **Focus areas:** Opensource tools publications, FeCIM advances 2024-2026
 
 ---

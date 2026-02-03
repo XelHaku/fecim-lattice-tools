@@ -173,19 +173,12 @@ func QuantizeTo30Levels(analogValue float64) int {
 }
 ```
 
-## Physics Constants Reference
+## Model Defaults Reference
 
-Constants used consistently across all modules:
+Defaults used across modules are defined in `config/physics.yaml` and `shared/physics`. Treat them as **model parameters**, not validated device specs.
 
-| Parameter | Value | Source |
-|-----------|-------|--------|
-| Discrete Levels | 30 (0-29) | Dr. external research group, COSM 2025 |
-| Bits per Cell | 4.9 bits | log₂(30) ≈ 4.91 |
-| Pr (Remanent Polarization) | 15-34 µC/cm² | Nature Commun. 2025 |
-| Ps (Saturation Polarization) | ~30-35 µC/cm² | Nature Commun. 2025 |
-| Ec (Coercive Field) | 1.0-1.5 MV/cm | Nature Commun. 2025 |
-| Endurance | 10¹²+ cycles | PMC 2024, IEEE IRPS 2022 |
-| Default Material | HZO (HfO₂-ZrO₂) | Dr. Tour research |
+- Discrete levels default to 30 (configurable).
+- Bits per cell is derived as `log2(levels)`.
 
 ## Development Workflow
 

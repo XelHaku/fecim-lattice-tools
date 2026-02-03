@@ -3,7 +3,7 @@
 **Module**: Module 1 - Hysteresis (P-E Curves & Ferroelectric Physics)  
 **Date**: January 31, 2026  
 **Reviewer**: Sisyphus AI Agent  
-**Project Status**: TRL 4 (Lab Validation)  
+**Project Status**: Simulation-only (internal review)  
 
 ---
 

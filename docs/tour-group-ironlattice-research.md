@@ -2,6 +2,8 @@
 
 **Network Analysis, Contact Intelligence, and Commercial Ecosystem Mapping**
 
+> **Note:** Internal research memo. Contains speculative analysis and contact details that may be outdated. Do not use as an authoritative source.
+
 ---
 
 ## 1. Executive Intelligence Overview
@@ -117,9 +119,9 @@ The name "Jaeho Shin" is relatively common in technical fields, necessitating a 
 
 ### 3.2 Contact Intelligence and Verification
 
-For the target subject, Dr. Jaeho Shin of external research institution, the investigation verified his institutional contact channels through multiple redundant sources, including departmental directories and scientific manuscripts where he serves as a co-author or corresponding contributor.
+For the target subject, Dr. Jaeho Shin of external research institution, the investigation identified institutional contact channels through multiple sources, including departmental directories and scientific manuscripts where he serves as a co-author or corresponding contributor.
 
-**Email Verification:** The address **jaeho-shin@rice.edu** is the standard, verified alias for his external research institution account. Academic institutions often employ a firstname-lastname or initial.lastname convention. The hyphenated format is explicitly listed in the Department of Chemistry's postdoctoral researcher directory. Furthermore, his ORCID profile (0000-0001-5280-3356) and Google Scholar profile confirm rice.edu as his verified email domain. While an alias like jaeho.shin@rice.edu or a NetID-based email (e.g., js123@rice.edu) may also route to him, jaeho-shin@rice.edu is the public-facing coordinate for professional correspondence.
+**Email Note:** The address **jaeho-shin@rice.edu** appears in public listings. Academic institutions often employ a firstname-lastname or initial.lastname convention. The hyphenated format is listed in the Department of Chemistry's postdoctoral researcher directory. ORCID and Google Scholar profiles list rice.edu as a contact domain. While aliases like jaeho.shin@rice.edu or a NetID-based email (e.g., js123@rice.edu) may also route to him, jaeho-shin@rice.edu appears to be a public-facing coordinate for professional correspondence.
 
 #### Validated Contact Matrix: Dr. Jaeho Shin
 
@@ -173,7 +175,7 @@ The identification of Mr. Tawfik Jarjour required careful separation from Dr. Im
 
 ### 4.2 Contact Intelligence and Protocol
 
-Unlike Dr. Tour and Dr. Shin, Mr. Jarjour works in the corporate sector. His contact information is not published in academic directories, necessitating a derivation based on corporate standards and verified personal projects.
+Unlike Dr. Tour and Dr. Shin, Mr. Jarjour works in the corporate sector. His contact information is not published in academic directories, necessitating a derivation based on corporate standards and publicly visible projects.
 
 **Corporate Email Channel:**
 Mr. Jarjour is a Senior Manager at Accenture. The standard email format for Accenture employees globally is firstname.lastname@accenture.com. Given his unique name and seniority within the firm, the probability of this address being active is near 100%.
@@ -241,7 +243,7 @@ The identification of email addresses for Dr. Tour, Dr. Shin, and Mr. Jarjour wa
 |---------|---------------------|
 | **Dr. external research group** | Contact is explicit in public academic records. **tour@rice.edu** is the robust, singular channel for professional engagement. |
 | **Dr. Jaeho Shin** | Contact is explicit in university directories. **jaeho-shin@rice.edu** is the confirmed coordinate. The investigation successfully filtered out the "Stanford Jaeho Shin," preventing a potentially embarrassing miscommunication. |
-| **Tawfik Jarjour** | Contact is derived from standard corporate syntax (**tawfik.jarjour@accenture.com**) and verified personal project data (**MetronConnect@gmail.com**). His identity was successfully isolated from the medical professional Dr. Imad Jarjour. |
+| **Tawfik Jarjour** | Contact is derived from standard corporate syntax (**tawfik.jarjour@accenture.com**) and publicly visible project data (**MetronConnect@gmail.com**). His identity was isolated from the medical professional Dr. Imad Jarjour. |
 
 ### Final Recommendation
 

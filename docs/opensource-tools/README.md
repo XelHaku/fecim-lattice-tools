@@ -6,7 +6,9 @@
 
 ## Overview
 
-This documentation catalogs 100+ open-source tools relevant to ferroelectric compute-in-memory systems based on Dr. external research group's HfO₂-ZrO₂ superlattice research. Whether you're simulating hysteresis loops, designing crossbar arrays, training neural networks, or characterizing devices in the lab, this guide connects you to the right tools.
+This documentation catalogs open-source tools relevant to ferroelectric compute-in-memory systems. Whether you're simulating hysteresis loops, designing crossbar arrays, training neural networks, or characterizing devices in the lab, this guide connects you to the right tools.
+
+> **Note:** Counts are approximate and tool claims are reported from sources, not verified by this project.
 
 **Note:** References to 30 levels refer to the demo baseline (configurable). Literature reports multi-level states (not verified here).
 
@@ -232,7 +234,7 @@ Beyond open-source tools, see also:
 | `docs/development/scriptReference.md` | Function lookup, error resolution, decision trees |
 | `docs/development/TESTING.md` | Test framework, running tests before commit |
 | `docs/development/GUI/FYNE_NOTES.md` | GUI framework notes for module updates |
-| `docs/video-transcripts/COSM_2025_AI_Hardware_Breakthrough/` | Dr. external research group's COSM 2025 presentation |
+| `docs/video-transcripts/COSM_2025_AI_Hardware_Breakthrough/` | COSM 2025 transcript (archival) |
 | `docs/comparison/HONESTY_AUDIT.md` | Scientific accuracy verification for all claims |
 
 ---
@@ -330,15 +332,14 @@ See `docs/about/Contributing.md` for full guidelines.
 
 ## Citation & References
 
-**If you use FeCIM tools based on this documentation, please cite:**
+**If you use tools based on this documentation, please cite:**
 
 - **FeCIM Project**: FeCIM Lattice Tools - Ferroelectric Compute-in-Memory Visualization Suite
-- **Dr. external research group**: Original HfO₂-ZrO₂ superlattice research (COSM 2025)
 - **Individual tools**: Cite original papers per documentation links
 
 ---
 
 **Last Updated: January 27, 2026**
 **Maintained by:** FeCIM Documentation Team
-**Total Tools Documented:** 72+
-**Documentation Pages:** 10 comprehensive guides
+**Total Tools Documented:** ~72 (approx.)
+**Documentation Pages:** ~10 guides (approx.)

@@ -472,8 +472,8 @@ Multi-temperature calibration with persistent storage:
 | **Calibration** | O(30 × 10) binary searches |
 
 **Physics accuracy**:
-- Remanent polarization: 15-75 µC/cm² (material-dependent, verified from literature)
-- Coercive field: 0.6-5.0 MV/cm (verified)
+- Remanent polarization: 15-75 µC/cm² (material-dependent, reported in literature)
+- Coercive field: 0.6-5.0 MV/cm (reported in literature)
 - Endurance: 10⁸-10¹² cycles (material-dependent)
 - Bits per cell: 4.91 bits for 30 levels, configurable 1-8 bits
 

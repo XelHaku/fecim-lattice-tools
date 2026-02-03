@@ -1,6 +1,6 @@
 # Research Papers Directory Organization
 
-**Overview:** 167+ research papers organized by research topic, with additional resources for paper discovery and compilation.
+**Overview:** Research papers organized by topic. Counts are approximate and any reported values are not independently verified.
 
 ---
 

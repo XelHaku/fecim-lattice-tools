@@ -5,6 +5,8 @@
 **Date:** November 2024 (references Nov 3rd WSJ article)  
 **Context:** First public disclosure of Ferroelectric CIM technology
 
+> **Note:** This is an archival transcript. Statements are quoted from the source and are **not** verified or endorsed by this project.
+
 ---
 
 ## Opening Remarks

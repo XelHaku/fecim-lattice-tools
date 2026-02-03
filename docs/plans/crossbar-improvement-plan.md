@@ -218,7 +218,7 @@ func ApplyReadNoise(Gprogrammed float64, config *ReadNoiseConfig) float64 {
 - `module2-crossbar/pkg/crossbar/device_errors_test.go`
 
 ### Acceptance Criteria
-- [ ] Programming error reduces accuracy by expected amount (~1-5% for σ=0.05)
+- [ ] Programming error reduces accuracy by expected amount (illustrative; confirm with tests)
 - [ ] Read noise is per-operation (non-persistent)
 - [ ] Models match CrossSim distribution shapes
 - [ ] Configurable via `Config` struct
@@ -489,7 +489,7 @@ R0_0 N0_0 M0_0 {1/G[0,0]}
 1. **badcrossbar**: Joksas & Mehonic, SoftwareX 2020, [DOI](https://doi.org/10.1016/j.softx.2020.100617)
 2. **CrossSim**: Sandia National Labs, [GitHub](https://github.com/sandialabs/cross-sim)
 3. **SOR Algorithm**: Young, D.M. (1971). Iterative Solution of Large Linear Systems
-4. **FeCIM Physics**: Tour Group, COSM 2025
+4. **FeCIM Physics**: Archival conference reference (not validated)
 
 ---
 

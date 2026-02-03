@@ -1,5 +1,7 @@
 # Research Gap Analysis: FeCIM Project
 
+> **Note:** Internal tracking document. Counts, grades, and reported values are approximate and not independently verified.
+
 **Analysis Date:** 2026-01-29 (Updated)
 **Current Grade:** A+ (97/100)
 **Previous Grade:** A (95/100)
@@ -147,7 +149,7 @@ This document identifies gaps in our research coverage and tracks progress. Afte
 - In₂Se₃ references (his latest work)
 - **98.24% MNIST accuracy** (reported in literature, exceeds simulation baselines)
 - OpenLane integration (shows fab awareness)
-- Honest TRL 4 disclaimer
+- Honest simulation-only disclaimer
 - **Three operation modes** (Storage/Memory/Compute)
 - **3D stacking roadmap** (512-layer, NAND replacement path)
 - **Automotive specs** (AEC-Q100 Grade 0, $18B market)

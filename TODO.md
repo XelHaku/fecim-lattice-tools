@@ -47,10 +47,10 @@
 | ID | Task | Status | Est. |
 |----|------|--------|------|
 | C01 | Add "SIMULATION ONLY - NOT VALIDATED" banners to Module 5 comparison screens | ✅ | Done |
-| C02 | Change "30 discrete states" from fact to hypothesis: "30 states (conference presentation, unverified)" | ✅ | Done |
-| C03 | ~~Add TRL disclaimer to energy comparison charts~~ | ✅ | Done |
-| C04 | ~~Update 87% MNIST to show reported in literature context (96.6-98.24%)~~ | ✅ | Done |
-| C05 | ~~Add "Why 30?" dialog with verification status~~ | ✅ | Done |
+| C02 | Change "30 discrete states" from fact to baseline (unverified) | ✅ | Done |
+| C03 | ~~Add simulation-only disclaimer to energy comparison charts~~ | ✅ | Done |
+| C04 | ~~Remove 87% MNIST claim; label literature benchmarks as reported~~ | ✅ | Done |
+| C05 | ~~Add "Why 30?" dialog with baseline explanation~~ | ✅ | Done |
 
 ### P1-D2: Medium-Effort Critical Fixes (Sprint 2 - Days 2-4)
 
@@ -82,7 +82,7 @@
 | H02 | ~~MAC count parallelism explanation~~ | ✅ | Done |
 | H03 | ~~Voltage range citations (thickness-dependent)~~ | ✅ | Done |
 | H04 | ~~Read parameter sources - mark as empirical~~ | ✅ | Done |
-| H05 | ~~Market chart disclaimers - TRL and projection warnings~~ | ✅ | Done |
+| H05 | ~~Market chart disclaimers - simulation-only and projection warnings~~ | ✅ | Done |
 | H06 | Cite strain coefficients - replace magic `-0.15` with Haun 1987 or DFT reference | ✅ | Done |
 | H07 | Add Preisach grid size convergence study reference (why 50×50?) | ✅ | Done |
 
@@ -232,37 +232,9 @@ From HONESTY_AUDIT Section 6.2:
 
 ---
 
-## 10. Verified Claims Reference
+## 10. Claims Reference (Use HONESTY_AUDIT)
 
-**Use ONLY these verified claims in documentation and demos:**
-
-### Material Properties [VERIFIED]
-- **Pr**: 15-34 µC/cm² (RT), 75 µC/cm² (4K)
-- **Ec**: 0.6-1.5 MV/cm
-- **Min thickness**: 3.6 nm
-- **Sub-1V switching**: 0.5V @ 3.6nm
-
-### Multi-Level States [VERIFIED vs UNVERIFIED]
-- **multi-level analog states (reported)**: ✅ VERIFIED (Oh 2017, Song 2024)
-- **30 states (Tour)**: ⚠️ UNVERIFIED - label as "simulation baseline, unverified"
-
-### Endurance [VERIFIED]
-- **10^12 cycles**: DEMONSTRATED (V:HfO₂ 2024, Science 2024)
-- **10^9 cycles**: Conservative baseline (IEEE IRPS 2022)
-
-### MNIST Accuracy [VERIFIED]
-- **98.24%**: HZO-FTJ reservoir (ScienceDirect 2025)
-- **96.6%**: 7 VT states (Nature Commun. 2023)
-- **87% (Tour)**: ❌ REMOVED - unverified, below reported in literature benchmarks
-
-### Energy Efficiency [VERIFIED with CAVEATS]
-- **25-100× vs NAND**: Samsung Nature 2025 ✅
-- **70,000× vs GPU (LLM)**: Nature Comp. Sci. 2025 ⚠️ (specific workload only)
-- **10M× (Tour)**: ❌ REMOVED - no measurement data
-
-### 3D Integration [VERIFIED]
-- **22nm BEOL**: CEA-Leti December 2024
-- **512 layers roadmap**: Samsung Nature 2025
+All external performance/material claims must be treated as **reported** or **unverified** unless explicitly validated by this codebase. Use `docs/comparison/HONESTY_AUDIT.md` as the single source of truth for what can be cited, and avoid adding “verified” labels in docs or UI.
 
 ---
 

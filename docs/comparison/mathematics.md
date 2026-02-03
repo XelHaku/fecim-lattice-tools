@@ -893,7 +893,7 @@ All equations are implemented in `module2-crossbar/pkg/crossbar/` with extensive
 
 1. CrossSim Documentation (Sandia Labs)
 2. NeuroSim Documentation (ASU)
-3. Primary papers and device measurements (to be filled with verified sources)
+3. Primary papers and device measurements (to be filled with primary sources)
 
 ---
 

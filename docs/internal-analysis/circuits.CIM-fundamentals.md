@@ -1,5 +1,7 @@
 # Compute-in-Memory (CIM) Fundamentals for FeFET Arrays
 
+> **Note:** Internal analysis note. Values are reported/illustrative and not validated by this codebase.
+
 > **Module 4 Reference Document** - Physics basis for peripheral circuit simulation
 
 ## Overview

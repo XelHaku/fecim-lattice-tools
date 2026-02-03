@@ -353,6 +353,8 @@ If we:
 
 ## Dr. Tour's Words (Historical Context)
 
+> **Note:** Quotes are archival context only and are not verified by this project.
+
 > "Compute in memory where the same device does the memory and the computation."
 
 ---

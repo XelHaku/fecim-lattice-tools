@@ -1,5 +1,7 @@
 # FeCIM Tool Demo: Video Script for Dr. Tour & Team
 
+> **Note:** Draft script only. Contains placeholders and historical references; do not treat as verified claims.
+
 **Title:** "FeCIM Design Suite - Private Demo for Dr. Tour"
 
 **Duration:** 5 minutes

@@ -78,7 +78,7 @@ go test -race ./...
 - `TestQuantizationCliff` - Validates 2→30 level MSE/PSNR improvement
 - `Test30LevelQuantizationAccuracy` - PSNR verification at different bit depths
 
-**Results:**
+**Results (example output; may change with defaults):**
 | Levels | MSE | PSNR |
 |--------|-----|------|
 | 2 (binary) | 0.3323 | 4.8 dB |
@@ -90,19 +90,19 @@ go test -race ./...
 #### IR Drop Physics
 - `TestIRDropOhmsLaw` - V=IR verification
 - `TestIRDropScalesWithResistance` - 5x resistance → ~5x drop
-- `TestIRDropMitigationEffectiveness` - 2x wider lines = 49% reduction
+- `TestIRDropMitigationEffectiveness` - Wider lines reduce IR drop (model trend)
 - `TestIRDropWorstCaseCorner` - Cumulative current hotspot identification
 
 #### Sneak Path Physics
 - `TestSneakPathThreeCellModel` - 3-cell parasitic current path
 - `TestSneakPathScalesWithConductance` - 10x G → 10x sneak current
 - `TestSneakPathSNR` - Signal-to-noise ratio calculation
-- `TestSneakMitigationSelector` - 1000:1 selector = 1000x improvement
+- `TestSneakMitigationSelector` - Selector ratio improves sneak-path suppression
 
 #### Drift Physics
 - `TestDriftTimeEvolution` - FeCIM vs RRAM drift comparison
-- `TestDriftFeCIMVsRRAM` - 50x better retention verified
-- `TestDriftRetentionPrediction` - 100% 10-year retention
+- `TestDriftFeCIMVsRRAM` - Compares relative drift trends (model-based)
+- `TestDriftRetentionPrediction` - Checks retention projection logic (model-based)
 - `TestDriftTemperatureDependence` - Arrhenius behavior at 27°C vs 85°C
 
 ### 2. Material/Ferroelectric Tests
@@ -117,7 +117,7 @@ go test -race ./...
 - `TestCoerciveFieldTemperatureDependence` - Ec vs temperature
 - `TestPolarizationTemperatureDependence` - Pr vs temperature
 - `TestMaterialVariants` - All material presets work correctly
-- `TestFerroelectricMaterialPhysics` - Literature-accurate parameters
+- `TestFerroelectricMaterialPhysics` - Parameter sanity checks against configured ranges
 
 ### 3. Simulation Engine Tests
 

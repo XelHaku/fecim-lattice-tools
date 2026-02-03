@@ -385,5 +385,5 @@ See [crossbar.research.md](crossbar.research.md) for complete academic citations
 ---
 
 **Part of:** FeCIM Lattice Tools - Ferroelectric Compute-in-Memory Visualization Suite
-**Source:** Dr. external research group's HfO₂-ZrO₂ superlattice research (COSM 2025)
+**Source:** Archival conference reference (not validated)
 **License:** See project root for details

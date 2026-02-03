@@ -313,11 +313,11 @@ This section outlines the requirements for a **production-grade** EDA toolchain 
 ```python
 fefet_model = FeFET(
     technology="HZO_superlattice",
-    Ec=1.0e6,           # V/cm
-    Pr=25e-6,           # C/cm^2
-    levels=30,          # Demo baseline (configurable)
-    endurance=1e12,
-    retention_years=10,
+    Ec=<placeholder>,   # V/cm
+    Pr=<placeholder>,   # C/cm^2
+    levels=<configured>,
+    endurance=<placeholder>,
+    retention_years=<placeholder>,
     temperature=300,    # Kelvin
     variation_sigma=0.05
 )
@@ -420,21 +420,21 @@ accuracy = verification.run_inference(
     test_set=mnist_test,
     include_nonidealities=True
 )
-# Returns: 94.2% (vs 96.5% ideal)
+# Returns: <placeholder> (vs <placeholder> ideal)
 
 # Statistical
 yield_result = verification.monte_carlo(
     n_samples=10000,
     vary=["device_variation", "ir_drop", "adc_noise"]
 )
-# Returns: 3-sigma yield = 98.7%
+# Returns: 3-sigma yield = <placeholder>
 
 # Reliability
 mttf = verification.reliability_analysis(
     workload="inference_continuous",
     temperature=85  # Celsius
 )
-# Returns: MTTF = 8.3 years
+# Returns: MTTF = <placeholder>
 ```
 
 #### F. Integration and Ecosystem
@@ -572,7 +572,7 @@ Module 6 (FeCIM Design Suite) is an **Array Builder for OpenLane**:
 
 | Gap | Status | What's Needed |
 |-----|--------|---------------|
-| Weight-to-cell mapping | Not implemented | Would need ONNX import + quantization |
+| Model import (ONNX) | Not implemented | ONNX import + mapping pipeline |
 | Real timing values | Placeholder only | FeFET SPICE characterization |
 | Physical layout | Abstract only | Magic/KLayout design |
 | Device models | None | Verilog-A FeFET model |
@@ -581,32 +581,32 @@ Module 6 (FeCIM Design Suite) is an **Array Builder for OpenLane**:
 
 ### 7.7 The "Dream" Production FeCIM EDA Tool
 
-If someone built the ultimate FeCIM EDA tool, here's what using it would feel like:
+If someone built the ultimate FeCIM EDA tool, here's a **fictional** CLI sketch (placeholders, not real measurements):
 
 ```
 $ fecim-eda new-project my_ai_chip
 
 $ fecim-eda import-model resnet18.onnx
-  [OK] Model loaded: 11.7M parameters
-  [OK] Estimated: 47 crossbar arrays (128x128)
-  [OK] Estimated energy: 0.3 mJ/inference
-  [OK] Estimated accuracy: 94.2% (vs 95.1% FP32)
+  [OK] Model loaded: <N> parameters
+  [OK] Estimated: <N> crossbar arrays (128x128)
+  [OK] Estimated energy: <placeholder>
+  [OK] Estimated accuracy: <placeholder>
 
 $ fecim-eda optimize --target energy
-  [OK] Optimized mapping: 0.18 mJ/inference (-40%)
-  [OK] Accuracy impact: 93.8% (-0.4%)
+  [OK] Optimized mapping: <placeholder>
+  [OK] Accuracy impact: <placeholder>
 
 $ fecim-eda simulate --monte-carlo 1000
-  [OK] Mean accuracy: 93.2% +/- 0.8%
-  [OK] 3-sigma yield: 99.1%
-  [OK] IR-drop worst case: 4.2%
+  [OK] Mean accuracy: <placeholder>
+  [OK] 3-sigma yield: <placeholder>
+  [OK] IR-drop worst case: <placeholder>
 
 $ fecim-eda layout --pdk IHP_SG13G2
-  [OK] Generated 47 array macros
-  [OK] Synthesized 47 ADCs, 47 DACs, 1 controller
-  [OK] Total area: 12.4 mm^2
-  [OK] DRC: PASS
-  [OK] LVS: PASS
+  [OK] Generated <N> array macros
+  [OK] Synthesized <N> ADCs, <N> DACs, <N> controller(s)
+  [OK] Total area: <placeholder>
+  [OK] DRC: <placeholder>
+  [OK] LVS: <placeholder>
 
 $ fecim-eda export --gdsii my_ai_chip.gds
   [OK] Ready for IHP shuttle submission!

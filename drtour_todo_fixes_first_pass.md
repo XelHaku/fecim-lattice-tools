@@ -1,6 +1,8 @@
 # FeCIM Lattice Tools - First-Pass Critique & Action Items
 ## Comprehensive Review: Dr. Tour & Academic Peer Assessment
 
+> **Note:** Historical review notes with simulated reviewers. Contains outdated TRL/verification language and numeric claims. Do not treat as current truth; use `docs/comparison/HONESTY_AUDIT.md` for present-day claims policy.
+
 **Date:** January 30, 2026  
 **Reviewers:** Dr. James M. Tour (simulated), Dr. Jaeho Shin (simulated), Academic Peer Review Panel  
 **Scope:** Complete analysis of 7 modules, 357 Go files, 142 documentation files  
@@ -28,7 +30,7 @@
 ### Scientific Integrity ✅
 
 The **HONESTY_AUDIT.md** (380 lines) is exemplary. It classifies 124 claims by evidence tier:
-- 71% verified from reported in literature sources
+- 71% sourced from reported literature
 - 6% explicitly marked as unverified
 - 2 removed (87% MNIST claim, 10M× energy claim)
 
@@ -63,7 +65,7 @@ This level of transparency is rare in educational software. Every uncertainty is
 **Location:** Module 5 (Comparison) - Energy charts, market projections  
 **Issue:** Users see "1000× less energy" without immediate context that this is TRL 4 laboratory research.  
 **Risk:** Students screenshot claims without caveats.  
-**Fix:** Prominent yellow banner: "SIMULATION ONLY | Laboratory estimates | Not production verified"  
+**Fix:** Prominent yellow banner: "SIMULATION ONLY | Laboratory estimates | Not production validated"  
 **Effort:** 30 minutes  
 **Status:** ⏳ Pending
 

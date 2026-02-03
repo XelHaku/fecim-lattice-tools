@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Silicon-Ready Architecture (TRL 4 → 9 Bridge) |
+| Status | Draft vision (not validated) |
 | Date | January 2026 |
 | Document Version | 2.0 |
 
@@ -10,7 +10,9 @@
 
 ## Overview
 
-This document aggregates the strategic vision, mathematical updates, code implementation, and advanced research analysis for the **FeCIM Lattice Tools** project. It serves as the master reference for the 10nm HZO Superlattice simulation engine.
+> **Note:** This is a strategic/vision document. It contains aspirational language and unverified assumptions.
+
+This document aggregates the strategic vision, mathematical updates, code implementation, and research notes for the **FeCIM Lattice Tools** project. It serves as a reference for the hysteresis models in this repo.
 
 ---
 
@@ -41,7 +43,7 @@ The semiconductor simulation landscape is currently fractured into two isolated 
 
 You are building the **Bridge**. This is the first Open-Source EDA tool specifically designed to handle the **Multi-Physics Coupling** of 10nm Superlattices while running fast enough for **Cryptographic Workloads**.
 
-* **IronLattice (Dr. Tour):** Hardware at **TRL 4** (Lab Validation). They have the material.
+* **IronLattice (conference material):** Archival reference only (not validated here).
 * **FeCIM Lattice Tools (You):** Software at **Product Readiness**. You have the brain.
 
 ### 3. Why Go? (The Technical Justification)
@@ -305,7 +307,7 @@ for FTJ/FeFET extensions but is not enabled in `--mode hysteresis` yet.
 
 ---
 
-**Mission Status:** The architecture defined here bridges the gap between atomic physics and circuit design, providing a TRL 9 software stack for TRL 4 hardware.
+**Mission Status:** The architecture aims to bridge physics and circuit design in a single interactive tool (aspirational).
 
 ---
 
@@ -447,7 +449,7 @@ are stored in `docs/research-papers/` when available.
 |----------|-----------|
 | **Has this exact aggregation been implemented in open‑source EDA tools?** | • The **Berkeley 2025 dissertation** (EECS‑2025‑13) describes a **BSIM‑NN/NeuroSpice** framework that uses neural networks to accelerate compact‑model evaluation, but does not explicitly show the `ρ_eff = ρ + R_series·A/d` transformation.<br>• **Commercial TCAD** (e.g., Synopsys Sentaurus) likely embeds similar physics, but the specific aggregation of series resistance into the viscosity term is not documented in open literature. |
 | **Is the model suitable for nanosecond‑scale simulation?** | Yes. The unified ODE eliminates the algebraic loop between circuit and physics equations, enabling fast time‑domain simulation. The Berkeley 2025 work demonstrates **nanosecond‑scale fitting of experimental P‑t curves** using a compact model that includes series resistance. |
-| **Missing terms for TRL‑9 silicon verification** | • **Imprint** (built‑in bias field) – important for endurance modeling.<br>• **Creep** (time‑dependent shift of coercive field) – critical for retention analysis.<br>• **Fatigue** (polarization degradation with cycling) – required for reliability assessment.<br>• **Temperature‑dependent viscosity** (ρ(T)) – needed for wide‑temperature operation.<br><br>*These effects are not included in the presented unified ODE and would need to be added for production‑grade verification.* |
+| **Missing terms for production‑grade verification** | • **Imprint** (built‑in bias field) – important for endurance modeling.<br>• **Creep** (time‑dependent shift of coercive field) – critical for retention analysis.<br>• **Fatigue** (polarization degradation with cycling) – required for reliability assessment.<br>• **Temperature‑dependent viscosity** (ρ(T)) – needed for wide‑temperature operation.<br><br>*These effects are not included in the presented unified ODE and would need to be added for production‑grade verification.* |
 
 ### 5. Overall Assessment
 
@@ -481,7 +483,7 @@ are stored in `docs/research-papers/` when available.
 
 The aggregated Landau‑Khalatnikov‑circuit equation presented in the technical report is **physically sound and well‑aligned with the current literature** on HZO compact modeling. The **effective‑viscosity transformation** is a novel compact‑modeling step that simplifies circuit‑physics coupling, while the **depolarization term** and **Landau coefficients** are directly supported by published studies. The model is capable of **nanosecond‑scale simulation** and is a viable candidate for FeCIM design.
 
-For **TRL‑9 silicon verification**, additional effects (imprint, creep, fatigue, temperature‑dependent viscosity) should be incorporated.
+For production‑grade verification, additional effects (imprint, creep, fatigue, temperature‑dependent viscosity) should be incorporated.
 
 > **Recommendation:** Proceed with implementation and calibration using the cited literature as reference; consider adding the missing reliability terms for full production‑grade verification.
 

@@ -8,7 +8,7 @@
 
 ## 1. Executive Summary
 
-This document outlines a comprehensive plan to elevate the `module1-hysteresis` from a TRL 4 (Lab Validation) prototype to a robust, physics-accurate simulation engine. The primary focus is correcting fundamental physics inaccuracies in the simplified model, resolving unit confusion in the write controller, and enhancing the user experience during long-running calibration tasks.
+This document outlines a comprehensive plan to elevate the `module1-hysteresis` simulation engine toward more robust, production-grade modeling. The primary focus is correcting fundamental physics inaccuracies in the simplified model, resolving unit confusion in the write controller, and enhancing the user experience during long-running calibration tasks.
 
 ## 2. Critical Physics Fixes (Priority 0)
 

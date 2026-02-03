@@ -1,5 +1,7 @@
 # Module 4 Physics Improvements - Gap Analysis
 
+> **Note:** Internal analysis note. Values are reported/illustrative and not validated by this codebase.
+
 > **Status**: Analysis Complete | **Priority**: Critical gaps identified
 
 ## Executive Summary

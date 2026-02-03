@@ -6,7 +6,7 @@
 
 **Scope:** Voltage values for 300K nominal operation. Timing parameters and pulse widths are documented separately in `config/physics.yaml`.
 
-**Note:** References to “30 levels” refer to the demo baseline (configurable).
+**Note:** References to “30 levels” refer to the demo baseline (configurable). All numeric values here are model defaults or reported ranges, not validated hardware specs.
 
 ---
 
@@ -1260,7 +1260,7 @@ Comprehensive tests proving algorithm provenance from CrossSim and badcrossbar:
 | `TestCrossSim_ParasiticVoltageDrop` | Voltage drop physics correct |
 | `TestCrossSim_AdaptiveOmega` | Omega reduction on divergence |
 | `TestCrossSim_NormalProportionalError` | Proportional noise scaling |
-| `TestCrossSim_ErrorDistributionShape` | Gaussian distribution verified |
+| `TestCrossSim_ErrorDistributionShape` | Gaussian distribution checked |
 | `TestBadcrossbar_ZeroParasiticIdealMVM` | Ideal MVM without parasitics |
 | `TestBadcrossbar_IRDropReducesOutput` | IR drop reduces output current |
 | `TestBadcrossbar_WorstCaseLocation` | Worst cell at (rows-1, cols-1) |
@@ -1491,9 +1491,11 @@ Sneak Path Suppression:
 | BEOL FeFET integration | Aabrar et al., IEEE TED 2022 | 10.1109/TED.2022.3141991 |
 | 256×256 FeFET array | Jerry et al., IEEE IEDM 2017 | 10.1109/IEDM.2017.8268338 |
 
-### 9.6 Peer-Reviewed Papers - Energy Efficiency
+### 9.6 Reported Energy Efficiency (Literature, Not Verified)
 
-| Comparison | Improvement | Source | DOI |
+> **Note:** These are reported in external papers and are not validated by this tool.
+
+| Comparison | Reported Improvement | Source | DOI |
 |------------|-------------|--------|-----|
 | vs NAND | 25-100× | Samsung Nature 2025 | 10.1038/s41586-025-09793-3 |
 | vs GPU (LLM) | 70,000× | Nature Comp. Sci. 2025 | 10.1038/s43588-025-00854-1 |
@@ -1529,7 +1531,7 @@ Sneak Path Suppression:
 | `module2-crossbar/pkg/crossbar/device_errors.go` | 310-378 | ComputeErrorStatistics() |
 | `module2-crossbar/pkg/crossbar/validation_crosssim_test.go` | 1-767 | Algorithm provenance tests |
 
-### 9.8 Dr. external research group Primary Source
+### 9.8 Archival Conference Reference
 
 | Content | Source | Location |
 |---------|--------|----------|
@@ -1626,15 +1628,15 @@ NOTES:
 ---
 
 **Document Status:**
-- ✅ All peripheral voltages verified from source code
+- ✅ All peripheral voltages checked against source code
 - ✅ Physics parameters cross-referenced with `config/physics.yaml`
 - ✅ V/2 half-select explicitly implemented in `ApplyHalfSelectWrite()` (device_state.go:487-518)
-- ✅ Architecture modes verified from device_state.go implementation
+- ✅ Architecture modes checked against device_state.go implementation
 - ✅ Write voltages derived from material properties (Vc = Ec × thickness)
 - ✅ **Read voltage safety margin**: field_min_ratio = 0.7 (30% below Vc, updated January 2026)
 - ✅ **SOR parasitic solver implemented** (solver.go) - ported from CrossSim NonInterleaved_InputSource
 - ✅ **Device error models implemented** (device_errors.go) - ported from CrossSim generic_error.py
-- ✅ **Validation test suite added** (validation_crosssim_test.go) - 12 tests proving algorithm provenance
+- ✅ **Validation test suite added** (validation_crosssim_test.go) - 12 tests covering algorithm behavior
 
 **Version:** 1.3
 **Last Updated:** January 30, 2026

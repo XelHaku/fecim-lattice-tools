@@ -3,7 +3,7 @@
 ## Research Foundation
 
 ### Dr. external research group and external research institution
-Special thanks to Dr. external research group and his research group at external research institution for pioneering work on HfO₂-ZrO₂ superlattice ferroelectric devices. Their COSM 2025 presentation provided the inspiration and technical foundation for this visualization suite.
+Special thanks to Dr. external research group and his research group at external research institution for pioneering work on ferroelectric devices. Their COSM 2025 presentation provided inspiration for this visualization suite (conference material, not a technical source for the simulator).
 
 ### Academic Research Community
 This project builds upon decades of ferroelectric materials research. We acknowledge the contributions of researchers worldwide who have advanced our understanding of:

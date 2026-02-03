@@ -39,25 +39,25 @@ Transform FeCIM (Ferroelectric Compute-in-Memory) array designs from our Module 
 
 | Aspect | Status | Details |
 |--------|--------|---------|
-| **EDA Tools** | ✅ Ready | Module 6 generates OpenLane-compatible Verilog/DEF |
-| **OpenLane Integration** | ✅ Validated | PLACEMENT_CURRENT_DEF injection works |
+| **EDA Tools** | ✅ Implemented | Module 6 generates OpenLane-compatible Verilog/DEF (model artifacts) |
+| **OpenLane Integration** | ⚠️ To Verify | Integration steps exist; validate in your environment |
 | **SKY130 PDK** | ✅ Available | Open-source, well-documented |
-| **FeFET Support** | ⚠️ Custom Required | No standard PDK includes FeFET devices |
-| **Fabrication** | ✅ Multiple Options | $0-$15k for standard CMOS; custom FeFET requires R&D |
+| **FeFET Support** | ⚠️ Custom Required | No standard PDK includes FeFET devices (requires custom models) |
+| **Fabrication** | ⚠️ Assumptions | Costs/timelines vary; verify with foundries and programs |
 
-### Technology Readiness
+### Technology Readiness (Illustrative)
 
-| Component | TRL | Notes |
-|-----------|-----|-------|
-| HfO₂-ZrO₂ FeFET Devices | 4 | Lab validation (Tour Lab, academic) |
-| CIM Array Architecture | 5-6 | Component validation, subsystem demos |
-| OpenLane/SKY130 Flow | 9 | Production-ready |
-| Module 6 EDA Suite | 4-5 | Functional prototype |
+| Component | Readiness (Example) | Notes |
+|-----------|----------------------|-------|
+| FeFET Devices | Research-stage | Verify maturity with the specific process and foundry |
+| CIM Array Architecture | Prototype-stage | Depends on architecture and validation scope |
+| OpenLane/SKY130 Flow | Production-used | Open-source flow used in academic and hobby tapeouts |
+| Module 6 EDA Suite | Prototype-stage | Functional tool, not signoff |
 
-### Recommended Path
+### Suggested Path (Example)
 
-**Phase 1 (Immediate)**: Standard CMOS peripheral circuits via ChipFoundry/Tiny Tapeout
-**Phase 2 (6-12 months)**: Custom FeFET BEOL post-processing via university cleanroom
+**Phase 1 (Immediate)**: Standard CMOS peripheral circuits via accessible tapeout programs
+**Phase 2 (6-12 months)**: FeFET BEOL post-processing via a university cleanroom (if available)
 **Phase 3 (12-24 months)**: Integrated FeFET+CMOS via foundry R&D partnership
 
 ---
@@ -70,31 +70,31 @@ Transform FeCIM (Ferroelectric Compute-in-Memory) array designs from our Module 
 
 You want to turn FeCIM chip designs into **real silicon chips**. This document explains how.
 
-### Key Discoveries
+### Working Assumptions (Illustrative)
 
-**1. Your Tool Works**
-Module 6 already generates the right files (Verilog, DEF) that chip-making software understands.
+**1. Module 6 Generates Standard Artifacts**
+Module 6 produces common formats (Verilog, DEF) that many flows can ingest.
 
-**2. Making Chips is Surprisingly Affordable**
+**2. Prototype Costs Vary Widely**
 
-| Option | Cost | Time |
-|--------|------|------|
-| Google's free program (OpenMPW) | $0 | 6-9 months |
-| Tiny Tapeout | ~$300 | 6 months |
-| ChipFoundry | $15,000 | 5 months |
+| Option | Cost (Example) | Time (Example) |
+|--------|---------------|----------------|
+| OpenMPW (example) | $0 | 6-9 months |
+| Tiny Tapeout (example) | ~$300 | 6 months |
+| ChipFoundry (example) | $15,000 | 5 months |
 
 **3. The Catch: FeFET is Special**
 
 Regular chip factories don't know how to make ferroelectric memory yet. It's like asking a regular bakery to make a soufflé - they have ovens, but not the recipe.
 
-**Solutions:**
+**Solutions (examples):**
 - Make the "normal" parts at a chip factory
 - Add the ferroelectric layer yourself (or with a university lab)
-- Or use IHP's MEMRES module (they have HfO₂ - the same material!)
+- Or use a foundry memory module if available for your process
 
-**4. IHP is the Best Match**
+**4. Foundry Options Require Verification**
 
-IHP (a German chip maker) has a **MEMRES module** that uses the same basic material (hafnium oxide) as Dr. Tour's FeCIM. Cost: ~€18,000 for a small chip.
+Some foundries offer resistive-memory modules. Verify availability, pricing, and material compatibility directly with the provider.
 
 **5. Simulate Before You Fabricate**
 
@@ -105,11 +105,7 @@ Free tools exist to test your design virtually:
 
 ### Bottom Line
 
-**You CAN make real FeCIM chips.**
-
-The path is: `Design → Simulate → Standard CMOS fab → Add ferroelectric layer`
-
-Budget: $0-$20k for prototypes, 6-12 months.
+This roadmap is a starting point. Actual feasibility, cost, and timeline depend on your foundry, process, and validation scope.
 
 ---
 
@@ -176,7 +172,7 @@ go run ./cmd/eda-cli -mode compute -rows 256 -cols 256 -output ./chip
 
 **Your users**: Anyone who wants to prototype FeCIM arrays without writing thousands of lines of EDA code by hand.
 
-**Value proposition**: Turns weeks of manual work into minutes of configuration.
+**Value proposition**: Reduces manual EDA boilerplate through reusable configuration.
 
 ---
 
@@ -190,7 +186,7 @@ This guide focuses on workflow and tooling. It does **not** assert device perfor
 
 ### 3.1 Overview
 
-Module 6 is a universal chip design tool that generates physical layouts for FeCIM arrays ready for OpenLane/OpenROAD fabrication flow.
+Module 6 generates physical layout artifacts for FeCIM arrays that can be used with OpenLane/OpenROAD for exploration.
 
 ### 3.2 Generated Outputs
 
@@ -375,6 +371,8 @@ END DESIGN
 
 ## 7. Process Design Kits (PDKs)
 
+> **Note**: PDK parameters and pricing are summarized for convenience and may change. Verify with official PDK documentation.
+
 ### 5.1 SKY130 PDK (Primary Target)
 
 | Parameter | Value | Notes |
@@ -438,6 +436,8 @@ END DESIGN
 ---
 
 ## 8. Fabrication Pathways
+
+> **Note**: Program costs/timelines are illustrative. Always confirm with the provider.
 
 ### 6.1 Option Comparison Matrix
 
@@ -946,6 +946,8 @@ library(fecim_1t1r) {
 
 ## 12. Cost & Timeline Analysis
 
+> **Note**: All cost and timeline figures below are illustrative placeholders. Verify with current program/foundry data.
+
 ### 10.1 Standard CMOS Path (Peripheral Circuits)
 
 | Phase | Duration | Cost |
@@ -1019,12 +1021,12 @@ library(fecim_1t1r) {
 | Custom FeFET cost overrun | High | High | Phase approach, academic partnerships |
 | Tool licensing | Low | Low | Use open-source tools |
 
-### 11.4 Go/No-Go Decision Points
+### 11.4 Go/No-Go Decision Points (Example)
 
-1. **After Simulation**: Proceed if CrossSim accuracy >85%, NeuroSim estimates within budget
-2. **After DRC/LVS**: Proceed if clean with <10 waivers
-3. **After Fabrication Quote**: Proceed if within budget ±20%
-4. **After Silicon Test**: Proceed to production if yield >50% and specs met
+1. **After Simulation**: Proceed based on your own accuracy/error targets and budget limits
+2. **After DRC/LVS**: Proceed if clean or within your internal waiver policy
+3. **After Fabrication Quote**: Proceed if within your approved budget range
+4. **After Silicon Test**: Proceed only after defining and meeting your own yield/spec criteria
 
 ---
 

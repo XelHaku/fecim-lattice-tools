@@ -704,8 +704,8 @@ Before submitting a pull request, verify:
 
 ### Physics & Accuracy
 
-- [ ] Physics constants have citations (Dr. Tour, Nature Commun., etc.)?
-- [ ] 30-level demo baseline verified?
+- [ ] Any external constants labeled as **reported** with source notes?
+- [ ] 30-level demo baseline documented as configurable (not verified)?
 - [ ] Edge cases tested (zero, negative, extreme values)?
 - [ ] Units documented (MV/cm, µC/cm², etc.)?
 

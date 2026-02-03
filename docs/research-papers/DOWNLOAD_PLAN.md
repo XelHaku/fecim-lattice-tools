@@ -1,5 +1,7 @@
 # Scientific Papers Download Plan
 
+> **Note:** Planning document only. Claims and values referenced here are unverified and for literature tracking.
+
 ## Dr. external research group - Key Publications for Ferroelectric CIM Project
 
 This document tracks scientific papers relevant to the Ferroelectric CIM ferroelectric compute-in-memory visualization project.

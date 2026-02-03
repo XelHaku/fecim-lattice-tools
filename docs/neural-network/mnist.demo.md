@@ -2,13 +2,13 @@
 
 ## Overview
 
-This demo shows how a 784→128→10 neural network runs on ferroelectric crossbar arrays with a **30-level baseline** (simulation baseline (configurable). It features **dual-mode inference** comparing Full Precision (FP) vs Compute-in-Memory (CIM) paths, with reported in literature accuracy context in the UI (96.6–98.24%).
+This demo shows how a 784→128→10 neural network runs on ferroelectric crossbar arrays with a **30-level baseline** (simulation baseline, configurable). It features **dual-mode inference** comparing Full Precision (FP) vs Compute-in-Memory (CIM) paths. Any accuracy values shown are **illustrative** and **not** verified hardware results.
 
 **Key Questions Answered:**
 1. What is the 30-level baseline? (Physics + competitive advantage)
 2. How do FP vs CIM results diverge? (Quantization + noise effects)
 3. What happens when hardware degrades? (Quantization cliff, noise wall)
-4. Why does this matter? (Verified energy-efficiency advantage range)
+4. Why does this matter? (Model-based efficiency discussion)
 
 ---
 
@@ -75,21 +75,19 @@ The demo runs both paths simultaneously:
 |------------|--------|-------|
 | Flash (NAND) | 2-4 | TLC/QLC |
 | ReRAM | 4-16 | Limited by variability |
-| **FeCIM (HZO)** | **30 (conference-claim baseline)** | **5x better than ReRAM** |
+| **FeCIM (HZO)** | **30 (demo baseline)** | **Model baseline** |
 | Ideal (FP32) | 2^32 | Baseline |
 
 **Impact on MNIST (illustrative):**
-- 2 levels (binary): ~50% accuracy (worse than random!)
-- 8 levels: ~75%
-- **30 levels (demo baseline): ~92–96% in simulation** (depends on noise/ADC/DAC)
-- Float32: ~98% (theoretical)
+- Fewer levels generally reduce accuracy.
+- More levels generally improve accuracy (model-dependent).
 
 ### Why Not 64 Levels (6-bit ADC)?
 
-Only 30 are reliably distinguishable due to:
-1. Device-to-device variation (~2.75%)
-2. Cycle-to-cycle variation (~1.5%)
-3. Read noise (~0.5% σ/μ)
+Only 30 are reliably distinguishable in this demo due to:
+1. Device-to-device variation
+2. Cycle-to-cycle variation
+3. Read noise
 
 With 3σ separation requirement, 30 levels is a **conservative demo baseline** (practical limits vary by process).
 
@@ -101,7 +99,7 @@ With 3σ separation requirement, 30 levels is a **conservative demo baseline** (
 
 **Simulation (this demo):** With low noise and the 30-level baseline, CIM can approach FP accuracy.
 
-**Hardware (literature):** Peer‑reviewed FeFET/FTJ work reports 96.6–98.24% (simulation); a conference‑only 87% claim exists but is unverified and not used as a target here.
+**Hardware (literature):** Literature reports high-accuracy results; these are **not** verified by this project and are not used as targets here.
 
 **Why the gap?**
 
@@ -153,16 +151,11 @@ ADC resolution is fixed in the Dual‑Mode UI. To explore ADC artifacts, adjust 
 
 ### Energy Model (MAC-Level Estimate)
 
-**Calculation (Jerry et al. IEDM 2017):**
-- Energy per MAC: ~10 fJ/bit × log2(levels) (≈50 fJ @ 30-level demo baseline)
-- MACs per inference: (784×128) + (128×10) = 101,632
-- **FeCIM Energy:** 101,632 × 50 fJ ≈ **5.08 μJ** (plus small ADC/DAC overhead)
+This section provides an **illustrative** MAC-level estimate. Use model inputs and treat any numeric outputs as **unverified** unless explicitly validated.
 
-**GPU Baseline (NVIDIA V100):**
-- Energy per MAC: ~500 pJ (DRAM fetch + compute)
-- **GPU Energy:** 101,632 × 500 pJ = **50.8 mJ**
-
-**Ratio:** Theoretical MAC-level ratio is large, but the **verified project claim** is **25–100×** efficiency vs NAND (Samsung Nature 2025). The UI uses that verified range.
+- Energy per MAC depends on the chosen model and quantization level.
+- MACs per inference for a 784×128×10 network is 101,632.
+- External efficiency ratios (e.g., vs NAND/GPU) are **reported in literature**, not verified by this project.
 
 ---
 
@@ -189,11 +182,7 @@ ADC resolution is fixed in the Dual‑Mode UI. To explore ADC artifacts, adjust 
 
 ### Expected Results
 
-| Configuration | Accuracy | Source |
-|---------------|----------|--------|
-| FP (float32) | 98.1% | Training script |
-| 30-level quantized (sim) | 96.8% | Quantize weights (demo baseline) |
-| Conference-only claim (unverified) | ~87% | Dr. Tour (Nov 2024, not reported in literature) |
+Results vary by dataset, weights, and configuration. Treat any accuracy numbers as **illustrative** and unverified unless explicitly validated.
 
 ---
 
@@ -201,12 +190,12 @@ ADC resolution is fixed in the Dual‑Mode UI. To explore ADC artifacts, adjust 
 
 ### FeCIM in Research
 
-| Paper | Architecture | Accuracy | Notes |
-|-------|--------------|----------|-------|
-| **This Demo** | 784→128→10 | **92–96% (sim, noise‑dependent)** | UI highlights reported in literature baselines |
-| Jerry+ IEDM 2017 | 784→256→10 | 90% | 75ns pulse optimization |
-| Nature Comms 2023 | Multi-level FeFET | 96.6% | Simulation only |
-| Variation-Resilient 2024 | Binary NN | 94.2% | BNN with FeFET |
+| Paper | Architecture | Notes |
+|-------|--------------|-------|
+| **This Demo** | 784→128→10 | Model-based simulation (illustrative) |
+| Jerry+ IEDM 2017 | 784→256→10 | Reported optimization study |
+| Nature Comms 2023 | Multi-level FeFET | Reported simulation result |
+| Variation-Resilient 2024 | Binary NN | Reported binary NN result |
 
 **Why Differences?**
 
@@ -214,7 +203,7 @@ ADC resolution is fixed in the Dual‑Mode UI. To explore ADC artifacts, adjust 
    - More neurons → higher capacity → better accuracy
    - Tradeoff: 2× chip area, 2× energy
 
-2. **Pulse Timing:** 50ns (this demo) vs 75ns (Jerry)
+2. **Pulse Timing:** Different pulse timing assumptions across studies
    - 75ns achieves symmetric potentiation/depression
    - Improves weight update linearity
 
@@ -400,7 +389,7 @@ This demo focuses on inference only.
 |---------|-----------|--------|--------|--------|
 | Mythic | Flash | 4 | ~5 pJ/MAC | Shipping |
 | Analog Inference | Flash | 8 | ~3 pJ/MAC | R&D |
-| **FeCIM** | **HZO FeFET** | **30 (conference-claim baseline)** | **50 fJ/MAC** | **TRL 4** |
+| **FeCIM** | **HZO FeFET** | **30 (demo baseline)** | **model input** | **simulation-only** |
 
 FeCIM's advantage: 10× lower energy (fJ vs pJ), 5× more levels (30-level demo baseline vs 4-8).
 
@@ -466,4 +455,4 @@ MIT License - See LICENSE file
 - Jerry et al. - IEDM 2017 paper (75ns pulse optimization)
 - MNIST Dataset - Yann LeCun
 
-**Disclaimer:** This is an educational visualization. FeCIM hardware is at TRL 4 (lab validation). Energy claims have not been independently verified.
+**Disclaimer:** This is an educational visualization. Energy claims are model inputs and have not been independently verified.

@@ -916,6 +916,6 @@ For questions or tool updates, see `docs/opensource-tools/README.md` or the indi
 ---
 
 **Document maintained by:** FeCIM Documentation Team
-**Last verified:** January 27, 2026
+**Last updated:** January 27, 2026
 **Status:** Comprehensive reference matrix (50+ tools, 10 categories)
 **Feedback:** See `docs/about/Contributing.md`

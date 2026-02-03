@@ -267,4 +267,4 @@ The FeCIM project validates crossbar algorithms against both CrossSim and badcro
 
 ## References
 
-All DOIs and links verified as of 2026-01-29.
+All DOIs and links checked as of 2026-01-29 (not independently verified beyond source availability).

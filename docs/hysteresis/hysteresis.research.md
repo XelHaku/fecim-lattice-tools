@@ -1,5 +1,7 @@
 # Hysteresis Research Meta-Study for FeCIM Project
 
+> **Note:** Literature synthesis only. Reported values are not independently verified by this project.
+
 **A Comprehensive Analysis of Ferroelectric Hysteresis, Preisach Modeling, and Domain Physics**
 
 *Last Updated: January 2026*
@@ -12,11 +14,11 @@ This meta-study synthesizes research from 50+ papers focused on ferroelectric hy
 
 ### Key Findings
 
-1. **The Mayergoyz Preisach model** is the gold standard for ferroelectric hysteresis simulation with physics-accurate minor loop handling
-2. **HfO2-ZrO2 superlattices** achieve 10^12 cycle endurance vs. 10^4-10^5 for standard HfO2
+1. **The Mayergoyz Preisach model** is a commonly used approach for ferroelectric hysteresis simulation with minor loop handling
+2. **HfO2-ZrO2 superlattices** are reported to improve endurance vs standard HfO2 (reported ranges vary)
 3. **30 discrete analog states** (simulation baseline (configurable) align with our project's quantization baseline; literature reports multi-level states (unverified)
 4. **Temperature dependence** follows Ec(T) ~ (1 - T/Tc)^0.5 requiring dynamic model adjustment
-5. **Preisach-based simulators** with GPU acceleration can achieve real-time 60+ FPS hysteresis visualization
+5. **Preisach-based simulators** with GPU acceleration can achieve real-time hysteresis visualization (hardware-dependent)
 
 ---
 
@@ -272,7 +274,7 @@ Where F includes:
 | Method | P-E Loop Match | Minor Loop Match | Speed |
 |--------|----------------|------------------|-------|
 | Preisach (analytical) | <5% error | <5% error | Real-time |
-| Preisach (numerical) | <2% error | <3% error | 60 FPS |
+| Preisach (numerical) | <2% error | <3% error | Real-time (hardware-dependent) |
 | Phase-field (TDGL) | <1% error | <1% error | Minutes/loop |
 | First-principles | Very accurate | N/A | Hours/point |
 
@@ -453,7 +455,7 @@ Where F includes:
 2. **Temperature-dependent Ec/Pr** following literature scaling
 3. **30-level quantization** using the demo baseline (configurable)
 4. **Minor loop support** via hysteron state persistence
-5. **Real-time visualization** at 60 FPS
+5. **Real-time visualization** (hardware-dependent)
 
 ### Remaining Gaps vs. Literature
 

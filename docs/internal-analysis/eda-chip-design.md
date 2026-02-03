@@ -1,5 +1,7 @@
 # Research Synthesis: EDA and Chip Design for FeCIM
 
+> **Note:** Internal analysis note. Values are reported/illustrative and not validated by this codebase.
+
 > **Internal Analysis Document** - FeCIM Lattice Tools Project
 
 ## 1. Executive Summary

@@ -1,22 +1,23 @@
 TO: tour@rice.edu
 CC: jaeho-shin@rice.edu, tawfik.jarjour@accenture.com
 
-Subject: FeCIM tool - 6 modules, Yosys/KLayout/OpenROAD integration
+Subject: FeCIM simulator - 7 modules, OpenLane-style artifacts (educational)
 
 Dr. Tour,
 
-After your COSM presentation, I built an interactive tool
-for exploring FeCIM concepts. Six modules:
+After your COSM presentation, I built an interactive simulator
+for exploring FeCIM concepts. Seven modules:
 
 - Hysteresis - Preisach model, configurable states, quantization error visible
 - Crossbar - 1T1R vs Passive toggle, IR drop, sneak paths visible
-- MNIST - Draw a digit, watch the crossbar compute
+- MNIST - Draw a digit, compare FP vs CIM behavior
 - Peripherals - DAC/TIA/ADC, Write/Read/Compute modes, 1T1R vs Passive
-- Comparison - FeCIM vs ReRAM vs PCM vs MRAM
-- EDA Explorer - Verilog/DEF, validates with Yosys, views in KLayout and OpenROAD
+- Comparison - Model-based scenario comparisons (simulation-only)
+- EDA Suite - Verilog/DEF/SPICE/JSON/CSV artifacts, OpenLane-style flow
+- Docs - Built-in documentation browser
 
-Built from published literature. Would need real device
-data for calibration, but the framework is working.
+Inspired by published literature, but not calibrated to any specific device.
+Would need real device data for calibration.
 
 Your faith-and-science work is part of why I paid attention.
 

@@ -1,6 +1,8 @@
 # Research Papers Library
 
-**Complete index of 167+ research papers** organized by topic to support FeCIM lattice tools development.
+**Complete index of research papers** organized by topic to support FeCIM lattice tools development.
+
+> **Note:** This is a bibliographic library. Counts are approximate and all claims are reported from sources, not verified by this project.
 
 ---
 
@@ -27,17 +29,17 @@
 
 ## What's Inside
 
-### 167+ Papers Across 23 Topics
+### Approximate Paper Counts Across Topics
 
-| # | Topic | Papers | Key Focus |
+| # | Topic | Papers (Approx.) | Key Focus |
 |:--|:------|-------:|-----------|
-| **01** | Ferroelectric Materials | 42 | HfO₂, ZrO₂, Preisach, physics |
-| **02** | Training Algorithms | 11 | Quantization, low-precision, analog AI |
-| **03** | Simulation Tools | 11 | CrossSim, FerroX, NeuroSim |
-| **04** | CIM Architectures | 32 | Crossbars, ADC, sneak paths |
-| **05** | Neuromorphic Computing | 7 | Synaptic transistors, STDP |
-| **06** | Photonic Computing | 5 | Optical DNNs, photonic accelerators |
-| **07** | Memory Architectures | 3 | 3D memory, HBM, side acceleration |
+| **01** | Ferroelectric Materials | ~42 | HfO₂, ZrO₂, Preisach, physics |
+| **02** | Training Algorithms | ~11 | Quantization, low-precision, analog AI |
+| **03** | Simulation Tools | ~11 | CrossSim, FerroX, NeuroSim |
+| **04** | CIM Architectures | ~32 | Crossbars, ADC, sneak paths |
+| **05** | Neuromorphic Computing | ~7 | Synaptic transistors, STDP |
+| **06** | Photonic Computing | ~5 | Optical DNNs, photonic accelerators |
+| **07** | Memory Architectures | ~3 | 3D memory, HBM, side acceleration |
 | **08** | Industry Reports | 5 | Roadmaps, surveys, benchmarks |
 | **09** | Reviews & Surveys | 6 | Comprehensive literature reviews |
 | **10** | CIM Compilers | 2 | Mapping frameworks, compilers |

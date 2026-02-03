@@ -70,7 +70,7 @@ High-gain differential amplifier for detecting small signal differences in memor
 ## Metrics
 
 ### TRL
-Technology Readiness Level - Scale from 1 (basic principles) to 9 (production ready). FeCIM status (Tour COSM 2025): TRL 4 (lab validation). Other ferroelectric memory technologies may be at higher TRLs; treat those as separate contexts.
+Technology Readiness Level - Scale from 1 (basic principles) to 9 (production ready). This project does not assign TRL levels; treat any TRL references as external or archival context.
 
 ### TOPS/W
 Tera-Operations Per Second per Watt - energy efficiency metric. FeCIM demonstrated: 200-400 TOPS/W (inference). Digital ASIC: ~10 TOPS/W. Energy savings from analog MAC and in-memory computation.

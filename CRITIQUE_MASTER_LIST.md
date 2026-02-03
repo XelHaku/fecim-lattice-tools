@@ -36,9 +36,9 @@
 |----|------|--------|--------|-----------|
 | C01 | Add "SIMULATION ONLY" banners to Module 5 | academic review (archived) | ✅ | Done |
 | C02 | Change "30 states" from fact to hypothesis language | academic review (archived) | ✅ | Done |
-| C03 | Add TRL disclaimer to energy comparison charts | drtour_todo_fixes | ✅ | Done |
-| C04 | Update 87% MNIST to show reported in literature context (96.6-98.24%) | drtour_todo_fixes | ✅ | Done |
-| C05 | Add "Why 30?" dialog with verification status | drtour_todo_fixes | ✅ | Done |
+| C03 | Add simulation-only labeling to energy comparison charts | drtour_todo_fixes | ✅ | Done |
+| C04 | Remove 87% MNIST claim; label external benchmarks as reported | drtour_todo_fixes | ✅ | Done |
+| C05 | Add "Why 30?" dialog with baseline explanation | drtour_todo_fixes | ✅ | Done |
 
 ### P1-D2: Medium-Effort Critical Fixes
 
@@ -46,7 +46,7 @@
 |----|------|--------|--------|-----------|
 | C06 | Add error bars to all physics parameters in UI | academic review (archived) | ✅ | Done |
 | C07 | Fix temperature-dependent retention (Arrhenius scaling) | academic review (archived) | ✅ | Done |
-| C08 | Accuracy degradation chart - add sources and confidence intervals | drtour_todo_fixes | ✅ | Done |
+| C08 | Accuracy degradation chart - label as projected; cite sources if used | drtour_todo_fixes | ✅ | Done |
 | C09 | Label all extrapolated accuracy as "projected" | academic review (archived) | ✅ | Done |
 | C10 | Add total system power breakdown (array + ADC/DAC + peripherals) | academic review (archived) | ✅ | Done |
 
@@ -70,7 +70,7 @@
 | H02 | MAC count parallelism explanation | drtour_todo_fixes | ✅ | Done |
 | H03 | Voltage range citations (thickness-dependent) | drtour_todo_fixes | ⏳ | 1hr |
 | H04 | Read parameter sources - mark as empirical | drtour_todo_fixes | ⏳ | 1hr |
-| H05 | Market chart disclaimers - TRL and projection warnings | drtour_todo_fixes | ✅ | Done |
+| H05 | Market chart disclaimers - simulation-only and projection warnings | drtour_todo_fixes | ✅ | Done |
 | H06 | Cite strain coefficients (replace magic -0.15) | academic review (archived) | ✅ | Done |
 | H07 | Add Preisach grid size convergence study reference | academic review (archived) | ✅ | Done |
 

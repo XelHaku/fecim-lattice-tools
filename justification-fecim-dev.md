@@ -1,6 +1,8 @@
 # Justification for FeCIM Lattice Tools
 
-**A Comparative Analysis Against 72+ Open-Source Alternatives**
+**A Comparative Analysis Against Open-Source Alternatives**
+
+> **Scope Note:** This is a qualitative positioning draft. Tool counts and performance figures are illustrative estimates and should be independently verified before external use.
 
 ---
 
@@ -16,7 +18,7 @@ This document provides an honest assessment comparing FeCIM Lattice Tools agains
 
 ### Current State of Open-Source FeCIM Tools
 
-| Category | # Tools | Typical Stack | Learning Curve |
+| Category | Approx. Count | Typical Stack | Learning Curve |
 |----------|---------|---------------|----------------|
 | Ferroelectric Simulation | 8 | C++/CUDA/Python | Steep (weeks) |
 | Circuit Simulation | 14 | SPICE/Verilog-A | Moderate |
@@ -38,18 +40,18 @@ This document provides an honest assessment comparing FeCIM Lattice Tools agains
 
 ## Where FeCIM Lattice Tools Excels
 
-### 1. Real-Time Interactive Visualization (60 FPS)
+### 1. Real-Time Interactive Visualization (hardware-dependent)
 
 | Tool | Visualization | Interactivity | Performance |
 |------|---------------|---------------|-------------|
-| **FeCIM Lattice Tools** | Real-time GUI | Full slider/mouse control | 60 FPS |
+| **FeCIM Lattice Tools** | Real-time GUI | Full slider/mouse control | Real-time (hardware-dependent) |
 | FerroX | Post-process VTK | None during sim | Batch |
 | FERRET/MOOSE | ParaView export | None during sim | Batch |
 | badcrossbar | Matplotlib static | Re-run required | Seconds |
 | CrossSim | File output | Re-run required | Seconds |
 | feram | gnuplot scripts | None | Batch |
 
-**Advantage**: Researchers can interactively explore parameter spaces in real-time, accelerating hypothesis testing from hours to seconds.
+**Advantage**: Researchers can interactively explore parameter spaces in real-time, potentially shortening iteration cycles.
 
 ### 2. Unified Go-Based Architecture
 
@@ -94,9 +96,9 @@ Each with different data formats, units, and conventions.
 
 **Advantage**: A student can understand FeCIM concepts in an afternoon. Research tools assume prior expertise.
 
-### 5. 30-Level Quantization Native Support
+### 5. Configurable Multi-Level Quantization
 
-FeCIM Lattice Tools implements Dr. Tour's 30-level conductance states natively throughout:
+FeCIM Lattice Tools uses a configurable multilevel baseline (default 30) across modules:
 
 ```go
 // Consistent quantization across all modules
@@ -112,38 +114,36 @@ conductance := crossbar.QuantizeTo30Levels(analog_value)
 
 | Operation | FeCIM Lattice Tools | Python Alternative |
 |-----------|---------------------|-------------------|
-| Preisach hysteresis | ~16ms | ~100-500ms |
-| 64×64 MVM | ~1ms | ~5-50ms |
-| GUI update | 16ms (60 FPS) | 100ms+ (Matplotlib) |
-| Full MNIST inference | ~50ms | ~200ms+ |
+| Small-array MVM demos | Real-time (hardware-dependent) | Often batch-oriented |
+| GUI interaction | Real-time (hardware-dependent) | Often slower for large updates |
 
-**Advantage**: Go's performance enables real-time interaction that Python struggles to achieve.
+**Advantage**: Go performance can enable responsive, interactive exploration on modest hardware.
 
 ---
 
 ## Honest Assessment: Where Alternatives Are Better
 
-### 1. Physics Accuracy
+### 1. Physics Fidelity (Research Use)
 
 | Capability | Best Tool | Why Better Than FeCIM |
 |------------|-----------|----------------------|
 | Phase-field ferroelectrics | FerroX | Full TDGL solver, GPU-accelerated |
 | Domain dynamics | FERRET/MOOSE | Coupled multiphysics |
-| Ab-initio polarization | VASP/Quantum ESPRESSO | DFT accuracy |
+| Ab-initio polarization | VASP/Quantum ESPRESSO | DFT-based |
 | Atomistic dynamics | feram | MD at atomic scale |
 
-**FeCIM Limitation**: Uses simplified Preisach model. For research-grade physics, use FerroX or FERRET.
+**FeCIM Limitation**: Uses simplified models for interactivity. For research-grade physics, use specialized simulators.
 
 ### 2. GPU Acceleration
 
-| Tool | GPU Support | Speedup |
-|------|-------------|---------|
-| FerroX | CUDA/HIP | 15× |
-| MemTorch | PyTorch CUDA | 10-50× |
-| AIHWKIT | PyTorch CUDA | 10-50× |
-| **FeCIM Lattice Tools** | None | N/A |
+| Tool | GPU Support | Notes |
+|------|-------------|-------|
+| FerroX | CUDA/HIP | GPU-accelerated |
+| MemTorch | PyTorch CUDA | GPU-accelerated |
+| AIHWKIT | PyTorch CUDA | GPU-accelerated |
+| **FeCIM Lattice Tools** | Limited/CPU-first | CPU-focused demos |
 
-**FeCIM Limitation**: No GPU acceleration. For large-scale simulations (>256×256 arrays), GPU tools are faster.
+**FeCIM Limitation**: Primarily CPU-focused; GPU tools can be faster for large-scale simulations.
 
 ### 3. Hardware-Aware Neural Network Training
 
@@ -291,7 +291,7 @@ FeCIM Lattice Tools fills a specific niche: **an accessible, real-time, educatio
 - Zero-setup deployment
 
 **Choose specialized tools when you need:**
-- Research-grade physics accuracy
+- Research-grade physics fidelity
 - GPU-accelerated large-scale simulation
 - Hardware-aware neural network training
 - Production chip design
@@ -305,8 +305,8 @@ The goal is complementary use: learn and prototype with FeCIM Lattice Tools, the
 - [FeCIM Lattice Tools Documentation](docs/)
 - [Open-Source Tools Catalog](docs/opensource-tools/README.md)
 - [Tool Comparison Matrix](docs/opensource-tools/tool-comparison-matrix.md)
-- [Dr. external research group COSM 2025 Transcript](docs/video-transcripts/COSM_2025_AI_Hardware_Breakthrough/)
+- [COSM 2025 Transcript (archival)](docs/video-transcripts/COSM_2025_AI_Hardware_Breakthrough/)
 
 ---
 
-*Document generated via comparative analysis of 72+ open-source tools documented in `/docs/opensource-tools/`*
+*Document generated via comparative analysis of open-source tools documented in `/docs/opensource-tools/` (counts are illustrative).*

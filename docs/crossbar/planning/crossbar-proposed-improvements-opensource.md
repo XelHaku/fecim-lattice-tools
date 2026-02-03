@@ -589,7 +589,7 @@ Level 5: Chip (module2-crossbar/chip)    ← Future
 |--------|--------|
 | IR drop accuracy vs literature | <15% RMSE |
 | VTEAM vs MemTorch reference | <5% difference |
-| Parameter sweep UI responsiveness | >20 FPS |
+| Parameter sweep UI responsiveness | >20 FPS target (hardware-dependent) |
 | Export round-trip fidelity | 100% |
 | Test coverage | >85% |
 

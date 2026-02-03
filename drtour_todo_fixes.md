@@ -1,4 +1,6 @@
 # Dr. Tour's Critique: FeCIM Lattice Tools
+
+> **Note:** Historical critique log from a simulated perspective. Contains outdated TRL/verification language and specific numeric claims. Do not treat as current truth; use `docs/comparison/HONESTY_AUDIT.md` for present-day claims policy.
 ## Comprehensive Scientific and Educational Review
 
 **Reviewer**: Dr. James M. Tour (simulated critique perspective)
@@ -22,7 +24,7 @@ This is an **impressive educational tool** that demonstrates genuine understandi
 
 **Critical**
 - ✅ **CRIT-001** implemented — prominent TRL banner and “SIMULATION ONLY” subtitle. (`module5-comparison/pkg/gui/hero.go`, `module5-comparison/pkg/gui/app.go`)
-- ✅ **CRIT-002** implemented — header now separates verified literature from projected demo. (`module3-mnist/pkg/gui/dualmode.go`)
+- ✅ **CRIT-002** implemented — header now separates reported literature from projected demo. (`module3-mnist/pkg/gui/dualmode.go`)
 - ✅ **CRIT-003** implemented — “Why 30 Levels?” dialog includes verification status and reported in literature context. (`module3-mnist/pkg/gui/dialogs.go`)
 - ✅ **CRIT-004** implemented — temperature slider drives physics + calibration; cryogenic preset included. (`module1-hysteresis/pkg/gui/controls.go`, `module1-hysteresis/pkg/gui/simulation.go`)
 - ✅ **CRIT-005** implemented — accuracy waterfall references reported in literature ranges and removes fixed 87% target. (`module2-crossbar/pkg/gui/app_tabs.go`, `module2-crossbar/pkg/gui/app_analysis.go`)
@@ -87,7 +89,7 @@ Stat strip: "1000x less than CPU | 100x less than GPU | ~1 pJ/MAC (TRL 4 est.)"
 
 **Fix Applied (2026-02-03)**:
 ```markdown
-HEADER: "FeCIM MNIST Demo | Literature: 96.6-98.24% (verified) | Demo: projected"
+HEADER: "FeCIM MNIST Demo | Literature: reported ranges | Demo: projected"
 ```
 
 **Reference**: `HONESTY_AUDIT.md` Section 5.4 - MNIST Accuracy table
@@ -105,7 +107,7 @@ HEADER: "FeCIM MNIST Demo | Literature: 96.6-98.24% (verified) | Demo: projected
 - Verification status section (Tour claim unverified; reported multi-level states range)
 - Peer‑reviewed MNIST context (7 states → 96.6%, FTJ reservoir → 98.24%)
 - Bits‑per‑cell comparison table
-- Accuracy vs levels (projected vs verified)
+- Accuracy vs levels (projected vs reported)
 - Noise/ADC constraints with 3σ separation rationale
 
 **Reference**: `CLAUDE.md` - "30 analog states (Tour device) | UNVERIFIED"
@@ -490,7 +492,7 @@ This would set a gold standard for educational software honesty.
 
 ### CRITICAL (Fix Before Any Public Demo):
 - [x] **CRIT-001**: Energy claim asterisk prominence ✅ (hero.go - added TRL warning)
-- [x] **CRIT-002**: 87% claim removed; header shows verified literature vs projected demo ✅ (`module3-mnist/pkg/gui/dualmode.go`)
+- [x] **CRIT-002**: 87% claim removed; header shows reported literature vs projected demo ✅ (`module3-mnist/pkg/gui/dualmode.go`)
 - [x] **CRIT-003**: "Why 30?" content verification ✅ (`module3-mnist/pkg/gui/dialogs.go`)
 - [x] **CRIT-004**: Temperature dependence functional ✅ (`module1-hysteresis/pkg/gui/controls.go`, `module1-hysteresis/pkg/gui/simulation.go`)
 - [x] **CRIT-005**: Accuracy degradation chart context ✅ (`module2-crossbar/pkg/gui/app_tabs.go`, `module2-crossbar/pkg/gui/app_analysis.go`)
@@ -708,7 +710,7 @@ This would set a gold standard for educational software honesty.
 
 This tool could become the **gold standard** for CIM education if it maintains scientific rigor. The physics simulation is sound. The visual design is professional. The interaction model is intuitive.
 
-My primary concern is **unverified claims presented as fact**. The 87% MNIST accuracy is MY unverified claim from a promotional conference - it shouldn't be the headline. The energy comparisons need verification data.
+My primary concern is **unverified claims presented as fact**. The 87% MNIST accuracy is MY unverified claim from a promotional conference - it shouldn't be the headline. The energy comparisons need validation data.
 
 The HONESTY_AUDIT.md shows you understand these issues. Now implement its recommendations in the UI.
 

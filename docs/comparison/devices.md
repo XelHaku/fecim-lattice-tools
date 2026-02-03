@@ -97,7 +97,7 @@ P← (left):  ⊖⊖⊖⊖ → Positive Vth shift → Less current
 
 #### Advantages
 ✅ CMOS-compatible (same fab tools)
-✅ High multi-level capability (multi-level states (reported) verified; 30-level baseline is a demo baseline (configurable))
+✅ High multi-level capability (multi-level states reported in literature; 30-level baseline is a demo baseline, configurable)
 ✅ Ultra-low energy (~10 fJ/bit)
 ✅ Non-volatile (retains data without power)
 ✅ High endurance (10⁹-10¹² cycles demonstrated) [REPORTED]

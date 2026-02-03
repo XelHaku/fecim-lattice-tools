@@ -2,6 +2,8 @@
 
 This document describes the physics models implemented in module2-crossbar, covering conductance models, matrix operations, non-idealities, and device physics.
 
+> **Note:** These are simplified models for simulation and visualization. Numeric values are model defaults or reported ranges, not validated hardware specs.
+
 **Table of Contents**
 - [Conductance Models](#conductance-models)
 - [Matrix-Vector Multiplication](#matrix-vector-multiplication)
@@ -461,13 +463,13 @@ Cells at array corners affected most due to both horizontal and vertical gradien
 
 ## Verification & Validation
 
-Physics models are verified against:
+Physics models are checked against:
 
 1. **Ohm's Law Tests** - IR drop follows V = I×R
 2. **Conductance Scaling** - Sneak paths scale correctly with G
-3. **Temperature Physics** - Arrhenius behavior verified
+3. **Temperature Physics** - Arrhenius behavior modeled
 4. **Architectural Comparison** - 1T1R vs 0T1R differences match literature
-5. **Technology Comparison** - FeFET drift < RRAM by ~50×
+5. **Technology Comparison** - Relative drift comparison (model-based)
 
 ### Test Coverage
 

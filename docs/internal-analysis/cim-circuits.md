@@ -1,10 +1,14 @@
 # Compute-in-Memory Circuits: Research Synthesis
 
+> **Note:** Internal analysis note. Values are reported/illustrative and not validated by this codebase.
+
 ## 1. Executive Summary
 
 This document synthesizes current research and architectural specifications for the peripheral circuits supporting Ferroelectric Compute-in-Memory (FeCIM) systems. The peripheral suite consists of Digital-to-Analog Converters (DAC) for input/programming, Transimpedance Amplifiers (TIA) for current sensing, Analog-to-Digital Converters (ADC) for output quantization, and Charge Pumps for high-voltage write operations. 
 
-A critical finding is the dominance of the ADC in the total energy budget, typically accounting for 50-80% of system power. The FeCIM demo baseline uses 5-bit precision (~30 discrete levels; simulation baseline) as the optimal "sweet spot" for balancing neural network accuracy (96-98% MNIST) against circuit complexity and energy consumption.
+A recurring theme in literature is ADC dominance in total energy budgets. The FeCIM demo baseline uses 5-bit precision (~30 discrete levels; simulation baseline) as an illustrative trade-off between accuracy and circuit complexity (not validated here).
+
+> **Note:** Numeric values below are illustrative literature-style defaults. For actual simulator defaults, see `shared/peripherals` and Module 4 UI settings.
 
 ## 2. DAC (Digital-to-Analog Converter)
 

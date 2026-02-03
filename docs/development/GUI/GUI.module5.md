@@ -5,13 +5,12 @@ Entry: cmd/comparison-gui/main.go
 Package: fecim-lattice-tools/module5-comparison/pkg/gui
 Last Updated: 2026-02-02
 Description: |
-  Technical briefing comparison demo showing FeCIM vs CPU/GPU architectures.
-  Features animated energy comparisons, market analysis, ROI calculator,
-  and phased commercialization strategy visualization.
+  Model-based comparison demo showing FeCIM vs CPU/GPU architectures.
+  Features animated energy comparisons, market scenario visualization,
+  and an ROI calculator.
 
-  CRITICAL: Energy claims are TRL 4 (laboratory validation only) and
-  pending independent verification. CPU/GPU specs are verified from
-  published datasheets.
+  All values are model inputs for visualization and are **not** measured
+  hardware specs.
 ---
 
 Conventions:
@@ -38,7 +37,7 @@ Screens:
                 Children:
                   - Component:
                       Type: Label (warningBanner)
-                      Purpose: TRL 4 warning banner
+                      Purpose: Simulation-only warning banner
                       file: app.go:264-270
                       State: Static (Bold, Centered)
                   - Component:
@@ -48,7 +47,7 @@ Screens:
                       Children:
                         - Component:
                             Type: Label
-                            Purpose: Subtitle "Dr. external research group | COSM 2025"
+                            Purpose: Subtitle "Simulation-only demo"
                             file: app.go:283-284
                             State: Static (Italic)
                         - Component:
@@ -85,7 +84,7 @@ Screens:
                     Layout:
                       - Component:
                           Type: AnimatedEnergyRace (hero widget)
-                          Purpose: Show 80-90% energy reduction hero message
+                          Purpose: Show model-based energy reduction hero message
                           file: hero.go:42-261
                           State: animProgress, showWinner, pulsePhase
                           Bindings: UpdateAnimation(dt), Reset()
@@ -103,22 +102,22 @@ Screens:
                                 State: 48pt bold, pulsing color
                             - Component:
                                 Type: Text (heroSubtext)
-                                Purpose: "⚠️ SIMULATION ONLY | TRL 4 Lab Estimates | Not Production Verified"
+                                Purpose: "⚠️ SIMULATION ONLY | Not measured hardware"
                                 file: hero.go:118-121
                                 State: 14pt bold amber
                             - Component:
                                 Type: Rectangle (gpuBar)
-                                Purpose: GPU energy bar (100 units)
+                                Purpose: GPU energy bar (model units)
                                 file: hero.go:140-144
                                 State: Animated width based on animProgress
                             - Component:
                                 Type: Rectangle (fecimBar)
-                                Purpose: FeCIM energy bar (~10 units)
+                                Purpose: FeCIM energy bar (model units)
                                 file: hero.go:164-168
                                 State: Animated width (10% of GPU)
                             - Component:
                                 Type: Text (statStrip)
-                                Purpose: "1000x less than CPU | 100x less than GPU | ~1 pJ/MAC (TRL 4 est.)"
+                                Purpose: "Model inputs shown for CPU/GPU/FeCIM (not measured)"
                                 file: hero.go:183-186
                                 State: Static cyan
 
@@ -139,7 +138,7 @@ Screens:
                                 State: 48pt bold, pulsing
                             - Component:
                                 Type: Text (heroSubtext)
-                                Purpose: "⚠️ SIMULATION ONLY | Market Projections Unverified | TRL 4→9 Required"
+                                Purpose: "⚠️ SIMULATION ONLY | Market projections are scenario inputs"
                                 file: market.go:111-114
                                 State: 13pt bold amber
                             - Component:
@@ -268,7 +267,7 @@ Screens:
                                       State: 12pt red
                                   - Component:
                                       Type: Text (fecimCostText)
-                                      Purpose: FeCIM projected monthly cost (TRL 4 est.)
+                                      Purpose: FeCIM projected monthly cost (model input)
                                       file: widgets.go:395-397
                                       State: 12pt green
                                   - Component:
@@ -312,18 +311,18 @@ DataFlow:
       6. Update transformation widget
       7. Update status label (with caching check)
 
-  - Flow: Energy Spec Verification
+  - Flow: Energy Spec Initialization
     Trigger: Application initialization
     Source: app.go:98-121
     Updates: cpuSpec, gpuSpec, fecimSpec
     file: app.go:34-41
     Details: |
       Energy specs initialized from constants (lines 28-32):
-      - CPU: 1000 pJ/MAC (verified, Intel/AMD specs)
-      - GPU: 100 pJ/MAC (verified, NVIDIA H100)
-      - FeCIM: 1 pJ/MAC (CLAIMED, Dr. Tour COSM 2025, NOT verified)
+      - CPU: model input (pJ/MAC)
+      - GPU: model input (pJ/MAC)
+      - FeCIM: model input (pJ/MAC)
 
-      EnergySpec struct includes verification status and source details.
+      EnergySpec struct includes source notes, not verification claims.
 
   - Flow: Status Label Update
     Trigger: Any calculation or state change
@@ -418,22 +417,19 @@ Constants:
   - Name: cpuEnergyPJPerMAC
     Value: 1000.0
     Purpose: CPU+DRAM energy per MAC operation (picojoules)
-    Source: Intel/AMD published specifications
-    Verified: true
+    Source: Model input (override in code if needed)
     file: app.go:29
 
   - Name: gpuEnergyPJPerMAC
     Value: 100.0
     Purpose: GPU+HBM energy per MAC operation (picojoules)
-    Source: NVIDIA H100 specifications
-    Verified: true
+    Source: Model input (override in code if needed)
     file: app.go:30
 
   - Name: fecimEnergyPJPerMAC
     Value: 1.0
-    Purpose: FeCIM claimed energy per MAC operation (picojoules)
-    Source: Dr. Tour COSM 2025 presentation ("under 1 picojoule")
-    Verified: false (TRL 4 - laboratory validation only)
+    Purpose: FeCIM model energy per MAC operation (picojoules)
+    Source: Model input (not measured)
     file: app.go:31
 
   - Name: marketData
@@ -442,7 +438,7 @@ Constants:
       DRAM: $130B (2024) → $220B (2030)
       AI Semiconductor: $140B (2024) → $403B (2030)
       TOTAL: $721B by 2030
-    Source: WSTS Semiconductor Trade Statistics 2025, Gartner AI Forecasts
+    Source: Scenario inputs (verify if used externally)
     file: market.go:32-36
 
 Types:
@@ -452,7 +448,7 @@ Types:
     Fields:
       - fyneApp: Fyne application instance
       - window: Main window
-      - cpuSpec, gpuSpec, fecimSpec: Energy specifications with verification status
+      - cpuSpec, gpuSpec, fecimSpec: Energy specifications with source notes
       - animMu: RWMutex protecting animation state
       - running, paused: Animation control flags
       - simTime: Elapsed simulation time (seconds)
@@ -465,13 +461,13 @@ Types:
       - statusLabel, lastStatusText: Status display with caching
 
   - Type: EnergySpec
-    Purpose: Energy specification with source verification
+    Purpose: Energy specification with source notes
     file: app.go:35-41
     Fields:
       - Name: Architecture name
       - EnergyFJ: Energy per MAC in femtojoules
       - Source: Reference source
-      - Verified: true if independently verified
+      - Verified: (deprecated) avoid using as a truth signal
       - SourceDetails: Additional context
 
   - Type: PresentationMode
@@ -521,8 +517,8 @@ WorkloadMACs:
 
 Notes:
   - Threading: Animation loop runs at 30 FPS (reduced from 60 to prevent resize loops on tiling WMs)
-  - Energy Claims: FeCIM values are TRL 4 (laboratory validation) and NOT independently verified
-  - Disclaimers: All UI shows explicit TRL 4 warnings and verification status
+  - Energy Claims: All energy values are model inputs, not measured hardware specs
+  - Disclaimers: UI should clearly state "SIMULATION ONLY"
   - Calculator Scale: Uses 10,000 server data center as reference scale
   - Electricity Cost: $0.10/kWh used for all cost calculations
   - Presentation Modes: Investor mode emphasizes business case, Engineer mode shows technical details

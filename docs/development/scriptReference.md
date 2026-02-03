@@ -883,7 +883,7 @@ func (app *EmbeddedXxxApp) Stop() { ... }   // Called when tab deselected
 
 The following demos were archived (see `docs/archive/removed-demos/`):
 - **demo5-thermal** - Merged into comparison module
-- **demo6-multilayer** (3D Stack) - Archived (too futuristic for TRL 4)
+- **demo6-multilayer** (3D Stack) - Archived (out of current scope)
 - **demo7-nonidealities** - Merged into module2-crossbar as tabs
 
 ## Dependencies

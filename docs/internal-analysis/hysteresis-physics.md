@@ -1,5 +1,7 @@
 # Research Synthesis: Ferroelectric Hysteresis Physics
 
+> **Note:** Internal analysis note. Values are reported/illustrative and not validated by this codebase.
+
 ## 1. Executive Summary
 This document provides a comprehensive synthesis of ferroelectric hysteresis physics, with a specific focus on HfO₂-ZrO₂ (HZO) superlattice materials. These materials are central to the Ferroelectric Compute-in-Memory (FeCIM) project, which aims to exploit the multi-level analog states of ferroelectric devices for ultra-low-power AI acceleration. This synthesis covers fundamental switching dynamics, material properties, Preisach modeling, temperature dependencies, multi-level state verification, and current endurance benchmarks.
 

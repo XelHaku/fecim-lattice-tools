@@ -1218,4 +1218,4 @@ E_field_MV_cm, Polarization_uC_cm2
 
 ---
 
-*This document is part of the FeCIM Lattice Tools project. Last verified: January 2026. For updates, see the project repository: https://github.com/fecim/lattice-tools*
+*This document is part of the FeCIM Lattice Tools project. Last updated: January 2026. For updates, see the project repository.*

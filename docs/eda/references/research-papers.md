@@ -1,6 +1,6 @@
 # EDA Research Collection for FeCIM Project
 
-**A Reference Collection of 350+ Papers and Resources**
+**A Reference Collection of Papers and Resources (Counts Approximate)**
 
 *Last Updated: January 2026 (Updated with 2024-2025 breakthrough papers)*
 
@@ -8,46 +8,46 @@
 
 ## Overview
 
-This document collects and references 310+ papers, tools, and resources gathered during the FeCIM Visualizer project. It organizes findings by topic and provides links to original sources for those interested in FeCIM/CIM research.
+This document collects and references papers, tools, and resources gathered during the FeCIM Visualizer project. It organizes findings by topic and provides links to original sources for those interested in FeCIM/CIM research.
 
 **Important Disclaimer:** This is a literature collection, not original research. The papers and tools listed here are the work of their respective authors and institutions. We have not validated claims made in these papers, and numeric values should be treated as reported, not verified.
 
 ### Key Findings (Reported, Not Verified)
 
-1. **Open-source EDA is production-ready for digital CMOS** but requires custom integration for FeFET/CIM designs
+1. **Open-source EDA can support digital CMOS flows** but requires custom integration for FeFET/CIM designs
 2. **The FeFET modeling gap is closing** with OpenVAF and Verilog-A compact models enabling SPICE simulation
 3. **Architecture-level tools (NeuroSim, CiMLoop) are mature** and can guide design decisions before circuit implementation
-4. **IHP's open PDK with RRAM support** provides the closest path to fabricating CIM arrays in the open ecosystem
+4. **Some open PDKs with resistive-memory options** may offer paths to CIM exploration (verify availability)
 5. **Quantization levels are configurable** in this project (default 30 for the demo)
 
 ---
 
 ## 1. Paper Corpus Overview
 
-### 1.1 Distribution by Topic
+### 1.1 Distribution by Topic (Approximate)
 
-| Category | Papers | Key Sources |
+| Category | Papers (Approx.) | Key Sources |
 |----------|--------|-------------|
-| FeFET/HfO₂ Materials | 45+ | Nature, Adv. Materials, J. Applied Physics |
-| CIM Architecture | 40+ | ISSCC, VLSI, IEEE JSSC |
-| Simulation Tools | 35+ | arXiv, GitHub, Academic |
-| EDA/RTL-to-GDSII | 30+ | OpenROAD, OpenLane, WOSET |
-| Neuromorphic/SNN | 30+ | Frontiers, Nature Communications |
-| ADC/DAC Design | 25+ | ICCAD, DAC, IEEE |
-| Non-Idealities | 25+ | Science China, ResearchGate |
-| 3D Integration | 20+ | Nature, Science Advances |
-| Transformers/LLM | 15+ | arXiv, Nature Computational Science |
-| Photonic CIM | 15+ | MIT, Lightmatter, IEEE |
-| Security/PUF | 10+ | IEEE, ACS |
+| FeFET/HfO₂ Materials | ~45 | Nature, Adv. Materials, J. Applied Physics |
+| CIM Architecture | ~40 | ISSCC, VLSI, IEEE JSSC |
+| Simulation Tools | ~35 | arXiv, GitHub, Academic |
+| EDA/RTL-to-GDSII | ~30 | OpenROAD, OpenLane, WOSET |
+| Neuromorphic/SNN | ~30 | Frontiers, Nature Communications |
+| ADC/DAC Design | ~25 | ICCAD, DAC, IEEE |
+| Non-Idealities | ~25 | Science China, ResearchGate |
+| 3D Integration | ~20 | Nature, Science Advances |
+| Transformers/LLM | ~15 | arXiv, Nature Computational Science |
+| Photonic CIM | ~15 | MIT, Lightmatter, IEEE |
+| Security/PUF | ~10 | IEEE, ACS |
 
-### 1.2 Publication Timeline
+### 1.2 Publication Timeline (Illustrative)
 
 ```
 2020-2021: Foundation papers (NeuroSim validation, OpenLane)
 2022-2023: CIM accelerator demonstrations, FeFET modeling advances
 2024:      LLM/Transformer CIM, 3D integration, mature tools
-2025:      Production deployments, IHP shuttles, analog attention
-2026:      Full-stack systems, commercial viability
+2025:      Continued research and tool development
+2026:      Ongoing exploration and integration work
 ```
 
 ---
@@ -199,7 +199,7 @@ return quantizeADC(result, bits=6)
 | Ferroelectric memristor RC (2025) | 98.78% | 32×32 | HfO₂ |
 | Multi-level FeFET crossbar (2023) | 96.6% | 64×64 | 28nm |
 | FTJ crossbar (2024) | 92% | 128×128 | HfO₂ |
-| Tour Lab In₂Se₃ (2024) | 87% | Research | Flash synthesis |
+| Tour Lab In₂Se₃ (2024) | Reported accuracy | Research | Flash synthesis |
 
 **Note:** Our Demo 3 simulation uses 30-level quantization but has **not been validated against real hardware**. The Tour Lab result is from actual physical devices.
 

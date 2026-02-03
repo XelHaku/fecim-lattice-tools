@@ -4,6 +4,8 @@
 
 *Last Updated: January 2026*
 
+> **Note:** Tool descriptions and numeric values are reported from sources and are not independently verified by this project.
+
 ---
 
 ## Overview
@@ -1028,9 +1030,9 @@ Heracles_HfO2 (
 ```
 
 **Relevance to FeCIM:**
-- Most accurate available HfO2 model (open-source)
+- Reported HfO2 model (open-source)
 - Captures known degradation modes
-- Validated against Nature Comms. 2025 data
+- Compared against reported Nature Comms. 2025 data (not verified here)
 
 **Where to Find:**
 - GitHub: Check arXiv paper for links
@@ -1047,11 +1049,11 @@ Heracles_HfO2 (
 | **Heracles** | Compact | Wake-up, fatigue, T-dep | 95%+ | Research |
 | **ML Potential (arXiv:2511) | DFT-based | Ab-initio accurate | 98%+ | Research |
 | **FerroX** | Phase-field | Domain dynamics | 90%+ | Production |
-| **NLS (AIP APL 2018)** | Kinetic | Switching time | 85%+ | Validated |
+| **NLS (AIP APL 2018)** | Kinetic | Switching time | 85%+ | Reported |
 
 ### 7.2 Material Parameters for HfO₂
 
-**Standard Values (from Nature Commun. 2025, verified):**
+**Standard Values (reported in literature; unverified here):**
 
 ```python
 class HfO2_Parameters:
@@ -1088,16 +1090,16 @@ class HfO2_Parameters:
 
 | Tool | Type | Language | Speed | GUI | Accuracy | HfO₂ Native |
 |------|------|----------|-------|-----|----------|------------|
-| **This Project (Go)** | Preisach | Go | 60 FPS | ✅ | 85% | Yes |
-| **Preisachmodel** | Preisach | Python | 1 sec | ❌ | 90% | Via param |
-| **pyhist** | Preisach | Python | 2 sec | ❌ | 85% | Via param |
-| **python-preisach** | Preisach | Python | 3 sec | ❌ | 80% | Educational |
-| **JAmodel** | Jiles-Atherton | MATLAB | 5 sec | ❌ | 75% | Limited |
-| **pyjam** | Jiles-Atherton | Python | 2 sec | ❌ | 75% | Limited |
-| **FerroX** | TDGL | C++ | 10+ min | ❌ | 95% | Yes |
-| **FERRET** | TDGL/LK | C++ | 20+ min | ❌ | 94% | Yes |
-| **FerroSim** | Discrete Landau | Python | 30 sec | ✅ | 80% | Partial |
-| **ngspice** | Circuit | SPICE | Variable | ❌ | 98% | Via model |
+| **This Project (Go)** | Preisach | Go | Real-time (hardware-dependent) | ✅ | N/A | Yes |
+| **Preisachmodel** | Preisach | Python | Seconds | ❌ | N/A | Via param |
+| **pyhist** | Preisach | Python | Seconds | ❌ | N/A | Via param |
+| **python-preisach** | Preisach | Python | Seconds | ❌ | N/A | Educational |
+| **JAmodel** | Jiles-Atherton | MATLAB | Seconds | ❌ | N/A | Limited |
+| **pyjam** | Jiles-Atherton | Python | Seconds | ❌ | N/A | Limited |
+| **FerroX** | TDGL | C++ | Minutes+ | ❌ | N/A | Yes |
+| **FERRET** | TDGL/LK | C++ | Minutes+ | ❌ | N/A | Yes |
+| **FerroSim** | Discrete Landau | Python | Seconds | ✅ | N/A | Partial |
+| **ngspice** | Circuit | SPICE | Variable | ❌ | N/A | Via model |
 | **hysteresis (pkg)** | Analysis | Python | Real-time | ❌ | N/A | Data only |
 | **ML Potential** | DFT | Python/C | 1-10 sec | ❌ | 98% | Yes |
 
@@ -1335,7 +1337,7 @@ def apply_cycles(self, E_cycling, n_cycles=100):
 ## 12. Resources & References
 
 ### Primary Sources
-- **Nature Communications 2025:** HfO₂ ferroelectric characterization (verified claims in CLAUDE.md)
+- **Nature Communications 2025:** HfO₂ ferroelectric characterization (reported claims in CLAUDE.md)
 - **Nano Letters 2024:** Endurance cycling data for V:HfO₂
 - **Science 2024:** 10¹² cycle endurance
 - **IEEE Transactions 2021:** NLS kinetic model for switching
@@ -1416,4 +1418,4 @@ Contributions welcome! Areas of need:
 *Last Updated: January 27, 2026*
 **Part of:** FeCIM Lattice Tools - Ferroelectric Compute-in-Memory Visualization Suite
 **Purpose:** Comprehensive catalog of open-source hysteresis modeling tools
-**Cross-References:** See [crossbar.opensource.md](crossbar.opensource.md) for array-level tools, [hysteresis.physics.md](hysteresis.physics.md) for theory, [CLAUDE.md](<local-path>) for verified claims.
+**Cross-References:** See [crossbar.opensource.md](crossbar.opensource.md) for array-level tools, [hysteresis.physics.md](hysteresis.physics.md) for theory, [CLAUDE.md](<local-path>) for honesty policy.

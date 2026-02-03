@@ -1240,7 +1240,7 @@ class FeCIMDevice:
 | MVM inference | MemTorch (GPU) | 10ms | 100ms |
 | Network training (10 epochs) | PyTorch | 30s | 2m |
 | Chip simulation | NeuroSim | 1m | 5m |
-| Real-time visualization | FeCIM | 60 FPS | 30 FPS |
+| Real-time visualization | FeCIM | Real-time (hardware-dependent) | Real-time (hardware-dependent) |
 
 ### 7.2 Accuracy Validation
 
