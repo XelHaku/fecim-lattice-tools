@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"os"
 	"strings"
 	"time"
 
@@ -46,7 +47,37 @@ func runHysteresisMode(engine string) error {
 	}
 	log.Info("Headless hysteresis engine: %s", engine)
 
-	mat := physics.FeCIMMaterial()
+	mat := func() *physics.HZOMaterial {
+		// Optional material selector for headless testing.
+		// Examples:
+		//   FECIM_MATERIAL=fecim_hzo
+		//   FECIM_MATERIAL=literature_superlattice
+		//   FECIM_MATERIAL=default_hzo
+		name := strings.ToLower(strings.TrimSpace(os.Getenv("FECIM_MATERIAL")))
+		switch name {
+		case "", "fecim", "fecim_hzo", "fecim-hzo":
+			return physics.FeCIMMaterial()
+		case "fecim_target", "fecim_hzo_target", "fecim-hzo-target":
+			return physics.FeCIMMaterialTarget()
+		case "default", "default_hzo", "default-hzo":
+			return physics.DefaultHZO()
+		case "literature", "literature_superlattice", "superlattice", "cheema", "cheema2020":
+			return physics.LiteratureSuperlattice()
+		case "cryo", "cryogenic", "cryogenic_hzo", "cryogenic-hzo":
+			return physics.CryogenicHZO()
+		case "hzo32", "hzo_standard_32", "hzo-standard-32":
+			return physics.HZOStandard32()
+		case "ftj140", "hzo_ftj_140", "hzo-ftj-140":
+			return physics.HZOFJT140()
+		case "custom14", "hzo_custom_14", "hzo-custom-14":
+			return physics.HZOCustom14()
+		case "alscn", "al-scn":
+			return physics.AlScN()
+		default:
+			log.Info("Unknown FECIM_MATERIAL=%q; defaulting to FeCIMMaterial", name)
+			return physics.FeCIMMaterial()
+		}
+	}()
 	numLevels := mat.GetNumLevels()
 	if numLevels <= 0 {
 		numLevels = 30
@@ -218,20 +249,39 @@ func runHysteresisMode(engine string) error {
 	}
 
 	gWindow := gmax - gmin
-	// Test targets matching baseline: levels 28, 5, 27, 3, 20
+	// Test targets span near-saturation + low + mid-range.
 	// Level-to-G: G = gmin + (level-1)/(numLevels-1) * gWindow
 	levelToG := func(level int) float64 {
+		if level < 1 {
+			level = 1
+		}
+		if level > numLevels {
+			level = numLevels
+		}
 		return gmin + float64(level-1)/float64(numLevels-1)*gWindow
 	}
+
+	lo3 := 3
+	lo5 := 5
+	hi2 := numLevels - 2
+	hi3 := numLevels - 3
+	mid := int(math.Round(0.66 * float64(numLevels)))
+	if mid < 1 {
+		mid = 1
+	}
+	if mid > numLevels {
+		mid = numLevels
+	}
+
 	steps := []struct {
 		label   string
 		targetG float64
 	}{
-		{"L28", levelToG(28)},
-		{"L5", levelToG(5)},
-		{"L27", levelToG(27)},
-		{"L3", levelToG(3)},
-		{"L20", levelToG(20)},
+		{"HI2", levelToG(hi2)},
+		{"LO5", levelToG(lo5)},
+		{"HI3", levelToG(hi3)},
+		{"LO3", levelToG(lo3)},
+		{"MID", levelToG(mid)},
 	}
 
 	wrdTotalWrites := 0
@@ -316,17 +366,18 @@ func runHysteresisMode(engine string) error {
 				// For lower targets (<=15): saturate POSITIVE first (level ~30), then write DOWN
 				prepE := 0.0
 				saturated := false
-				// Use 0.75*Ps threshold (not 0.9) because K_dep depolarization feedback
-				// limits achievable polarization. With K_dep=2.5e8, steady-state P < 0.9*Ps.
+				// Use a relaxed saturation threshold because depolarization (K_dep) and
+				// some LK parameter sets can limit the achievable steady-state |P| well
+				// below Ps (especially for literature/superlattice presets).
 				// Also use 2.0×Ec drive field for faster saturation.
 				if targetLevel > numLevels/2 {
 					// Upper target: drive to negative saturation
 					prepE = -mat.Ec * 2.0
-					saturated = currentP <= -0.75*mat.Ps
+					saturated = currentP <= -0.50*mat.Ps
 				} else {
 					// Lower target: drive to positive saturation
 					prepE = mat.Ec * 2.0
-					saturated = currentP >= 0.75*mat.Ps
+					saturated = currentP >= 0.50*mat.Ps
 				}
 				wrd.prepE = prepE
 

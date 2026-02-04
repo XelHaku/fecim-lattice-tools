@@ -196,6 +196,9 @@ func LiteratureSuperlattice() *HZOMaterial {
 		SeriesResistanceOhm: 50.0,
 		K_dep:               2.5e8,
 		StressGPa:           1.5,
+		// Electrostriction (assumed HZO-like; not explicitly reported in Cheema 2020).
+		Q11: 0.089,
+		Q12: -0.026,
 	}
 }
 
