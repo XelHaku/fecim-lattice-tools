@@ -103,6 +103,7 @@
 | ID | Task | Status | Est. |
 |----|------|--------|------|
 | G04 | Headless WRD/ISPP regression suite: Preisach target-hit within N pulses for HI/MID/LO; emits a compact JSON summary artifact | ⏳ | 2-4hr |
+| G04b | Reusable ISPP write engine: extract a shared, reusable ISPP state machine (same behavior) so module4-circuits write path uses the exact same controller logic as module1-hysteresis/headless | ⏳ | 4-8hr |
 | G05 | Headless LK regression suite: same targets + overshoot/pulse stats (looser thresholds OK), emits JSON summary | ⏳ | 2-4hr |
 | G06 | Normalize/verify CLI engine selector (`--engine {preisach,lk}` or document actual selector); ensure all docs/runbooks reference the same mechanism | ⏳ | 30-60m |
 | G06b | Verification matrix: for each material, verify both Preisach + LK run and hit a small target set (HI/MID/LO) without crashes; record a one-line PASS/FAIL summary | ⏳ | 1-2hr |
