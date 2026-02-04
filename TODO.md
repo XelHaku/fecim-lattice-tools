@@ -151,7 +151,7 @@
 | L02 | Screenshot metadata embedding (PNG EXIF with parameters) | ✅ | Done |
 | L03 | Add GitHub URL to glossary widget TODO | ✅ | Done (existing) |
 | L04 | Hysteresis polarization bar indicator - increase to 16px with pulsing | ✅ | Done |
-| L11 | Investigate "imagine" issue (user report: "imagine is not fix") | ⏳ | 1hr |
+| L11 | Add [LK] indicators to material_picker.go for Landau-Khalatnikov parameters (requires LK model implementation first - see docs/hysteresis/hysteresis-glm.md Phase 4: P1 Landau-Khalatnikov model) | ⏳ | 1hr |
 
 ### P4-D2: Medium-Effort Low-Priority Fixes
 
@@ -340,7 +340,7 @@ The L-K dynamic physics engine has issues with ISPP write/read demo, particularl
 - Sprint 4: C13 ✅, H16 ✅, H14 ✅ (COMPLETE)
 - P2 Remaining: H08 ✅, H09 ✅, H11 ✅ (ALL P2 COMPLETE)
 - P3 Progress: M12 ✅, M07 ✅, M09 ✅, M08 ✅, M11 ✅, M10 ✅, M14 ✅, M15 ✅, M13 ✅ (ALL P3 COMPLETE)
-- P4 Progress: L01 ✅, L02 ✅, L03 ✅, L04 ✅, L05 ✅, L06 ✅ (7/10 complete)
+- P4 Progress: L01 ✅, L02 ✅, L03 ✅, L04 ✅, L05 ✅, L06 ✅ (7/11 complete)
 
 ---
 
