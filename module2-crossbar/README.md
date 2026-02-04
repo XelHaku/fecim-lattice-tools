@@ -46,8 +46,8 @@ go run ./module2-crossbar/cmd/crossbar-gui
 # Crossbar GUI (enhanced mode)
 go run ./module2-crossbar/cmd/crossbar-gui -enhanced
 
-# Neural network inference
-go run ./module2-crossbar/cmd/inference --weights=model.json --input=data.csv
+# Neural network inference (terminal)
+go run ./module2-crossbar/cmd/crossbar-gui inference -size=64 -layers=3
 ```
 
 ### Simple Example

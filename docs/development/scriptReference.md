@@ -383,8 +383,9 @@ fecim-lattice-tools/
 │
 ├── module2-crossbar/              # Demo 2: Crossbar + Non-Idealities (4 tabs)
 │   ├── cmd/
-│   │   ├── crossbar-gui/main.go   # Standalone GUI entry point
-│   │   └── inference/main.go      # Inference CLI
+│   │   └── crossbar-gui/
+│   │       ├── main.go           # GUI entry point + CLI router
+│   │       └── inference_cmd.go  # Inference CLI (subcommand)
 │   ├── pkg/crossbar/
 │   │   ├── array.go               # Core crossbar array implementation
 │   │   ├── nonidealities.go       # IR drop, sneak path, drift analysis

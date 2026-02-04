@@ -11,10 +11,16 @@
 // - 30 discrete FeCIM levels (4.9 bits/cell, conference claim baseline)
 //
 // Standard Mode:
-//   go run ./cmd/crossbar-gui
+//
+//	go run ./cmd/crossbar-gui
 //
 // Enhanced Mode (all features):
-//   go run ./cmd/crossbar-gui -enhanced
+//
+//	go run ./cmd/crossbar-gui -enhanced
+//
+// Terminal Inference (CLI):
+//
+//	go run ./cmd/crossbar-gui inference [options]
 //
 // Enhanced features include:
 // - Color legends for all heatmaps
@@ -35,37 +41,65 @@ import (
 )
 
 func main() {
-	enhanced := flag.Bool("enhanced", false, "Enable enhanced UI with all features")
-	help := flag.Bool("help", false, "Show help")
-	flag.Parse()
+	if len(os.Args) > 1 && os.Args[1] == "inference" {
+		runInference(os.Args[2:])
+		return
+	}
 
-	if *help {
-		fmt.Println("FeCIM Crossbar Array Visualization")
-		fmt.Println()
-		fmt.Println("Usage:")
-		fmt.Println("  go run ./cmd/crossbar-gui [options]")
-		fmt.Println()
-		fmt.Println("Options:")
-		fmt.Println("  -enhanced    Enable enhanced UI with all features")
-		fmt.Println("  -help        Show this help message")
-		fmt.Println()
-		fmt.Println("Features:")
-		fmt.Println("  • 64×64 crossbar array (configurable 8-128)")
-		fmt.Println("  • 30 discrete FeCIM levels (4.9 bits/cell, conference claim)")
-		fmt.Println("  • Matrix-vector multiplication in O(1)")
-		fmt.Println("  • IR drop analysis")
-		fmt.Println("  • Sneak path analysis")
-		fmt.Println("  • Device variation simulation")
-		fmt.Println()
-		fmt.Println("Enhanced Features:")
-		fmt.Println("  • Color legends with level indicators")
-		fmt.Println("  • Live metrics (accuracy, energy, performance)")
-		fmt.Println("  • Before/after comparison view")
-		fmt.Println("  • Accuracy degradation waterfall")
-		fmt.Println("  • Energy comparison with GPU")
-		fmt.Println("  • Differential array for signed weights")
-		fmt.Println("  • Write-verify programming simulation")
-		fmt.Println("  • Data export (CSV/JSON)")
+	runGUI(os.Args[1:])
+}
+
+func runGUI(args []string) {
+	fs := flag.NewFlagSet("crossbar-gui", flag.ContinueOnError)
+	fs.SetOutput(os.Stdout)
+
+	enhanced := fs.Bool("enhanced", false, "Enable enhanced UI with all features")
+	help := fs.Bool("help", false, "Show help")
+	helpShort := fs.Bool("h", false, "Show help (shorthand)")
+
+	fs.Usage = func() {
+		out := fs.Output()
+		fmt.Fprintln(out, "FeCIM Crossbar Array Visualization")
+		fmt.Fprintln(out)
+		fmt.Fprintln(out, "Usage:")
+		fmt.Fprintln(out, "  go run ./cmd/crossbar-gui [options]")
+		fmt.Fprintln(out, "  go run ./cmd/crossbar-gui inference [options]")
+		fmt.Fprintln(out)
+		fmt.Fprintln(out, "Options:")
+		fmt.Fprintln(out, "  -enhanced    Enable enhanced UI with all features")
+		fmt.Fprintln(out, "  -help        Show this help message")
+		fmt.Fprintln(out, "  -h           Show this help message (shorthand)")
+		fmt.Fprintln(out)
+		fmt.Fprintln(out, "Inference:")
+		fmt.Fprintln(out, "  Use: go run ./cmd/crossbar-gui inference -help")
+		fmt.Fprintln(out)
+		fmt.Fprintln(out, "Features:")
+		fmt.Fprintln(out, "  • 64×64 crossbar array (configurable 8-128)")
+		fmt.Fprintln(out, "  • 30 discrete FeCIM levels (4.9 bits/cell, conference claim)")
+		fmt.Fprintln(out, "  • Matrix-vector multiplication in O(1)")
+		fmt.Fprintln(out, "  • IR drop analysis")
+		fmt.Fprintln(out, "  • Sneak path analysis")
+		fmt.Fprintln(out, "  • Device variation simulation")
+		fmt.Fprintln(out)
+		fmt.Fprintln(out, "Enhanced Features:")
+		fmt.Fprintln(out, "  • Color legends with level indicators")
+		fmt.Fprintln(out, "  • Live metrics (accuracy, energy, performance)")
+		fmt.Fprintln(out, "  • Before/after comparison view")
+		fmt.Fprintln(out, "  • Accuracy degradation waterfall")
+		fmt.Fprintln(out, "  • Energy comparison with GPU")
+		fmt.Fprintln(out, "  • Differential array for signed weights")
+		fmt.Fprintln(out, "  • Write-verify programming simulation")
+		fmt.Fprintln(out, "  • Data export (CSV/JSON)")
+	}
+
+	if err := fs.Parse(args); err != nil {
+		fmt.Fprintln(fs.Output(), "Error:", err)
+		fs.Usage()
+		return
+	}
+
+	if *help || *helpShort {
+		fs.Usage()
 		return
 	}
 
