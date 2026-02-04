@@ -250,10 +250,18 @@ func (s *LKSolver) Step(E, dt float64) float64 {
 	// RK4 Integration with rate limiting for numerical stability
 	prevP := s.P
 
-	// Rate limiter: cap dP/dt to prevent overflow with high Gamma materials
-	// Max rate = 2*Ps per characteristic time (allows full swing in ~τ)
-	maxRate := 2.0 * s.PMax / (rhoEff + 1e-12) // Ps/ρ is characteristic rate
-	if maxRate > 1e12 {
+	// Rate limiter: cap dP/dt to prevent overflow with high-Gamma materials.
+	//
+	// IMPORTANT: dP/dt has physical units; using rhoEff here as a time scale makes the
+	// clamp far too aggressive (it effectively freezes dynamics at small dt).
+	//
+	// For numerical safety we instead bound dP/dt so that P cannot change by more than
+	// ~2*PMax per integration step, with a generous absolute ceiling.
+	maxRate := 0.0
+	if dt > 0 {
+		maxRate = 2.0 * s.PMax / dt
+	}
+	if maxRate <= 0 || maxRate > 1e12 {
 		maxRate = 1e12 // Absolute cap to prevent overflow
 	}
 

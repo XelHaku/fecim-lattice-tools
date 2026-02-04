@@ -199,7 +199,6 @@ func runHysteresisMode(engine string) error {
 	if phaseDuration <= 0 {
 		phaseDuration = pulseDuration
 	}
-	frequency := 1.0 / phaseDuration
 
 	dtNominal := 1e-4
 	dtMin := 1e-6
@@ -310,6 +309,9 @@ func runHysteresisMode(engine string) error {
 
 			switch wrd.phase {
 			case 0: // PREP - drive to saturation in opposite direction of target
+				// For headless runs we apply fields directly (no slew-rate limiting).
+				// The slew limiter is useful for GUI smoothness but it can mask physics issues
+				// by never actually reaching the intended field during short phases.
 				// For upper targets (>15): saturate NEGATIVE first (level ~1), then write UP
 				// For lower targets (<=15): saturate POSITIVE first (level ~30), then write DOWN
 				prepE := 0.0
@@ -328,15 +330,7 @@ func runHysteresisMode(engine string) error {
 				}
 				wrd.prepE = prepE
 
-				diff := prepE - currentField
-				stepSize := 3.0 * mat.Ec * 2 * frequency * currentStep
-				if math.Abs(diff) < stepSize {
-					currentField = prepE
-				} else if diff > 0 {
-					currentField += stepSize
-				} else {
-					currentField -= stepSize
-				}
+				currentField = prepE
 
 				// Transition only after field reached AND level actually saturated
 				if wrd.phaseTimer > phaseDuration*0.25 && math.Abs(currentField-prepE) < 0.01*mat.Ec*2 && saturated {
@@ -360,15 +354,11 @@ func runHysteresisMode(engine string) error {
 			case 2: // WRITE - delegated to WriteController
 				targetField, done := writeController.Update(currentStep, currentField, currentLevel, 0)
 
-				diff := targetField - currentField
-				stepSize := 3.0 * mat.Ec * 2 * frequency * 1.5 * currentStep
-				if math.Abs(diff) < stepSize {
-					currentField = targetField
-				} else if diff > 0 {
-					currentField += stepSize
-				} else {
-					currentField -= stepSize
-				}
+				// Headless: apply exactly the controller-requested field.
+				// This avoids a pathological interaction where the controller believes
+				// E reached its setpoint but the simulation lags behind (and then VERIFY
+				// happens at a non-zero residual field like ~0.025×Ec).
+				currentField = targetField
 
 				wrd.writeE = targetField
 
@@ -413,14 +403,8 @@ func runHysteresisMode(engine string) error {
 				}
 
 			case 5: // DISPLAY - return to zero, then finish target
-				stepSize := 3.0 * mat.Ec * 2 * frequency * 0.4 * currentStep
-				if math.Abs(currentField) < stepSize {
-					currentField = 0
-				} else if currentField > 0 {
-					currentField -= stepSize
-				} else {
-					currentField += stepSize
-				}
+				// Headless: snap to zero for verify/display phases.
+				currentField = 0
 
 				if wrd.phaseTimer > phaseDuration*0.6 && math.Abs(currentField) < 0.01*mat.Ec*2 {
 					targetDone = true
