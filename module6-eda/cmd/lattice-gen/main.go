@@ -1,10 +1,11 @@
 // cmd/lattice-gen/main.go
 // CLI tool for generating FeCIM lattice Verilog and DEF files
 
-package main
+package edalattice
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -12,45 +13,74 @@ import (
 	"fecim-lattice-tools/shared/logging"
 )
 
-func main() {
+func Run(args []string) error {
 	// Initialize logger
 	homeDir, _ := os.UserHomeDir()
 	logPath := filepath.Join(homeDir, ".fecim", "logs", "module6-eda-lattice-gen.log")
 	if err := logging.Init("module6-eda-lattice-gen", logPath); err != nil {
 		// Fallback to standard error if logger init fails
 		os.Stderr.WriteString("Failed to initialize logging: " + err.Error() + "\n")
-		os.Exit(1)
+		return err
 	}
 	defer logging.CloseGlobal()
 
 	// Enable logging by default
 	logging.SetVerbosity(logging.VerbosityInfo)
 
-	rows := flag.Int("rows", 4, "Number of rows")
-	cols := flag.Int("cols", 4, "Number of columns")
-	outputDir := flag.String("output", "output/lattices", "Output directory")
-	flag.Parse()
+	fs := flag.NewFlagSet("lattice-gen", flag.ContinueOnError)
+	fs.SetOutput(os.Stdout)
+	rows := fs.Int("rows", 4, "Number of rows")
+	cols := fs.Int("cols", 4, "Number of columns")
+	outputDir := fs.String("output", "output/lattices", "Output directory")
+	help := fs.Bool("help", false, "Show help")
+	helpShort := fs.Bool("h", false, "Show help (shorthand)")
+
+	fs.Usage = func() {
+		out := fs.Output()
+		fmt.Fprintln(out, "FeCIM Lattice Generator")
+		fmt.Fprintln(out)
+		fmt.Fprintln(out, "Usage:")
+		fmt.Fprintln(out, "  fecim-lattice-tools eda lattice-gen [options]")
+		fmt.Fprintln(out)
+		fmt.Fprintln(out, "Options:")
+		fs.PrintDefaults()
+	}
+
+	if err := fs.Parse(args); err != nil {
+		fmt.Fprintln(fs.Output(), "Error:", err)
+		fs.Usage()
+		if err == flag.ErrHelp {
+			return nil
+		}
+		return err
+	}
+
+	if *help || *helpShort {
+		fs.Usage()
+		return nil
+	}
 
 	// Create output directory if needed
 	if err := os.MkdirAll(*outputDir, 0755); err != nil {
 		logging.GlobalError("Error creating output dir: %v\n", err)
-		os.Exit(1)
+		return err
 	}
 
 	// Generate files
 	verilogPath, err := export.WriteLatticeVerilog(*rows, *cols, *outputDir)
 	if err != nil {
 		logging.GlobalError("Error writing Verilog: %v\n", err)
-		os.Exit(1)
+		return err
 	}
 	logging.Printf("Generated: %s\n", verilogPath)
 
 	defPath, err := export.WriteLatticeDEF(*rows, *cols, *outputDir)
 	if err != nil {
 		logging.GlobalError("Error writing DEF: %v\n", err)
-		os.Exit(1)
+		return err
 	}
 	logging.Printf("Generated: %s\n", defPath)
 
 	logging.Printf("\nLattice %dx%d generated successfully (%d cells)\n", *rows, *cols, (*rows)*(*cols))
+	return nil
 }

@@ -1,6 +1,6 @@
 // Command train-network trains both 2-layer and single-layer MNIST networks
 // with quantization-aware training for proper CIM accuracy.
-package main
+package mnisttrain
 
 import (
 	"encoding/json"
@@ -383,7 +383,7 @@ func (n *Network) Save(filename string, levels int) error {
 	return os.WriteFile(filename, jsonData, 0644)
 }
 
-func main() {
+func Run(args []string) error {
 	fmt.Println("=== MNIST Network Training (PTQ - Post-Training Quantization) ===")
 	fmt.Println("Training with FP32, quantization applied at inference time")
 	fmt.Println("")
@@ -439,5 +439,5 @@ func main() {
 	}
 
 	fmt.Println("\nDone! Weights saved. Quantization applied dynamically based on UI slider.")
+	return nil
 }
-

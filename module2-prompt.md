@@ -52,7 +52,7 @@ Validation
 
   - Run: go test ./module2-crossbar/...
   - Run: go test -v ./module2-crossbar/pkg/crossbar -run Physics
-  - If GUI verification is required: go run ./module2-crossbar/cmd/crossbar-gui -enhanced
+  - If GUI verification is required: go run ./cmd/fecim-lattice-tools crossbar -enhanced
   - If unified app verification is required: ./launch.sh --logger --verbosity debug
   - Use logs to confirm non-idealities and mode behaviors.
   - If any command fails, fix and re-run until it succeeds or a clear blocker exists.

@@ -36,7 +36,7 @@ func RunInference(args []string) error {
 		fmt.Fprintln(out, "FeCIM Crossbar Inference (Terminal)")
 		fmt.Fprintln(out)
 		fmt.Fprintln(out, "Usage:")
-		fmt.Fprintln(out, "  go run ./cmd/crossbar-gui inference [options]")
+		fmt.Fprintln(out, "  go run ./cmd/fecim-lattice-tools crossbar inference [options]")
 		fmt.Fprintln(out)
 		fmt.Fprintln(out, "Options:")
 		fs.PrintDefaults()

@@ -47,11 +47,11 @@ if [ ! -f "$DATA_DIR/train-images-idx3-ubyte.gz" ]; then
     cd "$SCRIPT_DIR"
 fi
 
-# Build the training tool if needed
-echo "Building training tool..."
+# Build the unified tool if needed
+echo "Building unified tool..."
 cd "$DEMO_DIR"
-go build -o train_tool ./cmd/mnist 2>/dev/null || {
-    echo "Note: Standalone training tool not available."
+go build -o fecim-lattice-tools ../cmd/fecim-lattice-tools 2>/dev/null || {
+    echo "Note: Unified tool not available."
     echo "Using existing pretrained weights if available."
 }
 
@@ -65,9 +65,9 @@ for HIDDEN in 64 128 256; do
     echo "Output file: $OUTPUT_FILE"
     echo "----------------------------------------------"
 
-    if [ -x "$DEMO_DIR/train_tool" ]; then
-        # Use the training tool
-        "$DEMO_DIR/train_tool" --train \
+    if [ -x "$DEMO_DIR/fecim-lattice-tools" ]; then
+        # Use the unified tool
+        "$DEMO_DIR/fecim-lattice-tools" mnist cli --train \
             --epochs "$EPOCHS" \
             --hidden "$HIDDEN" \
             --save "$OUTPUT_FILE"
@@ -76,7 +76,7 @@ for HIDDEN in 64 128 256; do
 
         # Evaluate the trained model
         echo "Evaluating..."
-        "$DEMO_DIR/train_tool" --load "$OUTPUT_FILE" --evaluate
+        "$DEMO_DIR/fecim-lattice-tools" mnist cli --load "$OUTPUT_FILE" --evaluate
     else
         echo "Training tool not available. Skipping training for hidden=$HIDDEN."
         if [ -f "$OUTPUT_FILE" ]; then

@@ -361,7 +361,7 @@ fecim-lattice-tools/
 │   └── logging/logging.go         # Shared logger with file + stdout output
 │
 ├── module1-hysteresis/            # Demo 1: P-E Hysteresis Curve (Memory Cell Physics)
-│   ├── cmd/hysteresis/main.go     # Standalone entry point
+│   ├── cmd/hysteresis/main.go     # Subcommand (fecim-lattice-tools hysteresis)
 │   ├── pkg/ferroelectric/
 │   │   ├── preisach.go            # Preisach hysteresis model (core)
 │   │   ├── preisach_advanced.go   # Advanced Preisach extensions
@@ -384,8 +384,8 @@ fecim-lattice-tools/
 ├── module2-crossbar/              # Demo 2: Crossbar + Non-Idealities (4 tabs)
 │   ├── cmd/
 │   │   └── crossbar-gui/
-│   │       ├── main.go           # GUI entry point + CLI router
-│   │       └── inference_cmd.go  # Inference CLI (subcommand)
+│   │       ├── main.go           # Subcommand: crossbar GUI
+│   │       └── inference_cmd.go  # Subcommand: crossbar inference CLI
 │   ├── pkg/crossbar/
 │   │   ├── array.go               # Core crossbar array implementation
 │   │   ├── nonidealities.go       # IR drop, sneak path, drift analysis
@@ -417,8 +417,8 @@ fecim-lattice-tools/
 │
 ├── module3-mnist/                 # Demo 3: AI Brain (Dual Mode: FP vs CIM)
 │   ├── cmd/
-│   │   ├── mnist/main.go          # Training/inference CLI
-│   │   └── mnist-gui/main.go      # GUI entry point
+│   │   ├── mnist/main.go          # Subcommand: mnist CLI
+│   │   └── mnist-gui/main.go      # Subcommand: mnist GUI
 │   ├── pkg/core/
 │   │   ├── network.go             # DualModeNetwork (FP vs CIM inference)
 │   │   └── quantize.go            # Quantization to 30 levels
@@ -445,7 +445,7 @@ fecim-lattice-tools/
 │   └── train_mnist_proper.go
 │
 ├── module4-circuits/              # Demo 4: Chip System (Peripheral Circuits)
-│   ├── cmd/circuits-gui/main.go   # GUI entry point
+│   ├── cmd/circuits-gui/main.go   # Subcommand: circuits GUI
 │   ├── pkg/peripherals/
 │   │   ├── dac.go                 # DAC converter model
 │   │   ├── adc.go                 # ADC converter model
@@ -459,7 +459,7 @@ fecim-lattice-tools/
 │       └── liveslide.go           # Live slide components
 │
 ├── module5-comparison/            # Demo 5: Business Case (Technical Briefing)
-│   ├── cmd/comparison-gui/main.go # GUI entry point
+│   ├── cmd/comparison-gui/main.go # Subcommand: comparison GUI
 │   ├── pkg/comparison/
 │   │   ├── architecture.go        # Architecture specs + comparison
 │   │   └── render.go              # Comparison charts rendering
@@ -812,12 +812,16 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 # Or use launch script
 ./launch.sh
 
-# Build individual modules
-go build -o module1-hysteresis/hysteresis ./module1-hysteresis/cmd/hysteresis
-go build -o module2-crossbar/crossbar-gui ./module2-crossbar/cmd/crossbar-gui
-go build -o module3-mnist/mnist-gui ./module3-mnist/cmd/mnist-gui
-go build -o module4-circuits/circuits-gui ./module4-circuits/cmd/circuits-gui
-go build -o module5-comparison/comparison-gui ./module5-comparison/cmd/comparison-gui
+# Module subcommands
+./fecim-lattice-tools hysteresis
+./fecim-lattice-tools crossbar
+./fecim-lattice-tools mnist
+./fecim-lattice-tools circuits
+./fecim-lattice-tools comparison
+./fecim-lattice-tools eda
+
+# Optional: build latex-svg utility (independent)
+go build -o latex-svg ./cmd/latex-svg
 
 # Run tests
 go test ./...

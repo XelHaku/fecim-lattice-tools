@@ -247,22 +247,22 @@ To run or debug a specific module:
 
 ```bash
 # Module 1: Hysteresis
-go run ./module1-hysteresis/cmd/gui/main.go
+go run ./cmd/fecim-lattice-tools hysteresis
 
 # Module 2: Crossbar Array
-go run ./module2-crossbar/cmd/gui/main.go
+go run ./cmd/fecim-lattice-tools crossbar
 
 # Module 3: MNIST
-go run ./module3-mnist/cmd/gui/main.go
+go run ./cmd/fecim-lattice-tools mnist
 
 # Module 4: Circuits
-go run ./module4-circuits/cmd/gui/main.go
+go run ./cmd/fecim-lattice-tools circuits
 
 # Module 5: Comparison
-go run ./module5-comparison/cmd/gui/main.go
+go run ./cmd/fecim-lattice-tools comparison
 
 # Module 6: EDA
-go run ./module6-eda/cmd/gui/main.go
+go run ./cmd/fecim-lattice-tools eda
 
 # Module 7: Documentation
 # Note: No standalone entry - embedded only, accessed via toolbar icon

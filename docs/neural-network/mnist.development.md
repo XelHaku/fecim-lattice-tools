@@ -31,7 +31,7 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 ./launch.sh
 
 # Run MNIST module standalone
-go run ./module3-mnist/cmd/mnist-gui
+go run ./cmd/fecim-lattice-tools mnist
 ```
 
 ### Run Tests
@@ -143,7 +143,7 @@ func (app *DualModeApp) updateResultDisplays(result *core.InferenceResult, ...) 
 1. **Train weights at new level:**
 
 ```bash
-go run ./module3-mnist/cmd/train-ptq -levels 15 -epochs 10
+go run ./cmd/fecim-lattice-tools mnist train-ptq -levels 15 -epochs 10
 ```
 
 2. **Add to available levels:**

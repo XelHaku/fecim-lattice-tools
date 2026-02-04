@@ -1,5 +1,5 @@
 // cmd/eda-gui/main.go
-package main
+package edagui
 
 import (
 	"os"
@@ -11,7 +11,7 @@ import (
 	"fecim-lattice-tools/shared/logging"
 )
 
-func main() {
+func Run(args []string) error {
 	// Initialize logger
 	homeDir, _ := os.UserHomeDir()
 	logPath := filepath.Join(homeDir, ".fecim", "logs", "module6-eda.log")
@@ -28,4 +28,5 @@ func main() {
 	a := app.New()
 	w := gui.CreateMainWindow(a)
 	w.ShowAndRun()
+	return nil
 }

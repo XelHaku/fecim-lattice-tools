@@ -14,7 +14,7 @@ echo ""
 mkdir -p "$OUTPUT_DIR"
 
 echo "Step 1: Compiling 16x16 crossbar..."
-go run ./cmd/eda-cli \
+go run ../cmd/fecim-lattice-tools eda cli \
   -input "$SCRIPT_DIR/weights.json" \
   -output "$OUTPUT_DIR" \
   -rows 16 \

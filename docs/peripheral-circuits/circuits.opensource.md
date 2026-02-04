@@ -823,7 +823,6 @@ pip install volare                      # PDK management
 git clone https://github.com/idea-fasoc/OpenFASOC
 
 # Our FeCIM visualizer
-cd module4-circuits
-go build -o circuits-gui ./cmd/circuits-gui
-./circuits-gui
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
+./fecim-lattice-tools circuits
 ```

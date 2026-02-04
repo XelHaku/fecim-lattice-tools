@@ -12,15 +12,15 @@
 //
 // Standard Mode:
 //
-//	go run ./cmd/crossbar-gui
+//	go run ./cmd/fecim-lattice-tools crossbar
 //
 // Enhanced Mode (all features):
 //
-//	go run ./cmd/crossbar-gui -enhanced
+//	go run ./cmd/fecim-lattice-tools crossbar -enhanced
 //
 // Terminal Inference (CLI):
 //
-//	go run ./cmd/crossbar-gui inference [options]
+//	go run ./cmd/fecim-lattice-tools crossbar inference [options]
 //
 // Enhanced features include:
 // - Color legends for all heatmaps
@@ -53,8 +53,8 @@ func RunGUI(args []string) error {
 		fmt.Fprintln(out, "FeCIM Crossbar Array Visualization")
 		fmt.Fprintln(out)
 		fmt.Fprintln(out, "Usage:")
-		fmt.Fprintln(out, "  go run ./cmd/crossbar-gui [options]")
-		fmt.Fprintln(out, "  go run ./cmd/crossbar-gui inference [options]")
+		fmt.Fprintln(out, "  go run ./cmd/fecim-lattice-tools crossbar [options]")
+		fmt.Fprintln(out, "  go run ./cmd/fecim-lattice-tools crossbar inference [options]")
 		fmt.Fprintln(out)
 		fmt.Fprintln(out, "Options:")
 		fmt.Fprintln(out, "  -enhanced    Enable enhanced UI with all features")
@@ -62,7 +62,7 @@ func RunGUI(args []string) error {
 		fmt.Fprintln(out, "  -h           Show this help message (shorthand)")
 		fmt.Fprintln(out)
 		fmt.Fprintln(out, "Inference:")
-		fmt.Fprintln(out, "  Use: go run ./cmd/crossbar-gui inference -help")
+		fmt.Fprintln(out, "  Use: go run ./cmd/fecim-lattice-tools crossbar inference -help")
 		fmt.Fprintln(out)
 		fmt.Fprintln(out, "Features:")
 		fmt.Fprintln(out, "  • 64×64 crossbar array (configurable 8-128)")

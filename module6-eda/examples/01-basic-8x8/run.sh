@@ -15,7 +15,7 @@ mkdir -p "$OUTPUT_DIR"
 
 # Run compiler
 echo "Compiling weights..."
-go run ./cmd/eda-cli \
+go run ../cmd/fecim-lattice-tools eda cli \
   -input "$SCRIPT_DIR/weights.json" \
   -output "$OUTPUT_DIR" \
   -rows 8 \

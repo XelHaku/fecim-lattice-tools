@@ -6,13 +6,14 @@
 // IMPORTANT: FeCIM specifications are CLAIMED by Dr. Tour but NOT
 // independently verified. CPU/GPU specs are from published datasheets.
 // This is TRL 4 technology - lab validation only.
-package main
+package comparisongui
 
 import (
 	"fecim-lattice-tools/module5-comparison/pkg/gui"
 )
 
-func main() {
+func Run(args []string) error {
 	app := gui.NewComparisonApp()
 	app.Run()
+	return nil
 }

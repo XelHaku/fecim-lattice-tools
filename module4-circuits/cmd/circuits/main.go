@@ -3,12 +3,13 @@
 // This demo visualizes the peripheral circuits required for a complete
 // ferroelectric compute-in-memory system: DAC, ADC, TIA, and Charge Pump.
 // Shows how digital values are converted to/from analog for crossbar operations.
-package main
+package circuitscli
 
 import (
 	"flag"
 	"fmt"
 	"math"
+	"os"
 	"strings"
 
 	"fecim-lattice-tools/shared/logging"
@@ -16,21 +17,50 @@ import (
 	sharedphysics "fecim-lattice-tools/shared/physics"
 )
 
-func main() {
+func Run(args []string) error {
+	fs := flag.NewFlagSet("circuits", flag.ContinueOnError)
+	fs.SetOutput(os.Stdout)
+
 	// Command-line flags
-	showDAC := flag.Bool("dac", false, "Show DAC (Digital-to-Analog) details")
-	showADC := flag.Bool("adc", false, "Show ADC (Analog-to-Digital) details")
-	showTIA := flag.Bool("tia", false, "Show TIA (Transimpedance Amplifier) details")
-	showPump := flag.Bool("pump", false, "Show Charge Pump details")
-	showAll := flag.Bool("all", false, "Show all peripheral circuits")
-	showLinearity := flag.Bool("linearity", false, "Show INL/DNL linearity analysis")
-	showTiming := flag.Bool("timing", false, "Show timing diagrams")
-	showPower := flag.Bool("power", false, "Show power breakdown")
-	showISPP := flag.Bool("ispp", false, "Run ISPP write/verify demo (shared hysteresis physics)")
-	demoLevel := flag.Int("level", 15, "Demo level for conversion (0-29)")
-	enableLogger := flag.Bool("logger", false, "Enable file logging (logs/)")
-	verbosity := flag.Int("verbosity", 2, "Logging verbosity: 0=off, 1=info, 2=debug, 3=trace")
-	flag.Parse()
+	showDAC := fs.Bool("dac", false, "Show DAC (Digital-to-Analog) details")
+	showADC := fs.Bool("adc", false, "Show ADC (Analog-to-Digital) details")
+	showTIA := fs.Bool("tia", false, "Show TIA (Transimpedance Amplifier) details")
+	showPump := fs.Bool("pump", false, "Show Charge Pump details")
+	showAll := fs.Bool("all", false, "Show all peripheral circuits")
+	showLinearity := fs.Bool("linearity", false, "Show INL/DNL linearity analysis")
+	showTiming := fs.Bool("timing", false, "Show timing diagrams")
+	showPower := fs.Bool("power", false, "Show power breakdown")
+	showISPP := fs.Bool("ispp", false, "Run ISPP write/verify demo (shared hysteresis physics)")
+	demoLevel := fs.Int("level", 15, "Demo level for conversion (0-29)")
+	enableLogger := fs.Bool("logger", false, "Enable file logging (logs/)")
+	verbosity := fs.Int("verbosity", 2, "Logging verbosity: 0=off, 1=info, 2=debug, 3=trace")
+	help := fs.Bool("help", false, "Show help")
+	helpShort := fs.Bool("h", false, "Show help (shorthand)")
+
+	fs.Usage = func() {
+		out := fs.Output()
+		fmt.Fprintln(out, "FeCIM Peripheral Circuits CLI")
+		fmt.Fprintln(out)
+		fmt.Fprintln(out, "Usage:")
+		fmt.Fprintln(out, "  fecim-lattice-tools circuits cli [options]")
+		fmt.Fprintln(out)
+		fmt.Fprintln(out, "Options:")
+		fs.PrintDefaults()
+	}
+
+	if err := fs.Parse(args); err != nil {
+		fmt.Fprintln(fs.Output(), "Error:", err)
+		fs.Usage()
+		if err == flag.ErrHelp {
+			return nil
+		}
+		return err
+	}
+
+	if *help || *helpShort {
+		fs.Usage()
+		return nil
+	}
 
 	if *enableLogger {
 		logging.EnableFileLogging()
@@ -89,6 +119,8 @@ func main() {
 	fmt.Println("  Peripheral circuits enable CMOS-compatible")
 	fmt.Println("  ferroelectric compute-in-memory systems")
 	fmt.Println("================================================")
+
+	return nil
 }
 
 func showSystemOverview() {

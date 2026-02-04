@@ -23,7 +23,7 @@ Project Map (Module 4)
 
   - Physics models: `shared/peripherals/` (DAC/ADC/TIA/ChargePump + analysis)
   - GUI: `module4-circuits/pkg/gui/` (DeviceState, unified tabs, timing diagrams)
-  - CLI: `module4-circuits/cmd/circuits`
+  - CLI: `fecim-lattice-tools circuits cli`
   - ISPP shared logic:
       - `shared/physics/ispp_write.go` (WriteController + L-K solver)
       - `shared/physics/ispp_legacy.go` (ISPPCalculator)
@@ -76,7 +76,7 @@ Tasks
 Validation (Headless Required)
 
   - CLI:
-      - `go run ./module4-circuits/cmd/circuits -all -logger -verbosity 2`
+      - `go run ./cmd/fecim-lattice-tools circuits cli -all -logger -verbosity 2`
   - Tests:
       - `go test ./module4-circuits/...`
       - `go test ./shared/peripherals`

@@ -1,6 +1,6 @@
 // Command train-single-layer trains a single-layer MNIST network matching Dr. Tour's demo.
 // Expected accuracy: ~85-92% (single-layer networks are limited by linear separability of MNIST)
-package main
+package mnisttrainsingle
 
 import (
 	"encoding/json"
@@ -13,7 +13,7 @@ import (
 	"fecim-lattice-tools/shared/utils"
 )
 
-func main() {
+func Run(args []string) error {
 	fmt.Println("=== Single-Layer MNIST Training (Tour Mode) ===")
 	fmt.Println("Architecture: 784 -> 10 (no hidden layer)")
 	fmt.Println("Single-layer limit: ~85-92% (MNIST not fully linearly separable)")
@@ -69,6 +69,7 @@ func main() {
 	}
 
 	fmt.Println("\nDone!")
+	return nil
 }
 
 func appendSingleLayerToMainWeights(mainPath string, net *training.SingleLayerNetwork) error {

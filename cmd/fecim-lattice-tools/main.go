@@ -461,6 +461,10 @@ func loadLastTab(prefs fyne.Preferences) int {
 }
 
 func main() {
+	if maybeDispatchSubcommand(os.Args[1:]) {
+		return
+	}
+
 	// Parse command-line flags
 	loggerFlag := flag.Bool("logger", false, "Enable file logging (logs to logs/ directory). Optional shorthand: --logger debug|info|trace|off")
 	verbosityFlag := flag.String("verbosity", "info", "Logging verbosity: 0|off, 1|info, 2|debug, 3|trace (only used with --logger)")

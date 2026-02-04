@@ -10,7 +10,7 @@
 // - Confusion matrix with per-class metrics
 // - Precision, recall, F1 score display
 //
-// Run with: go run ./cmd/mnist-gui
+// Run with: go run ./cmd/fecim-lattice-tools mnist
 package mnistgui
 
 import (

@@ -8,11 +8,12 @@
 //
 // For storage and memory modes, no input file is required.
 // For compute mode, weights are optional - omit -input for unprogrammed arrays.
-package main
+package edacli
 
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"math"
 	"os"
 	"path/filepath"
@@ -32,50 +33,78 @@ type WeightsFile struct {
 	Weights [][]float64 `json:"weights"`
 }
 
-func main() {
+func Run(args []string) error {
 	homeDir, _ := os.UserHomeDir()
 	logPath := filepath.Join(homeDir, ".fecim", "logs", "module6-eda-cli.log")
 	if err := logging.Init("module6-eda-cli", logPath); err != nil {
 		logging.GlobalError("Failed to initialize logging: %v\n", err)
-		os.Exit(1)
+		return err
 	}
 	defer logging.CloseGlobal()
 
 	// Enable logging by default
 	logging.SetVerbosity(logging.VerbosityInfo)
 
+	fs := flag.NewFlagSet("eda-cli", flag.ContinueOnError)
+	fs.SetOutput(os.Stdout)
+
 	// Operation mode
-	mode := flag.String("mode", "compute", "Operation mode: storage, memory, or compute")
+	mode := fs.String("mode", "compute", "Operation mode: storage, memory, or compute")
 
 	// Input (optional for compute mode, ignored for others)
-	inputFile := flag.String("input", "", "Input weights JSON file (optional, compute mode only)")
+	inputFile := fs.String("input", "", "Input weights JSON file (optional, compute mode only)")
 
 	// Output
-	outputDir := flag.String("output", "data", "Output directory")
-	designName := flag.String("name", "fecim_array", "Design name for output files")
+	outputDir := fs.String("output", "data", "Output directory")
+	designName := fs.String("name", "fecim_array", "Design name for output files")
 
 	// Array parameters
-	rows := flag.Int("rows", 128, "Array rows")
-	cols := flag.Int("cols", 128, "Array cols")
-	levels := flag.Int("levels", 30, "Conductance levels (2-30)")
+	rows := fs.Int("rows", 128, "Array rows")
+	cols := fs.Int("cols", 128, "Array cols")
+	levels := fs.Int("levels", 30, "Conductance levels (2-30)")
 
 	// Technology selection
-	tech := flag.String("tech", "SKY130", "Technology: SKY130, GF180MCU, IHP_SG13G2")
-	arch := flag.String("arch", "passive", "Architecture: passive or 1T1R")
+	tech := fs.String("tech", "SKY130", "Technology: SKY130, GF180MCU, IHP_SG13G2")
+	arch := fs.String("arch", "passive", "Architecture: passive or 1T1R")
 
 	// Electrical parameters
-	vdd := flag.Float64("vdd", 1.8, "Supply voltage (V)")
-	gmin := flag.Float64("gmin", 10.0, "Min conductance (μS)")
-	gmax := flag.Float64("gmax", 100.0, "Max conductance (μS)")
+	vdd := fs.Float64("vdd", 1.8, "Supply voltage (V)")
+	gmin := fs.Float64("gmin", 10.0, "Min conductance (μS)")
+	gmax := fs.Float64("gmax", 100.0, "Max conductance (μS)")
 
 	// Export options
-	exportJSON := flag.Bool("json", true, "Export JSON mapping")
-	exportCSV := flag.Bool("csv", true, "Export CSV cell assignments")
-	exportSPICE := flag.Bool("spice", true, "Export SPICE netlist")
-	exportVerilog := flag.Bool("verilog", true, "Export Verilog netlist")
-	exportDEF := flag.Bool("def", true, "Export DEF placement")
+	exportJSON := fs.Bool("json", true, "Export JSON mapping")
+	exportCSV := fs.Bool("csv", true, "Export CSV cell assignments")
+	exportSPICE := fs.Bool("spice", true, "Export SPICE netlist")
+	exportVerilog := fs.Bool("verilog", true, "Export Verilog netlist")
+	exportDEF := fs.Bool("def", true, "Export DEF placement")
+	help := fs.Bool("help", false, "Show help")
+	helpShort := fs.Bool("h", false, "Show help (shorthand)")
 
-	flag.Parse()
+	fs.Usage = func() {
+		out := fs.Output()
+		fmt.Fprintln(out, "FeCIM EDA CLI")
+		fmt.Fprintln(out)
+		fmt.Fprintln(out, "Usage:")
+		fmt.Fprintln(out, "  fecim-lattice-tools eda cli [options]")
+		fmt.Fprintln(out)
+		fmt.Fprintln(out, "Options:")
+		fs.PrintDefaults()
+	}
+
+	if err := fs.Parse(args); err != nil {
+		fmt.Fprintln(fs.Output(), "Error:", err)
+		fs.Usage()
+		if err == flag.ErrHelp {
+			return nil
+		}
+		return err
+	}
+
+	if *help || *helpShort {
+		fs.Usage()
+		return nil
+	}
 
 	// Parse operation mode
 	var opMode compiler.OperationMode
@@ -88,7 +117,7 @@ func main() {
 		opMode = compiler.ModeCompute
 	default:
 		logging.Printf("Error: unknown mode '%s'. Use: storage, memory, or compute\n", *mode)
-		os.Exit(1)
+		return fmt.Errorf("unknown mode %q", *mode)
 	}
 
 	logging.Printf("FeCIM Array Generator - %s Mode\n", strings.Title(*mode))
@@ -113,13 +142,13 @@ func main() {
 		data, err := os.ReadFile(*inputFile)
 		if err != nil {
 			logging.Printf("Error reading weights file: %v\n", err)
-			os.Exit(1)
+			return err
 		}
 
 		var wf WeightsFile
 		if err := json.Unmarshal(data, &wf); err != nil {
 			logging.Printf("Error parsing weights JSON: %v\n", err)
-			os.Exit(1)
+			return err
 		}
 
 		logging.Printf("Loaded weights: %s (%dx%d = %d weights)\n",
@@ -150,7 +179,7 @@ func main() {
 	design, err := compiler.GenerateDesign(config)
 	if err != nil {
 		logging.Printf("Design generation error: %v\n", err)
-		os.Exit(1)
+		return err
 	}
 
 	// Print results
@@ -172,7 +201,7 @@ func main() {
 	// Create output directory
 	if err := os.MkdirAll(*outputDir, 0755); err != nil {
 		logging.Printf("Error creating output directory: %v\n", err)
-		os.Exit(1)
+		return err
 	}
 
 	// Export files
@@ -224,4 +253,5 @@ func main() {
 	}
 
 	logging.Println("\nDone!")
+	return nil
 }

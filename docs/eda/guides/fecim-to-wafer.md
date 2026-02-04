@@ -148,7 +148,7 @@ Your tool is the **first critical step** - it bridges the gap between "I have an
 
 **With Module 6:**
 ```bash
-go run ./cmd/eda-cli -mode compute -rows 256 -cols 256 -output ./chip
+go run ./cmd/fecim-lattice-tools eda cli -mode compute -rows 256 -cols 256 -output ./chip
 # Done. Verilog, DEF, SPICE all generated.
 ```
 
@@ -214,16 +214,16 @@ Module 6 generates physical layout artifacts for FeCIM arrays that can be used w
 
 ```bash
 # Storage mode - High-density non-volatile storage
-go run ./cmd/eda-cli -mode storage -rows 256 -cols 256 -name storage_array
+go run ./cmd/fecim-lattice-tools eda cli -mode storage -rows 256 -cols 256 -name storage_array
 
 # Memory mode - Memory-oriented mode
-go run ./cmd/eda-cli -mode memory -rows 128 -cols 128 -name memory_array
+go run ./cmd/fecim-lattice-tools eda cli -mode memory -rows 128 -cols 128 -name memory_array
 
 # Compute mode - AI accelerator with weights
-go run ./cmd/eda-cli -mode compute -input weights.json -rows 64 -cols 64 -output ./output
+go run ./cmd/fecim-lattice-tools eda cli -mode compute -input weights.json -rows 64 -cols 64 -output ./output
 
 # Full options
-go run ./cmd/eda-cli \
+go run ./cmd/fecim-lattice-tools eda cli \
   -mode compute \
   -input data/sample_weights_8x8.json \
   -output ./output \
@@ -820,7 +820,7 @@ library(fecim_1t1r) {
 │ PHASE 1: DESIGN ENTRY                                           │
 ├─────────────────────────────────────────────────────────────────┤
 │ □ Configure Module 6 parameters                                 │
-│   - go run ./cmd/eda-cli -mode compute -rows 64 -cols 64 ...    │
+│   - go run ./cmd/fecim-lattice-tools eda cli -mode compute -rows 64 -cols 64 ...    │
 │                                                                 │
 │ □ Load weights (compute mode only)                              │
 │   - Format: JSON with "weights" array                           │
@@ -1078,7 +1078,7 @@ library(fecim_1t1r) {
 
 ```bash
 # Module 6 CLI - Generate all outputs
-go run ./cmd/eda-cli \
+go run ./cmd/fecim-lattice-tools eda cli \
   -mode compute \
   -input weights.json \
   -rows 64 -cols 64 \

@@ -1,5 +1,5 @@
 // module6-eda/cmd/hello/main.go
-package main
+package edahello
 
 import (
 	"fmt"
@@ -68,7 +68,7 @@ func Compile(weights [][]float64) []CellAssignment {
 
 // === MAIN: PROVE IT WORKS ===
 
-func main() {
+func Run(args []string) error {
 	fmt.Println("=== FeCIM EDA: Hello World ===")
 	fmt.Println()
 
@@ -105,4 +105,5 @@ func main() {
 	fmt.Printf("Total cells: %d\n", len(cells))
 	fmt.Printf("Levels used: 30 (demo baseline; conference claim)\n")
 	fmt.Printf("Conductance range: 10.0 - 100.0 μS\n")
+	return nil
 }

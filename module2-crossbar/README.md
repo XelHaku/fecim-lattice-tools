@@ -41,13 +41,13 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 
 ```bash
 # Crossbar GUI (standard mode)
-go run ./module2-crossbar/cmd/crossbar-gui
+go run ./cmd/fecim-lattice-tools crossbar
 
 # Crossbar GUI (enhanced mode)
-go run ./module2-crossbar/cmd/crossbar-gui -enhanced
+go run ./cmd/fecim-lattice-tools crossbar -enhanced
 
 # Neural network inference (terminal)
-go run ./module2-crossbar/cmd/crossbar-gui inference -size=64 -layers=3
+go run ./cmd/fecim-lattice-tools crossbar inference -size=64 -layers=3
 ```
 
 ### Simple Example

@@ -29,20 +29,20 @@ Module 6 provides an RTL-to-layout **exploration flow** for FeCIM arrays. It sup
 From the repo root:
 
 ```bash
-go run ./module6-eda/cmd/eda-cli -mode compute -rows 64 -cols 64 -output ./output
+go run ./cmd/fecim-lattice-tools eda cli -mode compute -rows 64 -cols 64 -output ./output
 ```
 
 With optional weights (compute mode only):
 
 ```bash
-go run ./module6-eda/cmd/eda-cli -mode compute -rows 64 -cols 64 \
+go run ./cmd/fecim-lattice-tools eda cli -mode compute -rows 64 -cols 64 \
   -input weights.json -output ./output -name my_design
 ```
 
 ### GUI Application
 
 ```bash
-go run ./module6-eda/cmd/eda-gui
+go run ./cmd/fecim-lattice-tools eda gui
 ```
 
 The current GUI exposes two views:
@@ -54,7 +54,7 @@ The current GUI exposes two views:
 ## CLI Options
 
 ```
-Usage: eda-cli [flags]
+Usage: fecim-lattice-tools eda cli [flags]
 
 Mode Configuration:
   -mode string          Operation mode: storage, memory, or compute (default "compute")

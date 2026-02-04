@@ -1,25 +1,54 @@
-package main
+package comparisoncli
 
 import (
 	"flag"
 	"fmt"
+	"os"
 	"strings"
 
 	"fecim-lattice-tools/module5-comparison/pkg/comparison"
 )
 
-func main() {
-	// Flags
-	showAll := flag.Bool("all", false, "Show all comparisons")
-	showSpecs := flag.Bool("specs", false, "Show architecture specifications")
-	showInference := flag.Bool("inference", false, "Show inference comparison")
-	showDataCenter := flag.Bool("datacenter", false, "Show data center comparison")
-	showAdvantages := flag.Bool("advantages", false, "Show FeCIM advantages")
-	workloadName := flag.String("workload", "mnist", "Workload: mnist, resnet, bert, gpt2, llm")
-	targetTP := flag.Float64("throughput", 10000, "Target throughput (inferences/sec)")
-	noColor := flag.Bool("no-color", false, "Disable color output")
+func Run(args []string) error {
+	fs := flag.NewFlagSet("comparison", flag.ContinueOnError)
+	fs.SetOutput(os.Stdout)
 
-	flag.Parse()
+	// Flags
+	showAll := fs.Bool("all", false, "Show all comparisons")
+	showSpecs := fs.Bool("specs", false, "Show architecture specifications")
+	showInference := fs.Bool("inference", false, "Show inference comparison")
+	showDataCenter := fs.Bool("datacenter", false, "Show data center comparison")
+	showAdvantages := fs.Bool("advantages", false, "Show FeCIM advantages")
+	workloadName := fs.String("workload", "mnist", "Workload: mnist, resnet, bert, gpt2, llm")
+	targetTP := fs.Float64("throughput", 10000, "Target throughput (inferences/sec)")
+	noColor := fs.Bool("no-color", false, "Disable color output")
+	help := fs.Bool("help", false, "Show help")
+	helpShort := fs.Bool("h", false, "Show help (shorthand)")
+
+	fs.Usage = func() {
+		out := fs.Output()
+		fmt.Fprintln(out, "FeCIM Architecture Comparison CLI")
+		fmt.Fprintln(out)
+		fmt.Fprintln(out, "Usage:")
+		fmt.Fprintln(out, "  fecim-lattice-tools comparison cli [options]")
+		fmt.Fprintln(out)
+		fmt.Fprintln(out, "Options:")
+		fs.PrintDefaults()
+	}
+
+	if err := fs.Parse(args); err != nil {
+		fmt.Fprintln(fs.Output(), "Error:", err)
+		fs.Usage()
+		if err == flag.ErrHelp {
+			return nil
+		}
+		return err
+	}
+
+	if *help || *helpShort {
+		fs.Usage()
+		return nil
+	}
 
 	// Default to all if nothing specified
 	if !*showSpecs && !*showInference && !*showDataCenter && !*showAdvantages {
@@ -71,6 +100,8 @@ func main() {
 
 	// Summary
 	printSummary(comp, advantages)
+
+	return nil
 }
 
 func printHeader() {

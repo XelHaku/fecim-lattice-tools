@@ -24,7 +24,7 @@ cd module6-eda
 ./examples/01-basic-8x8/run.sh
 
 # Method 2: Run CLI directly
-go run ./cmd/eda-cli \
+go run ../cmd/fecim-lattice-tools eda cli \
   -input examples/01-basic-8x8/weights.json \
   -output examples/01-basic-8x8/output \
   -rows 8 -cols 8 -levels 30

@@ -49,8 +49,8 @@ Validation
 
   - Run: go test ./module3-mnist/...
   - Run: go test -race ./module3-mnist/pkg/core -run TestConcurrent
-  - If GUI verification is required: go run ./module3-mnist/cmd/mnist-gui
-  - If CLI verification is required: go run ./module3-mnist/cmd/mnist -evaluate (dataset required)
+  - If GUI verification is required: go run ./cmd/fecim-lattice-tools mnist
+  - If CLI verification is required: go run ./cmd/fecim-lattice-tools mnist cli -evaluate (dataset required)
   - Use logs to confirm dual-path inference, quantization, and noise settings are exercised.
   - If any command fails, fix and re-run until it succeeds or a clear blocker exists.
 

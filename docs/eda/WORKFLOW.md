@@ -176,7 +176,7 @@ with open("weights.json", "w") as f:
 ```bash
 # From repository root
 cd module6-eda
-go build -o eda-cli ./cmd/eda-cli
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 ```
 
 ### Basic Usage
@@ -184,7 +184,7 @@ go build -o eda-cli ./cmd/eda-cli
 **With weights (compute mode):**
 
 ```bash
-./eda-cli \
+./fecim-lattice-tools eda cli \
   -mode compute \
   -input weights.json \
   -output ./output \
@@ -197,7 +197,7 @@ go build -o eda-cli ./cmd/eda-cli
 **Without weights (unprogrammed array):**
 
 ```bash
-./eda-cli \
+./fecim-lattice-tools eda cli \
   -mode compute \
   -output ./output \
   -rows 64 \
@@ -207,7 +207,7 @@ go build -o eda-cli ./cmd/eda-cli
 **Storage mode (no weights applicable):**
 
 ```bash
-./eda-cli \
+./fecim-lattice-tools eda cli \
   -mode storage \
   -output ./output \
   -rows 256 \
@@ -239,7 +239,7 @@ go build -o eda-cli ./cmd/eda-cli
 ### Example: Complete Compute Design
 
 ```bash
-./eda-cli \
+./fecim-lattice-tools eda cli \
   -mode compute \
   -input examples/01-basic-8x8/weights.json \
   -output ./my_output \
@@ -938,7 +938,7 @@ EOF
 **Solution:** Increase array size or trim weights:
 ```bash
 # Use larger array
-./eda-cli -input weights.json -rows 64 -cols 64
+./fecim-lattice-tools eda cli -input weights.json -rows 64 -cols 64
 
 # Or subset weights in Python
 import json
@@ -963,7 +963,7 @@ ls -ld ./output
 chmod 755 ./output
 
 # Or use absolute path
-./eda-cli -output /tmp/fecim_output -input weights.json
+./fecim-lattice-tools eda cli -output /tmp/fecim_output -input weights.json
 ```
 
 **Problem:** High quantization error (PSNR < 30 dB)
@@ -971,7 +971,7 @@ chmod 755 ./output
 **Solution:**
 ```bash
 # Increase conductance range
-./eda-cli -input weights.json -gmin 0.1 -gmax 1000
+./fecim-lattice-tools eda cli -input weights.json -gmin 0.1 -gmax 1000
 
 # Or pre-quantize weights to [-1, 1]
 # (30-level system assumes normalized weights)
@@ -992,7 +992,7 @@ grep -E "real|logic|wire\[" output/my_design.v
 iverilog -g2012 -o /dev/null output/my_design.v
 
 # Or regenerate with explicit cell models
-./eda-cli -verilog < verify cell templates >
+./fecim-lattice-tools eda cli -verilog < verify cell templates >
 ```
 
 **Problem:** "ngspice: unrecognized parameter"
@@ -1010,7 +1010,7 @@ awk -F' ' '{
 }' output/my_design.sp
 
 # Regenerate SPICE with validation
-./eda-cli -spice -output ./output
+./fecim-lattice-tools eda cli -spice -output ./output
 ```
 
 ---
@@ -1044,7 +1044,7 @@ grep "^  -" ~/OpenLane/designs/my_fecim/src/crossbar.def | head -5
 # Format: - cell_name cell_type + FIXED ( X Y ) orientation ;
 
 # Regenerate with validation
-./eda-cli -def -output ./output
+./fecim-lattice-tools eda cli -def -output ./output
 ```
 
 **Problem:** "DRC violations"
@@ -1087,7 +1087,7 @@ cat ~/OpenLane/designs/my_fecim/runs/v1/reports/signoff/drc.rpt
 **Solution:**
 ```bash
 # Profile the CLI
-time ./eda-cli -rows 128 -cols 128 -output /tmp/large
+time ./fecim-lattice-tools eda cli -rows 128 -cols 128 -output /tmp/large
 
 # For 128x128: ~5-10 seconds expected
 # For 256x256: ~30-60 seconds expected
@@ -1120,7 +1120,7 @@ gzip my_fecim.gds
 **Solution:**
 ```bash
 # Regenerate with correct architecture
-./eda-cli -arch 1t1r -input weights.json -output ./output
+./fecim-lattice-tools eda cli -arch 1t1r -input weights.json -output ./output
 
 # Verify in Verilog
 grep "instantiate" output/my_design.v | head -1
@@ -1136,7 +1136,7 @@ grep "instantiate" output/my_design.v | head -1
 # Integrate manually into top-level design:
 
 # 1. Generate crossbar with EDA CLI
-./eda-cli -mode compute -input weights.json
+./fecim-lattice-tools eda cli -mode compute -input weights.json
 
 # 2. Design peripherals in Module 4 GUI or separately
 # 3. Wrap in top-level (top.v):

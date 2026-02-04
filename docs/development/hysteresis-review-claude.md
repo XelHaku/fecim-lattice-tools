@@ -42,7 +42,7 @@ The hysteresis module is a ferroelectric simulation system implementing the Prei
 
 ```
 module1-hysteresis/
-├── cmd/hysteresis/main.go          # Standalone entry point
+├── cmd/hysteresis/main.go          # Subcommand implementation
 ├── pkg/
 │   ├── ferroelectric/              # Physics layer
 │   │   ├── preisach.go             # Simplified Preisach model

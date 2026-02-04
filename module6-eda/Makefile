@@ -7,10 +7,10 @@ test:
 	go test ./... -v
 
 run:
-	go run ./cmd/eda-gui
+	go run ../cmd/fecim-lattice-tools eda gui
 
 cli:
-	go run ./cmd/eda-cli -input data/sample_weights_8x8.json -rows 8 -cols 8
+	go run ../cmd/fecim-lattice-tools eda cli -input data/sample_weights_8x8.json -rows 8 -cols 8
 
 clean:
 	go clean

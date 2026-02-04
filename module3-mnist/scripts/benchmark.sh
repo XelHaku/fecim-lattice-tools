@@ -38,11 +38,11 @@ fi
 echo "Using weights file: $WEIGHTS_FILE"
 echo ""
 
-# Build the evaluation tool
-echo "Building evaluation tool..."
+# Build the unified tool
+echo "Building unified tool..."
 cd "$DEMO_DIR"
-go build -o eval_tool ./cmd/mnist 2>/dev/null || {
-    echo "Note: Standalone evaluation tool not available."
+go build -o fecim-lattice-tools ../cmd/fecim-lattice-tools 2>/dev/null || {
+    echo "Note: Unified tool not available."
     echo "Showing expected benchmark results instead."
 
     echo ""
@@ -100,29 +100,29 @@ echo "---------------------------------|----------|---------------------------"
 
 # Benchmark 1: Ideal (no noise)
 echo -n "30-level, no noise              | "
-RESULT=$("$DEMO_DIR/eval_tool" --load "$WEIGHTS_FILE" --evaluate --noise 0.0 2>&1 | grep -o '[0-9]*\.[0-9]*%' | head -1)
+RESULT=$("$DEMO_DIR/fecim-lattice-tools" mnist cli --load "$WEIGHTS_FILE" --evaluate --noise 0.0 2>&1 | grep -o '[0-9]*\.[0-9]*%' | head -1)
 echo "$RESULT    | Ideal simulation"
 
 # Benchmark 2: Low noise
 echo -n "30-level, noise=0.01             | "
-RESULT=$("$DEMO_DIR/eval_tool" --load "$WEIGHTS_FILE" --evaluate --noise 0.01 2>&1 | grep -o '[0-9]*\.[0-9]*%' | head -1)
+RESULT=$("$DEMO_DIR/fecim-lattice-tools" mnist cli --load "$WEIGHTS_FILE" --evaluate --noise 0.01 2>&1 | grep -o '[0-9]*\.[0-9]*%' | head -1)
 echo "$RESULT    | Low noise"
 
 # Benchmark 3: Hardware-calibrated noise
 echo -n "30-level, noise=0.08             | "
-RESULT=$("$DEMO_DIR/eval_tool" --load "$WEIGHTS_FILE" --evaluate --noise 0.08 2>&1 | grep -o '[0-9]*\.[0-9]*%' | head -1)
+RESULT=$("$DEMO_DIR/fecim-lattice-tools" mnist cli --load "$WEIGHTS_FILE" --evaluate --noise 0.08 2>&1 | grep -o '[0-9]*\.[0-9]*%' | head -1)
 echo "$RESULT    | Matches Dr. Tour hardware"
 
 # Benchmark 4: High noise
 echo -n "30-level, noise=0.15             | "
-RESULT=$("$DEMO_DIR/eval_tool" --load "$WEIGHTS_FILE" --evaluate --noise 0.15 2>&1 | grep -o '[0-9]*\.[0-9]*%' | head -1)
+RESULT=$("$DEMO_DIR/fecim-lattice-tools" mnist cli --load "$WEIGHTS_FILE" --evaluate --noise 0.15 2>&1 | grep -o '[0-9]*\.[0-9]*%' | head -1)
 echo "$RESULT    | High noise"
 
 echo "---------------------------------|----------|---------------------------"
 echo ""
 
 # Cleanup
-rm -f "$DEMO_DIR/eval_tool"
+rm -f "$DEMO_DIR/fecim-lattice-tools"
 
 echo "=============================================="
 echo "Literature Comparison"

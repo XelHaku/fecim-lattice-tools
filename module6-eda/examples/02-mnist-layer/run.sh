@@ -14,7 +14,7 @@ echo ""
 mkdir -p "$OUTPUT_DIR"
 
 echo "Compiling 32x32 weight matrix..."
-go run ./cmd/eda-cli \
+go run ../cmd/fecim-lattice-tools eda cli \
   -input "$SCRIPT_DIR/weights.json" \
   -output "$OUTPUT_DIR" \
   -rows 32 \

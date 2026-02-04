@@ -1057,7 +1057,7 @@ Demo 8: "This is why it beats everything else"     ✅ CLI
 **Who it's for:** Everyone (educational foundation)
 
 ```
-Run: cd module1-hysteresis && go build ./cmd/hysteresis && ./hysteresis
+Run: go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-tools hysteresis
 ```
 
 ## Demo 2: Crossbar MVM ✅ Fyne GUI
@@ -1071,7 +1071,7 @@ Run: cd module1-hysteresis && go build ./cmd/hysteresis && ./hysteresis
 **Who it's for:** Engineers, AI researchers
 
 ```
-Run: cd module2-crossbar && go build -o crossbar-gui ./cmd/crossbar-gui && ./crossbar-gui
+Run: go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-tools crossbar
 ```
 
 ## Demo 3: MNIST Neural Network ✅ Fyne GUI
@@ -1087,7 +1087,7 @@ Run: cd module2-crossbar && go build -o crossbar-gui ./cmd/crossbar-gui && ./cro
 **Who it's for:** Investors, media, conferences
 
 ```
-Run: cd module3-mnist && go build -o mnist-gui ./cmd/mnist-gui && ./mnist-gui
+Run: go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-tools mnist
 ```
 
 ## Demo 4: Peripheral Circuits ✅ CLI
@@ -1101,7 +1101,7 @@ Run: cd module3-mnist && go build -o mnist-gui ./cmd/mnist-gui && ./mnist-gui
 **Who it's for:** Foundry partners, system designers
 
 ```
-Run: cd module4-circuits && go run ./cmd/circuits --all
+Run: go run ./cmd/fecim-lattice-tools circuits cli --all
 ```
 
 ## Demo 5: Thermal Simulation ✅ CLI
@@ -1157,7 +1157,7 @@ Run: cd demo7-nonidealities && go run ./cmd/nonidealities --all
 **Who it's for:** Investors, executives
 
 ```
-Run: cd module5-comparison && go run ./cmd/comparison --all --workload=bert
+Run: go run ./cmd/fecim-lattice-tools comparison cli --all --workload=bert
 ```
 
 ```
@@ -1172,23 +1172,23 @@ Comparison outputs are illustrative and model-based. See module5 documentation f
 fecim-lattice-tools/
 │
 ├── module1-hysteresis/      ✅ P-E curve demo (Fyne GUI)
-│   ├── cmd/hysteresis/    ← Main program
+│   ├── cmd/hysteresis/    ← Hysteresis subcommand
 │   ├── pkg/ferroelectric/ ← Preisach model
 │   └── shaders/           ← Vulkan graphics
 │
 ├── module2-crossbar/        ✅ MVM + non-idealities (Fyne GUI)
-│   ├── cmd/crossbar-gui/  ← Main program
+│   ├── cmd/crossbar-gui/  ← Crossbar subcommand implementation
 │   ├── pkg/crossbar/      ← Array model (default 30-level baseline)
 │   └── pkg/gui/           ← IR drop, sneak paths tabs
 │
 ├── module3-mnist/           ✅ MNIST classifier (Fyne GUI)
-│   ├── cmd/mnist-gui/     ← Interactive demo
+│   ├── cmd/mnist-gui/     ← MNIST GUI subcommand
 │   ├── pkg/training/      ← Neural network
 │   ├── pkg/mnist/         ← Data loading
 │   └── data/              ← MNIST dataset
 │
 ├── module4-circuits/        ✅ Peripheral circuits (CLI)
-│   ├── cmd/circuits/      ← DAC/ADC/TIA demo
+│   ├── cmd/circuits/      ← Circuits CLI subcommand
 │   └── pkg/peripherals/   ← Circuit models
 │
 ├── demo5-thermal/         ✅ Thermal simulation (CLI)
@@ -1204,7 +1204,7 @@ fecim-lattice-tools/
 │   └── pkg/nonidealities/ ← IR drop, sneak, drift
 │
 ├── module5-comparison/      ✅ Technology comparison (CLI)
-│   ├── cmd/comparison/    ← CPU vs GPU vs CIM
+│   ├── cmd/comparison/    ← Comparison CLI subcommand
 │   └── pkg/comparison/    ← Workloads, metrics
 │
 ├── docs/                  ← Documentation

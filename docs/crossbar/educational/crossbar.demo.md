@@ -42,13 +42,13 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 cd module2-crossbar
 
 # Build the GUI application
-go build -o crossbar-gui ./cmd/crossbar-gui
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 
 # Run Fyne GUI mode (recommended)
-./crossbar-gui
+./fecim-lattice-tools crossbar
 
 # Enhanced mode with all features
-./crossbar-gui -enhanced
+./fecim-lattice-tools crossbar -enhanced
 ```
 
 ---
@@ -72,7 +72,7 @@ Launch from the unified visualizer:
 ### 2. Standalone GUI Mode
 
 ```bash
-./crossbar-gui
+./fecim-lattice-tools crossbar
 ```
 
 Cross-platform native GUI featuring:
@@ -92,7 +92,7 @@ Cross-platform native GUI featuring:
 ### 3. Enhanced Mode
 
 ```bash
-./crossbar-gui -enhanced
+./fecim-lattice-tools crossbar -enhanced
 ```
 
 Includes all standard features plus:

@@ -58,15 +58,11 @@ go build -ldflags="-s -w" -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 ### Build All Standalone Modules
 
 ```bash
-# Build all 7 demo binaries
-./scripts/build-all.sh
+# Build the unified binary
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 
-# Output:
-# module1-hysteresis/hysteresis
-# module2-crossbar/crossbar-gui
-# module3-mnist/mnist-gui
-# module4-circuits/circuits-gui
-# module5-comparison/comparison-gui
+# Optional: build latex-svg utility (independent)
+go build -o latex-svg ./cmd/latex-svg
 ```
 
 ## Monitoring & Diagnostics

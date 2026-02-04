@@ -1,6 +1,6 @@
 // Command train-ptq trains MNIST network and applies Post-Training Quantization (PTQ)
 // with different quantization levels per layer for optimal accuracy.
-package main
+package mnisttrainptq
 
 import (
 	"encoding/json"
@@ -304,17 +304,17 @@ func (n *Network) Evaluate(images [][]float64, labels []int, config PTQConfig) f
 
 // PTQWeightsFile extends the weight file format with per-layer quantization
 type PTQWeightsFile struct {
-	Layer1Weights      [][]float64 `json:"layer1_weights"`
-	Layer2Weights      [][]float64 `json:"layer2_weights"`
-	Biases1            []float64   `json:"biases1"`
-	Biases2            []float64   `json:"biases2"`
-	L1Scale            float64     `json:"l1_scale"`
-	L1Offset           float64     `json:"l1_offset"`
-	L2Scale            float64     `json:"l2_scale"`
-	L2Offset           float64     `json:"l2_offset"`
-	Layer1QuantLevels  int         `json:"layer1_quant_levels"`
-	Layer2QuantLevels  int         `json:"layer2_quant_levels"`
-	QuantLevels        int         `json:"quant_levels"` // Legacy: uniform levels
+	Layer1Weights     [][]float64 `json:"layer1_weights"`
+	Layer2Weights     [][]float64 `json:"layer2_weights"`
+	Biases1           []float64   `json:"biases1"`
+	Biases2           []float64   `json:"biases2"`
+	L1Scale           float64     `json:"l1_scale"`
+	L1Offset          float64     `json:"l1_offset"`
+	L2Scale           float64     `json:"l2_scale"`
+	L2Offset          float64     `json:"l2_offset"`
+	Layer1QuantLevels int         `json:"layer1_quant_levels"`
+	Layer2QuantLevels int         `json:"layer2_quant_levels"`
+	QuantLevels       int         `json:"quant_levels"` // Legacy: uniform levels
 }
 
 func (n *Network) SavePTQ(filename string, config PTQConfig) error {
@@ -371,7 +371,7 @@ func (n *Network) SavePTQ(filename string, config PTQConfig) error {
 	return os.WriteFile(filename, jsonData, 0644)
 }
 
-func main() {
+func Run(args []string) error {
 	fmt.Println("=== MNIST PTQ Training (Per-Layer Post-Training Quantization) ===")
 	fmt.Println("Training FP32 weights, then evaluating with different quantization per layer")
 	fmt.Println("")
@@ -498,5 +498,5 @@ func main() {
 	}
 
 	fmt.Println("\nDone!")
+	return nil
 }
-

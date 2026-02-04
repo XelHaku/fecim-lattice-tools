@@ -22,8 +22,8 @@ cd /path/to/fecim-lattice-tools
 
 # Or standalone demo
 cd module3-mnist
-go build -o mnist-gui ./cmd/mnist-gui
-./mnist-gui
+go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
+./fecim-lattice-tools mnist
 ```
 
 **First-Time User:**

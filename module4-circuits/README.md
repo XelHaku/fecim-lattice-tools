@@ -77,24 +77,24 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 
 ```bash
 # Show all peripheral details
-go run ./module4-circuits/cmd/circuits -all
+go run ./cmd/fecim-lattice-tools circuits cli -all
 
 # Show all details with file logging
-go run ./module4-circuits/cmd/circuits -all -logger -verbosity 2
+go run ./cmd/fecim-lattice-tools circuits cli -all -logger -verbosity 2
 
 # Show specific circuit
-go run ./module4-circuits/cmd/circuits -dac
-go run ./module4-circuits/cmd/circuits -adc
-go run ./module4-circuits/cmd/circuits -tia
-go run ./module4-circuits/cmd/circuits -pump
+go run ./cmd/fecim-lattice-tools circuits cli -dac
+go run ./cmd/fecim-lattice-tools circuits cli -adc
+go run ./cmd/fecim-lattice-tools circuits cli -tia
+go run ./cmd/fecim-lattice-tools circuits cli -pump
 
 # Show detailed analysis
-go run ./module4-circuits/cmd/circuits -linearity
-go run ./module4-circuits/cmd/circuits -timing
-go run ./module4-circuits/cmd/circuits -power
+go run ./cmd/fecim-lattice-tools circuits cli -linearity
+go run ./cmd/fecim-lattice-tools circuits cli -timing
+go run ./cmd/fecim-lattice-tools circuits cli -power
 
 # Run ISPP write/verify demo (shared hysteresis physics)
-go run ./module4-circuits/cmd/circuits -ispp
+go run ./cmd/fecim-lattice-tools circuits cli -ispp
 ```
 
 ### Run GUI Visualization
@@ -103,8 +103,8 @@ go run ./module4-circuits/cmd/circuits -ispp
 # Start unified application with Module 4 tab
 go run ./cmd/fecim-lattice-tools/main.go
 
-# Or run Module 4 GUI standalone (circuits-gui)
-go run ./module4-circuits/cmd/circuits-gui/main.go
+# Or run Module 4 GUI via subcommand
+go run ./cmd/fecim-lattice-tools circuits
 ```
 
 ## Package Structure

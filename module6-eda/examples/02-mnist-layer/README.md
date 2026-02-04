@@ -24,7 +24,7 @@ cd module6-eda
 ./examples/02-mnist-layer/run.sh
 
 # Or manually:
-go run ./cmd/eda-cli \
+go run ../cmd/fecim-lattice-tools eda cli \
   -input examples/02-mnist-layer/weights.json \
   -output examples/02-mnist-layer/output \
   -rows 32 -cols 32 -levels 30
