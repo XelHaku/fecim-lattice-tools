@@ -599,32 +599,50 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		trailLabel.SetText(fmt.Sprintf("Trail: %d", int(v)))
 	}
 
-	physicsRow := container.NewHBox(a.physicsSelect, eqBtn)
+	physicsRow := container.NewBorder(nil, nil, a.physicsSelect, eqBtn, nil)
+	eFieldHeader := container.NewBorder(nil, nil, a.eFieldLabel, a.eFieldModeLabel, nil)
+	freqEntryRow := container.NewGridWithColumns(2, freqEntry, unitSelect)
+	actionRow := container.NewGridWithColumns(3, a.pauseBtn, resetBtn, eli5Btn)
 
-	// Compact layout
+	section := func(title string, content ...fyne.CanvasObject) fyne.CanvasObject {
+		return widget.NewCard(title, "", container.NewPadded(container.NewVBox(content...)))
+	}
+
 	return container.NewVBox(
-		a.materialBtn,
-		a.waveformSelect,
-		physicsRow,
-		a.levelsLabel,
-		a.levelsEntry,
-		a.wrdRangeLabel,
-		a.wrdRangeSlider,
-		container.NewHBox(a.eFieldLabel, a.eFieldModeLabel),
-		a.eFieldSlider,
-		freqLabel,
-		freqSlider,
-		container.NewHBox(freqEntry, unitSelect),
-		timeScaleLabel,
-		timeScaleSlider,
-		displayFreqLabel,
-		tempLabel,
-		tempSlider,
-		trailLabel,
-		trailSlider,
-		container.NewHBox(a.pauseBtn, resetBtn, eli5Btn),
-		stressLabel,
-		stressSlider,
+		section("Material & Mode",
+			a.materialBtn,
+			a.waveformSelect,
+			physicsRow,
+		),
+		section("Levels & Range",
+			a.levelsLabel,
+			a.levelsEntry,
+			a.wrdRangeLabel,
+			a.wrdRangeSlider,
+		),
+		section("Drive & Timing",
+			eFieldHeader,
+			a.eFieldSlider,
+			freqLabel,
+			freqSlider,
+			freqEntryRow,
+			timeScaleLabel,
+			timeScaleSlider,
+			displayFreqLabel,
+		),
+		section("Environment",
+			tempLabel,
+			tempSlider,
+			stressLabel,
+			stressSlider,
+		),
+		section("Trail",
+			trailLabel,
+			trailSlider,
+		),
+		section("Run",
+			actionRow,
+		),
 	)
 }
 

@@ -108,11 +108,14 @@ func buildLkEquationTab(parent fyne.Window) fyne.CanvasObject {
 
 	eqPanel := buildLkEquationPanel(parent, selectTerm)
 
-	detailScroll := container.NewVScroll(detailCard)
-	detailScroll.SetMinSize(fyne.NewSize(320, 260))
+	eqScroll := container.NewScroll(eqPanel)
+	eqScroll.SetMinSize(fyne.NewSize(240, 240))
 
-	split := container.NewHSplit(eqPanel, detailScroll)
-	split.Offset = 0.62
+	detailScroll := container.NewVScroll(detailCard)
+	detailScroll.SetMinSize(fyne.NewSize(240, 220))
+
+	split := container.NewHSplit(eqScroll, detailScroll)
+	split.Offset = 0.58
 
 	infoTabs := buildLkInfoTabs()
 
@@ -137,11 +140,14 @@ func buildPreisachEquationTab(parent fyne.Window) fyne.CanvasObject {
 
 	eqPanel := buildPreisachEquationPanel(parent, selectTerm)
 
-	detailScroll := container.NewVScroll(detailCard)
-	detailScroll.SetMinSize(fyne.NewSize(320, 260))
+	eqScroll := container.NewScroll(eqPanel)
+	eqScroll.SetMinSize(fyne.NewSize(240, 240))
 
-	split := container.NewHSplit(eqPanel, detailScroll)
-	split.Offset = 0.62
+	detailScroll := container.NewVScroll(detailCard)
+	detailScroll.SetMinSize(fyne.NewSize(240, 220))
+
+	split := container.NewHSplit(eqScroll, detailScroll)
+	split.Offset = 0.58
 
 	infoTabs := buildPreisachInfoTabs()
 
@@ -195,11 +201,14 @@ func buildIsppControllerTab(parent fyne.Window) fyne.CanvasObject {
 		caption,
 	)
 
-	detailScroll := container.NewVScroll(detailCard)
-	detailScroll.SetMinSize(fyne.NewSize(320, 260))
+	eqScroll := container.NewScroll(eqPanel)
+	eqScroll.SetMinSize(fyne.NewSize(240, 240))
 
-	split := container.NewHSplit(eqPanel, detailScroll)
-	split.Offset = 0.62
+	detailScroll := container.NewVScroll(detailCard)
+	detailScroll.SetMinSize(fyne.NewSize(240, 220))
+
+	split := container.NewHSplit(eqScroll, detailScroll)
+	split.Offset = 0.58
 
 	infoTabs := buildIsppInfoTabs()
 

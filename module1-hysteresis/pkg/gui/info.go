@@ -140,11 +140,13 @@ func (a *App) createLogPanel() fyne.CanvasObject {
 	})
 	a.logToggleBtn.Importance = widget.LowImportance
 
-	headerRow := container.NewHBox(logTitle, a.logToggleBtn)
+	headerRow := container.NewBorder(nil, nil, logTitle, a.logToggleBtn, nil)
+	logScroll := container.NewVScroll(a.logText)
+	logScroll.SetMinSize(fyne.NewSize(0, 140))
 
 	return container.NewVBox(
 		headerRow,
-		a.logText,
+		logScroll,
 	)
 }
 

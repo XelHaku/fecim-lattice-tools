@@ -632,7 +632,7 @@ func (a *App) createUI() fyne.CanvasObject {
 
 	// Create cell visualizer (THE memory cell!) - larger for better visibility
 	a.cellViz = widgets.NewCellVisualizer()
-	a.cellViz.SetMinSize(fyne.NewSize(180, 200)) // Increased 30% for prominence
+	a.cellViz.SetMinSize(fyne.NewSize(160, 180)) // Slightly smaller for responsive layouts
 
 	// Create P-E plot - will expand to fill space
 	// Use engine-specific Ec and nominal Pr for initial plot setup
@@ -640,12 +640,12 @@ func (a *App) createUI() fyne.CanvasObject {
 	// Use material's nominal Pr (not GetEffectivePr which recalculates from current state)
 	effPr := a.material.Pr
 	a.plot = widgets.NewPEPlot(effEc*2.5, effPr*1.2, ColorBackground, ColorGrid, ColorAxis, ColorPositive, ColorNegative, ColorWarning)
-	a.plot.SetMinSize(fyne.NewSize(400, 350))
+	a.plot.SetMinSize(fyne.NewSize(360, 300))
 	a.plot.SetMaterialParams(effEc, effPr)
 
 	// Create level indicator (wider for better labels, clickable in Manual mode)
 	a.levelIndicator = widgets.NewLevelIndicator()
-	a.levelIndicator.SetMinSize(fyne.NewSize(80, 350))
+	a.levelIndicator.SetMinSize(fyne.NewSize(70, 300))
 	// Wire up click callback for Manual mode
 	a.levelIndicator.OnLevelClicked = func(targetLevel int) {
 		a.mu.Lock()
@@ -676,6 +676,11 @@ func (a *App) createUI() fyne.CanvasObject {
 
 	// Create controls panel
 	controls := a.createControlsPanel()
+	controlsContent := container.New(&fixedMinWidthLayout{minWidth: 260},
+		container.NewPadded(controls),
+	)
+	controlsScroll := container.NewVScroll(controlsContent)
+	controlsScroll.SetMinSize(fyne.NewSize(260, 0))
 
 	// Create info panel
 	info := a.createInfoPanel()
@@ -728,36 +733,28 @@ func (a *App) createUI() fyne.CanvasObject {
 		container.NewCenter(a.cellViz),
 	)
 
-	// Scrollable content: all information panels with improved spacing
-	leftScrollableContent := container.NewVBox(
-		info,
-		container.NewPadded(widget.NewSeparator()),
-		logPanel,
-		container.NewPadded(widget.NewSeparator()),
-		layout.NewSpacer(),
-		a.isppWidget,
-		container.NewPadded(widget.NewSeparator()),
-		layout.NewSpacer(),
-		a.simVsExpWidget,
+	infoCard := widget.NewCard("State & Material", "", container.NewPadded(info))
+	infoStack := container.NewVBox(
+		infoCard,
+		container.NewPadded(a.isppWidget),
+		container.NewPadded(a.simVsExpWidget),
 	)
-	leftScroll := container.NewScroll(leftScrollableContent)
-	leftScroll.SetMinSize(fyne.NewSize(200, 0)) // Wider for better breathing room
+	infoScroll := container.NewVScroll(infoStack)
+	infoScroll.SetMinSize(fyne.NewSize(220, 0))
+
+	logPanelWrapped := container.NewPadded(logPanel)
+	leftSplit := container.NewVSplit(infoScroll, logPanelWrapped)
+	leftSplit.SetOffset(0.66)
 
 	// Left column: Fixed cell at top, scrollable info below
 	leftColumn := container.NewBorder(
 		cellDisplay,
 		nil, nil, nil,
-		container.NewPadded(leftScroll),
+		container.NewPadded(leftSplit),
 	)
 
 	// Right column: Controls only (compact)
-	controlsWithMinWidth := container.New(&fixedMinWidthLayout{minWidth: 240},
-		container.NewPadded(controls),
-	)
-	rightColumn := container.NewVBox(
-		controlsWithMinWidth,
-		layout.NewSpacer(),
-	)
+	rightColumn := container.NewBorder(nil, nil, nil, nil, controlsScroll)
 
 	// Plot + level in same row using Border layout
 	// Border allows level indicator to be tappable (HSplit may intercept events)
@@ -766,6 +763,7 @@ func (a *App) createUI() fyne.CanvasObject {
 		a.levelIndicator,
 		a.plot,
 	)
+	plotPanel := container.NewPadded(plotAndLevel)
 
 	// Status bar at bottom
 	a.statusLabel = widget.NewLabel("Running...")
@@ -779,7 +777,7 @@ func (a *App) createUI() fyne.CanvasObject {
 	// Zones: [0]=Left (Cell+Info), [1]=Plot+Level, [2]=Controls
 	zones := []fyne.CanvasObject{
 		leftColumn,
-		plotAndLevel,
+		plotPanel,
 		rightColumn,
 	}
 	tabLabels := []string{"Info", "P-E Plot", "Controls"}
@@ -788,10 +786,10 @@ func (a *App) createUI() fyne.CanvasObject {
 	adaptive.SetDesktopLayout(func(zones []fyne.CanvasObject) fyne.CanvasObject {
 		// Desktop: Left (Cell+Info) | Plot | Controls
 		innerSplit := container.NewHSplit(zones[1], zones[2])
-		innerSplit.SetOffset(0.75) // Plot gets 75%, controls get 25%
+		innerSplit.SetOffset(0.70) // Plot gets more space while keeping controls readable
 
 		outerSplit := container.NewHSplit(zones[0], innerSplit)
-		outerSplit.SetOffset(0.20) // Left column gets 20%
+		outerSplit.SetOffset(0.22) // Slightly wider left column for log readability
 
 		return outerSplit
 	})

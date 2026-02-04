@@ -614,8 +614,8 @@ func tableFromRows(rows [][]string, colWidths []float32) fyne.CanvasObject {
 }
 
 func scrollSection(content fyne.CanvasObject) fyne.CanvasObject {
-	scroll := container.NewVScroll(content)
-	scroll.SetMinSize(fyne.NewSize(560, 240))
+	scroll := container.NewScroll(content)
+	scroll.SetMinSize(fyne.NewSize(320, 200))
 	return scroll
 }
 
