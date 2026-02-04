@@ -119,6 +119,7 @@
 | M04 | ~~Energy breakdown annotation (peripheral percentages)~~ | ✅ | Done |
 | M05 | ~~Glossary widget integration~~ | ✅ | Done |
 | M06 | ~~References widget with DOI links~~ | ✅ | Done |
+| M16 | Physics equations UI: cover hysteresis ISPP, Preisach, and Landau (labels + links) | ⏳ | 1hr |
 
 ### P3-D2: Medium-Effort Medium-Priority Fixes
 
@@ -328,11 +329,11 @@ The L-K dynamic physics engine has issues with ISPP write/read demo, particularl
 |----------|-------|------|-----------|------------|
 | P1 Critical | 13 | 13 | 0 | 100% |
 | P2 High | 16 | 16 | 0 | 100% |
-| P3 Medium | 16 | 16 | 0 | 100% |
+| P3 Medium | 17 | 16 | 1 | 94% |
 | P4 Low | 11 | 7 | 4 | 64% |
-| **TOTAL** | **56** | **52** | **4** | **93%** |
+| **TOTAL** | **57** | **52** | **5** | **91%** |
 
-**Estimated Remaining Effort**: ~28 hours
+**Estimated Remaining Effort**: ~29 hours
 
 **Session Progress (2026-01-29)**:
 - Sprint 2: C06 ✅, C07 ✅, C09 ✅, C10 ✅
