@@ -178,10 +178,24 @@ Deliverable
 Baseline (update each run)
 
 - Latest headless log path (refresh when a new headless run is performed):
-  - logs/2026-02-03_17-56-17-fecim.log
+  - logs/2026-02-03_19-29-07-fecim.log
 - Latest headless CSV path (refresh when a new headless CSV is generated):
-  - logs/hysteresis-literature-superlattice-2026-02-03_17-56-19.csv
+  - logs/hysteresis-literature-superlattice-cheema-2020-2026-02-03_19-29-07.csv
 - Note: in this environment, prefer `grep` over `rg` if ripgrep is not installed.
+
+Headless material selector
+
+- You can switch the headless material without code edits:
+  - `FECIM_MATERIAL=fecim_hzo` (default)
+  - `FECIM_MATERIAL=literature_superlattice`
+  - `FECIM_MATERIAL=default_hzo`
+
+Recent evidence (L-K)
+
+- FeCIM HZO + L-K + ISPP now converges across the baseline targets (see `logs/2026-02-03_19-06-32-fecim.log`).
+- Literature Superlattice (64 levels) + L-K shows partial convergence:
+  - MID target can converge (e.g. `ISPP step (MID): ... success=true ... writtenLevel=42 ... overshoots=6` in `logs/2026-02-03_19-29-07-fecim.log`).
+  - High/low extremes still fail to reach target levels within MaxField, indicating LK04 (parameter mismatch / insufficient reachable range).
 
 Recent Changes (2026-02-02)
 

@@ -283,14 +283,15 @@ The L-K dynamic physics engine has issues with ISPP write/read demo, particularl
 |----|-------|------|-----|
 | LK01 | UseNLS not disabled for GUI | `physics_engine.go:68` | Added `UseNLS = false` ✅ |
 | LK02 | Reverse step cap too low (0.95×Ec) | `writer.go:645` | Increased to 1.5×Ec ✅ |
-| LK03 | Numerical overflow in RK4 | `landau.go:250` | Added rate limiter ✅ |
+| LK03 | Numerical overflow in RK4 | `landau.go:250` | Added rate limiter ✅ |  
+| LK03b | LK dynamics frozen by overly-aggressive dP/dt clamp | `shared/physics/landau.go` | Clamp now scales with dt (unfreezes switching) ✅ |
 
 ### Open Issues
 
 | ID | Issue | Priority | Difficulty |
 |----|-------|----------|------------|
 | LK04 | L-K coefficients not calibrated to Ec/Pr | P2 | D3 |
-| LK05 | ISPP controller not optimized for L-K dynamics | P2 | D3 |
+| LK05 | ISPP controller not optimized for L-K dynamics | P2 | D3 | (Superlattice shows many overshoots near MID; needs LK-aware settling/step tuning)
 | LK06 | Missing Q12 in some materials | P3 | D1 | (headless presets patched; defaults cover remaining)
 | LK07 | Need longer WAIT phases for L-K settling | P2 | D2 |
 
@@ -308,8 +309,9 @@ The L-K dynamic physics engine has issues with ISPP write/read demo, particularl
 **Solution**: Physics-engine-aware step sizes, longer settling times
 
 ### Testing Checklist
-- [ ] DefaultHZO + L-K + ISPP → all 30 levels
-- [ ] LiteratureSuperlattice + L-K + ISPP → all 30 levels
+- [ ] DefaultHZO + L-K + ISPP → all levels
+- [ ] FeCIM HZO + L-K + ISPP → baseline targets (✅ headless)
+- [ ] LiteratureSuperlattice + L-K + ISPP → all levels (MID ✅; extremes failing → LK04)
 - [ ] L-K + Sine Wave → proper hysteresis loop
 - [ ] Switch Preisach → L-K mid-sim → smooth transition
 
