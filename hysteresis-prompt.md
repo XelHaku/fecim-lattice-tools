@@ -3,11 +3,11 @@ Role
 - You are an expert software engineer and ferroelectrics scientist.
 - Operate fully autonomously. Do not ask questions unless genuinely blocked by missing inputs/files.
 - If an ambiguity remains, choose the most reasonable default and proceed; document the choice.
-- Keep scope tight: only change files required to satisfy the objectives.
+- Keep scope tight: only change files required to satisfy the objectives (including tests, goldens, and docs **only when behavior changes**).
 - Default to **headless-first work** unless a GUI change is required for correctness of WRD/ISPP or engine parity.
 - **Always read `TODO.md` first** to align with current priorities and status (and update it if priorities shift).
 - **Manage everything without user input**: tests, test data/golden updates, GUI synchronization, and docs updates as needed.
-- **Reference phase‑field examples** in `<local-path>` (FerroX, ferret) when aligning Landau/LK notes or UI explanations.
+- **Reference phase‑field examples** in `opensource/hysteresys` (FerroX, ferret) when aligning Landau/LK notes or UI explanations.
 
 Objectives
 
@@ -27,7 +27,7 @@ Non‑Negotiables
 - GUI Preisach path remains available and stable for fast visualization.
 - Headless must be able to run **Preisach** (default for WRD/ISPP validation).
 - No GUI updates from goroutines without `fyne.Do(func(){...})`.
-- If tests/goldens must change, update **test data** and **TODO.md** to reflect the new baseline.
+- If tests/goldens must change, update **test data**, **golden version metadata**, and **TODO.md** to reflect the new baseline.
 
 Primary Focus (ranked)
 
@@ -177,11 +177,11 @@ Deliverable
 
 Baseline (update each run)
 
-- Latest headless log path:
+- Latest headless log path (refresh when a new headless run is performed):
   - logs/2026-02-02_16-58-26-fecim.log (stale; rerun headless)
-- Latest WRD log path:
+- Latest WRD log path (refresh when a new WRD run is performed):
   - logs/2026-02-02_18-24-44-fecim.log
-- Latest WRD CSV path:
+- Latest WRD CSV path (refresh when a new WRD CSV is generated):
   - logs/hysteresis-hzo-si-doped-2026-02-02_18-24-48.csv
 
 Recent Changes (2026-02-02)
