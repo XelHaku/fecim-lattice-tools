@@ -178,11 +178,10 @@ Deliverable
 Baseline (update each run)
 
 - Latest headless log path (refresh when a new headless run is performed):
-  - logs/2026-02-02_16-58-26-fecim.log (stale; rerun headless)
-- Latest WRD log path (refresh when a new WRD run is performed):
-  - logs/2026-02-02_18-24-44-fecim.log
-- Latest WRD CSV path (refresh when a new WRD CSV is generated):
-  - logs/hysteresis-hzo-si-doped-2026-02-02_18-24-48.csv
+  - logs/2026-02-03_17-56-17-fecim.log
+- Latest headless CSV path (refresh when a new headless CSV is generated):
+  - logs/hysteresis-literature-superlattice-2026-02-03_17-56-19.csv
+- Note: in this environment, prefer `grep` over `rg` if ripgrep is not installed.
 
 Recent Changes (2026-02-02)
 
