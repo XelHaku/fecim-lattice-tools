@@ -5,16 +5,20 @@ Role
 - If an ambiguity remains, choose the most reasonable default and proceed; document the choice.
 - Keep scope tight: only change files required to satisfy the objectives.
 - Default to **headless-first work** unless a GUI change is required for correctness of WRD/ISPP or engine parity.
+- **Always read `TODO.md` first** to align with current priorities and status (and update it if priorities shift).
+- **Manage everything without user input**: tests, test data/golden updates, GUI synchronization, and docs updates as needed.
+- **Reference phase‑field examples** in `<local-path>` (FerroX, ferret) when aligning Landau/LK notes or UI explanations.
 
 Objectives
 
-- Explain **why the Landau-Khalatnikov (L-K / "Landau Kalinokov") math is too slow**: quantify where time is spent and which terms/loops dominate.
-- Preserve **Frankestein equation** fidelity in `docs/hysteresis/hysteresis-gemini.md` while investigating performance
+- Explain **why the Landau-Khalatnikov (L-K)** math is too slow (legacy typo: “Landau Kalinokov” appears in notes): quantify where time is spent and which terms/loops dominate.
+- Preserve **Frankenstein equation** fidelity (legacy typo: “Frankestein” in some notes) in `docs/hysteresis/hysteresis-gemini.md` while investigating performance
   (terms, signs, units, and effective viscosity).
 - Keep **both physics engines** (L-K and Preisach) supported and coherent. Do not remove Preisach.
 - Avoid regressions: WRD/ISPP convergence and autonomous calibration must remain stable.
 - **Run headless WRD/ISPP in Preisach mode** for parity with GUI and to debug target/marker mismatches.
 - Find and fix the **yellow target mismatch bug** (GUI) with evidence from logs and headless parity.
+- Keep the **physics equations UI** accurate for hysteresis ISPP, Preisach, and Landau (labels + links).
 
 Non‑Negotiables
 
@@ -23,6 +27,7 @@ Non‑Negotiables
 - GUI Preisach path remains available and stable for fast visualization.
 - Headless must be able to run **Preisach** (default for WRD/ISPP validation).
 - No GUI updates from goroutines without `fyne.Do(func(){...})`.
+- If tests/goldens must change, update **test data** and **TODO.md** to reflect the new baseline.
 
 Primary Focus (ranked)
 
@@ -31,7 +36,7 @@ Primary Focus (ranked)
 - Identify hot paths: polynomial term evals, allocation churn, logging overhead, GUI sync, and render coupling.
 - Separate **math cost** from **framework cost** (GUI vs headless). Preisach is the fast baseline.
 
-2) Frankestein equation fidelity
+2) Frankenstein equation fidelity
 - Implement exactly the unified L-K + depolarization + series-resistance formulation
   from `docs/hysteresis/hysteresis-gemini.md`.
 - Verify all terms, signs, and units in logs.
@@ -59,6 +64,9 @@ Implementation Notes
   - Preisach (quasi-static): single step per frame for performance.
   - **Headless WRD/ISPP**: run Preisach to match GUI behavior and isolate controller issues.
   - If a CLI engine flag is missing, **inspect the headless entry point** and wire it up.
+- **Physics equations UI** (keep labels/links coherent):
+  - `module1-hysteresis/pkg/gui/widgets/physics_equations.go`
+  - `module1-hysteresis/pkg/gui/widgets/physics_equations_info.go`
 - **Logging**:
   - Per‑step physics logs only at `--verbosity trace`.
   - For performance runs, prefer **aggregated counters** (per frame or per second) over per‑step logs.
@@ -76,7 +84,7 @@ Tasks
 - Record whether adaptive stepping is dominating (e.g., long runs of tiny `dt` near Ec).
 - Confirm whether overhead is math-bound (`pow`/polynomial evals) or glue-bound (allocations/logging/GUI sync).
 
-2) Frankestein equation (no missing terms)
+2) Frankenstein equation (no missing terms)
 - Verify: `dP/dt = (E_applied - k_dep*P - (2*alpha*P + 4*beta*P^3 + 6*gamma*P^5) + xi) / rho_eff`.
 - Ensure `rho_eff = rho + (R_series * A / d)` only when `UseEffectiveViscosity=true`.
 - Confirm `E_eff = E_applied - k_dep*P` is what the solver actually uses.
@@ -111,6 +119,7 @@ Tasks
 
 6) Documentation updates
 - Update docs only when behavior or equations change.
+- Keep `TODO.md` and the physics equations UI scope in sync with current tasks.
 
 Validation
 
@@ -127,7 +136,7 @@ Validation
   - Confirm “TARGET HIT” lines appear in WRD logs.
   - Verify GUI target highlight matches `writeController.TargetLevel` through WRITE→DISPLAY.
 
-Frankestein Equation Checklist
+Frankenstein Equation Checklist
 
 - Uses: `E_eff = E_applied - k_dep*P`.
 - Uses: `dP/dt = (E_eff - (2*alpha*P + 4*beta*P^3 + 6*gamma*P^5) + xi) / rho_eff`.
@@ -153,12 +162,13 @@ Execution Rules (Autonomous)
 - Inspect newest WRD log when GUI WRD is exercised.
 - Prefer minimal, targeted changes; avoid unrelated files.
 - If validation fails, report exact error output and last command run.
+- If GUI behavior changes, update UI labels, physics-equations tabs, and any related golden/test data.
 
 Deliverable
 
 - Concise report:
   - Why L-K math is slow (dominant hot path + evidence).
-  - Frankestein equation verification (what terms/logs confirmed).
+  - Frankenstein equation verification (what terms/logs confirmed).
   - WRD/ISPP target-hit evidence (log lines).
   - Target/marker parity evidence (log lines showing target alignment).
   - Documentation updates (file paths + summary).
