@@ -5,6 +5,8 @@ package main
 
 import (
 	"fmt"
+	"image"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -31,7 +33,22 @@ type moduleFactory struct {
 	create func() (moduleLifecycle, error)
 }
 
+const (
+	layoutAuditEnvVar            = "FECIM_LAYOUT_AUDIT"
+	layoutAuditShowDelay         = 150 * time.Millisecond
+	layoutAuditResizeDelay       = 120 * time.Millisecond
+	layoutAuditTabDelay          = 80 * time.Millisecond
+	layoutAuditOverlayDelay      = 80 * time.Millisecond
+	layoutAuditOverlayCloseDelay = 60 * time.Millisecond
+)
+
+// TestLayoutAudit_AllModulesTabsAndSizes runs the full layout audit.
+// Run with: FECIM_LAYOUT_AUDIT=1 go test -v ./cmd/fecim-lattice-tools/... -run LayoutAudit
+// Or with build tag: go test -tags layoutaudit -v ./cmd/fecim-lattice-tools/... -run LayoutAudit
 func TestLayoutAudit_AllModulesTabsAndSizes(t *testing.T) {
+	if !layoutAuditEnabled() {
+		t.Skipf("Skipping layout audit: set %s=1 or use -tags layoutaudit", layoutAuditEnvVar)
+	}
 	if testing.Short() {
 		t.Skip("Skipping layout audit in short mode")
 	}
@@ -42,7 +59,11 @@ func TestLayoutAudit_AllModulesTabsAndSizes(t *testing.T) {
 	// Use a real app (fonts + layout closer to production). We do not call app.Run();
 	// we only build content, show, resize, and capture.
 	fy := app.New()
-	defer fy.Quit()
+	defer func() {
+		fyne.DoAndWait(func() {
+			fy.Quit()
+		})
+	}()
 
 	sizes := []struct {
 		w, h float32
@@ -71,38 +92,69 @@ func TestLayoutAudit_AllModulesTabsAndSizes(t *testing.T) {
 				t.Fatalf("%s module is nil", m.name)
 			}
 
-			w := fy.NewWindow("LayoutAudit - " + m.name)
-			defer w.Close()
+			var w fyne.Window
+			fyne.DoAndWait(func() {
+				w = fy.NewWindow("LayoutAudit - " + m.name)
+			})
+			if w == nil {
+				t.Fatalf("%s window creation failed", m.name)
+			}
+			t.Cleanup(func() {
+				fyne.DoAndWait(func() {
+					w.Close()
+				})
+			})
 
-			content := mod.BuildContent(fy, w)
-			w.SetContent(container.NewMax(content))
-			w.Show()
+			var content fyne.CanvasObject
+			fyne.DoAndWait(func() {
+				content = mod.BuildContent(fy, w)
+				w.SetContent(container.NewMax(content))
+				w.Show()
+			})
+			if content == nil {
+				t.Fatalf("%s BuildContent returned nil", m.name)
+			}
 
 			// IMPORTANT: avoid calling Start() here—some modules spin simulation/animation loops.
-			time.Sleep(200 * time.Millisecond)
+			time.Sleep(layoutAuditShowDelay)
 
 			for _, sz := range sizes {
 				sz := sz
-				w.Resize(fyne.NewSize(sz.w, sz.h))
-				time.Sleep(200 * time.Millisecond)
+				fyne.DoAndWait(func() {
+					w.Resize(fyne.NewSize(sz.w, sz.h))
+				})
+				time.Sleep(layoutAuditResizeDelay)
 
 				baseName := fmt.Sprintf("layout_%s_%dx%d_base", m.name, int(sz.w), int(sz.h))
-				img := captureWindow(w)
+				var img image.Image
+				fyne.DoAndWait(func() {
+					img = captureWindow(w)
+				})
 				saveTestScreenshot(t, img, baseName)
 				verifyImageNotEmpty(t, img, baseName)
 				captureOverlays(t, w, content, m.name, int(sz.w), int(sz.h), "base")
 
 				// Traverse all AppTabs (including nested). For each tab set, capture each tab.
-				tabSets := findAllAppTabs(content)
+				var tabSets []*container.AppTabs
+				fyne.DoAndWait(func() {
+					tabSets = findAllAppTabs(content)
+				})
 				for k, tabs := range tabSets {
-					for i := 0; i < len(tabs.Items); i++ {
-						tabs.SelectIndex(i)
-						time.Sleep(150 * time.Millisecond)
+					var itemCount int
+					fyne.DoAndWait(func() {
+						itemCount = len(tabs.Items)
+					})
+					for i := 0; i < itemCount; i++ {
+						fyne.DoAndWait(func() {
+							tabs.SelectIndex(i)
+						})
+						time.Sleep(layoutAuditTabDelay)
 						name := fmt.Sprintf("layout_%s_%dx%d_tabs%d_i%d", m.name, int(sz.w), int(sz.h), k, i)
-						img := captureWindow(w)
+						fyne.DoAndWait(func() {
+							img = captureWindow(w)
+						})
 						saveTestScreenshot(t, img, name)
 						verifyImageNotEmpty(t, img, name)
-						captureOverlays(t, w, content, m.name, int(sz.w), int(sz.h), fmt.Sprintf("tabs%d_i%d", k, i))
 					}
 				}
 			}
@@ -195,11 +247,33 @@ func captureOverlays(t *testing.T, win fyne.Window, root fyne.CanvasObject, modu
 		"done":    true,
 	}
 
-	buttons := findAllButtons(root)
+	type buttonInfo struct {
+		button    *widget.Button
+		label     string
+		hasAction bool
+	}
+
+	snapshotButtons := func() []buttonInfo {
+		var infos []buttonInfo
+		fyne.DoAndWait(func() {
+			buttons := findAllButtons(root)
+			infos = make([]buttonInfo, 0, len(buttons))
+			for _, b := range buttons {
+				infos = append(infos, buttonInfo{
+					button:    b,
+					label:     strings.TrimSpace(b.Text),
+					hasAction: b.OnTapped != nil,
+				})
+			}
+		})
+		return infos
+	}
+
+	buttons := snapshotButtons()
 	seenLabel := map[string]int{}
 
 	for _, b := range buttons {
-		label := strings.TrimSpace(b.Text)
+		label := b.label
 		if label == "" {
 			continue
 		}
@@ -207,30 +281,56 @@ func captureOverlays(t *testing.T, win fyne.Window, root fyne.CanvasObject, modu
 		if !allow[norm] {
 			continue
 		}
-		if b.OnTapped == nil {
+		if !b.hasAction {
 			continue
 		}
-
 		// Trigger overlay
-		b.OnTapped()
-		time.Sleep(150 * time.Millisecond)
+		fyne.DoAndWait(func() {
+			if b.button.OnTapped != nil {
+				b.button.OnTapped()
+			}
+		})
+		time.Sleep(layoutAuditOverlayDelay)
 
 		idx := seenLabel[norm]
 		seenLabel[norm] = idx + 1
 		name := fmt.Sprintf("layout_%s_%dx%d_overlay_%s_%s_%d", module, w, h, safeName(norm), safeName(phase), idx)
-		img := captureWindow(win)
+		var img image.Image
+		fyne.DoAndWait(func() {
+			img = captureWindow(win)
+		})
 		saveTestScreenshot(t, img, name)
 		verifyImageNotEmpty(t, img, name)
 
 		// Best-effort close: look for a close/back/dismiss button and tap it.
-		for _, cb := range findAllButtons(root) {
-			cl := strings.ToLower(strings.TrimSpace(cb.Text))
-			if closeWords[cl] && cb.OnTapped != nil {
-				cb.OnTapped()
+		for _, cb := range snapshotButtons() {
+			cl := strings.ToLower(cb.label)
+			if closeWords[cl] && cb.hasAction {
+				fyne.DoAndWait(func() {
+					if cb.button.OnTapped != nil {
+						cb.button.OnTapped()
+					}
+				})
 				break
 			}
 		}
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(layoutAuditOverlayCloseDelay)
+	}
+}
+
+func layoutAuditEnabled() bool {
+	if layoutAuditBuildTagEnabled {
+		return true
+	}
+	value := strings.TrimSpace(os.Getenv(layoutAuditEnvVar))
+	if value == "" {
+		return false
+	}
+	switch strings.ToLower(value) {
+	case "0", "false", "no", "off":
+		return false
+	default:
+		return true
 	}
 }
 
