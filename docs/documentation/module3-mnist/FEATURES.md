@@ -3,8 +3,8 @@
 ## What This Module Does
 
 - Runs dual-path inference: full precision vs CIM.
-- Visualizes activations, confusion matrix, and confidence differences.
-- Provides energy-model visualization alongside accuracy.
+- Visualizes activations and confidence differences in the dual-mode UI; confusion matrix is available in the single-mode MNIST app (`cmd/mnist-gui`) when enabled.
+- Provides model-based energy visualization alongside accuracy.
 
 ## Primary Components
 
@@ -16,7 +16,7 @@
 ## Key Workflows
 
 - Load pretrained weights and run inference.
-- Adjust levels, noise, ADC/DAC bits and compare outputs.
+- Adjust levels and noise; ADC/DAC bits are changed via presets or code/CLI.
 - Use drawing canvas for live digit input.
 
 ## Extension Points

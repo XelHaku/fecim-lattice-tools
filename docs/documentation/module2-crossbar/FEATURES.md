@@ -30,3 +30,4 @@
 - No transistor-level or SPICE transient simulation.
 - Wire models are simplified and not process-specific.
 - Default parameters are for teaching, not calibration.
+- Drift and variation coefficients are assumed unless cited (DOI: (add)).

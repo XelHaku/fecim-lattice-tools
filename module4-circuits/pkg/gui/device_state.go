@@ -475,6 +475,87 @@ func (ds *DeviceState) SetDACVoltage(col int, voltage float64) {
 	}
 }
 
+// DACWriteVoltage converts a target analog write voltage into the DAC's actual output.
+// Returns the applied voltage and the DAC code used. This models DAC quantization (and
+// optional nonlinearity) before the voltage is applied to the array.
+func (ds *DeviceState) DACWriteVoltage(targetVoltage float64) (float64, int) {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
+	return ds.dacWriteVoltageLocked(targetVoltage)
+}
+
+// AppliedWriteVoltageForLevel returns the DAC-applied write voltage for a target level.
+// This is useful for UI previews where the applied voltage (post-DAC) is desired.
+func (ds *DeviceState) AppliedWriteVoltageForLevel(level int, ascending bool) float64 {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
+
+	if ds.voltageCalibration == nil {
+		ds.initVoltageCalibrationInternal()
+	}
+	target := ds.getVoltageForLevelInternal(level, ascending)
+	applied, _ := ds.dacWriteVoltageLocked(target)
+	return applied
+}
+
+// GetEffectiveCellVoltage returns the effective cell voltage considering WL/BL biasing.
+// For passive (0T1R) mode, Vcell = WL - BL. For 1T1R/2T1R, Vcell = BL.
+func (ds *DeviceState) GetEffectiveCellVoltage(row, col int) float64 {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
+	return ds.effectiveCellVoltageLocked(row, col)
+}
+
+func (ds *DeviceState) dacWriteVoltageLocked(targetVoltage float64) (float64, int) {
+	if ds.dac == nil {
+		return targetVoltage, -1
+	}
+	minV := ds.dac.VrefLow
+	maxV := ds.dac.VrefHigh
+	if targetVoltage < minV {
+		targetVoltage = minV
+	}
+	if targetVoltage > maxV {
+		targetVoltage = maxV
+	}
+
+	span := maxV - minV
+	if span == 0 {
+		return targetVoltage, 0
+	}
+
+	normalized := (targetVoltage - minV) / span
+	code := int(math.Round(normalized * float64(ds.dac.Levels()-1)))
+	if code < 0 {
+		code = 0
+	}
+	maxCode := ds.dac.Levels() - 1
+	if code > maxCode {
+		code = maxCode
+	}
+
+	var applied float64
+	if ds.enableDACNonlinearity {
+		applied = ds.dac.ConvertWithNonlinearity(code)
+	} else {
+		applied = ds.dac.Convert(code)
+	}
+
+	return applied, code
+}
+
+func (ds *DeviceState) effectiveCellVoltageLocked(row, col int) float64 {
+	if row < 0 || row >= ds.rows || col < 0 || col >= ds.cols {
+		return 0
+	}
+	bl := ds.dacVoltages[col]
+	if ds.isPassive {
+		wl := ds.wlVoltages[row]
+		return wl - bl
+	}
+	return bl
+}
+
 // SetDACPreset applies a preset pattern using material-derived voltage ranges
 func (ds *DeviceState) SetDACPreset(preset DACMode, params ...float64) {
 	ds.dacMode = preset
@@ -722,12 +803,14 @@ func (ds *DeviceState) Compute(weights [][]int, quantLevels int) {
 		// Sum currents from all active columns
 		totalCurrent := 0.0
 		for c := 0; c < ds.cols; c++ {
-			voltage := ds.dacVoltages[c]
+			blVoltage := ds.dacVoltages[c]
+			voltage := ds.effectiveCellVoltageLocked(r, c)
 
-			// Apply DAC nonlinearity if enabled
-			if ds.enableDACNonlinearity && ds.dac != nil {
-				// Convert voltage to level and back through DAC with nonlinearity
-				normalizedV := voltage / ds.readRange.Max
+			// Apply DAC nonlinearity if enabled (read/compute path only).
+			if ds.enableDACNonlinearity && ds.dac != nil && ds.dacRangeMode == DACRangeRead {
+				// Convert voltage magnitude to level and back through DAC with nonlinearity.
+				voltageMag := math.Abs(voltage)
+				normalizedV := voltageMag / ds.readRange.Max
 				if normalizedV > 1.0 {
 					normalizedV = 1.0
 				}
@@ -735,10 +818,13 @@ func (ds *DeviceState) Compute(weights [][]int, quantLevels int) {
 					normalizedV = 0
 				}
 				level := int(normalizedV * float64(ds.dac.Levels()-1))
-				voltage = ds.dac.ConvertWithNonlinearity(level)
+				voltage = math.Copysign(ds.dac.ConvertWithNonlinearity(level), voltage)
+			} else if ds.isPassive {
+				// For passive mode, use WL/BL effective voltage even without DAC nonlinearity.
+				voltage = ds.wlVoltages[r] - blVoltage
 			}
 
-			if voltage < 0.01 {
+			if math.Abs(voltage) < 0.01 {
 				continue
 			}
 
@@ -760,7 +846,7 @@ func (ds *DeviceState) Compute(weights [][]int, quantLevels int) {
 
 			// Convert to µS for current calculation
 			conductanceUS := conductanceS * 1e6
-			current := conductanceUS * voltage // I = G * V (in µA since G is in µS)
+			current := conductanceUS * math.Abs(voltage) // I = G * |V| (in µA since G is in µS)
 			totalCurrent += current
 		}
 
@@ -773,10 +859,11 @@ func (ds *DeviceState) Compute(weights [][]int, quantLevels int) {
 		if ds.tia != nil {
 			currentA := totalCurrent * 1e-6 // µA to A
 
-			// Count active columns (columns with voltage > 0.01V)
+			// Count active columns (columns with |effective voltage| > 0.01V)
 			activeColCount := 0
-			for _, v := range ds.dacVoltages {
-				if v > 0.01 {
+			for c := 0; c < ds.cols; c++ {
+				v := ds.effectiveCellVoltageLocked(r, c)
+				if math.Abs(v) > 0.01 {
 					activeColCount++
 				}
 			}
@@ -1199,7 +1286,14 @@ func (ds *DeviceState) StartWriteSequence(row, col, targetLevel, currentLevel in
 	ds.writeSequenceState.TargetCol = col
 	ds.writeSequenceState.TargetLevel = targetLevel
 	ds.writeSequenceState.CurrentLevel = currentLevel
-	ds.writeSequenceState.WriteVoltage = ds.getVoltageForLevelInternal(targetLevel, ascending)
+	calibrated := ds.getVoltageForLevelInternal(targetLevel, ascending)
+	writeVoltage := calibrated
+	if ds.isppState.Active && ds.isppState.Voltage > 0 {
+		// Use the current ISPP pulse voltage when available.
+		writeVoltage = ds.isppState.Voltage
+	}
+	applied, _ := ds.dacWriteVoltageLocked(writeVoltage)
+	ds.writeSequenceState.WriteVoltage = applied
 	if startPhase == PhaseHold1 {
 		ds.writeSequenceState.Progress = 0.2
 	} else {

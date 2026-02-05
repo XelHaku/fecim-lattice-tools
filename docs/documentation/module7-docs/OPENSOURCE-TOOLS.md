@@ -1,16 +1,9 @@
 # Module 7: Docs - Open-Source Tools
 
-## When To Use External Tools
+## Used In This Module (Open-Source Dependencies)
 
-- Generating static documentation sites.
-- Running broader search across multiple repositories.
-- Publishing docs with custom theming and CI.
-
-## Recommended Tools (With Rationale)
-
-- MkDocs for fast markdown-to-site builds.
-- Docusaurus for structured documentation portals.
-- Lunr.js or Tantivy for external search indexing.
+- Go toolchain (docs indexer + renderer)
+- Fyne (GUI)
 
 ## Integration Notes
 

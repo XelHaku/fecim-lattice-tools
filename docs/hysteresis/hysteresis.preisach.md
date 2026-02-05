@@ -86,6 +86,8 @@ Preisach‑type models are appropriate for systems exhibiting **wipe‑out** and
 **Short Example (30 Levels)**
 Assume `Ps = 0.55 C/m²`, `N = 30`, `GuardFrac = 0.15`, `rangeFrac = 0.98`.
 
+*Example values are illustrative; cite before external use (DOI: (add)).*
+
 ```text
 effectivePs = Ps * rangeFrac = 0.55 * 0.98 = 0.539 C/m²
 Step = 2*effectivePs/(N-1) = 2*0.539/29 ≈ 0.03717 C/m²

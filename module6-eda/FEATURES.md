@@ -17,6 +17,8 @@ Educational design-suite for FeCIM arrays (exploration, not signoff).
 
 ---
 
+**Note:** PDK support is limited to preset dimensions/labels; no foundry PDK files are bundled (DOI: (add)).
+
 ## Key Defaults (From Code)
 
 | Parameter | Default | Notes |

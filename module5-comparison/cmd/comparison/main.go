@@ -107,27 +107,27 @@ func Run(args []string) error {
 func printHeader() {
 	fmt.Println()
 	fmt.Println("╔══════════════════════════════════════════════════════════════╗")
-	fmt.Println("║         FECIM TECHNOLOGY COMPARISON                    ║")
+	fmt.Println("║         FECIM TECHNOLOGY COMPARISON (MODEL INPUTS)     ║")
 	fmt.Println("║     CPU+DRAM vs GPU vs FeCIM Compute-in-Memory         ║")
 	fmt.Println("╚══════════════════════════════════════════════════════════════╝")
 	fmt.Println()
 
 	// IMPORTANT: Print warning banner about estimated specifications
 	fmt.Println("╔══════════════════════════════════════════════════════════════╗")
-	fmt.Println("║  ⚠️  WARNING: FECIM SPECIFICATIONS ARE ESTIMATED ⚠️     ║")
+	fmt.Println("║  ⚠️  MODEL INPUTS ONLY - NOT VALIDATED ⚠️               ║")
 	fmt.Println("╠══════════════════════════════════════════════════════════════╣")
 	fmt.Println("║  FeCIM is at TRL 4 (lab validation only).             ║")
 	fmt.Println("║  Dr. Tour did NOT disclose chip-level specs (TDP, TOPS).    ║")
 	fmt.Println("║                                                              ║")
-	fmt.Println("║  The FeCIM values below are ESTIMATES for demo        ║")
-	fmt.Println("║  purposes only. Do NOT use for investment decisions.        ║")
+	fmt.Println("║  All CPU/GPU/FeCIM values below are model inputs for  ║")
+	fmt.Println("║  visualization only. Do NOT use for investment decisions.   ║")
 	fmt.Println("║                                                              ║")
-	fmt.Println("║  CLAIMED: 30 analog levels (conference; pending review)      ║")
-	fmt.Println("║  VERIFIED: 32–140 levels (peer-reviewed devices)             ║")
-	fmt.Println("║  VERIFIED: 96–98% MNIST (peer-reviewed)                      ║")
-	fmt.Println("║  VERIFIED: 25-100× vs NAND (Samsung Nature 2025)             ║")
+	fmt.Println("║  Reference inputs (not validated):                           ║")
+	fmt.Println("║  - 30 analog levels (conference claim)                       ║")
+	fmt.Println("║  - Literature ranges for analog states/MNIST                 ║")
+	fmt.Println("║  - Public CPU/GPU datasheets                                 ║")
 	fmt.Println("║                                                              ║")
-	fmt.Println("║  See: opensource/papers/08_Documentation/HONESTY_AUDIT.md   ║")
+	fmt.Println("║  See: docs/comparison/HONESTY_AUDIT.md                       ║")
 	fmt.Println("╚══════════════════════════════════════════════════════════════╝")
 	fmt.Println()
 }
@@ -241,10 +241,10 @@ func showFeCIMAdvantages(renderer *comparison.Renderer, advantages comparison.Fe
 	// Key advantage summary
 	fmt.Println("\nKey Advantage Summary:")
 	fmt.Println(strings.Repeat("─", 60))
-	fmt.Printf("  ⚡ %.0fx more energy efficient than GPU\n", advantages.VsGPU.EnergyReduction)
-	fmt.Printf("  📐 %.0fx smaller chip area than GPU\n", advantages.VsGPU.AreaReduction)
-	fmt.Printf("  🔋 %.0fx lower power than GPU\n", advantages.VsGPU.PowerReduction)
-	fmt.Printf("  💰 %.0fx lower TCO than CPU\n", advantages.VsCPU.CostReduction)
+	fmt.Printf("  ⚡ %.0fx more energy efficient than GPU (model output)\n", advantages.VsGPU.EnergyReduction)
+	fmt.Printf("  📐 %.0fx smaller chip area than GPU (model output)\n", advantages.VsGPU.AreaReduction)
+	fmt.Printf("  🔋 %.0fx lower power than GPU (model output)\n", advantages.VsGPU.PowerReduction)
+	fmt.Printf("  💰 %.0fx lower TCO than CPU (model output)\n", advantages.VsCPU.CostReduction)
 	fmt.Println()
 }
 
@@ -266,13 +266,13 @@ func printSummary(comp comparison.ComparisonResult, adv comparison.FeCIMAdvantag
 		}
 	}
 
-	fmt.Println("FeCIM delivers:")
+	fmt.Println("Model output indicates:")
 	fmt.Println(strings.Repeat("─", 60))
-	fmt.Printf("  • %.0fx energy reduction vs traditional CPU\n", adv.VsCPU.EnergyReduction)
-	fmt.Printf("  • %.0fx throughput improvement vs traditional CPU\n", adv.VsCPU.ThroughputIncrease)
-	fmt.Printf("  • %.0fx power reduction vs GPU accelerator\n", adv.VsGPU.PowerReduction)
-	fmt.Printf("  • %.0fx area reduction vs GPU accelerator\n", adv.VsGPU.AreaReduction)
-	fmt.Printf("  • %.0fx lower annual TCO\n", adv.VsCPU.CostReduction)
+	fmt.Printf("  • %.0fx energy reduction vs traditional CPU (model output)\n", adv.VsCPU.EnergyReduction)
+	fmt.Printf("  • %.0fx throughput improvement vs traditional CPU (model output)\n", adv.VsCPU.ThroughputIncrease)
+	fmt.Printf("  • %.0fx power reduction vs GPU accelerator (model output)\n", adv.VsGPU.PowerReduction)
+	fmt.Printf("  • %.0fx area reduction vs GPU accelerator (model output)\n", adv.VsGPU.AreaReduction)
+	fmt.Printf("  • %.0fx lower annual TCO (model output)\n", adv.VsCPU.CostReduction)
 	fmt.Printf("  • %.1f kg CO2 reduction per day\n",
 		comp.DataCenter[0].CO2Emissions-fecimDC.CO2Emissions)
 	fmt.Println()
@@ -293,21 +293,21 @@ func printSummary(comp comparison.ComparisonResult, adv comparison.FeCIMAdvantag
 	fmt.Println()
 
 	// Why FeCIM wins
-	fmt.Println("Why FeCIM Wins:")
+	fmt.Println("Why FeCIM Wins (model assumptions):")
 	fmt.Println(strings.Repeat("─", 60))
-	fmt.Println("  ✓ Compute-in-Memory: No von Neumann bottleneck")
-	fmt.Println("  ✓ 30 Analog Levels (conference claim): High information density")
-	fmt.Println("  ✓ Ferroelectric: Non-volatile, low power switching")
-	fmt.Println("  ✓ Parallel MVM: Massively parallel matrix operations")
-	fmt.Println("  ✓ Low Voltage: Minimal energy per operation")
+	fmt.Println("  ✓ Compute-in-Memory: No von Neumann bottleneck (assumption)")
+	fmt.Println("  ✓ 30 Analog Levels (conference claim; model input)")
+	fmt.Println("  ✓ Ferroelectric: Non-volatile, low power switching (assumption)")
+	fmt.Println("  ✓ Parallel MVM: Massively parallel matrix operations (assumption)")
+	fmt.Println("  ✓ Low Voltage: Minimal energy per operation (assumption)")
 	fmt.Println()
 
 	// Dr. Tour quote
 	fmt.Println("─────────────────────────────────────────────────────────────")
 	fmt.Println("  \"This could lower the requirements in a data center")
-	fmt.Println("   by 80 to 90%.\" - Dr. external research group")
+	fmt.Println("   by 80 to 90%.\" - Dr. external research group (claim, unverified)")
 	fmt.Println()
-	fmt.Printf("  Achieved: %.0f%% reduction in this comparison\n", percentSavings)
+	fmt.Printf("  Model output: %.0f%% reduction in this comparison\n", percentSavings)
 	fmt.Println("─────────────────────────────────────────────────────────────")
 	fmt.Println()
 }

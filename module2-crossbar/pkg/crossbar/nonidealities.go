@@ -36,12 +36,12 @@ type WireParams struct {
 // Includes parasitic capacitance values for RC delay modeling (H11).
 func DefaultWireParams() *WireParams {
 	return &WireParams{
-		RwordLine: 2.5,    // 2.5 Ohm per cell pitch
-		RbitLine:  2.5,    // 2.5 Ohm per cell pitch
-		Rcontact:  50,     // 50 Ohm contact resistance
+		RwordLine: 2.5,     // 2.5 Ohm per cell pitch
+		RbitLine:  2.5,     // 2.5 Ohm per cell pitch
+		Rcontact:  50,      // 50 Ohm contact resistance
 		CwordLine: 0.2e-15, // 0.2 fF per cell pitch (typical 45nm)
 		CbitLine:  0.2e-15, // 0.2 fF per cell pitch
-		CellPitch: 90e-9,  // 90 nm cell pitch (2× minimum feature size for 45nm)
+		CellPitch: 90e-9,   // 90 nm cell pitch (2× minimum feature size for 45nm)
 	}
 }
 
@@ -74,7 +74,8 @@ type RCDelayAnalysis struct {
 // Uses Elmore delay model for distributed RC lines.
 //
 // For a distributed RC line of length L:
-//   τ_elmore = R_total × C_total / 2 (for load at end)
+//
+//	τ_elmore = R_total × C_total / 2 (for load at end)
 //
 // Reference: IEEE TCAD, Elmore delay modeling for VLSI interconnects
 func (a *Array) AnalyzeRCDelay(params *WireParams, inputVoltage float64) *RCDelayAnalysis {
@@ -244,10 +245,10 @@ func (a *Array) AnalyzeIRDrop(input []float64, params *WireParams) *IRDropAnalys
 	})
 	result := a.AnalyzeIRDropIterative(input, params, nil)
 	getLog().Calculation("AnalyzeIRDrop", map[string]interface{}{
-		"maxDrop":     result.MaxIRDrop,
-		"avgDrop":     result.AvgIRDrop,
-		"variance":    result.IRDropVariance,
-		"worstCell":   result.WorstCaseCell,
+		"maxDrop":   result.MaxIRDrop,
+		"avgDrop":   result.AvgIRDrop,
+		"variance":  result.IRDropVariance,
+		"worstCell": result.WorstCaseCell,
 	}, result)
 	return result
 }
@@ -685,7 +686,7 @@ func (a *Array) MVMWithIRDrop(input []float64, params *WireParams) ([]float64, *
 			effectiveV := input[j] * irAnalysis.EffectiveVoltage[i][j]
 			quantizedInput := a.quantizeDAC(effectiveV)
 
-			g := a.cells[i][j].Conductance * a.cells[i][j].NoiseFactor
+			g := a.cells[i][j].Conductance * a.GetProcessVariationFactor(i, j)
 			sum += g * quantizedInput
 		}
 

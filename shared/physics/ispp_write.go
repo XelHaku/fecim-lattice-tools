@@ -29,6 +29,9 @@ type WriteController struct {
 	VMin float64
 	VMax float64
 
+	// FailureReason is set when WriteTarget fails (e.g., unreachable due to bounds).
+	FailureReason string
+
 	// Optional hooks for headless diagnostics and CSV logging.
 	StepFunc  func(E, dt float64) float64
 	EventHook func(event WriteEvent)
@@ -76,6 +79,20 @@ func (c *WriteController) WriteTargetWithReset(targetG float64, reset bool) (att
 
 func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int, success bool, overshootCount int) {
 	log := getISPPLogger()
+	c.FailureReason = ""
+
+	if c.Material == nil {
+		c.FailureReason = "material is nil"
+		log.Input("WriteTarget", map[string]interface{}{"status": "Failed", "reason": c.FailureReason})
+		c.emitEvent(WriteEvent{Phase: "Failed", Attempt: 0, TargetG: targetG})
+		return 0, false, 0
+	}
+	if targetG < c.Material.Gmin || targetG > c.Material.Gmax {
+		c.FailureReason = "target conductance out of bounds"
+		log.Input("WriteTarget", map[string]interface{}{"status": "Failed", "reason": c.FailureReason, "targetG": targetG, "gmin": c.Material.Gmin, "gmax": c.Material.Gmax})
+		c.emitEvent(WriteEvent{Phase: "Failed", Attempt: 0, TargetG: targetG})
+		return 0, false, 0
+	}
 
 	targetP := ConductanceToPolarization(targetG, c.Material.Gmin, c.Material.Gmax, c.Material.Ps)
 
@@ -162,6 +179,12 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 				vGuess = c.VMax
 			}
 			vPulse = direction * vGuess
+			if c.MinVoltage > 0 {
+				absV := math.Abs(vPulse)
+				if absV > 0 && absV < c.MinVoltage {
+					vPulse = math.Copysign(c.MinVoltage, vPulse)
+				}
+			}
 			log.Calculation("WriteTarget", map[string]interface{}{
 				"step":     "Predict",
 				"model":    "atanh",
@@ -197,6 +220,12 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 			}
 			midpoint := c.VMin + bias*(c.VMax-c.VMin)
 			vPulse = direction * midpoint
+			if c.MinVoltage > 0 {
+				absV := math.Abs(vPulse)
+				if absV > 0 && absV < c.MinVoltage {
+					vPulse = math.Copysign(c.MinVoltage, vPulse)
+				}
+			}
 			log.Calculation("WriteTarget", map[string]interface{}{
 				"step":     "BinarySearch",
 				"vPulse":   vPulse,
@@ -221,6 +250,13 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 			})
 		}
 
+		// Enforce MinVoltage as a guardrail for non-zero pulses.
+		if c.MinVoltage > 0 {
+			absV := math.Abs(vPulse)
+			if absV > 0 && absV < c.MinVoltage {
+				vPulse = math.Copysign(c.MinVoltage, vPulse)
+			}
+		}
 		eField := vPulse / c.Material.Thickness
 		c.applyPulse(eField, c.PulseWidth)
 
@@ -321,68 +357,106 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 		} else {
 			overshoots++
 
-			resetField := -direction * c.MaxVoltage * 1.5
-			eResetField := resetField / c.Material.Thickness
-			c.emitEvent(WriteEvent{
-				Phase:      "Reset",
-				Attempt:    i + 1,
-				VPulse:     vPulse,
-				VMin:       c.VMin,
-				VMax:       c.VMax,
-				TargetP:    targetP,
-				TargetG:    targetG,
-				CurrentP:   postP,
-				CurrentG:   postG,
-				Error:      error,
-				Direction:  direction,
-				Overshoots: overshoots,
-				ResetField: resetField,
-			})
-			c.applyPulse(eResetField, c.PulseWidth*2)
+			// Overshoot handling:
+			// - If reset==true (legacy behavior), perform a hard reset pulse.
+			// - If reset==false (used in tests and some UI flows), avoid forcing saturation;
+			//   just tighten the voltage bracket and continue.
+			if reset {
+				resetField := -direction * c.MaxVoltage * 1.5
+				eResetField := resetField / c.Material.Thickness
+				c.emitEvent(WriteEvent{
+					Phase:      "Reset",
+					Attempt:    i + 1,
+					VPulse:     vPulse,
+					VMin:       c.VMin,
+					VMax:       c.VMax,
+					TargetP:    targetP,
+					TargetG:    targetG,
+					CurrentP:   postP,
+					CurrentG:   postG,
+					Error:      error,
+					Direction:  direction,
+					Overshoots: overshoots,
+					ResetField: resetField,
+				})
+				c.applyPulse(eResetField, c.PulseWidth*2)
 
-			log.Calculation("WriteTarget", map[string]interface{}{
-				"decision":    "Overshoot",
-				"overshoots":  overshoots,
-				"resetField":  resetField,
-				"eResetField": eResetField,
-			}, nil)
-			c.emitEvent(WriteEvent{
-				Phase:      "Overshoot",
-				Attempt:    i + 1,
-				VPulse:     vPulse,
-				VMin:       c.VMin,
-				VMax:       c.VMax,
-				TargetP:    targetP,
-				TargetG:    targetG,
-				CurrentP:   postP,
-				CurrentG:   postG,
-				Error:      error,
-				Direction:  direction,
-				Overshoots: overshoots,
-				ResetField: resetField,
-			})
+				log.Calculation("WriteTarget", map[string]interface{}{
+					"decision":    "Overshoot",
+					"overshoots":  overshoots,
+					"resetField":  resetField,
+					"eResetField": eResetField,
+				}, nil)
+				c.emitEvent(WriteEvent{
+					Phase:      "Overshoot",
+					Attempt:    i + 1,
+					VPulse:     vPulse,
+					VMin:       c.VMin,
+					VMax:       c.VMax,
+					TargetP:    targetP,
+					TargetG:    targetG,
+					CurrentP:   postP,
+					CurrentG:   postG,
+					Error:      error,
+					Direction:  direction,
+					Overshoots: overshoots,
+					ResetField: resetField,
+				})
 
-			c.VMax = math.Abs(vPulse)
-			c.VMin = 0.0
-
-			c.Solver.SetState(-direction * math.Abs(c.Material.Pr))
+				c.VMax = math.Abs(vPulse)
+				c.VMin = 0.0
+				c.Solver.SetState(-direction * math.Abs(c.Material.Pr))
+			} else {
+				c.VMax = math.Abs(vPulse)
+				log.Calculation("WriteTarget", map[string]interface{}{
+					"decision":   "OvershootNoReset",
+					"overshoots": overshoots,
+					"vMax":       c.VMax,
+				}, nil)
+				c.emitEvent(WriteEvent{
+					Phase:      "OvershootNoReset",
+					Attempt:    i + 1,
+					VPulse:     vPulse,
+					VMin:       c.VMin,
+					VMax:       c.VMax,
+					TargetP:    targetP,
+					TargetG:    targetG,
+					CurrentP:   postP,
+					CurrentG:   postG,
+					Error:      error,
+					Direction:  direction,
+					Overshoots: overshoots,
+				})
+			}
 		}
 	}
 
 	if !success {
+		finalP := c.Solver.GetState()
+		finalG := PolarizationToConductance(finalP, c.Material.Ps, c.Material.Gmin, c.Material.Gmax)
+		finalErr := finalG - targetG
+		c.FailureReason = "max iterations exceeded"
+		// If we are still undershooting while already at max voltage, treat as unreachable by bounds.
+		if direction*finalErr < 0 && c.MaxVoltage > 0 && c.VMax >= c.MaxVoltage*0.999 {
+			c.FailureReason = "max voltage limit reached"
+		}
 		log.Input("WriteTarget", map[string]interface{}{
 			"status":     "Failed",
 			"attempts":   c.MaxIterations,
 			"overshoots": overshoots,
-			"reason":     "Max iterations exceeded",
+			"reason":     c.FailureReason,
+			"finalG":     finalG,
+			"finalP":     finalP,
+			"error":      finalErr,
 		})
 		c.emitEvent(WriteEvent{
 			Phase:      "Failed",
 			Attempt:    c.MaxIterations,
 			TargetP:    targetP,
 			TargetG:    targetG,
-			CurrentP:   c.Solver.GetState(),
-			CurrentG:   PolarizationToConductance(c.Solver.GetState(), c.Material.Ps, c.Material.Gmin, c.Material.Gmax),
+			CurrentP:   finalP,
+			CurrentG:   finalG,
+			Error:      finalErr,
 			Direction:  direction,
 			Overshoots: overshoots,
 		})

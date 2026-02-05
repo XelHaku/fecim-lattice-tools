@@ -324,8 +324,8 @@ func TestFormatFunctions(t *testing.T) {
 	}
 }
 
-// TestFeCIM80PercentReduction verifies Dr. Tour's claim.
-func TestFeCIM80PercentReduction(t *testing.T) {
+// TestModelPowerReductionTarget logs whether the model hits the 80-90% target.
+func TestModelPowerReductionTarget(t *testing.T) {
 	workload := ResNet50Workload()
 	targetThroughput := 100000.0 // 100K inferences/sec
 
@@ -335,7 +335,7 @@ func TestFeCIM80PercentReduction(t *testing.T) {
 	// Calculate power reduction percentage
 	powerReduction := (1 - ironMetrics.TotalPower/cpuMetrics.TotalPower) * 100
 
-	// Dr. Tour claims 80-90% reduction
+	// Model input target: 80-90% reduction
 	if powerReduction < 80 {
 		t.Logf("Power reduction: %.1f%% (target: 80-90%%)", powerReduction)
 		// This is informational, not a strict test failure

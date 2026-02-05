@@ -204,12 +204,6 @@ func (toc *TableOfContentsWidget) refresh() {
 		return
 	}
 
-	// Add title
-	title := canvas.NewText("Table of Contents", theme.ForegroundColor())
-	title.TextStyle = fyne.TextStyle{Bold: true}
-	title.TextSize = 14
-	items = append(items, title)
-
 	// Render headings with indentation
 	for _, heading := range toc.headings {
 		anchor := heading.Anchor // Capture for closure

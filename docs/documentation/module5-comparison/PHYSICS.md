@@ -20,6 +20,27 @@ Throughput = Ops / Time
 Efficiency = Ops / Energy
 ```
 
+## ROI Calculations (Model Inputs)
+
+All ROI values in Module 5 are **model inputs / model outputs** for visualization only.
+
+GUI calculator (energy per inference in µJ):
+
+```
+E_inf(µJ) = MACs * Energy_fJ / 1e9
+P(W) = E_inf(µJ) * InferencesPerSec / 1e6
+Cost_month($) = (P(W) / 1000) * HoursPerMonth * $/kWh
+Savings_year($) = (GPU_cost - FeCIM_cost) * 12 * ServerScale
+```
+
+Comparison engine (architecture.go):
+
+```
+Energy_mJ = TDP_W * Latency_ms
+Energy_kWh = Energy_mJ / 3.6e9
+Cost_per_inference($) = Energy_kWh * $/kWh
+```
+
 ## Parameters And Units
 
 | Symbol | Meaning | Units |
@@ -28,12 +49,20 @@ Efficiency = Ops / Energy
 | t | Time | seconds |
 | E | Energy | Joules |
 | T | Throughput | ops/s |
+| MACs | Multiply-accumulate count per inference | ops |
+| Energy_fJ | Energy per MAC (model input) | fJ/op |
+| InferencesPerSec | Inference rate (model input) | 1/s |
+| HoursPerMonth | Hours per month (model input) | hours |
+| $/kWh | Electricity price (model input) | USD/kWh |
+| GPU_cost, FeCIM_cost | Monthly cost inputs | USD/month |
+| ServerScale | Number of servers (model input) | count |
 
 ## Assumptions And Limits
 
 - Modeled numbers depend on configuration assumptions.
 - Benchmarks are representative subsets.
 - Comparisons should be interpreted with the honesty audit.
+- ROI and cost figures are illustrative model outputs, not financial forecasts.
 
 ## Where It Lives In Code
 

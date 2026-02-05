@@ -109,7 +109,7 @@ func createHardwareRealityContent() fyne.CanvasObject {
 		widget.NewLabelWithStyle("Accuracy Depends on Configuration", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabel(""),
 		widget.NewLabel("Simulation (this demo): 85-98% depending on noise, levels, ADC bits"),
-		widget.NewLabel("Peer-reviewed FeCIM: 96.6% (Nature Commun. 2023), 98.24% (ScienceDirect 2025)"),
+		widget.NewLabel("Peer-reviewed analog results: 96.6% FeFET (Nature Commun. 2023), 98.24% FTJ (ScienceDirect 2025, non-FeCIM)"),
 		widget.NewLabel("Software baseline: 98-99% (FP32); CIM: 92-98% (peer-reviewed literature)"),
 		widget.NewSeparator(),
 
@@ -135,8 +135,8 @@ func createHardwareRealityContent() fyne.CanvasObject {
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("Energy Efficiency Advantage", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-		widget.NewLabel("Verified: 25-100× more efficient than NAND Flash"),
-		widget.NewLabel("Reference: Samsung Nature 2025"),
+		widget.NewLabel("Reported in literature: 25-100× vs NAND/GPU (not verified here)"),
+		widget.NewLabel("This UI uses model inputs (Horowitz 2014 baseline)"),
 		widget.NewLabel(""),
 		widget.NewLabel("FeCIM Energy: ~50 fJ/MAC (ferroelectric switching + analog MVM)"),
 		widget.NewLabel(""),
@@ -225,14 +225,14 @@ func createAboutContent() fyne.CanvasObject {
 	return container.NewVBox(
 		widget.NewLabelWithStyle("MNIST FeCIM Demo", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		widget.NewLabel("Educational Visualization of Ferroelectric Compute-in-Memory"),
-		widget.NewLabel("Peer-reviewed accuracy: 96.6-98.24% (Nature Commun. 2023, ScienceDirect 2025)"),
+		widget.NewLabel("Literature accuracy: 96.6% FeFET, 98.24% FTJ (non-FeCIM)"),
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("This Demo Answers Four Key Questions:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabel("1. What are 30 analog levels? (Physics + competitive advantage)"),
 		widget.NewLabel("2. How does accuracy depend on configuration? (Noise, levels, ADC)"),
 		widget.NewLabel("3. What happens when hardware fails? (Quantization, noise, ADC)"),
-		widget.NewLabel("4. Why does this matter? (25-100x energy efficiency vs NAND)"),
+		widget.NewLabel("4. Why does this matter? (model-based energy gains reported in literature)"),
 		widget.NewSeparator(),
 
 		widget.NewLabelWithStyle("Neural Network Architecture", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),

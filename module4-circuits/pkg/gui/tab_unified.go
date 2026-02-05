@@ -5,8 +5,10 @@ package gui
 import (
 	"fmt"
 	"image/color"
+	"math"
 	"math/rand"
 	"strconv"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -299,8 +301,10 @@ func (ca *CircuitsApp) resizeArray(rows, cols int) {
 
 	// Reinitialize weight matrix
 	ca.arrayWeights = make([][]int, rows)
+	ca.halfSelectResidue = make([][]float64, rows)
 	for i := range ca.arrayWeights {
 		ca.arrayWeights[i] = make([]int, cols)
+		ca.halfSelectResidue[i] = make([]float64, cols)
 		// Initialize to mid-level (like a fresh device)
 		for j := range ca.arrayWeights[i] {
 			ca.arrayWeights[i][j] = ca.quantLevels / 2
@@ -725,8 +729,15 @@ func (ca *CircuitsApp) onUnifiedCellTapped(row, col int) {
 // UI UPDATE HELPERS
 // ============================================================================
 
-// recomputeAndRefresh runs computation and updates all UI elements
+const uiRefreshMinInterval = 50 * time.Millisecond
+
+// recomputeAndRefresh runs computation and updates all UI elements (throttled).
 func (ca *CircuitsApp) recomputeAndRefresh() {
+	ca.scheduleRecomputeAndRefresh(false)
+}
+
+// recomputeAndRefreshNow forces an immediate recompute + UI refresh.
+func (ca *CircuitsApp) recomputeAndRefreshNow() {
 	ca.mu.RLock()
 	weights := ca.arrayWeights
 	levels := ca.quantLevels
@@ -746,6 +757,37 @@ func (ca *CircuitsApp) recomputeAndRefresh() {
 
 	// Refresh array canvas
 	ca.refreshUnifiedArray()
+}
+
+func (ca *CircuitsApp) scheduleRecomputeAndRefresh(force bool) {
+	if force {
+		ca.recomputeAndRefreshNow()
+		return
+	}
+
+	now := time.Now()
+	ca.uiUpdateMu.Lock()
+	if ca.lastUIUpdate.IsZero() || now.Sub(ca.lastUIUpdate) >= uiRefreshMinInterval {
+		ca.lastUIUpdate = now
+		ca.uiUpdateMu.Unlock()
+		ca.recomputeAndRefreshNow()
+		return
+	}
+	if ca.pendingUIUpd {
+		ca.uiUpdateMu.Unlock()
+		return
+	}
+	delay := uiRefreshMinInterval - now.Sub(ca.lastUIUpdate)
+	ca.pendingUIUpd = true
+	ca.uiUpdateMu.Unlock()
+
+	time.AfterFunc(delay, func() {
+		ca.uiUpdateMu.Lock()
+		ca.lastUIUpdate = time.Now()
+		ca.pendingUIUpd = false
+		ca.uiUpdateMu.Unlock()
+		ca.recomputeAndRefreshNow()
+	})
 }
 
 // refreshUnifiedArray refreshes the array canvas
@@ -805,30 +847,38 @@ func (ca *CircuitsApp) updateCellInfo() {
 		conductanceUS = 1.0 + float64(level)/float64(levels-1)*99.0
 	}
 
-	voltage := ca.deviceState.GetDACVoltage(selectedCol)
+	blVoltage := ca.deviceState.GetDACVoltage(selectedCol)
+	wlVoltage := ca.deviceState.GetWLVoltage(selectedRow)
+	effectiveVoltage := ca.deviceState.GetEffectiveCellVoltage(selectedRow, selectedCol)
 	matName := ca.deviceState.GetMaterialName()
 
 	// Calculate expected current I = G x V
-	expectedCurrent := conductanceUS * voltage // uA
+	expectedCurrent := conductanceUS * math.Abs(effectiveVoltage) // uA
 
 	// Get actual row output (includes all cells in row if active)
 	rowCurrent := ca.deviceState.GetRowCurrent(selectedRow)
 	rowVoltage := ca.deviceState.GetRowVoltage(selectedRow)
 	adcLevel := ca.deviceState.GetRowLevel(selectedRow)
 	isActive := ca.deviceState.IsRowActive(selectedRow)
+	isPassive := ca.deviceState.IsPassiveMode()
 
 	fyne.Do(func() {
 		// Build detailed info string with signal chain data
 		var infoStr string
-		if isActive && voltage > 0.01 {
+		if isActive && math.Abs(effectiveVoltage) > 0.01 {
 			// Show full signal chain: G -> I -> TIA -> ADC
-			infoStr = fmt.Sprintf("Cell [%d,%d]: State %d/%d | G=%.1fuS | BL=%.2fV -> I=%.1fuA -> TIA=%.2fV -> ADC=%d | %s",
-				selectedRow, selectedCol, level, levels-1, conductanceUS, voltage, expectedCurrent, rowVoltage, adcLevel, matName)
+			if isPassive {
+				infoStr = fmt.Sprintf("Cell [%d,%d]: State %d/%d | G=%.1fuS | WL=%.2fV BL=%.2fV -> Vcell=%.2fV -> I=%.1fuA -> TIA=%.2fV -> ADC=%d | %s",
+					selectedRow, selectedCol, level, levels-1, conductanceUS, wlVoltage, blVoltage, effectiveVoltage, expectedCurrent, rowVoltage, adcLevel, matName)
+			} else {
+				infoStr = fmt.Sprintf("Cell [%d,%d]: State %d/%d | G=%.1fuS | BL=%.2fV -> I=%.1fuA -> TIA=%.2fV -> ADC=%d | %s",
+					selectedRow, selectedCol, level, levels-1, conductanceUS, blVoltage, expectedCurrent, rowVoltage, adcLevel, matName)
+			}
 		} else {
 			// Cell not being sensed
 			infoStr = fmt.Sprintf("Cell [%d,%d]: State %d/%d | G=%.1fuS | (Row %s, BL=%.2fV) | %s",
 				selectedRow, selectedCol, level, levels-1, conductanceUS,
-				map[bool]string{true: "ON", false: "OFF"}[isActive], voltage, matName)
+				map[bool]string{true: "ON", false: "OFF"}[isActive], blVoltage, matName)
 		}
 		ca.sharedCellInfoLabel.SetText(infoStr)
 	})
@@ -1006,15 +1056,20 @@ func (ca *CircuitsApp) onWriteLevelChanged(level int) {
 	}
 
 	// Calculate voltage for display only (don't apply to DAC)
-	voltage := ca.deviceState.CalculateVoltageForState(level, ca.quantLevels)
-	logInput("write_level=%d voltage=%.3f", level, voltage)
+	targetVoltage := ca.deviceState.CalculateVoltageForState(level, ca.quantLevels)
+	appliedVoltage := targetVoltage
+	logInput("write_level=%d voltage=%.3f", level, targetVoltage)
 
 	fyne.Do(func() {
 		if ca.mfuxWriteLevelLabel != nil {
 			ca.mfuxWriteLevelLabel.SetText(fmt.Sprintf("L:%d", level))
 		}
 		if ca.mfuxWriteVoltageLabel != nil {
-			ca.mfuxWriteVoltageLabel.SetText(fmt.Sprintf("%.2fV", voltage))
+			if math.Abs(appliedVoltage-targetVoltage) > 0.01 {
+				ca.mfuxWriteVoltageLabel.SetText(fmt.Sprintf("%.2fV (DAC %.2fV)", targetVoltage, appliedVoltage))
+			} else {
+				ca.mfuxWriteVoltageLabel.SetText(fmt.Sprintf("%.2fV", appliedVoltage))
+			}
 		}
 	})
 }

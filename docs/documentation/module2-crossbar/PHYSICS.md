@@ -28,12 +28,18 @@ V_drop ≈ I * R_wire
 | V | Input voltage | Volts |
 | I | Output current | Amps |
 | R_wire | Wire resistance | Ohms |
+| G_ij | Cell conductance at row i, col j (normalized in baseline MVM) | unitless (0–1) or Siemens |
+| V_j | Input voltage at column j | Volts |
+| I_i | Row-summed output current | Amps |
+| V_drop | Voltage drop along wire | Volts |
+| N_cols | Number of columns in array | count |
 
 ## Assumptions And Limits
 
 - Linear conductance model for ideal MVM.
 - Non-idealities are simplified and not device-calibrated.
 - Noise is modeled as additive perturbations.
+- Baseline MVM uses normalized conductance; physical units are applied in analysis paths.
 
 ## Where It Lives In Code
 

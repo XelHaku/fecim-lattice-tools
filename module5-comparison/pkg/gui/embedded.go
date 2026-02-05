@@ -21,31 +21,31 @@ func NewEmbeddedComparisonApp() *EmbeddedComparisonApp {
 		currentInferences: 10000,
 	}
 
-	// Initialize energy specs using constants from app.go
+	// Initialize energy specs using constants from app.go (model inputs)
 	// Source: docs/videos/ironlattice-youtube-script.md line 205
 	// "CPU plus DRAM: 1000 picojoules. GPU plus HBM: 100 picojoules. FeCIM: under 1 picojoule."
 	ca.cpuSpec = EnergySpec{
 		Name:          "CPU + DRAM",
 		EnergyFJ:      cpuEnergyPJPerMAC * 1000, // 1,000,000 fJ/MAC
-		Source:        "Intel/AMD published specs",
-		Verified:      true,
-		SourceDetails: "Includes memory access energy (~640 pJ for DRAM fetch + ~3-5 pJ for MAC).",
+		Source:        "Model input (public CPU/DRAM datasheets)",
+		Verified:      false,
+		SourceDetails: "Model input: includes memory access energy (~640 pJ for DRAM fetch + ~3-5 pJ for MAC).",
 	}
 
 	ca.gpuSpec = EnergySpec{
 		Name:          "GPU + HBM",
 		EnergyFJ:      gpuEnergyPJPerMAC * 1000, // 100,000 fJ/MAC
-		Source:        "NVIDIA H100 specifications",
-		Verified:      true,
-		SourceDetails: "H100 SXM: 700W TDP, ~3958 TFLOPS FP16. HBM access dominates.",
+		Source:        "Model input (public GPU/HBM datasheets)",
+		Verified:      false,
+		SourceDetails: "Model input: H100 SXM 700W TDP, ~3958 TFLOPS FP16; HBM access dominates.",
 	}
 
 	ca.fecimSpec = EnergySpec{
 		Name:          "FeCIM",
 		EnergyFJ:      fecimEnergyPJPerMAC * 1000, // 1,000 fJ/MAC
-		Source:        "Dr. Tour's presentation",
+		Source:        "Model input (COSM 2025 conference)",
 		Verified:      false,
-		SourceDetails: "Under 1 picojoule per MAC.",
+		SourceDetails: "Model input: under 1 picojoule per MAC (conference claim).",
 	}
 
 	return &EmbeddedComparisonApp{ComparisonApp: ca}

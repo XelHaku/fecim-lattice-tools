@@ -271,11 +271,11 @@ type CategoryBadge struct {
 
 // CategoryColors maps category names to colors
 var CategoryColors = map[string]color.Color{
-	"ELI5":     fecimTheme.ColorSuccess, // Green - beginner friendly
-	"Physics":  fecimTheme.ColorPrimary, // Cyan - technical
-	"Research": fecimTheme.ColorPurple,  // Purple - academic
-	"Demo":     fecimTheme.ColorWarning, // Amber - practical
-	"Guide":    fecimTheme.ColorAccent,  // Teal - howto
+	"ELI5":     color.RGBA{76, 175, 80, 255},  // Green #4CAF50
+	"Physics":  color.RGBA{0, 188, 212, 255},  // Cyan #00BCD4
+	"Research": color.RGBA{255, 152, 0, 255},  // Orange #FF9800
+	"Demo":     color.RGBA{156, 39, 176, 255}, // Purple #9C27B0
+	"Guide":    color.RGBA{33, 150, 243, 255}, // Blue #2196F3
 }
 
 // NewCategoryBadge creates a new category badge

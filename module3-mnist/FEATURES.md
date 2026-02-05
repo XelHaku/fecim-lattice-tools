@@ -46,6 +46,8 @@ Neural-network digit recognition demo with FP vs CIM comparison.
 | ADC / DAC | 8 / 8 | UI defaults |
 | Hidden Size | 128 | 784 -> 128 -> 10 network |
 
+Defaults are simulation inputs, not measured hardware values.
+
 ---
 
 ## Accuracy Notes

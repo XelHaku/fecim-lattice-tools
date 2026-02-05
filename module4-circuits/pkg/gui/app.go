@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"image/color"
 	"sync"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -42,24 +43,28 @@ type CircuitsApp struct {
 	pump *peripherals.ChargePump
 
 	// Configuration state
-	mu           sync.RWMutex
-	arrayRows    int
-	arrayCols    int
-	quantLevels  int
-	dacBits      int
-	adcBits      int
-	vMin         float64 // Min write voltage
-	vMax         float64 // Max write voltage
-	pulseWidth   float64 // ns
-	readVoltage  float64 // Read voltage (safe zone)
-	tiaGain      float64 // TIA gain (kOhm)
-	selectedRow  int
-	selectedCol  int
-	targetLevel  int
-	arrayWeights [][]int // Current programmed levels
-	inputVector  []int   // Input vector for compute
-	outputVector []float64
-	architecture string // "1T1R" or "0T1R" - affects row selection behavior
+	mu                sync.RWMutex
+	uiUpdateMu        sync.Mutex
+	lastUIUpdate      time.Time
+	pendingUIUpd      bool
+	arrayRows         int
+	arrayCols         int
+	quantLevels       int
+	dacBits           int
+	adcBits           int
+	vMin              float64 // Min write voltage
+	vMax              float64 // Max write voltage
+	pulseWidth        float64 // ns
+	readVoltage       float64 // Read voltage (safe zone)
+	tiaGain           float64 // TIA gain (kOhm)
+	selectedRow       int
+	selectedCol       int
+	targetLevel       int
+	arrayWeights      [][]int     // Current programmed levels
+	halfSelectResidue [][]float64 // Fractional disturb accumulation for half-selected cells
+	inputVector       []int       // Input vector for compute
+	outputVector      []float64
+	architecture      string // "1T1R" or "0T1R" - affects row selection behavior
 
 	// Tab-specific GUI components
 	// Tab 1: Write
@@ -315,8 +320,10 @@ func NewCircuitsApp() *CircuitsApp {
 func (ca *CircuitsApp) initializeArray() {
 	midLevel := ca.quantLevels / 2
 	ca.arrayWeights = make([][]int, ca.arrayRows)
+	ca.halfSelectResidue = make([][]float64, ca.arrayRows)
 	for i := range ca.arrayWeights {
 		ca.arrayWeights[i] = make([]int, ca.arrayCols)
+		ca.halfSelectResidue[i] = make([]float64, ca.arrayCols)
 		// All cells start at mid-level (neutral state)
 		for j := range ca.arrayWeights[i] {
 			ca.arrayWeights[i][j] = midLevel

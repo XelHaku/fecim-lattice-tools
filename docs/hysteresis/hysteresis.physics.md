@@ -2,7 +2,7 @@
 
 Start here if you've never studied ferroelectrics before.
 
-**Note:** References to “30 levels” refer to the demo baseline (configurable). Literature reports multi-level states (not verified here).
+**Note:** References to “30 levels” refer to the demo baseline (configurable). Literature reports multi-level states (not verified here). Numeric values below are simulation defaults or illustrative unless a DOI is provided (DOI: (add)).
 
 ---
 
@@ -167,7 +167,7 @@ The output (P) doesn't just depend on the input (E)—it depends on the **histor
 
 ### Key Parameters Explained
 
-| Parameter | Name | Meaning | HZO Value |
+| Parameter | Name | Meaning | Example (simulation default) |
 |-----------|------|---------|-----------|
 | **Ps** | Saturation Polarization | Maximum possible separation of charges | 25 μC/cm² |
 | **Pr** | Remanent Polarization | Polarization remaining at zero field (THE MEMORY) | ~20 μC/cm² |
@@ -307,7 +307,7 @@ When the applied field stays below the coercive field:
 
 ### Why This Matters
 
-1. **Non-destructive readout** — You can read the memory millions of times without degrading it
+1. **Non-destructive readout** — In this simplified model, reads below Ec do not change state
 2. **Clear write threshold** — You know exactly when you're modifying vs sensing
 3. **The demo shows this** — Watch the mode indicator switch between [WRITE] and (READ)
 

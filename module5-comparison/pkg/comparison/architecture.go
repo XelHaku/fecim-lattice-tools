@@ -33,7 +33,7 @@ type Architecture struct {
 	PowerCost       float64 // Power consumption cost factor
 
 	// Data quality
-	IsEstimated bool // True if values are estimates/projections (not verified)
+	IsEstimated bool // True if values are model inputs or estimates (not validated)
 }
 
 // TraditionalCPU creates a traditional CPU + DRAM architecture.
@@ -76,7 +76,7 @@ func GPUAccelerator() *Architecture {
 
 // FeCIMChip creates an FeCIM compute-in-memory architecture.
 //
-// ⚠️ WARNING: ESTIMATED VALUES - NO BASIS IN DR. TOUR'S PRESENTATION ⚠️
+// ⚠️ MODEL INPUTS ONLY (NOT VALIDATED) ⚠️
 //
 // FeCIM is at TRL 4 (lab validation only). Dr. Tour did NOT disclose:
 //   - TDP (power consumption)
@@ -85,26 +85,19 @@ func GPUAccelerator() *Architecture {
 //   - Chip area
 //   - Any chip-level specifications
 //
-// The values below are ESTIMATES/GUESSES for visualization purposes only.
-// They should NOT be presented as facts or used for investment decisions.
+// The values below are demo inputs for visualization purposes only.
+// They should NOT be presented as validated device specs or used for investment decisions.
 //
-// VERIFIED claims:
-//   - 32–140 discrete analog states in peer-reviewed devices (range)
-//   - 96.6-98.24% MNIST accuracy (VERIFIED - peer-reviewed: Nature Commun. 2023, ScienceDirect 2025)
-//   - 25-100× lower energy than NAND (VERIFIED - Samsung Nature 2025)
+// Context-only references (not validation or proof):
+//   - 30 discrete analog states (conference claim, pending peer review)
+//   - Peer-reviewed ranges for analog states / MNIST accuracy exist, but are
+//     not used here as verified device specifications.
 //
-// CONFERENCE CLAIM (pending peer review):
-//   - 30 discrete analog states (Dr. Tour, COSM 2025)
-//
-// UNVERIFIED claims (removed from tool):
-//   - Dr. Tour's "87% MNIST" (below peer-reviewed benchmarks)
-//   - "10M× lower energy than NAND" (no peer-reviewed data)
-//
-// See opensource/papers/08_Documentation/HONESTY_AUDIT.md for full analysis.
+// See docs/comparison/HONESTY_AUDIT.md for full analysis.
 func FeCIMChip() *Architecture {
 	return &Architecture{
 		Name:            "FeCIM CIM",
-		Description:     "Ferroelectric compute-in-memory with 30-level baseline (conference claim; TRL4)",
+		Description:     "Ferroelectric compute-in-memory with 30-level baseline (model input; TRL4)",
 		Technology:      "FeFET Crossbar",
 		ProcessNode:     45,   // ESTIMATED - not disclosed
 		ChipArea:        50,   // ESTIMATED - not disclosed by FeCIM
@@ -116,7 +109,7 @@ func FeCIMChip() *Architecture {
 		TOPSPerMM2:      1.0,  // ESTIMATED - derived from estimates above
 		ManufactureCost: 0.3,  // ESTIMATED - not disclosed
 		PowerCost:       0.04, // ESTIMATED - not disclosed
-		IsEstimated:     true, // TRL 4 - specs are estimates/projections
+		IsEstimated:     true, // TRL 4 - specs are model inputs/estimates
 	}
 }
 
@@ -170,7 +163,8 @@ func (a *Architecture) RunInference(modelOps int, batchSize int) InferenceResult
 	totalLatency := computeLatency + memoryLatency
 
 	// Energy = power * time
-	energy := a.TDP * totalLatency / 1000 // mJ (convert ms to s)
+	// W * ms = mJ
+	energy := a.TDP * totalLatency // mJ
 
 	// Throughput
 	throughput := float64(batchSize) / (totalLatency / 1000) // inferences/sec
@@ -307,7 +301,7 @@ func ScaleToDataCenter(arch *Architecture, targetThroughput float64, workload Wo
 
 	// Cost per inference (electricity cost ~$0.10/kWh)
 	electricityCost := 0.10
-	energyPerInference := result.Energy / 1000 / 3600 // Convert mJ to kWh
+	energyPerInference := result.Energy / 3.6e9 // Convert mJ to kWh
 	costPerInference := energyPerInference * electricityCost
 
 	// TCO (assume 3 year depreciation, include cooling 1.5x PUE)

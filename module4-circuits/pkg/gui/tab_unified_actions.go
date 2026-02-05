@@ -71,25 +71,34 @@ func (ca *CircuitsApp) writeReadVerifyLoop(row, col, targetLevel int, startVolta
 
 	// Check if using V/2 half-select (passive mode)
 	isPassive := ca.deviceState.IsPassiveMode()
+	direction := DirectionAscending
+	if currentLevel > targetLevel {
+		direction = DirectionDescending
+	}
+	if isPassive {
+		defer func() {
+			ca.deviceState.DisableHalfSelectVisualization()
+			ca.updateHalfSelectVisualization()
+		}()
+	}
 
 	for iteration := 1; iteration <= maxIterations; iteration++ {
 		// === WRITE PHASE ===
+		appliedVoltage, _ := ca.applyWriteVoltages(row, col, voltage)
 		if isPassive {
-			// V/2 half-select scheme for passive (0T1R) mode
-			// WL = +V/2, BL = -V/2, target sees full V, half-selected see V/2
-			halfV := voltage / 2.0
+			halfV := appliedVoltage / 2.0
 			fyne.Do(func() {
 				ca.operationsStatusLabel.SetText(fmt.Sprintf("WRITE [%d,%d]: V/2 scheme WL=+%.2fV BL=-%.2fV (iter %d/%d)",
 					row, col, halfV, halfV, iteration, maxIterations))
 			})
-			ca.deviceState.ApplyHalfSelectWrite(row, col, voltage)
+			ca.deviceState.EnableHalfSelectVisualization(row, col, appliedVoltage)
+			ca.updateHalfSelectVisualization()
 		} else {
-			// 1T1R/2T1R: transistor isolation, full voltage on BL
 			fyne.Do(func() {
-				ca.operationsStatusLabel.SetText(fmt.Sprintf("WRITE [%d,%d]: V=%.2fV (iter %d/%d)", row, col, voltage, iteration, maxIterations))
+				ca.operationsStatusLabel.SetText(fmt.Sprintf("WRITE [%d,%d]: V=%.2fV (iter %d/%d)", row, col, appliedVoltage, iteration, maxIterations))
 			})
-			ca.deviceState.SetDACVoltage(col, voltage)
 		}
+		ca.applyHalfSelectDisturb(row, col, direction, appliedVoltage)
 		ca.recomputeAndRefresh()
 		time.Sleep(iterationDelay / 2)
 
@@ -363,6 +372,11 @@ func (ca *CircuitsApp) onUnifiedReset() {
 			ca.arrayWeights[r][c] = midLevel
 		}
 	}
+	for r := range ca.halfSelectResidue {
+		for c := range ca.halfSelectResidue[r] {
+			ca.halfSelectResidue[r][c] = 0
+		}
+	}
 	ca.mu.Unlock()
 
 	// Reset DAC to read preset (uses material-derived voltage range)
@@ -395,6 +409,11 @@ func (ca *CircuitsApp) onUnifiedRandomArray() {
 	for r := range ca.arrayWeights {
 		for c := range ca.arrayWeights[r] {
 			ca.arrayWeights[r][c] = rand.Intn(ca.quantLevels)
+		}
+	}
+	for r := range ca.halfSelectResidue {
+		for c := range ca.halfSelectResidue[r] {
+			ca.halfSelectResidue[r][c] = 0
 		}
 	}
 	ca.mu.Unlock()

@@ -45,3 +45,5 @@ Matrix-Vector Multiply (MVM) simulator with non-idealities and visualization.
 
 - Non-idealities are configurable; several are disabled by default for performance.
 - GPU acceleration is optional and auto-falls back to CPU when unavailable.
+- Defaults are simulation assumptions; cite before external use (DOI: (add)).
+- External tool checks detect installs only; they do not run external simulators.

@@ -255,27 +255,43 @@ func (lm *LayoutManager) buildMobileLayout() *fyne.Container {
 // buildTabletLayout creates the tablet layout (600-900px)
 // Fixed sidebar (30%) + content (70%)
 func (lm *LayoutManager) buildTabletLayout() *fyne.Container {
-	if lm.sidebar == nil || !lm.sidebarVisible {
-		return container.NewBorder(lm.topBar, nil, nil, nil, lm.content)
+	var mainContent fyne.CanvasObject = lm.content
+
+	if lm.sidebar != nil && lm.sidebarVisible {
+		split := container.NewHSplit(lm.sidebar, lm.content)
+		split.SetOffset(0.30) // 30% sidebar, 70% content
+		mainContent = split
 	}
 
-	split := container.NewHSplit(lm.sidebar, lm.content)
-	split.SetOffset(0.30) // 30% sidebar, 70% content
+	// Add ToC if visible and available (minimal width on tablet)
+	if lm.toc != nil && lm.tocVisible {
+		finalSplit := container.NewHSplit(mainContent, lm.toc)
+		finalSplit.SetOffset(0.85) // 85% main, 15% ToC
+		mainContent = finalSplit
+	}
 
-	return container.NewBorder(lm.topBar, nil, nil, nil, split)
+	return container.NewBorder(lm.topBar, nil, nil, nil, mainContent)
 }
 
 // buildDesktopLayout creates the desktop layout (900-1200px)
 // Sidebar (25%) + wider content (75%)
 func (lm *LayoutManager) buildDesktopLayout() *fyne.Container {
-	if lm.sidebar == nil || !lm.sidebarVisible {
-		return container.NewBorder(lm.topBar, nil, nil, nil, lm.content)
+	var mainContent fyne.CanvasObject = lm.content
+
+	if lm.sidebar != nil && lm.sidebarVisible {
+		split := container.NewHSplit(lm.sidebar, lm.content)
+		split.SetOffset(0.25) // 25% sidebar, 75% content
+		mainContent = split
 	}
 
-	split := container.NewHSplit(lm.sidebar, lm.content)
-	split.SetOffset(0.25) // 25% sidebar, 75% content
+	// Add ToC if visible and available
+	if lm.toc != nil && lm.tocVisible {
+		finalSplit := container.NewHSplit(mainContent, lm.toc)
+		finalSplit.SetOffset(0.80) // 80% main, 20% ToC
+		mainContent = finalSplit
+	}
 
-	return container.NewBorder(lm.topBar, nil, nil, nil, split)
+	return container.NewBorder(lm.topBar, nil, nil, nil, mainContent)
 }
 
 // buildWideLayout creates the wide layout (> 1200px)

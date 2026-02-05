@@ -26,12 +26,15 @@ reading_time_minutes = ceil(word_count / 200)
 | idf | Inverse document frequency | unitless |
 | score | Relevance score | unitless |
 | t_read | Reading time | minutes |
+| word_count | Tokenized word count | words |
+| 200 | Reading speed assumption | words/minute |
 
 ## Assumptions And Limits
 
 - Search is scoped to the docs root.
 - Ranking is heuristic, not a research-grade IR system.
 - Category rules prioritize filename over path heuristics.
+- Reading time uses a fixed 200 wpm heuristic (not user-specific).
 
 ## Where It Lives In Code
 

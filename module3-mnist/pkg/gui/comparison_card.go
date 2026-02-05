@@ -66,8 +66,8 @@ func (cc *ComparisonCard) SetResult(result *ComparisonResult) {
 	// Update status
 	if result != nil {
 		if result.Match {
-			cc.statusLabel.SetText(fmt.Sprintf("CIM predicts: %d | Validated by FP | %.0fx energy improvement",
-				result.CIMPrediction, result.EnergyRatio))
+			cc.statusLabel.SetText(fmt.Sprintf("CIM predicts: %d | FP agrees | Energy model shown",
+				result.CIMPrediction))
 		} else {
 			cc.statusLabel.SetText(fmt.Sprintf("CIM predicts: %d | FP disagrees: %d | Quantization effects visible",
 				result.CIMPrediction, result.FPPrediction))
@@ -147,18 +147,18 @@ func (cc *ComparisonCard) generateImage(w, h int) image.Image {
 	}
 
 	// Color palette - Bold and distinct
-	matchColor := color.RGBA{50, 255, 150, 255}     // Vibrant green
-	mismatchColor := color.RGBA{255, 140, 50, 255}  // Bright orange
-	fpColor := color.RGBA{80, 150, 255, 255}        // Azure blue
-	cimColor := color.RGBA{0, 220, 200, 255}        // Cyan
+	matchColor := color.RGBA{50, 255, 150, 255}    // Vibrant green
+	mismatchColor := color.RGBA{255, 140, 50, 255} // Bright orange
+	fpColor := color.RGBA{80, 150, 255, 255}       // Azure blue
+	cimColor := color.RGBA{0, 220, 200, 255}       // Cyan
 	whiteColor := color.RGBA{245, 250, 255, 255}
 	dimColor := color.RGBA{120, 130, 150, 255}
-	accentColor := color.RGBA{255, 200, 100, 255}   // Gold
+	accentColor := color.RGBA{255, 200, 100, 255} // Gold
 
 	// Layout sections (height percentages)
-	topSectionH := int(float64(h) * 0.18)      // 18% - Status badge and predictions
-	heroSectionH := int(float64(h) * 0.38)     // 38% - Giant digit
-	chartSectionH := int(float64(h) * 0.38)    // 38% - Probability chart
+	topSectionH := int(float64(h) * 0.18)                     // 18% - Status badge and predictions
+	heroSectionH := int(float64(h) * 0.38)                    // 38% - Giant digit
+	chartSectionH := int(float64(h) * 0.38)                   // 38% - Probability chart
 	footerH := h - topSectionH - heroSectionH - chartSectionH // 6% - Energy info
 
 	padding := 20
@@ -280,8 +280,8 @@ func (cc *ComparisonCard) generateImage(w, h int) image.Image {
 	// Bar chart dimensions - much larger bars
 	chartWidth := w - 2*padding
 	barGroupWidth := chartWidth / 10
-	singleBarWidth := (barGroupWidth - 6) / 2  // Gap between FP and CIM bars
-	maxBarHeight := chartSectionH - 60  // Taller bars
+	singleBarWidth := (barGroupWidth - 6) / 2 // Gap between FP and CIM bars
+	maxBarHeight := chartSectionH - 60        // Taller bars
 
 	// Draw bars for each digit 0-9
 	for i := 0; i < 10; i++ {
@@ -387,7 +387,7 @@ func (cc *ComparisonCard) generateImage(w, h int) image.Image {
 
 	// ========== FOOTER: Energy Efficiency ==========
 	footerY := h - footerH - 8
-	effText := fmt.Sprintf("%.0f-%.0fx Energy Efficiency", 25.0, 100.0)
+	effText := "Energy model (illustrative)"
 	effX := (w - len(effText)*7) / 2
 	drawSimpleText(img, effText, effX, footerY, accentColor)
 

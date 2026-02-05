@@ -3,6 +3,7 @@
 This document describes the physics models implemented in module2-crossbar, covering conductance models, matrix operations, non-idealities, and device physics.
 
 > **Note:** These are simplified models for simulation and visualization. Numeric values are model defaults or reported ranges, not validated hardware specs.
+> **Literature values are unverified in this project; add DOI citations before external use (DOI: (add)).**
 
 **Table of Contents**
 - [Conductance Models](#conductance-models)
@@ -59,8 +60,8 @@ $$G_{\text{mid}} = \sqrt{G_{\min} \times G_{\max}} = \sqrt{10 \times 100} \appro
 **Characteristics:**
 - Exponential scaling more realistic for FeFET behavior
 - Better distribution across conductance range
-- More accurate representation of ferroelectric physics
-- Recommended for high-accuracy simulations
+- Can be a closer approximation for some ferroelectric devices (model assumption)
+- Use as a comparative option, not a validated device model
 
 ### Lookup Table Model
 
@@ -73,6 +74,7 @@ Where `ConductanceTable` is a pre-calibrated 30-entry table from measured device
 - Most accurate if calibration data available
 - Falls back to linear if table unavailable
 - Allows material-specific conductance curves
+- Calibration data is not bundled in this repo; provide your own table
 
 ---
 
@@ -87,7 +89,7 @@ Current through a single cell:
 $$I_{ij} = G_{ij} \times V_j$$
 
 Where:
-- $G_{ij}$ = normalized conductance [0, 1], converted to physical units
+- $G_{ij}$ = normalized conductance [0, 1] (baseline MVM uses normalized; physical conversion is used in IR drop/drift analysis)
 - $V_j$ = input voltage (DAC quantized)
 
 ### Column Summation (Single Output)
@@ -103,27 +105,29 @@ For each row i:
   sum = 0
   For each column j:
     V_quantized = DAC_quantize(input[j])
-    G_physical = GetPhysicalConductance(conductance[i][j])
-    sum += G_physical × V_quantized
+    G_effective = conductance[i][j] × variationFactor  // normalized
+    sum += G_effective × V_quantized
   output[i] = ADC_quantize(sum / N_cols)
 ```
+
+**Note:** The physical mapping (linear/exponential/lookup via `GetPhysicalConductance`) is used in IR drop and device-physics analysis paths. The baseline MVM path remains normalized for speed and stable stacking across layers.
 
 ### Quantization Effects
 
 **DAC Quantization (Input)**
 - Input voltages quantized to DAC levels
-- Default: 16-bit DAC → 2^16 = 65,536 discrete levels
+- Module 2 GUI/CLI defaults: 8-bit DAC (configurable); tests often use 16-bit for near-ideal behavior
 - Formula: $V_{\text{dac}} = \text{round}(V \times (2^{n}-1)) / (2^{n}-1)$
 
 **ADC Quantization (Output)**
 - Output currents quantized to ADC levels
-- Default: 16-bit ADC → 65,536 discrete levels
+- Module 2 GUI/CLI defaults: 6-bit ADC (configurable); tests often use 16-bit for near-ideal behavior
 - Reduces output precision
 
 **Impact on Accuracy:**
-- ~1% accuracy loss per 3% RMSE for neural networks
-- 8-bit ADC/DAC: acceptable for inference
-- 12+ bits: suitable for training
+- ~1% accuracy loss per 3% RMSE for neural networks (illustrative; DOI: (add))
+- 8-bit ADC/DAC: acceptable for inference (assumption; depends on model)
+- 12+ bits: suitable for training (assumption; depends on model)
 
 ---
 
@@ -139,7 +143,7 @@ Voltage drop due to wire resistance and cumulative current flow along metal line
 | $R_{\text{bl}}$ | 2.5 | Ω/pitch | 1-10 | Bit line resistance per cell pitch |
 | $R_{\text{contact}}$ | 50 | Ω | 10-100 | Contact resistance |
 
-Based on 45nm technology node. Scales with feature size.
+Based on a 45nm-era assumption (illustrative; DOI: (add)). Scales with feature size.
 
 ### Voltage Drop Formula
 
@@ -163,7 +167,7 @@ $$V_{\text{eff}}(i,j) = V_{\text{wl}}(i,j) - V_{\text{bl}}(i,j)$$
 IR drop is **maximum at far corner** (high row, high column):
 - Both row and column experience maximum cumulative current
 - Cell (rows-1, cols-1) typically worst case
-- Can cause 10-15% voltage reduction in passive arrays
+- Can cause voltage reduction; 10-15% is an illustrative model range (unverified)
 
 ### Iterative Relaxation Solver
 
@@ -181,12 +185,12 @@ IR drop is computed iteratively:
 **0T1R (Passive Crossbar):**
 - Sneak currents add to main current
 - Effective resistance higher (~1.5× nominal)
-- 10-15% IR drop typical
+- 10-15% IR drop is an illustrative range (unverified)
 
 **1T1R (Transistor-Isolated):**
 - Transistor isolation reduces parasitic currents
 - Lower effective current on lines
-- 5-10% IR drop typical
+- 5-10% IR drop is an illustrative range (unverified)
 
 ---
 
@@ -230,14 +234,14 @@ Where:
 **0T1R (Passive):**
 - No transistor isolation
 - All sneak paths contribute equally
-- Sneak-to-signal ratio: 1-2 (0-6 dB SNR)
-- 5-20% accuracy loss typical
+- Sneak-to-signal ratio: 1-2 (0-6 dB SNR) is illustrative (unverified)
+- 5-20% accuracy loss is illustrative (unverified)
 
 **1T1R (Transistor Isolation):**
 - Transistor OFF-state provides ~10^6 ON/OFF ratio
 - Conservative estimate: 0.001 isolation factor
-- Sneak-to-signal ratio: 10^-3 (60 dB SNR)
-- Negligible sneak path effect
+- Sneak-to-signal ratio: 10^-3 (60 dB SNR) is illustrative (unverified)
+- Sneak path effect is reduced but not eliminated (model assumption)
 
 ### Computation Modes
 
@@ -247,7 +251,7 @@ Where:
 - Suitable for large-scale simulations
 
 **Full Mode** (slower, accurate):
-- Enumerat all three-cell paths
+- Enumerate all three-cell paths
 - Accurate sneak path magnitudes
 - Used for arrays ≤ 32×32
 - O(n^4) complexity
@@ -260,7 +264,7 @@ Conductance drift over time, causing accuracy degradation.
 
 ### Physics Basis
 
-FeFET devices demonstrate excellent retention (>10 years at 85°C, Fraunhofer IPMS 2024). Drift is modeled logarithmically:
+Literature reports long retention for FeFETs (e.g., >10 years at 85°C), but this is unverified here (DOI: (add)). Drift is modeled logarithmically:
 
 $$G(t) = G_0 \times \left(1 - \beta \times \ln\left(\frac{t}{t_0}\right)\right)$$
 
@@ -276,13 +280,15 @@ Where:
 
 ### FeFET Drift Coefficient
 
+Status labels below reflect literature reporting only; this project does not verify them.
+
 | Source | Value | Status | Notes |
 |--------|-------|--------|-------|
 | **Assumed (default)** | 0.001 | ⚠️ Unverified | Estimated from >10 year retention requirement |
 | **Literature-derived** | 0.0005 | ⚠️ Estimated | Implies <0.5 level drift per decade |
-| **RRAM (comparison)** | 0.05 | ✅ Measured | Literature: 5-10% drift typical |
-| **PCM (comparison)** | 0.1 | ✅ Measured | Highest among emerging memories |
-| **Flash (comparison)** | 0.02 | ✅ Measured | Well-characterized in industry |
+| **RRAM (comparison)** | 0.05 | ⚠️ Reported | Literature: 5-10% drift typical |
+| **PCM (comparison)** | 0.1 | ⚠️ Reported | Highest among emerging memories |
+| **Flash (comparison)** | 0.02 | ⚠️ Reported | Well-characterized in industry |
 
 **Important:** FeFET drift coefficient 0.001 is **derived** from retention requirements, not directly measured. No reported in literature source provides explicit FeFET drift coefficients in the same format as RRAM/PCM papers.
 
@@ -293,7 +299,7 @@ Drift processes are thermally activated:
 $$\text{drift rate} \propto \exp\left(-\frac{E_a}{k_B T}\right)$$
 
 Where:
-- $E_a$ = activation energy ≈ 0.5 eV (typical for ferroelectric switching)
+- $E_a$ = activation energy ≈ 0.5 eV (assumed; DOI: (add))
 - $k_B$ = Boltzmann constant = 1.38×10^-23 J/K
 - $T$ = absolute temperature (K)
 
@@ -313,6 +319,10 @@ With 0.001 coefficient:
 ## Temperature Effects
 
 Temperature affects multiple physics parameters.
+
+**Implementation note:** `TemperatureEffects` provides these scalings. Current MVM-with-non-idealities applies temperature to wire resistance (IR drop); other temperature scalings (conductance window, noise, drift rate) are exposed via helpers and the drift simulator but are not auto-applied in the baseline MVM path.
+
+**Note:** Numeric temperature effects below are illustrative or literature-reported and are not verified here (DOI: (add)).
 
 ### Wire Resistance
 
@@ -425,9 +435,9 @@ $$\text{fatigue ratio} = \frac{\text{cycles} - \text{fatigue threshold}}{\text{f
 
 | Parameter | Value | Source |
 |-----------|-------|--------|
-| Fatigue Threshold | 10^8 cycles | IEEE IRPS 2022 |
-| Failure Threshold | 10^12 cycles | Nano Letters 2024 (V:HfO₂) |
-| Window Narrowing | 50% at failure | Typical FeFET behavior |
+| Fatigue Threshold | 10^8 cycles | IEEE IRPS 2022 (DOI: (add)) |
+| Failure Threshold | 10^12 cycles | Nano Letters 2024 (V:HfO₂) (DOI: (add)) |
+| Window Narrowing | 50% at failure | Assumed FeFET behavior (unverified) |
 
 **Note:** Endurance modeling off by default (performance optimization). Enable for cycle-specific studies.
 
@@ -468,8 +478,8 @@ Physics models are checked against:
 1. **Ohm's Law Tests** - IR drop follows V = I×R
 2. **Conductance Scaling** - Sneak paths scale correctly with G
 3. **Temperature Physics** - Arrhenius behavior modeled
-4. **Architectural Comparison** - 1T1R vs 0T1R differences match literature
-5. **Technology Comparison** - Relative drift comparison (model-based)
+4. **Architectural Comparison** - 1T1R vs 0T1R differences are qualitatively modeled (not validated)
+5. **Technology Comparison** - Relative drift comparison (model-based, unverified)
 
 ### Test Coverage
 
@@ -547,13 +557,13 @@ type MVMOptions struct {
 ## References
 
 **Peer-Reviewed Sources:**
-- IEEE IRPS 2022: FeFET endurance characterization
-- Nature Communications 2025: HZO properties, Pr measurements
-- Nano Letters 2024: V:HfO₂ 10^12 cycle endurance
-- Fraunhofer IPMS 2024: >10 year retention at 85°C
+- IEEE IRPS 2022: FeFET endurance characterization (DOI: (add))
+- Nature Communications 2025: HZO properties, Pr measurements (DOI: (add))
+- Nano Letters 2024: V:HfO₂ 10^12 cycle endurance (DOI: (add))
+- Fraunhofer IPMS 2024: >10 year retention at 85°C (DOI: (add))
 
 **Implementation Notes:**
-- All physics models validated against literature
+- Physics models are literature-informed but not fully validated
 - FeFET drift coefficient estimated, not directly measured
-- Temperature models use Arrhenius activation energy
-- Sneak path model matches three-cell series formulation from literature
+- Temperature models use Arrhenius activation energy (assumed)
+- Sneak path model follows a three-cell series formulation (literature-inspired)

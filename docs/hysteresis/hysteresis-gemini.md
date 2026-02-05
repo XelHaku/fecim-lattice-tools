@@ -105,7 +105,7 @@ $$ \rho \frac{dP}{dt} = - \nabla_P G = - (2\alpha P + 4\beta P^3 + 6\gamma P^5 -
 
 ### 2. The Unified Coefficient ($\alpha$)
 
-The stiffness coefficient $\alpha$ is **dynamic**. It unifies Thermodynamics (Curie-Weiss) and Mechanics (Electrostriction) into a single term.
+The stiffness coefficient $\alpha$ is **dynamic in theory**. In code, $\alpha$ follows the Curie‑Weiss + electrostriction form only when `UseMaterialAlpha=false`. When a material provides `Pr`, `ConfigureFromMaterial` derives $\alpha$ to satisfy `dG/dP(P=±Pr)=0` (and may scale $\alpha,\beta,\gamma$ to match `Ec`), setting `UseMaterialAlpha=true` and keeping $\alpha$ fixed unless explicitly disabled.
 
 $$ \alpha(T, \sigma) = \frac{T - T_C}{2 \epsilon_0 C} - 2 Q_{12} \sigma $$
 

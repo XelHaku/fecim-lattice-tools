@@ -2,9 +2,9 @@
 
 ## What This Module Does
 
-- Simulates ferroelectric hysteresis loops (Preisach) with a selectable dynamic engine (Landau-Khalatnikov).
-- Exposes discrete polarization levels for memory-state modeling.
-- Provides GUI visualization, calibration, and write/read/verify flows.
+- Simulates ferroelectric hysteresis loops (Preisach) with an optional, simplified Landau-Khalatnikov engine.
+- Exposes discrete polarization levels for memory-state modeling (simulation baseline).
+- Provides GUI visualization plus simulated calibration and write/read/verify flows.
 
 ## Primary Components
 
@@ -16,8 +16,8 @@
 ## Key Workflows
 
 - Sweep electric field to generate a P-E loop.
-- Program and read discrete levels with ISPP-style verification.
-- Calibrate per temperature and interpolate between cached calibrations.
+- Program and read discrete levels with ISPP-style verification (simulated).
+- Calibrate per temperature and interpolate between cached calibrations (heuristic).
 
 ## Extension Points
 
@@ -30,3 +30,4 @@
 - Landau-Khalatnikov engine is educational, not device-calibrated.
 - Wake-up/fatigue indicators are UI-level placeholders.
 - GPU renderer is specialized and may not cover all platforms.
+- Material presets include illustrative or unverified values; cite before external use (DOI: (add)).

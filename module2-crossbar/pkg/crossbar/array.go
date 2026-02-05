@@ -46,7 +46,7 @@ const (
 type Config struct {
 	Rows       int     // Number of rows (word lines)
 	Cols       int     // Number of columns (bit lines)
-	NoiseLevel float64 // Device-to-device variation (0-1)
+	NoiseLevel float64 // Device-to-device variation sigma (Gaussian, normalized)
 	ADCBits    int     // ADC resolution in bits
 	DACBits    int     // DAC resolution in bits
 	UseGPU     bool    `json:"use_gpu"` // Enable GPU acceleration for MVM operations
@@ -85,7 +85,7 @@ type EnduranceConfig struct {
 // Based on literature: FeFET 10^9-10^12 cycle endurance (IEEE IRPS 2022, Nano Letters 2024).
 func DefaultEnduranceConfig() *EnduranceConfig {
 	return &EnduranceConfig{
-		Enabled:          false, // Off by default for performance
+		Enabled:          false,             // Off by default for performance
 		FatigueThreshold: 100_000_000,       // 10^8 cycles
 		FailureThreshold: 1_000_000_000_000, // 10^12 cycles
 	}
@@ -173,13 +173,31 @@ func NewArray(cfg *Config) (*Array, error) {
 		for j := range arr.cells[i] {
 			arr.cells[i][j] = Cell{
 				Conductance: 0.0,
-				NoiseFactor: 1.0 + cfg.NoiseLevel*(rand.Float64()*2-1),
+				NoiseFactor: initialNoiseFactor(cfg),
 			}
 		}
 	}
 
 	getLog().Output("NewArray", arr)
 	return arr, nil
+}
+
+// initialNoiseFactor returns a per-cell device variation factor.
+// Uses Gaussian noise to match PHYSICS.md: G = G_nominal * (1 + sigma * N(0,1)).
+// If ProcessVariation is configured, its DeviceSigma overrides NoiseLevel.
+func initialNoiseFactor(cfg *Config) float64 {
+	sigma := cfg.NoiseLevel
+	if cfg.ProcessVariation != nil {
+		sigma = cfg.ProcessVariation.DeviceSigma
+	}
+	if sigma <= 0 {
+		return 1.0
+	}
+	factor := 1.0 + rand.NormFloat64()*sigma
+	if factor < 0 {
+		factor = 0
+	}
+	return factor
 }
 
 // initGPU lazily initializes GPU accelerator on first use.
@@ -214,7 +232,7 @@ func (a *Array) uploadVariationToGPU() {
 	variation := make([]float32, a.config.Rows*a.config.Cols)
 	for i := 0; i < a.config.Rows; i++ {
 		for j := 0; j < a.config.Cols; j++ {
-			variation[i*a.config.Cols+j] = float32(a.cells[i][j].NoiseFactor)
+			variation[i*a.config.Cols+j] = float32(a.GetProcessVariationFactor(i, j))
 		}
 	}
 
@@ -377,6 +395,8 @@ func (a *Array) GetPhysicalConductanceForCell(row, col int) float64 {
 
 	// Get base physical conductance
 	gPhys := a.GetPhysicalConductance(gNorm)
+	// Apply process/device variation (random + gradients + edge)
+	gPhys *= a.GetProcessVariationFactor(row, col)
 
 	// Apply endurance fatigue
 	if a.config.Endurance != nil && a.config.Endurance.Enabled {
@@ -497,7 +517,7 @@ func (a *Array) mvmCPU(input []float64) ([]float64, error) {
 			vIn := a.quantizeDAC(input[j])
 
 			// Read conductance with device variation noise
-			g := a.cells[i][j].Conductance * a.cells[i][j].NoiseFactor
+			g := a.cells[i][j].Conductance * a.GetProcessVariationFactor(i, j)
 
 			// Ohm's Law: I = G × V
 			// Accumulate current (physical summation via Kirchhoff's current law)
@@ -540,7 +560,7 @@ func (a *Array) VMM(input []float64) ([]float64, error) {
 			quantizedInput := a.quantizeDAC(input[i])
 
 			// Read conductance with noise
-			g := a.cells[i][j].Conductance * a.cells[i][j].NoiseFactor
+			g := a.cells[i][j].Conductance * a.GetProcessVariationFactor(i, j)
 
 			// Accumulate current
 			sum += g * quantizedInput
@@ -602,8 +622,8 @@ func (a *Array) GetEffectiveConductanceMatrix() [][]float64 {
 	for i := range matrix {
 		matrix[i] = make([]float64, a.config.Cols)
 		for j := range matrix[i] {
-			// Effective conductance = base conductance × noise factor
-			matrix[i][j] = a.cells[i][j].Conductance * a.cells[i][j].NoiseFactor
+			// Effective conductance = base conductance × variation factor
+			matrix[i][j] = a.cells[i][j].Conductance * a.GetProcessVariationFactor(i, j)
 		}
 	}
 	return matrix

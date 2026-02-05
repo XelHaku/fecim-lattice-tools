@@ -30,3 +30,4 @@
 - Liberty timing values are placeholders (need characterization).
 - Exports are educational artifacts, not tape-out ready.
 - CLI supports passive/1T1R; 2T1R is available via API only.
+- PDK support refers to preset dimensions/labels; no foundry PDK files are bundled (DOI: (add)).

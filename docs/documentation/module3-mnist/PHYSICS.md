@@ -18,7 +18,8 @@
 Hidden = ReLU(W1 * x + b1)
 Logits = W2 * Hidden + b2
 Probs = softmax(Logits)
-QuantizedValue = round(value * (L-1)) / (L-1)
+QuantizedWeight = -Wmax + round((w + Wmax) / (2*Wmax) * (L-1)) * (2*Wmax/(L-1))
+NoisyValue = v + N(0,1) * |v| * sigma_over_mu
 ```
 
 ## Parameters And Units
@@ -29,13 +30,18 @@ QuantizedValue = round(value * (L-1)) / (L-1)
 | W | Weight matrix | unitless |
 | b | Bias vector | unitless |
 | L | Quantization levels | levels |
-| sigma | Noise coefficient | unitless |
+| Wmax | Max absolute weight for symmetric quantization | unitless |
+| sigma_over_mu | Noise coefficient (sigma/mu) | unitless |
+| W1, W2 | Layer weight matrices | unitless |
+| b1, b2 | Layer bias vectors | unitless |
+| N(0,1) | Standard normal random variable | unitless |
 
 ## Assumptions And Limits
 
 - The architecture is a small MLP for visualization speed.
 - Quantization is uniform with optional per-layer levels.
-- Noise is modeled as additive perturbations.
+- Noise is modeled as multiplicative Gaussian perturbations (sigma/mu).
+- Quantization formulas are software-level approximations, not device-physics models.
 
 ## Where It Lives In Code
 

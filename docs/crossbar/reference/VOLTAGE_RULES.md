@@ -4,7 +4,7 @@
 
 > Comprehensive voltage specifications for ferroelectric crossbar operations across 0T1R (Passive), 1T1R, and 2T1R architectures.
 
-**Scope:** Voltage values for 300K nominal operation. Timing parameters and pulse widths are documented separately in `config/physics.yaml`.
+**Scope:** Voltage values for 300K nominal operation. Timing parameters and pulse widths are documented separately in `config/physics/defaults/timing.yaml`.
 
 **Note:** References to “30 levels” refer to the demo baseline (configurable). All numeric values here are model defaults or reported ranges, not validated hardware specs.
 
@@ -76,43 +76,43 @@ This document provides the authoritative reference for all voltage values used i
 | Parameter | Value | Tolerance | Source | Verification Status |
 |-----------|-------|-----------|--------|---------------------|
 | **Peripheral Circuits** | | | | |
-| DAC Vref High | +1.5 V | ±50 mV | `shared/peripherals/defaults.go:19` | ✅ Verified |
-| DAC Vref Low | -1.5 V | ±50 mV | `shared/peripherals/defaults.go:22` | ✅ Verified |
-| ADC Vref High | +1.0 V | ±20 mV | `shared/peripherals/defaults.go:31` | ✅ Verified |
-| ADC Vref Low | 0.0 V | ±5 mV | `shared/peripherals/defaults.go:34` | ✅ Verified |
-| Charge Pump Input | 1.0 V | ±50 mV | `module4-circuits/pkg/peripherals/chargepump.go:22` | ✅ Verified |
-| Charge Pump Output | 1.5 V | ±100 mV | `module4-circuits/pkg/peripherals/chargepump.go:23` | ✅ Verified |
-| TIA Max Output | 1.0 V | ±50 mV | `module4-circuits/pkg/peripherals/tia.go:26` | ✅ Verified |
+| DAC Vref High | +1.5 V | ±50 mV | `shared/peripherals/defaults.go:19` | ✅ Code |
+| DAC Vref Low | -1.5 V | ±50 mV | `shared/peripherals/defaults.go:22` | ✅ Code |
+| ADC Vref High | +1.0 V | ±20 mV | `shared/peripherals/defaults.go:31` | ✅ Code |
+| ADC Vref Low | 0.0 V | ±5 mV | `shared/peripherals/defaults.go:34` | ✅ Code |
+| Charge Pump Input | 1.0 V | ±50 mV | `shared/peripherals/chargepump.go` | ✅ Code |
+| Charge Pump Output | 1.5 V | ±100 mV | `shared/peripherals/chargepump.go` | ✅ Code |
+| TIA Max Output | 1.0 V | ±50 mV | `shared/peripherals/tia.go` | ✅ Code |
 | **Physics Parameters** | | | | |
-| Coercive Field (Ec) | 0.6-1.5 MV/cm | Material-dependent | `config/physics.yaml` (Nature Commun. 2025) | ✅ Peer-reviewed |
-| Film Thickness | 10 nm | ±1 nm | `config/physics.yaml` | ✅ Standard |
-| Coercive Voltage (Vc) | 0.6-1.5 V | Derived: Vc = Ec × thickness | Calculated from Ec | ⚠️ Estimated |
-| Read Voltage Max Ratio | 0.7 × Vc | 30% safety margin below Vc | `config/physics.yaml` (field_min_ratio) | ✅ Verified |
+| Coercive Field (Ec) | 0.6-1.5 MV/cm | Material-dependent | `config/physics/defaults/materials.yaml` (literature defaults; DOI: (add)) | ⚠️ Literature (unverified) |
+| Film Thickness | 10 nm | ±1 nm | `config/physics/defaults/materials.yaml` | ⚠️ Literature default (unverified) |
+| Coercive Voltage (Vc) | 0.6-1.5 V | Derived: Vc = Ec × thickness | Calculated from Ec | ⚠️ Derived (from unverified Ec) |
+| Read Voltage Max Ratio | 0.7 × Vc | 30% safety margin below Vc | `config/physics/defaults/calibration.yaml` | ✅ Code |
 | **Operation Voltages** | | | | |
-| Read Voltage | 0.1-0.5 V | <0.7×Vc (30% margin) | `module4-circuits/pkg/peripherals/analysis.go:249` | ✅ Verified |
+| Read Voltage | 0.1-0.5 V | <0.7×Vc (30% margin) | `shared/peripherals/analysis.go` | ✅ Code (model) |
 | Write Voltage (Set) | +1.2-1.5 V | >Vc with margin | Derived from DAC range | ⚠️ Estimated |
 | Write Voltage (Erase) | -1.2-1.5 V | Negative polarity | Derived from DAC range | ⚠️ Estimated |
-| MVM Input Range | 0.0-1.0 V | DAC output → array | ADC Vref range | ✅ Verified |
-| Half-Select (V/2) | 0.75 V | Vwrite/2 (0T1R only) | `device_state.go:487-518` | ✅ Verified |
+| MVM Input Range | 0.0-1.0 V | DAC output → array | ADC Vref range | ✅ Code (model) |
+| Half-Select (V/2) | 0.75 V | Vwrite/2 (0T1R only) | `device_state.go:487-518` | ✅ Code |
 | **Transistor Control (1T1R/2T1R)** | | | | |
-| WL HIGH (ON) | 1.0 V | VDD (logic high) | Standard CMOS | ✅ Standard |
-| WL LOW (OFF) | 0.0 V | VSS (logic low) | Standard CMOS | ✅ Standard |
-| Source Line (SL) | 0.0 V | Typically grounded | Standard practice | ✅ Standard |
+| WL HIGH (ON) | 1.0 V | VDD (logic high) | Assumed CMOS logic | ⚠️ Assumed |
+| WL LOW (OFF) | 0.0 V | VSS (logic low) | Assumed CMOS logic | ⚠️ Assumed |
+| Source Line (SL) | 0.0 V | Typically grounded | Assumed practice | ⚠️ Assumed |
 
 ### Key Observations
 
-**Verified Values:**
+**Code-Sourced Values:**
 - All peripheral circuit voltages are hard-coded in source files.
-- Physics parameters (Ec) are reported in literature and material-specific.
-- Transistor control voltages follow standard CMOS logic levels.
+- Physics parameters (Ec) are literature defaults and unverified here.
+- Transistor control voltages are assumed CMOS-level defaults.
 - **V/2 half-select is explicitly implemented** in `ApplyHalfSelectWrite()` for passive (0T1R) mode.
 
 **Derived Values:**
 - Write voltages are **derived from material properties** (Vc = Ec × thickness).
-- Write range: Vc to FieldMaxRatio × Vc (from `config/physics.yaml` calibration).
+- Write range: Vc to FieldMaxRatio × Vc (from `config/physics/defaults/calibration.yaml`).
 - Coercive voltage (Vc) is **calculated** from Ec and thickness via `material.CoerciveVoltage()`.
 
-**Recommended Values (300K Operation):**
+**Recommended Values (300K Operation, model defaults):**
 - Read: **0.2V** (30% safety margin below Vc: max = 0.7×Vc = 0.7-1.05V for Vc=1.0-1.5V)
 - Write: **±1.5V** (maximum DAC range for full switching)
 - MVM: **0.0-1.0V** (matches ADC input range)
@@ -151,6 +151,8 @@ I_read = G_cell × V_read
        = (10-100 µS) × 0.2V
        = 2-20 µA
 ```
+
+*Uses model-default Gmin/Gmax; not measured device current.*
 
 **Constraints:**
 - V_read < 0.7×Vc (field_min_ratio = 0.7) → Non-destructive read with 30% safety margin
@@ -528,7 +530,7 @@ Phase 3: HOLD_WRITE (50ns)
 as the current level, phases 0-1 (RESET) can be skipped. This provides ~50%
 energy savings. See "ISPP Optimization: Skip RESET on Same-Branch Writes" above.
 
-**Timing (from config/physics.yaml):**
+**Timing (from config/physics/defaults/timing.yaml):**
 ```yaml
 pulse_widths:
     reset_ns: 100       # Phase 0: RESET
@@ -949,7 +951,7 @@ voltage := dac.Convert(level)  // Maps level 0-29 to -1.5V to +1.5V
 
 ### 7.2 Charge Pump Configuration
 
-**File:** `module4-circuits/pkg/peripherals/chargepump.go`
+**File:** `shared/peripherals/chargepump.go`
 
 ```go
 func DefaultChargePump() *ChargePump {
@@ -972,7 +974,7 @@ func DefaultChargePump() *ChargePump {
 
 ### 7.3 TIA Output Range
 
-**File:** `module4-circuits/pkg/peripherals/tia.go`
+**File:** `shared/peripherals/tia.go`
 
 ```go
 func DefaultTIA() *TIA {
@@ -993,7 +995,7 @@ V_out = I_in × Gain
 
 ### 7.4 Read Voltage (Code Reference)
 
-**File:** `module4-circuits/pkg/peripherals/analysis.go`
+**File:** `shared/peripherals/analysis.go`
 
 ```go
 // Line 248-249: Read voltage explicitly set
@@ -1004,13 +1006,16 @@ Vread := 0.1  // 0.1V for non-destructive read
 
 ### 7.5 Physics Parameters
 
-**File:** `config/physics.yaml`
+**Files:** `config/physics/defaults/materials.yaml`, `config/physics/defaults/calibration.yaml`
 
 ```yaml
-default_hzo:
+materials:
+  default_hzo:
     ec_v_m: 1.2e8               # Coercive field = 1.2 MV/cm
     thickness_m: 10.0e-9        # Film thickness = 10 nm
-    field_min_ratio: 0.7        # Read voltage max = 0.7 × Vc (30% safety margin)
+
+calibration:
+  field_min_ratio: 0.7          # Read voltage max = 0.7 × Vc (30% safety margin)
 
 # Derived voltages:
 # Vc = Ec × thickness
@@ -1505,12 +1510,12 @@ Sneak Path Suppression:
 | File | Lines | Content |
 |------|-------|---------|
 | `shared/peripherals/defaults.go` | 19, 22, 31, 34 | DAC/ADC Vref constants |
-| `module4-circuits/pkg/peripherals/dac.go` | 23-24 | DAC voltage range |
-| `module4-circuits/pkg/peripherals/adc.go` | 32-33 | ADC voltage range |
-| `module4-circuits/pkg/peripherals/chargepump.go` | 22-23 | Charge pump I/O voltages |
-| `module4-circuits/pkg/peripherals/tia.go` | 26 | TIA max output voltage |
-| `module4-circuits/pkg/peripherals/analysis.go` | 249 | Explicit read voltage (0.1V) |
-| `config/physics.yaml` | 87, 95 | Ec and thickness (Vc derivation) |
+| `shared/peripherals/dac.go` | 23-24 | DAC voltage range |
+| `shared/peripherals/adc.go` | 32-33 | ADC voltage range |
+| `shared/peripherals/chargepump.go` | 22-23 | Charge pump I/O voltages |
+| `shared/peripherals/tia.go` | 26 | TIA max output voltage |
+| `shared/peripherals/analysis.go` | 249 | Explicit read voltage (0.1V) |
+| `config/physics/defaults/materials.yaml` | 87, 95 | Ec and thickness (Vc derivation) |
 | `module2-crossbar/pkg/crossbar/sneakpath.go` | 219-220 | Half-select voltage struct |
 | `module4-circuits/pkg/gui/device_state.go` | 280-288 | Passive mode WL enforcement |
 | `module4-circuits/pkg/gui/device_state.go` | 487-518 | **V/2 ApplyHalfSelectWrite()** |
@@ -1615,11 +1620,11 @@ Sneak Path Suppression:
 
 NOTES:
   - All voltages at 300K (room temperature)
-  - Timing parameters in config/physics.yaml
-  - Vc varies with material (HZO: 1.2V, AlScN: 5-10V)
+  - Timing parameters in config/physics/defaults/timing.yaml
+  - Vc varies with material (HZO: 1.2V, AlScN: 5-10V) (illustrative; DOI: (add))
   - Read voltage max = 0.7 × Vc (field_min_ratio = 0.7, 30% safety margin)
   - Half-select voltage = Vwrite/2 (0T1R only)
-  - Transistor ON/OFF voltages are standard CMOS logic levels
+  - Transistor ON/OFF voltages are assumed CMOS logic levels
   - Write voltages are level-dependent (30 unique values per cell)
   - Multi-level writes use ISPP (Incremental Step Pulse Programming)
   - See §3.2.1 for full multi-level write voltage complexity
@@ -1628,8 +1633,8 @@ NOTES:
 ---
 
 **Document Status:**
-- ✅ All peripheral voltages checked against source code
-- ✅ Physics parameters cross-referenced with `config/physics.yaml`
+- ✅ All peripheral voltages mapped to source code references
+- ✅ Physics parameters cross-referenced with `config/physics/defaults/materials.yaml` (literature defaults; unverified)
 - ✅ V/2 half-select explicitly implemented in `ApplyHalfSelectWrite()` (device_state.go:487-518)
 - ✅ Architecture modes checked against device_state.go implementation
 - ✅ Write voltages derived from material properties (Vc = Ec × thickness)

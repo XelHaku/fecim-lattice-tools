@@ -6,8 +6,8 @@ P-E curve simulator for ferroelectric memory physics.
 
 ## Physics Engines
 
-- **Preisach (quasi-static)** - Mayergoyz-based hysteresis with memory and discrete states.
-- **Landau-Khalatnikov (dynamic)** - Time-resolved switching engine for educational visualization.
+- **Preisach (quasi-static)** - Mayergoyz-style hysteresis with memory and discrete states (simplified).
+- **Landau-Khalatnikov (dynamic)** - Time-resolved switching engine for educational visualization (not device-calibrated).
 
 > Note: The Landau engine is intended for interactive learning, not calibrated device modeling.
 
@@ -37,6 +37,8 @@ P-E curve simulator for ferroelectric memory physics.
 | AlScN | 8-16 | Preset (illustrative) |
 
 ---
+
+**Note:** Material presets are simulation defaults or literature-reported values; treat as unverified unless cited (DOI: (add)).
 
 ## GUI Components
 

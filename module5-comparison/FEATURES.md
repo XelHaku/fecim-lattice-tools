@@ -22,7 +22,7 @@ FeCIM vs CPU/GPU business-case visualization (model-based, not measured).
 | GPU+HBM | 4 nm | 400 W | 100 | Baseline model |
 | FeCIM CIM | 45 nm | 5 W | 50 | **Estimated** (visualization only) |
 
-> FeCIM values are explicitly marked **estimated** in code and should not be treated as measured device specs.
+> All architecture values are model inputs for visualization. FeCIM values are explicitly marked **estimated** in code and should not be treated as measured device specs (DOI: (add)).
 
 ---
 

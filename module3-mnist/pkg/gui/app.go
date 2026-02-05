@@ -226,7 +226,7 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 	ma.educationalPanel.SetIdleExplanation()
 	ma.operationLog = NewMNISTOperationLog()
 	ma.predictionDisplay = NewPredictionDisplay()
-	ma.keyStat = NewMNISTKeyStat("Peer-Reviewed", "96-98%")
+	ma.keyStat = NewMNISTKeyStat("Literature", "96-98% (lit.)")
 
 	// Demo mode selector
 	ma.demoModeSelect = widget.NewSelect(
@@ -250,7 +250,7 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 	ma.hoverInfoLabel.TextStyle = fyne.TextStyle{Monospace: true}
 
 	// Info label with network specs - distinguish verified vs simulated
-	ma.infoLabel = widget.NewLabel("Network: 784→128→10 | Levels: 30 (claim) | Verified: 96-98% | This demo: PROJECTED")
+	ma.infoLabel = widget.NewLabel("Network: 784→128→10 | Levels: 30 (claim) | Literature: 96-98% (non-FeCIM) | Demo: projected")
 
 	// Control buttons - organized into groups
 	clearBtn := widget.NewButton("Clear", func() {

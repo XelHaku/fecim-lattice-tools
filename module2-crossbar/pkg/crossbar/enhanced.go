@@ -187,7 +187,7 @@ func (a *Array) MVMWithNonIdealities(input []float64, opts *MVMOptions) (*MVMRes
 
 			// Apply device variation
 			if opts.EnableVariation {
-				G *= a.cells[i][j].NoiseFactor
+				G *= a.GetProcessVariationFactor(i, j)
 			}
 
 			// Get effective input voltage (DAC quantized, IR drop affected)
@@ -258,26 +258,35 @@ const SneakPathThreshold = 32 // Use simplified mode for arrays larger than 32x3
 func (a *Array) computeSneakCurrentForRow(row int, input []float64, opts *MVMOptions) float64 {
 	// For 2T1R, dual transistor AND-gate makes sneak paths virtually zero
 	if opts != nil && opts.Is2T1R() {
-		return a.computeSimplifiedSneakCurrent(row, input, 0.000001) // 10x better than 1T1R
+		return a.computeSimplifiedSneakCurrent(row, input, 0.000001, opts) // 10x better than 1T1R
 	}
 
 	// For 1T1R, transistor isolation makes sneak paths negligible
 	if opts != nil && opts.Is1T1R() {
-		return a.computeSimplifiedSneakCurrent(row, input, 0.00001)
+		return a.computeSimplifiedSneakCurrent(row, input, 0.00001, opts)
 	}
 
 	// For small passive arrays, use full calculation for accuracy
 	if a.config.Rows <= SneakPathThreshold && a.config.Cols <= SneakPathThreshold {
-		return a.computeFullSneakCurrent(row, input)
+		return a.computeFullSneakCurrent(row, input, opts)
 	}
 
 	// For large passive arrays, use simplified model for performance
-	return a.computeSimplifiedSneakCurrent(row, input, 0.01)
+	return a.computeSimplifiedSneakCurrent(row, input, 0.01, opts)
+}
+
+// effectiveConductance returns the conductance for a cell with optional variation.
+func (a *Array) effectiveConductance(row, col int, opts *MVMOptions) float64 {
+	g := a.cells[row][col].Conductance
+	if opts != nil && opts.EnableVariation {
+		g *= a.GetProcessVariationFactor(row, col)
+	}
+	return g
 }
 
 // computeSimplifiedSneakCurrent uses a fixed factor model for sneak paths.
 // This is the original simplified model - fast but less accurate.
-func (a *Array) computeSimplifiedSneakCurrent(row int, input []float64, sneakFactor float64) float64 {
+func (a *Array) computeSimplifiedSneakCurrent(row int, input []float64, sneakFactor float64, opts *MVMOptions) float64 {
 	var sneakCurrent float64
 
 	for j := 0; j < len(input); j++ {
@@ -286,8 +295,8 @@ func (a *Array) computeSimplifiedSneakCurrent(row int, input []float64, sneakFac
 			if i == row {
 				continue
 			}
-			g1 := a.cells[row][j].Conductance
-			g2 := a.cells[i][j].Conductance
+			g1 := a.effectiveConductance(row, j, opts)
+			g2 := a.effectiveConductance(i, j, opts)
 			if g1 > 0.01 && g2 > 0.01 {
 				sneakCurrent += input[j] * sneakFactor * (g1 * g2) / (g1 + g2)
 			}
@@ -303,7 +312,7 @@ func (a *Array) computeSimplifiedSneakCurrent(row int, input []float64, sneakFac
 // Physical model: For a given target row reading, sneak paths form when:
 // Input voltage on column 'col' → cell[srcRow][col] → cell[srcRow][j] → cell[targetRow][j]
 // This creates a three-cell series path that adds parasitic current to the target row.
-func (a *Array) computeFullSneakCurrent(targetRow int, input []float64) float64 {
+func (a *Array) computeFullSneakCurrent(targetRow int, input []float64, opts *MVMOptions) float64 {
 	var totalSneak float64
 
 	inputLen := len(input)
@@ -325,7 +334,7 @@ func (a *Array) computeFullSneakCurrent(targetRow int, input []float64) float64 
 			}
 
 			// Entry conductance: input column on source row
-			g1 := a.cells[srcRow][col].Conductance
+			g1 := a.effectiveConductance(srcRow, col, opts)
 			if g1 < 0.01 {
 				continue // Path blocked by low conductance
 			}
@@ -337,13 +346,13 @@ func (a *Array) computeFullSneakCurrent(targetRow int, input []float64) float64 
 				}
 
 				// Middle conductance: source row, different column
-				g2 := a.cells[srcRow][j].Conductance
+				g2 := a.effectiveConductance(srcRow, j, opts)
 				if g2 < 0.01 {
 					continue // Path blocked
 				}
 
 				// Exit conductance: target row, exit column
-				g3 := a.cells[targetRow][j].Conductance
+				g3 := a.effectiveConductance(targetRow, j, opts)
 				if g3 < 0.01 {
 					continue // Path blocked
 				}
@@ -373,9 +382,9 @@ func (a *Array) ComputeFullMVMSneak(input []float64, opts *MVMOptions) []float64
 
 	for targetRow := 0; targetRow < a.config.Rows; targetRow++ {
 		if a.config.Rows <= SneakPathThreshold && a.config.Cols <= SneakPathThreshold {
-			sneakPerRow[targetRow] = a.computeFullSneakCurrent(targetRow, input)
+			sneakPerRow[targetRow] = a.computeFullSneakCurrent(targetRow, input, opts)
 		} else {
-			sneakPerRow[targetRow] = a.computeSimplifiedSneakCurrent(targetRow, input, 0.01)
+			sneakPerRow[targetRow] = a.computeSimplifiedSneakCurrent(targetRow, input, 0.01, opts)
 		}
 	}
 

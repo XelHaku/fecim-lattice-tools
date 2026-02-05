@@ -357,8 +357,8 @@ func TestHalfSelectNoDisturbFor1T1R(t *testing.T) {
 // TestTemperatureScaling verifies temperature effects on physics.
 func TestTemperatureScaling(t *testing.T) {
 	// Test wire resistance scaling with temperature
-	tempRT := NewTemperatureEffects(TempRoom)       // 300K
-	tempCryo := NewTemperatureEffects(TempCryogenic) // 77K
+	tempRT := NewTemperatureEffects(TempRoom)         // 300K
+	tempCryo := NewTemperatureEffects(TempCryogenic)  // 77K
 	tempAuto := NewTemperatureEffects(TempAutomotive) // 400K
 
 	baseR := 2.5 // Ohm
@@ -438,7 +438,7 @@ func TestSwitchingStatisticsDistribution(t *testing.T) {
 
 	stats := &WriteStatistics{
 		Enabled:  true,
-		VthSigma: 0.1, // 10% variation = ~3 level spread
+		VthSigma: 0.1,                          // 10% variation = ~3 level spread
 		RNG:      rand.New(rand.NewSource(42)), // Fixed seed for reproducibility
 	}
 
@@ -604,10 +604,10 @@ func TestProcessVariationGradient(t *testing.T) {
 		ADCBits:    8,
 		DACBits:    8,
 		ProcessVariation: &ProcessVariationConfig{
-			DeviceSigma: 0.0,   // No random
-			GradientX:   0.01,  // 1% per cell
-			GradientY:   0.01,  // 1% per cell
-			EdgeEffect:  0.0,   // No edge effect for this test
+			DeviceSigma: 0.0,  // No random
+			GradientX:   0.01, // 1% per cell
+			GradientY:   0.01, // 1% per cell
+			EdgeEffect:  0.0,  // No edge effect for this test
 		},
 	}
 
@@ -873,6 +873,6 @@ func BenchmarkFullSneakCalculation(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		arr.computeFullSneakCurrent(16, input)
+		arr.computeFullSneakCurrent(16, input, nil)
 	}
 }

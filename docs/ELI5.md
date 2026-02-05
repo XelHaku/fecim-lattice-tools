@@ -9,9 +9,11 @@
 **If you only have 60 seconds, read this.**
 
 > **Note:** This guide is a conceptual explanation. It does **not** assert device performance. The simulator defaults to 30 discrete levels (configurable). External scientific claims are tracked in `docs/comparison/HONESTY_AUDIT.md`.
+>
+> **Citations needed:** Numeric/performance claims in this guide are illustrative unless a DOI is provided. Add citations before external use (DOI: (add)). Examples include data-center energy projections, "% energy moving data" statements, HZO property tables, and energy-per-MAC comparisons.
 
 ## The Problem
-AI is eating the world, but it's also eating all the electricity. Data centers are projected to consume 8% of global power by 2030. Why? Because computers waste 90% of their energy just moving data around.
+AI is eating the world, but it's also eating all the electricity. Data centers are projected to consume 8% of global power by 2030 (citation needed; DOI: (add)). Why? Because computers waste 90% of their energy just moving data around (citation needed; DOI: (add)).
 
 ## The Root Cause
 Traditional computers have a "commute problem." The memory (where data lives) and the processor (where math happens) are separate. Every calculation requires billions of trips back and forth.
@@ -224,8 +226,8 @@ In the 1940s-60s, analog computers were common. They used voltages to represent 
 - Difficult to program
 
 **Ferroelectric CIM brings analog back** with:
-- Ferroelectric memory that holds analog values stably
-- Enough precision (30-level demo baseline) for AI applications
+- Ferroelectric memory that holds analog values stably (conceptual)
+- Enough precision (30-level demo baseline) for demo-scale AI exploration (simulation assumption)
 - Inherent multiplication via Ohm's Law
 
 ## The Best of Both Worlds
@@ -609,6 +611,8 @@ Stacked layers:
 | Endurance | 10¹² cycles | Lasts basically forever |
 | States | Multi-level (demo baseline 30) | Stores more info per cell |
 | CMOS compatible | ✅ | Can use existing factories |
+
+*Values above are literature-reported or illustrative and are not verified by this simulator (DOI: (add)).*
 
 > "Works on a standard CMOS line and can translate just like that." — Dr. Tour
 
@@ -1556,6 +1560,8 @@ Traditional CPU multiply-add        ~10 pJ
 GPU multiply-add                    ~1 pJ
 Ferroelectric CIM multiply-add            ~0.001 pJ (1 fJ!)
 
+*Order-of-magnitude illustration only; cite before external use (DOI: (add)).*
+
 To put it in perspective:
 - The energy in one AA battery could power:
   - ~100 million traditional multiply-adds
@@ -1584,6 +1590,8 @@ With Ferroelectric CIM (100× efficiency):
 - 1,000 kWh/day
 - $100/day electricity
 - 500 kg CO₂/day
+
+*Illustrative scenario only; not measured or validated. Add citations before external use (DOI: (add)).*
 
 That's the difference between "expensive novelty"
 and "ubiquitous infrastructure"!

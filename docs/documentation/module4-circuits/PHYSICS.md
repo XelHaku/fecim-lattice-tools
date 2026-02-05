@@ -28,6 +28,8 @@ QuantizationError ≈ ±0.5 LSB
 | N | Converter resolution | bits |
 | I_in | Input current | Amps |
 | R_tia | TIA resistance | Ohms |
+| LSB | Least significant bit size | Volts |
+| V_out | Output voltage | Volts |
 
 ## Assumptions And Limits
 
@@ -37,9 +39,9 @@ QuantizationError ≈ ±0.5 LSB
 
 ## Where It Lives In Code
 
-- `module4-circuits/pkg/peripherals/dac.go`
-- `module4-circuits/pkg/peripherals/adc.go`
-- `module4-circuits/pkg/peripherals/tia.go`
+- `shared/peripherals/dac.go`
+- `shared/peripherals/adc.go`
+- `shared/peripherals/tia.go`
 - `module4-circuits/pkg/gui/app.go`
 
 ## Sources

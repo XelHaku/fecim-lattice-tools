@@ -24,6 +24,12 @@ import (
 // AnimationFrameDelayMs is the animation frame delay for smooth updates
 const AnimationFrameDelayMs = 50
 
+// Half-select disturb modeling (simple, deterministic for live UI updates)
+const (
+	halfSelectDisturbThresholdRatio = 0.3  // Vhalf/Vc threshold before any drift
+	halfSelectDisturbRate           = 0.25 // Fractional level change per pulse at full strength
+)
+
 // UI Colors for voltage visualization
 var (
 	colorFullVoltage   = color.RGBA{255, 200, 0, 255}   // Bright Gold for target cell
@@ -185,8 +191,8 @@ func (ca *CircuitsApp) runISPPWithAnimation(row, col, targetLevel int) {
 
 	// Enable V/2 visualization if in passive (0T1R) mode
 	if ca.deviceState.IsPassiveMode() {
-		voltage := ca.deviceState.GetVoltageForLevel(targetLevel, ascending)
-		ca.deviceState.EnableHalfSelectVisualization(row, col, voltage)
+		applied := ca.deviceState.AppliedWriteVoltageForLevel(targetLevel, ascending)
+		ca.deviceState.EnableHalfSelectVisualization(row, col, applied)
 		ca.updateHalfSelectVisualization()
 	}
 
@@ -209,6 +215,15 @@ func (ca *CircuitsApp) runISPPWithAnimation(row, col, targetLevel int) {
 		ca.deviceState.StartWriteSequence(row, col, targetLevel, currentLevel)
 		go ca.animateWriteSequence()
 
+		// Apply write voltage via DAC for this pulse and update half-select neighbors.
+		appliedVoltage, _ := ca.applyWriteVoltages(row, col, isppStatus.Voltage)
+		if ca.deviceState.IsPassiveMode() {
+			ca.deviceState.EnableHalfSelectVisualization(row, col, appliedVoltage)
+			ca.updateHalfSelectVisualization()
+		}
+		ca.applyHalfSelectDisturb(row, col, direction, appliedVoltage)
+		ca.recomputeAndRefresh()
+
 		// Update ISPP UI
 		ca.updateISPPUI()
 
@@ -229,6 +244,9 @@ func (ca *CircuitsApp) runISPPWithAnimation(row, col, targetLevel int) {
 				return
 			}
 		}
+
+		// Clear write voltages before verify/next iteration
+		ca.deviceState.ResetWriteVoltages()
 
 		// Simulate write: move at most one level per pulse toward the calibrated level
 		ascending := isppStatus.Direction == DirectionAscending
@@ -311,6 +329,7 @@ cleanup:
 	// Disable V/2 visualization
 	ca.deviceState.DisableHalfSelectVisualization()
 	ca.updateHalfSelectVisualization()
+	ca.deviceState.ResetWriteVoltages()
 
 	// Record the write in hysteresis state
 	ca.deviceState.RecordWrite(row, col, currentLevel)
@@ -402,14 +421,19 @@ func (ca *CircuitsApp) runISPPWithLK(row, col, targetLevel int) {
 		level := ds.conductanceToLevel(event.CurrentG, levels)
 		ds.updateISPPTracking(event.Attempt, math.Abs(event.VPulse), level)
 		ca.updateISPPUI()
+
+		// During write phases, drive the circuit path and visualize half-select behavior.
 		if event.Phase == "Predict" || event.Phase == "BinarySearch" {
-			ca.applyWritePhaseVoltages(WriteSequenceState{
-				Phase:        PhaseWrite,
-				TargetRow:    row,
-				TargetCol:    col,
-				PhaseVoltage: math.Abs(event.VPulse),
-			})
+			appliedVoltage, _ := ca.applyWriteVoltages(row, col, event.VPulse)
+			if ds.IsPassiveMode() {
+				ds.EnableHalfSelectVisualization(row, col, appliedVoltage)
+				ca.updateHalfSelectVisualization()
+			}
+			ca.applyHalfSelectDisturb(row, col, direction, appliedVoltage)
+			ca.recomputeAndRefresh()
 		}
+
+		// Verify phase uses a low read-like voltage for UI/circuit visualization.
 		if event.Phase == "Verify" {
 			verifyV := ds.GetReadRange().Max * 0.5
 			ca.applyWritePhaseVoltages(WriteSequenceState{
@@ -419,6 +443,8 @@ func (ca *CircuitsApp) runISPPWithLK(row, col, targetLevel int) {
 				PhaseVoltage: verifyV,
 			})
 		}
+
+		// On verify/success, reflect the level update in the stored array weights.
 		if event.Phase == "Verify" || event.Phase == "Success" {
 			ca.mu.Lock()
 			updated := false
@@ -436,6 +462,7 @@ func (ca *CircuitsApp) runISPPWithLK(row, col, targetLevel int) {
 				ca.recomputeAndRefresh()
 			}
 		}
+
 		if ca.operationsStatusLabel != nil {
 			msg := fmt.Sprintf("L-K ISPP [%d/%d]: Level %d -> %d | V=%.2fV | %s",
 				event.Attempt, ctrl.MaxIterations, level, targetLevel, math.Abs(event.VPulse), event.Phase)
@@ -477,6 +504,7 @@ func (ca *CircuitsApp) runISPPWithLK(row, col, targetLevel int) {
 	// Disable V/2 visualization
 	ds.DisableHalfSelectVisualization()
 	ca.updateHalfSelectVisualization()
+	ds.ResetWriteVoltages()
 
 	// Record the write in hysteresis state
 	ds.RecordWrite(row, col, finalLevel)
@@ -626,10 +654,15 @@ func (ca *CircuitsApp) updateISPPUI() {
 
 	fyne.Do(func() {
 		if ca.operationsStatusLabel != nil {
-			ca.operationsStatusLabel.SetText(fmt.Sprintf("ISPP [%d/%d]: Level %d -> %d | V=%.2fV | %s",
+			appliedVoltage, dacCode := ca.deviceState.DACWriteVoltage(isppStatus.Voltage)
+			voltageText := fmt.Sprintf("V=%.2fV", appliedVoltage)
+			if dacCode >= 0 {
+				voltageText = fmt.Sprintf("V=%.2fV (DAC %d)", appliedVoltage, dacCode)
+			}
+			ca.operationsStatusLabel.SetText(fmt.Sprintf("ISPP [%d/%d]: Level %d -> %d | %s | %s",
 				isppStatus.Iteration, isppStatus.MaxIter,
 				isppStatus.CurrentLevel, isppStatus.TargetLevel,
-				isppStatus.Voltage, dirStr))
+				voltageText, dirStr))
 		}
 
 		// Update direction indicator if we have one
@@ -832,6 +865,112 @@ func (ca *CircuitsApp) updateArchitectureSpecificUI() {
 			}
 		}
 	})
+}
+
+// applyWriteVoltages converts the target voltage through the DAC and applies
+// the resulting voltages to the array (including V/2 scheme in passive mode).
+func (ca *CircuitsApp) applyWriteVoltages(row, col int, targetVoltage float64) (float64, int) {
+	if ca.deviceState == nil {
+		return targetVoltage, -1
+	}
+	applied, dacCode := ca.deviceState.DACWriteVoltage(targetVoltage)
+
+	if ca.deviceState.IsPassiveMode() {
+		ca.deviceState.ApplyHalfSelectWrite(row, col, applied)
+	} else {
+		// Non-passive: pass-through voltages should be 0 on unselected BLs.
+		ca.deviceState.SetAllDACVoltages(0)
+		ca.deviceState.SetDACVoltage(col, applied)
+	}
+	ca.deviceState.SetDACRangeMode(DACRangeWrite)
+
+	return applied, dacCode
+}
+
+// applyHalfSelectDisturb updates neighbor polarization based on V/2 exposure.
+// This is a lightweight, deterministic drift model for live UI feedback.
+func (ca *CircuitsApp) applyHalfSelectDisturb(row, col int, direction HysteresisDirection, appliedVoltage float64) {
+	if ca.deviceState == nil || !ca.deviceState.IsPassiveMode() {
+		return
+	}
+
+	writeRange := ca.deviceState.GetWriteRange()
+	if writeRange.Min <= 0 {
+		return
+	}
+
+	halfVoltage := math.Abs(appliedVoltage) * HalfSelectVoltageRatio
+	ratio := halfVoltage / writeRange.Min
+	if ratio <= halfSelectDisturbThresholdRatio {
+		return
+	}
+
+	strength := (ratio - halfSelectDisturbThresholdRatio) / (1.0 - halfSelectDisturbThresholdRatio)
+	if strength <= 0 {
+		return
+	}
+	step := strength * halfSelectDisturbRate
+
+	deltaSign := 1.0
+	if direction == DirectionDescending {
+		deltaSign = -1.0
+	}
+
+	ca.mu.Lock()
+	defer ca.mu.Unlock()
+
+	if len(ca.halfSelectResidue) != ca.arrayRows {
+		ca.halfSelectResidue = make([][]float64, ca.arrayRows)
+		for r := range ca.halfSelectResidue {
+			ca.halfSelectResidue[r] = make([]float64, ca.arrayCols)
+		}
+	}
+
+	// Same row, different columns
+	for c := 0; c < ca.arrayCols; c++ {
+		if c == col {
+			continue
+		}
+		ca.applyDisturbToCellLocked(row, c, step*deltaSign)
+	}
+	// Same column, different rows
+	for r := 0; r < ca.arrayRows; r++ {
+		if r == row {
+			continue
+		}
+		ca.applyDisturbToCellLocked(r, col, step*deltaSign)
+	}
+}
+
+func (ca *CircuitsApp) applyDisturbToCellLocked(row, col int, delta float64) {
+	if row < 0 || row >= len(ca.arrayWeights) {
+		return
+	}
+	if col < 0 || col >= len(ca.arrayWeights[row]) {
+		return
+	}
+
+	ca.halfSelectResidue[row][col] += delta
+
+	for ca.halfSelectResidue[row][col] >= 1.0 {
+		if ca.arrayWeights[row][col] < ca.quantLevels-1 {
+			ca.arrayWeights[row][col]++
+		} else {
+			ca.halfSelectResidue[row][col] = 0
+			break
+		}
+		ca.halfSelectResidue[row][col] -= 1.0
+	}
+
+	for ca.halfSelectResidue[row][col] <= -1.0 {
+		if ca.arrayWeights[row][col] > 0 {
+			ca.arrayWeights[row][col]--
+		} else {
+			ca.halfSelectResidue[row][col] = 0
+			break
+		}
+		ca.halfSelectResidue[row][col] += 1.0
+	}
 }
 
 // updateHysteresisDirectionUI updates the direction indicator

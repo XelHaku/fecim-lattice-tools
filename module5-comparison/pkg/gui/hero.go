@@ -16,7 +16,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// estimatedColor is used for unverified/estimated values (amber)
+// estimatedColor is used for model-input values (amber)
 var estimatedColor = color.RGBA{255, 191, 0, 255}
 
 // Technical briefing colors
@@ -29,7 +29,7 @@ var (
 	heroMutedColor = color.RGBA{160, 180, 200, 255} // Secondary text
 )
 
-// Energy values in picojoules per MAC (from docs/videos/ironlattice-youtube-script.md)
+// Energy values in picojoules per MAC (model inputs from docs/videos/ironlattice-youtube-script.md)
 // "CPU plus DRAM: 1000 picojoules. GPU plus HBM: 100 picojoules. FeCIM: under 1 picojoule."
 const (
 	cpuEnergyPJ   = 1000.0 // 1000 pJ/MAC
@@ -38,7 +38,7 @@ const (
 )
 
 // AnimatedEnergyRace shows the HERO energy comparison - investor grade.
-// HERO STATEMENT: "80-90% data center energy reduction"
+// HERO STATEMENT: "80-90% data center energy reduction" (model input headline)
 type AnimatedEnergyRace struct {
 	widget.BaseWidget
 
@@ -139,7 +139,7 @@ func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
 	e.heroText.TextStyle = fyne.TextStyle{Bold: true}
 	e.heroText.Alignment = fyne.TextAlignCenter
 
-	e.heroSubtext = canvas.NewText("⚠️ SIMULATION ONLY | TRL 4 Lab Estimates | Not Production Verified", heroAmberColor)
+	e.heroSubtext = canvas.NewText("⚠️ SIMULATION ONLY | MODEL INPUTS | TRL 4 Lab Context", heroAmberColor)
 	e.heroSubtext.TextSize = 14
 	e.heroSubtext.TextStyle = fyne.TextStyle{Bold: true}
 	e.heroSubtext.Alignment = fyne.TextAlignCenter
@@ -195,20 +195,20 @@ func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
 	)
 
 	// === KEY STAT STRIP ===
-	e.statStrip = canvas.NewText("1000x less than CPU  |  100x less than GPU  |  ~1 pJ/MAC (TRL 4 est.)", heroCyanColor)
+	e.statStrip = canvas.NewText("Model inputs: 1000× vs CPU  |  100× vs GPU  |  ~1 pJ/MAC (TRL 4)", heroCyanColor)
 	e.statStrip.TextSize = 11
 	e.statStrip.TextStyle = fyne.TextStyle{Bold: true}
 	e.statStrip.Alignment = fyne.TextAlignCenter
 
 	// === SYSTEM POWER BREAKDOWN (C10: Per Dr. Tour critique) ===
 	// Shows total system power distribution, not just array power
-	powerBreakdown := canvas.NewText("System Power: Array ~45% | ADC/DAC ~40% | Peripherals ~15% (typical CIM architecture)", heroAmberColor)
+	powerBreakdown := canvas.NewText("Model assumption: System Power = Array ~45% | ADC/DAC ~40% | Peripherals ~15%", heroAmberColor)
 	powerBreakdown.TextSize = 10
 	powerBreakdown.TextStyle = fyne.TextStyle{Italic: true}
 	powerBreakdown.Alignment = fyne.TextAlignCenter
 
 	// === CITATION ===
-	citation := canvas.NewText("Sources: Samsung Nature 2025 (25-100× vs NAND), NVIDIA H100 specs, Intel/AMD specs", heroMutedColor)
+	citation := canvas.NewText("Model input references (not validated): Samsung Nature 2025 range, NVIDIA H100 datasheets, Intel/AMD datasheets", heroMutedColor)
 	citation.TextSize = 9
 	citation.TextStyle = fyne.TextStyle{Italic: true}
 	citation.Alignment = fyne.TextAlignCenter
@@ -430,7 +430,7 @@ func (p *PhasedStrategyDiagram) CreateRenderer() fyne.WidgetRenderer {
 	phase3Name := canvas.NewText("Full CIM", heroTextColor)
 	phase3Name.TextSize = 12
 	phase3Name.TextStyle = fyne.TextStyle{Bold: true}
-	phase3Desc := canvas.NewText("80-90% reduction", heroMutedColor)
+	phase3Desc := canvas.NewText("80-90% model reduction", heroMutedColor)
 	phase3Desc.TextSize = 9
 	phase3Box := container.NewVBox(
 		container.NewCenter(phase3Title),
@@ -510,7 +510,7 @@ func (a *AnalogStatesComparison) MinSize() fyne.Size {
 
 // CreateRenderer implements fyne.Widget.
 func (a *AnalogStatesComparison) CreateRenderer() fyne.WidgetRenderer {
-	text := widget.NewLabel("30 Analog States (conference claim) = ~4.9 bits/cell (COSM 2025; pending peer review)")
+	text := widget.NewLabel("30 Analog States (model input; conference claim) ≈ 4.9 bits/cell")
 	text.Alignment = fyne.TextAlignCenter
 	return widget.NewSimpleRenderer(container.NewCenter(text))
 }

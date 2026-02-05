@@ -28,12 +28,16 @@ TileIndex = (rowTile, colTile)
 | C | Weight matrix cols | count |
 | ArrayRows | Crossbar rows | count |
 | ArrayCols | Crossbar cols | count |
+| TilesRows | Number of row tiles (ceil) | count |
+| TilesCols | Number of column tiles (ceil) | count |
+| rowTile, colTile | Tile indices | count |
 
 ## Assumptions And Limits
 
 - No detailed routing or placement optimization.
 - Focus is on mapping correctness and export format.
 - Quantization levels are assumed to match array configuration.
+- Counts are integer quantities; ceilings reflect tiling that may pad edges.
 
 ## Where It Lives In Code
 

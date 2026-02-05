@@ -2,9 +2,117 @@
 
 **Mission**: Educational FeCIM visualization and simulation tool based on reported in literature HfO₂-ZrO₂ superlattice research.
 
-**Last updated**: 2026-02-04
+**Last updated**: 2026-02-05
+
+---
+
+## 0. Focus Areas
+
+This TODO prioritizes (1) **physics accuracy**, (2) **UI/UX correctness**, and (3) **documentation alignment** across all modules.
+
+### This Week (Top 5)
+
+1. M5-U1: Align Module 5 CLI/GUI banners with `docs/comparison/HONESTY_AUDIT.md` (remove TRL/verified claims, fix path).
+2. M4-D1: Update Module 4 docs to reference `shared/peripherals` and remove stale `module4-circuits/pkg/peripherals` paths.
+3. M2-D2: Update `docs/crossbar/reference/VOLTAGE_RULES.md` peripheral references to `shared/peripherals`.
+4. M2-U1: Fix crossbar GUI `-enhanced` help/features list to match implemented features.
+5. M2-U2: Remove/replace the 87% “measured hardware” target in accuracy waterfall with honest labeling.
+
+### Module 1: Hysteresis (Physics + UI/UX + Docs)
+
+| ID | Area | Task | Status | Est. |
+|----|------|------|--------|------|
+| M1-D1 | Docs | Document run modes (GUI/TUI/headless/Vulkan) and clarify L-K vs Preisach defaults in `docs/documentation/module1-hysteresis/*.md` | ⏳ | 30-60m |
+| M1-U1 | UI/UX | Fix WRD target marker parity (single snapshot for target/marker/logs) | ⏳ | 1-2hr |
+| M1-P1 | Physics | L-K performance accounting + ISPP stabilization evidence (HI/MID/LO) vs `docs/hysteresis/hysteresis-gemini.md` | ⏳ | 2-4hr |
+
+### Module 2: Crossbar (Physics + UI/UX + Docs)
+
+| ID | Area | Task | Status | Est. |
+|----|------|------|--------|------|
+| M2-U1 | UI/UX | Align `cmd/crossbar-gui -help` feature list with implemented features (remove write-verify/differential claims or implement) | ⏳ | 30-60m |
+| M2-U2 | UI/UX | Replace 87% “measured hardware” target in accuracy waterfall with HONESTY_AUDIT-aligned labeling | ⏳ | 30-60m |
+| M2-D1 | Docs | Update `docs/crossbar/reference/PHYSICS.md` to reflect actual ADC/DAC defaults (6/8 bits) or change code to match docs | ✅ | 1-2hr |
+| M2-D2 | Docs | Update `docs/crossbar/reference/VOLTAGE_RULES.md` peripheral file references to `shared/peripherals` and re-verify V/2 references | ⏳ | 1-2hr |
+| M2-P2 | Physics | Apply temperature scalings beyond wire resistance (conductance window, noise, drift) in MVM-with-non-idealities or gate behind options; add tests | ⏳ | 1-2hr |
+| M2-P1 | Physics | Full physics audit vs `docs/crossbar/reference/PHYSICS.md` (IR drop, sneak paths, drift, variation, temperature) | ⏳ | 2-4hr |
+
+### Module 3: MNIST (Physics + UI/UX + Docs)
+
+| ID | Area | Task | Status | Est. |
+|----|------|------|--------|------|
+| M3-D1 | Docs | Sync `docs/documentation/module3-mnist/*.md` with current file paths and core vs training split | ⏳ | 30-60m |
+| M3-U1 | UI/UX | Audit GUI labels/metrics to ensure accuracy/energy values are labeled as modeled (not verified) | ⏳ | 30-60m |
+| M3-P1 | Physics | Verify FP vs CIM inference pipeline ordering + quantization/noise injection vs docs; add evidence logs/tests | ⏳ | 2-4hr |
+| M3-P2 | Physics | Align energy model between core (bit-scaled µJ) and GUI energy widget/comparison card (fixed 50 fJ/MAC, static ratios); choose SSOT + update UI/docs | ⏳ | 1-2hr |
+| M3-D2 | Docs | Align noise bounds (docs/UI 0.20 max vs code clamp 0.50) and document rationale | ⏳ | 15-30m |
+| M3-U2 | UI/UX | Decide whether dual-mode should expose confusion matrix/metrics or label them as single-mode-only in UI | ⏳ | 1-2hr |
+
+### Module 4: Circuits (Physics + UI/UX + Docs)
+
+| ID | Area | Task | Status | Est. |
+|----|------|------|--------|------|
+| M4-D1 | Docs | Update Module 4 docs to reference `shared/peripherals` (`docs/documentation/module4-circuits/*.md`, `docs/peripheral-circuits/*`) | ⏳ | 30-60m |
+| M4-U1 | UI/UX | Validate ISPP engine toggle wiring (Fast vs L-K) and ensure GUI uses shared/physics with thin adapter | ⏳ | 1-2hr |
+| M4-P1 | Physics | Audit DAC/ADC/TIA/ChargePump equations vs `docs/peripheral-circuits/PHYSICS.md` | ⏳ | 2-4hr |
+| M4-U2 | UI/UX | Write/Write Cell UX + circuit-coupled updates during ISPP (selected cell + neighbors update each pulse/verify) | ⏳ | 4-12hr |
+
+#### M4-U2 Subtasks
+
+| ID | Task | Status | Est. |
+|----|------|--------|------|
+| M4-U2a | Route write voltage through DAC output (quantization + INL/DNL) before applying to array | ✅ | 1-2hr |
+| M4-U2b | Apply V/2 (0T1R) or pass-through (1T1R/2T1R) voltages and update neighbor polarization live | ✅ | 2-4hr |
+| M4-U2c | Throttle ISPP UI refresh and enforce Fyne-safe updates from goroutines | ✅ | 1-2hr |
+| M4-U2d | Add targeted tests/visual checks for half-select disturb + applied DAC voltage display | ⏳ | 1-2hr |
+
+### Module 5: Comparison (Physics + UI/UX + Docs)
+
+| ID | Area | Task | Status | Est. |
+|----|------|------|--------|------|
+| M5-U1 | UI/UX | Replace CLI/GUI comparison banners with HONESTY_AUDIT-aligned copy (remove TRL/verified claims; fix path) | ✅ | 30-60m |
+| M5-P1 | Physics | Verify energy/ROI equations vs code defaults; ensure values are labeled as model inputs | ✅ | 1-2hr |
+| M5-D1 | Docs | Update `docs/documentation/module5-comparison/*.md` to match workload defaults and honesty phrasing | ✅ | 1-2hr |
+
+### Module 6: EDA (Physics + UI/UX + Docs)
+
+| ID | Area | Task | Status | Est. |
+|----|------|------|--------|------|
+| M6-D1 | Docs | Sync `docs/documentation/module6-eda/*.md` with actual exports (JSON/CSV/SPICE/Verilog/DEF) | ⏳ | 1-2hr |
+| M6-U1 | UI/UX | Check GUI/CLI parity (Start/Stop, defaults) and document any drift | ⏳ | 1-2hr |
+| M6-P1 | Physics | Audit mapping/quantization/topology vs docs; verify export contents | ⏳ | 2-4hr |
+
+### Module 7: Docs (Physics + UI/UX + Docs)
+
+| ID | Area | Task | Status | Est. |
+|----|------|------|--------|------|
+| M7-D1 | Docs | Confirm curriculum tree order + shortcuts match `docs/documentation/`; update README/MODULES if needed | ⏳ | 30-60m |
+| M7-U2 | UI/UX | Add colored category badges in tree rows to match curriculum-first UI spec | ⏳ | 30-60m |
+| M7-U3 | UI/UX | Hide the “On This Page” sidebar when ToC has < 3 headings | ⏳ | 30-60m |
+| M7-U1 | UI/UX | Validate layout breakpoints + click targets vs `docs/development/GUI/GUI.module7.md` | ⏳ | 1-2hr |
+| M7-P1 | Physics | Verify search ranking + reading time math vs `docs/documentation/module7-docs/PHYSICS.md` | ⏳ | 1-2hr |
+
+### Cross-Module (Shared Infrastructure)
+
+| ID | Area | Task | Status | Est. |
+|----|------|------|--------|------|
+| CM-P1 | Physics | Define “physics accuracy” acceptance criteria per module and align wording with `docs/comparison/HONESTY_AUDIT.md` | ⏳ | 30-60m |
+| CM-D1 | Docs | Keep `HONESTY_AUDIT.md` as SSOT and ensure UI labels match it everywhere | ⏳ | 30-60m |
+| CM-U1 | UI/UX | Ensure UI values/plots never desync from engine state (single source of truth snapshot wiring) | ⏳ | 1-2hr |
+| CM-D2 | Docs | Equation widgets pipeline: LaTeX→SVG SSOT, hotspot alignment, and SVG caching | ⏳ | 1-2hr |
+| CM-P2 | Physics | Add minimal headless regression suite per engine (Preisach + LK) with compact JSON summary | ⏳ | 2-4hr |
+| CM-D3 | Docs | Tighten module docs so each model has equations, assumptions, units, and reported vs validated labels | ⏳ | 2-4hr |
+
+---
 
 ## LK Tracking (headless)
+
+| ID | Task | Acceptance | Status |
+|----|------|------------|--------|
+| LK-C01 | Verify LK equation terms/signs in `shared/physics/landau.go` match the compendium (E_eff = E_applied - k_dep·P; dP/dt = (E_eff - dG/dP + noise)/rho_eff; dG/dP = 2αP + 4βP^3 + 6γP^5). | `go test ./shared/physics -run TestLKSolver_dPdT_Equation` | ⏳ |
+| LK-C02 | Verify effective-viscosity wiring `rho_eff = rho + (R_series·A/d)` when `UseEffectiveViscosity=true`. | `go test ./shared/physics -run TestLKSolver_effectiveRho` | ⏳ |
+| LK-C03 | Headless LK run uses E-field units and completes the 5-target ISPP sequence without NaN/Inf states. | `go run ./cmd/fecim-lattice-tools --mode hysteresis --engine lk` | ⏳ |
+| LK-C04 | Doc parity: note `UseMaterialAlpha` (Pr-calibrated α) vs dynamic α in compendium. | Check `docs/hysteresis/hysteresis-gemini.md` update. | ✅ |
 
 ## Calibration JSON hygiene
 
@@ -94,27 +202,27 @@
 
 | ID | Task | Status | Est. |
 |----|------|--------|------|
-| G01 | Calibration drift guard: add `scripts/calib-guard.sh` to fail CI if `cmd/fecim-lattice-tools/data/calibrations/*.json` changes unless `ALLOW_CALIBRATION_UPDATES=1` | ⏳ | 1-2hr |
 | G02 | Add “intentional calibration update” policy: require linking the evidence log/CSV paths in the commit message/body when calibrations are updated | ⏳ | 30m |
 | G03 | Provide optional `pre-commit` hook template to block calibration JSON commits by default (not auto-installed) | ⏳ | 30m |
+| G01 | Calibration drift guard: add `scripts/calib-guard.sh` to fail CI if `cmd/fecim-lattice-tools/data/calibrations/*.json` changes unless `ALLOW_CALIBRATION_UPDATES=1` | ⏳ | 1-2hr |
 
 ### P1: Engine parity / regression evidence (headless-first)
 
 | ID | Task | Status | Est. |
 |----|------|--------|------|
-| G04 | Headless WRD/ISPP regression suite: Preisach target-hit within N pulses for HI/MID/LO; emits a compact JSON summary artifact | ⏳ | 2-4hr |
-| G04b | One-source-of-truth ISPP write engine: refactor so the ISPP state machine lives in `shared/physics` and is reused by module1-hysteresis (GUI + headless) and module4-circuits (GUI + CLI). Remove duplicate controllers (`module1-hysteresis/pkg/controller/WriteController` vs `shared/physics/WriteController` vs module4 local ISPP state) or make them thin adapters. | ⏳ | 4-12hr |
-| G04c | Shared ISPP migration plan: define the shared API (target=level and/or conductance), mapping adapters per module, and a deprecation plan for old controllers; add parity tests to prove behavior matches across modules | ⏳ | 1-2hr |
-| G05 | Headless LK regression suite: same targets + overshoot/pulse stats (looser thresholds OK), emits JSON summary | ⏳ | 2-4hr |
 | G06 | Normalize/verify CLI engine selector (`--engine {preisach,lk}` or document actual selector); ensure all docs/runbooks reference the same mechanism | ⏳ | 30-60m |
 | G06b | Verification matrix: for each material, verify both Preisach + LK run and hit a small target set (HI/MID/LO) without crashes; record a one-line PASS/FAIL summary | ⏳ | 1-2hr |
+| G04c | Shared ISPP migration plan: define the shared API (target=level and/or conductance), mapping adapters per module, and a deprecation plan for old controllers; add parity tests to prove behavior matches across modules | ⏳ | 1-2hr |
+| G04 | Headless WRD/ISPP regression suite: Preisach target-hit within N pulses for HI/MID/LO; emits a compact JSON summary artifact | ⏳ | 2-4hr |
+| G05 | Headless LK regression suite: same targets + overshoot/pulse stats (looser thresholds OK), emits JSON summary | ⏳ | 2-4hr |
+| G04b | One-source-of-truth ISPP write engine: refactor so the ISPP state machine lives in `shared/physics` and is reused by module1-hysteresis (GUI + headless) and module4-circuits (GUI + CLI). Remove duplicate controllers (`module1-hysteresis/pkg/controller/WriteController` vs `shared/physics/WriteController` vs module4 local ISPP state) or make them thin adapters. | ⏳ | 4-12hr |
 
 ### P2: LK05/LK07 stabilization accounting (make it measurable)
 
 | ID | Task | Status | Est. |
 |----|------|--------|------|
-| G07 | Add LK ISPP overshoot accounting counters: overshoots/target, max overshoot Δ(level), stuck-breaker invocations, bisection usage rate | ⏳ | 1-2hr |
 | G08 | Define acceptance criteria for Literature Superlattice MID stability (overshoot rate/variance bounds) and record evidence in `hysteresis-prompt.md` | ⏳ | 30-60m |
+| G07 | Add LK ISPP overshoot accounting counters: overshoots/target, max overshoot Δ(level), stuck-breaker invocations, bisection usage rate | ⏳ | 1-2hr |
 
 ### P2: Performance diagnosis tooling
 
@@ -127,9 +235,10 @@
 
 | ID | Task | Status | Est. |
 |----|------|--------|------|
+| G12 | Add “GUI parity smoke test” checklist (5-min manual run) with expected log lines + what screenshots to capture | ⏳ | 30-60m |
 | G11 | Throttled WRD phase-boundary logging spec: log `wrdTargetLevel`, `wrdNextTargetLevel`, `controller.TargetLevel`, `controller.State`, `discreteLevel` at transitions (no per-frame spam) | ⏳ | 1hr |
 | G11b | Refactor target/phase snapshot wiring: ensure a single snapshot struct is shared across GUI widgets so target/marker/logs cannot desync (eliminate parallel sources of truth) | ⏳ | 1-2hr |
-| G12 | Add “GUI parity smoke test” checklist (5-min manual run) with expected log lines + what screenshots to capture | ⏳ | 30-60m |
+| G11c | Write/Write Cell ISPP UX + circuit-coupled updates: during ISPP, update the selected cell’s polarization/level live on each pulse/verify; drive input voltage from the DAC above via the peripheral circuit (not a direct set); compute neighbor polarization updates due to pass-through/half-select voltages and update them live as well | ⏳ | 4-12hr |
 
 ### P3: UX polish standard
 
@@ -215,19 +324,19 @@
 
 | ID | Task | Status | Est. |
 |----|------|--------|------|
+| L11 | Add [LK] indicators to material_picker.go for Landau-Khalatnikov parameters (requires LK model implementation first - see docs/hysteresis/hysteresis-glm.md Phase 4: P1 Landau-Khalatnikov model) | ⏳ | 1hr |
 | L01 | Hysteresis cycle labels (wake-up, stable, fatigue phases) | ✅ | Done |
 | L02 | Screenshot metadata embedding (PNG EXIF with parameters) | ✅ | Done |
 | L03 | Add GitHub URL to glossary widget TODO | ✅ | Done (existing) |
 | L04 | Hysteresis polarization bar indicator - increase to 16px with pulsing | ✅ | Done |
-| L11 | Add [LK] indicators to material_picker.go for Landau-Khalatnikov parameters (requires LK model implementation first - see docs/hysteresis/hysteresis-glm.md Phase 4: P1 Landau-Khalatnikov model) | ⏳ | 1hr |
 
 ### P4-D2: Medium-Effort Low-Priority Fixes
 
 | ID | Task | Status | Est. |
 |----|------|--------|------|
+| L07 | Demo video creation (2-3 min walkthrough) | ⏳ | 4hr |
 | L05 | "About the Science" unified Learn More section | ✅ | Done |
 | L06 | Accessibility audit (keyboard nav, ARIA labels, high-contrast mode) | ✅ | Done |
-| L07 | Demo video creation (2-3 min walkthrough) | ⏳ | 4hr |
 
 ### P4-D3: Hard Low-Priority Fixes
 
@@ -240,6 +349,16 @@
 ---
 
 ## 7. Documentation Work
+
+### Doc Debt (2026-02-05 Sweep)
+
+| ID | Task | Status | Est. |
+|----|------|--------|------|
+| DOC-CITE-1 | Add DOI citations (or remove numeric claims) for ELI5 energy, HZO property, and data-center projection numbers (`docs/ELI5.md`) | ⏳ | 1-2hr |
+| DOC-CITE-2 | Verify or replace literature DOIs in crossbar voltage/physics references (`docs/crossbar/reference/PHYSICS.md`, `docs/crossbar/reference/VOLTAGE_RULES.md`) | ⏳ | 2-4hr |
+| DOC-CITE-3 | Cite peripheral timing/energy assumptions or label as placeholders (`docs/peripheral-circuits/PHYSICS.md`) | ⏳ | 1-2hr |
+| DOC-CITE-4 | Cite hysteresis parameter values or label as placeholders (`docs/hysteresis/hysteresis.physics.md`) | ⏳ | 1-2hr |
+| DOC-LINK-1 | Fix broken internal markdown links (110 found in docs scan; prioritize `docs/README.md` and `docs/opensource-tools/*`) | ⏳ | 2-4hr |
 
 ### Quarterly Literature Review
 **Status**: Scheduled | **Due**: April 2026 | **Priority**: P3
@@ -357,10 +476,10 @@ The L-K dynamic physics engine has issues with ISPP write/read demo, particularl
 
 | ID | Issue | Priority | Difficulty |
 |----|-------|----------|------------|
-| LK04 | L-K coefficients not calibrated to Ec/Pr | P2 | D3 |
-| LK05 | ISPP controller not optimized for L-K dynamics | P2 | D3 | (Superlattice shows many overshoots near MID; needs LK-aware settling/step tuning)
 | LK06 | Missing Q12 in some materials | P3 | D1 | (headless presets patched; defaults cover remaining)
 | LK07 | Need longer WAIT phases for L-K settling | P2 | D2 |
+| LK04 | L-K coefficients not calibrated to Ec/Pr (note: LK04 marked ✅ in LK Tracking above; reconcile status) | P2 | D3 |
+| LK05 | ISPP controller not optimized for L-K dynamics | P2 | D3 | (Superlattice shows many overshoots near MID; needs LK-aware settling/step tuning)
 
 ### LK04: L-K Parameters Don't Match Material Ec/Pr
 **Problem**: Landau coefficients (Alpha, Beta, Gamma) don't produce hysteresis matching defined Ec/Pr.
@@ -397,9 +516,9 @@ The L-K dynamic physics engine has issues with ISPP write/read demo, particularl
 | Priority | Total | Done | Remaining | % Complete |
 |----------|-------|------|-----------|------------|
 | P1 Critical | 13 | 13 | 0 | 100% |
-| P2 High | 16 | 16 | 0 | 100% |
-| P3 Medium | 17 | 16 | 1 | 94% |
-| P4 Low | 11 | 7 | 4 | 64% |
+| P2 High (note: Section 4 guardrail items above still ⏳; totals may exclude them) | 16 | 16 | 0 | 100% |
+| P3 Medium (note: no remaining P3 item listed above; counts may be stale) | 17 | 16 | 1 | 94% |
+| P4 Low (note: Section 6 shows 5 open items: L07-L11) | 11 | 7 | 4 | 64% |
 | **TOTAL** | **57** | **52** | **5** | **91%** |
 
 **Estimated Remaining Effort**: ~29 hours

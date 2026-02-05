@@ -13,6 +13,7 @@ import (
 	"unicode"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
@@ -52,6 +53,7 @@ type SearchIndex struct {
 type SearchResult struct {
 	DocPath   string
 	Title     string
+	Category  string  // ELI5, Physics, Research, Demo, Guide
 	Snippet   string  // ~100 chars with match context
 	MatchType string  // "title", "heading", "content", "glossary"
 	Relevance float64 // TF-IDF score
@@ -461,8 +463,10 @@ func (si *SearchIndex) Query(query string, limit int) []SearchResult {
 	for path, score := range docScores {
 		meta := si.docs[path]
 		title := path
+		category := ""
 		if meta != nil {
 			title = meta.Title
+			category = meta.Category
 		}
 
 		snippet := docSnippets[path]
@@ -473,6 +477,7 @@ func (si *SearchIndex) Query(query string, limit int) []SearchResult {
 		results = append(results, SearchResult{
 			DocPath:   path,
 			Title:     title,
+			Category:  category,
 			Snippet:   snippet,
 			MatchType: docMatchTypes[path],
 			Relevance: score,
@@ -657,10 +662,14 @@ func NewSearchDialog(index *SearchIndex, parent fyne.Window, onSelected func(pat
 			return len(sd.results)
 		},
 		func() fyne.CanvasObject {
+			categoryBadge := canvas.NewText("Guide ", theme.ForegroundColor())
+			categoryBadge.TextStyle = fyne.TextStyle{Bold: true}
+			categoryBadge.TextSize = 11
+			titleLabel := widget.NewLabel("Title")
 			return container.NewHBox(
 				widget.NewIcon(theme.DocumentIcon()),
 				container.NewVBox(
-					widget.NewLabel("Title"),
+					container.NewHBox(categoryBadge, titleLabel),
 					widget.NewLabel("Snippet..."),
 				),
 			)
@@ -677,17 +686,34 @@ func NewSearchDialog(index *SearchIndex, parent fyne.Window, onSelected func(pat
 			box := obj.(*fyne.Container)
 			icon := box.Objects[0].(*widget.Icon)
 			textBox := box.Objects[1].(*fyne.Container)
-			titleLabel := textBox.Objects[0].(*widget.Label)
+			titleRow := textBox.Objects[0].(*fyne.Container)
+			categoryBadge := titleRow.Objects[0].(*canvas.Text)
+			titleLabel := titleRow.Objects[1].(*widget.Label)
 			snippetLabel := textBox.Objects[1].(*widget.Label)
 
 			// Set icon based on category
-			icon.SetResource(sd.getCategoryIcon(result.MatchType))
+			icon.SetResource(sd.getCategoryIcon(result.Category))
 
 			titleLabel.SetText(result.Title)
 			titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 
+			categoryText := result.Category
+			if categoryText != "" {
+				categoryText = categoryText + " "
+			}
+			categoryBadge.Text = categoryText
+			if badgeColor, ok := CategoryColors[result.Category]; ok {
+				categoryBadge.Color = badgeColor
+			} else {
+				categoryBadge.Color = theme.ForegroundColor()
+			}
+			categoryBadge.Refresh()
+
 			// Truncate snippet
 			snippet := result.Snippet
+			if result.MatchType != "" {
+				snippet = strings.Title(result.MatchType) + " • " + snippet
+			}
 			if len(snippet) > 80 {
 				snippet = snippet[:77] + "..."
 			}
@@ -711,17 +737,21 @@ func NewSearchDialog(index *SearchIndex, parent fyne.Window, onSelected func(pat
 	return sd
 }
 
-// getCategoryIcon returns an appropriate icon for the match type/category.
-func (sd *SearchDialog) getCategoryIcon(matchType string) fyne.Resource {
-	switch matchType {
-	case "title":
-		return theme.DocumentIcon()
-	case "heading":
+// getCategoryIcon returns an appropriate icon for the document category.
+func (sd *SearchDialog) getCategoryIcon(category string) fyne.Resource {
+	switch category {
+	case "ELI5":
+		return theme.HelpIcon()
+	case "Physics":
+		return theme.ComputerIcon()
+	case "Research":
+		return theme.SearchIcon()
+	case "Demo":
+		return theme.MediaPlayIcon()
+	case "Guide":
 		return theme.ListIcon()
-	case "glossary":
-		return theme.InfoIcon()
 	default:
-		return theme.FileTextIcon()
+		return theme.DocumentIcon()
 	}
 }
 
@@ -865,6 +895,8 @@ func SetupSearchShortcut(window fyne.Window, searchDialog *SearchDialog) {
 				searchDialog.MoveSelection(1)
 			case fyne.KeyReturn:
 				searchDialog.ConfirmSelection()
+			case fyne.KeyEscape:
+				searchDialog.dialog.Hide()
 			}
 		}
 	})

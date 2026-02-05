@@ -223,7 +223,7 @@ Results vary by dataset, weights, and configuration. Treat any accuracy numbers 
 | Levels Select | QAT levels available in `module3-mnist/data/` | 30 | Only levels with trained weights are shown |
 | Noise Slider | 0.0-0.20 | 0.01 | Gaussian noise σ/μ |
 
-**Note:** ADC/DAC resolution and hidden size are fixed in the Dual‑Mode UI. They can be adjusted via code/CLI if needed.
+**Note:** ADC/DAC resolution and hidden size are not directly adjustable in the Dual‑Mode UI. Presets switch ADC bits (8→6); full control is available via code/CLI.
 
 ### Preset Buttons
 

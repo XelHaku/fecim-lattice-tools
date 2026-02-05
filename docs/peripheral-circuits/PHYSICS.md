@@ -17,6 +17,8 @@ This document provides the physics foundation for peripheral circuits in FeCIM s
 - **Timing Analysis**: Read/write cycle timing, throughput
 - **System Integration**: How peripheral circuits work together in a FeCIM crossbar
 
+**Note:** Numeric values in this document are model defaults or illustrative assumptions, not measured hardware data (DOI: (add)).
+
 ---
 
 ## Part 1: Analog-to-Digital Converters (ADCs)
@@ -629,6 +631,8 @@ Specifications identical to positive pump:
 
 ## Part 5: System Timing Analysis
 
+Timing values below are derived from model defaults in `shared/peripherals` and are illustrative.
+
 ### FeCIM Operation Cycles
 
 FeCIM performs three main operations, each with different timing:
@@ -711,6 +715,8 @@ With realistic peripherals:
 ---
 
 ## Part 6: System Energy Analysis
+
+Energy numbers below are model-based estimates, not measured device values (DOI: (add)).
 
 ### Energy Breakdown Per Operation
 
@@ -931,16 +937,16 @@ FeCIM uses SAR because it balances speed (50 ns) with power efficiency.
 ### Related Physics
 
 - **[../hysteresis/hysteresis.physics.md](../hysteresis/hysteresis.physics.md)** — Ferroelectric hysteresis
-- **[../crossbar-arrays/crossbar.physics.md](../crossbar-arrays/crossbar.physics.md)** — Crossbar array physics
+- **[../crossbar/reference/PHYSICS.md](../crossbar/reference/PHYSICS.md)** — Crossbar array physics
 
 ### Key Measurements
 
 The values in this document are based on:
-- **SAR ADC:** Industry standard 5-bit designs (46-48 dB SNR with INL/DNL)
-- **DAC:** Switched-capacitor 5-bit designs (synth + sim)
-- **TIA:** Standard noise-figure based on thermal noise kT/C
-- **Charge Pump:** Dickson topology literature (70% typical efficiency)
-- **Timing:** Spice simulations at 28-65nm geometry
+- **SAR ADC:** Industry standard 5-bit designs (46-48 dB SNR with INL/DNL) (DOI: (add))
+- **DAC:** Switched-capacitor 5-bit designs (synth + sim) (DOI: (add))
+- **TIA:** Standard noise-figure based on thermal noise kT/C (DOI: (add))
+- **Charge Pump:** Dickson topology literature (70% typical efficiency) (DOI: (add))
+- **Timing:** Spice simulations at 28-65nm geometry (DOI: (add))
 
 ---
 

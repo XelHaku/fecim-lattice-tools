@@ -2,7 +2,7 @@
 
 End-to-end educational toolchain for Ferroelectric Compute-in-Memory (FeCIM).
 
-**Core Concept:** Discrete analog states per cell (demo baseline: 30; material presets include 32 and 140).
+**Core Concept:** Discrete analog states per cell (demo baseline: 30; higher-state presets are illustrative and unverified). See `docs/comparison/HONESTY_AUDIT.md` (DOI: (add)).
 
 ---
 
@@ -25,7 +25,7 @@ End-to-end educational toolchain for Ferroelectric Compute-in-Memory (FeCIM).
 ### Module 1: Hysteresis
 
 - Preisach and Landau-Khalatnikov engines
-- Multi-level write/read/verify with calibration
+- Multi-level write/read/verify with simulated calibration
 - Temperature-aware calibration cache
 
 ### Module 2: Crossbar
@@ -42,7 +42,7 @@ End-to-end educational toolchain for Ferroelectric Compute-in-Memory (FeCIM).
 
 ### Module 4: Circuits
 
-- DAC -> Pump -> FeFET -> TIA -> ADC pipeline
+- DAC -> Pump -> ferroelectric cell model -> TIA -> ADC pipeline
 - INL/DNL analysis, voltage-zone visualization
 - Architecture voltage-rule visualization (0T1R/1T1R/2T1R)
 
@@ -83,6 +83,8 @@ Module 1 (Calibrate) -> Module 2 (Simulate) -> Module 3 (Infer)
                                 v
                         Module 6 (Export)
 ```
+
+Workflow is conceptual; modules can be used independently.
 
 ---
 

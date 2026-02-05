@@ -29,12 +29,17 @@ Ec ≈ field where P crosses 0 on the major loop
 | P | Polarization | C/m^2 (or uC/cm^2) |
 | Ec | Coercive field | V/m |
 | Pr | Remanent polarization | C/m^2 |
+| α | Hysteron up-switch threshold | V/m |
+| β | Hysteron down-switch threshold | V/m |
+| μ(α,β) | Preisach density/weighting (normalized in code) | scaled to yield P |
+| γ_{α,β} | Hysteron state (+1 or -1) | unitless |
 
 ## Assumptions And Limits
 
 - Quasi-static loops, no high-frequency domain dynamics.
 - Uniform material properties, no spatial gradients.
 - Preisach elements are idealized, not microstructural.
+- Parameters are simulation defaults unless cited; do not treat numeric values as measured device data.
 
 ## Where It Lives In Code
 
@@ -48,3 +53,4 @@ Ec ≈ field where P crosses 0 on the major loop
 - `docs/video-transcripts/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md`
 - `docs/research-papers/by-topic/01-ferroelectric-materials/`
 - `docs/development/scriptReference.md#demo-1-hysteresis-module1-hysteresis`
+- HZO P-E loop examples (DOI: (add))

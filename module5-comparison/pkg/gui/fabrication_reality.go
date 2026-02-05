@@ -40,7 +40,7 @@ func (f *FabricationReality) CreateRenderer() fyne.WidgetRenderer {
 	)
 
 	// Timeline section
-	timelineTitle := widget.NewLabelWithStyle("Development Timeline", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	timelineTitle := widget.NewLabelWithStyle("Development Timeline (Model Inputs)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
 	timelineItems := container.NewVBox(
 		createTimelineItem("Design & Verification", "6-9 months", color.RGBA{100, 150, 200, 255}),
@@ -51,13 +51,13 @@ func (f *FabricationReality) CreateRenderer() fyne.WidgetRenderer {
 	)
 
 	totalTimeline := widget.NewLabelWithStyle(
-		"TOTAL: 18-36 months to production silicon",
+		"TOTAL: 18-36 months to production silicon (model input)",
 		fyne.TextAlignCenter,
 		fyne.TextStyle{Bold: true, Italic: true},
 	)
 
 	// Cost section
-	costTitle := widget.NewLabelWithStyle("Development Costs (Typical)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	costTitle := widget.NewLabelWithStyle("Development Costs (Model Inputs)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
 	costItems := container.NewVBox(
 		createCostItem("First silicon (28nm)", "$1-2M"),
@@ -68,7 +68,7 @@ func (f *FabricationReality) CreateRenderer() fyne.WidgetRenderer {
 	)
 
 	totalCost := widget.NewLabelWithStyle(
-		"TOTAL: $5-50M+ to first working chip",
+		"TOTAL: $5-50M+ to first working chip (model input)",
 		fyne.TextAlignCenter,
 		fyne.TextStyle{Bold: true, Italic: true},
 	)
@@ -85,7 +85,7 @@ func (f *FabricationReality) CreateRenderer() fyne.WidgetRenderer {
 
 	// Disclaimer
 	disclaimer := canvas.NewText(
-		"Note: These are industry-typical figures. Actual costs vary by process node and complexity.",
+		"Note: These are model input estimates based on industry-typical figures. Actual costs vary by process node and complexity.",
 		color.RGBA{150, 150, 150, 255},
 	)
 	disclaimer.TextSize = 10

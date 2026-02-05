@@ -28,6 +28,8 @@ Peripheral-circuit demo: DAC -> charge pump -> FeFET array -> TIA -> ADC.
 
 ---
 
+Defaults above are simulation parameters from `shared/peripherals`, not measured silicon values (DOI: (add)).
+
 ## Key Parameters
 
 | Parameter | Default | Notes |

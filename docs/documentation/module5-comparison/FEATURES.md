@@ -15,6 +15,7 @@
 ## Key Workflows
 
 - Select a workload and compare architectures.
+- Default GUI inputs are model inputs and may change; check current config in code (e.g., GPT-2 at 10,000 inferences/sec).
 - Scale results to data-center assumptions.
 - Render charts for energy, latency, and throughput.
 

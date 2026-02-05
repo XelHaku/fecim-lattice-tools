@@ -329,23 +329,23 @@ func (e *ComparisonEducationalPanel) updateForMode() {
 	case PresentationModeInvestor:
 		e.SetContent("Scenario Summary",
 			"THE OPPORTUNITY\n\n"+
-				"$721B addressable market by 2030\n"+
-				"1000× claimed energy reduction\n"+
-				"CMOS-compatible fabrication\n"+
-				"Proven research pedigree\n\n"+
+				"$721B addressable market by 2030 (model input)\n"+
+				"1000× energy reduction (model input)\n"+
+				"CMOS-compatible fabrication (assumption)\n"+
+				"Research pedigree (context only)\n\n"+
 				"COMMERCIALIZATION STRATEGY\n"+
 				"Phase 1: NAND replacement\n"+
 				"  → Drop-in compatible design\n"+
 				"  → Minimal integration risk\n\n"+
-				"Clear TRL 4 → TRL 9 pathway")
+				"TRL 4 → TRL 9 roadmap (scenario)")
 
 	case PresentationModeEngineer:
 		e.SetContent("Technical Deep-Dive",
-			"FERROELECTRIC PHYSICS\n\n"+
-				"HfO₂-ZrO₂ superlattice structure\n"+
-				"Remanent polarization: 15-34 µC/cm²\n"+
-				"Coercive field: 1.0-1.5 MV/cm\n"+
-				"30 discrete analog levels (conference claim)\n\n"+
+			"FERROELECTRIC PHYSICS (MODEL INPUTS)\n\n"+
+				"HfO₂-ZrO₂ superlattice structure (context)\n"+
+				"Remanent polarization: 15-34 µC/cm² (model input)\n"+
+				"Coercive field: 1.0-1.5 MV/cm (model input)\n"+
+				"30 discrete analog levels (model input; conference claim)\n\n"+
 				"CROSSBAR ARCHITECTURE\n"+
 				"Matrix-vector multiply: O(1) time\n"+
 				"Physical parallelism via Kirchhoff's law\n"+
@@ -384,33 +384,32 @@ func (e *ComparisonEducationalPanel) updateForPhase() {
 		title = "Energy Comparison"
 		if mode == PresentationModeInvestor {
 			content = "THE HEADLINE\n\n" +
-				"1000× less energy\n" +
+				"1000× less energy (model input)\n" +
 				"than current CPUs\n" +
-				"100× less than GPUs\n\n" +
-				"= 90% cost reduction\n" +
-				"= 10× more inference\n" +
-				"= same power budget\n\n" +
+				"100× less than GPUs (model input)\n\n" +
+				"= 90% cost reduction (model input)\n" +
+				"= 10× more inference (model input)\n" +
+				"= same power budget (model input)\n\n" +
 				"* TRL 4 = Laboratory Validation\n" +
 				"  (not production ready)"
 		} else {
 			content = "ENERGY PER MAC\n\n" +
-				"CPU + DRAM: 1000 pJ\n" +
-				"GPU + HBM: 100 pJ\n" +
-				"FeCIM: ~1 pJ*\n\n" +
+				"CPU + DRAM: 1000 pJ (model input)\n" +
+				"GPU + HBM: 100 pJ (model input)\n" +
+				"FeCIM: ~1 pJ (model input)*\n\n" +
 				"* TRL 4 = Laboratory Validation\n" +
 				"  (not production ready)\n" +
 				"(1 pJ = 1000 fJ)\n\n" +
-				"References: Nature Commun. 2025,\n" +
-				"PMC 2024, IEEE IRPS 2022"
+				"Model input references (not validated)"
 		}
 
 	case AutoDemoPhaseMarket:
 		title = "Market Opportunity"
-		content = "$721B BY 2030\n\n" +
-			"NAND Flash: $98B\n" +
-			"DRAM: $220B\n" +
-			"AI Semiconductor: $403B\n\n" +
-			"FeCIM addresses all three segments"
+		content = "$721B BY 2030 (model input)\n\n" +
+			"NAND Flash: $98B (model input)\n" +
+			"DRAM: $220B (model input)\n" +
+			"AI Semiconductor: $403B (model input)\n\n" +
+			"FeCIM addresses all three segments (scenario)"
 
 	case AutoDemoPhaseCompetitive:
 		title = "Competitive Position"
@@ -418,10 +417,10 @@ func (e *ComparisonEducationalPanel) updateForPhase() {
 			"Google TPU v5: Von Neumann arch\n" +
 			"Intel Loihi 2: Exotic fabrication\n" +
 			"IBM Analog AI: Research phase\n\n" +
-			"FeCIM ADVANTAGES:\n" +
-			"  ✓ True compute-in-memory\n" +
-			"  ✓ Standard CMOS process\n" +
-			"  ✓ Production scalability"
+			"MODEL INPUT ADVANTAGES:\n" +
+			"  ✓ True compute-in-memory (assumption)\n" +
+			"  ✓ Standard CMOS process (assumption)\n" +
+			"  ✓ Production scalability (scenario)"
 
 	case AutoDemoPhaseStrategy:
 		title = "Phased Strategy"
@@ -433,7 +432,7 @@ func (e *ComparisonEducationalPanel) updateForPhase() {
 			"  → Non-volatile, zero refresh power\n" +
 			"  → Higher density potential\n\n" +
 			"Phase 3: Full Compute-in-Memory\n" +
-			"  → 80-90% claimed energy savings\n" +
+			"  → 80-90% model input energy savings\n" +
 			"  → Transform datacenter economics"
 
 	case AutoDemoPhaseCalculator:
@@ -461,15 +460,12 @@ func (e *ComparisonEducationalPanel) SetComparison(cpuRatio, gpuRatio float64) {
 		"  • Computation at storage location\n" +
 		"  • Eliminates data movement\n" +
 		"  • Physics-based parallelism\n\n" +
-		"CLAIMED ADVANTAGES:\n" +
+		"MODEL INPUT ADVANTAGES:\n" +
 		fmt.Sprintf("  • %.0f× less power vs CPU*\n", cpuRatio) +
 		fmt.Sprintf("  • %.0f× less power vs GPU*\n", gpuRatio) +
 		"\n* TRL 4 = Laboratory Validation\n" +
 		"  (not production ready)\n" +
-		"  Based on Dr. Tour's claims\n" +
-		"  Independent verification pending\n\n" +
-		"Peer-reviewed: Nature Commun. 2025,\n" +
-		"PMC 2024, IEEE IRPS 2022"
+		"  Model inputs only; not validated\n"
 	e.SetContent("Why Compute-in-Memory Wins", content)
 }
 

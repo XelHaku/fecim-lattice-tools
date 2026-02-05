@@ -240,7 +240,7 @@ func (app *EmbeddedDocsApp) buildTopBar() fyne.CanvasObject {
 
 	return container.NewBorder(
 		nil, nil,
-		widget.NewLabel("FeCIM Curriculum"),
+		widget.NewLabel("FeCIM Documentation"),
 		container.NewHBox(sidebarToggleBtn, tocToggleBtn, searchBtn),
 		nil,
 	)
@@ -656,10 +656,15 @@ func (app *EmbeddedDocsApp) entryLess(a, b *docEntry, parentPath string) bool {
 	}
 
 	if app.isModuleDir(parentPath) {
-		rankA := moduleFileRank(a)
-		rankB := moduleFileRank(b)
-		if rankA != rankB {
-			return rankA < rankB
+		if a.isDir != b.isDir {
+			return a.isDir
+		}
+		if !a.isDir {
+			rankA := moduleFileRank(a)
+			rankB := moduleFileRank(b)
+			if rankA != rankB {
+				return rankA < rankB
+			}
 		}
 	}
 

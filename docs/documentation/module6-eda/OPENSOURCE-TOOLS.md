@@ -1,17 +1,9 @@
 # Module 6: EDA - Open-Source Tools
 
-## When To Use External Tools
+## Used In This Module (Open-Source Dependencies)
 
-- Running full synthesis, placement, and routing flows.
-- Verifying SPICE netlists at device or circuit level.
-- Visualizing layout and parasitics.
-
-## Recommended Tools (With Rationale)
-
-- OpenROAD or OpenLane for open-source RTL to GDS flows.
-- KLayout for layout inspection and editing.
-- Yosys for synthesis and netlist generation.
-- ngspice or Xyce for circuit simulation.
+- OpenLane (optional config generation helpers)
+- Yosys (optional validation helper)
 
 ## Integration Notes
 

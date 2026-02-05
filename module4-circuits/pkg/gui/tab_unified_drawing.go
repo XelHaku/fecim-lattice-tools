@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"math"
 
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
@@ -550,7 +551,7 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	if arch == sharedwidgets.Architecture0T1R && ca.deviceState != nil {
 		selectedRow := ca.deviceState.GetSelectedRow()
 		selectedCol := ca.deviceState.GetSelectedCol()
-		voltage := ca.deviceState.GetDACVoltage(selectedCol)
+		voltage := math.Abs(ca.deviceState.GetEffectiveCellVoltage(selectedRow, selectedCol))
 
 		// Only show sneak paths when there's active voltage
 		if voltage > 0.05 {

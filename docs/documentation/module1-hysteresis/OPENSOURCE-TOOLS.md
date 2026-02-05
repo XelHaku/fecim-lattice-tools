@@ -1,20 +1,14 @@
 # Module 1: Hysteresis - Open-Source Tools
 
-## When To Use External Tools
+## Used In This Module (Open-Source Dependencies)
 
-- Calibrating model parameters against published measurements.
-- Running higher-fidelity hysteresis or domain simulations.
-- Producing publication-quality plots for reports.
-
-## Recommended Tools (With Rationale)
-
-- NumPy and SciPy for data fitting and parameter sweeps.
-- Matplotlib for high-quality P-E loop plots.
-- Jupyter for reproducible, shareable experiments.
-- ngspice or Xyce for circuit-level validation of polarization models.
+- Go toolchain (build/runtime for the simulator)
+- Fyne (GUI rendering)
+- Bubble Tea (TUI mode)
+- Vulkan-go (optional GPU renderer)
 
 ## Integration Notes
 
-- Source parameter ranges from `docs/research-papers/by-topic/01-ferroelectric-materials/`.
-- Use `module1-hysteresis/pkg/ferroelectric/material.go` as the local parameter baseline.
-- If you export data, keep units explicit and consistent with PHYSICS tables.
+- Material presets live in `module1-hysteresis/pkg/ferroelectric/material.go` and are simulation defaults.
+- Exported data should keep units consistent with `PHYSICS.md`.
+- External solvers or data science stacks are not integrated in this repo.

@@ -101,7 +101,7 @@ func (app *DualModeApp) runInferenceAnimated(pixels []float64) {
 		// Show dramatic match/mismatch feedback (UI-024 fix: better units, UI-023 fix: clearer wording)
 		if !app.quickDemoRunning {
 			if result.Agree {
-				app.statusLabel.SetText(fmt.Sprintf("MATCH | FP: %d | CIM: %d | Confidence: %.1f%% | 25-100× energy efficient (Samsung Nature 2025)",
+				app.statusLabel.SetText(fmt.Sprintf("MATCH | FP: %d | CIM: %d | Confidence: %.1f%% | Energy model (illustrative)",
 					result.FPPrediction, result.CIMPrediction, result.CIMConfidence*100))
 			} else {
 				app.statusLabel.SetText(fmt.Sprintf("Prediction Mismatch | FP: %d vs CIM: %d | Weight quantization may need tuning",
@@ -136,7 +136,7 @@ func (app *DualModeApp) updateResultDisplays(result *core.InferenceResult, quant
 	}
 
 	// Update energy (legacy) - UI-024 fix: clearer units and wording
-	app.energyLabel.SetText(fmt.Sprintf("Energy: %.2f µJ (FeCIM) | 25-100× more efficient (verified)",
+	app.energyLabel.SetText(fmt.Sprintf("Energy: %.2f µJ (FeCIM model)",
 		result.EnergyUsed))
 
 	// P1 Enhancements

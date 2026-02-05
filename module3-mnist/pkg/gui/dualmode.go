@@ -33,10 +33,10 @@ const (
 	FeCIMDefaultADC    = 8                     // 8-bit ADC resolution
 	FeCIMDefaultDAC    = 8                     // 8-bit DAC resolution
 
-	// Energy efficiency (Samsung Nature 2025: 25-100× vs NAND)
+	// Energy efficiency (model input; literature ranges are reported, not verified here)
 	FeCIMEnergyPerMAC = 50e-15  // 50 fJ/MAC (femtojoules)
 	GPUEnergyPerMAC   = 500e-12 // 500 pJ/MAC including DRAM access (Horowitz 2014)
-	EnergyRatioGPU    = 100     // Verified: 25-100× (Samsung Nature 2025)
+	EnergyRatioGPU    = 100     // Illustrative ratio for UI (model-based, not verified)
 
 	// Accuracy reference (peer-reviewed baselines, not targets)
 	// Note: Accuracy varies with noise, levels, and architecture
@@ -360,7 +360,7 @@ func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
 func (app *DualModeApp) createHeader() fyne.CanvasObject {
 	// Header with peer-reviewed accuracy context (87% claim removed)
 	// C09: Distinguish verified literature results from simulated demo results
-	title := widget.NewLabel("FeCIM MNIST Demo | Literature: 96.6-98.24% (verified) | Demo: projected")
+	title := widget.NewLabel("FeCIM MNIST Demo | Literature: 96.6% FeFET, 98.24% FTJ (non-FeCIM) | Demo: projected")
 	title.TextStyle = fyne.TextStyle{Bold: true}
 
 	// Quick Demo button - prominent call to action

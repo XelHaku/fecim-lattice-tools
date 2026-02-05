@@ -27,8 +27,8 @@ type MarketSegment struct {
 }
 
 // marketData holds the market opportunity data (in billions USD).
-// Sources: WSTS Semiconductor Trade Statistics 2025, Gartner AI Semiconductor Forecasts 2025 (combined markets)
-// TOTAL: $98B + $220B + $403B = $721B (Dr. Tour COSM 2025)
+// Model inputs based on WSTS Semiconductor Trade Statistics 2025 and Gartner AI Semiconductor forecasts 2025.
+// TOTAL: $98B + $220B + $403B = $721B (scenario input for visualization)
 var marketData = []MarketSegment{
 	{Name: "NAND Flash", Y2024: 72, Y2026: 85, Y2030: 98, Color: color.RGBA{231, 76, 60, 255}},           // Red
 	{Name: "DRAM", Y2024: 130, Y2026: 165, Y2030: 220, Color: color.RGBA{243, 156, 18, 255}},             // Amber
@@ -135,7 +135,7 @@ func (m *MarketOpportunityChart) CreateRenderer() fyne.WidgetRenderer {
 	m.heroText.TextStyle = fyne.TextStyle{Bold: true}
 	m.heroText.Alignment = fyne.TextAlignCenter
 
-	m.heroSubtext = canvas.NewText("⚠️ SIMULATION ONLY | Market Projections Unverified | TRL 4→9 Required", heroAmberColor)
+	m.heroSubtext = canvas.NewText("⚠️ SIMULATION ONLY | MODEL INPUTS (market scenarios) | TRL 4→9 Required", heroAmberColor)
 	m.heroSubtext.TextSize = 13
 	m.heroSubtext.TextStyle = fyne.TextStyle{Bold: true}
 	m.heroSubtext.Alignment = fyne.TextAlignCenter
@@ -193,7 +193,7 @@ func (m *MarketOpportunityChart) CreateRenderer() fyne.WidgetRenderer {
 	)
 
 	// === SOURCE ===
-	citation := canvas.NewText("Source: WSTS + Gartner (2025)", heroMutedColor)
+	citation := canvas.NewText("Model input references (not validated): WSTS + Gartner (2025)", heroMutedColor)
 	citation.TextSize = 9
 	citation.TextStyle = fyne.TextStyle{Italic: true}
 	citation.Alignment = fyne.TextAlignCenter
@@ -299,8 +299,8 @@ type Competitor struct {
 	Highlight bool
 }
 
-// competitors data for the simplified competitive matrix.
-// INVESTOR MESSAGE: "Only FeCIM has ALL green checkmarks"
+// competitors data for the simplified competitive matrix (model input scoring).
+// INVESTOR MESSAGE: "Only FeCIM has ALL green checkmarks" (model input)
 var competitors = []Competitor{
 	{"FeCIM", true, true, true, true, true, true}, // ALL CHECKMARKS
 	{"Google TPU v5", false, true, true, true, true, false},
@@ -309,8 +309,8 @@ var competitors = []Competitor{
 	{"ReRAM", true, false, false, true, false, false},
 }
 
-// CompetitiveMatrix shows SIMPLIFIED competitive comparison.
-// INVESTOR MESSAGE: "Only FeCIM has checkmarks in ALL categories"
+// CompetitiveMatrix shows simplified competitive comparison (model inputs).
+// INVESTOR MESSAGE: "Only FeCIM has checkmarks in ALL categories" (model input)
 type CompetitiveMatrix struct {
 	widget.BaseWidget
 }
@@ -330,7 +330,7 @@ func (c *CompetitiveMatrix) MinSize() fyne.Size {
 // CreateRenderer implements fyne.Widget.
 func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
 	// Hero message
-	heroText := canvas.NewText("Only FeCIM has checkmarks in ALL categories", heroCyanColor)
+	heroText := canvas.NewText("Model input comparison: FeCIM checks all categories", heroCyanColor)
 	heroText.TextSize = 12
 	heroText.TextStyle = fyne.TextStyle{Bold: true}
 	heroText.Alignment = fyne.TextAlignCenter

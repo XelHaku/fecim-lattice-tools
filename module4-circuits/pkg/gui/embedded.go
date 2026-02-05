@@ -43,8 +43,10 @@ func NewEmbeddedCircuitsApp() *EmbeddedCircuitsApp {
 	// Initialize array - all cells start at mid-level (neutral state)
 	midLevel := ca.quantLevels / 2
 	ca.arrayWeights = make([][]int, ca.arrayRows)
+	ca.halfSelectResidue = make([][]float64, ca.arrayRows)
 	for i := range ca.arrayWeights {
 		ca.arrayWeights[i] = make([]int, ca.arrayCols)
+		ca.halfSelectResidue[i] = make([]float64, ca.arrayCols)
 		for j := range ca.arrayWeights[i] {
 			ca.arrayWeights[i][j] = midLevel
 		}

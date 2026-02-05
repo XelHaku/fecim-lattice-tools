@@ -130,6 +130,9 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 
 // applyPreset sets hardware parameters to a preset configuration.
 func (app *DualModeApp) applyPreset(levels int, noise float64, adcBits, dacBits int) {
+	// Attempt to load QAT weights for this level (if available)
+	app.tryLoadQATWeights(levels)
+
 	// Update network parameters (thread-safe, not UI)
 	app.network().SetNumLevels(levels)
 	app.network().SetNoiseLevel(noise)
@@ -138,7 +141,23 @@ func (app *DualModeApp) applyPreset(levels int, noise float64, adcBits, dacBits 
 
 	// Update UI elements on main thread
 	fyne.Do(func() {
-		app.levelsSelect.SetSelected(fmt.Sprintf("%d", levels))
+		if app.levelsSelect != nil {
+			selected := fmt.Sprintf("%d", levels)
+			hasOption := false
+			for _, option := range app.levelsSelect.Options {
+				if option == selected {
+					hasOption = true
+					break
+				}
+			}
+			if hasOption {
+				app.levelsSelect.SetSelected(selected)
+			} else if app.levelsLabel != nil {
+				app.levelsLabel.SetText(selected)
+			}
+		} else if app.levelsLabel != nil {
+			app.levelsLabel.SetText(fmt.Sprintf("%d", levels))
+		}
 		app.noiseSlider.SetValue(noise)
 		app.updateWeightHeatmap()
 

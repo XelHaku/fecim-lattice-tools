@@ -24,7 +24,7 @@ func init() {
 	debug = logging.NewLogger("comparison-app")
 }
 
-// Energy specs - sourced from docs/videos/ironlattice-youtube-script.md line 205:
+// Energy specs (model inputs) derived from docs/videos/ironlattice-youtube-script.md line 205:
 // "CPU plus DRAM: 1000 picojoules. GPU plus HBM: 100 picojoules. FeCIM: under 1 picojoule."
 const (
 	cpuEnergyPJPerMAC   = 1000.0 // 1000 pJ/MAC
@@ -37,12 +37,12 @@ const (
 	electricityCostPerKWh = 0.10
 )
 
-// EnergySpec holds energy per MAC specifications with sources.
+// EnergySpec holds energy per MAC model inputs with source references.
 type EnergySpec struct {
 	Name          string
 	EnergyFJ      float64 // femtojoules per MAC (1 pJ = 1000 fJ)
 	Source        string
-	Verified      bool
+	Verified      bool // Deprecated: keep false; all values are model inputs, not validated
 	SourceDetails string
 }
 
@@ -107,25 +107,25 @@ func NewComparisonApp() *ComparisonApp {
 	ca.cpuSpec = EnergySpec{
 		Name:          "CPU + DRAM",
 		EnergyFJ:      cpuEnergyPJPerMAC * 1000, // 1,000,000 fJ/MAC
-		Source:        "Intel/AMD published specs",
-		Verified:      true,
-		SourceDetails: "Includes memory access energy (~640 pJ for DRAM fetch + ~3-5 pJ for MAC).",
+		Source:        "Model input (public CPU/DRAM datasheets)",
+		Verified:      false,
+		SourceDetails: "Model input: includes memory access energy (~640 pJ for DRAM fetch + ~3-5 pJ for MAC).",
 	}
 
 	ca.gpuSpec = EnergySpec{
 		Name:          "GPU + HBM",
 		EnergyFJ:      gpuEnergyPJPerMAC * 1000, // 100,000 fJ/MAC
-		Source:        "NVIDIA H100 specifications",
-		Verified:      true,
-		SourceDetails: "H100 SXM: 700W TDP, ~3958 TFLOPS FP16. HBM access dominates.",
+		Source:        "Model input (public GPU/HBM datasheets)",
+		Verified:      false,
+		SourceDetails: "Model input: H100 SXM 700W TDP, ~3958 TFLOPS FP16; HBM access dominates.",
 	}
 
 	ca.fecimSpec = EnergySpec{
 		Name:          "FeCIM",
 		EnergyFJ:      fecimEnergyPJPerMAC * 1000, // 1,000 fJ/MAC
-		Source:        "Dr. Tour COSM 2025",
+		Source:        "Model input (COSM 2025 conference)",
 		Verified:      false,
-		SourceDetails: "Under 1 picojoule per MAC.",
+		SourceDetails: "Model input: under 1 picojoule per MAC (conference claim).",
 	}
 
 	debug.Println("NewComparisonApp: Initialization complete")
@@ -236,7 +236,7 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	ca.dcTransformation = NewDataCenterTransformation()
 	ca.calculator = NewDataCenterCalculator()
 
-	// Workload selector - default to GPT-2 for impressive savings display
+	// Workload selector - default to GPT-2 for illustrative savings display
 	ca.workloadSelect = widget.NewSelect(
 		[]string{"MNIST", "ResNet-50", "BERT-Base", "GPT-2", "LLM-70B"},
 		ca.onWorkloadChanged,
@@ -277,7 +277,7 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	// === SIMULATION WARNING BANNER ===
 	// CRITICAL: Per Dr. Tour critique - must prominently display TRL status
 	warningBanner := widget.NewLabelWithStyle(
-		"⚠️ SIMULATION ONLY - NOT VALIDATED | TRL 4 Lab Prototype | All projections are estimates pending peer review",
+		"⚠️ SIMULATION ONLY - NOT VALIDATED | TRL 4 Lab Prototype | All values are model inputs",
 		fyne.TextAlignCenter,
 		fyne.TextStyle{Bold: true},
 	)
@@ -403,22 +403,22 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	return mainContent
 }
 
-// createVerifiedClaimsWidget creates a compact verified/claimed section.
-// Dr. Tour recommendation: Show explicit energy numbers with units and citations
+// createVerifiedClaimsWidget creates a compact model input / scenario input section.
+// Dr. Tour recommendation: Show explicit energy numbers with units and citations (as model inputs)
 func (ca *ComparisonApp) createVerifiedClaimsWidget() fyne.CanvasObject {
-	verifiedLabel := widget.NewLabelWithStyle("VERIFIED (peer-reviewed):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	verifiedItems := widget.NewLabel("• 32–140 analog levels (peer-reviewed devices)\n• 96–98% MNIST\n• CMOS compatible")
+	verifiedLabel := widget.NewLabelWithStyle("MODEL INPUT REFERENCES:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	verifiedItems := widget.NewLabel("• Analog levels (literature ranges; not validated here)\n• MNIST accuracy (literature ranges; not validated here)\n• CMOS compatibility (assumed)")
 
 	// Explicit energy numbers with units (Dr. Tour recommendation)
-	energyLabel := widget.NewLabelWithStyle("ENERGY/MAC (pJ):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	energyLabel := widget.NewLabelWithStyle("ENERGY/MAC (pJ, MODEL INPUTS):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	energyItems := widget.NewLabel(fmt.Sprintf(
-		"• CPU+DRAM: %d pJ ✓ (verified)\n• GPU+HBM: %d pJ ✓ (verified)\n• FeCIM: ~%.1f pJ (TRL 4 est.)",
+		"• CPU+DRAM: %d pJ (model input)\n• GPU+HBM: %d pJ (model input)\n• FeCIM: ~%.1f pJ (model input; TRL 4)",
 		int(cpuEnergyPJPerMAC), int(gpuEnergyPJPerMAC), fecimEnergyPJPerMAC))
 
-	claimedLabel := widget.NewLabelWithStyle("CLAIMED (not verified):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	claimedItems := widget.NewLabel("• 30 analog levels (conference claim)\n• 25-100× vs NAND\n• 1000× vs DRAM\n• 80-90% DC savings")
+	claimedLabel := widget.NewLabelWithStyle("SCENARIO INPUTS (NOT VALIDATED):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	claimedItems := widget.NewLabel("• 30 analog levels (conference claim)\n• 25-100× vs NAND (scenario input)\n• 1000× vs DRAM (scenario input)\n• 80-90% DC savings (scenario input)")
 
-	trlLabel := widget.NewLabelWithStyle("Status: TRL 4 (Lab only)", fyne.TextAlignCenter, fyne.TextStyle{Bold: true, Italic: true})
+	trlLabel := widget.NewLabelWithStyle("Status: TRL 4 (Lab only) — model inputs only", fyne.TextAlignCenter, fyne.TextStyle{Bold: true, Italic: true})
 
 	return container.NewVBox(
 		verifiedLabel,
@@ -472,7 +472,7 @@ func (ca *ComparisonApp) updateCalculations() {
 }
 
 // getWorkloadMACs returns MACs per inference for common neural network workloads.
-// Sources: Published architecture specifications and measured inference costs.
+// Model inputs derived from typical architecture descriptions (not validated).
 func (ca *ComparisonApp) getWorkloadMACs() int {
 	switch ca.currentWorkload {
 	case "MNIST":

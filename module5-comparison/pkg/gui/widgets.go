@@ -267,8 +267,8 @@ func drawBox(img *image.RGBA, x, y, width, height int, c color.RGBA) {
 	}
 }
 
-// DataCenterCalculator shows power and cost calculations - INVESTOR GRADE.
-// HERO: Dynamic "$XX MILLION ANNUAL SAVINGS"
+// DataCenterCalculator shows power and cost calculations (model inputs).
+// HERO: Dynamic "$XX MILLION ANNUAL SAVINGS" (model output)
 type DataCenterCalculator struct {
 	widget.BaseWidget
 
@@ -350,12 +350,12 @@ func (d *DataCenterCalculator) SetResults(
 			canvas.Refresh(d.gpuCostText)
 		}
 		if d.fecimCostText != nil {
-			d.fecimCostText.Text = fmt.Sprintf("FeCIM (TRL 4 est.): %s/month", formatCost(monthlyFecimCost))
+			d.fecimCostText.Text = fmt.Sprintf("FeCIM (model input; TRL 4): %s/month", formatCost(monthlyFecimCost))
 			canvas.Refresh(d.fecimCostText)
 		}
 		if d.savingsPercent != nil {
 			savingsPct := (gpuCost - fecimCost) / gpuCost * 100
-			d.savingsPercent.Text = fmt.Sprintf("SAVINGS: %.0f%%", savingsPct)
+			d.savingsPercent.Text = fmt.Sprintf("MODEL SAVINGS: %.0f%%", savingsPct)
 			canvas.Refresh(d.savingsPercent)
 		}
 
@@ -383,7 +383,7 @@ func (d *DataCenterCalculator) CreateRenderer() fyne.WidgetRenderer {
 	d.heroSavingsText.TextStyle = fyne.TextStyle{Bold: true}
 	d.heroSavingsText.Alignment = fyne.TextAlignCenter
 
-	d.heroSavingsLabel = canvas.NewText("ANNUAL SAVINGS", color.RGBA{0, 212, 255, 255})
+	d.heroSavingsLabel = canvas.NewText("ANNUAL SAVINGS (MODEL)", color.RGBA{0, 212, 255, 255})
 	d.heroSavingsLabel.TextSize = 14
 	d.heroSavingsLabel.TextStyle = fyne.TextStyle{Bold: true}
 	d.heroSavingsLabel.Alignment = fyne.TextAlignCenter
@@ -402,11 +402,11 @@ func (d *DataCenterCalculator) CreateRenderer() fyne.WidgetRenderer {
 	d.gpuCostText.TextSize = 12
 	d.gpuCostText.Alignment = fyne.TextAlignCenter
 
-	d.fecimCostText = canvas.NewText("FeCIM (TRL 4 est.): $0/month", color.RGBA{46, 204, 113, 255}) // Green
+	d.fecimCostText = canvas.NewText("FeCIM (model input; TRL 4): $0/month", color.RGBA{46, 204, 113, 255}) // Green
 	d.fecimCostText.TextSize = 12
 	d.fecimCostText.Alignment = fyne.TextAlignCenter
 
-	d.savingsPercent = canvas.NewText("SAVINGS: 99%", color.RGBA{0, 212, 255, 255}) // Cyan
+	d.savingsPercent = canvas.NewText("MODEL SAVINGS: 99%", color.RGBA{0, 212, 255, 255}) // Cyan
 	d.savingsPercent.TextSize = 16
 	d.savingsPercent.TextStyle = fyne.TextStyle{Bold: true}
 	d.savingsPercent.Alignment = fyne.TextAlignCenter
@@ -420,7 +420,7 @@ func (d *DataCenterCalculator) CreateRenderer() fyne.WidgetRenderer {
 	)
 
 	// === CITATION ===
-	citation := canvas.NewText("Energy: NVIDIA H100 specs, Intel/AMD specs | Cost: $0.10/kWh average", color.RGBA{160, 180, 200, 255})
+	citation := canvas.NewText("Model input references (not validated): NVIDIA H100 datasheets, Intel/AMD datasheets | Cost: $0.10/kWh", color.RGBA{160, 180, 200, 255})
 	citation.TextSize = 9
 	citation.TextStyle = fyne.TextStyle{Italic: true}
 	citation.Alignment = fyne.TextAlignCenter
@@ -447,7 +447,7 @@ func (d *DataCenterCalculator) MinSize() fyne.Size {
 	return fyne.NewSize(600, 180)
 }
 
-// VerifiedClaimsTable shows what's verified vs claimed.
+// VerifiedClaimsTable shows model inputs vs scenario inputs.
 type VerifiedClaimsTable struct {
 	widget.BaseWidget
 }
@@ -461,29 +461,29 @@ func NewVerifiedClaimsTable() *VerifiedClaimsTable {
 
 // CreateRenderer implements fyne.Widget.
 func (v *VerifiedClaimsTable) CreateRenderer() fyne.WidgetRenderer {
-	titleLabel := widget.NewLabel("Verified vs Claimed")
+	titleLabel := widget.NewLabel("Model Inputs vs Scenario Inputs")
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 
-	verifiedLabel := widget.NewLabel("VERIFIED (peer-reviewed):")
+	verifiedLabel := widget.NewLabel("MODEL INPUT REFERENCES:")
 	verifiedLabel.TextStyle = fyne.TextStyle{Bold: true}
 
 	verified := container.NewVBox(
-		widget.NewLabel("  32–140 analog levels (peer-reviewed devices)"),
-		widget.NewLabel("  96-98% MNIST (peer-reviewed)"),
-		widget.NewLabel("  CMOS compatible"),
+		widget.NewLabel("  Analog levels (literature ranges; not validated here)"),
+		widget.NewLabel("  MNIST accuracy (literature ranges; not validated here)"),
+		widget.NewLabel("  CMOS compatibility (assumed)"),
 	)
 
-	claimedLabel := widget.NewLabel("CLAIMED (not verified):")
+	claimedLabel := widget.NewLabel("SCENARIO INPUTS (NOT VALIDATED):")
 	claimedLabel.TextStyle = fyne.TextStyle{Bold: true}
 
 	claimed := container.NewVBox(
 		widget.NewLabel("  30 levels (conference claim)"),
-		widget.NewLabel("  25-100× lower than NAND"),
-		widget.NewLabel("  1000× lower than DRAM"),
-		widget.NewLabel("  80-90% DC energy savings"),
+		widget.NewLabel("  25-100× lower than NAND (scenario input)"),
+		widget.NewLabel("  1000× lower than DRAM (scenario input)"),
+		widget.NewLabel("  80-90% DC energy savings (scenario input)"),
 	)
 
-	statusLabel := widget.NewLabel("Status: TRL 4 (Lab only)")
+	statusLabel := widget.NewLabel("Status: TRL 4 (Lab only) — model inputs only")
 	statusLabel.TextStyle = fyne.TextStyle{Bold: true, Italic: true}
 
 	content := container.NewVBox(
@@ -624,7 +624,7 @@ func (d *DataCenterTransformation) MinSize() fyne.Size {
 // CreateRenderer implements fyne.Widget.
 func (d *DataCenterTransformation) CreateRenderer() fyne.WidgetRenderer {
 	// Before section - GPU (many racks)
-	beforeTitle := widget.NewLabelWithStyle("Before (GPU)", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	beforeTitle := widget.NewLabelWithStyle("Before (GPU, model)", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	var beforeRackWidgets []fyne.CanvasObject
 	for i := 0; i < 10; i++ {
 		d.beforeRacks[i] = canvas.NewRectangle(color.RGBA{180, 80, 80, 255})
@@ -640,7 +640,7 @@ func (d *DataCenterTransformation) CreateRenderer() fyne.WidgetRenderer {
 	arrowText.TextSize = 24
 
 	// After section - FeCIM (few racks)
-	afterTitle := widget.NewLabelWithStyle("After (FeCIM)", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	afterTitle := widget.NewLabelWithStyle("After (FeCIM, model)", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	var afterRackWidgets []fyne.CanvasObject
 	for i := 0; i < 2; i++ {
 		d.afterRacks[i] = canvas.NewRectangle(color.RGBA{80, 180, 120, 255})
@@ -652,7 +652,7 @@ func (d *DataCenterTransformation) CreateRenderer() fyne.WidgetRenderer {
 	afterCol := container.NewVBox(afterTitle, afterRacksRow, d.afterLabel)
 
 	// Savings - larger text size for prominence
-	d.savingsLabel = canvas.NewText("90% Less", color.RGBA{0, 212, 255, 255})
+	d.savingsLabel = canvas.NewText("Model: 90% Less", color.RGBA{0, 212, 255, 255})
 	d.savingsLabel.TextSize = 16
 	d.savingsLabel.TextStyle = fyne.TextStyle{Bold: true}
 
@@ -681,7 +681,7 @@ func (d *DataCenterTransformation) Refresh() {
 		d.afterLabel.SetText(fmt.Sprintf("%.0f W", afterPower))
 	}
 	if d.savingsLabel != nil {
-		d.savingsLabel.Text = fmt.Sprintf("%.0f%% Less", savings)
+		d.savingsLabel.Text = fmt.Sprintf("Model: %.0f%% Less", savings)
 		canvas.Refresh(d.savingsLabel)
 	}
 }
