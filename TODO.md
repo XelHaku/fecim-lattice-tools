@@ -13,8 +13,8 @@ This TODO prioritizes (1) **physics accuracy**, (2) **UI/UX correctness**, and (
 ### This Week (Top 5)
 
 1. M4-D1: Update Module 4 docs to reference `shared/peripherals` everywhere (fix stale `module4-circuits/pkg/peripherals` paths).
-2. M4-U3: Sense-chain UI: expose TIA output, ADC code/saturation, and measurement-path toggles (Tier A arraysim).
-3. M4-P3: Define/centralize cell geometry (area, thickness) and use it consistently in arraysim current/charge equations.
+2. ✅ M4-U3: Sense-chain UI: expose TIA output, ADC code/saturation, and measurement-path toggles (Tier A arraysim).
+3. ✅ M4-P3: Define/centralize cell geometry (area, thickness) and use it consistently in arraysim current/charge equations.
 4. M4-P4: Implement Tier B DC solver for arraysim (full resistive network solve) + regression tests.
 5. M3-D2: Align noise bounds (docs/UI 0.20 max vs code clamp 0.50) and document rationale.
 
@@ -23,19 +23,19 @@ This TODO prioritizes (1) **physics accuracy**, (2) **UI/UX correctness**, and (
 | ID | Area | Task | Status | Est. |
 |----|------|------|--------|------|
 | M1-D1 | Docs | Document run modes (GUI/TUI/headless/Vulkan) and clarify L-K vs Preisach defaults in `docs/documentation/module1-hysteresis/*.md` | ⏳ | 30-60m |
-| M1-U1 | UI/UX | Fix WRD target marker parity (single snapshot for target/marker/logs) | ⏳ | 1-2hr |
-| M1-U2 | UI/UX | Equation widget perf acceptance: cold <1s, warm <200ms, no UI freeze (async load + SVG cache reuse; measure via `FECIM_EQUATION_PERF=1` logs or benchmarks). | ⏳ | 30-60m |
+| M1-U1 | UI/UX | Fix WRD target marker parity (single snapshot for target/marker/logs) | ✅ | 1-2hr |
+| M1-U2 | UI/UX | Equation widget perf acceptance: cold <1s, warm <200ms, no UI freeze (async load + SVG cache reuse; measure via `FECIM_EQUATION_PERF=1` logs or benchmarks). | ✅ | 30-60m |
 | M1-P1 | Physics | L-K performance accounting + ISPP stabilization evidence (HI/MID/LO) vs `docs/hysteresis/hysteresis-gemini.md` | ⏳ | 2-4hr |
 
 ### Module 2: Crossbar (Physics + UI/UX + Docs)
 
 | ID | Area | Task | Status | Est. |
 |----|------|------|--------|------|
-| M2-U1 | UI/UX | Align `cmd/crossbar-gui -help` feature list with implemented features (remove write-verify/differential claims or implement). AC: `-help` list matches actual tabs/features; no write-verify/differential claims unless implemented. Cmd: `go run ./cmd/crossbar-gui -help` | ⏳ | 30-60m |
+| M2-U1 | UI/UX | Align `cmd/crossbar-gui -help` feature list with implemented features (remove write-verify/differential claims or implement). AC: `-help` list matches actual tabs/features; no write-verify/differential claims unless implemented. Cmd: `go run ./cmd/crossbar-gui -help` | ✅ | 30-60m |
 | M2-U2 | UI/UX | Replace 87% “measured hardware” target in accuracy waterfall with HONESTY_AUDIT-aligned labeling | ✅ | 30-60m |
 | M2-D1 | Docs | Update `docs/crossbar/reference/PHYSICS.md` to reflect actual ADC/DAC defaults (6/8 bits) or change code to match docs | ✅ | 1-2hr |
 | M2-D2 | Docs | Update `docs/crossbar/reference/VOLTAGE_RULES.md` peripheral file references to `shared/peripherals` and re-verify V/2 references | ✅ | 1-2hr |
-| M2-P2 | Physics | Apply temperature scalings beyond wire resistance (conductance window, noise, drift) in MVM-with-non-idealities or gate behind options; add tests | ⏳ | 1-2hr |
+| M2-P2 | Physics | Apply temperature scalings beyond wire resistance (conductance window, noise, drift) in MVM-with-non-idealities or gate behind options; add tests | ✅ | 1-2hr |
 | M2-P1 | Physics | Full physics audit vs `docs/crossbar/reference/PHYSICS.md` (IR drop, sneak paths, drift, variation, temperature) | ⏳ | 2-4hr |
 
 **M2 Validation Notes (2026-02-05)**
@@ -53,7 +53,7 @@ This TODO prioritizes (1) **physics accuracy**, (2) **UI/UX correctness**, and (
 | M3-D2 | Docs | Align noise bounds (docs/UI 0.20 max vs code clamp 0.50) and document rationale. AC: UI slider max, core clamp, presets, and docs agree on one max; tests updated. Cmd: `rg -n "Noise" module3-mnist/pkg/core/network_config.go module3-mnist/pkg/gui/dualmode_controls.go docs/documentation/module3-mnist/FEATURES.md` | ⏳ | 15-30m |
 | M3-D1 | Docs | Sync `docs/documentation/module3-mnist/*.md` with current file paths and core vs training split | ⏳ | 30-60m |
 | M3-U1 | UI/UX | Audit GUI labels/metrics to ensure accuracy/energy values are labeled as modeled (not verified) | ⏳ | 30-60m |
-| M3-P2 | Physics | Align energy model between core (bit-scaled µJ) and GUI energy widget/comparison card (fixed 50 fJ/MAC, static ratios); choose SSOT + update UI/docs. AC: GUI energy uses same formula or explicitly labeled separate model; docs updated; tests pass. Cmd: `rg -n -e "EnergyPerMAC" -e "EnergyUsed" module3-mnist/pkg/core module3-mnist/pkg/gui` | ⏳ | 1-2hr |
+| M3-P2 | Physics | Align energy model between core (bit-scaled µJ) and GUI energy widget/comparison card (fixed 50 fJ/MAC, static ratios); choose SSOT + update UI/docs. AC: GUI energy uses same formula or explicitly labeled separate model; docs updated; tests pass. Cmd: `rg -n -e "EnergyPerMAC" -e "EnergyUsed" module3-mnist/pkg/core module3-mnist/pkg/gui` | ✅ | 1-2hr |
 | M3-U2 | UI/UX | Decide whether dual-mode should expose confusion matrix/metrics or label them as single-mode-only in UI | ⏳ | 1-2hr |
 | M3-P1 | Physics | Verify FP vs CIM inference pipeline ordering + quantization/noise injection vs docs; add evidence logs/tests | ⏳ | 2-4hr |
 
@@ -64,8 +64,8 @@ This TODO prioritizes (1) **physics accuracy**, (2) **UI/UX correctness**, and (
 | M4-D1 | Docs | Update Module 4 docs to reference `shared/peripherals` (`docs/documentation/module4-circuits/*.md`, `docs/peripheral-circuits/*`). AC: no `module4-circuits/pkg/peripherals` references remain; sources point to `shared/peripherals/analysis.go`. Cmd: `grep -RIn "module4-circuits/pkg/peripherals" docs/documentation/module4-circuits docs/peripheral-circuits` | ⏳ | 30-60m |
 | M4-P2 | Physics | **Arraysim Tier A**: couple array state to peripheral models (DAC→array, array→sense chain via TIA/ADC) with deterministic testable semantics | ✅ | 1-2hr |
 | M4-U1 | UI/UX | Validate ISPP engine toggle wiring (Fast vs L-K) and ensure GUI uses shared/physics with thin adapter | ⏳ | 1-2hr |
-| M4-U3 | UI/UX | Sense-chain UI: show TIA output (V/I), ADC code + saturation/clip indicators, and clearly labeled measurement-path presets for Tier A arraysim | ⏳ | 1-2hr |
-| M4-P3 | Physics | Define/centralize cell geometry (area, thickness, stack) and use it consistently for current/charge/voltage conversions (arraysim + docs) | ⏳ | 1-2hr |
+| M4-U3 | UI/UX | Sense-chain UI: show TIA output (V/I), ADC code + saturation/clip indicators, and clearly labeled measurement-path presets for Tier A arraysim | ✅ | 1-2hr |
+| M4-P3 | Physics | Define/centralize cell geometry (area, thickness, stack) and use it consistently for current/charge/voltage conversions (arraysim + docs) | ✅ | 1-2hr |
 | M4-P1 | Physics | Audit DAC/ADC/TIA/ChargePump equations vs `docs/peripheral-circuits/PHYSICS.md` | ⏳ | 2-4hr |
 | M4-P4 | Physics | **Arraysim Tier B**: DC solver (full resistive network solve for line/selector models) + regression tests; ensure Tier A vs Tier B fidelity is documented | ⏳ | 4-12hr |
 | M4-U2 | UI/UX | Write/Write Cell UX + circuit-coupled updates during ISPP (selected cell + neighbors update each pulse/verify) | ⏳ | 4-12hr |
@@ -104,7 +104,7 @@ This TODO prioritizes (1) **physics accuracy**, (2) **UI/UX correctness**, and (
 |----|------|------|--------|------|
 | M7-D1 | Docs | Confirm curriculum tree order + shortcuts match `docs/documentation/`; update README/MODULES if needed | ⏳ | 30-60m |
 | M7-U2 | UI/UX | Add colored category badges in tree rows to match curriculum-first UI spec | ⏳ | 30-60m |
-| M7-U3 | UI/UX | Hide the “On This Page” sidebar when ToC has < 3 headings | ⏳ | 30-60m |
+| M7-U3 | UI/UX | Hide the “On This Page” sidebar when ToC has < 3 headings | ✅ | 30-60m |
 | M7-U1 | UI/UX | Validate layout breakpoints + click targets vs `docs/development/GUI/GUI.module7.md` | ⏳ | 1-2hr |
 | M7-P1 | Physics | Verify search ranking + reading time math vs `docs/documentation/module7-docs/PHYSICS.md` | ⏳ | 1-2hr |
 
@@ -125,8 +125,8 @@ This TODO prioritizes (1) **physics accuracy**, (2) **UI/UX correctness**, and (
 
 | ID | Task | Acceptance | Status |
 |----|------|------------|--------|
-| LK-C01 | Verify LK equation terms/signs in `shared/physics/landau.go` match the compendium (E_eff = E_applied - k_dep·P; dP/dt = (E_eff - dG/dP + noise)/rho_eff; dG/dP = 2αP + 4βP^3 + 6γP^5). | `go test ./shared/physics -run TestLKSolver_dPdT_Equation` | ⏳ |
-| LK-C02 | Verify effective-viscosity wiring `rho_eff = rho + (R_series·A/d)` when `UseEffectiveViscosity=true`. | `go test ./shared/physics -run TestLKSolver_effectiveRho` | ⏳ |
+| LK-C01 | Verify LK equation terms/signs in `shared/physics/landau.go` match the compendium (E_eff = E_applied - k_dep·P; dP/dt = (E_eff - dG/dP + noise)/rho_eff; dG/dP = 2αP + 4βP^3 + 6γP^5). | `go test ./shared/physics -run TestLKSolver_dPdT_Equation` | ✅ |
+| LK-C02 | Verify effective-viscosity wiring `rho_eff = rho + (R_series·A/d)` when `UseEffectiveViscosity=true`. | `go test ./shared/physics -run TestLKSolver_effectiveRho` | ✅ |
 | LK-C03 | Headless LK run uses E-field units and completes the 5-target ISPP sequence without NaN/Inf states. | `go run ./cmd/fecim-lattice-tools --mode hysteresis --engine lk` | ⏳ |
 | LK-C04 | Doc parity: note `UseMaterialAlpha` (Pr-calibrated α) vs dynamic α in compendium. | Check `docs/hysteresis/hysteresis-gemini.md` update. | ✅ |
 
@@ -220,7 +220,7 @@ This TODO prioritizes (1) **physics accuracy**, (2) **UI/UX correctness**, and (
 |----|------|--------|------|
 | G02 | Add “intentional calibration update” policy: require linking the evidence log/CSV paths in the commit message/body when calibrations are updated | ⏳ | 30m |
 | G03 | Provide optional `pre-commit` hook template to block calibration JSON commits by default (not auto-installed) | ⏳ | 30m |
-| G01 | Calibration drift guard: add `scripts/calib-guard.sh` to fail CI if `cmd/fecim-lattice-tools/data/calibrations/*.json` changes unless `ALLOW_CALIBRATION_UPDATES=1` | ⏳ | 1-2hr |
+| G01 | Calibration drift guard: add `scripts/calib-guard.sh` to fail CI if `cmd/fecim-lattice-tools/data/calibrations/*.json` changes unless `ALLOW_CALIBRATION_UPDATES=1` | ✅ | 1-2hr |
 
 ### P1: Engine parity / regression evidence (headless-first)
 
@@ -261,7 +261,7 @@ This TODO prioritizes (1) **physics accuracy**, (2) **UI/UX correctness**, and (
 | ID | Task | Status | Est. |
 |----|------|--------|------|
 | G13 | Define minimum supported GUI size (e.g., 1024×768) and ensure key widgets (Physics Equations, Log, Controls) remain usable (scroll/min-size conventions) | ⏳ | 30-60m |
-| G14 | GUI overlap audit: reproduce widget overlap/clipping on resize (controls cards, log, plot/level, equations tab) and fix via min-sizes, scrolls, and split offsets (layout-only) | ⏳ | 1-2hr |
+| G14 | GUI overlap audit: reproduce widget overlap/clipping on resize (controls cards, log, plot/level, equations tab) and fix via min-sizes, scrolls, and split offsets (layout-only) | ✅ | 1-2hr |
 | G15 | GUI layout doc sync: update `docs/development/GUI/GUI.module1.md` to match current code (post-2026-02-04 layout refactor), including correct min sizes, scroll containers, splits, and component hierarchy | ⏳ | 1-2hr |
 | G16 | Documentation mapping sweep: audit `docs/development/GUI/GUI.module{1..7}.md` for drift vs code; add a lightweight checklist + update “Last Updated” stamps when verified | ⏳ | 2-4hr |
 
