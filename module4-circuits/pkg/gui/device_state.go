@@ -178,10 +178,10 @@ func NewDeviceState(rows, cols int, tia *peripherals.TIA, adc *peripherals.ADC) 
 	defaultGeometry := arraysim.DefaultCellGeometry()
 	if defaultMaterial != nil {
 		if defaultMaterial.Thickness > 0 {
-			defaultGeometry.Thickness = defaultMaterial.Thickness
+			defaultGeometry.Film.Thickness = defaultMaterial.Thickness
 		}
 		if defaultMaterial.Area > 0 {
-			defaultGeometry.ActiveArea = defaultMaterial.Area
+			defaultGeometry.Film.Area = defaultMaterial.Area
 		}
 	}
 
@@ -302,10 +302,10 @@ func (ds *DeviceState) SetMaterial(mat *sharedphysics.HZOMaterial) {
 		numLevels := mat.GetNumLevels()
 		ds.isppCalc = sharedphysics.NewISPPCalculator(ec, numLevels)
 		if mat.Thickness > 0 {
-			ds.cellGeometry.Thickness = mat.Thickness
+			ds.cellGeometry.Film.Thickness = mat.Thickness
 		}
 		if mat.Area > 0 {
-			ds.cellGeometry.ActiveArea = mat.Area
+			ds.cellGeometry.Film.Area = mat.Area
 		}
 	}
 }

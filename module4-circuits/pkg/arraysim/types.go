@@ -1,6 +1,8 @@
 // Package arraysim provides approximate array coupling solvers for module4-circuits.
 package arraysim
 
+import sharedphysics "fecim-lattice-tools/shared/physics"
+
 // CouplingMode selects the array coupling model.
 type CouplingMode int
 
@@ -15,15 +17,17 @@ const (
 	CouplingTierB
 )
 
-// CellGeometry captures physical cell dimensions and wire geometry (SI units).
+// CellGeometry captures array-relevant geometry (SI units).
+//
+// Core ferroelectric film dimensions (thickness/area) are centralized in
+// shared/physics.CellGeometry and referenced here to avoid duplication.
 type CellGeometry struct {
-	PitchX           float64 // Cell pitch in X (m)
-	PitchY           float64 // Cell pitch in Y (m)
-	Thickness        float64 // Ferroelectric thickness (m)
-	ActiveArea       float64 // Active cell area (m^2)
-	WireWidth        float64 // Word/bitline width (m)
-	WireThickness    float64 // Word/bitline thickness (m)
-	MetalResistivity float64 // Conductor resistivity (ohm*m)
+	PitchX           float64                    // Cell pitch in X (m)
+	PitchY           float64                    // Cell pitch in Y (m)
+	Film             sharedphysics.CellGeometry // Ferroelectric film geometry (thickness/area)
+	WireWidth        float64                    // Word/bitline width (m)
+	WireThickness    float64                    // Word/bitline thickness (m)
+	MetalResistivity float64                    // Conductor resistivity (ohm*m)
 }
 
 // DefaultCellGeometry returns conservative defaults aligned with module6 layout assumptions.
@@ -31,8 +35,7 @@ func DefaultCellGeometry() CellGeometry {
 	return CellGeometry{
 		PitchX:           0.46e-6, // 0.46 um (SKY130 pitch)
 		PitchY:           2.72e-6, // 2.72 um (SKY130 row height)
-		Thickness:        10e-9,   // 10 nm HZO film
-		ActiveArea:       1e-14,   // 0.01 um^2 active area
+		Film:             sharedphysics.DefaultCellGeometry(),
 		WireWidth:        0.08e-6, // 80 nm line width (tighter default)
 		WireThickness:    0.16e-6, // 160 nm metal thickness (tighter default)
 		MetalResistivity: 2.2e-8,  // Copper-like resistivity
@@ -48,12 +51,7 @@ func (g CellGeometry) WithDefaults() CellGeometry {
 	if g.PitchY <= 0 {
 		g.PitchY = defaults.PitchY
 	}
-	if g.Thickness <= 0 {
-		g.Thickness = defaults.Thickness
-	}
-	if g.ActiveArea <= 0 {
-		g.ActiveArea = defaults.ActiveArea
-	}
+	g.Film = g.Film.WithDefaults()
 	if g.WireWidth <= 0 {
 		g.WireWidth = defaults.WireWidth
 	}
@@ -78,7 +76,8 @@ func (w WireParams) WithDefaults(geom CellGeometry) WireParams {
 	if w.RWordLine <= 0 || w.RBitLine <= 0 {
 		crossSection := geom.WireWidth * geom.WireThickness
 		if crossSection <= 0 {
-			crossSection = DefaultCellGeometry().WireWidth * DefaultCellGeometry().WireThickness
+			def := DefaultCellGeometry()
+			crossSection = def.WireWidth * def.WireThickness
 		}
 		resistPerMeter := geom.MetalResistivity / crossSection
 		if w.RWordLine <= 0 {

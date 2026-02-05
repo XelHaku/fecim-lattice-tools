@@ -566,7 +566,8 @@ func (ca *CircuitsApp) applyHalfSelectDisturb(targetRow, targetCol int) int {
 	if mat == nil {
 		mat = sharedphysics.FeCIMMaterial()
 	}
-	if mat.Thickness <= 0 || mat.Ps == 0 {
+	geom := ca.deviceState.GetCellGeometry().WithDefaults()
+	if geom.Film.Thickness <= 0 || mat.Ps == 0 {
 		return 0
 	}
 
@@ -617,7 +618,7 @@ func (ca *CircuitsApp) applyHalfSelectDisturb(targetRow, targetCol int) int {
 			polarization := sharedphysics.ConductanceToPolarization(conductance, gmin, gmax, mat.Ps)
 
 			solver.SetState(polarization)
-			eField := vCell / mat.Thickness
+			eField := geom.Film.ElectricField(vCell)
 			solver.Step(eField, pulseWidth)
 
 			newP := solver.GetState()
