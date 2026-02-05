@@ -12,11 +12,14 @@ This TODO prioritizes (1) **physics accuracy**, (2) **UI/UX correctness**, and (
 
 ### This Week (Top 5)
 
+**Doc Sprint (fecim-documentator focus)**
+- DOC-CITE-1, DOC-CITE-3, CM-D3 (see Section 7)
+
 1. M4-D1: Update Module 4 docs to reference `shared/peripherals` everywhere (fix stale `module4-circuits/pkg/peripherals` paths).
-2. ✅ M4-U3: Sense-chain UI: expose TIA output, ADC code/saturation, and measurement-path toggles (Tier A arraysim).
-3. ✅ M4-P3: Define/centralize cell geometry (area, thickness) and use it consistently in arraysim current/charge equations.
-4. M4-P4: Implement Tier B DC solver for arraysim (full resistive network solve) + regression tests.
-5. M3-D2: Align noise bounds (docs/UI 0.20 max vs code clamp 0.50) and document rationale.
+2. M3-D2: Align noise bounds (docs/UI 0.20 max vs code clamp 0.50) and document rationale.
+3. DOC-CITE-1: Add DOI citations (or remove numeric claims) for ELI5 energy, HZO property, and projection numbers (`docs/ELI5.md`).
+4. DOC-CITE-3: Cite peripheral timing/energy assumptions or label as placeholders (`docs/peripheral-circuits/PHYSICS.md`).
+5. CM-D3: Tighten module docs so each model has equations, assumptions, units, and reported vs validated labels.
 
 ### Module 1: Hysteresis (Physics + UI/UX + Docs)
 
