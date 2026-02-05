@@ -29,6 +29,21 @@ This document details the operational rules for FeCIM crossbar arrays in two arc
 
 ---
 
+## Terminology (Vcell, sneak paths, half-select disturb, IR drop)
+
+This document uses the following operational definitions:
+
+- **Vcell**: the local voltage across a particular cell, \(V_{cell}=V_{WL}(r,c)-V_{BL}(r,c)\). In non-ideal arrays, local node voltages can differ from driver voltages due to **IR drop** and loading.
+- **Sneak paths**: unintended conduction paths through non-selected cells that add parasitic current to a measurement (primarily in **0T1R** passive arrays).
+- **Half-select disturb**: unselected cells experiencing partial \(|V_{cell}|\) during READ/WRITE, potentially shifting their state if close to switching thresholds.
+- **IR drop**: distributed voltage loss along WL/BL interconnect due to finite line resistance (\(\Delta V = I\cdot R\)).
+
+For a deeper discussion and planned simulation fidelity tiers (Ideal → Approx → DC nodal/MNA → Transient), see:
+
+- `docs/peripheral-circuits/ARRAY_SIMULATION_FIDELITY.md`
+
+> **HONESTY_AUDIT:** This operations doc contains literature-style numbers and sketches. Treat them as conceptual unless validated against code defaults or measured data.
+
 ## 1. Architecture Overview
 
 ### 1.1 Passive Array (0T1R)

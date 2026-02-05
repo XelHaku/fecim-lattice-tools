@@ -13,6 +13,9 @@ Conventions:
   - Widget types refer to Fyne (`widget.*`, `container.*`, `canvas.*`) or shared widgets
   - Bindings list event handlers or UI update calls impacting the component
 
+Related (authoritative) control semantics:
+- **Unified GUI control contract (semantics + units + clamping):** `docs/development/GUI/GUI.module4.unified-controls.md`
+
 ## Bugs Summary
 
 ### Fixed Bugs

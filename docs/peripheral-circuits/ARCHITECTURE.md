@@ -8,6 +8,45 @@ Module 4 implements a complete peripheral circuit simulation environment for fer
 
 **Note:** References to 30 levels refer to the demo baseline (configurable). Literature reports multi-level states (not verified here).
 
+## Array Coupling, Fidelity Tiers, and Definitions
+
+If you are looking specifically for **array simulation** concepts (how DAC+architecture selection couples into measurable currents), start here:
+
+- `docs/peripheral-circuits/ARRAY_SIMULATION_FIDELITY.md`
+
+That page defines **Vcell**, **sneak paths**, **half-select disturb**, and **IR drop**, and proposes a set of explicit **fidelity tiers**:
+
+- **Ideal** (fast, didactic)
+- **Approx** (lumped non-idealities)
+- **DC nodal / MNA** (sneak + IR drop via circuit solve)
+- **Transient** (time-domain settling, bandwidth; planned)
+
+> **HONESTY_AUDIT:** The fidelity-tier selector is a documentation-level plan; implementation status may lag.
+
+### Sense-chain measurable current range (TIA + ADC)
+
+A practical way to reason about “what currents can we measure?” is to combine the TIA transfer and ADC input range:
+
+- TIA (idealized): \(V_{out} = I_{in}\cdot R_{TIA} + V_{offset}\)
+- ADC range: \(V_{ref,low} \le V_{in} \le V_{ref,high}\)
+
+This implies an approximate measurable current span:
+
+\[
+I_{min} \approx \frac{V_{ref,low}-V_{offset}}{R_{TIA}},\quad
+I_{max} \approx \frac{V_{ref,high}-V_{offset}}{R_{TIA}}
+\]
+
+…and then apply any explicit TIA input clamp \(I_{max,TIA}\):
+
+\[
+I_{max,meas} = \min(I_{max}, I_{max,TIA})
+\]
+
+All quantities are in SI units: A, Ω, V.
+
+> **HONESTY_AUDIT:** Exact clamping/rounding depends on the code in `shared/peripherals/*`.
+
 ## Project Structure
 
 ```

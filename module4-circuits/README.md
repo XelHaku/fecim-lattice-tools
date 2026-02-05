@@ -238,6 +238,19 @@ Module 4 supports multiple crossbar array architectures:
 - **Features**: Read and write gates separate for decoupling
 - **Support**: Will be added in future
 
+### Array Coupling + Fidelity Tiers (Roadmap)
+
+Module 4 currently uses an educational, **behavioral coupling** between DAC voltages, architecture row-masking, and the resulting sensed currents.
+
+Planned improvements make the coupling explicitly **architecture-aware** (0T1R vs 1T1R vs 2T1R) and add explicit **simulation fidelity tiers** (Ideal → Approx → DC nodal/MNA → Transient), including standard definitions for:
+
+- **Vcell** (local cell voltage),
+- **sneak paths**,
+- **half-select disturb**,
+- **IR drop**.
+
+See: `docs/peripheral-circuits/ARRAY_SIMULATION_FIDELITY.md`.
+
 ## Signal Chain
 
 Complete signal path from digital command to digital readout:
@@ -319,7 +332,13 @@ The DAC automatically switches between these ranges based on operation mode:
 
 ## Testing
 
-All peripheral circuits include comprehensive tests:
+All peripheral circuits include comprehensive tests.
+
+Testing is intentionally **headless** and should remain safe to run in CI (no GUI initialization). For new work (architecture-aware coupling, fidelity tiers), prefer **table-driven** tests (`[]struct{...}` + `t.Run`) so expected behavior is explicit and reviewable.
+
+See also: `docs/peripheral-circuits/ARRAY_SIMULATION_FIDELITY.md` (Testing Strategy section).
+
+
 
 ```bash
 # Run all Module 4 tests
