@@ -93,3 +93,52 @@ func (s SenseChain) ConvertCurrents(currents []float64) []SenseResult {
 	}
 	return results
 }
+
+// EffectiveVoltageRange returns the measurable voltage window after TIA rails and ADC references are applied.
+func (s SenseChain) EffectiveVoltageRange() (float64, float64) {
+	vmin := s.TIA.Vmin
+	vmax := s.TIA.Vmax
+	if s.ADC.Vmin > vmin {
+		vmin = s.ADC.Vmin
+	}
+	if s.ADC.Vmax < vmax {
+		vmax = s.ADC.Vmax
+	}
+	return vmin, vmax
+}
+
+// CurrentRange returns the measurable input current window derived from the effective voltage range.
+func (s SenseChain) CurrentRange() (float64, float64) {
+	if s.TIA.Rf <= 0 {
+		return 0, 0
+	}
+	vmin, vmax := s.EffectiveVoltageRange()
+	if vmax < vmin {
+		return 0, 0
+	}
+	imin := (vmin - s.TIA.Vref) / s.TIA.Rf
+	imax := (vmax - s.TIA.Vref) / s.TIA.Rf
+	return imin, imax
+}
+
+// CurrentLSB returns the current represented by one ADC LSB within the effective voltage range.
+func (s SenseChain) CurrentLSB() float64 {
+	if s.TIA.Rf <= 0 {
+		return 0
+	}
+	adcBits := s.ADC.Bits
+	if adcBits < 1 {
+		adcBits = 1
+	}
+	levels := 1 << adcBits
+	if levels < 2 {
+		return 0
+	}
+	vmin, vmax := s.EffectiveVoltageRange()
+	span := vmax - vmin
+	if span <= 0 {
+		return 0
+	}
+	lsbV := span / float64(levels-1)
+	return lsbV / s.TIA.Rf
+}

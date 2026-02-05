@@ -29,8 +29,8 @@ func DefaultCellGeometry() CellGeometry {
 		PitchY:           2.72e-6, // 2.72 um (SKY130 row height)
 		Thickness:        10e-9,   // 10 nm HZO film
 		ActiveArea:       1e-14,   // 0.01 um^2 active area
-		WireWidth:        0.10e-6, // 100 nm line width
-		WireThickness:    0.20e-6, // 200 nm metal thickness
+		WireWidth:        0.08e-6, // 80 nm line width (tighter default)
+		WireThickness:    0.16e-6, // 160 nm metal thickness (tighter default)
 		MetalResistivity: 2.2e-8,  // Copper-like resistivity
 	}
 }

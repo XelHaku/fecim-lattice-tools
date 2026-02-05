@@ -273,6 +273,20 @@ type CircuitsApp struct {
 	computeRandomBtn      *widget.Button
 	computeClearBtn       *widget.Button
 
+	// Sense panel widgets (READ/COMPUTE)
+	sensePanel           *fyne.Container
+	senseTitleLabel      *widget.Label
+	senseRowLabel        *widget.Label
+	senseCurrentLabel    *widget.Label
+	senseVoltageLabel    *widget.Label
+	senseCodeLabel       *widget.Label
+	senseSaturationLabel *widget.Label
+	senseRangeLabel      *widget.Label
+	senseLSBLabel        *widget.Label
+	senseRfEntry         *widget.Entry
+	senseAdcVminEntry    *widget.Entry
+	senseAdcVmaxEntry    *widget.Entry
+
 	// H3 FIX: Undo history for array changes
 	undoHistory    [][]int // Previous array state
 	undoHistoryBtn *widget.Button

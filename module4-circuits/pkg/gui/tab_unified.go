@@ -32,6 +32,38 @@ func createFixedHeightContainer(content fyne.CanvasObject, minHeight float32) fy
 	return container.NewStack(spacer, content)
 }
 
+const (
+	minSenseRfKOhm      = 1.0
+	maxSenseRfKOhm      = 100.0
+	minSenseADCVref     = 0.0
+	maxSenseADCVref     = 1.5
+	minSenseADCVrefSpan = 1e-3
+)
+
+func formatCurrentA(currentA float64) string {
+	absCurrent := math.Abs(currentA)
+	unit := "A"
+	scale := 1.0
+	switch {
+	case absCurrent >= 1:
+		unit = "A"
+		scale = 1.0
+	case absCurrent >= 1e-3:
+		unit = "mA"
+		scale = 1e-3
+	case absCurrent >= 1e-6:
+		unit = "uA"
+		scale = 1e-6
+	case absCurrent >= 1e-9:
+		unit = "nA"
+		scale = 1e-9
+	default:
+		unit = "pA"
+		scale = 1e-12
+	}
+	return fmt.Sprintf("%.3g %s", currentA/scale, unit)
+}
+
 // ============================================================================
 // UNIFIED DEVICE SIMULATION VIEW
 // ============================================================================
@@ -67,14 +99,20 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 	ca.computeModePanel = container.NewVBox(computePanelContent)
 	ca.computeModePanel.Hide() // Hidden by default (READ mode)
 
+	// Sense panel (visible in READ/COMPUTE)
+	sensePanelContent := ca.createSensePanel()
+	ca.sensePanel = container.NewVBox(sensePanelContent)
+	ca.sensePanel.Hide()
+
 	// Stack panels (only one visible at a time)
 	modePanelStack := container.NewStack(ca.writeModePanel, ca.computeModePanel)
 
-	// Toolbar section: Config/Mode row + Action row + Mode panel
+	// Toolbar section: Config/Mode row + Action row + Mode panel + Sense panel
 	toolbarSection := container.NewVBox(
 		configModeRow,
 		actionRow,
 		modePanelStack,
+		ca.sensePanel,
 	)
 
 	// ============================================================
@@ -129,6 +167,8 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 
 	// Initialize button states for default READ mode
 	ca.updateActionButtons()
+	ca.updateModePanels(ca.deviceState.GetOperationMode())
+	ca.updateSensePanel()
 
 	return container.NewBorder(
 		toolbarSection, // top: compact controls
@@ -728,6 +768,86 @@ func (ca *CircuitsApp) onDACVoltageChanged(col int, voltageStr string) {
 	ca.recomputeAndRefresh()
 }
 
+// applySenseRf updates the TIA feedback resistance (Rf) from UI input.
+func (ca *CircuitsApp) applySenseRf(valueStr string) {
+	if ca.tia == nil {
+		return
+	}
+	rfKOhm, err := strconv.ParseFloat(valueStr, 64)
+	if err != nil {
+		rfKOhm = ca.tia.Gain / 1e3
+	}
+
+	// Physics: Rf sets transimpedance gain (Vout = I * Rf + Vref).
+	// Larger Rf increases sensitivity but reduces measurable current range.
+	if rfKOhm < minSenseRfKOhm {
+		rfKOhm = minSenseRfKOhm
+	}
+	if rfKOhm > maxSenseRfKOhm {
+		rfKOhm = maxSenseRfKOhm
+	}
+
+	ca.tia.Gain = rfKOhm * 1e3
+	ca.tiaGain = rfKOhm
+
+	if ca.senseRfEntry != nil {
+		fyne.Do(func() {
+			ca.senseRfEntry.SetText(fmt.Sprintf("%.1f", rfKOhm))
+		})
+	}
+	ca.recomputeAndRefresh()
+}
+
+// applySenseADCRange updates the ADC reference range (Vmin/Vmax) from UI input.
+func (ca *CircuitsApp) applySenseADCRange() {
+	if ca.adc == nil {
+		return
+	}
+
+	vmin := ca.adc.VrefLow
+	vmax := ca.adc.VrefHigh
+	if ca.senseAdcVminEntry != nil {
+		if parsed, err := strconv.ParseFloat(ca.senseAdcVminEntry.Text, 64); err == nil {
+			vmin = parsed
+		}
+	}
+	if ca.senseAdcVmaxEntry != nil {
+		if parsed, err := strconv.ParseFloat(ca.senseAdcVmaxEntry.Text, 64); err == nil {
+			vmax = parsed
+		}
+	}
+
+	// Physics: ADC Vref window defines the measurable voltage span before quantization.
+	// Clamp to a realistic window and enforce a non-zero span.
+	if vmin < minSenseADCVref {
+		vmin = minSenseADCVref
+	}
+	if vmax > maxSenseADCVref {
+		vmax = maxSenseADCVref
+	}
+	if vmin > maxSenseADCVref-minSenseADCVrefSpan {
+		vmin = maxSenseADCVref - minSenseADCVrefSpan
+	}
+	if vmax <= vmin+minSenseADCVrefSpan {
+		vmax = vmin + minSenseADCVrefSpan
+	}
+
+	ca.adc.VrefLow = vmin
+	ca.adc.VrefHigh = vmax
+
+	if ca.senseAdcVminEntry != nil || ca.senseAdcVmaxEntry != nil {
+		fyne.Do(func() {
+			if ca.senseAdcVminEntry != nil {
+				ca.senseAdcVminEntry.SetText(fmt.Sprintf("%.2f", vmin))
+			}
+			if ca.senseAdcVmaxEntry != nil {
+				ca.senseAdcVmaxEntry.SetText(fmt.Sprintf("%.2f", vmax))
+			}
+		})
+	}
+	ca.recomputeAndRefresh()
+}
+
 // setUnifiedDACPreset applies a DAC preset (called by mode changes)
 func (ca *CircuitsApp) setUnifiedDACPreset(preset DACMode) {
 	switch preset {
@@ -826,6 +946,7 @@ func (ca *CircuitsApp) recomputeAndRefreshNow() {
 
 	// Update cell info
 	ca.updateCellInfo()
+	ca.updateSensePanel()
 
 	// Update operation classification
 	ca.updateOperationClassification()
@@ -965,6 +1086,101 @@ func (ca *CircuitsApp) updateCellInfo() {
 				ca.arrayRows, ca.arrayCols, ca.quantLevels, selectedRow, rowCurrent))
 		})
 	}
+}
+
+func (ca *CircuitsApp) senseChainConfig() (arraysim.SenseChain, bool) {
+	if ca.tia == nil || ca.adc == nil {
+		return arraysim.SenseChain{}, false
+	}
+	return arraysim.SenseChain{
+		TIA: arraysim.TIAConfig{
+			Rf:   ca.tia.Gain,
+			Vref: ca.tia.OutputOffset,
+			Vmin: 0,
+			Vmax: ca.tia.MaxOutputVoltage,
+		},
+		ADC: arraysim.ADCConfig{
+			Bits: ca.adc.Bits,
+			Vmin: ca.adc.VrefLow,
+			Vmax: ca.adc.VrefHigh,
+		},
+	}, true
+}
+
+// updateSensePanel updates the compact sense-chain readout.
+func (ca *CircuitsApp) updateSensePanel() {
+	if ca.sensePanel == nil || ca.deviceState == nil {
+		return
+	}
+
+	row := ca.deviceState.GetSelectedRow()
+	currentA := ca.deviceState.GetRowCurrent(row) * 1e-6
+	voltage := ca.deviceState.GetRowVoltage(row)
+	code := ca.deviceState.GetRowLevel(row)
+	levels := ca.deviceState.GetADCLevels()
+	saturated := ca.deviceState.IsSaturated(row)
+	isActive := ca.deviceState.IsRowActive(row)
+	mode := ca.deviceState.GetOperationMode()
+
+	rangeText := "n/a"
+	lsbText := "n/a"
+	if sense, ok := ca.senseChainConfig(); ok {
+		imin, imax := sense.CurrentRange()
+		lsb := sense.CurrentLSB()
+		if lsb > 0 {
+			rangeText = fmt.Sprintf("%s .. %s", formatCurrentA(imin), formatCurrentA(imax))
+			lsbText = formatCurrentA(lsb)
+		}
+	}
+
+	codeText := fmt.Sprintf("%d", code)
+	if levels > 1 {
+		codeText = fmt.Sprintf("%d/%d", code, levels-1)
+	}
+
+	rowText := fmt.Sprintf("Row %d", row)
+	if !isActive {
+		rowText = fmt.Sprintf("Row %d (inactive)", row)
+	}
+
+	titleText := "Sense (TIA+ADC)"
+	if mode == OpModeRead {
+		titleText = "Sense (READ)"
+	} else if mode == OpModeCompute {
+		titleText = "Sense (COMPUTE)"
+	}
+
+	satText := "OK"
+	if saturated {
+		satText = "SAT"
+	}
+
+	fyne.Do(func() {
+		if ca.senseTitleLabel != nil {
+			ca.senseTitleLabel.SetText(titleText)
+		}
+		if ca.senseRowLabel != nil {
+			ca.senseRowLabel.SetText(rowText)
+		}
+		if ca.senseCurrentLabel != nil {
+			ca.senseCurrentLabel.SetText(formatCurrentA(currentA))
+		}
+		if ca.senseVoltageLabel != nil {
+			ca.senseVoltageLabel.SetText(fmt.Sprintf("%.3f V", voltage))
+		}
+		if ca.senseCodeLabel != nil {
+			ca.senseCodeLabel.SetText(codeText)
+		}
+		if ca.senseSaturationLabel != nil {
+			ca.senseSaturationLabel.SetText(satText)
+		}
+		if ca.senseRangeLabel != nil {
+			ca.senseRangeLabel.SetText(rangeText)
+		}
+		if ca.senseLSBLabel != nil {
+			ca.senseLSBLabel.SetText(lsbText)
+		}
+	})
 }
 
 // updateOperationClassification updates the operation classification display
@@ -1211,6 +1427,82 @@ func (ca *CircuitsApp) createComputeModePanel() fyne.CanvasObject {
 	)
 }
 
+// createSensePanel creates the compact sense-chain panel for READ/COMPUTE modes.
+func (ca *CircuitsApp) createSensePanel() fyne.CanvasObject {
+	titleLabel := widget.NewLabelWithStyle("Sense (TIA+ADC)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	ca.senseTitleLabel = titleLabel
+	ca.senseRowLabel = widget.NewLabel("Row 0")
+
+	headerRow := container.NewHBox(titleLabel, layout.NewSpacer(), ca.senseRowLabel)
+
+	ca.senseCurrentLabel = widget.NewLabel("0 A")
+	ca.senseVoltageLabel = widget.NewLabel("0.000 V")
+	ca.senseCodeLabel = widget.NewLabel("0")
+	ca.senseSaturationLabel = widget.NewLabel("OK")
+
+	metricsRow := container.NewHBox(
+		widget.NewLabel("Irow (A):"), ca.senseCurrentLabel,
+		widget.NewLabel("Vout (V):"), ca.senseVoltageLabel,
+		widget.NewLabel("ADC:"), ca.senseCodeLabel,
+		widget.NewLabel("SAT:"), ca.senseSaturationLabel,
+	)
+
+	ca.senseRangeLabel = widget.NewLabel("n/a")
+	ca.senseLSBLabel = widget.NewLabel("n/a")
+
+	rangeTooltip := NewTooltipButton("?", "Measurable current range after TIA rails and ADC references.\nI = (V - Vref) / Rf, using Vmin/Vmax = max/min(TIA, ADC).", ca.window, nil)
+	rangeTooltip.Importance = widget.LowImportance
+	lsbTooltip := NewTooltipButton("?", "LSB current = (Vmax_eff - Vmin_eff) / (2^bits - 1) / Rf.", ca.window, nil)
+	lsbTooltip.Importance = widget.LowImportance
+
+	rangeRow := container.NewHBox(
+		widget.NewLabel("I_range (A):"), ca.senseRangeLabel, rangeTooltip,
+		widget.NewLabel("LSB (A):"), ca.senseLSBLabel, lsbTooltip,
+	)
+
+	ca.senseRfEntry = widget.NewEntry()
+	ca.senseRfEntry.SetPlaceHolder("10.0")
+	if ca.tia != nil {
+		ca.senseRfEntry.SetText(fmt.Sprintf("%.1f", ca.tia.Gain/1e3))
+	} else {
+		ca.senseRfEntry.SetText(fmt.Sprintf("%.1f", minSenseRfKOhm))
+	}
+	ca.senseRfEntry.OnSubmitted = func(s string) {
+		ca.applySenseRf(s)
+	}
+
+	ca.senseAdcVminEntry = widget.NewEntry()
+	ca.senseAdcVmaxEntry = widget.NewEntry()
+	ca.senseAdcVminEntry.SetPlaceHolder("0.0")
+	ca.senseAdcVmaxEntry.SetPlaceHolder("1.0")
+	if ca.adc != nil {
+		ca.senseAdcVminEntry.SetText(fmt.Sprintf("%.2f", ca.adc.VrefLow))
+		ca.senseAdcVmaxEntry.SetText(fmt.Sprintf("%.2f", ca.adc.VrefHigh))
+	} else {
+		ca.senseAdcVminEntry.SetText(fmt.Sprintf("%.2f", minSenseADCVref))
+		ca.senseAdcVmaxEntry.SetText(fmt.Sprintf("%.2f", maxSenseADCVref))
+	}
+	ca.senseAdcVminEntry.OnSubmitted = func(string) {
+		ca.applySenseADCRange()
+	}
+	ca.senseAdcVmaxEntry.OnSubmitted = func(string) {
+		ca.applySenseADCRange()
+	}
+
+	controlsRow := container.NewHBox(
+		widget.NewLabel("Rf (kΩ):"), ca.senseRfEntry,
+		widget.NewLabel("ADC Vmin (V):"), ca.senseAdcVminEntry,
+		widget.NewLabel("Vmax (V):"), ca.senseAdcVmaxEntry,
+	)
+
+	return container.NewVBox(
+		headerRow,
+		metricsRow,
+		rangeRow,
+		controlsRow,
+	)
+}
+
 // buildComputeInputEntries builds the input entries based on current array size
 func (ca *CircuitsApp) buildComputeInputEntries() {
 	cols := ca.arrayCols
@@ -1399,6 +1691,9 @@ func (ca *CircuitsApp) updateModePanels(mode OpMode) {
 		if ca.computeModePanel != nil {
 			ca.computeModePanel.Hide()
 		}
+		if ca.sensePanel != nil {
+			ca.sensePanel.Hide()
+		}
 
 		// Show relevant panel
 		switch mode {
@@ -1417,7 +1712,14 @@ func (ca *CircuitsApp) updateModePanels(mode OpMode) {
 			if ca.computeModePanel != nil {
 				ca.computeModePanel.Show()
 			}
+			if ca.sensePanel != nil {
+				ca.sensePanel.Show()
+			}
 			// OpModeRead: no special panel needed (clean view)
+		case OpModeRead:
+			if ca.sensePanel != nil {
+				ca.sensePanel.Show()
+			}
 		}
 	})
 }
