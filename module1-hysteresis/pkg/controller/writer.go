@@ -109,6 +109,10 @@ type WriteController struct {
 
 	// Step floor to break out of quantization stalls (in E-field units).
 	stepFloor float64
+
+	// Guard pulse tracking: counts consecutive guard corrections at the target level.
+	// After MaxGuardPulses, accept the level as converged to prevent direction flips.
+	GuardPulseCount int
 }
 
 func NewWriteController(numLevels int, ec, emax float64, calib *algo.CalibrationManager) *WriteController {
@@ -147,6 +151,7 @@ func (wc *WriteController) Start(targetLevel int, fromSaturation bool) {
 	wc.resetDirection = 0
 	wc.StuckCount = 0
 	wc.stepFloor = 0
+	wc.GuardPulseCount = 0
 
 	// Initialize Binary Search Bounds
 	wc.VMin = 0
@@ -366,10 +371,25 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 				wc.NoImproveCount = 0
 			}
 			if wc.LastError == 0 && guardSign != 0 {
-				wc.LastError = guardSign
-				absErr = int(math.Abs(float64(wc.LastError)))
-				guardActive = true
-				log.Printf("ISPP GUARD: level=%d target=%d sign=%d", currentLevel, wc.TargetLevel, guardSign)
+				// Guard-band correction: the cell is at the target level but
+				// polarization is near a bin edge. Allow up to 2 guard pulses
+				// to nudge it toward center; after that, accept convergence
+				// to avoid catastrophic direction flips.
+				const maxGuardPulses = 2
+				wc.GuardPulseCount++
+				if wc.GuardPulseCount <= maxGuardPulses {
+					wc.LastError = guardSign
+					absErr = int(math.Abs(float64(wc.LastError)))
+					guardActive = true
+					log.Printf("ISPP GUARD: level=%d target=%d sign=%d guardPulse=%d/%d",
+						currentLevel, wc.TargetLevel, guardSign, wc.GuardPulseCount, maxGuardPulses)
+				} else {
+					log.Printf("ISPP GUARD ACCEPT: level=%d target=%d (guard limit reached, accepting convergence)",
+						currentLevel, wc.TargetLevel)
+				}
+			} else if wc.LastError != 0 {
+				// Reset guard pulse counter when not at target level.
+				wc.GuardPulseCount = 0
 			}
 			wc.LastAbsError = absErr
 
@@ -446,13 +466,34 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 				}
 			}
 
-			// If bounds collapse or invert, reset them to avoid deadlocks.
+			// If bounds collapse or invert, widen the bracket minimally
+			// instead of discarding all convergence progress.
 			if wc.VMinSet && wc.VMaxSet && wc.VMin >= wc.VMax {
-				wc.VMin = 0
-				wc.VMax = wc.MaxField
-				wc.VMinSet = false
-				wc.VMaxSet = false
-				log.Printf("ISPP BOUNDS RESET: invalid bracket (vmin>=vmax), clearing bounds")
+				minSep := 0.04 * wc.EcField // Minimum bracket width
+				if wc.stepFloor > minSep {
+					minSep = wc.stepFloor
+				}
+				if needMore {
+					// We need higher voltage: keep VMin, push VMax up
+					wc.VMax = wc.VMin + minSep
+					if wc.VMax > wc.MaxField {
+						wc.VMax = wc.MaxField
+					}
+				} else if needLess {
+					// We need lower voltage: keep VMax, push VMin down
+					wc.VMin = wc.VMax - minSep
+					if wc.VMin < 0 {
+						wc.VMin = 0
+					}
+				} else {
+					// Unknown direction: full reset as last resort
+					wc.VMin = 0
+					wc.VMax = wc.MaxField
+					wc.VMinSet = false
+					wc.VMaxSet = false
+				}
+				log.Printf("ISPP BOUNDS FIX: bracket collapsed, widened to [%.3f, %.3f]×Ec",
+					wc.VMin/wc.EcField, wc.VMax/wc.EcField)
 			}
 
 			// DEBUG: Always log the overshoot check
@@ -515,7 +556,20 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			wc.PulseCount++
 			calcLevel := currentLevel
 			if guardActive {
-				calcLevel = currentLevel + guardSign
+				// Guard correction: nudge calcLevel toward the side that needs
+				// more polarization, but NEVER flip the overall write direction.
+				// Flipping direction at the target level causes catastrophic overshoot.
+				candidateLevel := currentLevel + guardSign
+				prevDir := wc.directionToTarget(currentLevel)
+				candidateDir := wc.directionToTarget(candidateLevel)
+				if prevDir != 0 && candidateDir != 0 && candidateDir != prevDir {
+					// Would flip direction — keep calcLevel at currentLevel
+					// and let the small voltage increment handle it.
+					log.Printf("ISPP GUARD CLAMP: avoiding direction flip (current=%d candidate=%d target=%d)",
+						currentLevel, candidateLevel, wc.TargetLevel)
+				} else {
+					calcLevel = candidateLevel
+				}
 			}
 			wc.calculateNextField(calcLevel)
 			wc.State = StateApply
