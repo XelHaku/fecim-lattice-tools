@@ -137,6 +137,7 @@ func DefaultHZO() *HZOMaterial {
 		RetentionTime:   3.15e9,  // 100 years at 85°C
 		ImrintField:     1e6,     // Small imprint
 		NumLevels:       30,      // Demo baseline (conference claim; pending peer review)
+		TargetRangeFrac: 0.90,    // Map outer levels to ±0.90×Ps for reachability
 		Tau0NLS:         1e-10,   // 100 ps attempt time (HfO2 typical)
 		EaNLS:           12e8,    // 12 MV/cm activation field
 		Gmin:            1e-6,    // 1 µS at HRS (P = -Ps)
@@ -165,15 +166,15 @@ func DefaultHZO() *HZOMaterial {
 func LiteratureSuperlattice() *HZOMaterial {
 	return &HZOMaterial{
 		Name:            "Literature Superlattice (Cheema 2020)",
-		Pr:              45e-2, // 45 μC/cm² (superlattice enhanced)
-		Ps:              50e-2, // 50 μC/cm²
-		Ec:              0.8e8, // 0.8 MV/cm (reduced by negative capacitance)
+		Pr:              50e-2,   // 50 μC/cm² (superlattice enhanced) [5]
+		Ps:              55e-2,   // 55 μC/cm²
+		Ec:              0.85e8,  // 0.85 MV/cm (Nature Commun. 2025) [3]
 		Epsilon:         35,
 		EpsilonLF:       50,
 		LossAngle:       0.015,
 		Thickness:       10e-9,
 		Area:            100e-12,
-		Tau:             0.5e-9, // Faster switching
+		Tau:             0.36e-9, // 360 ps RECORD (Purdue sub-µm arrays) [8]
 		Tau0:            1e-13,
 		Ea:              0.5, // Lower activation energy
 		Alpha:           2.5,
@@ -181,8 +182,8 @@ func LiteratureSuperlattice() *HZOMaterial {
 		CurieConst:      1.5e5,
 		TempCoeffEc:     -1.5e5,
 		TempCoeffPr:     -3e-5,
-		EnduranceCycles: 1e12, // Literature best-case
-		RetentionTime:   1e10, // Literature best-case
+		EnduranceCycles: 1e10,    // 10^10 verified [3][4], 10^12 claimed but rare
+		RetentionTime:   3.15e8,  // 10-year at 85°C verified
 		ImrintField:     0.5e6,
 		NumLevels:       64,      // Enhanced superlattice can achieve more states
 		TargetRangeFrac: 0.90,    // Map outer levels to ±0.90×Ps (≈Pr) for reachability under depolarization/relaxation
@@ -197,9 +198,9 @@ func LiteratureSuperlattice() *HZOMaterial {
 		SeriesResistanceOhm: 50.0,
 		K_dep:               2.5e8,
 		StressGPa:           1.5,
-		// Electrostriction (assumed HZO-like; not explicitly reported in Cheema 2020).
+		// Electrostriction (assumed HZO-like; stronger coupling in superlattice).
 		Q11: 0.089,
-		Q12: -0.026,
+		Q12: -0.035, // Stronger coupling in superlattice
 	}
 }
 
@@ -248,6 +249,7 @@ func FeCIMMaterial() *HZOMaterial {
 		RetentionTime:   1e7, // 10^7 sec (~116 days) DEMONSTRATED
 		ImrintField:     1e6,
 		NumLevels:       30,     // 30-level baseline (conference claim; pending peer review)
+		TargetRangeFrac: 0.90,   // Map outer levels to ±0.90×Ps for reachability
 		Tau0NLS:         1e-10,  // 100 ps attempt time
 		EaNLS:           12e8,   // 12 MV/cm activation field
 		Gmin:            1e-6,   // 1 µS at HRS
@@ -306,10 +308,21 @@ func CryogenicHZO() *HZOMaterial {
 		RetentionTime:   3.15e10, // >10 years at cryo (improved)
 		ImrintField:     0.3e6,   // Reduced imprint at cryo
 		NumLevels:       48,      // Enhanced polarization allows more levels
+		TargetRangeFrac: 0.90,    // Map outer levels to ±0.90×Ps for reachability
 		Tau0NLS:         2e-10,   // 200 ps (slower at cryo)
 		EaNLS:           15e8,    // 15 MV/cm (higher barrier at cryo)
 		Gmin:            0.5e-6,  // 0.5 µS at HRS (lower leakage at cryo)
 		Gmax:            200e-6,  // 200 µS at LRS (higher Pr → better modulation)
+		// Landau-Khalatnikov parameters (Golden Set I defaults; cryo-specific LGD not widely published)
+		BetaLandau:          -2.160e8,
+		GammaLandau:         1.653e10,
+		RhoViscosity:        0.05,
+		CurieConst:          1.5e5,
+		SeriesResistanceOhm: 50.0,
+		K_dep:               2.5e8, // Depolarization factor for analog slope
+		StressGPa:           1.0,
+		Q11:                 0.089,  // Longitudinal electrostriction (m⁴/C²)
+		Q12:                 -0.026, // Transverse electrostriction (m⁴/C²)
 	}
 }
 
@@ -339,10 +352,21 @@ func HZOStandard32() *HZOMaterial {
 		RetentionTime:   3.15e8, // 10 years projected
 		ImrintField:     1e6,
 		NumLevels:       32,    // 32 states - VERIFIED (Oh et al. 2017)
+		TargetRangeFrac: 0.90,  // Map outer levels to ±0.90×Ps for reachability
 		Tau0NLS:         1e-10, // 100 ps attempt time
 		EaNLS:           12e8,  // 12 MV/cm activation field
 		Gmin:            2e-6,  // 2 µS at HRS (2017 era device)
 		Gmax:            80e-6, // 80 µS at LRS, ~40x on/off ratio
+		// Landau-Khalatnikov parameters (Golden Set I, 10nm HZO)
+		BetaLandau:          -2.160e8,
+		GammaLandau:         1.653e10,
+		RhoViscosity:        0.05,
+		CurieConst:          1.5e5,
+		SeriesResistanceOhm: 50.0,
+		K_dep:               2.5e8, // Depolarization factor for analog slope
+		StressGPa:           1.0,
+		Q11:                 0.089,  // Longitudinal electrostriction (m⁴/C²)
+		Q12:                 -0.026, // Transverse electrostriction (m⁴/C²)
 	}
 }
 
@@ -373,10 +397,21 @@ func HZOFJT140() *HZOMaterial {
 		RetentionTime:   3.15e8, // 10 years extrapolated
 		ImrintField:     1e6,
 		NumLevels:       140,    // 140 states - VERIFIED (Song et al. 2024)
+		TargetRangeFrac: 0.90,   // Map outer levels to ±0.90×Ps for reachability
 		Tau0NLS:         2e-10,  // 200 ps (FTJ tunneling)
 		EaNLS:           10e8,   // 10 MV/cm
 		Gmin:            0.1e-6, // 0.1 µS at HRS (FTJ: tunneling → lower current)
 		Gmax:            10e-6,  // 10 µS at LRS (FTJ: ~100x on/off but lower absolute)
+		// Landau-Khalatnikov parameters (Golden Set I, 10nm HZO)
+		BetaLandau:          -2.160e8,
+		GammaLandau:         1.653e10,
+		RhoViscosity:        0.05,
+		CurieConst:          1.5e5,
+		SeriesResistanceOhm: 50.0,
+		K_dep:               2.5e8, // Depolarization factor for analog slope
+		StressGPa:           1.0,
+		Q11:                 0.089,  // Longitudinal electrostriction (m⁴/C²)
+		Q12:                 -0.026, // Transverse electrostriction (m⁴/C²)
 	}
 }
 
@@ -405,10 +440,21 @@ func HZOCustom14() *HZOMaterial {
 		RetentionTime:   3.15e9,
 		ImrintField:     1e6,
 		NumLevels:       14, // 14 discrete levels (3.81 bits/cell)
+		TargetRangeFrac: 0.90,
 		Tau0NLS:         1e-10,
 		EaNLS:           12e8,
 		Gmin:            1e-6,
 		Gmax:            100e-6,
+		// Landau-Khalatnikov parameters (Golden Set I, 10nm HZO)
+		BetaLandau:          -2.160e8,
+		GammaLandau:         1.653e10,
+		RhoViscosity:        0.05,
+		CurieConst:          1.5e5,
+		SeriesResistanceOhm: 50.0,
+		K_dep:               2.5e8, // Depolarization factor for analog slope
+		StressGPa:           1.0,
+		Q11:                 0.089,  // Longitudinal electrostriction (m⁴/C²)
+		Q12:                 -0.026, // Transverse electrostriction (m⁴/C²)
 	}
 }
 

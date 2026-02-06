@@ -367,9 +367,15 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		if err != nil || rows <= 0 {
 			rows = cfg.Rows // Keep current value
 		}
+		if rows > 1024 {
+			rows = 1024 // Prevent OOM from unreasonable array sizes
+		}
 		cols, err := strconv.Atoi(colsEntry.Text)
 		if err != nil || cols <= 0 {
 			cols = cfg.Cols // Keep current value
+		}
+		if cols > 1024 {
+			cols = 1024 // Prevent OOM from unreasonable array sizes
 		}
 		cfg.Rows = rows
 		cfg.Cols = cols
