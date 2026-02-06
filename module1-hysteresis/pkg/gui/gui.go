@@ -498,6 +498,9 @@ func NewApp() *App {
 	// Initialize L-K Solver and Adaptive ISPP
 	uiApp.lkSolver = physics.NewLKSolver()
 	uiApp.lkSolver.ConfigureFromMaterial(mat) // Load material-specific params (K_dep, etc.)
+	// Module 1 expects deterministic LK dynamics for interactive demos and ISPP control.
+	uiApp.lkSolver.UseNLS = false
+	uiApp.lkSolver.EnableNoise = false
 	uiApp.adaptiveISPP = physics.NewAdaptiveISPP(uiApp.lkSolver, mat)
 
 	return uiApp
@@ -584,6 +587,9 @@ func NewAppWithMaterial(materialName string) *App {
 	// Initialize L-K Solver and Adaptive ISPP
 	uiApp.lkSolver = physics.NewLKSolver()
 	uiApp.lkSolver.ConfigureFromMaterial(mat) // Load material-specific params (K_dep, etc.)
+	// Module 1 expects deterministic LK dynamics for interactive demos and ISPP control.
+	uiApp.lkSolver.UseNLS = false
+	uiApp.lkSolver.EnableNoise = false
 	uiApp.adaptiveISPP = physics.NewAdaptiveISPP(uiApp.lkSolver, mat)
 
 	return uiApp

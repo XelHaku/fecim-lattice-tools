@@ -775,6 +775,9 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	}
 	if a.lkSolver != nil {
 		a.lkSolver.ConfigureFromMaterial(a.material)
+		// Keep LK dynamics deterministic in Module 1.
+		a.lkSolver.UseNLS = false
+		a.lkSolver.EnableNoise = false
 		a.lkSolver.Temperature = savedTemp
 	}
 	if a.useLKSolver() {
