@@ -326,7 +326,7 @@ This TODO prioritizes (1) **physics accuracy**, (2) **UI/UX correctness**, and (
 | M04 | ~~Energy breakdown annotation (peripheral percentages)~~ | ✅ | Done |
 | M05 | ~~Glossary widget integration~~ | ✅ | Done |
 | M06 | ~~References widget with DOI links~~ | ✅ | Done |
-| M16 | Physics equations UI: cover hysteresis ISPP, Preisach, and Landau (labels + links) | ✅ | Done |
+| M16 | Physics equations UI: cover hysteresis ISPP, Preisach, and Landau (labels + links); keep improving equations modal (SVG render/zoom/responsive + capture regression screenshots) | ⏳ | Follow-up |
 
 ### P3-D2: Medium-Effort Medium-Priority Fixes
 
