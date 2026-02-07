@@ -46,12 +46,13 @@ func TestVisualRegressionHysteresis(t *testing.T) {
 	defer app.Quit()
 
 	window := app.NewWindow("Visual Test - Hysteresis")
-	window.Resize(fyne.NewSize(1200, 800))
-
 	demo := demo1gui.NewEmbeddedApp()
-	content := demo.BuildContent(app, window)
-	window.SetContent(container.NewMax(content))
-	window.Show()
+	sharedwidgets.WithUILock(func() {
+		window.Resize(fyne.NewSize(1200, 800))
+		content := demo.BuildContent(app, window)
+		window.SetContent(container.NewMax(content))
+		window.Show()
+	})
 
 	// Start the module
 	demo.Start()
@@ -92,12 +93,13 @@ func TestVisualRegressionCircuits(t *testing.T) {
 	defer app.Quit()
 
 	window := app.NewWindow("Visual Test - Circuits")
-	window.Resize(fyne.NewSize(1200, 800))
-
 	demo := demo4gui.NewEmbeddedCircuitsApp()
-	content := demo.BuildContent(app, window)
-	window.SetContent(container.NewMax(content))
-	window.Show()
+	sharedwidgets.WithUILock(func() {
+		window.Resize(fyne.NewSize(1200, 800))
+		content := demo.BuildContent(app, window)
+		window.SetContent(container.NewMax(content))
+		window.Show()
+	})
 
 	// Start the module
 	demo.Start()
@@ -126,12 +128,13 @@ func TestVisualRegressionComparison(t *testing.T) {
 	defer app.Quit()
 
 	window := app.NewWindow("Visual Test - Comparison")
-	window.Resize(fyne.NewSize(1200, 800))
-
 	demo := demo5gui.NewEmbeddedComparisonApp()
-	content := demo.BuildContent(app, window)
-	window.SetContent(container.NewMax(content))
-	window.Show()
+	sharedwidgets.WithUILock(func() {
+		window.Resize(fyne.NewSize(1200, 800))
+		content := demo.BuildContent(app, window)
+		window.SetContent(container.NewMax(content))
+		window.Show()
+	})
 
 	// Start the module (triggers animation)
 	demo.Start()
@@ -160,12 +163,13 @@ func TestVisualRegressionEDA(t *testing.T) {
 	defer app.Quit()
 
 	window := app.NewWindow("Visual Test - EDA")
-	window.Resize(fyne.NewSize(1200, 800))
-
 	demo := demo6gui.NewEmbeddedEDAApp()
-	content := demo.BuildContent(app, window)
-	window.SetContent(container.NewMax(content))
-	window.Show()
+	sharedwidgets.WithUILock(func() {
+		window.Resize(fyne.NewSize(1200, 800))
+		content := demo.BuildContent(app, window)
+		window.SetContent(container.NewMax(content))
+		window.Show()
+	})
 
 	// Start the module
 	demo.Start()
@@ -198,7 +202,9 @@ func TestVisualAllModulesScreenshot(t *testing.T) {
 	defer app.Quit()
 
 	window := app.NewWindow("Visual Test - All Modules")
-	window.Resize(fyne.NewSize(1200, 800))
+	sharedwidgets.WithUILock(func() {
+		window.Resize(fyne.NewSize(1200, 800))
+	})
 
 	type moduleInfo struct {
 		name   string
@@ -238,9 +244,11 @@ func TestVisualAllModulesScreenshot(t *testing.T) {
 				t.Fatalf("Failed to create %s module: %v", m.name, err)
 			}
 
-			content := module.BuildContent(app, window)
-			window.SetContent(container.NewMax(content))
-			window.Show()
+			sharedwidgets.WithUILock(func() {
+				content := module.BuildContent(app, window)
+				window.SetContent(container.NewMax(content))
+				window.Show()
+			})
 
 			module.Start()
 			time.Sleep(300 * time.Millisecond)

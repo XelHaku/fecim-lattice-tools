@@ -12,6 +12,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	sharedtheme "fecim-lattice-tools/shared/theme"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // ============================================================================
@@ -361,7 +362,7 @@ func (ca *CircuitsApp) onRunComparison() {
 	ca.compStatusLabel.SetText("Running comparison for 8×8 MVM...")
 
 	// Refresh canvases
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		if ca.compArchCanvas != nil {
 			ca.compArchCanvas.Refresh()
 		}
@@ -395,7 +396,7 @@ func (ca *CircuitsApp) onAnimateComparison() {
 			if ca.shouldStop() {
 				return
 			}
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				ca.compStatusLabel.SetText(step)
 			})
 			if i < len(steps)-1 {
@@ -435,7 +436,7 @@ func (ca *CircuitsApp) onScaleUpComparison() {
 	fefetEnergy := float64(2.9 * scaleFactor)
 
 	// Update table labels
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		// Update CPU row
 		ca.compTableLabels[5].SetText(fmt.Sprintf("%d ns", cpuTime))
 		ca.compTableLabels[6].SetText(fmt.Sprintf("%d pJ", cpuEnergy))

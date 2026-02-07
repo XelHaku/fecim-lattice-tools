@@ -7,8 +7,6 @@ import (
 	"math/rand"
 	"time"
 
-	"fyne.io/fyne/v2"
-
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
@@ -83,14 +81,14 @@ func (ca *CircuitsApp) writeReadVerifyLoop(row, col, targetLevel int, startVolta
 		appliedVoltage, _ := ca.applyWriteVoltages(row, col, voltage)
 		if isPassive {
 			halfV := appliedVoltage / 2.0
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				ca.operationsStatusLabel.SetText(fmt.Sprintf("WRITE [%d,%d]: V/2 scheme WL=+%.2fV BL=-%.2fV (iter %d/%d)",
 					row, col, halfV, halfV, iteration, maxIterations))
 			})
 			ca.deviceState.EnableHalfSelectVisualization(row, col, appliedVoltage)
 			ca.updateHalfSelectVisualization()
 		} else {
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				ca.operationsStatusLabel.SetText(fmt.Sprintf("WRITE [%d,%d]: V=%.2fV (iter %d/%d)", row, col, appliedVoltage, iteration, maxIterations))
 			})
 		}
@@ -128,7 +126,7 @@ func (ca *CircuitsApp) writeReadVerifyLoop(row, col, targetLevel int, startVolta
 		ca.mu.Unlock()
 
 		// === READ/VERIFY PHASE ===
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			ca.operationsStatusLabel.SetText(fmt.Sprintf("VERIFY [%d,%d]: Read level %d (target %d)", row, col, currentLevel, targetLevel))
 		})
 
@@ -147,7 +145,7 @@ func (ca *CircuitsApp) writeReadVerifyLoop(row, col, targetLevel int, startVolta
 		if currentLevel == targetLevel {
 			totalTimeNs := iteration * 203
 			totalEnergyFJ := iteration * 2200
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				ca.operationsStatusLabel.SetText(fmt.Sprintf("WRITE [%d,%d] = State %d | %d iter | ~%dns, ~%dfJ",
 					row, col, targetLevel, iteration, totalTimeNs, totalEnergyFJ))
 			})
@@ -176,7 +174,7 @@ func (ca *CircuitsApp) writeReadVerifyLoop(row, col, targetLevel int, startVolta
 	}
 
 	// Max iterations reached
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		ca.operationsStatusLabel.SetText(fmt.Sprintf("PARTIAL [%d,%d] = State %d (target was %d, max iterations)",
 			row, col, currentLevel, targetLevel))
 	})
@@ -192,7 +190,7 @@ func (ca *CircuitsApp) writeReadVerifyLoop(row, col, targetLevel int, startVolta
 func (ca *CircuitsApp) onUnifiedRead() {
 	// Mode validation: only allowed in READ mode
 	if ca.deviceState.GetOperationMode() != OpModeRead {
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			ca.operationsStatusLabel.SetText("Error: Switch to READ mode first")
 		})
 		return
@@ -240,7 +238,7 @@ func (ca *CircuitsApp) onUnifiedRead() {
 
 	// Update status with single-cell sense result including energy/timing
 	// Read cycle: ~76ns, Energy: DAC(14.4fJ) + TIA(6.3fJ) + ADC(25fJ) = ~46fJ
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		ca.operationsStatusLabel.SetText(fmt.Sprintf("READ [%d,%d]: State=%d | I=%.1fuA -> TIA=%.2fV -> ADC=%d | ~76ns, ~46fJ",
 			selectedRow, selectedCol, level, current, tiaVoltage, adcLevel))
 	})
@@ -305,7 +303,7 @@ func (ca *CircuitsApp) onUnifiedAnimate() {
 		ca.animationStep = 1
 		ca.mu.Unlock()
 		ca.refreshUnifiedArray()
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			ca.operationsStatusLabel.SetText("Step 1: DAC conversion (10ns)")
 		})
 		if ca.sleep(600) {
@@ -320,7 +318,7 @@ func (ca *CircuitsApp) onUnifiedAnimate() {
 		ca.animationStep = 2
 		ca.mu.Unlock()
 		ca.refreshUnifiedArray()
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			ca.operationsStatusLabel.SetText("Step 2: Array settle (5ns)")
 		})
 		if ca.sleep(600) {
@@ -335,7 +333,7 @@ func (ca *CircuitsApp) onUnifiedAnimate() {
 		ca.animationStep = 3
 		ca.mu.Unlock()
 		ca.refreshUnifiedArray()
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			ca.operationsStatusLabel.SetText("Step 3: TIA+ADC conversion (~61ns)")
 		})
 		if ca.sleep(600) {
@@ -348,7 +346,7 @@ func (ca *CircuitsApp) onUnifiedAnimate() {
 		ca.animationActive = false
 		ca.mu.Unlock()
 		ca.recomputeAndRefresh()
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			ca.operationsStatusLabel.SetText("Complete in ~76ns")
 		})
 	}()
@@ -431,7 +429,7 @@ func (ca *CircuitsApp) saveUndoHistory() {
 	ca.mu.Unlock() // Release lock before UI update to avoid deadlock
 
 	// Enable undo button
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		if ca.undoHistoryBtn != nil {
 			ca.undoHistoryBtn.Enable()
 		}
@@ -460,7 +458,7 @@ func (ca *CircuitsApp) onUndo() {
 	ca.mu.Unlock() // Release lock before UI updates to avoid deadlock
 
 	// Disable undo button
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		if ca.undoHistoryBtn != nil {
 			ca.undoHistoryBtn.Disable()
 		}

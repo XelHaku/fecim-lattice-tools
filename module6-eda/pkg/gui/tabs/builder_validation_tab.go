@@ -24,6 +24,7 @@ import (
 	"fecim-lattice-tools/module6-eda/pkg/openlane"
 	"fecim-lattice-tools/module6-eda/pkg/validation"
 	"fecim-lattice-tools/shared/logging"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // fileExists checks if a file exists
@@ -227,7 +228,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		pngPath := fmt.Sprintf("data/fecim_crossbar_%dx%d.png", cfg.Rows, cfg.Cols)
 		absPath, _ := filepath.Abs(pngPath)
 		if fileExists(absPath) {
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				klayoutImage.File = absPath
 				klayoutImage.Resource = nil
 				klayoutStatus.SetText("Generated: " + filepath.Base(pngPath))
@@ -242,7 +243,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		pngPath := fmt.Sprintf("data/fecim_crossbar_%dx%d_schematic.png", cfg.Rows, cfg.Cols)
 		absPath, _ := filepath.Abs(pngPath)
 		if fileExists(absPath) {
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				yosysImage.File = absPath
 				yosysImage.Resource = nil
 				yosysStatus.SetText("Generated: " + filepath.Base(pngPath))
@@ -254,7 +255,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		dotPath := fmt.Sprintf("data/fecim_crossbar_%dx%d_schematic.dot", cfg.Rows, cfg.Cols)
 		dotAbs, _ := filepath.Abs(dotPath)
 		if fileExists(dotAbs) {
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				yosysStatus.SetText("DOT only (install graphviz)")
 			})
 		}
@@ -265,7 +266,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		pngPath := fmt.Sprintf("data/fecim_crossbar_%dx%d_openroad.png", cfg.Rows, cfg.Cols)
 		absPath, _ := filepath.Abs(pngPath)
 		if fileExists(absPath) {
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				openroadImage.File = absPath
 				openroadImage.Resource = nil
 				openroadStatus.SetText("Generated: " + filepath.Base(pngPath))
@@ -414,7 +415,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 
 		logging.GlobalDebug("[EDA-Builder] Stats updated: %dx%d array, area=%.2f µm²", rows, cols, area)
 
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			totalLabel.SetText(fmt.Sprintf("Total Cells: %d", total))
 			areaLabel.SetText(fmt.Sprintf("Array Area: %.2f µm²", area))
 			wlLengthLabel.SetText(fmt.Sprintf("WL Length: %.2f µm", wlLength))
@@ -443,7 +444,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	// Button to generate Yosys schematic SVG
 	genSchematicBtn := widget.NewButton("Gen Schematic (Yosys)", func() {
 		logging.GlobalInfo("[EDA-Builder] Yosys schematic generation started")
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			yosysStatus.SetText("Generating...")
 		})
 		go func() {
@@ -458,7 +459,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			if err != nil {
 				logging.GlobalError("[EDA-Builder] Yosys schematic generation failed: %v", err)
 			}
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				if result != nil && result.Success {
 					logging.GlobalInfo("[EDA-Builder] Yosys schematic generated successfully: %s", result.ImagePath)
 					updateYosysImage()
@@ -488,7 +489,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	// Button to generate OpenROAD layout PNG
 	genOpenROADBtn := widget.NewButton("Gen Layout (OpenROAD)", func() {
 		logging.GlobalInfo("[EDA-Builder] OpenROAD layout generation started")
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			openroadStatus.SetText("Generating...")
 		})
 		go func() {
@@ -511,7 +512,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			if err != nil {
 				logging.GlobalError("[EDA-Builder] OpenROAD layout generation failed: %v", err)
 			}
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				if result != nil && result.Success {
 					logging.GlobalInfo("[EDA-Builder] OpenROAD layout generated successfully: %s", result.ImagePath)
 					updateOpenROADImage()
@@ -553,7 +554,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 
 	addLog := func(msg string) {
 		logging.GlobalInfo("%s", msg)
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			logOutput.SetText(logOutput.Text + msg + "\n")
 		})
 	}
@@ -572,7 +573,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	pullImageBtn = widget.NewButton("Pull OpenLane Image", func() {
 		logging.GlobalInfo("[EDA-Builder] Docker image pull started")
 		go func() {
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				dockerStatus.SetText("Pulling image...")
 			})
 			addLog("=== Pulling OpenLane Docker Image ===")
@@ -584,13 +585,13 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			})
 			if err != nil {
 				logging.GlobalError("[EDA-Builder] Docker image pull failed: %v", err)
-				fyne.Do(func() {
+				sharedwidgets.SafeDo(func() {
 					dockerStatus.SetText("✗ Pull failed: " + err.Error())
 				})
 				addLog("ERROR: " + err.Error())
 			} else {
 				logging.GlobalInfo("[EDA-Builder] Docker image pull completed successfully")
-				fyne.Do(func() {
+				sharedwidgets.SafeDo(func() {
 					dockerStatus.SetText("✓ Docker image ready")
 					pullImageBtn.Hide()
 				})
@@ -605,7 +606,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		manager := openlane.NewManager()
 		mode := manager.DetectMode()
 
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			if mode == openlane.ModeDocker {
 				if manager.IsDockerImagePulled() {
 					dockerStatus.SetText("✓ Docker image ready")
@@ -653,7 +654,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		exportPackageBtn.Disable()
 		generateAllBtn.SetText("Generating...")
 		go func() {
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				statusLabel.SetText("Generating...")
 				logOutput.SetText("")
 			})
@@ -682,7 +683,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			}
 			if err := os.MkdirAll(dir, 0755); err != nil {
 				addLog("ERROR: Failed to create directory " + dir + ": " + err.Error())
-				fyne.Do(func() {
+				sharedwidgets.SafeDo(func() {
 					statusLabel.SetText("Generation failed")
 					generateAllBtn.Enable()
 					validateAllBtn.Enable()
@@ -705,14 +706,14 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			// Generate array Verilog
 			addLog("Generating array Verilog...")
 			vContent := export.GenerateArrayVerilog(*cfg)
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				verilogPreview.SetText(vContent)
 			})
 
 			instances := cfg.Rows * cfg.Cols
 			lines := strings.Count(vContent, "\n")
 			size := float64(len(vContent)) / 1024
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				verilogStatsLabel.SetText(fmt.Sprintf("Instances: %d | Lines: %d | Size: %.1fKB", instances, lines, size))
 			})
 
@@ -728,7 +729,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			// Generate DEF
 			addLog("Generating DEF placement...")
 			defContent := generateBuilderDEF(*cfg)
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				defPreview.SetText(defContent)
 			})
 
@@ -736,7 +737,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			if err := os.WriteFile(defFilename, []byte(defContent), 0644); err != nil {
 				addLog("ERROR: Failed to write DEF: " + err.Error())
 			}
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				defStatsLabel.SetText(fmt.Sprintf("Components: %d | File: %s", cfg.Rows*cfg.Cols, defFilename))
 			})
 			addLog("  DEF: " + defFilename)
@@ -758,7 +759,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 
 			imgManager := openlane.NewManager()
 			imgConfig := openlane.DefaultConfig()
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				klayoutStatus.SetText("Generating...")
 			})
 			if validation.IsKLayoutAvailable(imgManager) {
@@ -792,14 +793,14 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 						}
 					}
 					addLog("  Use 'Gen Layout (OpenROAD)' button for alternative")
-					fyne.Do(func() {
+					sharedwidgets.SafeDo(func() {
 						klayoutStatus.SetText("Failed: " + errMsg)
 					})
 				}
 			} else {
 				addLog("  KLayout not available (install Docker with OpenLane image)")
 				addLog("  Use 'Gen Layout (OpenROAD)' button for alternative")
-				fyne.Do(func() {
+				sharedwidgets.SafeDo(func() {
 					klayoutStatus.SetText("Not available (need Docker)")
 				})
 			}
@@ -813,7 +814,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			addLog("  Config: data/config.json")
 
 			logging.GlobalInfo("[EDA-Builder] Generate All completed successfully")
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				statusLabel.SetText("All files generated")
 				generateAllBtn.Enable()
 				validateAllBtn.Enable()
@@ -832,7 +833,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		exportPackageBtn.Disable()
 		validateAllBtn.SetText("Validating...")
 		go func() {
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				statusLabel.SetText("Validating...")
 				logOutput.SetText("")
 				yosysResult.SetText("...")
@@ -867,12 +868,12 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			err1 := validation.ValidateVerilogWithCell(arrayPath, cellPath)
 			if err1 != nil {
 				logging.GlobalDebug("[EDA-Builder] Yosys validation: FAIL")
-				fyne.Do(func() { yosysResult.SetText("✗ FAIL") })
+				sharedwidgets.SafeDo(func() { yosysResult.SetText("✗ FAIL") })
 				addLog(fmt.Sprintf("ERROR: %v", err1))
 				allPassed = false
 			} else {
 				logging.GlobalDebug("[EDA-Builder] Yosys validation: PASS")
-				fyne.Do(func() { yosysResult.SetText("✓ PASS") })
+				sharedwidgets.SafeDo(func() { yosysResult.SetText("✓ PASS") })
 				addLog("PASSED")
 			}
 
@@ -884,12 +885,12 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			err2 := validation.ValidateDEF(defPath)
 			if err2 != nil {
 				logging.GlobalDebug("[EDA-Builder] DEF validation: FAIL")
-				fyne.Do(func() { defResult.SetText("✗ FAIL") })
+				sharedwidgets.SafeDo(func() { defResult.SetText("✗ FAIL") })
 				addLog(fmt.Sprintf("ERROR: %v", err2))
 				allPassed = false
 			} else {
 				logging.GlobalDebug("[EDA-Builder] DEF validation: PASS")
-				fyne.Do(func() { defResult.SetText("✓ PASS") })
+				sharedwidgets.SafeDo(func() { defResult.SetText("✓ PASS") })
 				stats, _ := validation.GetDEFStats(defPath)
 				addLog(fmt.Sprintf("Design: %v, Components: %v", stats["design_name"], stats["component_count"]))
 				addLog("PASSED")
@@ -907,12 +908,12 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			err3 := validation.CrossCheckFiles(lefPath, libPath, vPath)
 			if err3 != nil {
 				logging.GlobalDebug("[EDA-Builder] Cross-check validation: FAIL")
-				fyne.Do(func() { crossResult.SetText("✗ FAIL") })
+				sharedwidgets.SafeDo(func() { crossResult.SetText("✗ FAIL") })
 				addLog(fmt.Sprintf("ERROR: %v", err3))
 				allPassed = false
 			} else {
 				logging.GlobalDebug("[EDA-Builder] Cross-check validation: PASS")
-				fyne.Do(func() { crossResult.SetText("✓ PASS") })
+				sharedwidgets.SafeDo(func() { crossResult.SetText("✓ PASS") })
 				addLog("Pin names and cell names match")
 				addLog("PASSED")
 			}
@@ -924,7 +925,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			mode := manager.DetectMode()
 
 			if mode == openlane.ModeNone {
-				fyne.Do(func() { placementResult.SetText("⊝ SKIP") })
+				sharedwidgets.SafeDo(func() { placementResult.SetText("⊝ SKIP") })
 				addLog("SKIPPED: OpenLane/Docker not available")
 			} else {
 				defPath := fmt.Sprintf("data/fecim_crossbar_%dx%d.def", cfg.Rows, cfg.Cols)
@@ -937,17 +938,17 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 				result, err := validation.RunPlacementCheckWithCell(defPath, lefPath, manager, config)
 				if err != nil {
 					logging.GlobalDebug("[EDA-Builder] Placement validation: ERROR")
-					fyne.Do(func() { placementResult.SetText("✗ ERROR") })
+					sharedwidgets.SafeDo(func() { placementResult.SetText("✗ ERROR") })
 					addLog(fmt.Sprintf("ERROR: %v", err))
 					allPassed = false
 				} else if result.Passed {
 					logging.GlobalDebug("[EDA-Builder] Placement validation: PASS")
-					fyne.Do(func() { placementResult.SetText("✓ PASS") })
+					sharedwidgets.SafeDo(func() { placementResult.SetText("✓ PASS") })
 					addLog(result.RawOutput)
 					addLog("PASSED")
 				} else {
 					logging.GlobalDebug("[EDA-Builder] Placement validation: FAIL (%d violations)", result.ViolationCount)
-					fyne.Do(func() { placementResult.SetText("✗ FAIL") })
+					sharedwidgets.SafeDo(func() { placementResult.SetText("✗ FAIL") })
 					addLog(result.RawOutput)
 					addLog(fmt.Sprintf("FAILED: %d violations", result.ViolationCount))
 					for _, v := range result.Violations {
@@ -960,7 +961,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			// Summary
 			if allPassed {
 				logging.GlobalInfo("[EDA-Builder] Validate All completed: all checks passed")
-				fyne.Do(func() {
+				sharedwidgets.SafeDo(func() {
 					statusLabel.SetText("All validations passed")
 					validationSummary.SetText("✓ All checks passed")
 					validateAllBtn.Enable()
@@ -971,7 +972,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 				addLog("\n=== ALL VALIDATIONS PASSED ===")
 			} else {
 				logging.GlobalInfo("[EDA-Builder] Validate All completed: some checks failed")
-				fyne.Do(func() {
+				sharedwidgets.SafeDo(func() {
 					statusLabel.SetText("Some validations failed")
 					validationSummary.SetText("✗ Some checks failed - see log for details")
 					validateAllBtn.Enable()
@@ -991,7 +992,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		validateAllBtn.Disable()
 		exportPackageBtn.SetText("Exporting...")
 		go func() {
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				statusLabel.SetText("Exporting package...")
 				logOutput.SetText("")
 			})
@@ -1001,7 +1002,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			logging.GlobalInfo("[EDA-Builder] Export Package started to: %s", outputDir)
 			if err := os.MkdirAll(outputDir, 0755); err != nil {
 				addLog("ERROR: Failed to create directory " + outputDir + ": " + err.Error())
-				fyne.Do(func() {
+				sharedwidgets.SafeDo(func() {
 					statusLabel.SetText("Export failed")
 					exportPackageBtn.Enable()
 					generateAllBtn.Enable()
@@ -1012,7 +1013,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			}
 			if err := os.MkdirAll(outputDir+"/cells", 0755); err != nil {
 				addLog("ERROR: Failed to create cells directory: " + err.Error())
-				fyne.Do(func() {
+				sharedwidgets.SafeDo(func() {
 					validateAllBtn.Enable()
 					exportPackageBtn.SetText("Export Package")
 				})
@@ -1091,7 +1092,7 @@ Date: %s
 			absOutputDir, _ := filepath.Abs(outputDir)
 
 			logging.GlobalInfo("[EDA-Builder] Export Package completed: %s", absOutputDir)
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				statusLabel.SetText("Package exported to " + outputDir)
 				exportPackageBtn.Enable()
 				generateAllBtn.Enable()

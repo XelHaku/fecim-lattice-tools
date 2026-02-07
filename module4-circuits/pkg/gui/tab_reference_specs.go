@@ -11,6 +11,8 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
+
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // ============================================================================
@@ -545,7 +547,7 @@ func (ca *CircuitsApp) onExportSpecs() {
 func (ca *CircuitsApp) onCompareToGPU() {
 	logAction("specs_compare_gpu")
 	// Show comparison summary in status label
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		ca.specStatusLabel.SetText("FeFET vs GPU: ~6.6x faster than CPU (76ns vs 500ns). FeFET per-MAC energy ~46 fJ in this model.")
 	})
 }

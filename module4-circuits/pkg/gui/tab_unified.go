@@ -285,7 +285,7 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 		ca.mu.Unlock()
 		logInput("zoom=%.2f", v)
 		ca.zoomLabel.SetText(fmt.Sprintf("%.0f%%", v*100))
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			if ca.sharedArrayCanvas != nil {
 				ca.sharedArrayCanvas.Refresh()
 			}
@@ -435,7 +435,7 @@ func (ca *CircuitsApp) resizeArray(rows, cols int) {
 	// Update status (must be on UI thread)
 	totalCells := rows * cols
 	bitCapacity := float64(totalCells) * 4.9 // ~4.9 bits per 30-level cell
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		if ca.operationsStatusLabel != nil {
 			ca.operationsStatusLabel.SetText(fmt.Sprintf("Array resized: %dx%d (%d cells, %.1f bits)",
 				rows, cols, totalCells, bitCapacity))
@@ -567,7 +567,7 @@ func (ca *CircuitsApp) updateDACRangeModeLabel() {
 	rangeMode := ca.deviceState.GetDACRangeMode()
 	currentRange := ca.deviceState.GetCurrentVoltageRange()
 
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		// Only show in WRITE mode where voltage range matters
 		if mode == OpModeWrite {
 			var text string
@@ -676,7 +676,7 @@ func (ca *CircuitsApp) updateModeButtons() {
 
 	mode := ca.deviceState.GetOperationMode()
 
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		// Reset all to low importance
 		if ca.modeReadBtn != nil {
 			ca.modeReadBtn.Importance = widget.LowImportance
@@ -791,7 +791,7 @@ func (ca *CircuitsApp) applySenseRf(valueStr string) {
 	ca.tiaGain = rfKOhm
 
 	if ca.senseRfEntry != nil {
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			ca.senseRfEntry.SetText(fmt.Sprintf("%.1f", rfKOhm))
 		})
 	}
@@ -836,7 +836,7 @@ func (ca *CircuitsApp) applySenseADCRange() {
 	ca.adc.VrefHigh = vmax
 
 	if ca.senseAdcVminEntry != nil || ca.senseAdcVmaxEntry != nil {
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			if ca.senseAdcVminEntry != nil {
 				ca.senseAdcVminEntry.SetText(fmt.Sprintf("%.2f", vmin))
 			}
@@ -1059,7 +1059,7 @@ func (ca *CircuitsApp) updateCellInfo() {
 	isActive := ca.deviceState.IsRowActive(selectedRow)
 	isPassive := ca.deviceState.IsPassiveMode()
 
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		// Build detailed info string with signal chain data
 		var infoStr string
 		if isActive && math.Abs(effectiveVoltage) > 0.01 {
@@ -1082,7 +1082,7 @@ func (ca *CircuitsApp) updateCellInfo() {
 
 	// Also update array info label with total row current
 	if ca.sharedArrayInfoLabel != nil {
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			ca.sharedArrayInfoLabel.SetText(fmt.Sprintf("Array: %dx%d | %d levels | Row %d sum: I=%.1fuA",
 				ca.arrayRows, ca.arrayCols, ca.quantLevels, selectedRow, rowCurrent))
 		})
@@ -1156,7 +1156,7 @@ func (ca *CircuitsApp) updateSensePanel() {
 		satText = "SAT"
 	}
 
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		if ca.senseTitleLabel != nil {
 			ca.senseTitleLabel.SetText(titleText)
 		}
@@ -1223,7 +1223,7 @@ func (ca *CircuitsApp) updateOperationClassification() {
 		helpText = "Select a mode: READ, WRITE, or COMPUTE."
 	}
 
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		ca.operationsModeHelp.SetText(helpText)
 	})
 }
@@ -1237,7 +1237,7 @@ func (ca *CircuitsApp) updateWriteTargetLabel() {
 	row := ca.deviceState.GetSelectedRow()
 	col := ca.deviceState.GetSelectedCol()
 
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		ca.mfuxWriteTargetLabel.SetText(fmt.Sprintf("[%d,%d]", row, col))
 	})
 }
@@ -1370,7 +1370,7 @@ func (ca *CircuitsApp) onWriteLevelChanged(level int) {
 	appliedVoltage := targetVoltage
 	logInput("write_level=%d voltage=%.3f", level, targetVoltage)
 
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		if ca.mfuxWriteLevelLabel != nil {
 			ca.mfuxWriteLevelLabel.SetText(fmt.Sprintf("L:%d", level))
 		}
@@ -1552,13 +1552,13 @@ func (ca *CircuitsApp) rebuildComputeInputs() {
 		if ca.deviceState != nil {
 			readMax = ca.deviceState.GetReadRange().Max
 		}
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			ca.computeInputTitle.SetText(fmt.Sprintf("Input Vector (%d inputs, 0–255 → 0–%.2fV):", ca.arrayCols, readMax))
 		})
 	}
 
 	// Rebuild entries
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		ca.buildComputeInputEntries()
 		ca.computeInputContainer.Refresh()
 	})
@@ -1627,7 +1627,7 @@ func (ca *CircuitsApp) randomizeInputVectorEntries() {
 	logAction("input_vector_randomized len=%d", len(valuesCopy))
 
 	// Update entry widgets (no lock - use copy)
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		for i, entry := range ca.mfuxInputVectorEntry {
 			if entry != nil && i < len(valuesCopy) {
 				entry.SetText(strconv.Itoa(valuesCopy[i]))
@@ -1663,7 +1663,7 @@ func (ca *CircuitsApp) clearInputVectorEntries() {
 	logAction("input_vector_cleared len=%d", len(ca.inputVector))
 
 	// Update entry widgets (no lock held - safe)
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		for _, entry := range ca.mfuxInputVectorEntry {
 			if entry != nil {
 				entry.SetText("0")
@@ -1684,7 +1684,7 @@ func (ca *CircuitsApp) clearInputVectorEntries() {
 
 // updateModePanels shows/hides mode-specific panels based on current mode
 func (ca *CircuitsApp) updateModePanels(mode OpMode) {
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		// Hide all panels first
 		if ca.writeModePanel != nil {
 			ca.writeModePanel.Hide()

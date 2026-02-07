@@ -15,6 +15,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	sharedphysics "fecim-lattice-tools/shared/physics"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // ====================================================================================
@@ -153,7 +154,7 @@ func (ca *CircuitsApp) animateWriteSequence() {
 
 // updateWriteSequenceUI refreshes the program-verify timing display
 func (ca *CircuitsApp) updateWriteSequenceUI() {
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		if ca.writeSequencePanel != nil {
 			// Rebuild the timing diagram with current state
 			newDiagram := ca.drawWriteSequenceTimingDiagram()
@@ -287,14 +288,14 @@ func (ca *CircuitsApp) runISPPWithAnimation(row, col, targetLevel int) {
 
 		switch result {
 		case ISPPResultVerified:
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				ca.operationsStatusLabel.SetText(fmt.Sprintf("SUCCESS [%d,%d] = Level %d (%d iterations)",
 					row, col, targetLevel, isppStatus.Iteration))
 			})
 			goto cleanup
 
 		case ISPPResultOvershoot:
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				ca.operationsStatusLabel.SetText(fmt.Sprintf("OVERSHOOT [%d,%d] - Resetting to saturation...", row, col))
 			})
 			ca.deviceState.HandleOvershoot(row, col)
@@ -314,7 +315,7 @@ func (ca *CircuitsApp) runISPPWithAnimation(row, col, targetLevel int) {
 			continue
 
 		case ISPPResultMaxIterations:
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				ca.operationsStatusLabel.SetText(fmt.Sprintf("PARTIAL [%d,%d] = Level %d (target was %d)",
 					row, col, currentLevel, targetLevel))
 			})
@@ -358,7 +359,7 @@ func (ca *CircuitsApp) runISPPWithLK(row, col, targetLevel int) {
 	direction := ds.GetWriteDirection(row, col, currentLevel, targetLevel)
 	if direction == DirectionUnknown {
 		if ca.operationsStatusLabel != nil {
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				ca.operationsStatusLabel.SetText(fmt.Sprintf("Already at target [%d,%d] = Level %d", row, col, targetLevel))
 			})
 		}
@@ -466,7 +467,7 @@ func (ca *CircuitsApp) runISPPWithLK(row, col, targetLevel int) {
 		if ca.operationsStatusLabel != nil {
 			msg := fmt.Sprintf("L-K ISPP [%d/%d]: Level %d -> %d | V=%.2fV | %s",
 				event.Attempt, ctrl.MaxIterations, level, targetLevel, math.Abs(event.VPulse), event.Phase)
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				ca.operationsStatusLabel.SetText(msg)
 			})
 		}
@@ -495,7 +496,7 @@ func (ca *CircuitsApp) runISPPWithLK(row, col, targetLevel int) {
 		if success {
 			status = "SUCCESS"
 		}
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			ca.operationsStatusLabel.SetText(fmt.Sprintf("%s [%d,%d] = Level %d | %d attempts | overshoots=%d",
 				status, row, col, finalLevel, attempts, overshoots))
 		})
@@ -653,7 +654,7 @@ func (ca *CircuitsApp) updateISPPUI() {
 		dirColor = colorDescending
 	}
 
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		if ca.operationsStatusLabel != nil {
 			appliedVoltage, dacCode := ca.deviceState.DACWriteVoltage(isppStatus.Voltage)
 			voltageText := fmt.Sprintf("V=%.2fV", appliedVoltage)
@@ -693,7 +694,7 @@ func (ca *CircuitsApp) drawHalfSelectOverlay(arrayCanvas fyne.CanvasObject) {
 func (ca *CircuitsApp) updateHalfSelectVisualization() {
 	hsState := ca.deviceState.GetHalfSelectState()
 
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		if ca.halfSelectIndicator != nil {
 			if hsState.Enabled {
 				ca.halfSelectIndicator.SetText(fmt.Sprintf("V/2 Bias Active | Full: %.2fV | Half: %.2fV",
@@ -855,7 +856,7 @@ func (ca *CircuitsApp) createCompactWritePanel() fyne.CanvasObject {
 func (ca *CircuitsApp) updateArchitectureSpecificUI() {
 	isPassive := ca.deviceState.IsPassiveMode()
 
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		if ca.passiveVoltagePanel != nil && ca.activeVoltagePanel != nil {
 			if isPassive {
 				ca.passiveVoltagePanel.Show()
@@ -1000,7 +1001,7 @@ func (ca *CircuitsApp) updateHysteresisDirectionUI(targetLevel int) {
 		dirStr = "v Descending"
 	}
 
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		if ca.hysteresisDirectionLabel != nil {
 			ca.hysteresisDirectionLabel.SetText(dirStr)
 		}

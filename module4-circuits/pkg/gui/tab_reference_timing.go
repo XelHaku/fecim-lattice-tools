@@ -564,7 +564,7 @@ func (ca *CircuitsApp) onAnimateTiming() {
 			if ca.shouldStop() {
 				return
 			}
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				ca.timingStatusLabel.SetText(step)
 			})
 			if i < len(steps)-1 {

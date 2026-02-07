@@ -17,8 +17,10 @@ func setupUnifiedTestApp(t *testing.T) (*EmbeddedCircuitsApp, fyne.App, fyne.Win
 	app := test.NewApp()
 	win := test.NewWindow(nil)
 	embedded := NewEmbeddedCircuitsApp()
-	content := embedded.BuildContent(app, win)
-	win.SetContent(content)
+	sharedwidgets.WithUILock(func() {
+		content := embedded.BuildContent(app, win)
+		win.SetContent(content)
+	})
 	return embedded, app, win
 }
 
@@ -102,7 +104,7 @@ func TestUnifiedActionButtons(t *testing.T) {
 
 	// Make sure target level differs from current to start ISPP.
 	midLevel := ca.quantLevels / 2
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		if ca.mfuxWriteLevelSlider != nil {
 			ca.mfuxWriteLevelSlider.SetValue(float64(midLevel + 1))
 		}
