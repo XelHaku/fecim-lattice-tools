@@ -409,7 +409,16 @@ func runHysteresisMode(engine string) error {
 		currentG := physics.PolarizationToConductance(currentP, effPs, gmin, gmax)
 		_, currentLevel := headlessLevelFromConductance(currentG, gmin, gmax, numLevels)
 		stepStart := simTime
-		maxSimTime := phaseDuration * float64(writeController.MaxRetries+100)
+		pulseBudget := 800
+		if s := strings.TrimSpace(os.Getenv("FECIM_ISPP_MAX_PULSES")); s != "" {
+			if v, err := strconv.Atoi(s); err == nil && v > 0 {
+				pulseBudget = v
+			}
+		}
+		if strings.TrimSpace(os.Getenv("FECIM_HEADLESS_FAST")) == "1" && pulseBudget < 1200 {
+			pulseBudget = 1200
+		}
+		maxSimTime := phaseDuration * float64(pulseBudget)
 		wrd := &headlessWRDState{
 			phase:         0,
 			phaseTimer:    0,
