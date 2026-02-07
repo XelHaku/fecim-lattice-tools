@@ -276,6 +276,7 @@ var CategoryColors = map[string]color.Color{
 	"Research": color.RGBA{255, 152, 0, 255},  // Orange #FF9800
 	"Demo":     color.RGBA{156, 39, 176, 255}, // Purple #9C27B0
 	"Guide":    color.RGBA{33, 150, 243, 255}, // Blue #2196F3
+	"Module":   color.RGBA{96, 125, 139, 255}, // Blue Grey #607D8B
 }
 
 // NewCategoryBadge creates a new category badge
@@ -293,24 +294,58 @@ func NewCategoryBadge(category string) *CategoryBadge {
 	return b
 }
 
-// CreateRenderer implements fyne.Widget
+// SetCategory updates the badge label + color.
+func (b *CategoryBadge) SetCategory(category string) {
+	b.category = category
+	badgeColor, ok := CategoryColors[category]
+	if !ok {
+		badgeColor = fecimTheme.ColorPrimary
+	}
+	b.color = badgeColor
+	b.Refresh()
+}
+
+type categoryBadgeRenderer struct {
+	badge  *CategoryBadge
+	border *canvas.Rectangle
+	label  *canvas.Text
+	root   *fyne.Container
+}
+
+func (r *categoryBadgeRenderer) Layout(size fyne.Size) {
+	r.root.Resize(size)
+}
+
+func (r *categoryBadgeRenderer) MinSize() fyne.Size {
+	return r.root.MinSize()
+}
+
+func (r *categoryBadgeRenderer) Refresh() {
+	r.border.FillColor = r.badge.color
+	r.border.Refresh()
+	r.label.Text = r.badge.category
+	r.label.Refresh()
+}
+
+func (r *categoryBadgeRenderer) BackgroundColor() color.Color { return color.Transparent }
+func (r *categoryBadgeRenderer) Objects() []fyne.CanvasObject { return []fyne.CanvasObject{r.root} }
+func (r *categoryBadgeRenderer) Destroy()                     {}
+
+// CreateRenderer implements fyne.Widget.
 func (b *CategoryBadge) CreateRenderer() fyne.WidgetRenderer {
-	// Create colored border line
 	border := canvas.NewRectangle(b.color)
 	border.SetMinSize(fyne.NewSize(4, 0))
 
-	// Create label
 	label := canvas.NewText(b.category, theme.ForegroundColor())
 	label.TextStyle = fyne.TextStyle{Bold: true}
 
-	// Container with border and text
 	content := container.NewBorder(
 		nil, nil,
 		border, nil,
 		container.NewPadded(label),
 	)
 
-	return widget.NewSimpleRenderer(content)
+	return &categoryBadgeRenderer{badge: b, border: border, label: label, root: content}
 }
 
 // DocumentMetadataWidget displays document metadata with category and reading time
