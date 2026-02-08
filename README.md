@@ -18,7 +18,10 @@
 - [Overview](#overview)
 - [Quick Start](#quick-start)
 - [Installation](#installation)
+- [Command Line Options](#command-line-options)
+- [CLI Subcommands](#cli-subcommands)
 - [Modules](#modules)
+- [Keyboard Shortcuts](#keyboard-shortcuts)
 - [Claims Policy](#claims-policy)
 - [Technical Stack](#technical-stack)
 - [Repository Structure](#repository-structure)
@@ -116,6 +119,35 @@ See: `BENCHMARKS.md`.
 ./launch.sh --verbosity trace           # Console-only trace output (no file)
 ```
 
+### CLI Subcommands
+
+All modules support standalone CLI operation with common flags:
+
+```bash
+# JSON output for scripting
+fecim-lattice-tools hysteresis --headless --json --material superlattice
+
+# Quiet mode (results only)
+fecim-lattice-tools circuits cli --all --json --quiet
+
+# Config file support
+fecim-lattice-tools mnist cli --config config.yaml --evaluate
+
+# Batch processing
+fecim-lattice-tools hysteresis --headless --batch materials.txt --json
+```
+
+**Common CLI Flags (all subcommands):**
+| Flag | Description |
+|------|-------------|
+| `--json` | Output results as JSON |
+| `-q, --quiet` | Suppress informational output |
+| `-c, --config FILE` | Load from YAML/JSON config |
+| `--batch FILE` | Process multiple items from file |
+| `-o, --output FILE` | Write to file (default: stdout) |
+
+See `docs/CLI.md` for complete CLI reference.
+
 ---
 
 ## Modules
@@ -146,6 +178,65 @@ PHYSICS → COMPUTE → APPLICATION → SYSTEM → BUSINESS → TOOLING → REFE
 | **5. Comparison** | Business | Model-based, clearly labeled comparisons and projections |
 | **6. EDA Suite** | Tooling | Generate illustrative JSON/CSV/SPICE/Verilog/DEF outputs (not signoff-ready) |
 | **7. Docs** | Reference | In-app documentation browser and glossary |
+
+---
+
+## Keyboard Shortcuts
+
+All modules support comprehensive keyboard shortcuts for efficient navigation and control. Press `?` or `/` in any module to see the full list.
+
+### Common Shortcuts (All Modules)
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+S` | Save/Export data |
+| `Ctrl+E` | Export data |
+| `Ctrl+R` | Reset simulation/view |
+| `Space` | Pause/Resume animation |
+| `↑/↓/←/→` | Navigate (context-dependent) |
+| `Tab` | Next tab/view |
+| `Shift+Tab` | Previous tab/view |
+| `+/=` | Increase value |
+| `-` | Decrease value |
+| `?` or `/` | Show help dialog |
+
+### Module-Specific Shortcuts
+
+**Module 1 (Hysteresis):**
+- `E/D` - Adjust E-field (Manual mode)
+- `T/G` - Adjust temperature (±25K)
+- `F/V` - Adjust frequency (×2 or ÷2)
+- `W` - Cycle waveform mode
+- `R` - Reset simulation
+
+**Module 2 (Crossbar):**
+- `M` - Run MVM operation
+- `N` - Randomize weights
+- `A` - Toggle architecture (0T1R/1T1R/2T1R)
+- `T/G` - Adjust temperature
+
+**Module 3 (MNIST):**
+- `C` - Clear canvas
+- `R` - Load random test digit
+- `E` - Evaluate network
+- `L` - Load test data
+
+**Module 4 (Circuits):**
+- `P` - Program selected cell
+- `R` - Read selected cell
+- `C` - Run compute operation
+- `W/D/M` - Switch Write/Read/Compute mode
+- `A` - Toggle animation
+
+**Module 5 (Comparison):**
+- `N/P` - Next/Previous demo phase
+- `←/→` - Cycle workloads
+
+**Module 6 (EDA):**
+- `1/2` - Jump to view by number
+- `Space` - Cycle views
+
+The keyboard system is implemented in `shared/keyboard/` and can be extended for new modules.
 
 ---
 

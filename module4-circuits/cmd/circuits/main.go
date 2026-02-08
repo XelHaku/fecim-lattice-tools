@@ -3,6 +3,11 @@
 // This demo visualizes the peripheral circuits required for a complete
 // ferroelectric compute-in-memory system: DAC, ADC, TIA, and Charge Pump.
 // Shows how digital values are converted to/from analog for crossbar operations.
+//
+// Common flags:
+//   - --json: Output results as JSON
+//   - --quiet: Suppress informational output
+//   - --config: Load configuration from YAML/JSON file
 package circuitscli
 
 import (
@@ -12,14 +17,65 @@ import (
 	"os"
 	"strings"
 
+	"fecim-lattice-tools/shared/cli"
 	"fecim-lattice-tools/shared/logging"
 	"fecim-lattice-tools/shared/peripherals"
 	sharedphysics "fecim-lattice-tools/shared/physics"
 )
 
+// CircuitsConfig holds configuration for the circuits CLI.
+type CircuitsConfig struct {
+	Level     int  `json:"level" yaml:"level"`
+	ShowAll   bool `json:"show_all" yaml:"show_all"`
+	Verbosity int  `json:"verbosity" yaml:"verbosity"`
+}
+
+// CircuitsResult represents peripheral circuit specs for JSON output.
+type CircuitsResult struct {
+	DAC  *DACResult  `json:"dac,omitempty"`
+	ADC  *ADCResult  `json:"adc,omitempty"`
+	TIA  *TIAResult  `json:"tia,omitempty"`
+	Pump *PumpResult `json:"pump,omitempty"`
+}
+
+type DACResult struct {
+	Bits            int     `json:"bits"`
+	Levels          int     `json:"levels"`
+	VrefLow         float64 `json:"vref_low_v"`
+	VrefHigh        float64 `json:"vref_high_v"`
+	Resolution      float64 `json:"resolution_v"`
+	EnergyPerConv   float64 `json:"energy_fj"`
+}
+
+type ADCResult struct {
+	Bits           int     `json:"bits"`
+	Levels         int     `json:"levels"`
+	ConversionTime float64 `json:"conversion_time_ns"`
+	ENOB           float64 `json:"enob"`
+	EnergyPerConv  float64 `json:"energy_fj"`
+}
+
+type TIAResult struct {
+	Gain            float64 `json:"gain_kohm"`
+	Bandwidth       float64 `json:"bandwidth_mhz"`
+	DynamicRange    float64 `json:"dynamic_range_db"`
+	Power           float64 `json:"power_uw"`
+}
+
+type PumpResult struct {
+	InputVoltage  float64 `json:"input_voltage_v"`
+	OutputVoltage float64 `json:"output_voltage_v"`
+	Efficiency    float64 `json:"efficiency_percent"`
+	Stages        int     `json:"stages"`
+}
+
 func Run(args []string) error {
 	fs := flag.NewFlagSet("circuits", flag.ContinueOnError)
 	fs.SetOutput(os.Stdout)
+
+	// Common CLI flags
+	commonFlags := cli.NewCommonFlags()
+	commonFlags.Register(fs)
 
 	// Command-line flags
 	showDAC := fs.Bool("dac", false, "Show DAC (Digital-to-Analog) details")
@@ -34,8 +90,6 @@ func Run(args []string) error {
 	demoLevel := fs.Int("level", 15, "Demo level for conversion (0-29)")
 	enableLogger := fs.Bool("logger", false, "Enable file logging (logs/)")
 	verbosity := fs.Int("verbosity", 2, "Logging verbosity: 0=off, 1=info, 2=debug, 3=trace")
-	help := fs.Bool("help", false, "Show help")
-	helpShort := fs.Bool("h", false, "Show help (shorthand)")
 
 	fs.Usage = func() {
 		out := fs.Output()
@@ -46,6 +100,7 @@ func Run(args []string) error {
 		fmt.Fprintln(out)
 		fmt.Fprintln(out, "Options:")
 		fs.PrintDefaults()
+		fmt.Fprintln(out, cli.CommonUsage())
 	}
 
 	if err := fs.Parse(args); err != nil {
@@ -57,15 +112,43 @@ func Run(args []string) error {
 		return err
 	}
 
-	if *help || *helpShort {
+	if commonFlags.WantsHelp() {
 		fs.Usage()
 		return nil
 	}
+
+	// Load config file if specified
+	var cfg CircuitsConfig
+	if commonFlags.Config != "" {
+		loader := cli.NewConfigLoader(commonFlags.Config)
+		if err := loader.Load(&cfg); err != nil {
+			return fmt.Errorf("failed to load config: %w", err)
+		}
+		if cfg.Level > 0 && *demoLevel == 15 {
+			*demoLevel = cfg.Level
+		}
+		if cfg.ShowAll {
+			*showAll = true
+		}
+	}
+
+	// Create output writer
+	out, err := cli.NewOutputWriter(commonFlags)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
 
 	if *enableLogger {
 		logging.EnableFileLogging()
 		logging.SetVerbosity(logging.VerbosityLevel(*verbosity))
 		peripherals.EnableLogging()
+	}
+
+	// JSON mode: output structured data
+	if commonFlags.JSON {
+		result := buildCircuitsResult(*showDAC, *showADC, *showTIA, *showPump, *showAll)
+		return out.Result(result)
 	}
 
 	fmt.Println("================================================")
@@ -688,4 +771,54 @@ func showAsciiPieChart(data map[string]float64) {
 		fmt.Printf("  │%s│ %s: %.0f%%\n", bar, name, frac*100)
 	}
 	fmt.Println("  └" + strings.Repeat("─", 50) + "┘")
+}
+
+// buildCircuitsResult creates a JSON-friendly result for peripheral circuits.
+func buildCircuitsResult(showDAC, showADC, showTIA, showPump, showAll bool) CircuitsResult {
+	result := CircuitsResult{}
+
+	if showAll || showDAC {
+		dac := peripherals.DefaultDAC()
+		result.DAC = &DACResult{
+			Bits:          dac.Bits,
+			Levels:        dac.Levels(),
+			VrefLow:       dac.VrefLow,
+			VrefHigh:      dac.VrefHigh,
+			Resolution:    dac.Resolution(),
+			EnergyPerConv: dac.EnergyPerConversion() * 1e15,
+		}
+	}
+
+	if showAll || showADC {
+		adc := peripherals.DefaultADC()
+		result.ADC = &ADCResult{
+			Bits:           adc.Bits,
+			Levels:         adc.Levels(),
+			ConversionTime: adc.ConversionTime,
+			ENOB:           adc.ENOB(),
+			EnergyPerConv:  adc.EnergyPerConversion() * 1e15,
+		}
+	}
+
+	if showAll || showTIA {
+		tia := peripherals.DefaultTIA()
+		result.TIA = &TIAResult{
+			Gain:         tia.Gain / 1e3,
+			Bandwidth:    tia.Bandwidth / 1e6,
+			DynamicRange: tia.DynamicRange(),
+			Power:        tia.PowerConsumption() * 1e6,
+		}
+	}
+
+	if showAll || showPump {
+		pump := peripherals.DefaultChargePump()
+		result.Pump = &PumpResult{
+			InputVoltage:  pump.InputVoltage,
+			OutputVoltage: pump.ActualOutputVoltage(),
+			Efficiency:    pump.Efficiency * 100,
+			Stages:        pump.Stages,
+		}
+	}
+
+	return result
 }

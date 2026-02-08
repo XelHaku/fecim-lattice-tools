@@ -3,6 +3,12 @@
 // This demo allows users to draw digits and see them classified
 // through a neural network implemented on ferroelectric crossbar arrays.
 // Target: Physics-limited accuracy (typically 85-90% with 30 levels)
+//
+// Common flags:
+//   - --json: Output results as JSON
+//   - --quiet: Suppress informational output
+//   - --config: Load configuration from YAML/JSON file
+//   - --batch: Process multiple images from file
 package mnistcli
 
 import (
@@ -23,8 +29,29 @@ import (
 	"fecim-lattice-tools/module3-mnist/pkg/core"
 	"fecim-lattice-tools/module3-mnist/pkg/mnist"
 	"fecim-lattice-tools/module3-mnist/pkg/training"
+	"fecim-lattice-tools/shared/cli"
 	"fecim-lattice-tools/shared/logging"
 )
+
+// MNISTConfig holds configuration for the MNIST CLI.
+type MNISTConfig struct {
+	HiddenSize int     `json:"hidden_size" yaml:"hidden_size"`
+	NoiseLevel float64 `json:"noise_level" yaml:"noise_level"`
+	Epochs     int     `json:"epochs" yaml:"epochs"`
+	Levels     []int   `json:"levels" yaml:"levels"`
+}
+
+// EvaluationResult represents evaluation results for JSON output.
+type EvaluationResult struct {
+	Samples      int     `json:"samples"`
+	Accuracy     float64 `json:"accuracy"`
+	FPAccuracy   float64 `json:"fp_accuracy,omitempty"`
+	CIMAccuracy  float64 `json:"cim_accuracy,omitempty"`
+	AgreeRate    float64 `json:"agree_rate,omitempty"`
+	AvgKL        float64 `json:"avg_kl,omitempty"`
+	AvgEnergy    float64 `json:"avg_energy_uj,omitempty"`
+	Levels       int     `json:"levels,omitempty"`
+}
 
 func Run(args []string) error {
 	logging.EnableFileLogging()
@@ -32,6 +59,10 @@ func Run(args []string) error {
 
 	fs := flag.NewFlagSet("mnist", flag.ContinueOnError)
 	fs.SetOutput(os.Stdout)
+
+	// Common CLI flags
+	commonFlags := cli.NewCommonFlags()
+	commonFlags.Register(fs)
 
 	// Command-line flags
 	train := fs.Bool("train", false, "Train the network on MNIST")
@@ -47,8 +78,6 @@ func Run(args []string) error {
 	coreLevels := fs.String("core-levels", "", "Comma-separated levels for core-eval sweep (e.g., 8,16,24,31)")
 	exportLevels := fs.String("export-levels", "", "Comma-separated levels to export (pretrained_weights_{N}.json)")
 	exportDir := fs.String("export-dir", "", "Comma-separated output directories for export-levels (default: data/pretrained-weigths)")
-	help := fs.Bool("help", false, "Show help")
-	helpShort := fs.Bool("h", false, "Show help (shorthand)")
 
 	fs.Usage = func() {
 		out := fs.Output()
@@ -59,6 +88,7 @@ func Run(args []string) error {
 		fmt.Fprintln(out)
 		fmt.Fprintln(out, "Options:")
 		fs.PrintDefaults()
+		fmt.Fprintln(out, cli.CommonUsage())
 	}
 
 	if err := fs.Parse(args); err != nil {
@@ -70,22 +100,48 @@ func Run(args []string) error {
 		return err
 	}
 
-	if *help || *helpShort {
+	if commonFlags.WantsHelp() {
 		fs.Usage()
 		return nil
 	}
 
-	fmt.Println("================================================")
-	fmt.Println("  FeCIM Demo 3: MNIST Digit Recognition")
-	fmt.Println("  Ferroelectric Compute-in-Memory Neural Network")
-	fmt.Println("================================================")
-	fmt.Printf("\nConfiguration:\n")
-	fmt.Printf("  Input layer: 784 (28x28 pixels)\n")
-	fmt.Printf("  Hidden layer: %d neurons\n", *hiddenSize)
-	fmt.Printf("  Output layer: 10 classes (digits 0-9)\n")
-	fmt.Printf("  Device noise: %.2f%%\n", *noiseLevel*100)
-	fmt.Printf("  Discrete levels: 30 (demo baseline; conference claim)\n")
-	fmt.Printf("  Target accuracy: Physics-limited\n")
+	// Load config file if specified
+	var cfg MNISTConfig
+	if commonFlags.Config != "" {
+		loader := cli.NewConfigLoader(commonFlags.Config)
+		if err := loader.Load(&cfg); err != nil {
+			return fmt.Errorf("failed to load config: %w", err)
+		}
+		// Apply config values (flags take precedence)
+		if cfg.HiddenSize > 0 && *hiddenSize == 128 {
+			*hiddenSize = cfg.HiddenSize
+		}
+		if cfg.NoiseLevel > 0 && *noiseLevel == 0.02 {
+			*noiseLevel = cfg.NoiseLevel
+		}
+		if cfg.Epochs > 0 && *epochs == 5 {
+			*epochs = cfg.Epochs
+		}
+	}
+
+	// Create output writer
+	out, err := cli.NewOutputWriter(commonFlags)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	out.Println("================================================")
+	out.Println("  FeCIM Demo 3: MNIST Digit Recognition")
+	out.Println("  Ferroelectric Compute-in-Memory Neural Network")
+	out.Println("================================================")
+	out.Print("\nConfiguration:\n")
+	out.Print("  Input layer: 784 (28x28 pixels)\n")
+	out.Print("  Hidden layer: %d neurons\n", *hiddenSize)
+	out.Print("  Output layer: 10 classes (digits 0-9)\n")
+	out.Print("  Device noise: %.2f%%\n", *noiseLevel*100)
+	out.Print("  Discrete levels: 30 (demo baseline; conference claim)\n")
+	out.Print("  Target accuracy: Physics-limited\n")
 
 	if *exportLevels != "" {
 		levels, err := parseLevelList(*exportLevels)

@@ -623,37 +623,35 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		return widget.NewCard(title, "", container.NewPadded(container.NewVBox(content...)))
 	}
 
+	// Helper to create a row with an info button for tooltips
+	withInfo := func(content fyne.CanvasObject, tc sharedwidgets.TooltipContent) fyne.CanvasObject {
+		return sharedwidgets.WithInfoButton(content, tc, a.mainWindow)
+	}
+
+	// Tooltips reference
+	tips := sharedwidgets.HysteresisTooltips
+
 	return container.NewVBox(
 		section("Material & Mode",
-			a.materialBtn,
-			a.waveformSelect,
-			physicsRow,
+			withInfo(a.materialBtn, tips.Material),
+			withInfo(a.waveformSelect, tips.Waveform),
+			withInfo(physicsRow, tips.PhysicsEngine),
 		),
 		section("Levels & Range",
-			a.levelsLabel,
-			a.levelsEntry,
-			a.wrdRangeLabel,
-			a.wrdRangeSlider,
+			withInfo(container.NewVBox(a.levelsLabel, a.levelsEntry), tips.Levels),
+			withInfo(container.NewVBox(a.wrdRangeLabel, a.wrdRangeSlider), tips.TargetRange),
 		),
 		section("Drive & Timing",
-			eFieldHeader,
-			a.eFieldSlider,
-			freqLabel,
-			freqSlider,
-			freqEntryRow,
-			timeScaleLabel,
-			timeScaleSlider,
-			displayFreqLabel,
+			withInfo(container.NewVBox(eFieldHeader, a.eFieldSlider), tips.EField),
+			withInfo(container.NewVBox(freqLabel, freqSlider, freqEntryRow), tips.Frequency),
+			withInfo(container.NewVBox(timeScaleLabel, timeScaleSlider, displayFreqLabel), tips.TimeScale),
 		),
 		section("Environment",
-			tempLabel,
-			tempSlider,
-			stressLabel,
-			stressSlider,
+			withInfo(container.NewVBox(tempLabel, tempSlider), tips.Temperature),
+			withInfo(container.NewVBox(stressLabel, stressSlider), tips.Stress),
 		),
 		section("Trail",
-			trailLabel,
-			trailSlider,
+			withInfo(container.NewVBox(trailLabel, trailSlider), tips.TrailLength),
 		),
 		section("Run",
 			actionRow,

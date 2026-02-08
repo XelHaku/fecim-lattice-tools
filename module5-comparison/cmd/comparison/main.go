@@ -7,11 +7,46 @@ import (
 	"strings"
 
 	"fecim-lattice-tools/module5-comparison/pkg/comparison"
+	"fecim-lattice-tools/shared/cli"
 )
+
+// ComparisonConfig holds configuration for the comparison CLI.
+type ComparisonConfig struct {
+	Workload   string  `json:"workload" yaml:"workload"`
+	Throughput float64 `json:"throughput" yaml:"throughput"`
+}
+
+// ComparisonJSONResult represents the comparison results for JSON output.
+type ComparisonJSONResult struct {
+	Workload     string                   `json:"workload"`
+	Throughput   float64                  `json:"target_throughput"`
+	Architectures []ArchitectureResult    `json:"architectures"`
+	Advantages   AdvantagesResult         `json:"advantages"`
+}
+
+type ArchitectureResult struct {
+	Name       string  `json:"name"`
+	TDP        float64 `json:"tdp_watts"`
+	TOPSPerW   float64 `json:"tops_per_watt"`
+	Latency    float64 `json:"latency_ms"`
+	Energy     float64 `json:"energy_mj"`
+	Throughput float64 `json:"throughput_infs"`
+}
+
+type AdvantagesResult struct {
+	VsCPU_EnergyReduction  float64 `json:"vs_cpu_energy_reduction"`
+	VsCPU_CostReduction    float64 `json:"vs_cpu_cost_reduction"`
+	VsGPU_PowerReduction   float64 `json:"vs_gpu_power_reduction"`
+	VsGPU_AreaReduction    float64 `json:"vs_gpu_area_reduction"`
+}
 
 func Run(args []string) error {
 	fs := flag.NewFlagSet("comparison", flag.ContinueOnError)
 	fs.SetOutput(os.Stdout)
+
+	// Common CLI flags
+	commonFlags := cli.NewCommonFlags()
+	commonFlags.Register(fs)
 
 	// Flags
 	showAll := fs.Bool("all", false, "Show all comparisons")
@@ -22,8 +57,6 @@ func Run(args []string) error {
 	workloadName := fs.String("workload", "mnist", "Workload: mnist, resnet, bert, gpt2, llm")
 	targetTP := fs.Float64("throughput", 10000, "Target throughput (inferences/sec)")
 	noColor := fs.Bool("no-color", false, "Disable color output")
-	help := fs.Bool("help", false, "Show help")
-	helpShort := fs.Bool("h", false, "Show help (shorthand)")
 
 	fs.Usage = func() {
 		out := fs.Output()
@@ -34,6 +67,7 @@ func Run(args []string) error {
 		fmt.Fprintln(out)
 		fmt.Fprintln(out, "Options:")
 		fs.PrintDefaults()
+		fmt.Fprintln(out, cli.CommonUsage())
 	}
 
 	if err := fs.Parse(args); err != nil {
@@ -45,10 +79,32 @@ func Run(args []string) error {
 		return err
 	}
 
-	if *help || *helpShort {
+	if commonFlags.WantsHelp() {
 		fs.Usage()
 		return nil
 	}
+
+	// Load config file if specified
+	var cfg ComparisonConfig
+	if commonFlags.Config != "" {
+		loader := cli.NewConfigLoader(commonFlags.Config)
+		if err := loader.Load(&cfg); err != nil {
+			return fmt.Errorf("failed to load config: %w", err)
+		}
+		if cfg.Workload != "" && *workloadName == "mnist" {
+			*workloadName = cfg.Workload
+		}
+		if cfg.Throughput > 0 && *targetTP == 10000 {
+			*targetTP = cfg.Throughput
+		}
+	}
+
+	// Create output writer
+	out, err := cli.NewOutputWriter(commonFlags)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
 
 	// Default to all if nothing specified
 	if !*showSpecs && !*showInference && !*showDataCenter && !*showAdvantages {
@@ -78,6 +134,12 @@ func Run(args []string) error {
 	// Run comparison
 	comp := comparison.CompareArchitectures(workload, 1, *targetTP)
 	advantages := comparison.CalculateAdvantages(comp)
+
+	// JSON mode: output structured data
+	if commonFlags.JSON {
+		result := buildComparisonResult(comp, advantages, *workloadName, *targetTP)
+		return out.Result(result)
+	}
 
 	// Header
 	printHeader()
@@ -330,4 +392,35 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// buildComparisonResult creates a JSON-friendly comparison result.
+func buildComparisonResult(comp comparison.ComparisonResult, adv comparison.FeCIMAdvantage, workload string, throughput float64) ComparisonJSONResult {
+	result := ComparisonJSONResult{
+		Workload:      workload,
+		Throughput:    throughput,
+		Architectures: make([]ArchitectureResult, 0),
+		Advantages: AdvantagesResult{
+			VsCPU_EnergyReduction: adv.VsCPU.EnergyReduction,
+			VsCPU_CostReduction:   adv.VsCPU.CostReduction,
+			VsGPU_PowerReduction:  adv.VsGPU.PowerReduction,
+			VsGPU_AreaReduction:   adv.VsGPU.AreaReduction,
+		},
+	}
+
+	for i, arch := range comp.Architectures {
+		if i < len(comp.Results) {
+			r := comp.Results[i]
+			result.Architectures = append(result.Architectures, ArchitectureResult{
+				Name:       arch.Name,
+				TDP:        arch.TDP,
+				TOPSPerW:   arch.TOPSPerWatt,
+				Latency:    r.Latency,
+				Energy:     r.Energy,
+				Throughput: r.Throughput,
+			})
+		}
+	}
+
+	return result
 }

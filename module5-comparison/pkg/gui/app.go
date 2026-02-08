@@ -141,8 +141,11 @@ func (ca *ComparisonApp) Run() {
 	content := ca.createMainLayout()
 	ca.window.SetContent(content)
 
+	// Setup keyboard shortcuts
+	ca.setupKeyboard()
+
 	ca.updateCalculations()
-	ca.updateStatus("Ready. Select workload and adjust parameters.")
+	ca.updateStatus("Ready. Select workload and adjust parameters. Press ? for shortcuts.")
 
 	// Start animation loop
 	ca.animMu.Lock()
@@ -342,6 +345,14 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	// Wrap slider in fixed-width container for better visibility
 	sliderContainer := container.NewGridWrap(fyne.NewSize(200, 30), ca.inferencesSlider)
 
+	// Export buttons
+	exportDataBtn := widget.NewButton("Export Data", func() {
+		ca.exportComparisonData()
+	})
+	exportImageBtn := widget.NewButton("Save Image", func() {
+		ca.exportVisualization()
+	})
+
 	configRow := container.NewHBox(
 		widget.NewLabel("Workload:"),
 		ca.workloadSelect,
@@ -349,6 +360,9 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 		ca.inferencesLabel,
 		sliderContainer,
 		calcBtn,
+		widget.NewSeparator(),
+		exportDataBtn,
+		exportImageBtn,
 	)
 	roiSection := container.NewVBox(
 		sectionROIHeader,

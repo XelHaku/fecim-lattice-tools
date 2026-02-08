@@ -766,7 +766,7 @@ func TestMaterialParameterConsistency(t *testing.T) {
 			}
 
 			// Generate hysteresis loop and verify shape
-			E, P := model.GetHysteresisLoop(2*mat.Ec, 100)
+			_, P := model.GetHysteresisLoop(2*mat.Ec, 100)
 
 			// Find coercive field points (where P crosses zero)
 			coerciveCount := 0

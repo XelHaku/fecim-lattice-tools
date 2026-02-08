@@ -189,6 +189,11 @@ func CloseShared() {
 
 // Info logs at INFO level (verbosity >= 1)
 func (l *Logger) Info(format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	// Add to global buffer for LogViewer
+	entry := NewEntry(LevelInfo, l.demoName, msg)
+	AddToBuffer(entry)
+
 	if IsVerbose(VerbosityInfo) {
 		l.Printf("[INFO] "+format, args...)
 	}
@@ -196,6 +201,11 @@ func (l *Logger) Info(format string, args ...interface{}) {
 
 // Debug logs at DEBUG level (verbosity >= 2) - for button clicks, value changes
 func (l *Logger) Debug(format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	// Add to global buffer for LogViewer
+	entry := NewEntry(LevelDebug, l.demoName, msg)
+	AddToBuffer(entry)
+
 	if IsVerbose(VerbosityDebug) {
 		l.Printf("[DEBUG] "+format, args...)
 	}
@@ -203,13 +213,32 @@ func (l *Logger) Debug(format string, args ...interface{}) {
 
 // Trace logs at TRACE level (verbosity >= 3) - for frequent updates
 func (l *Logger) Trace(format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	// Add to global buffer for LogViewer
+	entry := NewEntry(LevelTrace, l.demoName, msg)
+	AddToBuffer(entry)
+
 	if IsVerbose(VerbosityTrace) {
 		l.Printf("[TRACE] "+format, args...)
 	}
 }
 
+// Warn logs at WARN level (always logs, less severe than ERROR)
+func (l *Logger) Warn(format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	// Add to global buffer for LogViewer
+	entry := NewEntry(LevelWarn, l.demoName, msg)
+	AddToBuffer(entry)
+
+	l.Printf("[WARN] "+format, args...)
+}
+
 // Button logs a button click event at DEBUG level
 func (l *Logger) Button(buttonName string) {
+	// Add to global buffer for LogViewer
+	entry := NewEntry(LevelDebug, l.demoName, buttonName+" clicked").WithCategory("BUTTON")
+	AddToBuffer(entry)
+
 	if IsVerbose(VerbosityDebug) {
 		l.Printf("[DEBUG] BUTTON: %s clicked", buttonName)
 	}
@@ -217,6 +246,11 @@ func (l *Logger) Button(buttonName string) {
 
 // ValueChange logs a value change event at DEBUG level
 func (l *Logger) ValueChange(widgetName string, oldValue, newValue interface{}) {
+	msg := fmt.Sprintf("%s changed from %v to %v", widgetName, oldValue, newValue)
+	entry := NewEntry(LevelDebug, l.demoName, msg).WithCategory("VALUE")
+	entry.WithFields(map[string]interface{}{"old": oldValue, "new": newValue, "widget": widgetName})
+	AddToBuffer(entry)
+
 	if IsVerbose(VerbosityDebug) {
 		l.Printf("[DEBUG] VALUE: %s changed from %v to %v", widgetName, oldValue, newValue)
 	}
@@ -224,6 +258,11 @@ func (l *Logger) ValueChange(widgetName string, oldValue, newValue interface{}) 
 
 // Selection logs a selection change event at DEBUG level
 func (l *Logger) Selection(widgetName string, selected string) {
+	msg := fmt.Sprintf("%s = %q", widgetName, selected)
+	entry := NewEntry(LevelDebug, l.demoName, msg).WithCategory("SELECT")
+	entry.WithField("widget", widgetName).WithField("selected", selected)
+	AddToBuffer(entry)
+
 	if IsVerbose(VerbosityDebug) {
 		l.Printf("[DEBUG] SELECT: %s = %q", widgetName, selected)
 	}
@@ -231,6 +270,11 @@ func (l *Logger) Selection(widgetName string, selected string) {
 
 // SliderChange logs a slider value change at DEBUG level
 func (l *Logger) SliderChange(sliderName string, value float64) {
+	msg := fmt.Sprintf("%s = %.4f", sliderName, value)
+	entry := NewEntry(LevelDebug, l.demoName, msg).WithCategory("SLIDER")
+	entry.WithField("slider", sliderName).WithField("value", value)
+	AddToBuffer(entry)
+
 	if IsVerbose(VerbosityDebug) {
 		l.Printf("[DEBUG] SLIDER: %s = %.4f", sliderName, value)
 	}
@@ -238,6 +282,11 @@ func (l *Logger) SliderChange(sliderName string, value float64) {
 
 // TabChange logs a tab selection change at DEBUG level
 func (l *Logger) TabChange(tabName string) {
+	msg := fmt.Sprintf("switched to %q", tabName)
+	entry := NewEntry(LevelDebug, l.demoName, msg).WithCategory("TAB")
+	entry.WithField("tab", tabName)
+	AddToBuffer(entry)
+
 	if IsVerbose(VerbosityDebug) {
 		l.Printf("[DEBUG] TAB: switched to %q", tabName)
 	}
@@ -245,6 +294,11 @@ func (l *Logger) TabChange(tabName string) {
 
 // CheckboxChange logs a checkbox state change at DEBUG level
 func (l *Logger) CheckboxChange(checkboxName string, checked bool) {
+	msg := fmt.Sprintf("%s = %v", checkboxName, checked)
+	entry := NewEntry(LevelDebug, l.demoName, msg).WithCategory("CHECKBOX")
+	entry.WithField("checkbox", checkboxName).WithField("checked", checked)
+	AddToBuffer(entry)
+
 	if IsVerbose(VerbosityDebug) {
 		l.Printf("[DEBUG] CHECKBOX: %s = %v", checkboxName, checked)
 	}
@@ -252,6 +306,11 @@ func (l *Logger) CheckboxChange(checkboxName string, checked bool) {
 
 // EntryChange logs a text entry change at DEBUG level
 func (l *Logger) EntryChange(entryName string, text string) {
+	msg := fmt.Sprintf("%s = %q", entryName, text)
+	entry := NewEntry(LevelDebug, l.demoName, msg).WithCategory("ENTRY")
+	entry.WithField("entry", entryName).WithField("text", text)
+	AddToBuffer(entry)
+
 	if IsVerbose(VerbosityDebug) {
 		l.Printf("[DEBUG] ENTRY: %s = %q", entryName, text)
 	}
@@ -260,6 +319,11 @@ func (l *Logger) EntryChange(entryName string, text string) {
 // Calculation logs a physics/math calculation at DEBUG level
 // Format: [DEBUG] CALC: funcName(param1=value1, param2=value2) = result
 func (l *Logger) Calculation(funcName string, inputs map[string]interface{}, result interface{}) {
+	msg := fmt.Sprintf("%s(%s) = %v", funcName, formatParams(inputs), result)
+	entry := NewEntry(LevelDebug, l.demoName, msg).WithCategory("CALC")
+	entry.WithFields(inputs).WithField("result", result)
+	AddToBuffer(entry)
+
 	if IsVerbose(VerbosityDebug) {
 		l.Printf("[DEBUG] CALC: %s(%s) = %v", funcName, formatParams(inputs), result)
 	}
@@ -268,6 +332,11 @@ func (l *Logger) Calculation(funcName string, inputs map[string]interface{}, res
 // Input logs function entry with parameters at DEBUG level
 // Format: [DEBUG] INPUT: funcName(param1=value1, param2=value2)
 func (l *Logger) Input(funcName string, params map[string]interface{}) {
+	msg := fmt.Sprintf("%s(%s)", funcName, formatParams(params))
+	entry := NewEntry(LevelDebug, l.demoName, msg).WithCategory("INPUT")
+	entry.WithFields(params)
+	AddToBuffer(entry)
+
 	if IsVerbose(VerbosityDebug) {
 		l.Printf("[DEBUG] INPUT: %s(%s)", funcName, formatParams(params))
 	}
@@ -276,6 +345,11 @@ func (l *Logger) Input(funcName string, params map[string]interface{}) {
 // Output logs function return value at TRACE level
 // Format: [TRACE] OUTPUT: funcName -> result
 func (l *Logger) Output(funcName string, result interface{}) {
+	msg := fmt.Sprintf("%s -> %v", funcName, result)
+	entry := NewEntry(LevelTrace, l.demoName, msg).WithCategory("OUTPUT")
+	entry.WithField("result", result)
+	AddToBuffer(entry)
+
 	if IsVerbose(VerbosityTrace) {
 		l.Printf("[TRACE] OUTPUT: %s -> %v", funcName, result)
 	}
@@ -290,6 +364,12 @@ func (l *Logger) Error(err error, context string) {
 	} else {
 		errMsg = "<nil>"
 	}
+
+	msg := fmt.Sprintf("%s: %s", context, errMsg)
+	entry := NewEntry(LevelError, l.demoName, msg).WithError(err)
+	entry.WithField("context", context)
+	AddToBuffer(entry)
+
 	l.Printf("[ERROR] %s: %s", context, errMsg)
 }
 
@@ -302,6 +382,17 @@ func (l *Logger) ErrorContext(operation string, err error, details map[string]in
 	} else {
 		errMsg = "<nil>"
 	}
+
+	var msg string
+	if len(details) > 0 {
+		msg = fmt.Sprintf("%s: %s (%s)", operation, errMsg, formatParams(details))
+	} else {
+		msg = fmt.Sprintf("%s: %s", operation, errMsg)
+	}
+
+	entry := NewEntry(LevelError, l.demoName, msg).WithError(err)
+	entry.WithField("operation", operation).WithFields(details)
+	AddToBuffer(entry)
 
 	if len(details) > 0 {
 		l.Printf("[ERROR] %s: %s (%s)", operation, errMsg, formatParams(details))
@@ -445,6 +536,11 @@ func GlobalDebug(format string, args ...interface{}) {
 
 // GlobalError logs at ERROR level (always logs regardless of verbosity)
 func GlobalError(format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	// Add to global buffer for LogViewer
+	entry := NewEntry(LevelError, "global", msg)
+	AddToBuffer(entry)
+
 	if defaultLogger != nil {
 		defaultLogger.Printf("[ERROR] "+format, args...)
 	} else {
@@ -452,11 +548,32 @@ func GlobalError(format string, args ...interface{}) {
 		sharedLogMu.Lock()
 		writer := sharedLogWriter
 		sharedLogMu.Unlock()
-		msg := fmt.Sprintf(format, args...)
 		if writer != nil {
 			fmt.Fprintf(writer, "%s [ERROR] %s\n", time.Now().Format("2006/01/02 15:04:05"), msg)
 		} else {
 			log.Printf("[ERROR] %s", msg)
+		}
+	}
+}
+
+// GlobalWarn logs at WARN level (always logs regardless of verbosity)
+func GlobalWarn(format string, args ...interface{}) {
+	msg := fmt.Sprintf(format, args...)
+	// Add to global buffer for LogViewer
+	entry := NewEntry(LevelWarn, "global", msg)
+	AddToBuffer(entry)
+
+	if defaultLogger != nil {
+		defaultLogger.Printf("[WARN] "+format, args...)
+	} else {
+		// Use shared log writer if available, otherwise stdout
+		sharedLogMu.Lock()
+		writer := sharedLogWriter
+		sharedLogMu.Unlock()
+		if writer != nil {
+			fmt.Fprintf(writer, "%s [WARN] %s\n", time.Now().Format("2006/01/02 15:04:05"), msg)
+		} else {
+			log.Printf("[WARN] %s", msg)
 		}
 	}
 }

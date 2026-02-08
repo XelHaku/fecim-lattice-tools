@@ -98,5 +98,8 @@ func CreateMainWindow(app fyne.App) fyne.Window {
 	content := container.NewBorder(header, nil, nil, nil, contentContainer)
 	w.SetContent(content)
 
+	// Setup keyboard shortcuts
+	SetupKeyboard(w, viewSelector)
+
 	return w
 }

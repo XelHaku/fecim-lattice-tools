@@ -4,7 +4,6 @@ package gui
 import (
 	"context"
 	"fmt"
-	"image/color"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -15,13 +14,13 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
-	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 	"fecim-lattice-tools/module3-mnist/pkg/mnist"
 	"fecim-lattice-tools/module3-mnist/pkg/training"
 	"fecim-lattice-tools/shared/logging"
+	"fecim-lattice-tools/shared/themes"
 	"fecim-lattice-tools/shared/utils"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
@@ -33,45 +32,11 @@ func init() {
 	debug = logging.NewLogger("mnist-gui")
 }
 
-// FeCIM theme colors - same as demo1
+// FeCIM theme colors - use shared themes package
 var (
-	colorBackground = color.RGBA{0, 50, 100, 255}  // FeCIM blue #003264
-	colorPrimary    = color.RGBA{0, 212, 255, 255} // Cyan
+	colorBackground = themes.DarkBackground // FeCIM blue #003264
+	colorPrimary    = themes.DarkPrimary    // Cyan
 )
-
-// feCIMTheme implements fyne.Theme for consistent FeCIM branding
-type feCIMTheme struct{}
-
-func (t *feCIMTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
-	switch name {
-	case theme.ColorNameBackground:
-		return colorBackground // FeCIM blue #003264
-	case theme.ColorNameForeground:
-		return color.RGBA{230, 230, 230, 255}
-	case theme.ColorNamePrimary:
-		return colorPrimary
-	case theme.ColorNameButton:
-		return color.RGBA{0, 70, 130, 255} // Slightly lighter blue
-	case theme.ColorNameInputBackground:
-		return color.RGBA{0, 40, 80, 255} // Darker blue for inputs
-	case theme.ColorNameSeparator:
-		return color.RGBA{0, 80, 150, 255} // Separator lines
-	default:
-		return theme.DefaultTheme().Color(name, variant)
-	}
-}
-
-func (t *feCIMTheme) Font(style fyne.TextStyle) fyne.Resource {
-	return theme.DefaultTheme().Font(style)
-}
-
-func (t *feCIMTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
-	return theme.DefaultTheme().Icon(name)
-}
-
-func (t *feCIMTheme) Size(name fyne.ThemeSizeName) float32 {
-	return theme.DefaultTheme().Size(name)
-}
 
 // MNISTApp is the main application for the MNIST demo.
 type MNISTApp struct {
@@ -125,9 +90,10 @@ func NewMNISTApp() *MNISTApp {
 	debug.Println("NewMNISTApp: Creating application")
 	ma := &MNISTApp{}
 
-	// Create Fyne app
+	// Create Fyne app with theme manager
 	ma.fyneApp = app.NewWithID("com.fecim.mnist-demo")
-	ma.fyneApp.Settings().SetTheme(&feCIMTheme{})
+	themeManager := themes.NewManager(ma.fyneApp)
+	themeManager.LoadPreference()
 	debug.Println("NewMNISTApp: Applied FeCIM theme")
 
 	// Find data directory
@@ -196,9 +162,12 @@ func (ma *MNISTApp) Run() {
 	debug.Println("App: Setting window content")
 	ma.window.SetContent(content)
 
+	// Setup keyboard shortcuts
+	ma.setupKeyboard()
+
 	// Initialize
 	debug.Println("App: Updating status")
-	ma.updateStatus("Ready. Draw a digit or load test data.")
+	ma.updateStatus("Ready. Draw a digit or load test data. Press ? for shortcuts.")
 
 	debug.Println("App: ShowAndRun starting")
 	ma.window.ShowAndRun()

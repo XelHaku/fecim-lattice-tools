@@ -20,6 +20,22 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	label := widget.NewLabel("Hardware Config")
 	label.TextStyle = fyne.TextStyle{Bold: true}
 
+	// Tooltip reference
+	tips := mnistTooltips()
+
+	// Helper to show tooltip dialogs
+	showTooltip := func(tc tooltipContent) {
+		content := fmt.Sprintf("%s\n\n📊 Range: %s\n\n🔬 Physics: %s",
+			tc.description, tc.rangeInfo, tc.physics)
+		if len(tc.tips) > 0 {
+			content += "\n\n💡 Tips:\n"
+			for _, tip := range tc.tips {
+				content += "• " + tip + "\n"
+			}
+		}
+		dialog.ShowInformation(tc.title, content, app.window)
+	}
+
 	// Levels select (only available QAT levels)
 	levelsTitle := widget.NewLabel("Levels:")
 	app.levelsLabel = widget.NewLabel(fmt.Sprintf("%d", FeCIMDefaultLevels))
@@ -50,7 +66,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 
 	levelsRow := container.NewBorder(nil, nil,
 		container.NewHBox(levelsTitle, widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
-			dialog.ShowInformation("Quantization Levels", "Number of discrete conductance states in the ferroelectric device.\n\nOnly levels with trained weights are shown.\n\nPhysics: Ferroelectric material domains determine stable polarization states.", app.window)
+			showTooltip(tips.levels)
 		})),
 		app.levelsLabel, app.levelsSelect)
 
@@ -70,14 +86,14 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 	}
 	noiseRow := container.NewBorder(nil, nil,
 		container.NewHBox(noiseTitle, widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
-			dialog.ShowInformation("Read Noise", "Gaussian noise added to analog read operations.\n\nSimulates:\n• Thermal (Johnson) noise in sense amplifiers\n• Device-to-device variability\n• Cycle-to-cycle retention drift\n\n0.01 = 1% standard deviation (typical for production hardware)", app.window)
+			showTooltip(tips.noise)
 		})),
 		app.noiseLabel, app.noiseSlider)
 
 	// Preprocess toggle
 	preprocessTitle := widget.NewLabel("Preprocess:")
 	preprocessInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
-		dialog.ShowInformation("Input Preprocessing", "Normalizes drawn digits to match MNIST style:\n• Threshold background\n• Crop to bounding box\n• Scale to 20×20\n• Center by mass\n\nRandom test samples are never altered.", app.window)
+		showTooltip(tips.preprocess)
 	})
 	app.preprocessToggle = widget.NewCheck("", func(checked bool) {
 		app.preprocessEnabled = checked
@@ -99,7 +115,7 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 		app.preprocessToggle,
 	)
 
-	// Preset buttons
+	// Preset buttons with tooltips
 	idealBtn := widget.NewButton("Ideal", func() {
 		mnistLog.Button("Preset:Ideal")
 		app.applyPreset(FeCIMDefaultLevels, FeCIMDefaultNoise, FeCIMDefaultADC, FeCIMDefaultDAC)
@@ -117,7 +133,33 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 		app.applyPreset(FeCIMDefaultLevels, 0.15, 6, FeCIMDefaultDAC)
 	})
 
-	presetRow := container.NewGridWithColumns(3, idealBtn, hwBtn, noisyBtn)
+	// Preset info buttons
+	presetInfoRow := container.NewGridWithColumns(3,
+		widget.NewButtonWithIcon("", theme.InfoIcon(), func() { showTooltip(tips.presetIdeal) }),
+		widget.NewButtonWithIcon("", theme.InfoIcon(), func() { showTooltip(tips.presetHW) }),
+		widget.NewButtonWithIcon("", theme.InfoIcon(), func() { showTooltip(tips.presetNoisy) }),
+	)
+
+	presetRow := container.NewVBox(
+		container.NewGridWithColumns(3, idealBtn, hwBtn, noisyBtn),
+		presetInfoRow,
+	)
+
+	// Export buttons
+	exportLabel := widget.NewLabel("Export")
+	exportLabel.TextStyle = fyne.TextStyle{Bold: true}
+
+	exportDataBtn := widget.NewButtonWithIcon("Export Data", theme.DocumentSaveIcon(), func() {
+		mnistLog.Button("ExportData")
+		app.exportInferenceData()
+	})
+
+	exportImageBtn := widget.NewButtonWithIcon("Save Image", theme.MediaPhotoIcon(), func() {
+		mnistLog.Button("ExportImage")
+		app.exportVisualization()
+	})
+
+	exportRow := container.NewGridWithColumns(2, exportDataBtn, exportImageBtn)
 
 	return container.NewVBox(
 		container.NewHBox(label, layout.NewSpacer()),
@@ -125,7 +167,137 @@ func (app *DualModeApp) createControlsZone() fyne.CanvasObject {
 		noiseRow,
 		preprocessRow,
 		presetRow,
+		widget.NewSeparator(),
+		container.NewHBox(exportLabel, layout.NewSpacer()),
+		exportRow,
 	)
+}
+
+// tooltipContent holds structured tooltip information for MNIST module.
+type tooltipContent struct {
+	title       string
+	description string
+	rangeInfo   string
+	physics     string
+	tips        []string
+}
+
+// mnistTooltipsStruct holds all MNIST-specific tooltips.
+type mnistTooltipsStruct struct {
+	levels      tooltipContent
+	noise       tooltipContent
+	preprocess  tooltipContent
+	presetIdeal tooltipContent
+	presetHW    tooltipContent
+	presetNoisy tooltipContent
+	confidence  tooltipContent
+	comparison  tooltipContent
+	energy      tooltipContent
+}
+
+// mnistTooltips returns all MNIST module tooltips.
+func mnistTooltips() mnistTooltipsStruct {
+	return mnistTooltipsStruct{
+		levels: tooltipContent{
+			title:       "Quantization Levels",
+			description: "Number of discrete weight values in the neural network. Affects model accuracy and hardware efficiency.",
+			rangeInfo:   "2-256 levels (weights from pretrained QAT models)",
+			physics:     "Each level corresponds to a programmable conductance state in the crossbar. Quantization-aware training (QAT) optimizes weights for discrete levels.",
+			tips: []string{
+				"30 levels ≈ 4.9 bits (conference claim for FeCIM)",
+				"8-16 levels often sufficient for MNIST",
+				"Only levels with trained weights are available",
+			},
+		},
+		noise: tooltipContent{
+			title:       "Read Noise",
+			description: "Gaussian noise added to weight reads, simulating analog hardware imperfections.",
+			rangeInfo:   "0-20% (standard deviation relative to weight magnitude)",
+			physics:     "Combines thermal noise, device variability, and retention drift. The network must be robust to this noise for reliable inference.",
+			tips: []string{
+				"0% = ideal (floating-point equivalent)",
+				"3% = typical production hardware target",
+				"10%+ = stress test for noise robustness",
+			},
+		},
+		preprocess: tooltipContent{
+			title:       "Input Preprocessing",
+			description: "Normalizes hand-drawn digits to match MNIST training distribution.",
+			rangeInfo:   "On/Off toggle",
+			physics:     "Data preprocessing, not physics. Centers and scales drawn digits to match the 28×28 centered format of MNIST training data.",
+			tips: []string{
+				"Enable for better recognition of drawn digits",
+				"Random test samples are never preprocessed",
+				"Preprocessing: threshold → crop → scale → center",
+			},
+		},
+		presetIdeal: tooltipContent{
+			title:       "Ideal Preset",
+			description: "Maximum precision, no noise—equivalent to floating-point inference.",
+			rangeInfo:   "30 levels, 0% noise, 8-bit ADC/DAC",
+			physics:     "Best-case scenario: no analog non-idealities. Used as the accuracy reference.",
+			tips: []string{
+				"Use to establish baseline accuracy",
+				"Compare against hardware presets",
+				"Should match FP32 closely",
+			},
+		},
+		presetHW: tooltipContent{
+			title:       "Hardware Preset",
+			description: "Realistic hardware parameters based on published FeCIM specifications.",
+			rangeInfo:   "30 levels, 3% noise, 6-bit ADC",
+			physics:     "Represents achievable performance with current FeCIM technology. Noise includes read variability and retention drift.",
+			tips: []string{
+				"This is the target for real hardware",
+				"Accuracy should be close to ideal",
+				"Small accuracy drop is acceptable",
+			},
+		},
+		presetNoisy: tooltipContent{
+			title:       "Noisy Preset",
+			description: "Stress test with high noise to evaluate robustness.",
+			rangeInfo:   "30 levels, 15% noise, 6-bit ADC",
+			physics:     "Represents challenging conditions: high variability, poor retention, or degraded devices.",
+			tips: []string{
+				"Expect visible accuracy degradation",
+				"Some digits become unreliable",
+				"Useful for robustness testing",
+			},
+		},
+		confidence: tooltipContent{
+			title:       "Prediction Confidence",
+			description: "Softmax probability distribution over the 10 digit classes.",
+			rangeInfo:   "0-100% for each class (sums to 100%)",
+			physics:     "Softmax normalizes raw output scores to probabilities. Higher confidence = more certain prediction.",
+			tips: []string{
+				"High confidence on correct class = reliable",
+				"Similar scores across classes = uncertain",
+				"Noise typically reduces confidence margins",
+			},
+		},
+		comparison: tooltipContent{
+			title:       "FP32 vs CIM Comparison",
+			description: "Side-by-side comparison of floating-point and compute-in-memory inference.",
+			rangeInfo:   "Agreement rate typically 95-99%",
+			physics:     "FP32 uses 32-bit floating point (ideal). CIM uses quantized weights + analog noise. Differences show hardware effects.",
+			tips: []string{
+				"Green = both agree on prediction",
+				"Red = predictions differ (hardware error)",
+				"Disagreement increases with noise/fewer levels",
+			},
+		},
+		energy: tooltipContent{
+			title:       "Energy Consumption",
+			description: "Estimated energy per inference for different compute platforms.",
+			rangeInfo:   "fJ to mJ per inference (varies by 10⁶×)",
+			physics:     "CIM energy: E = CV² per cell access. No data movement = orders of magnitude less than Von Neumann. GPU moves data through memory hierarchy = high energy.",
+			tips: []string{
+				"FeCIM: ~1 fJ/MAC (femtojoules per multiply-accumulate)",
+				"GPU: ~1 pJ/MAC (1000× more)",
+				"CPU: ~10 pJ/MAC (10000× more)",
+			},
+		},
+	}
 }
 
 // applyPreset sets hardware parameters to a preset configuration.

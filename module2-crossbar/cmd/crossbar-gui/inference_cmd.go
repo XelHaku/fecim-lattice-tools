@@ -11,11 +11,34 @@ import (
 	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 	"fecim-lattice-tools/module2-crossbar/pkg/network"
 	"fecim-lattice-tools/module2-crossbar/pkg/visualization"
+	"fecim-lattice-tools/shared/cli"
 )
+
+// InferenceConfig holds configuration for the inference command.
+type InferenceConfig struct {
+	ArraySize  int     `json:"array_size" yaml:"array_size"`
+	NumLayers  int     `json:"num_layers" yaml:"num_layers"`
+	NoiseLevel float64 `json:"noise_level" yaml:"noise_level"`
+	ADCBits    int     `json:"adc_bits" yaml:"adc_bits"`
+}
+
+// InferenceResult represents results for JSON output.
+type InferenceResult struct {
+	ArraySize   int       `json:"array_size"`
+	NumLayers   int       `json:"num_layers"`
+	Prediction  int       `json:"prediction"`
+	Confidence  float64   `json:"confidence"`
+	Activations []float64 `json:"activations,omitempty"`
+	TotalOps    int64     `json:"total_ops,omitempty"`
+}
 
 func RunInference(args []string) error {
 	fs := flag.NewFlagSet("inference", flag.ContinueOnError)
 	fs.SetOutput(os.Stdout)
+
+	// Common CLI flags
+	commonFlags := cli.NewCommonFlags()
+	commonFlags.Register(fs)
 
 	arraySize := fs.Int("size", 64, "Crossbar array size (NxN)")
 	numLayers := fs.Int("layers", 3, "Number of neural network layers")
@@ -30,18 +53,17 @@ func RunInference(args []string) error {
 	showIRDrop := fs.Bool("show-irdrop", false, "Show IR drop analysis")
 	showSneak := fs.Bool("show-sneak", false, "Show sneak path analysis")
 	showNonidealities := fs.Bool("show-nonidealities", false, "Show all non-ideality effects")
-	help := fs.Bool("help", false, "Show help")
-	helpShort := fs.Bool("h", false, "Show help (shorthand)")
 
 	fs.Usage = func() {
 		out := fs.Output()
 		fmt.Fprintln(out, "FeCIM Crossbar Inference (Terminal)")
 		fmt.Fprintln(out)
 		fmt.Fprintln(out, "Usage:")
-		fmt.Fprintln(out, "  go run ./cmd/fecim-lattice-tools crossbar inference [options]")
+		fmt.Fprintln(out, "  fecim-lattice-tools crossbar inference [options]")
 		fmt.Fprintln(out)
 		fmt.Fprintln(out, "Options:")
 		fs.PrintDefaults()
+		fmt.Fprintln(out, cli.CommonUsage())
 	}
 
 	if err := fs.Parse(args); err != nil {
@@ -53,21 +75,49 @@ func RunInference(args []string) error {
 		return err
 	}
 
-	if *help || *helpShort {
+	if commonFlags.WantsHelp() {
 		fs.Usage()
 		return nil
 	}
 
-	fmt.Println("============================================")
-	fmt.Println("  FeCIM Demo 2: Crossbar Array MVM")
-	fmt.Println("  Ferroelectric Compute-in-Memory")
-	fmt.Println("============================================")
-	fmt.Printf("\nConfiguration:\n")
-	fmt.Printf("  Crossbar size: %d x %d\n", *arraySize, *arraySize)
-	fmt.Printf("  Layers: %d\n", *numLayers)
-	fmt.Printf("  Noise level: %.2f%%\n", *noiseLevel*100)
-	fmt.Printf("  ADC bits: %d (DAC bits: 8)\n", *adcBits)
-	fmt.Printf("  Discrete levels: 30 (demo baseline; conference claim)\n")
+	// Load config file if specified
+	var cfg InferenceConfig
+	if commonFlags.Config != "" {
+		loader := cli.NewConfigLoader(commonFlags.Config)
+		if err := loader.Load(&cfg); err != nil {
+			return fmt.Errorf("failed to load config: %w", err)
+		}
+		if cfg.ArraySize > 0 && *arraySize == 64 {
+			*arraySize = cfg.ArraySize
+		}
+		if cfg.NumLayers > 0 && *numLayers == 3 {
+			*numLayers = cfg.NumLayers
+		}
+		if cfg.NoiseLevel > 0 && *noiseLevel == 0.02 {
+			*noiseLevel = cfg.NoiseLevel
+		}
+		if cfg.ADCBits > 0 && *adcBits == 6 {
+			*adcBits = cfg.ADCBits
+		}
+	}
+
+	// Create output writer
+	out, err := cli.NewOutputWriter(commonFlags)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	out.Println("============================================")
+	out.Println("  FeCIM Demo 2: Crossbar Array MVM")
+	out.Println("  Ferroelectric Compute-in-Memory")
+	out.Println("============================================")
+	out.Print("\nConfiguration:\n")
+	out.Print("  Crossbar size: %d x %d\n", *arraySize, *arraySize)
+	out.Print("  Layers: %d\n", *numLayers)
+	out.Print("  Noise level: %.2f%%\n", *noiseLevel*100)
+	out.Print("  ADC bits: %d (DAC bits: 8)\n", *adcBits)
+	out.Print("  Discrete levels: 30 (demo baseline; conference claim)\n")
 
 	if *seed == 0 {
 		*seed = time.Now().UnixNano()

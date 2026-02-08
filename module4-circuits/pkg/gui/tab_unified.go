@@ -297,7 +297,13 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 		ca.zoomSlider.SetValue(1.0)
 	})
 
-	// Row: Program Cell | MVM | Sep | Undo | Random Array | Reset Array | Sep | Zoom controls | Spacer | Tools status
+	// Export button
+	exportBtn := widget.NewButton("Export", func() {
+		logAction("button_export")
+		ca.exportSimulationData()
+	})
+
+	// Row: Program Cell | MVM | Sep | Undo | Random Array | Reset Array | Export | Sep | Zoom controls | Spacer | Tools status
 	return container.NewHBox(
 		ca.actionWriteCellBtn,
 		ca.actionComputeBtn,
@@ -305,6 +311,7 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 		ca.undoHistoryBtn,
 		ca.actionRandomArrayBtn,
 		ca.actionResetArrayBtn,
+		exportBtn,
 		widget.NewSeparator(),
 		widget.NewLabel("Zoom:"),
 		ca.zoomSlider,

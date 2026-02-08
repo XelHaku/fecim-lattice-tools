@@ -171,17 +171,25 @@ func (cp *ControlPanel) MinSize() fyne.Size {
 
 // CreateRenderer implements fyne.Widget.
 func (cp *ControlPanel) CreateRenderer() fyne.WidgetRenderer {
-	// Simplified content to fit in fixed height
+	tips := sharedwidgets.CrossbarTooltips
+
+	// Helper to add tooltip info buttons (window-less for now, uses popup on canvas)
+	withTooltip := func(content fyne.CanvasObject, tc sharedwidgets.TooltipContent) fyne.CanvasObject {
+		// Create info label that shows tooltip on click
+		infoLabel := widget.NewLabel("ⓘ")
+		infoLabel.TextStyle = fyne.TextStyle{Bold: true}
+		return container.NewBorder(nil, nil, nil, infoLabel, content)
+	}
+
+	// Simplified content with tooltips
 	content := container.NewVBox(
-		cp.RunMVMButton,
-		cp.AnalyzeIRButton,
-		cp.AnalyzeSneakButton,
+		withTooltip(cp.RunMVMButton, tips.MVM),
+		withTooltip(cp.AnalyzeIRButton, tips.IRDrop),
+		withTooltip(cp.AnalyzeSneakButton, tips.SneakPath),
 		cp.ResetButton,
 		widget.NewSeparator(),
-		cp.arraySizeLabel,
-		cp.ArraySizeSlider,
-		widget.NewLabel("Colormap:"),
-		cp.ColormapSelect,
+		withTooltip(container.NewVBox(cp.arraySizeLabel, cp.ArraySizeSlider), tips.ArraySize),
+		withTooltip(container.NewVBox(widget.NewLabel("Colormap:"), cp.ColormapSelect), tips.Colormap),
 	)
 
 	return widget.NewSimpleRenderer(content)

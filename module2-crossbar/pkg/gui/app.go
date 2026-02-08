@@ -232,6 +232,9 @@ func (ca *CrossbarApp) RunWithLayout(enhanced bool) {
 	getDebug().Println("App: Updating status")
 	ca.updateStatus("Ready | Array initialized with random weights. Click 'Run MVM' to start!")
 
+	// Setup keyboard shortcuts
+	ca.setupKeyboard()
+
 	// m5 UX fix: Set first-load onboarding content
 	ca.setEducationalContent("Getting Started",
 		"Welcome to Crossbar MVM!\n\n"+
@@ -247,7 +250,8 @@ func (ca *CrossbarApp) RunWithLayout(enhanced bool) {
 			"• MVM = Matrix × Vector\n"+
 			"• All rows compute in 1 step\n\n"+
 			"Try: Switch tabs to see\n"+
-			"different non-idealities!")
+			"different non-idealities!\n\n"+
+			"Press ? for keyboard shortcuts")
 
 	getDebug().Println("App: ShowAndRun starting")
 	ca.window.ShowAndRun()

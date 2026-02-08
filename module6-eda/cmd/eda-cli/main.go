@@ -8,6 +8,11 @@
 //
 // For storage and memory modes, no input file is required.
 // For compute mode, weights are optional - omit -input for unprogrammed arrays.
+//
+// Common flags:
+//   - --json: Output results as JSON
+//   - --quiet: Suppress informational output
+//   - --config: Load configuration from YAML/JSON file
 package edacli
 
 import (
@@ -21,6 +26,7 @@ import (
 
 	"fecim-lattice-tools/module6-eda/pkg/compiler"
 	"fecim-lattice-tools/module6-eda/pkg/export"
+	"fecim-lattice-tools/shared/cli"
 	"fecim-lattice-tools/shared/logging"
 )
 
@@ -31,6 +37,31 @@ type WeightsFile struct {
 	Rows    int         `json:"rows"`
 	Cols    int         `json:"cols"`
 	Weights [][]float64 `json:"weights"`
+}
+
+// EDAConfig holds configuration for the EDA CLI.
+type EDAConfig struct {
+	Mode       string  `json:"mode" yaml:"mode"`
+	Rows       int     `json:"rows" yaml:"rows"`
+	Cols       int     `json:"cols" yaml:"cols"`
+	Levels     int     `json:"levels" yaml:"levels"`
+	Technology string  `json:"technology" yaml:"technology"`
+	VDD        float64 `json:"vdd" yaml:"vdd"`
+}
+
+// EDAResult represents design generation results for JSON output.
+type EDAResult struct {
+	DesignName     string  `json:"design_name"`
+	Mode           string  `json:"mode"`
+	Rows           int     `json:"rows"`
+	Cols           int     `json:"cols"`
+	TotalCells     int     `json:"total_cells"`
+	ActiveCells    int     `json:"active_cells"`
+	AreaMM2        float64 `json:"area_mm2"`
+	PowerMW        float64 `json:"power_mw"`
+	ThroughputGOPS float64 `json:"throughput_gops,omitempty"`
+	Technology     string  `json:"technology"`
+	OutputFiles    []string `json:"output_files"`
 }
 
 func Run(args []string) error {
@@ -47,6 +78,11 @@ func Run(args []string) error {
 
 	fs := flag.NewFlagSet("eda-cli", flag.ContinueOnError)
 	fs.SetOutput(os.Stdout)
+
+	// Common CLI flags (use explicit names to avoid conflict with export-json)
+	jsonOutput := fs.Bool("json-output", false, "Output results as JSON to stdout")
+	quiet := fs.Bool("quiet", false, "Suppress informational output")
+	configFile := fs.String("config", "", "Load configuration from YAML/JSON file")
 
 	// Operation mode
 	mode := fs.String("mode", "compute", "Operation mode: storage, memory, or compute")
@@ -73,13 +109,12 @@ func Run(args []string) error {
 	gmax := fs.Float64("gmax", 100.0, "Max conductance (μS)")
 
 	// Export options
-	exportJSON := fs.Bool("json", true, "Export JSON mapping")
+	exportJSONFile := fs.Bool("export-json", true, "Export JSON mapping file")
 	exportCSV := fs.Bool("csv", true, "Export CSV cell assignments")
 	exportSPICE := fs.Bool("spice", true, "Export SPICE netlist")
 	exportVerilog := fs.Bool("verilog", true, "Export Verilog netlist")
 	exportDEF := fs.Bool("def", true, "Export DEF placement")
 	help := fs.Bool("help", false, "Show help")
-	helpShort := fs.Bool("h", false, "Show help (shorthand)")
 
 	fs.Usage = func() {
 		out := fs.Output()
@@ -90,6 +125,11 @@ func Run(args []string) error {
 		fmt.Fprintln(out)
 		fmt.Fprintln(out, "Options:")
 		fs.PrintDefaults()
+		fmt.Fprintln(out)
+		fmt.Fprintln(out, "Common Options:")
+		fmt.Fprintln(out, "  --json-output     Output results as JSON to stdout")
+		fmt.Fprintln(out, "  --quiet           Suppress informational output")
+		fmt.Fprintln(out, "  --config FILE     Load configuration from YAML/JSON file")
 	}
 
 	if err := fs.Parse(args); err != nil {
@@ -101,9 +141,36 @@ func Run(args []string) error {
 		return err
 	}
 
-	if *help || *helpShort {
+	if *help {
 		fs.Usage()
 		return nil
+	}
+
+	// Load config file if specified
+	var cfg EDAConfig
+	if *configFile != "" {
+		loader := cli.NewConfigLoader(*configFile)
+		if err := loader.Load(&cfg); err != nil {
+			return fmt.Errorf("failed to load config: %w", err)
+		}
+		if cfg.Mode != "" && *mode == "compute" {
+			*mode = cfg.Mode
+		}
+		if cfg.Rows > 0 && *rows == 128 {
+			*rows = cfg.Rows
+		}
+		if cfg.Cols > 0 && *cols == 128 {
+			*cols = cfg.Cols
+		}
+		if cfg.Levels > 0 && *levels == 30 {
+			*levels = cfg.Levels
+		}
+		if cfg.Technology != "" && *tech == "SKY130" {
+			*tech = cfg.Technology
+		}
+		if cfg.VDD > 0 && *vdd == 1.8 {
+			*vdd = cfg.VDD
+		}
 	}
 
 	// Parse operation mode
@@ -204,15 +271,23 @@ func Run(args []string) error {
 		return err
 	}
 
-	// Export files
-	logging.Printf("Exporting files to %s/\n", *outputDir)
+	// Track output files for JSON result
+	outputFiles := make([]string, 0)
 
-	if *exportJSON {
+	// Export files
+	if !*quiet {
+		logging.Printf("Exporting files to %s/\n", *outputDir)
+	}
+
+	if *exportJSONFile {
 		path := filepath.Join(*outputDir, *designName+"_design.json")
 		if err := export.ExportJSON(design, path); err != nil {
 			logging.Printf("  JSON export error: %v\n", err)
 		} else {
-			logging.Printf("  ✓ %s\n", path)
+			if !*quiet {
+				logging.Printf("  ✓ %s\n", path)
+			}
+			outputFiles = append(outputFiles, path)
 		}
 	}
 
@@ -221,7 +296,10 @@ func Run(args []string) error {
 		if err := export.ExportCSV(design, path); err != nil {
 			logging.Printf("  CSV export error: %v\n", err)
 		} else {
-			logging.Printf("  ✓ %s\n", path)
+			if !*quiet {
+				logging.Printf("  ✓ %s\n", path)
+			}
+			outputFiles = append(outputFiles, path)
 		}
 	}
 
@@ -230,7 +308,10 @@ func Run(args []string) error {
 		if err := export.ExportSPICE(design, path, *vdd); err != nil {
 			logging.Printf("  SPICE export error: %v\n", err)
 		} else {
-			logging.Printf("  ✓ %s\n", path)
+			if !*quiet {
+				logging.Printf("  ✓ %s\n", path)
+			}
+			outputFiles = append(outputFiles, path)
 		}
 	}
 
@@ -239,7 +320,10 @@ func Run(args []string) error {
 		if err := export.ExportVerilog(design, path); err != nil {
 			logging.Printf("  Verilog export error: %v\n", err)
 		} else {
-			logging.Printf("  ✓ %s\n", path)
+			if !*quiet {
+				logging.Printf("  ✓ %s\n", path)
+			}
+			outputFiles = append(outputFiles, path)
 		}
 	}
 
@@ -248,10 +332,35 @@ func Run(args []string) error {
 		if err := export.ExportDEF(design, path); err != nil {
 			logging.Printf("  DEF export error: %v\n", err)
 		} else {
-			logging.Printf("  ✓ %s\n", path)
+			if !*quiet {
+				logging.Printf("  ✓ %s\n", path)
+			}
+			outputFiles = append(outputFiles, path)
 		}
 	}
 
-	logging.Println("\nDone!")
+	// JSON output mode
+	if *jsonOutput {
+		result := EDAResult{
+			DesignName:     *designName,
+			Mode:           *mode,
+			Rows:           config.ArrayRows,
+			Cols:           config.ArrayCols,
+			TotalCells:     design.Stats.TotalCells,
+			ActiveCells:    design.Stats.ActiveCells,
+			AreaMM2:        design.Stats.AreaMM2,
+			PowerMW:        design.Stats.PowerMW,
+			ThroughputGOPS: design.Stats.ThroughputGOPS,
+			Technology:     *tech,
+			OutputFiles:    outputFiles,
+		}
+		encoder := json.NewEncoder(os.Stdout)
+		encoder.SetIndent("", "  ")
+		return encoder.Encode(result)
+	}
+
+	if !*quiet {
+		logging.Println("\nDone!")
+	}
 	return nil
 }

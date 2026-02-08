@@ -368,6 +368,9 @@ func (ca *CircuitsApp) Run() {
 	content := ca.createMainLayout()
 	ca.window.SetContent(content)
 
+	// Setup keyboard shortcuts
+	ca.setupKeyboard()
+
 	ca.window.ShowAndRun()
 }
 

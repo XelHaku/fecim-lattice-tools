@@ -9,7 +9,6 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
@@ -578,10 +577,6 @@ func (ca *CircuitsApp) onAnimateTiming() {
 
 func (ca *CircuitsApp) onExportTimingSVG() {
 	logAction("timing_export_svg")
-	// Show "Coming soon" dialog for SVG export feature
-	if ca.window != nil {
-		dialog.ShowInformation("Export SVG",
-			"SVG export feature coming soon!\n\nFor now, use your system's screenshot tool:\n• macOS: Cmd+Shift+4\n• Linux: PrtSc or screenshot utility\n• Windows: Win+Shift+S",
-			ca.window)
-	}
+	// Export as PNG (SVG not available, but PNG captures the visualization)
+	ca.exportVisualization()
 }
