@@ -2,13 +2,12 @@
 package training
 
 import (
-	"encoding/json"
 	"log"
 	"math"
 	"math/rand"
-	"os"
 
 	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/shared/io"
 )
 
 // MNISTNetwork represents a 2-layer neural network for MNIST classification.
@@ -301,48 +300,37 @@ func (n *MNISTNetwork) Evaluate(images [][]float64, labels []int) float64 {
 	return float64(correct) / float64(len(images))
 }
 
+// networkWeightsData is the JSON structure for network weights.
+// Supports both legacy format and new format with scale/offset.
+type networkWeightsData struct {
+	Layer1Weights [][]float64 `json:"layer1_weights"`
+	Layer2Weights [][]float64 `json:"layer2_weights"`
+	Biases1       []float64   `json:"biases1"`
+	Biases2       []float64   `json:"biases2"`
+	L1Scale       float64     `json:"l1_scale"`
+	L1Offset      float64     `json:"l1_offset"`
+	L2Scale       float64     `json:"l2_scale"`
+	L2Offset      float64     `json:"l2_offset"`
+}
+
 // SaveWeights saves the network weights to a JSON file.
+// Uses shared/io for consistent file handling across the codebase.
 func (n *MNISTNetwork) SaveWeights(filename string) error {
-	data := struct {
-		Layer1Weights [][]float64 `json:"layer1_weights"`
-		Layer2Weights [][]float64 `json:"layer2_weights"`
-		Biases1       []float64   `json:"biases1"`
-		Biases2       []float64   `json:"biases2"`
-	}{
+	data := networkWeightsData{
 		Layer1Weights: n.layer1.GetConductanceMatrix(),
 		Layer2Weights: n.layer2.GetConductanceMatrix(),
 		Biases1:       n.biases1,
 		Biases2:       n.biases2,
 	}
-
-	jsonData, err := json.MarshalIndent(data, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(filename, jsonData, 0644)
+	return io.SaveJSON(filename, data)
 }
 
 // LoadWeights loads network weights from a JSON file.
 // Supports both legacy format and new format with scale/offset.
+// Uses shared/io for consistent file handling across the codebase.
 func (n *MNISTNetwork) LoadWeights(filename string) error {
-	jsonData, err := os.ReadFile(filename)
-	if err != nil {
-		return err
-	}
-
-	var data struct {
-		Layer1Weights [][]float64 `json:"layer1_weights"`
-		Layer2Weights [][]float64 `json:"layer2_weights"`
-		Biases1       []float64   `json:"biases1"`
-		Biases2       []float64   `json:"biases2"`
-		L1Scale       float64     `json:"l1_scale"`
-		L1Offset      float64     `json:"l1_offset"`
-		L2Scale       float64     `json:"l2_scale"`
-		L2Offset      float64     `json:"l2_offset"`
-	}
-
-	if err := json.Unmarshal(jsonData, &data); err != nil {
+	var data networkWeightsData
+	if err := io.LoadJSON(filename, &data); err != nil {
 		return err
 	}
 

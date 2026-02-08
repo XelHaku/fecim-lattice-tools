@@ -90,17 +90,17 @@ func Run(args []string) error {
 	if *exportLevels != "" {
 		levels, err := parseLevelList(*exportLevels)
 		if err != nil {
-			log.Fatalf("Invalid export levels: %v", err)
+			return fmt.Errorf("invalid export levels: %w\n\nHint: Specify levels as comma-separated integers, e.g., --export-levels 8,16,24,31", err)
 		}
 		outDirs, err := parseDirList(*exportDir)
 		if err != nil {
-			log.Fatalf("Invalid export directories: %v", err)
+			return fmt.Errorf("invalid export directories: %w", err)
 		}
 		if len(outDirs) == 0 {
 			outDirs = []string{filepath.Join("data", "pretrained-weigths")}
 		}
 		if err := runExportQuantizedWeights(levels, *loadWeights, outDirs, *hiddenSize); err != nil {
-			log.Fatalf("Export failed: %v", err)
+			return fmt.Errorf("export failed: %w", err)
 		}
 		return nil
 	}
@@ -108,7 +108,7 @@ func Run(args []string) error {
 	if *coreEvaluate {
 		levels, err := parseLevelList(*coreLevels)
 		if err != nil {
-			log.Fatalf("Invalid core levels: %v", err)
+			return fmt.Errorf("invalid core levels: %w\n\nHint: Specify levels as comma-separated integers, e.g., --core-levels 8,16,24,31", err)
 		}
 		runCoreEvaluation(*hiddenSize, *noiseLevel, *loadWeights, *coreSamples, levels)
 		return nil
@@ -125,7 +125,7 @@ func Run(args []string) error {
 	}
 	layer1, err := crossbar.NewArray(layer1Cfg)
 	if err != nil {
-		log.Fatalf("Failed to create layer 1 crossbar: %v", err)
+		return fmt.Errorf("failed to create layer 1 crossbar: %w\n\nThis may indicate insufficient memory or invalid configuration", err)
 	}
 
 	// Layer 2: hidden neurons -> 10 outputs
@@ -138,7 +138,7 @@ func Run(args []string) error {
 	}
 	layer2, err := crossbar.NewArray(layer2Cfg)
 	if err != nil {
-		log.Fatalf("Failed to create layer 2 crossbar: %v", err)
+		return fmt.Errorf("failed to create layer 2 crossbar: %w\n\nThis may indicate insufficient memory or invalid configuration", err)
 	}
 
 	// Create the network

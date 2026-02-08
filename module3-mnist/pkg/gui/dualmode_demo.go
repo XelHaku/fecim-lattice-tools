@@ -135,11 +135,14 @@ func (app *DualModeApp) StopQuickDemo() {
 }
 
 // waitOrStop waits for duration or returns true if demo was stopped.
+// Uses time.NewTimer instead of time.After to avoid memory leaks when demo is stopped early.
 func (app *DualModeApp) waitOrStop(d time.Duration) bool {
+	timer := time.NewTimer(d)
+	defer timer.Stop() // Ensure timer is stopped to prevent memory leak
 	select {
 	case <-app.quickDemoStopChan:
 		return true
-	case <-time.After(d):
+	case <-timer.C:
 		return false
 	}
 }

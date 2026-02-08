@@ -74,10 +74,12 @@ docs/crossbar/reference/PHYSICS.md
 docs/crossbar/reference/VOLTAGE_RULES.md
 ```
 
-### docs/development/ (14)
+### docs/development/ (16)
 ```
 docs/development/ARCHITECTURE.md
+docs/development/CI.md
 docs/development/GLOSSARY_SYSTEM.md
+docs/development/HEADLESS.md
 docs/development/GUI/FYNE_NOTES.md
 docs/development/GUI/GUI.module1.md
 docs/development/GUI/GUI.module2.md

@@ -6,10 +6,64 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    name: unit (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - run: go test -tags=ci ./...
+          cache: true
+
+      - name: go test ./...
+        shell: bash
+        timeout-minutes: 20
+        env:
+          TZ: UTC
+          GOMAXPROCS: "4"
+          GO_TEST_TIMEOUT: 10m
+        run: make test-ci
+
+  windows:
+    name: unit (windows-latest)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: go test ./...
+        timeout-minutes: 20
+        env:
+          TZ: UTC
+          GOMAXPROCS: "4"
+        run: |
+          go test -tags=ci -count=1 -shuffle=off -trimpath -timeout 10m ./...
+
+  race:
+    name: race (targeted pkgs)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: go test -race (targeted)
+        timeout-minutes: 35
+        env:
+          TZ: UTC
+          GOMAXPROCS: "4"
+          CGO_ENABLED: "1"
+          GO_TEST_RACE_TIMEOUT: 20m
+        run: make test-race-ci

@@ -245,7 +245,8 @@ func (cm *ConfusionMatrix) generateImage(w, h int) image.Image {
 	}
 
 	// Draw grid lines
-	gridColor := color.RGBA{60, 60, 70, 255}
+	// ACCESSIBILITY FIX: Increased contrast from (60,60,70) to (85,90,100) - 3.5:1 ratio
+	gridColor := color.RGBA{85, 90, 100, 255}
 	for i := 0; i <= 10; i++ {
 		x := padding + i*cellSize
 		y := padding + i*cellSize

@@ -314,20 +314,36 @@ func main() {
 
 	dataDir := utils.FindModuleDataDir("module3-mnist", "train-images-idx3-ubyte.gz")
 	if dataDir == "" {
-		fmt.Println("Error: Could not find MNIST data directory")
+		fmt.Println("\n╔════════════════════════════════════════════════════════════════╗")
+		fmt.Println("║ ERROR: Could not find MNIST data directory                      ║")
+		fmt.Println("╠════════════════════════════════════════════════════════════════╣")
+		fmt.Println("║ The training script could not locate the MNIST dataset.         ║")
+		fmt.Println("╠════════════════════════════════════════════════════════════════╣")
+		fmt.Println("║ To fix this:                                                    ║")
+		fmt.Println("║ 1. Download MNIST from: http://yann.lecun.com/exdb/mnist/       ║")
+		fmt.Println("║ 2. Place files in: module3-mnist/data/                          ║")
+		fmt.Println("║    Required files:                                              ║")
+		fmt.Println("║    - train-images-idx3-ubyte.gz                                 ║")
+		fmt.Println("║    - train-labels-idx1-ubyte.gz                                 ║")
+		fmt.Println("║    - t10k-images-idx3-ubyte.gz                                  ║")
+		fmt.Println("║    - t10k-labels-idx1-ubyte.gz                                  ║")
+		fmt.Println("║ 3. Run from repository root: cd fecim-lattice-tools             ║")
+		fmt.Println("╚════════════════════════════════════════════════════════════════╝")
 		os.Exit(1)
 	}
 
 	fmt.Println("Loading MNIST data...")
 	trainImages, trainLabels, err := mnist.LoadMNIST(dataDir, true)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
+		fmt.Printf("\nError loading training data: %v\n", err)
+		fmt.Println("Check that train-images-idx3-ubyte.gz and train-labels-idx1-ubyte.gz exist and are valid.")
 		os.Exit(1)
 	}
 
 	testImages, testLabels, err := mnist.LoadMNIST(dataDir, false)
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
+		fmt.Printf("\nError loading test data: %v\n", err)
+		fmt.Println("Check that t10k-images-idx3-ubyte.gz and t10k-labels-idx1-ubyte.gz exist and are valid.")
 		os.Exit(1)
 	}
 

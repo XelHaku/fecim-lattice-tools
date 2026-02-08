@@ -4,6 +4,8 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 )
 
@@ -20,7 +22,9 @@ func main() {
 	}
 	arr, err := crossbar.NewArray(cfg)
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error: Failed to create crossbar array: %v\n", err)
+		fmt.Println("Check that the crossbar configuration is valid.")
+		os.Exit(1)
 	}
 
 	// Program some weights

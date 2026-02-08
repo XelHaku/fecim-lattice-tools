@@ -32,12 +32,37 @@ func main() {
 	fmt.Println("Loading MNIST dataset...")
 	trainImages, trainLabels, err := mnist.LoadMNIST("module3-mnist/data", true)
 	if err != nil {
+		fmt.Println("\n╔════════════════════════════════════════════════════════════════╗")
+		fmt.Println("║ ERROR: Could not load MNIST training data                       ║")
+		fmt.Println("╠════════════════════════════════════════════════════════════════╣")
+		fmt.Printf("║ Details: %v\n", err)
+		fmt.Println("╠════════════════════════════════════════════════════════════════╣")
+		fmt.Println("║ To fix this:                                                    ║")
+		fmt.Println("║ 1. Run from the repository root:                                ║")
+		fmt.Println("║    cd fecim-lattice-tools                                       ║")
+		fmt.Println("║ 2. Download MNIST data:                                         ║")
+		fmt.Println("║    wget http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz ║")
+		fmt.Println("║    wget http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz ║")
+		fmt.Println("║    wget http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz  ║")
+		fmt.Println("║    wget http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz  ║")
+		fmt.Println("║ 3. Move files to: module3-mnist/data/                           ║")
+		fmt.Println("╚════════════════════════════════════════════════════════════════╝")
 		log.Fatalf("Failed to load training data: %v", err)
 	}
 	fmt.Printf("Loaded %d training images\n", len(trainImages))
 
 	testImages, testLabels, err := mnist.LoadMNIST("module3-mnist/data", false)
 	if err != nil {
+		fmt.Println("\n╔════════════════════════════════════════════════════════════════╗")
+		fmt.Println("║ ERROR: Could not load MNIST test data                           ║")
+		fmt.Println("╠════════════════════════════════════════════════════════════════╣")
+		fmt.Printf("║ Details: %v\n", err)
+		fmt.Println("╠════════════════════════════════════════════════════════════════╣")
+		fmt.Println("║ Training data loaded OK. Test data files may be missing.        ║")
+		fmt.Println("║ Expected files in module3-mnist/data/:                          ║")
+		fmt.Println("║   - t10k-images-idx3-ubyte.gz                                   ║")
+		fmt.Println("║   - t10k-labels-idx1-ubyte.gz                                   ║")
+		fmt.Println("╚════════════════════════════════════════════════════════════════╝")
 		log.Fatalf("Failed to load test data: %v", err)
 	}
 	fmt.Printf("Loaded %d test images\n", len(testImages))
@@ -55,6 +80,8 @@ func main() {
 		Rows: hidden, Cols: 784, NoiseLevel: 0, ADCBits: 16, DACBits: 16, // High resolution for training
 	})
 	if err != nil {
+		fmt.Printf("\nError creating layer 1 crossbar (%dx%d): %v\n", hidden, 784, err)
+		fmt.Println("This may indicate insufficient memory. Try reducing hidden layer size.")
 		log.Fatalf("Failed to create layer1: %v", err)
 	}
 
@@ -62,6 +89,8 @@ func main() {
 		Rows: 10, Cols: hidden, NoiseLevel: 0, ADCBits: 16, DACBits: 16, // High resolution for training
 	})
 	if err != nil {
+		fmt.Printf("\nError creating layer 2 crossbar (%dx%d): %v\n", 10, hidden, err)
+		fmt.Println("This may indicate insufficient memory. Try reducing hidden layer size.")
 		log.Fatalf("Failed to create layer2: %v", err)
 	}
 

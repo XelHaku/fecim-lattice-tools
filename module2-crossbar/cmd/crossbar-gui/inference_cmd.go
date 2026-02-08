@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"time"
 
 	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 	"fecim-lattice-tools/module2-crossbar/pkg/network"
@@ -21,6 +22,7 @@ func RunInference(args []string) error {
 	batchSize := fs.Int("batch", 1, "Inference batch size")
 	noiseLevel := fs.Float64("noise", 0.02, "Device noise level (0-1)")
 	adcBits := fs.Int("adc", 6, "ADC resolution in bits")
+	seed := fs.Int64("seed", 1, "Random seed for deterministic runs (0 = time-based)")
 	noColor := fs.Bool("no-color", false, "Disable colored output")
 	benchmark := fs.Bool("benchmark", false, "Run inference benchmark")
 	showArray := fs.Bool("show-array", false, "Show crossbar array state")
@@ -67,6 +69,11 @@ func RunInference(args []string) error {
 	fmt.Printf("  ADC bits: %d (DAC bits: 8)\n", *adcBits)
 	fmt.Printf("  Discrete levels: 30 (demo baseline; conference claim)\n")
 
+	if *seed == 0 {
+		*seed = time.Now().UnixNano()
+	}
+	rng := rand.New(rand.NewSource(*seed))
+
 	arrayCfg := &crossbar.Config{
 		Rows:       *arraySize,
 		Cols:       *arraySize,
@@ -83,16 +90,16 @@ func RunInference(args []string) error {
 	vis := visualization.NewTerminalVisualizer(array, !*noColor)
 
 	if *showArray {
-		programRandomWeights(array)
+		programRandomWeights(array, rng)
 		vis.ShowCrossbarState()
 	}
 
 	if *showMVM {
-		programRandomWeights(array)
+		programRandomWeights(array, rng)
 
 		input := make([]float64, *arraySize)
 		for i := range input {
-			input[i] = rand.Float64()
+			input[i] = rng.Float64()
 		}
 
 		output, err := array.MVM(input)
@@ -106,11 +113,11 @@ func RunInference(args []string) error {
 	}
 
 	if *showIRDrop || *showNonidealities {
-		programRandomWeights(array)
+		programRandomWeights(array, rng)
 
 		input := make([]float64, *arraySize)
 		for i := range input {
-			input[i] = rand.Float64()
+			input[i] = rng.Float64()
 		}
 
 		wireParams := crossbar.DefaultWireParams()
@@ -125,7 +132,7 @@ func RunInference(args []string) error {
 	}
 
 	if *showSneak || *showNonidealities {
-		programRandomWeights(array)
+		programRandomWeights(array, rng)
 
 		selectedRow := *arraySize / 2
 		selectedCol := *arraySize / 2
@@ -147,7 +154,7 @@ func RunInference(args []string) error {
 
 		input := make([]float64, *arraySize)
 		for i := range input {
-			input[i] = rand.Float64()
+			input[i] = rng.Float64()
 		}
 
 		idealOutput, err := array.MVM(input)
@@ -233,11 +240,11 @@ func runBenchmark(net *network.Network, batchSize int) {
 	fmt.Println("Benchmark complete.")
 }
 
-func programRandomWeights(array *crossbar.Array) {
+func programRandomWeights(array *crossbar.Array, rng *rand.Rand) {
 	rows, cols := array.Rows(), array.Cols()
 	for i := 0; i < rows; i++ {
 		for j := 0; j < cols; j++ {
-			level := rand.Intn(30)
+			level := rng.Intn(30)
 			weight := float64(level) / 29.0
 			array.ProgramWeight(i, j, weight)
 		}

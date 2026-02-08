@@ -155,6 +155,10 @@ func (d *DemoController) IsPaused() bool {
 
 // run executes demo steps.
 func (d *DemoController) run() {
+	// Create a single pause-check timer to avoid memory leaks from repeated time.After calls
+	pauseTimer := time.NewTimer(100 * time.Millisecond)
+	defer pauseTimer.Stop()
+
 	for {
 		for i, step := range d.steps {
 			// Check if stopped
@@ -166,12 +170,21 @@ func (d *DemoController) run() {
 			ctx := d.ctx
 			d.mu.Unlock()
 
-			// Wait while paused
+			// Wait while paused - reuse timer to avoid memory leaks
 			for d.IsPaused() {
+				// Reset timer for next pause check
+				if !pauseTimer.Stop() {
+					select {
+					case <-pauseTimer.C:
+					default:
+					}
+				}
+				pauseTimer.Reset(100 * time.Millisecond)
+
 				select {
 				case <-ctx.Done():
 					return
-				case <-time.After(100 * time.Millisecond):
+				case <-pauseTimer.C:
 					// Check pause state again
 				}
 			}
@@ -214,15 +227,19 @@ func (d *DemoController) run() {
 }
 
 // waitOrStop waits for duration or returns false if stopped.
+// Uses time.NewTimer instead of time.After to avoid memory leaks when stopped early.
 func (d *DemoController) waitOrStop(ctx context.Context, duration time.Duration) bool {
 	if duration <= 0 {
 		return d.IsRunning()
 	}
 
+	timer := time.NewTimer(duration)
+	defer timer.Stop()
+
 	select {
 	case <-ctx.Done():
 		return false
-	case <-time.After(duration):
+	case <-timer.C:
 		return d.IsRunning()
 	}
 }

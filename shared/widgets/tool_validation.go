@@ -64,18 +64,11 @@ func NewToolValidationWidgets(opts ToolValidationOptions) *ToolValidationWidgets
 	}
 
 	statusText := func(status validation.ToolStatus, name string) string {
-		symbol := status.Symbol()
-		if opts.StatusLabelMode == ToolStatusSymbolWithName {
-			return fmt.Sprintf("%s %s", symbol, name)
-		}
-		return symbol
+		return ToolStatusText(status, name, opts.StatusLabelMode)
 	}
 
 	busyText := func(name string) string {
-		if opts.StatusLabelMode == ToolStatusSymbolWithName {
-			return "... " + name
-		}
-		return "..."
+		return ToolBusyText(name, opts.StatusLabelMode)
 	}
 
 	crosssimStatus := widget.NewLabel(statusText(validation.StatusUnknown, "CrossSim"))
@@ -91,31 +84,7 @@ func NewToolValidationWidgets(opts ToolValidationOptions) *ToolValidationWidgets
 	}
 
 	formatResult := func(result *validation.ValidationResult) string {
-		notInstalled := result.Error != nil && strings.Contains(strings.ToLower(result.Error.Error()), "not installed")
-		if result.Passed {
-			switch opts.MessageStyle {
-			case ToolMessageASCII:
-				return "V PASS"
-			default:
-				return "✓ PASS"
-			}
-		}
-		if notInstalled {
-			switch opts.MessageStyle {
-			case ToolMessageASCII:
-				return "O NOT INSTALLED"
-			case ToolMessageUnicodeSkip:
-				return "○ SKIP (not installed)"
-			default:
-				return "○ NOT INSTALLED"
-			}
-		}
-		switch opts.MessageStyle {
-		case ToolMessageASCII:
-			return "X FAIL"
-		default:
-			return "✗ FAIL"
-		}
+		return FormatToolValidationResult(result, opts.MessageStyle)
 	}
 
 	toolsBtn := widget.NewButton(opts.ButtonLabel, func() {

@@ -363,6 +363,9 @@ func (g *GPUPeripherals) Destroy() {
 
 // structToBytes converts a struct to a byte slice for uniform buffer upload.
 // Uses unsafe to directly interpret struct memory layout.
+//
+// Supported types: *DACParams, *ADCParams, *TIAParams
+// Panics on unsupported types (programming error - add new types here as needed).
 func structToBytes(s interface{}) []byte {
 	switch v := s.(type) {
 	case *DACParams:
@@ -375,7 +378,10 @@ func structToBytes(s interface{}) []byte {
 		size := unsafe.Sizeof(*v)
 		return unsafe.Slice((*byte)(unsafe.Pointer(v)), size)
 	default:
-		panic(fmt.Sprintf("unsupported struct type: %T", s))
+		// This is a programming error - the caller passed an unsupported type
+		panic(fmt.Sprintf("structToBytes: unsupported struct type %T\n"+
+			"Supported types: *DACParams, *ADCParams, *TIAParams\n"+
+			"If you need to support a new type, add it to the switch statement in structToBytes()", s))
 	}
 }
 
@@ -431,23 +437,28 @@ var (
 	_ = [1]struct{}{}[unsafe.Sizeof(TIAParams{})-32] // Must be 32 bytes (8 x 4-byte fields)
 )
 
-// Helper to validate std140 alignment at runtime
+// Helper to validate std140 alignment at runtime.
+// These panics are intentional - struct layout mismatches are programming errors
+// that indicate the code will produce incorrect GPU shader results.
+// They should be caught during development, not at runtime.
 func init() {
+	var errors []string
+
 	// Verify struct sizes match expected uniform buffer layout
-	if unsafe.Sizeof(DACParams{}) != 32 {
-		panic(fmt.Sprintf("DACParams size mismatch: got %d, expected 32", unsafe.Sizeof(DACParams{})))
+	if sz := unsafe.Sizeof(DACParams{}); sz != 32 {
+		errors = append(errors, fmt.Sprintf("DACParams size mismatch: got %d, expected 32 bytes (8 x 4-byte fields)", sz))
 	}
-	if unsafe.Sizeof(ADCParams{}) != 32 {
-		panic(fmt.Sprintf("ADCParams size mismatch: got %d, expected 32", unsafe.Sizeof(ADCParams{})))
+	if sz := unsafe.Sizeof(ADCParams{}); sz != 32 {
+		errors = append(errors, fmt.Sprintf("ADCParams size mismatch: got %d, expected 32 bytes (8 x 4-byte fields)", sz))
 	}
-	if unsafe.Sizeof(TIAParams{}) != 32 {
-		panic(fmt.Sprintf("TIAParams size mismatch: got %d, expected 32", unsafe.Sizeof(TIAParams{})))
+	if sz := unsafe.Sizeof(TIAParams{}); sz != 32 {
+		errors = append(errors, fmt.Sprintf("TIAParams size mismatch: got %d, expected 32 bytes (8 x 4-byte fields)", sz))
 	}
 
 	// Verify field alignment for std140 (all fields 4-byte aligned)
 	verifyAlignment := func(name string, offset, expected uintptr) {
 		if offset != expected {
-			panic(fmt.Sprintf("%s field alignment mismatch: got %d, expected %d", name, offset, expected))
+			errors = append(errors, fmt.Sprintf("%s field offset mismatch: got %d, expected %d (std140 requires 4-byte alignment)", name, offset, expected))
 		}
 	}
 
@@ -483,6 +494,17 @@ func init() {
 	verifyAlignment("TIAParams.Seed", unsafe.Offsetof(tiaParams.Seed), 20)
 	verifyAlignment("TIAParams.Padding1", unsafe.Offsetof(tiaParams.Padding1), 24)
 	verifyAlignment("TIAParams.Padding2", unsafe.Offsetof(tiaParams.Padding2), 28)
+
+	// Report all alignment errors at once for better debugging
+	if len(errors) > 0 {
+		msg := "GPU Peripheral struct alignment errors (GPU compute will not work correctly):\n"
+		for _, e := range errors {
+			msg += "  - " + e + "\n"
+		}
+		msg += "\nThis is a programming error. The struct layouts must match the GPU shader uniform buffer layouts.\n"
+		msg += "Please check that all fields use 4-byte types and total struct size is 32 bytes."
+		panic(msg)
+	}
 }
 
 // DefaultDACParams returns typical DAC parameters for 5-bit FeCIM.

@@ -328,23 +328,51 @@ func ValidateAllTools() []*ValidationResult {
 	return results
 }
 
-// GetProjectRoot returns the project root directory by looking for CLAUDE.md marker.
+// GetProjectRoot returns the project root directory.
+//
+// Prefer finding the repo root by walking up the filesystem from a few likely
+// anchors. This needs to work in CI and in `go test`, where runtime.Caller
+// paths may point at temporary build directories.
 func GetProjectRoot() (string, error) {
-	// Get the source file location to find project root
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		return "", fmt.Errorf("could not determine source location")
+	findFrom := func(start string) (string, bool) {
+		dir := start
+		for i := 0; i < 10; i++ {
+			// Prefer CLAUDE.md (project convention), but fall back to go.mod/.git.
+			if _, err := os.Stat(filepath.Join(dir, "CLAUDE.md")); err == nil {
+				return dir, true
+			}
+			if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+				return dir, true
+			}
+			if _, err := os.Stat(filepath.Join(dir, ".git")); err == nil {
+				return dir, true
+			}
+
+			parent := filepath.Dir(dir)
+			if parent == dir {
+				break
+			}
+			dir = parent
+		}
+		return "", false
 	}
 
-	// Walk up from shared/validation/ to find project root
-	dir := filepath.Dir(filename)
-	for i := 0; i < 5; i++ {
-		// Check for CLAUDE.md as project root marker
-		claudeMD := filepath.Join(dir, "CLAUDE.md")
-		if _, err := os.Stat(claudeMD); err == nil {
-			return dir, nil
+	if _, filename, _, ok := runtime.Caller(0); ok {
+		if root, ok := findFrom(filepath.Dir(filename)); ok {
+			return root, nil
 		}
-		dir = filepath.Dir(dir)
+	}
+
+	if wd, err := os.Getwd(); err == nil {
+		if root, ok := findFrom(wd); ok {
+			return root, nil
+		}
+	}
+
+	if ws := os.Getenv("GITHUB_WORKSPACE"); ws != "" {
+		if root, ok := findFrom(ws); ok {
+			return root, nil
+		}
 	}
 
 	return "", fmt.Errorf("project root not found")

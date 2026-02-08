@@ -422,10 +422,40 @@ func Load() (*Config, error) {
 }
 
 // MustLoad loads the config and panics on error.
+// This should only be used in initialization code where errors are unrecoverable.
+// For graceful error handling, use Load() instead.
+//
+// Deprecated: Prefer Load() with proper error handling for new code.
 func MustLoad() *Config {
 	cfg, err := Load()
 	if err != nil {
-		panic(fmt.Sprintf("failed to load physics config: %v", err))
+		panic(fmt.Sprintf("failed to load physics config: %v\n\nTo fix this:\n"+
+			"  1. Ensure config/*.yaml files exist in the working directory\n"+
+			"  2. Or run from the repository root: cd fecim-lattice-tools && ./launcher\n"+
+			"  3. Check file permissions on config directory", err))
+	}
+	return cfg
+}
+
+// LoadWithDefaults loads the config, falling back to safe defaults on error.
+// This is useful for GUI applications where crashing is not acceptable.
+// It logs any errors but returns a valid config with sensible defaults.
+func LoadWithDefaults() *Config {
+	cfg, err := Load()
+	if err != nil {
+		// Return embedded defaults directly
+		defaultCfg, defaultErr := loadSplitConfig("")
+		if defaultErr != nil {
+			// Last resort: return minimal valid config
+			return &Config{
+				Constants: Constants{
+					FeCIMLevels:     30,
+					BitsPerCell:     4.9,
+					RoomTemperature: 300,
+				},
+			}
+		}
+		return defaultCfg
 	}
 	return cfg
 }

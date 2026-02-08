@@ -64,7 +64,39 @@ See `INSTALLATION.md` for prerequisites, optional dependencies, and platform-spe
 go test ./...                              # See CI for latest status
 go test -v ./module2-crossbar/pkg/crossbar # Crossbar tests only
 go test -race ./...                        # Race detector (optional)
+
+# CI-like settings (recommended when reproducing CI failures)
+make test-ci
+make test-race-ci
 ```
+
+See: `docs/development/TESTING.md` and `docs/development/CI.md`.
+
+### Headless / Non-GUI Usage
+
+The GUI requires a display server, but several workflows are supported without one:
+
+```bash
+# Headless hysteresis diagnostics (prints + optional CSV log)
+./fecim-lattice-tools --mode hysteresis
+
+# Hysteresis subcommand headless ASCII mode
+./fecim-lattice-tools hysteresis --headless --material superlattice
+```
+
+See: `docs/development/HEADLESS.md`.
+
+### Benchmarks
+
+Microbenchmarks for hot loops live alongside unit tests.
+
+```bash
+make bench
+# Or targeted:
+BENCH=BenchmarkEngineStep BENCH_COUNT=5 make bench
+```
+
+See: `BENCHMARKS.md`.
 
 ### Command Line Options
 

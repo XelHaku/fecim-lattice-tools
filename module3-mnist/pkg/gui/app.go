@@ -818,23 +818,34 @@ func (ma *MNISTApp) stopAutoDemoLoop() {
 	}
 
 	ma.autoDemo = false
-	// Cancel context first to signal goroutine
+	// Cancel context to signal goroutine - goroutine handles its own cleanup
 	if ma.autoDemoCancel != nil {
 		ma.autoDemoCancel()
 		ma.autoDemoCancel = nil
 	}
-	// Brief sleep to allow goroutine to see cancellation
-	time.Sleep(10 * time.Millisecond)
-	// Then stop ticker
-	if ma.autoDemoTimer != nil {
-		ma.autoDemoTimer.Stop()
-		ma.autoDemoTimer = nil
-	}
+	// Note: ticker is stopped by the goroutine via defer, not here
+	// This prevents race conditions between stopping and the goroutine reading
 	ma.operationLog.Add("Mode: Auto Demo stopped")
 }
 
 // autoDemoLoop runs the automatic demonstration.
+// The goroutine owns the ticker and cleans it up on exit to prevent memory leaks.
 func (ma *MNISTApp) autoDemoLoop(ctx context.Context) {
+	// Goroutine owns the ticker cleanup to prevent race with stopAutoDemoLoop
+	ma.autoDemoMu.Lock()
+	ticker := ma.autoDemoTimer
+	ma.autoDemoMu.Unlock()
+
+	if ticker == nil {
+		return
+	}
+	defer func() {
+		ticker.Stop()
+		ma.autoDemoMu.Lock()
+		ma.autoDemoTimer = nil
+		ma.autoDemoMu.Unlock()
+	}()
+
 	// Run first operation immediately
 	fyne.Do(func() {
 		ma.loadRandomTestDigit()
@@ -844,7 +855,7 @@ func (ma *MNISTApp) autoDemoLoop(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
-		case <-ma.autoDemoTimer.C:
+		case <-ticker.C:
 			ma.autoDemoMu.Lock()
 			running := ma.autoDemo
 			ma.autoDemoMu.Unlock()

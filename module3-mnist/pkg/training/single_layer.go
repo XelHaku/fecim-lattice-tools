@@ -3,13 +3,12 @@
 package training
 
 import (
-	"encoding/json"
 	"fmt"
 	"math"
 	"math/rand"
-	"os"
 
 	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/shared/io"
 )
 
 // SingleLayerNetwork represents a single-layer neural network for MNIST.
@@ -193,37 +192,27 @@ func (n *SingleLayerNetwork) GetBiases() []float64 {
 	return n.biases
 }
 
+// singleLayerWeightsData is the JSON structure for single-layer weights.
+type singleLayerWeightsData struct {
+	SingleLayerWeights [][]float64 `json:"single_layer_weights"`
+	SingleLayerBias    []float64   `json:"single_layer_bias"`
+}
+
 // SaveWeights saves the single-layer weights to a JSON file.
+// Uses shared/io for consistent file handling across the codebase.
 func (n *SingleLayerNetwork) SaveWeights(filename string) error {
-	data := struct {
-		SingleLayerWeights [][]float64 `json:"single_layer_weights"`
-		SingleLayerBias    []float64   `json:"single_layer_bias"`
-	}{
+	data := singleLayerWeightsData{
 		SingleLayerWeights: n.layer.GetConductanceMatrix(),
 		SingleLayerBias:    n.biases,
 	}
-
-	jsonData, err := json.MarshalIndent(data, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(filename, jsonData, 0644)
+	return io.SaveJSON(filename, data)
 }
 
 // LoadWeights loads single-layer weights from a JSON file.
+// Uses shared/io for consistent file handling across the codebase.
 func (n *SingleLayerNetwork) LoadWeights(filename string) error {
-	jsonData, err := os.ReadFile(filename)
-	if err != nil {
-		return err
-	}
-
-	var data struct {
-		SingleLayerWeights [][]float64 `json:"single_layer_weights"`
-		SingleLayerBias    []float64   `json:"single_layer_bias"`
-	}
-
-	if err := json.Unmarshal(jsonData, &data); err != nil {
+	var data singleLayerWeightsData
+	if err := io.LoadJSON(filename, &data); err != nil {
 		return err
 	}
 

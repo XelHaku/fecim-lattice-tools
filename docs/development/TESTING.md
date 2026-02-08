@@ -45,6 +45,13 @@
 # Run all tests
 go test ./...
 
+# CI-like settings (recommended when reproducing CI failures)
+make test-ci
+make test-race-ci
+
+# Or manually (mirrors scripts/ci/go-test-all.sh)
+go test -tags=ci -count=1 -shuffle=off -trimpath -timeout 10m ./...
+
 # Run with verbose output
 go test -v ./...
 
@@ -57,11 +64,12 @@ go test -v ./module3-mnist/...
 go test -v -run TestFeCIM30LevelPhysics ./module3-mnist/pkg/core/...
 go test -v -run TestMaterialPhysicsConsistency ./cmd/fecim-lattice-tools/...
 
-# Run benchmarks
-go test -bench=. ./module2-crossbar/pkg/crossbar/...
-go test -bench=. ./cmd/fecim-lattice-tools/...
+# Run microbenchmarks only (skip unit tests)
+make bench
+# Or:
+go test ./... -run ^$ -bench . -benchmem
 
-# Run with race detector
+# Run with race detector (full tree; can be slow)
 go test -race ./...
 ```
 
@@ -203,6 +211,15 @@ go test -race ./...
 - Animation timing
 - Visual rendering
 - User interactions (mouse clicks)
+
+**Display-required automated checks (optional):**
+
+Some layout/audit tests are skipped unless a display is available. On headless Linux, run them with Xvfb:
+
+```bash
+sudo apt-get install -y xvfb
+xvfb-run -a go test -v ./cmd/fecim-lattice-tools/... -run LayoutAudit
+```
 
 ### 2. Drift Model Precision
 

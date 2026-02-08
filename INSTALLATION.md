@@ -21,6 +21,8 @@ sudo apt-get update
 sudo apt-get install -y gcc libgl1-mesa-dev xorg-dev
 # Optional: for Module 6 Yosys schematic visualization
 sudo apt-get install -y graphviz
+# Optional: run GUI/layout tests on a headless server
+sudo apt-get install -y xvfb
 ```
 
 ### Linux (Fedora/RHEL)

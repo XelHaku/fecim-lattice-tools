@@ -371,7 +371,8 @@ func (lav *LayerActivationView) generateOutputImage(w, h int) image.Image {
 	}
 
 	// Draw axis
-	axisColor := color.RGBA{80, 80, 90, 255}
+	// ACCESSIBILITY FIX: Increased contrast from (80,80,90) to (100,105,120)
+	axisColor := color.RGBA{100, 105, 120, 255}
 	for x := padding; x < w-padding; x++ {
 		img.Set(x, h-padding, axisColor)
 	}
@@ -501,7 +502,8 @@ func (obc *OutputBarChart) generateImage(w, h int) image.Image {
 	}
 
 	// Draw axis
-	axisColor := color.RGBA{80, 80, 90, 255}
+	// ACCESSIBILITY FIX: Increased contrast from (80,80,90) to (100,105,120)
+	axisColor := color.RGBA{100, 105, 120, 255}
 	for x := padding; x < w-padding; x++ {
 		img.Set(x, h-padding, axisColor)
 	}

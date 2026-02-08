@@ -24,11 +24,15 @@ func drawRectBorder(img *image.RGBA, x, y, rectW, rectH int, c color.Color) {
 
 // sleep pauses execution for the specified number of milliseconds.
 // Used for animation timing. Returns true if interrupted by stop signal.
+// Uses time.NewTimer instead of time.After to avoid memory leaks when interrupted.
 func (ca *CircuitsApp) sleep(milliseconds int) bool {
+	timer := time.NewTimer(time.Duration(milliseconds) * time.Millisecond)
+	defer timer.Stop()
+
 	select {
 	case <-ca.stopChan:
 		return true // Interrupted
-	case <-time.After(time.Duration(milliseconds) * time.Millisecond):
+	case <-timer.C:
 		return false // Normal completion
 	}
 }

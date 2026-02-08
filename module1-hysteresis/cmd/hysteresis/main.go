@@ -298,7 +298,14 @@ func runGraphical(engine *simulation.Engine, material *ferroelectric.HZOMaterial
 
 	// Run render loop
 	if err := renderer.Run(); err != nil {
-		log.Fatalf("Renderer error: %v", err)
+		fmt.Printf("\nRenderer error: %v\n", err)
+		fmt.Println("The visualization window encountered an error.")
+		fmt.Println("This may be due to:")
+		fmt.Println("  - Window was closed unexpectedly")
+		fmt.Println("  - GPU driver issues")
+		fmt.Println("  - Display server (X11/Wayland) disconnection")
+		fmt.Println("\nTry running with --headless flag for non-graphical output.")
+		os.Exit(1)
 	}
 
 	fmt.Printf("\nSimulation completed. Rendered %d frames.\n", frameCount)

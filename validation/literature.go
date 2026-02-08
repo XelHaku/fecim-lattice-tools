@@ -1,42 +1,28 @@
 package validation
 
 import (
-	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
+
+	"fecim-lattice-tools/shared/io"
 )
 
-// LoadLiteratureDataset loads a literature dataset from a JSON file
+// LoadLiteratureDataset loads a literature dataset from a JSON file.
+// Uses shared/io for consistent file handling across the codebase.
 func LoadLiteratureDataset(path string) (*LiteratureDataset, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read literature dataset: %w", err)
-	}
-
 	var dataset LiteratureDataset
-	if err := json.Unmarshal(data, &dataset); err != nil {
-		return nil, fmt.Errorf("failed to parse literature dataset: %w", err)
+	if err := io.LoadJSON(path, &dataset); err != nil {
+		return nil, fmt.Errorf("failed to load literature dataset: %w", err)
 	}
-
 	return &dataset, nil
 }
 
-// SaveLiteratureDataset saves a literature dataset to a JSON file
+// SaveLiteratureDataset saves a literature dataset to a JSON file.
+// Uses shared/io for consistent file handling across the codebase.
 func SaveLiteratureDataset(dataset *LiteratureDataset, path string) error {
-	data, err := json.MarshalIndent(dataset, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal dataset: %w", err)
+	if err := io.SaveJSON(path, dataset); err != nil {
+		return fmt.Errorf("failed to save literature dataset: %w", err)
 	}
-
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-		return fmt.Errorf("failed to create directory: %w", err)
-	}
-
-	if err := os.WriteFile(path, data, 0644); err != nil {
-		return fmt.Errorf("failed to write dataset: %w", err)
-	}
-
 	return nil
 }
 
