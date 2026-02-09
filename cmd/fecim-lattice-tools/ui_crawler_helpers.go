@@ -20,7 +20,12 @@ import (
 // findInteractiveElements discovers all interactive UI elements that could trigger overlays or dialogs
 func findInteractiveElements(root fyne.CanvasObject) []interactiveElement {
 	seen := map[uintptr]bool{}
-	var elements []interactiveElement
+	elements := make([]interactiveElement, 0) // Ensure non-nil slice
+	
+	// Return empty slice if root is nil
+	if root == nil {
+		return elements
+	}
 	
 	var walk func(o fyne.CanvasObject)
 	walk = func(o fyne.CanvasObject) {
@@ -141,7 +146,7 @@ type interactiveElement struct {
 
 // findPopupTriggers identifies buttons likely to trigger popups or dialogs
 func findPopupTriggers(elements []interactiveElement) []interactiveElement {
-	var triggers []interactiveElement
+	triggers := make([]interactiveElement, 0) // Ensure non-nil slice
 	
 	// Keywords that commonly indicate popup/dialog triggers
 	triggerKeywords := map[string]bool{
@@ -211,7 +216,7 @@ func findPopupTriggers(elements []interactiveElement) []interactiveElement {
 
 // findCloseElements identifies elements that likely close dialogs or overlays
 func findCloseElements(elements []interactiveElement) []interactiveElement {
-	var closers []interactiveElement
+	closers := make([]interactiveElement, 0) // Ensure non-nil slice
 	
 	closeKeywords := map[string]bool{
 		"close":    true,
@@ -277,7 +282,12 @@ func triggerInteractiveElement(element interactiveElement) bool {
 // findMenus discovers menu-like structures that might contain additional options
 func findMenus(root fyne.CanvasObject) []menuInfo {
 	seen := map[uintptr]bool{}
-	var menus []menuInfo
+	menus := make([]menuInfo, 0) // Ensure non-nil slice
+	
+	// Return empty slice if root is nil
+	if root == nil {
+		return menus
+	}
 	
 	var walk func(o fyne.CanvasObject)
 	walk = func(o fyne.CanvasObject) {
@@ -379,7 +389,7 @@ func exploreMenuOptions(menu menuInfo) []string {
 
 // findToolTips discovers elements that might have tooltips (future implementation)
 func findToolTips(root fyne.CanvasObject) []tooltipInfo {
-	var tips []tooltipInfo
+	tips := make([]tooltipInfo, 0) // Ensure non-nil slice
 	
 	// Placeholder for tooltip discovery
 	// Fyne tooltips are not easily discoverable via reflection
