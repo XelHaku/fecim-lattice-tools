@@ -3,6 +3,7 @@ package widgets
 
 import (
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -158,9 +159,9 @@ func TestTutorialControllerLevelFilter(t *testing.T) {
 	ctrl := NewTutorialController(steps)
 	ctrl.SetLevelFilter(LevelBeginner)
 
-	stepsExecuted := 0
+	var stepsExecuted atomic.Int32
 	ctrl.SetOnStepStart(func(step int, total int, ts TutorialStep) {
-		stepsExecuted++
+		stepsExecuted.Add(1)
 		if ts.DifficultyLevel > LevelBeginner {
 			t.Errorf("Should not execute step with level %v", ts.DifficultyLevel)
 		}
@@ -169,8 +170,8 @@ func TestTutorialControllerLevelFilter(t *testing.T) {
 	ctrl.Start()
 	time.Sleep(200 * time.Millisecond)
 
-	if stepsExecuted != 2 {
-		t.Errorf("Expected 2 beginner steps to execute, got %d", stepsExecuted)
+	if stepsExecuted.Load() != 2 {
+		t.Errorf("Expected 2 beginner steps to execute, got %d", stepsExecuted.Load())
 	}
 }
 
@@ -184,9 +185,9 @@ func TestTutorialControllerFastMode(t *testing.T) {
 	ctrl := NewTutorialController(steps)
 	ctrl.SetFastMode(true)
 
-	stepsExecuted := 0
+	var stepsExecuted atomic.Int32
 	ctrl.SetOnStepStart(func(step int, total int, ts TutorialStep) {
-		stepsExecuted++
+		stepsExecuted.Add(1)
 		if ts.SkippedWhenFast {
 			t.Error("Should not execute skippable step in fast mode")
 		}
@@ -195,8 +196,8 @@ func TestTutorialControllerFastMode(t *testing.T) {
 	ctrl.Start()
 	time.Sleep(200 * time.Millisecond)
 
-	if stepsExecuted != 2 {
-		t.Errorf("Expected 2 required steps to execute, got %d", stepsExecuted)
+	if stepsExecuted.Load() != 2 {
+		t.Errorf("Expected 2 required steps to execute, got %d", stepsExecuted.Load())
 	}
 }
 

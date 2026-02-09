@@ -19,16 +19,28 @@ type StatusBar struct {
 	mu       sync.Mutex
 }
 
+var uiUpdateMu sync.Mutex
+
 // safeUIUpdate executes fn on the UI thread if a Fyne app is running,
 // otherwise executes directly (safe for tests and initialization).
+//
+// NOTE: In the Fyne test driver, fyne.Do() may execute functions in a way that
+// can appear concurrent to the race detector. We serialize UI mutations here to
+// keep tests race-clean.
 func safeUIUpdate(fn func()) {
 	defer func() {
 		if r := recover(); r != nil {
-			// No Fyne app running, execute directly
+			// No Fyne app running, execute directly.
+			uiUpdateMu.Lock()
+			defer uiUpdateMu.Unlock()
 			fn()
 		}
 	}()
-	fyne.Do(fn)
+	fyne.Do(func() {
+		uiUpdateMu.Lock()
+		defer uiUpdateMu.Unlock()
+		fn()
+	})
 }
 
 // NewStatusBar creates a new status bar with an optional prefix.
