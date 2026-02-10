@@ -217,6 +217,15 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			a.setPhysicsEngine(PhysicsPreisach)
 		}
 
+		// Temperature controls only for L-K model
+		if a.tempContainer != nil {
+			if s == PhysicsPreisach.String() {
+				a.tempContainer.Hide()
+			} else {
+				a.tempContainer.Show()
+			}
+		}
+
 		// Update plot markers for the active engine
 		a.mu.RLock()
 		effEc := a.effectiveEc()
@@ -602,6 +611,14 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		tempLabel.SetText(fmt.Sprintf("T: %.0f K (%.0f°C) [%.0f%% Tc]", v, celsius, tcRatio))
 	}
 
+	// Create temperature container (L-K only)
+	a.tempContainer = container.NewVBox(tempLabel, tempSlider)
+
+	// Set initial visibility based on current engine
+	if a.physicsEngine == PhysicsPreisach {
+		a.tempContainer.Hide()
+	}
+
 	// Trail length slider
 	trailSlider := widget.NewSlider(1000, 100000)
 	trailSlider.Step = 1000
@@ -669,8 +686,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			displayFreqLabel,
 		),
 		section("Environment",
-			tempLabel,
-			tempSlider,
+			a.tempContainer,
 			stressLabel,
 			stressSlider,
 		),

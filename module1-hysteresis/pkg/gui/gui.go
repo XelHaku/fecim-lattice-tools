@@ -113,6 +113,7 @@ type App struct {
 	waveform      WaveformType
 	physicsEngine PhysicsEngine
 	physicsSelect *widget.Select
+	tempContainer *fyne.Container // Temperature controls (L-K only)
 
 	// Plot view (presentation-only)
 	plotViewMode   PlotViewMode

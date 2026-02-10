@@ -62,6 +62,9 @@ func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 
 	case fyne.KeyT:
 		// Increase temperature by 25K
+		if a.physicsEngine == PhysicsPreisach {
+			break
+		}
 		a.mu.Lock()
 		currentTemp := a.currentTemperature()
 		newTemp := currentTemp + 25
@@ -80,6 +83,9 @@ func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 
 	case fyne.KeyG:
 		// Decrease temperature by 25K
+		if a.physicsEngine == PhysicsPreisach {
+			break
+		}
 		a.mu.Lock()
 		currentTemp := a.currentTemperature()
 		newTemp := currentTemp - 25
