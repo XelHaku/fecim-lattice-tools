@@ -1856,10 +1856,10 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 		if wrdSettled {
 			wrdDisplayPhase = wrdPhaseResult
 		} else if snapshot.controllerState == controller.StateVerify ||
-			snapshot.controllerState == controller.StateSuccess ||
-			lastPhase == wrdPhaseVerify {
+			snapshot.controllerState == controller.StateSuccess {
 			wrdDisplayPhase = wrdPhaseVerify
 		}
+		// StateApply, StateWait, StateResetting, StateForceReset → PROGRAM (default)
 	}
 
 	if a.phaseIndicator != nil {

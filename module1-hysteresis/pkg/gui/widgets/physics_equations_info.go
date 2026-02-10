@@ -3,11 +3,9 @@ package widgets
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
@@ -368,13 +366,9 @@ func buildPreisachInfoTabsWithDetail(detailCard fyne.CanvasObject) (*container.A
 
 func buildOverviewSection() fyne.CanvasObject {
 	return container.NewVBox(
-		sectionTitle("Master Equation (First-Order L-K / TDGL)"),
-		bodyLabel("We solve polarization dynamics using the Landau-Khalatnikov form:"),
-		equationBlock("ρ dP/dt = −dG/dP"),
-		bodyLabel("With effective field and Landau energy expansion:"),
-		equationBlock("E_eff = E_applied − k_dep · P"),
-		equationBlock("dG/dP = 2αP + 4βP³ + 6γP⁵"),
-		bodyLabel("This widget adds depolarization and series-resistance aggregation used in the headless L-K path."),
+		sectionTitle("Landau-Khalatnikov (First-Order L-K / TDGL)"),
+		bodyLabel("Solves polarization dynamics with an explicit dP/dt viscous term, depolarization, and series-resistance aggregation."),
+		bodyLabel("Tap any coefficient in the SVG above to see its meaning and code mapping."),
 	)
 }
 
@@ -391,27 +385,12 @@ func buildLkNotesSection() fyne.CanvasObject {
 }
 
 func buildPreisachSection() fyne.CanvasObject {
-	section := []fyne.CanvasObject{
+	return container.NewVBox(
 		sectionTitle("Preisach Model (Quasi-Static)"),
-	}
-
-	if img := loadPreisachEquationSVG(); img != nil {
-		img.FillMode = canvas.ImageFillContain
-		img.SetMinSize(fyne.NewSize(900, 140))
-		section = append(section, img)
-	}
-
-	section = append(section,
-		bodyLabel("The quasi-static Preisach model represents polarization as a weighted sum of bistable hysterons:"),
-		equationBlock("P(E) = ∬ μ(α,β) · γ_{α,β}(E) dα dβ"),
-		bodyLabel("Each hysteron switches based on its thresholds and retains memory between them:"),
-		equationBlock("γ_{α,β}(E) = +1 if E ≥ α; −1 if E ≤ β; hold if β < E < α"),
-		bodyLabel("Quasi-static means rate-independent: there is no explicit dP/dt term and switching depends on input history."),
-		bodyLabel("If you sweep faster or slower but preserve the same ordering of field values, the predicted loop is unchanged."),
-		bodyLabel("Dynamics like viscosity, switching delay, and RC effects are intentionally omitted in this model."),
+		bodyLabel("Weighted sum of bistable hysterons — each switches at thresholds (α, β) and retains memory between them."),
+		bodyLabel("Quasi-static: rate-independent, no explicit dP/dt term. Output depends only on input history ordering."),
+		bodyLabel("Dynamics like viscosity, switching delay, and RC effects are intentionally omitted."),
 	)
-
-	return container.NewVBox(section...)
 }
 
 func buildPreisachAlphaSection() fyne.CanvasObject {
@@ -447,13 +426,6 @@ func buildPreisachDynamicsSection() fyne.CanvasObject {
 	)
 }
 
-func loadPreisachEquationSVG() *canvas.Image {
-	const svgPath = "shared/assets/equations/preisach.svg"
-	if _, err := os.Stat(svgPath); err != nil {
-		return nil
-	}
-	return loadEquationSVG(svgPath)
-}
 
 func buildAlphaSection() fyne.CanvasObject {
 	return container.NewVBox(

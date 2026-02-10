@@ -216,7 +216,7 @@ func buildLkEquationTab(parent fyne.Window) fyne.CanvasObject {
 
 	top := container.NewBorder(title, nil, nil, nil, eqScroll)
 	split := container.NewVSplit(top, infoTabs)
-	split.Offset = 0.45
+	split.Offset = 0.60
 	return split
 }
 
@@ -243,7 +243,7 @@ func buildPreisachEquationTab(parent fyne.Window) fyne.CanvasObject {
 
 	top := container.NewBorder(title, nil, nil, nil, eqScroll)
 	split := container.NewVSplit(top, infoTabs)
-	split.Offset = 0.45
+	split.Offset = 0.60
 	return split
 }
 
