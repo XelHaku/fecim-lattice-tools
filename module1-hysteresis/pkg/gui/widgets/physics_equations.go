@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -28,6 +29,9 @@ var (
 	equationSVGCache   = map[string]*equationSVGCacheEntry{}
 	equationPerfEnabled = os.Getenv("FECIM_EQUATION_PERF") == "1"
 
+	equationBaseDirOnce sync.Once
+	equationBaseDir     string
+
 	lkHotspotsOnce sync.Once
 	cachedLkSpots  []hotspotDef
 	cachedLkSize   fyne.Size
@@ -37,6 +41,46 @@ type equationSVGCacheEntry struct {
 	once sync.Once
 	res  fyne.Resource
 	ok   bool
+}
+
+func equationRepoBaseDir() string {
+	equationBaseDirOnce.Do(func() {
+		// Resolve paths regardless of `go test` package working directory.
+		// We search upwards for go.mod, then treat that directory as repo root.
+		wd, err := os.Getwd()
+		if err != nil {
+			equationBaseDir = ""
+			return
+		}
+		cur := wd
+		for {
+			if _, err := os.Stat(filepath.Join(cur, "go.mod")); err == nil {
+				equationBaseDir = cur
+				return
+			}
+			parent := filepath.Dir(cur)
+			if parent == cur {
+				break
+			}
+			cur = parent
+		}
+		// Fallback: if go.mod is not found, do not rewrite paths.
+		equationBaseDir = ""
+	})
+	return equationBaseDir
+}
+
+func resolveEquationPath(rel string) string {
+	// Keep absolute paths as-is.
+	if filepath.IsAbs(rel) {
+		return rel
+	}
+	// Normalize "./foo".
+	rel = strings.TrimPrefix(rel, "./")
+	if base := equationRepoBaseDir(); base != "" {
+		return filepath.Join(base, rel)
+	}
+	return rel
 }
 
 // TermChip is a small hoverable label that shows a tooltip for a coefficient.
@@ -577,7 +621,7 @@ func loadEquationSVGResource(svgPath string) (fyne.Resource, bool) {
 
 	entry.once.Do(func() {
 		start := time.Now()
-		data, err := os.ReadFile(svgPath)
+		data, err := os.ReadFile(resolveEquationPath(svgPath))
 		if err != nil {
 			logEquationPerf("equation svg load failed path=%s err=%v", svgPath, err)
 			return
@@ -619,7 +663,7 @@ func loadLkHotspots() ([]hotspotDef, fyne.Size) {
 	lkHotspotsOnce.Do(func() {
 		defaultHotspots, defaultSize := defaultLkHotspots()
 		start := time.Now()
-		data, err := os.ReadFile(lkEquationHotspotPath)
+		data, err := os.ReadFile(resolveEquationPath(lkEquationHotspotPath))
 		if err != nil {
 			logEquationPerf("equation hotspots load failed path=%s err=%v", lkEquationHotspotPath, err)
 			cachedLkSpots = defaultHotspots
