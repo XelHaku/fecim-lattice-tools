@@ -116,6 +116,7 @@ func (a *App) setPhysicsEngine(engine PhysicsEngine) {
 		}
 		if a.preisach != nil {
 			a.preisach.SetTemperature(300) // Fixed room temp for Preisach
+			a.preisach.SetStress(1.0)      // Fixed default stress for Preisach
 			a.preisach.Reset()
 			a.polarization = a.preisach.Update(a.electricField)
 			a.normalizedP = a.preisach.NormalizedPolarization()

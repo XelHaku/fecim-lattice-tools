@@ -217,12 +217,19 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			a.setPhysicsEngine(PhysicsPreisach)
 		}
 
-		// Temperature controls only for L-K model
+		// Temperature and stress controls only for L-K model
 		if a.tempContainer != nil {
 			if s == PhysicsPreisach.String() {
 				a.tempContainer.Hide()
 			} else {
 				a.tempContainer.Show()
+			}
+		}
+		if a.stressContainer != nil {
+			if s == PhysicsPreisach.String() {
+				a.stressContainer.Hide()
+			} else {
+				a.stressContainer.Show()
 			}
 		}
 
@@ -614,9 +621,13 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	// Create temperature container (L-K only)
 	a.tempContainer = container.NewVBox(tempLabel, tempSlider)
 
+	// Create stress container (L-K only)
+	a.stressContainer = container.NewVBox(stressLabel, stressSlider)
+
 	// Set initial visibility based on current engine
 	if a.physicsEngine == PhysicsPreisach {
 		a.tempContainer.Hide()
+		a.stressContainer.Hide()
 	}
 
 	// Trail length slider
@@ -687,8 +698,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		),
 		section("Environment",
 			a.tempContainer,
-			stressLabel,
-			stressSlider,
+			a.stressContainer,
 		),
 		section("Trail",
 			trailLabel,

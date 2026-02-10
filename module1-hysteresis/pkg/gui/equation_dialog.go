@@ -22,7 +22,11 @@ func (a *App) showPhysicsEquationsDialog() {
 		}
 	}
 
-	content := widgets.NewPhysicsEquationsWidget(a.mainWindow)
+	initialTab := 0 // L-K
+	if a.physicsEngine == PhysicsPreisach {
+		initialTab = 1 // Preisach
+	}
+	content := widgets.NewPhysicsEquationsWidget(a.mainWindow, initialTab)
 	canvasSize := a.mainWindow.Canvas().Size()
 	width := canvasSize.Width * 0.92
 	height := canvasSize.Height * 0.95

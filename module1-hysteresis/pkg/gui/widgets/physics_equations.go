@@ -134,7 +134,7 @@ func swapEquationSlotContent(slot *fyne.Container, bar *widget.ProgressBarInfini
 // NewPhysicsEquationsWidget builds the equation display with tooltips.
 // The first (visible) tab is built synchronously; the other two are
 // constructed lazily on first selection so the dialog opens fast.
-func NewPhysicsEquationsWidget(parent fyne.Window) fyne.CanvasObject {
+func NewPhysicsEquationsWidget(parent fyne.Window, initialTab ...int) fyne.CanvasObject {
 	type lazyTab struct {
 		slot    *fyne.Container
 		bar     *widget.ProgressBarInfinite
@@ -165,6 +165,10 @@ func NewPhysicsEquationsWidget(parent fyne.Window) fyne.CanvasObject {
 		container.NewTabItem("ISPP / WRD", ispp.slot),
 	)
 	tabs.SetTabLocation(container.TabLocationTop)
+
+	if len(initialTab) > 0 && initialTab[0] > 0 && initialTab[0] < len(tabs.Items) {
+		tabs.SelectIndex(initialTab[0])
+	}
 
 	tabs.OnSelected = func(item *container.TabItem) {
 		idx := -1
@@ -386,80 +390,49 @@ func buildLkEquationTextPanel(selectTerm func(string, string), withCaption bool)
 func buildEquationDiagramWithZoom(parent fyne.Window, stack fyne.CanvasObject, baseSize fyne.Size, aspectFallback float32) fyne.CanvasObject {
 	// baseSize is the "natural" SVG size (used for aspect ratio). When unavailable,
 	// fall back to aspectFallback = height/width.
-	zoom := float32(1.0)
 
-	// update sizes based on window width; on narrow screens use more width.
-	update := func() {
-		canvasW := float32(0)
-		if parent != nil {
-			canvasW = parent.Canvas().Size().Width
-		}
-		if canvasW <= 0 {
-			canvasW = 900
-		}
-		frac := float32(0.62)
-		if canvasW < 620 {
-			frac = 0.92
-		}
-		targetW := canvasW * frac * zoom
-		if targetW < 260 {
-			targetW = 260
-		}
-		var targetH float32
-		if baseSize.Width > 0 && baseSize.Height > 0 {
-			s := targetW / baseSize.Width
-			targetH = baseSize.Height * s
-		} else if aspectFallback > 0 {
-			targetH = targetW * aspectFallback
-		} else {
-			targetH = 180
-		}
+	// Size based on window width; on narrow screens use more width.
+	canvasW := float32(0)
+	if parent != nil {
+		canvasW = parent.Canvas().Size().Width
+	}
+	if canvasW <= 0 {
+		canvasW = 900
+	}
+	frac := float32(0.62)
+	if canvasW < 620 {
+		frac = 0.92
+	}
+	targetW := canvasW * frac
+	if targetW < 260 {
+		targetW = 260
+	}
+	var targetH float32
+	if baseSize.Width > 0 && baseSize.Height > 0 {
+		s := targetW / baseSize.Width
+		targetH = baseSize.Height * s
+	} else if aspectFallback > 0 {
+		targetH = targetW * aspectFallback
+	} else {
+		targetH = 180
+	}
 
-		// Best-effort: if the stack contains a canvas.Image as the first child,
-		// set its min size. (LK uses this for correct contain sizing.)
-		if c, ok := stack.(*fyne.Container); ok {
-			if len(c.Objects) > 0 {
-				if img, ok := c.Objects[0].(*canvas.Image); ok {
-					img.SetMinSize(fyne.NewSize(targetW, targetH))
-				}
+	// Best-effort: if the stack contains a canvas.Image as the first child,
+	// set its min size for correct contain sizing.
+	if c, ok := stack.(*fyne.Container); ok {
+		if len(c.Objects) > 0 {
+			if img, ok := c.Objects[0].(*canvas.Image); ok {
+				img.SetMinSize(fyne.NewSize(targetW, targetH))
 			}
 		}
 	}
-
-	slider := widget.NewSlider(0.7, 2.2)
-	slider.Step = 0.05
-	slider.Value = float64(zoom)
-	slider.OnChanged = func(v float64) {
-		zoom = float32(v)
-		update()
-	}
-
-	minusBtn := widget.NewButton("-", func() {
-		z := zoom - 0.1
-		if z < 0.7 {
-			z = 0.7
-		}
-		slider.SetValue(float64(z))
-	})
-	plusBtn := widget.NewButton("+", func() {
-		z := zoom + 0.1
-		if z > 2.2 {
-			z = 2.2
-		}
-		slider.SetValue(float64(z))
-	})
-
-	zoomLabel := widget.NewLabel("Zoom")
-	zoomLabel.TextStyle = fyne.TextStyle{Bold: true}
-	controls := container.NewHBox(zoomLabel, minusBtn, slider, plusBtn)
 
 	bg := canvas.NewRectangle(theme.InputBackgroundColor())
 	bg.StrokeColor = theme.ShadowColor()
 	bg.StrokeWidth = 1
 	framed := container.NewPadded(container.NewStack(bg, stack))
 
-	update()
-	return container.NewVBox(controls, framed)
+	return framed
 }
 
 func buildLkEquationImagePanel(parent fyne.Window, selectTerm func(string, string), res fyne.Resource, hotspots []hotspotDef, minSize fyne.Size) fyne.CanvasObject {
