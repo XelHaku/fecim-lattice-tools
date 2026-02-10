@@ -109,11 +109,11 @@ func termDetails() map[string]termDetail {
 	return map[string]termDetail{
 		"rho_eff_main": {
 			ID:           "rho_eff_main",
-			Title:        "rho_eff (effective viscosity)",
-			Equation:     "rho_eff dP/dt",
+			Title:        "ρ_eff (effective viscosity)",
+			Equation:     "ρ_eff · dP/dt",
 			Meaning:      "Effective damping that folds intrinsic viscosity and RC delay into a single term.",
-			Units:        "Ohm*m (effective viscosity term in the L-K equation).",
-			DefaultValue: fmt.Sprintf("rho_eff = rho + (R_series*A/d) with rho=%.2f Ohm*m, R_series=%.0f Ohm, A=%.0f nm^2, d=%.0f nm.", mat.RhoViscosity, mat.SeriesResistanceOhm, mat.Area*1e18, mat.Thickness*1e9),
+			Units:        "Ω·m (effective viscosity term in the L-K equation).",
+			DefaultValue: fmt.Sprintf("ρ_eff = ρ + (R_series·A/d) with ρ=%.2f Ω·m, R_series=%.0f Ω, A=%.0f nm², d=%.0f nm.", mat.RhoViscosity, mat.SeriesResistanceOhm, mat.Area*1e18, mat.Thickness*1e9),
 			CodeRef:      "shared/physics/landau.go (UseEffectiveViscosity, effectiveRho)",
 			References: []string{
 				"Khalatnikov viscous dynamics (L-K form)",
@@ -135,7 +135,7 @@ func termDetails() map[string]termDetail {
 		"k_dep": {
 			ID:           "k_dep",
 			Title:        "k_dep (depolarization factor)",
-			Equation:     "E_dep = k_dep * P",
+			Equation:     "E_dep = k_dep · P",
 			Meaning:      "Depolarization field from interfacial layers; adds slant for analog multi-level states.",
 			Units:        "V*m/C",
 			DefaultValue: fmt.Sprintf("k_dep = %.2e V*m/C (Golden Set I).", mat.K_dep),
@@ -146,37 +146,37 @@ func termDetails() map[string]termDetail {
 		},
 		"alpha": {
 			ID:           "alpha",
-			Title:        "alpha (dynamic stiffness)",
-			Equation:     "alpha(T,sigma) = (T-T_C)/(2epsilon0C) - 2 Q12 sigma",
+			Title:        "α (dynamic stiffness)",
+			Equation:     "α(T,σ) = (T−T_C)/(2ε₀C) − 2Q₁₂σ",
 			Meaning:      "Temperature + stress dependent curvature of the Landau free energy wells.",
 			Units:        "Effective field contribution (V/m).",
-			DefaultValue: fmt.Sprintf("Derived from T_C=%.0f K, C=%.1e K, Q12=%.3f m^4/C^2, sigma=%.1f GPa.", mat.CurieTemp, mat.CurieConst, mat.Q12, mat.StressGPa),
+			DefaultValue: fmt.Sprintf("Derived from T_C=%.0f K, C=%.1e K, Q₁₂=%.3f m⁴/C², σ=%.1f GPa.", mat.CurieTemp, mat.CurieConst, mat.Q12, mat.StressGPa),
 			CodeRef:      "shared/physics/landau.go (UpdateParams)",
 			References: []string{
-				"Curie-Weiss law (alpha temperature dependence)",
-				"Electrostriction coupling (Q12 stress term)",
+				"Curie-Weiss law (α temperature dependence)",
+				"Electrostriction coupling (Q₁₂ stress term)",
 			},
 		},
 		"alpha_def": {
 			ID:           "alpha_def",
-			Title:        "alpha(T,sigma) definition",
-			Equation:     "alpha(T,sigma) = (T - T_C)/(2 epsilon0 C) - 2 Q12 sigma",
+			Title:        "α(T,σ) definition",
+			Equation:     "α(T,σ) = (T − T_C)/(2ε₀C) − 2Q₁₂σ",
 			Meaning:      "Explicit temperature + stress form of the Landau stiffness coefficient.",
 			Units:        "Effective field contribution (V/m).",
-			DefaultValue: fmt.Sprintf("Derived from T_C=%.0f K, C=%.1e K, Q12=%.3f m^4/C^2, sigma=%.1f GPa.", mat.CurieTemp, mat.CurieConst, mat.Q12, mat.StressGPa),
+			DefaultValue: fmt.Sprintf("Derived from T_C=%.0f K, C=%.1e K, Q₁₂=%.3f m⁴/C², σ=%.1f GPa.", mat.CurieTemp, mat.CurieConst, mat.Q12, mat.StressGPa),
 			CodeRef:      "shared/physics/landau.go (UpdateParams)",
 			References: []string{
-				"Curie-Weiss law (alpha temperature dependence)",
-				"Electrostriction coupling (Q12 stress term)",
+				"Curie-Weiss law (α temperature dependence)",
+				"Electrostriction coupling (Q₁₂ stress term)",
 			},
 		},
 		"beta": {
 			ID:           "beta",
-			Title:        "beta (first-order nonlinearity)",
-			Equation:     "4betaP^3",
-			Meaning:      "Negative beta creates the first-order switching barrier in HZO.",
-			Units:        "beta in J*m^5/C^4 (contributes an effective field term).",
-			DefaultValue: fmt.Sprintf("beta = %.3e J*m^5/C^4 (Golden Set I).", mat.BetaLandau),
+			Title:        "β (first-order nonlinearity)",
+			Equation:     "4βP³",
+			Meaning:      "Negative β creates the first-order switching barrier in HZO.",
+			Units:        "β in J·m⁵/C⁴ (contributes an effective field term).",
+			DefaultValue: fmt.Sprintf("β = %.3e J·m⁵/C⁴ (Golden Set I).", mat.BetaLandau),
 			CodeRef:      "shared/physics/landau.go (dPdT, Beta)",
 			References: []string{
 				"Landau-Devonshire free energy expansion",
@@ -184,11 +184,11 @@ func termDetails() map[string]termDetail {
 		},
 		"gamma": {
 			ID:           "gamma",
-			Title:        "gamma (sixth-order stabilizer)",
-			Equation:     "6gammaP^5",
-			Meaning:      "Positive gamma keeps the energy bounded at high polarization.",
-			Units:        "gamma in J*m^9/C^6 (contributes an effective field term).",
-			DefaultValue: fmt.Sprintf("gamma = %.3e J*m^9/C^6 (Golden Set I).", mat.GammaLandau),
+			Title:        "γ (sixth-order stabilizer)",
+			Equation:     "6γP⁵",
+			Meaning:      "Positive γ keeps the energy bounded at high polarization.",
+			Units:        "γ in J·m⁹/C⁶ (contributes an effective field term).",
+			DefaultValue: fmt.Sprintf("γ = %.3e J·m⁹/C⁶ (Golden Set I).", mat.GammaLandau),
 			CodeRef:      "shared/physics/landau.go (dPdT, Gamma)",
 			References: []string{
 				"Landau-Devonshire free energy expansion",
@@ -197,10 +197,10 @@ func termDetails() map[string]termDetail {
 		"lk_terms": {
 			ID:           "lk_terms",
 			Title:        "Landau-Khalatnikov nonlinearity",
-			Equation:     "2alphaP + 4betaP^3 + 6gammaP^5",
+			Equation:     "2αP + 4βP³ + 6γP⁵",
 			Meaning:      "Nonlinear energy gradient that shapes the ferroelectric double-well potential.",
 			Units:        "Effective field contribution (V/m).",
-			DefaultValue: "Computed each step from alpha(T,sigma), beta, and gamma.",
+			DefaultValue: "Computed each step from α(T,σ), β, and γ.",
 			CodeRef:      "shared/physics/landau.go (dPdT, UpdateParams)",
 			References: []string{
 				"Landau-Devonshire free energy expansion",
@@ -209,8 +209,8 @@ func termDetails() map[string]termDetail {
 		},
 		"noise": {
 			ID:           "noise",
-			Title:        "xi(t) (stochastic noise)",
-			Equation:     "xi(t)",
+			Title:        "ξ(t) (stochastic noise)",
+			Equation:     "ξ(t)",
 			Meaning:      "Optional Langevin noise for thermal variability and cycle-to-cycle spread.",
 			Units:        "Effective field contribution (V/m).",
 			DefaultValue: "Disabled by default (EnableNoise=false).",
@@ -221,11 +221,11 @@ func termDetails() map[string]termDetail {
 		},
 		"rho_eff_def": {
 			ID:           "rho_eff_def",
-			Title:        "rho_eff definition",
-			Equation:     "rho_eff = rho + (R_series*A/d)",
+			Title:        "ρ_eff definition",
+			Equation:     "ρ_eff = ρ + (R_series·A/d)",
 			Meaning:      "Aggregates series resistance delay into effective viscosity.",
-			Units:        "Ohm*m",
-			DefaultValue: fmt.Sprintf("rho=%.2f Ohm*m, R_series=%.0f Ohm, A=%.0f nm^2, d=%.0f nm.", mat.RhoViscosity, mat.SeriesResistanceOhm, mat.Area*1e18, mat.Thickness*1e9),
+			Units:        "Ω·m",
+			DefaultValue: fmt.Sprintf("ρ=%.2f Ω·m, R_series=%.0f Ω, A=%.0f nm², d=%.0f nm.", mat.RhoViscosity, mat.SeriesResistanceOhm, mat.Area*1e18, mat.Thickness*1e9),
 			CodeRef:      "shared/physics/landau.go (effectiveRho)",
 			References: []string{
 				"Khalatnikov viscous dynamics (L-K form)",
@@ -233,11 +233,11 @@ func termDetails() map[string]termDetail {
 		},
 		"rho": {
 			ID:           "rho",
-			Title:        "rho (viscosity / damping)",
-			Equation:     "rho",
+			Title:        "ρ (viscosity / damping)",
+			Equation:     "ρ",
 			Meaning:      "Intrinsic damping in polarization dynamics.",
-			Units:        "Ohm*m",
-			DefaultValue: fmt.Sprintf("rho = %.2f Ohm*m (Golden Set I).", mat.RhoViscosity),
+			Units:        "Ω·m",
+			DefaultValue: fmt.Sprintf("ρ = %.2f Ω·m (Golden Set I).", mat.RhoViscosity),
 			CodeRef:      "shared/physics/landau.go (Rho)",
 			References: []string{
 				"Khalatnikov viscous dynamics (L-K form)",
@@ -246,10 +246,10 @@ func termDetails() map[string]termDetail {
 		"r_series": {
 			ID:           "r_series",
 			Title:        "R_series (series resistance)",
-			Equation:     "R_series*A/d",
+			Equation:     "R_series·A/d",
 			Meaning:      "Series resistance term folded into effective viscosity.",
-			Units:        "Ohm",
-			DefaultValue: fmt.Sprintf("R_series = %.0f Ohm.", mat.SeriesResistanceOhm),
+			Units:        "Ω",
+			DefaultValue: fmt.Sprintf("R_series = %.0f Ω.", mat.SeriesResistanceOhm),
 			CodeRef:      "shared/physics/landau.go (SeriesResistance)",
 			References: []string{
 				"RC delay aggregation (effective viscosity approximation)",
@@ -257,9 +257,9 @@ func termDetails() map[string]termDetail {
 		},
 		"preisach_mu": {
 			ID:           "preisach_mu",
-			Title:        "mu(alpha,beta) (hysteron density)",
-			Equation:     "mu(alpha,beta)",
-			Meaning:      "Weighting function that defines how many hysterons sit at each (alpha,beta) threshold pair.",
+			Title:        "μ(α,β) (hysteron density)",
+			Equation:     "μ(α,β)",
+			Meaning:      "Weighting function that defines how many hysterons sit at each (α,β) threshold pair.",
 			Units:        "Model density (normalized weight).",
 			DefaultValue: "Implemented via the Everett function (tanh-based distribution in the default model).",
 			CodeRef:      "module1-hysteresis/pkg/ferroelectric/preisach.go (TanhEverett.Calculate)",
@@ -269,11 +269,11 @@ func termDetails() map[string]termDetail {
 		},
 		"preisach_gamma": {
 			ID:           "preisach_gamma",
-			Title:        "gamma_{alpha,beta}(E) (hysteron state)",
-			Equation:     "gamma_{alpha,beta}(E)",
+			Title:        "γ_{α,β}(E) (hysteron state)",
+			Equation:     "γ_{α,β}(E)",
 			Meaning:      "Bistable relay output for a single hysteron (+1/-1) with memory between thresholds.",
 			Units:        "Unitless (+1 / -1).",
-			DefaultValue: "Switches at alpha or beta, otherwise holds last state.",
+			DefaultValue: "Switches at α or β, otherwise holds last state.",
 			CodeRef:      "shared/physics/preisach.go (Update, ComputePolarization)",
 			References: []string{
 				"Preisach relay operator (memory element)",
@@ -281,26 +281,26 @@ func termDetails() map[string]termDetail {
 		},
 		"preisach_alpha": {
 			ID:           "preisach_alpha",
-			Title:        "alpha (upper switching threshold)",
-			Equation:     "alpha",
+			Title:        "α (upper switching threshold)",
+			Equation:     "α",
 			Meaning:      "Upper threshold where a hysteron switches to +1 on an increasing field.",
 			Units:        "V/m",
 			DefaultValue: "Distributed across the Preisach plane; not a single scalar.",
 			CodeRef:      "shared/physics/preisach.go (TurningPoint, Update)",
 			References: []string{
-				"Preisach plane (alpha, beta thresholds)",
+				"Preisach plane (α, β thresholds)",
 			},
 		},
 		"preisach_beta": {
 			ID:           "preisach_beta",
-			Title:        "beta (lower switching threshold)",
-			Equation:     "beta",
+			Title:        "β (lower switching threshold)",
+			Equation:     "β",
 			Meaning:      "Lower threshold where a hysteron switches to -1 on a decreasing field.",
 			Units:        "V/m",
 			DefaultValue: "Distributed across the Preisach plane; not a single scalar.",
 			CodeRef:      "shared/physics/preisach.go (TurningPoint, Update)",
 			References: []string{
-				"Preisach plane (alpha, beta thresholds)",
+				"Preisach plane (α, β thresholds)",
 			},
 		},
 		"preisach_history": {
@@ -324,7 +324,7 @@ func buildLkInfoTabsWithDetail(detailCard fyne.CanvasObject) (*container.AppTabs
 		termTab,
 		container.NewTabItem("Overview", scrollSection(buildOverviewSection())),
 		container.NewTabItem("Model Notes", scrollSection(buildLkNotesSection())),
-		container.NewTabItem("alpha(T,sigma)", scrollSection(buildAlphaSection())),
+		container.NewTabItem("α(T,σ)", scrollSection(buildAlphaSection())),
 		container.NewTabItem("Parameters", scrollSection(buildGoldenSetSection())),
 		container.NewTabItem("Materials", scrollSection(buildMaterialDefaultsSection())),
 		container.NewTabItem("Dynamics", scrollSection(buildDynamicsSection())),
@@ -355,7 +355,7 @@ func buildPreisachInfoTabsWithDetail(detailCard fyne.CanvasObject) (*container.A
 		termTab,
 		container.NewTabItem("Overview", scrollSection(buildPreisachSection())),
 		container.NewTabItem("Model Notes", scrollSection(buildPreisachNotesSection())),
-		container.NewTabItem("alpha(T,sigma)", scrollSection(buildPreisachAlphaSection())),
+		container.NewTabItem("α(T,σ)", scrollSection(buildPreisachAlphaSection())),
 		container.NewTabItem("Parameters", scrollSection(buildPreisachParametersSection())),
 		container.NewTabItem("Materials", scrollSection(buildMaterialDefaultsSection())),
 		container.NewTabItem("Dynamics", scrollSection(buildPreisachDynamicsSection())),
@@ -370,10 +370,10 @@ func buildOverviewSection() fyne.CanvasObject {
 	return container.NewVBox(
 		sectionTitle("Master Equation (First-Order L-K / TDGL)"),
 		bodyLabel("We solve polarization dynamics using the Landau-Khalatnikov form:"),
-		equationBlock("rho dP/dt = -dG/dP"),
+		equationBlock("ρ dP/dt = −dG/dP"),
 		bodyLabel("With effective field and Landau energy expansion:"),
-		equationBlock("E_eff = E_applied - k_dep P"),
-		equationBlock("dG/dP = 2alphaP + 4betaP^3 + 6gammaP^5"),
+		equationBlock("E_eff = E_applied − k_dep · P"),
+		equationBlock("dG/dP = 2αP + 4βP³ + 6γP⁵"),
 		bodyLabel("This widget adds depolarization and series-resistance aggregation used in the headless L-K path."),
 	)
 }
@@ -403,9 +403,9 @@ func buildPreisachSection() fyne.CanvasObject {
 
 	section = append(section,
 		bodyLabel("The quasi-static Preisach model represents polarization as a weighted sum of bistable hysterons:"),
-		equationBlock("P(E) = double_integral mu(alpha,beta) * gamma_{alpha,beta}(E) d alpha d beta"),
+		equationBlock("P(E) = ∬ μ(α,β) · γ_{α,β}(E) dα dβ"),
 		bodyLabel("Each hysteron switches based on its thresholds and retains memory between them:"),
-		equationBlock("gamma_{alpha,beta}(E) = +1 if E >= alpha; -1 if E <= beta; hold if beta < E < alpha"),
+		equationBlock("γ_{α,β}(E) = +1 if E ≥ α; −1 if E ≤ β; hold if β < E < α"),
 		bodyLabel("Quasi-static means rate-independent: there is no explicit dP/dt term and switching depends on input history."),
 		bodyLabel("If you sweep faster or slower but preserve the same ordering of field values, the predicted loop is unchanged."),
 		bodyLabel("Dynamics like viscosity, switching delay, and RC effects are intentionally omitted in this model."),
@@ -416,8 +416,8 @@ func buildPreisachSection() fyne.CanvasObject {
 
 func buildPreisachAlphaSection() fyne.CanvasObject {
 	return container.NewVBox(
-		sectionTitle("alpha(T,sigma) in Preisach"),
-		bodyLabel("The Preisach model here does not use the L-K alpha(T,sigma) stiffness term."),
+		sectionTitle("α(T,σ) in Preisach"),
+		bodyLabel("The Preisach model here does not use the L-K α(T,σ) stiffness term."),
 		bodyLabel("Temperature and stress are handled by scaling the effective coercive field Ec and saturation polarization Ps."),
 		bodyLabel("See the Parameters tab for how Ec and Ps are updated in the Everett distribution."),
 	)
@@ -457,22 +457,22 @@ func loadPreisachEquationSVG() *canvas.Image {
 
 func buildAlphaSection() fyne.CanvasObject {
 	return container.NewVBox(
-		sectionTitle("Unified alpha(T,sigma) Coefficient"),
-		equationBlock("alpha(T,sigma) = (T - T_C) / (2 epsilon0 C) - 2 Q12 sigma"),
-		bodyLabel("As temperature approaches T_C, alpha -> 0 and the wells flatten (more volatile)."),
-		bodyLabel("Stress shifts alpha via electrostriction; tensile vs compressive sign depends on Q12."),
+		sectionTitle("Unified α(T,σ) Coefficient"),
+		equationBlock("α(T,σ) = (T − T_C) / (2ε₀C) − 2Q₁₂σ"),
+		bodyLabel("As temperature approaches T_C, α → 0 and the wells flatten (more volatile)."),
+		bodyLabel("Stress shifts α via electrostriction; tensile vs compressive sign depends on Q₁₂."),
 	)
 }
 
 func buildGoldenSetSection() fyne.CanvasObject {
 	rows := [][]string{
 		{"Parameter", "Value", "Units", "Role"},
-		{"beta", "-2.160e8", "J*m^5/C^4", "First-order barrier (negative)"},
-		{"gamma", "1.653e10", "J*m^9/C^6", "Stability (positive)"},
-		{"rho", "0.05", "Ohm*m", "Viscosity / damping"},
-		{"Q12", "-0.026", "m^4/C^2", "Electrostriction"},
+		{"β", "-2.160e8", "J·m⁵/C⁴", "First-order barrier (negative)"},
+		{"γ", "1.653e10", "J·m⁹/C⁶", "Stability (positive)"},
+		{"ρ", "0.05", "Ω·m", "Viscosity / damping"},
+		{"Q₁₂", "-0.026", "m⁴/C²", "Electrostriction"},
 		{"T_C", "723", "K", "Curie temperature"},
-		{"k_dep", "2.5e8", "V*m/C", "Depolarization"},
+		{"k_dep", "2.5e8", "V·m/C", "Depolarization"},
 	}
 	return container.NewVBox(
 		sectionTitle("Golden Parameter Set (10 nm HZO, Set I)"),
@@ -487,8 +487,8 @@ func buildMaterialDefaultsSection() fyne.CanvasObject {
 	switchEnergy := mat.SwitchingEnergy()
 	rows := [][]string{
 		{"Parameter", "Value"},
-		{"Pr (remanent polarization)", fmt.Sprintf("%.2f C/m^2 (%.0f uC/cm^2)", mat.Pr, mat.Pr*100)},
-		{"Ps (saturation polarization)", fmt.Sprintf("%.2f C/m^2 (%.0f uC/cm^2)", mat.Ps, mat.Ps*100)},
+		{"Pr (remanent polarization)", fmt.Sprintf("%.2f C/m² (%.0f uC/cm²)", mat.Pr, mat.Pr*100)},
+		{"Ps (saturation polarization)", fmt.Sprintf("%.2f C/m² (%.0f uC/cm²)", mat.Ps, mat.Ps*100)},
 		{"Ec (coercive field)", fmt.Sprintf("%.2f MV/cm", mat.Ec/1e8)},
 		{"Vc (coercive voltage)", fmt.Sprintf("%.2f V (Ec * t)", coerciveV)},
 		{"Thickness (t)", fmt.Sprintf("%.0f nm", mat.Thickness*1e9)},
@@ -504,18 +504,18 @@ func buildMaterialDefaultsSection() fyne.CanvasObject {
 		{"Epsilon (relative)", fmt.Sprintf("%.0f", mat.Epsilon)},
 		{"EpsilonLF (low freq)", fmt.Sprintf("%.0f", mat.EpsilonLF)},
 		{"LossAngle (tan delta)", fmt.Sprintf("%.3f", mat.LossAngle)},
-		{"BetaLandau", fmt.Sprintf("%.3e J*m^5/C^4", mat.BetaLandau)},
-		{"GammaLandau", fmt.Sprintf("%.3e J*m^9/C^6", mat.GammaLandau)},
-		{"RhoViscosity", fmt.Sprintf("%.2f Ohm*m", mat.RhoViscosity)},
-		{"SeriesResistance", fmt.Sprintf("%.0f Ohm", mat.SeriesResistanceOhm)},
-		{"K_dep", fmt.Sprintf("%.2e V*m/C", mat.K_dep)},
-		{"Q11", fmt.Sprintf("%.3f m^4/C^2", mat.Q11)},
-		{"Q12", fmt.Sprintf("%.3f m^4/C^2", mat.Q12)},
+		{"BetaLandau", fmt.Sprintf("%.3e J·m⁵/C⁴", mat.BetaLandau)},
+		{"GammaLandau", fmt.Sprintf("%.3e J·m⁹/C⁶", mat.GammaLandau)},
+		{"RhoViscosity", fmt.Sprintf("%.2f Ω·m", mat.RhoViscosity)},
+		{"SeriesResistance", fmt.Sprintf("%.0f Ω", mat.SeriesResistanceOhm)},
+		{"K_dep", fmt.Sprintf("%.2e V·m/C", mat.K_dep)},
+		{"Q11", fmt.Sprintf("%.3f m⁴/C²", mat.Q11)},
+		{"Q12", fmt.Sprintf("%.3f m⁴/C²", mat.Q12)},
 		{"Stress", fmt.Sprintf("%.1f GPa", mat.StressGPa)},
 		{"CurieTemp", fmt.Sprintf("%.0f K", mat.CurieTemp)},
 		{"CurieConst", fmt.Sprintf("%.1e K", mat.CurieConst)},
 		{"TempCoeffEc", fmt.Sprintf("%.2e V/m/K", mat.TempCoeffEc)},
-		{"TempCoeffPr", fmt.Sprintf("%.2e C/m^2/K", mat.TempCoeffPr)},
+		{"TempCoeffPr", fmt.Sprintf("%.2e C/m²/K", mat.TempCoeffPr)},
 		{"EnduranceCycles", fmt.Sprintf("%.1e cycles", mat.EnduranceCycles)},
 		{"RetentionTime", fmt.Sprintf("%.1e s", mat.RetentionTime)},
 		{"ImprintField", fmt.Sprintf("%.2e V/m", mat.ImrintField)},
@@ -534,7 +534,7 @@ func buildDynamicsSection() fyne.CanvasObject {
 	return container.NewVBox(
 		sectionTitle("Numerical Solver & Write Loop"),
 		bodyLabel("RK4 integration is used to stabilize the stiff L-K dynamics at sub-ns steps."),
-		bodyLabel("Effective viscosity aggregates series resistance: rho_eff = rho + (R_series*A/d)."),
+		bodyLabel("Effective viscosity aggregates series resistance: ρ_eff = ρ + (R_series·A/d)."),
 		bodyLabel("Headless and GUI use the same real incremental ISPP with overshoot handling."),
 		bodyLabel("Optional NLS (Merz's law) modulates switching time at low fields."),
 	)
@@ -546,7 +546,7 @@ func buildAssumptionsSection() fyne.CanvasObject {
 		bodyLabel(bullets([]string{
 			"Single-domain effective medium (no explicit multi-domain walls).",
 			"Depolarization modeled by k_dep term (interfacial layer approximation).",
-			"Series resistance folded into rho_eff for RC delay.",
+			"Series resistance folded into ρ_eff for RC delay.",
 			"Noise term optional; default disabled for deterministic checks.",
 			"GUI can run either L-K dynamics or Preisach (toggle in controls); headless uses L-K.",
 		})),
@@ -557,8 +557,8 @@ func buildReferencesSection() fyne.CanvasObject {
 	refs := []string{
 		"Landau & Devonshire - phenomenological free-energy expansion for ferroelectrics (classic theory).",
 		"Khalatnikov - viscous polarization dynamics (Landau-Khalatnikov equation, classic theory).",
-		"Curie-Weiss law - temperature dependence of dielectric stiffness alpha(T).",
-		"Electrostriction coupling - Q12 stress term in alpha(T,sigma).",
+		"Curie-Weiss law - temperature dependence of dielectric stiffness α(T).",
+		"Electrostriction coupling - Q₁₂ stress term in α(T,σ).",
 		"Merz's law - nucleation-limited switching kinetics (field-dependent tau).",
 		"Park et al., Advanced Materials (2015) - HZO ferroelectricity in thin films.",
 		"Muller et al., Nano Letters (2012) - ferroelectric HfO2 discovery and properties.",

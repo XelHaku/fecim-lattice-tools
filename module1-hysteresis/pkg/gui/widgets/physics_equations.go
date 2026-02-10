@@ -331,38 +331,38 @@ func buildLkEquationPanel(parent fyne.Window, selectTerm func(string, string)) f
 
 func buildLkEquationTextPanel(selectTerm func(string, string), withCaption bool) fyne.CanvasObject {
 	line1 := container.NewHBox(
-		NewTermChip("rho_eff_main", "\\rho_{eff}", "Effective viscosity: intrinsic damping plus series-resistance RC delay.", selectTerm),
+		NewTermChip("rho_eff_main", "ρ_eff", "Effective viscosity: intrinsic damping plus series-resistance RC delay.", selectTerm),
 		mathLabel(" dP/dt = "),
-		NewTermChip("e_applied", "E_{applied}", "Applied electric field drive term (external voltage across the film).", selectTerm),
+		NewTermChip("e_applied", "E_applied", "Applied electric field drive term (external voltage across the film).", selectTerm),
 		mathLabel(" - "),
-		NewTermChip("k_dep", "k_{dep}", "Depolarization factor: models interfacial layer; slants the loop for analog states.", selectTerm),
+		NewTermChip("k_dep", "k_dep", "Depolarization factor: models interfacial layer; slants the loop for analog states.", selectTerm),
 		mathLabel(" P - ("),
 	)
 
 	line2 := container.NewHBox(
-		NewTermChip("alpha", "2\\alpha", "Dynamic stiffness: temperature + stress dependent curvature of energy wells.", selectTerm),
+		NewTermChip("alpha", "2α", "Dynamic stiffness: temperature + stress dependent curvature of energy wells.", selectTerm),
 		mathLabel(" P + "),
-		NewTermChip("beta", "4\\beta", "First-order nonlinearity: negative for HZO to create the switching barrier.", selectTerm),
-		mathLabel(" P^3 + "),
-		NewTermChip("gamma", "6\\gamma", "Sixth-order stabilizer: keeps energy bounded at large polarization.", selectTerm),
-		mathLabel(" P^5)"),
+		NewTermChip("beta", "4β", "First-order nonlinearity: negative for HZO to create the switching barrier.", selectTerm),
+		mathLabel(" P³ + "),
+		NewTermChip("gamma", "6γ", "Sixth-order stabilizer: keeps energy bounded at large polarization.", selectTerm),
+		mathLabel(" P⁵)"),
 	)
 
 	lkRow := container.NewHBox(
-		NewTermChip("lk_terms", "LK nonlinearity", "Landau-Khalatnikov nonlinear energy term: 2αP + 4βP^3 + 6γP^5.", selectTerm),
+		NewTermChip("lk_terms", "LK nonlinearity", "Landau-Khalatnikov nonlinear energy term: 2αP + 4βP³ + 6γP⁵.", selectTerm),
 	)
 
 	line3 := container.NewHBox(
 		mathLabel("+ "),
-		NewTermChip("noise", "\\xi(t)", "Stochastic noise term (optional): captures thermal variability.", selectTerm),
+		NewTermChip("noise", "ξ(t)", "Stochastic noise term (optional): captures thermal variability.", selectTerm),
 	)
 
 	line4 := container.NewHBox(
-		NewTermChip("rho_eff_def", "\\rho_{eff}", "Effective viscosity definition used in the headless hysteresis path.", selectTerm),
+		NewTermChip("rho_eff_def", "ρ_eff", "Effective viscosity definition used in the headless hysteresis path.", selectTerm),
 		mathLabel(" = "),
-		NewTermChip("rho", "\\rho", "Intrinsic viscosity / damping coefficient.", selectTerm),
+		NewTermChip("rho", "ρ", "Intrinsic viscosity / damping coefficient.", selectTerm),
 		mathLabel(" + ("),
-		NewTermChip("r_series", "R_{series}", "Series resistance: absorbs RC delay into viscosity.", selectTerm),
+		NewTermChip("r_series", "R_series", "Series resistance: absorbs RC delay into viscosity.", selectTerm),
 		mathLabel(" A) / d"),
 	)
 
@@ -524,24 +524,24 @@ func buildPreisachEquationTextPanel(selectTerm func(string, string)) fyne.Canvas
 
 	line1 := container.NewHBox(
 		mathLabel("P(E) = ∬ "),
-		term("preisach_mu", "\\mu(\\alpha,\\beta)", "Weight/density of hysterons with thresholds (alpha, beta)."),
-		mathLabel(" * "),
-		term("preisach_gamma", "\\gamma_{\\alpha,\\beta}(E)", "Bistable hysteron state (+1/-1) with memory."),
-		mathLabel(" d\\alpha d\\beta"),
+		term("preisach_mu", "μ(α,β)", "Weight/density of hysterons with thresholds (α, β)."),
+		mathLabel(" · "),
+		term("preisach_gamma", "γ_{α,β}(E)", "Bistable hysteron state (+1/-1) with memory."),
+		mathLabel(" dα dβ"),
 	)
 
 	line2 := container.NewHBox(
-		mathLabel("\\gamma_{\\alpha,\\beta}(E) = +1 if E >= "),
-		term("preisach_alpha", "\\alpha", "Upper switching threshold for a hysteron."),
+		mathLabel("γ_{α,β}(E) = +1 if E >= "),
+		term("preisach_alpha", "α", "Upper switching threshold for a hysteron."),
 		mathLabel("; -1 if E <= "),
-		term("preisach_beta", "\\beta", "Lower switching threshold for a hysteron."),
+		term("preisach_beta", "β", "Lower switching threshold for a hysteron."),
 	)
 
 	line3 := container.NewHBox(
 		mathLabel("hold if "),
-		term("preisach_beta", "\\beta", "Lower switching threshold for a hysteron."),
+		term("preisach_beta", "β", "Lower switching threshold for a hysteron."),
 		mathLabel(" < E < "),
-		term("preisach_alpha", "\\alpha", "Upper switching threshold for a hysteron."),
+		term("preisach_alpha", "α", "Upper switching threshold for a hysteron."),
 		mathLabel("; state follows history "),
 		term("preisach_history", "history", "Turning-point memory that makes the model hysteretic."),
 	)
