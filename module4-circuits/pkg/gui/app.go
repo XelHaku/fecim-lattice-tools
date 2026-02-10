@@ -238,9 +238,9 @@ type CircuitsApp struct {
 	unifiedWLHelpLabel *widget.Label // Shows "Checked = Active" or passive mode explanation
 
 	// Unified view mode buttons (READ/WRITE/COMPUTE)
-	modeReadBtn    *TooltipButton
-	modeWriteBtn   *TooltipButton
-	modeComputeBtn *TooltipButton
+	modeReadBtn    *widget.Button
+	modeWriteBtn   *widget.Button
+	modeComputeBtn *widget.Button
 
 	// Unified view output labels
 	unifiedOutputLabels []*widget.Label
@@ -293,7 +293,7 @@ type CircuitsApp struct {
 	hasUndoHistory bool
 
 	// Action buttons (stored for mode-based enable/disable)
-	actionWriteCellBtn   *TooltipButton
+	actionWriteCellBtn   *widget.Button
 	actionComputeBtn     *widget.Button
 	actionRandomArrayBtn *widget.Button
 	actionResetArrayBtn  *widget.Button

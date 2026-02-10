@@ -13,7 +13,9 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
 	configphysics "fecim-lattice-tools/config/physics"
@@ -193,24 +195,16 @@ func (ca *CircuitsApp) createUnifiedConfigModeRow() fyne.CanvasObject {
 	couplingToggle := ca.createCouplingToggle()
 
 	// Mode buttons
-	ca.modeReadBtn = NewTooltipButton(
-		"READ",
-		"READ mode: safe read voltage on selected column; no programming.",
-		ca.window,
-		func() { ca.setOperationMode(OpModeRead) },
-	)
-	ca.modeWriteBtn = NewTooltipButton(
-		"WRITE",
-		"WRITE mode: arms write range and WL gating; no voltage until Program Cell.",
-		ca.window,
-		func() { ca.setOperationMode(OpModeWrite) },
-	)
-	ca.modeComputeBtn = NewTooltipButton(
-		"COMPUTE",
-		"COMPUTE mode: applies input vector across all rows for MVM.",
-		ca.window,
-		func() { ca.setOperationMode(OpModeCompute) },
-	)
+	ca.modeReadBtn = widget.NewButton("READ", func() { ca.setOperationMode(OpModeRead) })
+	ca.modeWriteBtn = widget.NewButton("WRITE", func() { ca.setOperationMode(OpModeWrite) })
+	ca.modeComputeBtn = widget.NewButton("COMPUTE", func() { ca.setOperationMode(OpModeCompute) })
+	modeInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+		dialog.ShowInformation("Operation Modes",
+			"READ: Safe read voltage on selected column; no programming.\n\n"+
+				"WRITE: Arms write range and WL gating; no voltage until Program Cell.\n\n"+
+				"COMPUTE: Applies input vector across all rows for MVM.", ca.window)
+	})
+	modeInfo.Importance = widget.LowImportance
 
 	// Set initial highlight (READ mode by default)
 	ca.modeReadBtn.Importance = widget.HighImportance
@@ -229,6 +223,7 @@ func (ca *CircuitsApp) createUnifiedConfigModeRow() fyne.CanvasObject {
 		ca.modeReadBtn,
 		ca.modeWriteBtn,
 		ca.modeComputeBtn,
+		modeInfo,
 		layout.NewSpacer(),
 		archToggle,
 	)
@@ -237,13 +232,13 @@ func (ca *CircuitsApp) createUnifiedConfigModeRow() fyne.CanvasObject {
 // createUnifiedActionRow creates the action buttons row
 func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 	// Primary action buttons
-	ca.actionWriteCellBtn = NewTooltipButton(
-		"Program Cell",
-		"Apply DAC write pulse to selected cell (ISPP). Passive arrays use V/2 half-select.",
-		ca.window,
-		func() { ca.onUnifiedProgram() },
-	)
+	ca.actionWriteCellBtn = widget.NewButton("Program Cell", func() { ca.onUnifiedProgram() })
 	ca.actionWriteCellBtn.Importance = widget.HighImportance
+	programInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+		dialog.ShowInformation("Program Cell",
+			"Apply DAC write pulse to selected cell (ISPP).\nPassive arrays use V/2 half-select.", ca.window)
+	})
+	programInfo.Importance = widget.LowImportance
 
 	ca.actionComputeBtn = widget.NewButton("MVM", func() {
 		ca.onUnifiedCompute()
@@ -300,6 +295,7 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 	// Row: Program Cell | MVM | Sep | Undo | Random Array | Reset Array | Sep | Zoom controls | Spacer | Tools status
 	return container.NewHBox(
 		ca.actionWriteCellBtn,
+		programInfo,
 		ca.actionComputeBtn,
 		widget.NewSeparator(),
 		ca.undoHistoryBtn,
@@ -361,7 +357,12 @@ func (ca *CircuitsApp) createCouplingToggle() fyne.CanvasObject {
 
 	apply(current)
 
-	return container.NewHBox(widget.NewLabel("Coupling:"), ca.couplingToggle)
+	couplingInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+		dialog.ShowInformation("Coupling Model",
+			"Ideal: No parasitic effects.\n\nApprox: Includes IR drop, sneak paths, and line resistance for realistic array behavior.", ca.window)
+	})
+	couplingInfo.Importance = widget.LowImportance
+	return container.NewHBox(widget.NewLabel("Coupling:"), ca.couplingToggle, couplingInfo)
 }
 
 // ValidArraySizes defines the supported array dimensions
@@ -387,7 +388,12 @@ func (ca *CircuitsApp) createArraySizeSelector() fyne.CanvasObject {
 	// Set default selection
 	selector.SetSelected(fmt.Sprintf("%dx%d", ca.arrayRows, ca.arrayCols))
 
-	return container.NewHBox(widget.NewLabel("Size:"), selector)
+	sizeInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+		dialog.ShowInformation("Array Size",
+			"Crossbar array dimensions (rows x columns).\nLarger arrays increase compute parallelism but worsen sneak-path and IR-drop effects.", ca.window)
+	})
+	sizeInfo.Importance = widget.LowImportance
+	return container.NewHBox(widget.NewLabel("Size:"), selector, sizeInfo)
 }
 
 // resizeArray changes the array dimensions and reinitializes all related state
@@ -478,7 +484,12 @@ func (ca *CircuitsApp) createMaterialSelector() fyne.CanvasObject {
 		})
 	})
 
-	return container.NewHBox(widget.NewLabel("Material:"), ca.materialBtn)
+	materialInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+		dialog.ShowInformation("Material",
+			"Ferroelectric material preset.\nDetermines coercive voltage, remnant polarization, and write voltage range.", ca.window)
+	})
+	materialInfo.Importance = widget.LowImportance
+	return container.NewHBox(widget.NewLabel("Material:"), ca.materialBtn, materialInfo)
 }
 
 // getCurrentMaterialID returns the ID of the currently selected material
@@ -525,7 +536,12 @@ func (ca *CircuitsApp) createADCBitsSelector() fyne.CanvasObject {
 	// Set default selection
 	selector.SetSelected("5-bit (32)")
 
-	return container.NewHBox(widget.NewLabel("ADC:"), selector)
+	adcInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+		dialog.ShowInformation("ADC Resolution",
+			"Analog-to-digital converter bit width.\nHigher resolution distinguishes more conductance levels but increases area and power.", ca.window)
+	})
+	adcInfo.Importance = widget.LowImportance
+	return container.NewHBox(widget.NewLabel("ADC:"), selector, adcInfo)
 }
 
 // createDACInputSection creates the DAC status and manual control
@@ -1288,7 +1304,14 @@ func (ca *CircuitsApp) createArchitectureToggle() fyne.CanvasObject {
 	ca.archToggle = container.NewGridWithColumns(3, ca.archPassiveBtn, ca.arch1T1RBtn, ca.arch2T1RBtn)
 
 	archLabel := widget.NewLabel("Arch:")
-	return container.NewHBox(archLabel, ca.archToggle)
+	archInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+		dialog.ShowInformation("Architecture",
+			"0T1R (Passive): No transistor; simpler but suffers sneak paths.\n\n"+
+				"1T1R: One transistor per cell; row selection via word-line gating.\n\n"+
+				"2T1R: Two transistors; enables bidirectional programming.", ca.window)
+	})
+	archInfo.Importance = widget.LowImportance
+	return container.NewHBox(archLabel, ca.archToggle, archInfo)
 }
 
 // ============================================================================
@@ -1451,14 +1474,20 @@ func (ca *CircuitsApp) createSensePanel() fyne.CanvasObject {
 	ca.senseRangeLabel = widget.NewLabel("n/a")
 	ca.senseLSBLabel = widget.NewLabel("n/a")
 
-	rangeTooltip := NewTooltipButton("?", "Measurable current range after TIA rails and ADC references.\nI = (V - Vref) / Rf, using Vmin/Vmax = max/min(TIA, ADC).", ca.window, nil)
-	rangeTooltip.Importance = widget.LowImportance
-	lsbTooltip := NewTooltipButton("?", "LSB current = (Vmax_eff - Vmin_eff) / (2^bits - 1) / Rf.", ca.window, nil)
-	lsbTooltip.Importance = widget.LowImportance
+	rangeInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+		dialog.ShowInformation("Measurable Range",
+			"Measurable current range after TIA rails and ADC references.\nI = (V - Vref) / Rf, using Vmin/Vmax = max/min(TIA, ADC).", ca.window)
+	})
+	rangeInfo.Importance = widget.LowImportance
+	lsbInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+		dialog.ShowInformation("LSB Current",
+			"LSB current = (Vmax_eff - Vmin_eff) / (2^bits - 1) / Rf.", ca.window)
+	})
+	lsbInfo.Importance = widget.LowImportance
 
 	rangeRow := container.NewHBox(
-		widget.NewLabel("I_range (A):"), ca.senseRangeLabel, rangeTooltip,
-		widget.NewLabel("LSB (A):"), ca.senseLSBLabel, lsbTooltip,
+		widget.NewLabel("I_range (A):"), ca.senseRangeLabel, rangeInfo,
+		widget.NewLabel("LSB (A):"), ca.senseLSBLabel, lsbInfo,
 	)
 
 	ca.senseRfEntry = widget.NewEntry()
