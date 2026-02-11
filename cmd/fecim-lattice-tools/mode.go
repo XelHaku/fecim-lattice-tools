@@ -273,6 +273,12 @@ func runHysteresisMode(engine string) error {
 	if phaseDuration <= 0 {
 		phaseDuration = pulseDuration
 	}
+	// Keep phase duration in a numerically practical range for headless loops.
+	// Some presets define very small Tau, which can make maxSimTime collapse and
+	// trigger immediate timeouts before the controller can converge.
+	if phaseDuration < 1e-9 {
+		phaseDuration = 1e-9
+	}
 
 	// Headless integration tests can become extremely slow if we pick time steps that
 	// are too small relative to the pulse duration. Provide deterministic, opt-in
@@ -353,7 +359,7 @@ func runHysteresisMode(engine string) error {
 		if n > numLevels {
 			n = numLevels
 		}
-		mid := numLevels / 2
+		mid := int(math.Round(float64(numLevels+1) / 2.0))
 		q1 := int(math.Round(0.25 * float64(numLevels)))
 		q3 := int(math.Round(0.75 * float64(numLevels)))
 		base := []int{1, 2, 3, q1, mid, q3, numLevels - 2, numLevels - 1, numLevels}
@@ -390,7 +396,50 @@ func runHysteresisMode(engine string) error {
 		return out
 	}
 
-	targetLevels := buildTargets(numLevels, targetCount, seed)
+	parseTargetLevels := func(raw string, numLevels int) []int {
+		raw = strings.TrimSpace(raw)
+		if raw == "" {
+			return nil
+		}
+		mid := int(math.Round(float64(numLevels+1) / 2.0))
+		parts := strings.Split(raw, ",")
+		out := make([]int, 0, len(parts))
+		for _, p := range parts {
+			tok := strings.ToLower(strings.TrimSpace(p))
+			if tok == "" {
+				continue
+			}
+			switch tok {
+			case "lo", "low", "l":
+				out = append(out, 1)
+			case "mid", "middle", "m":
+				out = append(out, mid)
+			case "hi", "high", "h":
+				out = append(out, numLevels)
+			default:
+				if v, err := strconv.Atoi(tok); err == nil {
+					if v < 1 {
+						v = 1
+					}
+					if v > numLevels {
+						v = numLevels
+					}
+					out = append(out, v)
+				}
+			}
+		}
+		if len(out) == 0 {
+			return nil
+		}
+		return out
+	}
+
+	targetLevels := parseTargetLevels(os.Getenv("FECIM_ISPP_TARGET_LEVELS"), numLevels)
+	if len(targetLevels) == 0 {
+		targetLevels = buildTargets(numLevels, targetCount, seed)
+	} else {
+		log.Info("Using explicit ISPP target levels from FECIM_ISPP_TARGET_LEVELS=%q => %v", os.Getenv("FECIM_ISPP_TARGET_LEVELS"), targetLevels)
+	}
 	steps := make([]struct {
 		label   string
 		targetG float64
@@ -435,6 +484,9 @@ func runHysteresisMode(engine string) error {
 			writeController.ForceResetLimit = 1
 		}
 		maxSimTime := phaseDuration * float64(pulseBudget)
+		if maxSimTime < 1e-3 {
+			maxSimTime = 1e-3
+		}
 		wrd := &headlessWRDState{
 			phase:         0,
 			phaseTimer:    0,
@@ -618,7 +670,12 @@ func runHysteresisMode(engine string) error {
 		}
 
 		if !targetDone {
-			return fmt.Errorf("ISPP step %d (%s): timed out after %.3fs", i+1, step.label, simTime-stepStart)
+			timeoutErr := fmt.Errorf("ISPP step %d (%s): timed out after %.3fs", i+1, step.label, simTime-stepStart)
+			if strings.TrimSpace(os.Getenv("FECIM_HEADLESS_ALLOW_TIMEOUT")) == "1" {
+				log.Info("%v (continuing: FECIM_HEADLESS_ALLOW_TIMEOUT=1)", timeoutErr)
+			} else {
+				return timeoutErr
+			}
 		}
 		logPerf(fmt.Sprintf("ISPP_%s", step.label))
 
