@@ -160,7 +160,7 @@
 | M3-U2 | Decide dual-mode confusion matrix/metrics exposure | `module3-mnist` | ⏳ | 1-2hr |
 | M4-D1 | Update docs to reference `shared/peripherals` everywhere | `docs/.../module4-circuits/` | ⏳ | 30-60m |
 | M4-U1 | Validate ISPP engine toggle wiring (Fast vs L-K) | `module4-circuits` | ⏳ | 1-2hr |
-| M4-U3 | Sense-chain UI: TIA output, ADC code/saturation, measurement presets | `module4-circuits` | ⏳ | 1-2hr |
+| M4-U3 | Sense-chain UI: TIA output, ADC code/saturation, measurement presets | `module4-circuits` | ✅ | 1-2hr |
 | M4-P1 | Audit DAC/ADC/TIA/ChargePump equations vs docs | `module4-circuits` | ⏳ | 2-4hr |
 | M4-P3 | Define/centralize cell geometry (area, thickness, stack) | `module4-circuits` | ✅ | 1-2hr |
 | M4-P4 | **Tier B DC solver** (full resistive network) + regression tests | `module4-circuits/pkg/arraysim` | ⏳ | 4-12hr |

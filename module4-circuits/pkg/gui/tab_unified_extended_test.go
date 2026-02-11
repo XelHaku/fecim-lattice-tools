@@ -2,6 +2,7 @@ package gui
 
 import (
 	"math"
+	"strings"
 	"testing"
 	"time"
 
@@ -591,9 +592,7 @@ func TestUnifiedTabSensePanel(t *testing.T) {
 		return ca.deviceState.GetOperationMode() == OpModeRead
 	})
 
-	sharedwidgets.SafeDo(func() {
-		ca.updateSensePanel()
-	})
+	ca.updateSensePanel()
 
 	// Verify sense panel components exist
 	if ca.senseCurrentLabel == nil {
@@ -605,12 +604,75 @@ func TestUnifiedTabSensePanel(t *testing.T) {
 	if ca.senseCodeLabel == nil {
 		t.Fatal("expected sense code label")
 	}
+	if ca.senseSaturationLabel == nil {
+		t.Fatal("expected sense saturation label")
+	}
+	if ca.sensePresetSelect == nil {
+		t.Fatal("expected sense preset selector")
+	}
 
-	// Test TIA gain adjustment
-	if ca.senseRfEntry != nil {
-		ca.applySenseRf("20.0")
-		if math.Abs(ca.tiaGain-20.0) > 0.1 {
-			t.Fatalf("TIA gain: got %.1f, want 20.0", ca.tiaGain)
+	// Verify improved label formatting
+	if !strings.Contains(ca.senseVoltageLabel.Text, "TIA out") {
+		t.Fatalf("sense voltage label should show TIA context, got %q", ca.senseVoltageLabel.Text)
+	}
+	if !strings.Contains(ca.senseCodeLabel.Text, "Code") {
+		t.Fatalf("sense code label should show Code prefix, got %q", ca.senseCodeLabel.Text)
+	}
+
+	// Test measurement preset application
+	ca.applySensePreset("High Sensitivity")
+	if math.Abs(ca.tiaGain-50.0) > 0.1 {
+		t.Fatalf("preset TIA gain: got %.1f, want 50.0", ca.tiaGain)
+	}
+
+	// Manual edit should flip preset to Custom
+	ca.applySenseRf("20.0")
+	if math.Abs(ca.tiaGain-20.0) > 0.1 {
+		t.Fatalf("TIA gain: got %.1f, want 20.0", ca.tiaGain)
+	}
+	if ca.sensePresetSelect.Selected != customSensePresetName {
+		t.Fatalf("preset after manual edit: got %q, want %q", ca.sensePresetSelect.Selected, customSensePresetName)
+	}
+}
+
+// TestUnifiedTabSensePanelLayoutAndPresets validates layout wiring and all presets.
+func TestUnifiedTabSensePanelLayoutAndPresets(t *testing.T) {
+	embedded, app, win := setupUnifiedTestApp(t)
+	defer app.Quit()
+	defer win.Close()
+	defer embedded.Stop()
+
+	ca := embedded.CircuitsApp
+	if ca == nil {
+		t.Fatal("expected circuits app")
+	}
+	if ca.sensePresetSelect == nil {
+		t.Fatal("expected preset selector")
+	}
+
+	// Default preset should be Balanced
+	if ca.sensePresetSelect.Selected != "Balanced" {
+		t.Fatalf("default preset: got %q, want Balanced", ca.sensePresetSelect.Selected)
+	}
+
+	// Apply each preset and verify parameters
+	presets := []struct {
+		name string
+		rf   float64
+		vmax float64
+	}{
+		{"Balanced", 10.0, 1.00},
+		{"High Sensitivity", 50.0, 1.00},
+		{"Wide Current Range", 5.0, 1.20},
+		{"Low-Current Focus", 100.0, 0.90},
+	}
+	for _, p := range presets {
+		ca.applySensePreset(p.name)
+		if math.Abs(ca.tiaGain-p.rf) > 0.1 {
+			t.Fatalf("preset %s: Rf got %.1f, want %.1f", p.name, ca.tiaGain, p.rf)
+		}
+		if math.Abs(ca.adc.VrefHigh-p.vmax) > 1e-6 {
+			t.Fatalf("preset %s: Vmax got %.2f, want %.2f", p.name, ca.adc.VrefHigh, p.vmax)
 		}
 	}
 }

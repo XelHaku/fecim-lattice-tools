@@ -1287,7 +1287,7 @@ func (ca *CircuitsApp) updateSensePanel() {
 			ca.senseCurrentLabel.SetText(formatCurrentA(currentA))
 		}
 		if ca.senseVoltageLabel != nil {
-			ca.senseVoltageLabel.SetText(fmt.Sprintf("%.3f V", voltage))
+			ca.senseVoltageLabel.SetText(fmt.Sprintf("%.3f V (TIA out)", voltage))
 		}
 		if ca.senseCodeLabel != nil {
 			ca.senseCodeLabel.SetText(codeText)
@@ -1564,15 +1564,17 @@ func (ca *CircuitsApp) createSensePanel() fyne.CanvasObject {
 	headerRow := container.NewHBox(titleLabel, layout.NewSpacer(), ca.senseRowLabel)
 
 	ca.senseCurrentLabel = widget.NewLabel("0 A")
-	ca.senseVoltageLabel = widget.NewLabel("0.000 V")
-	ca.senseCodeLabel = widget.NewLabel("0")
-	ca.senseSaturationLabel = widget.NewLabel("OK")
+	ca.senseVoltageLabel = widget.NewLabel("0.000 V (TIA out)")
+	ca.senseCodeLabel = widget.NewLabel("Code 0 / 31 (0.0% FS)")
+	ca.senseCodeLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	ca.senseSaturationLabel = widget.NewLabel("Linear")
+	ca.senseSaturationLabel.TextStyle = fyne.TextStyle{Bold: true}
 
-	metricsRow := container.NewHBox(
-		widget.NewLabel("Irow (A):"), ca.senseCurrentLabel,
-		widget.NewLabel("Vout (V):"), ca.senseVoltageLabel,
-		widget.NewLabel("ADC:"), ca.senseCodeLabel,
-		widget.NewLabel("SAT:"), ca.senseSaturationLabel,
+	metricsRow := container.NewGridWithColumns(2,
+		container.NewHBox(widget.NewLabel("Row Current:"), ca.senseCurrentLabel),
+		container.NewHBox(widget.NewLabel("TIA Vout:"), ca.senseVoltageLabel),
+		container.NewHBox(widget.NewLabel("ADC Code:"), ca.senseCodeLabel),
+		container.NewHBox(widget.NewLabel("Status:"), ca.senseSaturationLabel),
 	)
 
 	ca.senseRangeLabel = widget.NewLabel("n/a")
@@ -1590,8 +1592,8 @@ func (ca *CircuitsApp) createSensePanel() fyne.CanvasObject {
 	lsbInfo.Importance = widget.LowImportance
 
 	rangeRow := container.NewHBox(
-		widget.NewLabel("I_range (A):"), ca.senseRangeLabel, rangeInfo,
-		widget.NewLabel("LSB (A):"), ca.senseLSBLabel, lsbInfo,
+		widget.NewLabel("Measurable I-range:"), ca.senseRangeLabel, rangeInfo,
+		widget.NewLabel("Current LSB:"), ca.senseLSBLabel, lsbInfo,
 	)
 
 	ca.senseRfEntry = widget.NewEntry()
@@ -1623,7 +1625,21 @@ func (ca *CircuitsApp) createSensePanel() fyne.CanvasObject {
 		ca.applySenseADCRange()
 	}
 
+	presetOptions := make([]string, 0, len(senseMeasurementPresets)+1)
+	for _, p := range senseMeasurementPresets {
+		presetOptions = append(presetOptions, p.Name)
+	}
+	presetOptions = append(presetOptions, customSensePresetName)
+	ca.sensePresetSelect = widget.NewSelect(presetOptions, func(selected string) {
+		if ca.sensePresetUpdating || selected == "" || selected == customSensePresetName {
+			return
+		}
+		ca.applySensePreset(selected)
+	})
+	ca.setSensePresetSelection(senseMeasurementPresets[0].Name)
+
 	controlsRow := container.NewHBox(
+		widget.NewLabel("Preset:"), ca.sensePresetSelect,
 		widget.NewLabel("Rf (kΩ):"), ca.senseRfEntry,
 		widget.NewLabel("ADC Vmin (V):"), ca.senseAdcVminEntry,
 		widget.NewLabel("Vmax (V):"), ca.senseAdcVmaxEntry,
