@@ -43,7 +43,7 @@ Comprehensive 2025 study covering full spectrum of 3D ferroelectric memory archi
 ## Related Topics
 
 - **[08-industry-reports](../08-industry-reports/)** - Wafer-scale integration manufacturing context
-- **[02-crossbar-arrays](../02-crossbar-arrays/)** - 2D crossbar foundations extended by 3D stacking
+- **[02-crossbar-arrays](../04-cim-architectures/)** - 2D crossbar foundations extended by 3D stacking
 - **[18-ald-process-control](../18-ald-process-control/)** - Low-temperature ALD critical for BEOL compatibility
 - **[19-variability-yield](../19-variability-yield/)** - Yield challenges amplified in 3D structures
-- **[04-peripheral-circuits](../04-peripheral-circuits/)** - Peripheral circuit integration in 3D architectures
+- **[04-peripheral-circuits](../07-memory-architectures/)** - Peripheral circuit integration in 3D architectures

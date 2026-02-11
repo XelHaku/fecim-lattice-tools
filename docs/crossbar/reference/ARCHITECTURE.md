@@ -390,7 +390,7 @@ var FeFETDriftCoefficients = struct {
 }
 ```
 
-**Important Note**: FeCIM drift is estimated from retention requirements (>10 years at 85°C demonstrated by Fraunhofer IPMS 2024), not directly measured. See `CLAUDE.md` for accuracy audit.
+**Important Note**: FeCIM drift is estimated from retention requirements (>10 years at 85°C demonstrated by Fraunhofer IPMS 2024; [CITATION NEEDED - placeholder value]), not directly measured. See `CLAUDE.md` for accuracy audit.
 
 #### Drift Physics
 
@@ -1048,9 +1048,9 @@ See `/CLAUDE.md` for complete accuracy audit. Key sources:
 
 - **Pr (Polarization)**: Nature Communications 2025, Advanced Electronics Materials 2024
 - **Ec (Coercivity)**: Nature Communications 2025, Nano Letters 2024
-- **Endurance**: IEEE IRPS 2022, Nano Letters 2024
-- **MNIST Accuracy**: Nature Communications 2023 (96.6%), ScienceDirect 2025 (98.24%)
-- **Temperature**: Fraunhofer IPMS 2024 (automotive grade), CEA-Leti 2024 (BEOL integration)
+- **Endurance**: IEEE IRPS 2022, Nano Letters 2024 ([CITATION NEEDED - placeholder value])
+- **MNIST Accuracy**: Nature Communications 2023 (96.6%; [CITATION NEEDED - placeholder value]), ScienceDirect 2025 (98.24%; [CITATION NEEDED - placeholder value])
+- **Temperature**: Fraunhofer IPMS 2024 (automotive grade; [CITATION NEEDED - placeholder value]), CEA-Leti 2024 (BEOL integration; [CITATION NEEDED - placeholder value])
 
 ### Implementation References
 

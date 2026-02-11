@@ -11,7 +11,7 @@
 | [ELI5.md](ELI5.md) | Concepts explained simply |
 | [RUNBOOK.md](RUNBOOK.md) | Build, run, and deploy |
 | [FEATURES.md](FEATURES.md) | Complete feature reference |
-| [CONTRIB.md](CONTRIB.md) | How to contribute |
+| [../CONTRIBUTING.md](../CONTRIBUTING.md) | How to contribute |
 | [project/STATUS.md](project/STATUS.md) | Project phase, validation, and CI status |
 
 ## Build & Run
@@ -39,8 +39,8 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-too
 
 | Module | Folder | Features | Start With |
 |--------|--------|----------|------------|
-| 1. Hysteresis | [hysteresis/](hysteresis/) | P-E loops, Preisach model, 8 materials, temperature effects | [ELI5](hysteresis/hysteresis.ELI5.md), [Physics](hysteresis/hysteresis.physics.md) |
-| 2. Crossbar | [crossbar/](crossbar/) | MVM, IR drop, sneak paths, 0T1R/1T1R/2T1R | [ELI5](crossbar-arrays/crossbar.ELI5.md), [Physics](crossbar-arrays/crossbar.physics.md), [Voltage Rules](crossbar/VOLTAGE_RULES.md) |
+| 1. Hysteresis | [hysteresis/](hysteresis/) | P-E loops, Preisach model, 8 materials, temperature effects | [ELI5](hysteresis/../hysteresis/hysteresis.ELI5.md), [Physics](hysteresis/../hysteresis/hysteresis.physics.md) |
+| 2. Crossbar | [crossbar/](crossbar/) | MVM, IR drop, sneak paths, 0T1R/1T1R/2T1R | [ELI5](crossbar/educational/crossbar.ELI5.md), [Physics](crossbar/educational/../educational/crossbar.physics.md), [Voltage Rules](crossbar/reference/VOLTAGE_RULES.md) |
 | 3. Neural Network | [neural-network/](neural-network/) | MNIST inference, FP32 vs CIM comparison, quantization | [ELI5](neural-network/mnist.ELI5.md), [Demo](neural-network/mnist.demo.md) |
 | 4. Peripheral Circuits | [peripheral-circuits/](peripheral-circuits/) | DAC/ADC/TIA, 4-phase write, ISPP | [ELI5](peripheral-circuits/circuits.ELI5.md) |
 | 5. Comparison | [comparison/](comparison/) | CPU vs GPU vs FeCIM, data center projections | [ELI5](comparison/cim.ELI5.md), [Honesty Audit](comparison/HONESTY_AUDIT.md) |
@@ -113,7 +113,7 @@ This repository prioritizes simulation accuracy and clear labeling of assumption
 
 ## See Also
 
-- **Project root:** [../CLAUDE.md](../CLAUDE.md) - AI agent instructions and quick reference
-- **Root README:** [../README.md](../README.md) - Full project overview
+- **Project root:** [../../CLAUDE.md](../../CLAUDE.md) - AI agent instructions and quick reference
+- **Root README:** [.../README.md](.../README.md) - Full project overview
 - **About:** [about/](about/) - App info, contributors, thanks
 - **Glossary:** [GLOSSARY.md](GLOSSARY.md) - 100+ ferroelectric terms

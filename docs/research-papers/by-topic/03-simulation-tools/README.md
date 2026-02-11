@@ -126,8 +126,8 @@ Based on analogous studies:
 - **[01-ferroelectric-materials](../01-ferroelectric-materials/)** - Material properties required for simulation input parameters
 - **[02-training-algorithms](../02-training-algorithms/)** - QAT algorithms implemented in these tools
 - **[04-cim-architectures](../04-cim-architectures/)** - Hardware architectures these tools simulate
-- **[08-hardware-measurements](../08-hardware-measurements/)** - Experimental data for model validation
-- **[15-benchmarking](../15-benchmarking/)** - Performance comparison methodologies
+- **[08-hardware-measurements](../20-manufacturing-integration/)** - Experimental data for model validation
+- **[15-benchmarking](../08-industry-reports/)** - Performance comparison methodologies
 
 ## Getting Started with Tools
 

@@ -719,10 +719,10 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-too
 
 ## Related Documentation
 
-- **[Crossbar Physics](crossbar.physics.md)** - Physics fundamentals
-- **[Demo Guide](crossbar.demo.md)** - Run the visualization
+- **[Crossbar Physics](../educational/crossbar.physics.md)** - Physics fundamentals
+- **[Demo Guide](../educational/crossbar.demo.md)** - Run the visualization
 - **[ELI5 Explanation](crossbar.ELI5.md)** - Simple analogies
-- **[Research Papers](crossbar.research.md)** - Academic references
+- **[Research Papers](../educational/crossbar.research.md)** - Academic references
 
 ---
 

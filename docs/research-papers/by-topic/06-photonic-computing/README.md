@@ -164,8 +164,8 @@ Sensor → Photonic Interconnect → FeCIM Processing → Output
 - **[04-cim-architectures](../04-cim-architectures/)** - Electronic analog CIM for comparison
 - **[05-neuromorphic](../05-neuromorphic/)** - Another alternative analog computing paradigm
 - **[02-training-algorithms](../02-training-algorithms/)** - Shared challenge: low-precision training
-- **[11-peripheral-circuits](../11-peripheral-circuits/)** - ADC/DAC requirements similar
-- **[15-benchmarking](../15-benchmarking/)** - Performance comparison methodologies
+- **[11-peripheral-circuits](../07-memory-architectures/)** - ADC/DAC requirements similar
+- **[15-benchmarking](../08-industry-reports/)** - Performance comparison methodologies
 
 ## Critical Assessment for FeCIM Roadmap
 

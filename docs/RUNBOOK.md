@@ -432,7 +432,7 @@ chmod 755 screenshots recordings output logs
 | Physics questions | `docs/cim/HONESTY_AUDIT.md` |
 | GUI issues | `docs/development/GUI/FYNE_NOTES.md` |
 | Testing | `docs/development/TESTING.md` |
-| General development | `docs/CONTRIB.md` |
+| General development | `docs/../CONTRIBUTING.md` |
 | Project rules | `CLAUDE.md` |
 
 ---

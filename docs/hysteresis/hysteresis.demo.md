@@ -111,7 +111,7 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-too
 
 ## Physics Model
 
-For detailed physics, see [hysteresis.physics.md](hysteresis.physics.md).
+For detailed physics, see [../hysteresis/hysteresis.physics.md](../hysteresis/hysteresis.physics.md).
 
 ### Quick Summary
 
@@ -328,4 +328,4 @@ sudo pacman -S mesa libxcursor libxrandr libxinerama libxi
 
 ---
 
-*This document is part of the FeCIM Visualizer project. For beginner explanations, see [hysteresis.ELI5.md](hysteresis.ELI5.md). For deep physics, see [hysteresis.physics.md](hysteresis.physics.md). For research references, see [hysteresis.research.md](hysteresis.research.md).*
+*This document is part of the FeCIM Visualizer project. For beginner explanations, see [../hysteresis/hysteresis.ELI5.md](../hysteresis/hysteresis.ELI5.md). For deep physics, see [../hysteresis/hysteresis.physics.md](../hysteresis/hysteresis.physics.md). For research references, see [../hysteresis/hysteresis.research.md](../hysteresis/hysteresis.research.md).*

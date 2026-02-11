@@ -50,4 +50,4 @@ The comparison module (module5) directly leverages insights from these reports t
 - **[09-reviews-surveys](../09-reviews-surveys/)** - Academic surveys providing technical depth on emerging memory technologies
 - **[15-3d-stacking-architectures](../15-3d-stacking-architectures/)** - 3D integration crucial for wafer-scale implementations
 - **[19-variability-yield](../19-variability-yield/)** - Manufacturing yield challenges highlighted in industry roadmaps
-- **[06-neural-networks-inference](../06-neural-networks-inference/)** - Neural network implementations validated by real-world deployments
+- **[06-neural-networks-inference](../10-cim-compilers-mapping/)** - Neural network implementations validated by real-world deployments

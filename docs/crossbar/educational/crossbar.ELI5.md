@@ -593,10 +593,10 @@ func Test30LevelQuantization(t *testing.T) {
 
 ## Related Documentation
 
-- **[Crossbar Physics](crossbar.physics.md)** - Deep technical reference on crossbar physics
-- **[Demo Guide](crossbar.demo.md)** - How to run the interactive visualization
-- **[Research Papers](crossbar.research.md)** - Academic citations and meta-study
-- **[Open Source Tools](crossbar.opensource.md)** - Comparison with other simulators
+- **[Crossbar Physics](../educational/crossbar.physics.md)** - Deep technical reference on crossbar physics
+- **[Demo Guide](../educational/crossbar.demo.md)** - How to run the interactive visualization
+- **[Research Papers](../educational/crossbar.research.md)** - Academic citations and meta-study
+- **[Open Source Tools](../crossbar/educational/crossbar.opensource.md)** - Comparison with other simulators
 
 ---
 

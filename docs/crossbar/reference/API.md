@@ -53,7 +53,7 @@ if err != nil {
 
 ### DefaultEnduranceConfig
 
-Returns default endurance (fatigue) settings based on literature: 10^8 cycles fatigue threshold, 10^12 cycles failure threshold (IEEE IRPS 2022, Nano Letters 2024).
+Returns default endurance (fatigue) settings based on literature: 10^8 cycles fatigue threshold, 10^12 cycles failure threshold (IEEE IRPS 2022, Nano Letters 2024; [CITATION NEEDED - placeholder value]).
 
 **Signature:**
 ```go
@@ -1120,7 +1120,7 @@ type EnduranceConfig struct {
 ```
 
 **Sources:**
-- Fatigue threshold: IEEE IRPS 2022 (10^9 cycle endurance)
+- Fatigue threshold: IEEE IRPS 2022 (10^9 cycle endurance; [CITATION NEEDED - placeholder value])
 - Failure threshold: Nano Letters 2024 (10^12 cycle endurance for V:HfO₂)
 
 ### ProcessVariationConfig
@@ -1582,7 +1582,7 @@ for tech, stats := range results {
 - IEEE IRPS 2022: FeFET endurance characterization (10^9 cycles)
 - Nano Letters 2024: V:HfO₂ superlattice 10^12 cycle endurance
 - Nature Communications 2025: HZO polarization (15-34 µC/cm² at RT, 75 µC/cm² at 4K)
-- Fraunhofer IPMS 2024: >10 year retention at 85°C (AEC-Q100 automotive)
+- Fraunhofer IPMS 2024: >10 year retention at 85°C (AEC-Q100 automotive; [CITATION NEEDED - placeholder value])
 
 **Implementation Notes:**
 - All weights automatically quantize to 30 discrete levels (demo baseline)

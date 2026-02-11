@@ -158,13 +158,13 @@ Most CIM demonstrations only show inference. True on-chip training with backprop
   - Both require precise weight update mechanisms
   - Online learning for adaptive systems
 
-- **[Topic 4: Analog CIM](../04-analog-cim/)** - Hardware substrate
+- **[Topic 4: Analog CIM](../04-cim-architectures/)** - Hardware substrate
   - Training requires bidirectional crossbar operation
   - Peripheral circuits must support gradient computation
   - ADC/DAC requirements more stringent for training
 
 ### Secondary Connections
-- **[Topic 1: FeFET Fundamentals](../01-fefet-fundamentals/)** - Device requirements
+- **[Topic 1: FeFET Fundamentals](../01-ferroelectric-materials/)** - Device requirements
   - Endurance: 10¹²+ cycles needed for training
   - Symmetric programming essential
   - Multi-level states enable gradient precision
@@ -174,7 +174,7 @@ Most CIM demonstrations only show inference. True on-chip training with backprop
   - Pipeline architectures critical for large models
   - Gradient checkpointing reduces memory
 
-- **[Topic 6: 3D Integration](../06-3d-integration/)** - Scaling training capacity
+- **[Topic 6: 3D Integration](../15-3d-stacking-architectures/)** - Scaling training capacity
   - Vertical stacking increases weight storage
   - Reduces inter-layer communication overhead
   - Thermal management critical for dense training

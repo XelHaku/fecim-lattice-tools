@@ -579,8 +579,8 @@ To create a topic-based index linking to these papers **without duplicating PDFs
    ```markdown
    ## Ferroelectric Materials
 
-   - [HZO Superlattice First-Principles](../../research-papers/by-topic/01-ferroelectric-materials/first_principles_hfo2_superlattice_2024.pdf)
-   - [Preisach Modeling](../../research-papers/by-topic/01-ferroelectric-materials/Preisach_Ferroelectric_Modeling_arXiv.pdf)
+   - [HZO Superlattice First-Principles](./by-topic/01-ferroelectric-materials/first_principles_hfo2_superlattice_2024.pdf)
+   - [Preisach Modeling](./by-topic/01-ferroelectric-materials/Preisach_Ferroelectric_Modeling_arXiv.pdf)
    ```
 
 3. Use **relative path references** in documentation that point to actual files

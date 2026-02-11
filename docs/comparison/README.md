@@ -731,8 +731,8 @@ URLs are provided in the source documents and the DOWNLOAD_PLAN.md.
 
 - **RESEARCH_GAP_ANALYSIS.md** - Coverage assessment and improvement tracking
 - **DOWNLOAD_PLAN.md** - Complete URLs and download instructions for 300+ papers
-- **crossbar.research.md** - Deep dive on crossbar array literature
-- **hysteresis.research.md** - Deep dive on ferroelectric hysteresis
+- **../educational/crossbar.research.md** - Deep dive on crossbar array literature
+- **../hysteresis/hysteresis.research.md** - Deep dive on ferroelectric hysteresis
 - **mnist.research.md** - Deep dive on neural network inference
 
 ---

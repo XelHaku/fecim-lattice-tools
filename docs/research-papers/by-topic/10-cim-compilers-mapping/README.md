@@ -36,8 +36,8 @@ These compiler tools are directly relevant to the FeCIM Lattice Tools project:
 
 ## Related Topics
 
-- **[06-neural-networks-inference](../06-neural-networks-inference/)** - Neural network workloads being mapped by these compilers
-- **[02-crossbar-arrays](../02-crossbar-arrays/)** - Physical crossbar architectures targeted by mapping algorithms
+- **[06-neural-networks-inference](../10-cim-compilers-mapping/)** - Neural network workloads being mapped by these compilers
+- **[02-crossbar-arrays](../04-cim-architectures/)** - Physical crossbar architectures targeted by mapping algorithms
 - **[09-reviews-surveys](../09-reviews-surveys/)** - Broader CIM architecture surveys providing context
 - **[19-variability-yield](../19-variability-yield/)** - Device variation that compilers must compensate for
-- **[04-peripheral-circuits](../04-peripheral-circuits/)** - ADC/DAC/TIA constraints that affect mapping decisions
+- **[04-peripheral-circuits](../07-memory-architectures/)** - ADC/DAC/TIA constraints that affect mapping decisions

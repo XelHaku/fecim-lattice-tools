@@ -201,9 +201,9 @@ GPU (complex ops) ← 10 pJ/bit → HBM (temporary data)
 
 - **[01-ferroelectric-materials](../01-ferroelectric-materials/)** - 3D BEOL FeFET integration
 - **[04-cim-architectures](../04-cim-architectures/)** - CIM vs. PIM trade-offs
-- **[15-benchmarking](../15-benchmarking/)** - Energy/performance comparisons
-- **[13-low-power-design](../13-low-power-design/)** - Power optimization strategies
-- **[16-scaling-and-integration](../16-scaling-and-integration/)** - 3D integration roadmap
+- **[15-benchmarking](../08-industry-reports/)** - Energy/performance comparisons
+- **[13-low-power-design](../07-memory-architectures/)** - Power optimization strategies
+- **[16-scaling-and-integration](../20-manufacturing-integration/)** - 3D integration roadmap
 
 ## Implementation Considerations for FeCIM
 

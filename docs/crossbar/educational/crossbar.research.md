@@ -486,10 +486,10 @@ Our crossbar simulation module is well-aligned with literature best practices:
 
 ## Related Documentation
 
-- **[Crossbar Physics](crossbar.physics.md)** - Deep technical reference
-- **[Demo Guide](crossbar.demo.md)** - Interactive visualization guide
+- **[Crossbar Physics](../educational/crossbar.physics.md)** - Deep technical reference
+- **[Demo Guide](../educational/crossbar.demo.md)** - Interactive visualization guide
 - **[ELI5 Explanation](crossbar.ELI5.md)** - Simple analogies
-- **[Open Source Tools](crossbar.opensource.md)** - Other simulators
+- **[Open Source Tools](../crossbar/educational/crossbar.opensource.md)** - Other simulators
 
 ---
 

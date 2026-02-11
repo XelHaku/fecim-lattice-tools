@@ -485,5 +485,5 @@ fecim-lattice-tools eda cli --rows 64 --cols 64 --json-output | \
 ## See Also
 
 - [OpenLane CLI Reference](eda/references/cli-reference.md) - External EDA tools
-- [API Documentation](api/) - Programmatic access
+- [API Documentation](API.md) - Programmatic access
 - [Examples](../examples/) - Sample code and configs

@@ -571,10 +571,10 @@ ls -la /path/to/fecim_bit.lef
 
 | Document | Description |
 |----------|-------------|
-| [eda.demo.md](./eda.demo.md) | FeCIM Design Suite interface guide |
-| [eda.opensource.md](./eda.opensource.md) | Open-source EDA ecosystem overview |
-| [SKY130.md](./SKY130.md) | SKY130 PDK integration specifics |
-| [README.md](./README.md) | Module 6 overview and disclaimers |
+| [eda.demo.md](./demo.md) | FeCIM Design Suite interface guide |
+| [eda.opensource.md](../ecosystem/opensource-eda.md) | Open-source EDA ecosystem overview |
+| [SKY130.md](../pdk/sky130.md) | SKY130 PDK integration specifics |
+| [README.md](../README.md) | Module 6 overview and disclaimers |
 
 ---
 

@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Optional template hook (not auto-installed).
+# Install:
+#   git config core.hooksPath .githooks
+# or copy this file into .git/hooks/pre-commit.
+#
+# Policy: calibration JSON updates are allowed only when intentional and backed
+# by evidence links in the commit message/body.
+
+CALIB_DIR="cmd/fecim-lattice-tools/data/calibrations"
+changed="$(git diff --cached --name-only --diff-filter=ACMRTUXB -- "$CALIB_DIR" | grep -E '\.json$' || true)"
+
+if [[ -n "$changed" ]]; then
+  cat >&2 <<EOF
+⚠️  pre-commit warning: staged calibration JSON changes detected:
+$(echo "$changed" | sed 's/^/  - /')
+
+Calibration updates are drift-sensitive.
+Before committing, include evidence links in your commit message, for example:
+  Calibration-Evidence: https://... (bench log, lab note, issue, or PR discussion)
+
+This hook only warns (does not block commit).
+EOF
+fi
+
+exit 0

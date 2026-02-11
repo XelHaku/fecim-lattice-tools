@@ -221,7 +221,7 @@ The FeCIM Design Suite generates files compatible with OpenLane v1.0+ flow.
 "VERILOG_FILES_BLACKBOX": "/path/to/fecim_cell.v"
 ```
 
-See [eda.integration.md](./eda.integration.md) for detailed OpenLane integration guide.
+See [eda.integration.md](./integration.md) for detailed OpenLane integration guide.
 
 ---
 
@@ -275,11 +275,11 @@ endmodule
 
 | Document | Description |
 |----------|-------------|
-| [eda.integration.md](./eda.integration.md) | OpenLane integration guide |
-| [plan-demo6.md](./plan-demo6.md) | Implementation plan with code templates |
-| [eda.opensource.md](./eda.opensource.md) | Open-source EDA ecosystem analysis |
-| [eda.eli5.md](./eda.eli5.md) | Beginner-friendly EDA explanation |
-| [README.md](./README.md) | Module 6 overview with disclaimers |
+| [eda.integration.md](./integration.md) | OpenLane integration guide |
+| [plan-demo6.md](./demo.md) | Implementation plan with code templates |
+| [eda.opensource.md](../ecosystem/opensource-eda.md) | Open-source EDA ecosystem analysis |
+| [eda.eli5.md](./eli5.md) | Beginner-friendly EDA explanation |
+| [README.md](../README.md) | Module 6 overview with disclaimers |
 
 ---
 
@@ -309,10 +309,10 @@ endmodule
 
 ## Related Resources
 
-- [FeCIM Design Suite Examples](../../module6-eda/examples/) - Sample designs and test cases
+- [FeCIM Design Suite Examples](../../../module6-eda/examples/) - Sample designs and test cases
 - [OpenLane Documentation](https://openlane.readthedocs.io/) - Official OpenLane resources
-- [SKY130 PDK Guide](./SKY130.md) - SkyWater 130nm process integration
+- [SKY130 PDK Guide](../pdk/sky130.md) - SkyWater 130nm process integration
 
 ---
 
-**Part of the FeCIM Lattice Tools educational suite** - See [../../README.md](../../README.md) for project overview.
+**Part of the FeCIM Lattice Tools educational suite** - See [../.../README.md](../.../README.md) for project overview.

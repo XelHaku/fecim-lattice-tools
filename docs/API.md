@@ -1340,6 +1340,6 @@ func main() {
 
 ## See Also
 
-- [README.md](../README.md) - Project overview
+- [README.md](.../README.md) - Project overview
 - [CONTRIBUTING.md](../CONTRIBUTING.md) - Contribution guidelines
-- [config/physics.yaml](../config/physics.yaml) - Material configuration
+- [config/physics.yaml](../config/physics/physics.yaml) - Material configuration

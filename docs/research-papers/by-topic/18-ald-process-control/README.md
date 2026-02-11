@@ -45,8 +45,8 @@ ALD process control is foundational to achieving the 30-level analog resolution 
 
 ## Related Topics
 
-- **[01-material-physics](../01-material-physics/)** - Fundamental physics of HZO ferroelectricity enabled by ALD control
+- **[01-material-physics](../01-ferroelectric-materials/)** - Fundamental physics of HZO ferroelectricity enabled by ALD control
 - **[19-variability-yield](../19-variability-yield/)** - Process-induced variation that ALD optimization must minimize
 - **[15-3d-stacking-architectures](../15-3d-stacking-architectures/)** - Low-temperature ALD enabling BEOL 3D integration
-- **[05-endurance-reliability](../05-endurance-reliability/)** - ALD-optimized films achieving 10¹²+ cycle endurance
-- **[02-crossbar-arrays](../02-crossbar-arrays/)** - Uniform device characteristics critical for crossbar functionality
+- **[05-endurance-reliability](../19-variability-yield/)** - ALD-optimized films achieving 10¹²+ cycle endurance
+- **[02-crossbar-arrays](../04-cim-architectures/)** - Uniform device characteristics critical for crossbar functionality

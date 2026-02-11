@@ -1528,7 +1528,7 @@ EOF
 
 ### Related FeCIM Documentation
 
-- [Module 6: EDA Design Suite](./README.md)
+- [Module 6: EDA Design Suite](../README.md)
 - [SKY130 PDK Reference](../eda/pdk/sky130.md)
 - [OpenLane Study](../eda/references/openlane-study.md)
 - [From FeCIM to Wafer](../eda/guides/fecim-to-wafer.md)

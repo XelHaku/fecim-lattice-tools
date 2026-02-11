@@ -84,7 +84,7 @@ This document provides the authoritative reference for all voltage values used i
 | Charge Pump Output | 1.5 V | ±100 mV | `shared/peripherals/chargepump.go` | ✅ Code |
 | TIA Max Output | 1.0 V | ±50 mV | `shared/peripherals/tia.go` | ✅ Code |
 | **Physics Parameters** | | | | |
-| Coercive Field (Ec) | 0.6-1.5 MV/cm | Material-dependent | `config/physics/defaults/materials.yaml` (literature defaults; DOI: (add)) | ⚠️ Literature (unverified) |
+| Coercive Field (Ec) | 0.6-1.5 MV/cm | Material-dependent | `config/physics/defaults/materials.yaml` (literature defaults; [CITATION NEEDED - placeholder value]) | ⚠️ Literature (unverified) |
 | Film Thickness | 10 nm | ±1 nm | `config/physics/defaults/materials.yaml` | ⚠️ Literature default (unverified) |
 | Coercive Voltage (Vc) | 0.6-1.5 V | Derived: Vc = Ec × thickness | Calculated from Ec | ⚠️ Derived (from unverified Ec) |
 | Read Voltage Max Ratio | 0.7 × Vc | 30% safety margin below Vc | `config/physics/defaults/calibration.yaml` | ✅ Code |
@@ -1621,7 +1621,7 @@ Sneak Path Suppression:
 NOTES:
   - All voltages at 300K (room temperature)
   - Timing parameters in config/physics/defaults/timing.yaml
-  - Vc varies with material (HZO: 1.2V, AlScN: 5-10V) (illustrative; DOI: (add))
+  - Vc varies with material (HZO: 1.2V, AlScN: 5-10V) (illustrative; [CITATION NEEDED - placeholder value])
   - Read voltage max = 0.7 × Vc (field_min_ratio = 0.7, 30% safety margin)
   - Half-select voltage = Vwrite/2 (0T1R only)
   - Transistor ON/OFF voltages are assumed CMOS logic levels

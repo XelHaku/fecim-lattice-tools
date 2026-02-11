@@ -290,6 +290,8 @@ type CircuitsApp struct {
 	senseRfEntry         *widget.Entry
 	senseAdcVminEntry    *widget.Entry
 	senseAdcVmaxEntry    *widget.Entry
+	sensePresetSelect    *widget.Select
+	sensePresetUpdating  bool
 
 	// H3 FIX: Undo history for array changes
 	undoHistory    [][]int // Previous array state

@@ -36,8 +36,8 @@ Security applications represent an important diversification opportunity for fer
 
 ## Related Topics
 
-- **[01-material-physics](../01-material-physics/)** - Stochastic domain switching physics underlying PUF behavior
+- **[01-material-physics](../01-ferroelectric-materials/)** - Stochastic domain switching physics underlying PUF behavior
 - **[19-variability-yield](../19-variability-yield/)** - Device variation that enables PUF uniqueness
-- **[06-neural-networks-inference](../06-neural-networks-inference/)** - Secure edge AI combining CIM and PUF
-- **[02-crossbar-arrays](../02-crossbar-arrays/)** - Crossbar-based PUF architectures
+- **[06-neural-networks-inference](../10-cim-compilers-mapping/)** - Secure edge AI combining CIM and PUF
+- **[02-crossbar-arrays](../04-cim-architectures/)** - Crossbar-based PUF architectures
 - **[08-industry-reports](../08-industry-reports/)** - IoT and edge computing market drivers for hardware security

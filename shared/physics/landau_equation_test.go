@@ -5,43 +5,104 @@ import (
 	"testing"
 )
 
-func TestLKSolver_dPdT_Equation(t *testing.T) {
-	s := &LKSolver{
-		Alpha: 1.2,
-		Beta:  -0.5,
-		Gamma: 0.25,
-		K_dep: 2.0,
+func TestLKSolver_dPdT_EquationSignAndTerms_TableDriven(t *testing.T) {
+	tests := []struct {
+		name   string
+		solver LKSolver
+		P      float64
+		E      float64
+		noise  float64
+		rhoEff float64
+	}{
+		{
+			name: "reference case with positive depolarization penalty",
+			solver: LKSolver{Alpha: 1.2, Beta: -0.5, Gamma: 0.25, K_dep: 2.0},
+			P:      0.3,
+			E:      5.0,
+			noise:  -0.2,
+			rhoEff: 1.5,
+		},
+		{
+			name: "negative polarization increases effective field via -k_dep*P",
+			solver: LKSolver{Alpha: 0.8, Beta: -0.2, Gamma: 0.05, K_dep: 3.0},
+			P:      -0.4,
+			E:      2.0,
+			noise:  0.0,
+			rhoEff: 0.9,
+		},
+		{
+			name: "zero depolarization reduces to classic LK drive",
+			solver: LKSolver{Alpha: 1.0, Beta: -0.3, Gamma: 0.07, K_dep: 0.0},
+			P:      0.2,
+			E:      -1.0,
+			noise:  0.1,
+			rhoEff: 1.3,
+		},
 	}
 
-	P := 0.3
-	E := 5.0
-	noise := -0.2
-	rhoEff := 1.5
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			Edep := tc.solver.K_dep * tc.P
+			Eeff := tc.E - Edep
+			dGdP := (2 * tc.solver.Alpha * tc.P) + (4 * tc.solver.Beta * math.Pow(tc.P, 3)) + (6 * tc.solver.Gamma * math.Pow(tc.P, 5))
+			expected := (Eeff + tc.noise - dGdP) / tc.rhoEff
 
-	Edep := s.K_dep * P
-	Deff := E - Edep
-	dGdP := (2 * s.Alpha * P) + (4 * s.Beta * math.Pow(P, 3)) + (6 * s.Gamma * math.Pow(P, 5))
-	expected := (Deff + noise - dGdP) / rhoEff
-
-	got := s.dPdT(0, P, E, noise, rhoEff)
-	if math.Abs(got-expected) > 1e-12 {
-		t.Fatalf("dPdT mismatch: got %.12f, expected %.12f", got, expected)
+			got := tc.solver.dPdT(0, tc.P, tc.E, tc.noise, tc.rhoEff)
+			if math.Abs(got-expected) > 1e-12 {
+				t.Fatalf("dPdT mismatch: got %.12f, expected %.12f", got, expected)
+			}
+		})
 	}
 }
 
-func TestLKSolver_effectiveRho(t *testing.T) {
-	s := &LKSolver{
-		Rho:                   0.1,
-		UseEffectiveViscosity: true,
-		SeriesResistance:      50,
-		Area:                  2,
-		Thickness:             5,
+func TestLKSolver_effectiveRho_SignAndUnits_TableDriven(t *testing.T) {
+	tests := []struct {
+		name     string
+		solver   LKSolver
+		expected float64
+	}{
+		{
+			name: "enabled uses rho + (R*A/d)",
+			solver: LKSolver{
+				Rho:                   0.1,
+				UseEffectiveViscosity: true,
+				SeriesResistance:      50,
+				Area:                  2,
+				Thickness:             5,
+			},
+			expected: 0.1 + (50*2)/5,
+		},
+		{
+			name: "disabled keeps intrinsic rho only",
+			solver: LKSolver{
+				Rho:                   0.25,
+				UseEffectiveViscosity: false,
+				SeriesResistance:      50,
+				Area:                  2,
+				Thickness:             5,
+			},
+			expected: 0.25,
+		},
+		{
+			name: "physical units example (ohm*meter contribution)",
+			solver: LKSolver{
+				Rho:                   0.05,
+				UseEffectiveViscosity: true,
+				SeriesResistance:      50.0,
+				Area:                  45e-9 * 45e-9,
+				Thickness:             10e-9,
+			},
+			expected: 0.05 + (50.0*(45e-9*45e-9))/(10e-9),
+		},
 	}
 
-	expected := 0.1 + (50*2)/5
-	got := s.effectiveRho()
-	if math.Abs(got-expected) > 1e-12 {
-		t.Fatalf("effectiveRho mismatch: got %.12f, expected %.12f", got, expected)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := tc.solver.effectiveRho()
+			if math.Abs(got-tc.expected) > 1e-12 {
+				t.Fatalf("effectiveRho mismatch: got %.12f, expected %.12f", got, tc.expected)
+			}
+		})
 	}
 }
 

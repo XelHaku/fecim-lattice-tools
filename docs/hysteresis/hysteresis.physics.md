@@ -2,7 +2,7 @@
 
 Start here if you've never studied ferroelectrics before.
 
-**Note:** References to “30 levels” refer to the demo baseline (configurable). Literature reports multi-level states (not verified here). Numeric values below are simulation defaults or illustrative unless a peer-reviewed citation is provided (**CITATION NEEDED**).
+**Note:** References to “30 levels” refer to the demo baseline (configurable). Literature reports multi-level states (not verified here). Numeric values below are simulation defaults or illustrative unless a peer-reviewed citation is provided (**[CITATION NEEDED - placeholder value]**).
 
 ---
 
@@ -167,7 +167,7 @@ The output (P) doesn't just depend on the input (E)—it depends on the **histor
 
 ### Key Parameters Explained
 
-| Parameter | Name | Meaning | Example (simulation default) |
+| Parameter | Name | Meaning | Example (simulation default; [CITATION NEEDED - placeholder value]) |
 |-----------|------|---------|-----------|
 | **Ps** | Saturation Polarization | Maximum possible separation of charges | 25 μC/cm² |
 | **Pr** | Remanent Polarization | Polarization remaining at zero field (THE MEMORY) | ~20 μC/cm² |
@@ -551,4 +551,4 @@ Where Tc = 723 K (~450°C) is the Curie temperature. Above Tc, the material lose
 
 ---
 
-*This document is part of the FeCIM Visualizer project. For beginner explanations, see [hysteresis.ELI5.md](hysteresis.ELI5.md). For research references, see [hysteresis.research.md](hysteresis.research.md). For open-source tools, see [hysteresis.opensource.md](hysteresis.opensource.md).*
+*This document is part of the FeCIM Visualizer project. For beginner explanations, see [../hysteresis/hysteresis.ELI5.md](../hysteresis/hysteresis.ELI5.md). For research references, see [../hysteresis/hysteresis.research.md](../hysteresis/hysteresis.research.md). For open-source tools, see [hysteresis.opensource.md](hysteresis.opensource.md).*

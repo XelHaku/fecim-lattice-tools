@@ -73,18 +73,18 @@
 
 | ID | Task | Source | Status | Est. |
 |----|------|--------|--------|------|
-| LK-C01 | Verify LK equation terms/signs match compendium (E_eff = E_applied - k_dep·P) | `shared/physics/landau.go` | ⏳ | 2hr |
-| LK-C02 | Verify effective-viscosity wiring `rho_eff = rho + (R_series·A/d)` | `shared/physics/landau.go` | ⏳ | 1hr |
+| LK-C01 | Verify LK equation terms/signs match compendium (E_eff = E_applied - k_dep·P) | `shared/physics/landau.go` | ✅ | 2hr |
+| LK-C02 | Verify effective-viscosity wiring `rho_eff = rho + (R_series·A/d)` | `shared/physics/landau.go` | ✅ | 1hr |
 | LK-C03 | Headless LK run: E-field units, 5-target ISPP without NaN/Inf | `cmd/fecim-lattice-tools` | ⏳ | 2hr |
 
 ### Documentation Accuracy
 
 | ID | Task | Source | Status | Est. |
 |----|------|--------|--------|------|
-| DOC-CITE-1 | Add DOI citations for ELI5 energy, HZO property, data-center projections | `docs/ELI5.md` | ⏳ | 1-2hr |
-| DOC-CITE-2 | Verify/replace literature DOIs in crossbar voltage/physics references | `docs/crossbar/reference/` | ⏳ | 2-4hr |
-| DOC-CITE-3 | Cite peripheral timing/energy assumptions or label as placeholders | `docs/peripheral-circuits/PHYSICS.md` | ⏳ | 1-2hr |
-| DOC-CITE-4 | Cite hysteresis parameter values or label as placeholders | `docs/hysteresis/hysteresis.physics.md` | ⏳ | 1-2hr |
+| DOC-CITE-1 | Add DOI citations for ELI5 energy, HZO property, data-center projections | `docs/ELI5.md` | ✅ | 1-2hr |
+| DOC-CITE-2 | Verify/replace literature DOIs in crossbar voltage/physics references | `docs/crossbar/reference/` | ✅ | 2-4hr |
+| DOC-CITE-3 | Cite peripheral timing/energy assumptions or label as placeholders | `docs/peripheral-circuits/PHYSICS.md` | ✅ | 1-2hr |
+| DOC-CITE-4 | Cite hysteresis parameter values or label as placeholders | `docs/hysteresis/hysteresis.physics.md` | ✅ | 1-2hr |
 | DOC-LINK-1 | Fix 110 broken internal markdown links (prioritize docs/README.md) | `docs/` | ⏳ | 2-4hr |
 
 ---
@@ -106,9 +106,9 @@
 
 | ID | Task | Source | Status | Est. |
 |----|------|--------|--------|------|
-| G01 | Calibration drift guard: `scripts/calib-guard.sh` fails CI on JSON changes | `cmd/.../calibrations/` | ⏳ | 1-2hr |
-| G02 | Intentional calibration update policy: require evidence log links in commits | Process | ⏳ | 30m |
-| G03 | Provide optional pre-commit hook template to block calibration JSON commits | Process | ⏳ | 30m |
+| G01 | Calibration drift guard: `scripts/calib-guard.sh` fails CI on uncommitted calibration JSON changes | `cmd/.../calibrations/` | ✅ | 1-2hr |
+| G02 | Intentional calibration update policy: require evidence log links in commits | Process | ✅ | 30m |
+| G03 | Provide optional pre-commit hook template that warns on calibration JSON changes | Process | ✅ | 30m |
 | G04 | Headless WRD/ISPP regression suite: Preisach HI/MID/LO targets + JSON summary | Shared | ⏳ | 2-4hr |
 | G05 | Headless LK regression suite: same targets + overshoot/pulse stats | Shared | ⏳ | 2-4hr |
 | G06 | Normalize/verify CLI engine selector (`--engine {preisach,lk}`) | CLI | ⏳ | 30-60m |

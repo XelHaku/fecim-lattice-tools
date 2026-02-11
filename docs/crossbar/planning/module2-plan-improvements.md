@@ -715,7 +715,7 @@ Week 6:    Testing, documentation, bug fixes
 
 ## Related Documentation
 
-- `docs/crossbar/crossbar.research.md` - Crossbar array research
+- `docs/crossbar/../educational/crossbar.research.md` - Crossbar array research
 - `docs/peripheral-circuits/circuits.CIM-fundamentals.md` - CIM physics
 - `docs/development/TESTING.md` - Test framework
 - `CLAUDE.md` - Project conventions

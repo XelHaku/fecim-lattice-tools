@@ -1089,7 +1089,7 @@ FYNE_DEBUG_RESIZE=1 ./fecim-lattice-tools
 
 ## References
 
-- **COSM 2025**: Dr. external research group on FeCIM: [ironlattice-transcript.md](../videos/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md)
+- **COSM 2025**: Dr. external research group on FeCIM: [ironlattice-transcript.md](../video-transcripts/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md)
 - **Nature Communications 2025**: HfO₂-ZrO₂ superlattice material parameters
 - **IEEE IRPS 2022**: Endurance and reliability data
 - **Preisach Model**: Classical hysteresis modeling (research papers in module1 docs)

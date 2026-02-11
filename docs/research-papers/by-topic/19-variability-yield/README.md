@@ -51,9 +51,9 @@ Variability modeling is essential for realistic FeCIM system simulation:
 
 ## Related Topics
 
-- **[01-material-physics](../01-material-physics/)** - Physical origins of variation (grain boundaries, defects)
+- **[01-material-physics](../01-ferroelectric-materials/)** - Physical origins of variation (grain boundaries, defects)
 - **[18-ald-process-control](../18-ald-process-control/)** - Process optimization to reduce variation at source
-- **[02-crossbar-arrays](../02-crossbar-arrays/)** - Impact of device variation on crossbar MVM accuracy
+- **[02-crossbar-arrays](../04-cim-architectures/)** - Impact of device variation on crossbar MVM accuracy
 - **[10-cim-compilers-mapping](../10-cim-compilers-mapping/)** - Compiler techniques for variation-aware mapping
-- **[06-neural-networks-inference](../06-neural-networks-inference/)** - Accuracy degradation due to weight variation
+- **[06-neural-networks-inference](../10-cim-compilers-mapping/)** - Accuracy degradation due to weight variation
 - **[15-3d-stacking-architectures](../15-3d-stacking-architectures/)** - Yield challenges amplified in 3D structures

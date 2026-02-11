@@ -1207,7 +1207,7 @@ func (m *MayergoyzPreisach) ImportDistribution(filename string) error {
 **Implementation**:
 ```go
 func (a *App) startAPIServer(port int) {
-    http.HandleFunc("/api/status", func(w http.ResponseWriter, r *http.Request) {
+    http.HandleFunc("/API.mdstatus", func(w http.ResponseWriter, r *http.Request) {
         a.mu.RLock()
         defer a.mu.Unlock()
         json.NewEncoder(w).Encode(map[string]interface{}{
@@ -1217,7 +1217,7 @@ func (a *App) startAPIServer(port int) {
         })
     })
     
-    http.HandleFunc("/api/field", func(w http.ResponseWriter, r *http.Request) {
+    http.HandleFunc("/API.mdfield", func(w http.ResponseWriter, r *http.Request) {
         var req struct{ E float64 `json:"e"`}
         json.NewDecoder(r.Body).Decode(&req)
         a.mu.Lock()
@@ -1442,8 +1442,8 @@ Before marking any feature complete:
 ## 📚 Key References
 
 ### Internal Documentation
-- `docs/hysteresis/hysteresis.physics.md` - Physics fundamentals
-- `docs/hysteresis/hysteresis.research.md` - Research meta-study
+- `docs/hysteresis/../hysteresis/hysteresis.physics.md` - Physics fundamentals
+- `docs/hysteresis/../hysteresis/hysteresis.research.md` - Research meta-study
 - `docs/hysteresis/hysteresis.opensource.md` - Open-source tools review
 - `docs/hysteresis/hysteresis-proposed-improvements-opensource.md` - Proposed improvements (31 items)
 

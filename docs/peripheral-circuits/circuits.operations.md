@@ -809,7 +809,7 @@ The mode help text dynamically updates based on architecture:
 - **[circuits.research.md](circuits.research.md)** — Peripheral circuits meta-study
 - **[circuits.ELI5.md](circuits.ELI5.md)** — Simple explanations + module spec
 - **[circuits.opensource.md](circuits.opensource.md)** — Open-source tools
-- **[../crossbar/crossbar.research.md](../crossbar/crossbar.research.md)** — Crossbar array research
+- **[../crossbar/educational/../educational/crossbar.research.md](../crossbar/educational/../educational/crossbar.research.md)** — Crossbar array research
 - **[../development/GUI/GUI.module4.md](../development/GUI/GUI.module4.md)** — Module 4 GUI reference
 
 ---

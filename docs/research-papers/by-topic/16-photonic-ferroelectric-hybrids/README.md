@@ -255,18 +255,18 @@ FeFET stores Q, K, V projection weights non-volatilely
   - Q×K^T and Attention×V ideal for photonic MVM
   - 1000× bandwidth eliminates memory bottleneck
 
-- **[Topic 4: Analog CIM](../04-analog-cim/)** - Complementary technologies
+- **[Topic 4: Analog CIM](../04-cim-architectures/)** - Complementary technologies
   - Photonic: Ultra-high bandwidth, lower precision
   - Electronic FeFET: High precision, moderate bandwidth
   - Hybrid: Best of both worlds
 
 ### Secondary Connections
-- **[Topic 1: FeFET Fundamentals](../01-fefet-fundamentals/)** - Device enabler
+- **[Topic 1: FeFET Fundamentals](../01-ferroelectric-materials/)** - Device enabler
   - Non-volatile phase control is unique advantage
   - 30 analog states (demo baseline; simulation baseline) enable precise optical weights
   - Fast switching (ns) matches photonic speed
 
-- **[Topic 6: 3D Integration](../06-3d-integration/)** - Packaging solution
+- **[Topic 6: 3D Integration](../15-3d-stacking-architectures/)** - Packaging solution
   - Photonic layer + FeFET layer in 3D stack
   - Reduces footprint and latency
   - Thermal management critical
@@ -276,7 +276,7 @@ FeFET stores Q, K, V projection weights non-volatilely
   - FeFET enables gradient-based weight updates
   - Hybrid approach: photonic forward + electronic backward
 
-- **[Topic 2: HZO Materials](../02-hzo-materials/)** - Material requirements
+- **[Topic 2: HZO Materials](../01-ferroelectric-materials/)** - Material requirements
   - Electro-optic effect in ferroelectrics
   - Integration with silicon photonics
   - Temperature sensitivity affects photonic performance

@@ -757,7 +757,7 @@ Tradeoff: Slower (integration time), precision limited
 - **[circuits.research.md](circuits.research.md)** — Peripheral circuits meta-study (ADC/DAC/TIA/Pump)
 - **[circuits.ELI5.md](circuits.ELI5.md)** — Simple explanations for beginners
 - **[circuits.opensource.md](circuits.opensource.md)** — Open-source simulation tools
-- **[../crossbar/crossbar.research.md](../crossbar/crossbar.research.md)** — Crossbar array physics
+- **[../crossbar/educational/../educational/crossbar.research.md](../crossbar/educational/../educational/crossbar.research.md)** — Crossbar array physics
 
 ---
 

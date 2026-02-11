@@ -31,36 +31,48 @@ Thank you for your interest in contributing to the FeCIM Visualizer project.
    ```
 7. **Open a Pull Request** on GitHub
 
-## Calibration updates (drift guard)
+## Calibration update policy (drift-sensitive)
 
 Calibration JSON files under:
 
 - `cmd/fecim-lattice-tools/data/calibrations/*.json`
 
-are treated as **drift-sensitive**. CI will fail if these files change unless the update is explicitly allowed.
+are treated as **drift-sensitive**.
 
-### CI bypass (intentional updates)
+### CI guard: no uncommitted calibration drift
 
-- Local/dev:
-  ```bash
-  ALLOW_CALIBRATION_UPDATES=1 scripts/calib-guard.sh
-  ```
-- GitHub Actions: set the Actions variable `ALLOW_CALIBRATION_UPDATES=1` for the repository/org.
-
-### Optional pre-commit hook (not auto-installed)
-
-To block accidental calibration edits on your machine:
+Use:
 
 ```bash
-cp scripts/pre-commit-calib-guard.sh .git/hooks/pre-commit
-chmod +x .git/hooks/pre-commit
+scripts/calib-guard.sh
 ```
 
-Bypass for one commit:
+This script fails when any calibration JSON file is changed but not committed
+(staged, unstaged, or untracked). It is intended for CI jobs that should leave
+these files untouched.
+
+### Intentional calibration updates (required evidence)
+
+If calibration JSON changes are intentional, include evidence links in the commit
+message/body (bench logs, lab notes, issue/PR discussion, etc.).
+
+Recommended trailer format:
+
+```text
+Calibration-Evidence: https://...
+```
+
+### Optional pre-commit warning hook (template)
+
+Install the provided warning-only hook:
 
 ```bash
-git commit --no-verify
+git config core.hooksPath .githooks
+chmod +x .githooks/pre-commit
 ```
+
+The hook warns when staged calibration JSON files are detected, but does **not**
+block commits.
 
 ## Code Standards
 

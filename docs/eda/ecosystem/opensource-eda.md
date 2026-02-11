@@ -218,7 +218,7 @@ The following curriculum leverages the "Zero to ASIC" methodology, structured to
 
 - **Theory:** "Digital Integrated Circuits" (Rabaey) - Chapters on MOS physics and CMOS inverters
 - **Tools:** Install Docker. Pull the IIC-OSIC-TOOLS image, which contains the entire suite (OpenROAD, OpenLane, Xschem, ngspice, Magic) pre-installed and configured
-- **Tutorials:** Matt Venn's "Zero to ASIC" course (highly recommended intro) and the "Open Source Silicon" YouTube channel. For a practical breakdown of this workflow, see our internal guide: [Zero to ASIC: A Practical Field Guide](eda.guide.zero_to_asic.md).
+- **Tutorials:** Matt Venn's "Zero to ASIC" course (highly recommended intro) and the "Open Source Silicon" YouTube channel. For a practical breakdown of this workflow, see our internal guide: [Zero to ASIC: A Practical Field Guide](../guides/zero-to-asic.md).
 
 ### Phase 2: The First "Tapeout" (Weeks 3-4)
 
@@ -377,7 +377,7 @@ This project—a "FeCIM Visualizer and Compiler"—aims to help bridge this gap 
 | Resource | URL |
 |----------|-----|
 | Zero to ASIC Course | [zerotoasiccourse.com](https://zerotoasiccourse.com) |
-| **Internal Guide** | [Zero to ASIC: A Practical Field Guide](eda.guide.zero_to_asic.md) |
+| **Internal Guide** | [Zero to ASIC: A Practical Field Guide](../guides/zero-to-asic.md) |
 | Tiny Tapeout | [tinytapeout.com](https://tinytapeout.com) |
 
 ### Key Figures

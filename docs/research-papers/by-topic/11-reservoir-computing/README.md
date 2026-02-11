@@ -36,8 +36,8 @@ Reservoir computing represents an important extension of the FeCIM Lattice Tools
 
 ## Related Topics
 
-- **[01-material-physics](../01-material-physics/)** - HZO material properties (MPB compositions) enabling superior RC performance
-- **[06-neural-networks-inference](../06-neural-networks-inference/)** - Feedforward DNNs that RC extends with temporal processing
-- **[03-analog-in-memory-compute](../03-analog-in-memory-compute/)** - Analog computing principles leveraged by RC
-- **[12-benchmarking-datasets](../12-benchmarking-datasets/)** - Time-series and speech datasets for RC evaluation
+- **[01-material-physics](../01-ferroelectric-materials/)** - HZO material properties (MPB compositions) enabling superior RC performance
+- **[06-neural-networks-inference](../10-cim-compilers-mapping/)** - Feedforward DNNs that RC extends with temporal processing
+- **[03-analog-in-memory-compute](../04-cim-architectures/)** - Analog computing principles leveraged by RC
+- **[12-benchmarking-datasets](../08-industry-reports/)** - Time-series and speech datasets for RC evaluation
 - **[19-variability-yield](../19-variability-yield/)** - Device variation affects reservoir richness and requires robustness analysis

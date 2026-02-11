@@ -155,16 +155,16 @@ Spiking Neural Networks are biologically-inspired and dramatically more energy-e
   - SNNs can leverage analog weight update circuits
   - STDP is a form of local learning (simpler than backprop)
 
-- **[Topic 1: FeFET Fundamentals](../01-fefet-fundamentals/)** - Device physics
+- **[Topic 1: FeFET Fundamentals](../01-ferroelectric-materials/)** - Device physics
   - FeFET multi-level states enable precise synaptic weights
   - Retention and endurance requirements for SNN applications
 
 ### Secondary Connections
-- **[Topic 4: Analog CIM](../04-analog-cim/)** - Crossbar architectures
+- **[Topic 4: Analog CIM](../04-cim-architectures/)** - Crossbar architectures
   - SNN implementations use similar crossbar structures
   - Event-driven computation reduces array utilization
 
-- **[Topic 7: Cryogenic](../07-cryogenic/)** - Ultra-low power
+- **[Topic 7: Cryogenic](../23-cryogenic-operation/)** - Ultra-low power
   - Combining SNN + cryogenic for maximum efficiency
   - Superconductive neurons for zero-energy spikes
 

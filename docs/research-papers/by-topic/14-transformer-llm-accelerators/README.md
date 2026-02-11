@@ -162,7 +162,7 @@ Input Embeddings (n × d)
 ## Related Topics
 
 ### Primary Connections
-- **[Topic 4: Analog CIM](../04-analog-cim/)** - Hardware foundation
+- **[Topic 4: Analog CIM](../04-cim-architectures/)** - Hardware foundation
   - Transformer = stack of MVM operations
   - Attention is perfect for crossbar arrays
   - Requires high-precision ADCs for softmax
@@ -173,11 +173,11 @@ Input Embeddings (n × d)
   - LoRA (Low-Rank Adaptation) reduces training memory
 
 ### Secondary Connections
-- **[Topic 2: HZO Materials](../02-hzo-materials/)** - Scaling to large models
+- **[Topic 2: HZO Materials](../01-ferroelectric-materials/)** - Scaling to large models
   - Billion-parameter models need high density
   - Retention critical for persistent KV-cache
 
-- **[Topic 6: 3D Integration](../06-3d-integration/)** - Memory capacity
+- **[Topic 6: 3D Integration](../15-3d-stacking-architectures/)** - Memory capacity
   - Vertical stacking enables on-chip LLaMA-7B
   - Reduces inter-layer latency
 

@@ -15,12 +15,13 @@ package physics
 type CellGeometry struct {
 	Thickness float64 // Ferroelectric thickness (m)
 	Area      float64 // Active area (m^2)
+	Stack     string  // Optional process/material stack label (e.g. "TiN/HZO/TiN")
 }
 
 // DefaultCellGeometry returns conservative defaults aligned with FeCIMMaterial.
 func DefaultCellGeometry() CellGeometry {
 	m := FeCIMMaterial()
-	return CellGeometry{Thickness: m.Thickness, Area: m.Area}
+	return CellGeometry{Thickness: m.Thickness, Area: m.Area, Stack: "TiN/HZO/TiN"}
 }
 
 // WithDefaults fills missing geometry fields with defaults.
@@ -31,6 +32,9 @@ func (g CellGeometry) WithDefaults() CellGeometry {
 	}
 	if g.Area <= 0 {
 		g.Area = def.Area
+	}
+	if g.Stack == "" {
+		g.Stack = def.Stack
 	}
 	return g
 }
@@ -57,4 +61,40 @@ func (g CellGeometry) CurrentFromDPdt(dPdtCPerM2PerS float64) float64 {
 		return 0
 	}
 	return dPdtCPerM2PerS * g.Area
+}
+
+// ConductanceFromConductivity computes film conductance from conductivity using
+// G = sigma * area / thickness.
+func (g CellGeometry) ConductanceFromConductivity(conductivitySPerM float64) float64 {
+	if conductivitySPerM <= 0 || g.Area <= 0 || g.Thickness <= 0 {
+		return 0
+	}
+	return conductivitySPerM * g.Area / g.Thickness
+}
+
+// ResistanceFromResistivity computes film resistance from resistivity using
+// R = rho * thickness / area.
+func (g CellGeometry) ResistanceFromResistivity(resistivityOhmM float64) float64 {
+	if resistivityOhmM <= 0 || g.Area <= 0 || g.Thickness <= 0 {
+		return 0
+	}
+	return resistivityOhmM * g.Thickness / g.Area
+}
+
+// ConductanceScale returns the relative geometry scaling factor (A/t) / (Aref/tref).
+// Returns 1 when either geometry is invalid to avoid exploding callers.
+func (g CellGeometry) ConductanceScale(reference CellGeometry) float64 {
+	if g.Area <= 0 || g.Thickness <= 0 || reference.Area <= 0 || reference.Thickness <= 0 {
+		return 1
+	}
+	return (g.Area / g.Thickness) / (reference.Area / reference.Thickness)
+}
+
+// GeometryFromMaterial extracts canonical cell geometry from material parameters.
+func GeometryFromMaterial(mat *HZOMaterial) CellGeometry {
+	if mat == nil {
+		return DefaultCellGeometry()
+	}
+	g := CellGeometry{Thickness: mat.Thickness, Area: mat.Area, Stack: mat.Name}
+	return g.WithDefaults()
 }

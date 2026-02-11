@@ -7,7 +7,7 @@ The curriculum does not duplicate PDFs; it points you to curated topics.
 
 | Topic | Link |
 |---|---|
-| Ferroelectric materials | [01-ferroelectric-materials](../../research-papers/by-topic/01-ferroelectric-materials/) |
+| Ferroelectric materials | [01-ferroelectric-materials](./by-topic/01-ferroelectric-materials/) |
 | Training algorithms | [02-training-algorithms](../../research-papers/by-topic/02-training-algorithms/) |
 | Simulation tools | [03-simulation-tools](../../research-papers/by-topic/03-simulation-tools/) |
 | CIM architectures | [04-cim-architectures](../../research-papers/by-topic/04-cim-architectures/) |

@@ -17,7 +17,7 @@ This document provides the physics foundation for peripheral circuits in FeCIM s
 - **Timing Analysis**: Read/write cycle timing, throughput
 - **System Integration**: How peripheral circuits work together in a FeCIM crossbar
 
-**Note:** Unless explicitly cited, numeric values in this document are simulation defaults or illustrative assumptions from `shared/peripherals` (not measured hardware data). Equations are standard references.
+**Note:** Unless explicitly cited, numeric values in this document are simulation defaults or illustrative assumptions from `shared/peripherals` (not measured hardware data) ([CITATION NEEDED - placeholder value]). Equations are standard references.
 
 ## Model Defaults Map (Doc ↔ Code)
 
@@ -659,7 +659,7 @@ Specifications identical to positive pump:
 
 ## Part 5: System Timing Analysis
 
-Timing values below are derived from model defaults in `shared/peripherals` and are illustrative. Array settle (sneak/RC) 5 ns and program pulse 100 ns are fixed constants in `AnalyzeTiming` (placeholders, not parameterized).
+Timing values below are derived from model defaults in `shared/peripherals` and are illustrative. Array settle (sneak/RC) 5 ns and program pulse 100 ns are fixed constants in `AnalyzeTiming` (placeholders, not parameterized) ([CITATION NEEDED - placeholder value]).
 
 ### FeCIM Operation Cycles
 
@@ -744,7 +744,7 @@ With realistic peripherals:
 
 ## Part 6: System Energy Analysis
 
-Energy numbers below are model-based estimates using `shared/peripherals` defaults, not measured device values.
+Energy numbers below are model-based estimates using `shared/peripherals` defaults, not measured device values ([CITATION NEEDED - placeholder value]).
 
 ### Energy Breakdown Per Operation
 
@@ -964,7 +964,7 @@ FeCIM uses SAR because it balances speed (50 ns) with power efficiency.
 
 ### Related Physics
 
-- **[../hysteresis/hysteresis.physics.md](../hysteresis/hysteresis.physics.md)** — Ferroelectric hysteresis
+- **[../hysteresis/../hysteresis/hysteresis.physics.md](../hysteresis/../hysteresis/hysteresis.physics.md)** — Ferroelectric hysteresis
 - **[../crossbar/reference/PHYSICS.md](../crossbar/reference/PHYSICS.md)** — Crossbar array physics
 
 ### External References

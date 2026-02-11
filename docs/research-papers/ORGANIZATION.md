@@ -197,8 +197,8 @@ To link papers in `docs/documentation/research-papers/` without duplicating file
 ```markdown
 ## Ferroelectric Materials
 
-- [First-Principles HfO₂ Superlattice](../../research-papers/by-topic/01-ferroelectric-materials/first_principles_hfo2_superlattice_2024.pdf)
-- [Preisach Ferroelectric Modeling](../../research-papers/by-topic/01-ferroelectric-materials/Preisach_Ferroelectric_Modeling_arXiv.pdf)
+- [First-Principles HfO₂ Superlattice](./by-topic/01-ferroelectric-materials/first_principles_hfo2_superlattice_2024.pdf)
+- [Preisach Ferroelectric Modeling](./by-topic/01-ferroelectric-materials/Preisach_Ferroelectric_Modeling_arXiv.pdf)
 ```
 
 **Option B: Symbolic Links** (Unix/Linux)

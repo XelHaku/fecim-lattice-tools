@@ -1613,10 +1613,10 @@ START: What is your array size?
 
 ### Related Documentation
 
-- **[Crossbar Physics](crossbar.physics.md)** - Core MVM and non-ideality physics
-- **[Crossbar Demo Guide](crossbar.demo.md)** - Interactive visualization walkthrough
-- **[Crossbar Research](crossbar.research.md)** - 40+ paper meta-study
-- **[Module 2 README](../../module2-crossbar/README.md)** - Implementation details
+- **[Crossbar Physics](../educational/crossbar.physics.md)** - Core MVM and non-ideality physics
+- **[Crossbar Demo Guide](../educational/crossbar.demo.md)** - Interactive visualization walkthrough
+- **[Crossbar Research](../educational/crossbar.research.md)** - 40+ paper meta-study
+- **[Module 2 README](../../../module2-crossbar/README.md)** - Implementation details
 
 ---
 

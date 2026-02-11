@@ -148,7 +148,7 @@ G_effective = G_stored × (V_applied / V_actual)
 
 ### 2.3 IR Drop Impact (Empirical)
 
-**Source:** IEEE TCAD 2022 (from crossbar.research.md)
+**Source:** IEEE TCAD 2022 (from ../educational/crossbar.research.md)
 
 | Array Size | Max IR Drop | Accuracy Loss |
 |------------|-------------|---------------|
@@ -577,7 +577,7 @@ Effective resolution ≈ 5 bits despite 6-bit ADC.
 
 ### 7.4 MNIST Accuracy vs. ADC Bits (Illustrative)
 
-**Source:** IEEE TCAD 2022 (from crossbar.research.md)
+**Source:** IEEE TCAD 2022 (from ../educational/crossbar.research.md)
 
 | ADC Bits | Relative Power | MNIST Accuracy |
 |----------|----------------|----------------|
@@ -715,15 +715,15 @@ Effective resolution ≈ 5 bits despite 6-bit ADC.
 ### Primary Sources
 1. **Dr. external research group COSM 2025** - First public disclosure of 30-level FeCIM (docs/videos/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md)
 2. **Nature Communications 2025 (PMC12254504)** - "Enhancing ferroelectric stability: wide-range of adaptive control in epitaxial HfO₂/ZrO₂ superlattices"
-3. **IEEE TCAD 2022** - IR drop and sneak path benchmarks (crossbar.research.md)
+3. **IEEE TCAD 2022** - IR drop and sneak path benchmarks (../educational/crossbar.research.md)
 4. **Sze et al.** - "Efficient Processing of Deep Neural Networks" (digital MAC energy reference)
 
 ### Literature Meta-Study
-- **Complete analysis:** docs/crossbar/crossbar.research.md
+- **Complete analysis:** docs/crossbar/../educational/crossbar.research.md
 - **40+ papers** synthesized covering CIM architectures, FeFET crossbars, non-idealities
 
 ### Project Documentation
-- **Physics deep-dive:** docs/crossbar/crossbar.physics.md
+- **Physics deep-dive:** docs/crossbar/../educational/crossbar.physics.md
 - **Testing guide:** docs/development/TESTING.md
 - **Fyne GUI reference:** docs/development/FYNE_NOTES.md
 

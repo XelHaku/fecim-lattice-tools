@@ -1034,13 +1034,13 @@ library(fecim_1t1r) {
 
 ### Project Documentation
 
-- [Module 6 Demo Guide](./eda.demo.md)
-- [Module 6 Overview](./README.md)
-- [OpenLane Study](./OPENLANE_STUDY.md)
-- [OpenLane Integration Guide](./eda.integration.md)
-- [SKY130 Quick Reference](./SKY130.md)
-- [EDA Research](./eda.research.md)
-- [EDA Open Source Ecosystem](./eda.opensource.md)
+- [Module 6 Demo Guide](./demo.md)
+- [Module 6 Overview](../README.md)
+- [OpenLane Study](../references/openlane-study.md)
+- [OpenLane Integration Guide](./integration.md)
+- [SKY130 Quick Reference](../pdk/sky130.md)
+- [EDA Research](../references/research-papers.md)
+- [EDA Open Source Ecosystem](../ecosystem/opensource-eda.md)
 
 ### External Resources
 

@@ -3,7 +3,7 @@
 This document describes the physics models implemented in module2-crossbar, covering conductance models, matrix operations, non-idealities, and device physics.
 
 > **Note:** These are simplified models for simulation and visualization. Numeric values are model defaults or reported ranges, not validated hardware specs.
-> **Literature values are unverified in this project; add peer-reviewed citations before external use (CITATION NEEDED).**
+> **Literature values are unverified in this project; add peer-reviewed citations before external use ([CITATION NEEDED - placeholder value]).**
 
 **Table of Contents**
 - [Conductance Models](#conductance-models)
@@ -125,7 +125,7 @@ For each row i:
 - Reduces output precision
 
 **Impact on Accuracy:**
-- ~1% accuracy loss per 3% RMSE for neural networks (illustrative; CITATION NEEDED)
+- ~1% accuracy loss per 3% RMSE for neural networks (illustrative; [CITATION NEEDED - placeholder value])
 - 8-bit ADC/DAC: acceptable for inference (assumption; depends on model)
 - 12+ bits: suitable for training (assumption; depends on model)
 
@@ -143,7 +143,7 @@ Voltage drop due to wire resistance and cumulative current flow along metal line
 | $R_{\text{bl}}$ | 2.5 | Ω/pitch | 1-10 | Bit line resistance per cell pitch |
 | $R_{\text{contact}}$ | 50 | Ω | 10-100 | Contact resistance |
 
-Based on a 45nm-era assumption (illustrative; CITATION NEEDED). Scales with feature size.
+Based on a 45nm-era assumption (illustrative; [CITATION NEEDED - placeholder value]). Scales with feature size.
 
 ### Voltage Drop Formula
 
@@ -167,7 +167,7 @@ $$V_{\text{eff}}(i,j) = V_{\text{wl}}(i,j) - V_{\text{bl}}(i,j)$$
 IR drop is **maximum at far corner** (high row, high column):
 - Both row and column experience maximum cumulative current
 - Cell (rows-1, cols-1) typically worst case
-- Can cause voltage reduction; 10-15% is an illustrative model range (unverified)
+- Can cause voltage reduction; 10-15% is an illustrative model range ([CITATION NEEDED - placeholder value])
 
 ### Iterative Relaxation Solver
 
@@ -185,12 +185,12 @@ IR drop is computed iteratively:
 **0T1R (Passive Crossbar):**
 - Sneak currents add to main current
 - Effective resistance higher (~1.5× nominal)
-- 10-15% IR drop is an illustrative range (unverified)
+- 10-15% IR drop is an illustrative range ([CITATION NEEDED - placeholder value])
 
 **1T1R (Transistor-Isolated):**
 - Transistor isolation reduces parasitic currents
 - Lower effective current on lines
-- 5-10% IR drop is an illustrative range (unverified)
+- 5-10% IR drop is an illustrative range ([CITATION NEEDED - placeholder value])
 
 ---
 
@@ -234,13 +234,13 @@ Where:
 **0T1R (Passive):**
 - No transistor isolation
 - All sneak paths contribute equally
-- Sneak-to-signal ratio: 1-2 (0-6 dB SNR) is illustrative (unverified)
-- 5-20% accuracy loss is illustrative (unverified)
+- Sneak-to-signal ratio: 1-2 (0-6 dB SNR) is illustrative ([CITATION NEEDED - placeholder value])
+- 5-20% accuracy loss is illustrative ([CITATION NEEDED - placeholder value])
 
 **1T1R (Transistor Isolation):**
 - Transistor OFF-state provides ~10^6 ON/OFF ratio
 - Conservative estimate: 0.001 isolation factor
-- Sneak-to-signal ratio: 10^-3 (60 dB SNR) is illustrative (unverified)
+- Sneak-to-signal ratio: 10^-3 (60 dB SNR) is illustrative ([CITATION NEEDED - placeholder value])
 - Sneak path effect is reduced but not eliminated (model assumption)
 
 ### Computation Modes
@@ -264,7 +264,7 @@ Conductance drift over time, causing accuracy degradation.
 
 ### Physics Basis
 
-Literature reports long retention for FeFETs (e.g., >10 years at 85°C), but this is unverified here (CITATION NEEDED). Drift is modeled logarithmically:
+Literature reports long retention for FeFETs (e.g., >10 years at 85°C), but this is unverified here ([CITATION NEEDED - placeholder value]). Drift is modeled logarithmically:
 
 $$G(t) = G_0 \times \left(1 - \beta \times \ln\left(\frac{t}{t_0}\right)\right)$$
 
@@ -299,7 +299,7 @@ Drift processes are thermally activated:
 $$\text{drift rate} \propto \exp\left(-\frac{E_a}{k_B T}\right)$$
 
 Where:
-- $E_a$ = activation energy ≈ 0.5 eV (assumed; CITATION NEEDED)
+- $E_a$ = activation energy ≈ 0.5 eV (assumed; [CITATION NEEDED - placeholder value])
 - $k_B$ = Boltzmann constant = 1.38×10^-23 J/K
 - $T$ = absolute temperature (K)
 
@@ -322,7 +322,7 @@ Temperature affects multiple physics parameters.
 
 **Implementation note:** `TemperatureEffects` provides these scalings. Current MVM-with-non-idealities applies temperature to wire resistance (IR drop); other temperature scalings (conductance window, noise, drift rate) are exposed via helpers and the drift simulator but are not auto-applied in the baseline MVM path.
 
-**Note:** Numeric temperature effects below are illustrative or literature-reported and are not verified here (CITATION NEEDED).
+**Note:** Numeric temperature effects below are illustrative or literature-reported and are not verified here ([CITATION NEEDED - placeholder value]).
 
 ### Wire Resistance
 
@@ -435,9 +435,9 @@ $$\text{fatigue ratio} = \frac{\text{cycles} - \text{fatigue threshold}}{\text{f
 
 | Parameter | Value | Source |
 |-----------|-------|--------|
-| Fatigue Threshold | 10^8 cycles | IEEE IRPS (CITATION NEEDED) |
-| Failure Threshold | 10^12 cycles | Claim requires peer-reviewed support (CITATION NEEDED) |
-| Window Narrowing | 50% at failure | Assumed FeFET behavior (unverified) |
+| Fatigue Threshold | 10^8 cycles | IEEE IRPS ([CITATION NEEDED - placeholder value]) |
+| Failure Threshold | 10^12 cycles | Claim requires peer-reviewed support ([CITATION NEEDED - placeholder value]) |
+| Window Narrowing | 50% at failure | Assumed FeFET behavior ([CITATION NEEDED - placeholder value]) |
 
 **Note:** Endurance modeling off by default (performance optimization). Enable for cycle-specific studies.
 
@@ -556,7 +556,7 @@ type MVMOptions struct {
 
 ## References
 
-**Peer-Reviewed Sources (CITATION NEEDED):**
+**Peer-Reviewed Sources ([CITATION NEEDED - placeholder value]):**
 - Add specific endurance/retention citations for FeFET/FE devices used to justify default thresholds.
 - Avoid future-dated or placeholder citations; include full reference + DOI when verified.
 

@@ -15,10 +15,10 @@ crossbar/
 │
 ├── educational/         # Learning materials
 │   ├── crossbar.ELI5.md      # Beginner-friendly explanations
-│   ├── crossbar.demo.md      # Demo guide and usage
-│   ├── crossbar.physics.md   # Deep physics tutorial
-│   ├── crossbar.research.md  # Research meta-study (40+ papers)
-│   └── crossbar.opensource.md # External tool survey
+│   ├── ../educational/crossbar.demo.md      # Demo guide and usage
+│   ├── ../educational/crossbar.physics.md   # Deep physics tutorial
+│   ├── ../educational/crossbar.research.md  # Research meta-study (40+ papers)
+│   └── ../crossbar/educational/crossbar.opensource.md # External tool survey
 │
 └── planning/            # Improvement roadmaps
     ├── module2-plan-improvements.md              # Internal enhancement plan
@@ -33,8 +33,8 @@ crossbar/
 | Learn crossbar basics | `educational/crossbar.ELI5.md` |
 | Compare architectures | `reference/ARCHITECTURES.md` |
 | See voltage specifications | `reference/VOLTAGE_RULES.md` |
-| Run the demo | `educational/crossbar.demo.md` |
-| Review physics models | `reference/PHYSICS.md` (code) or `educational/crossbar.physics.md` (theory) |
+| Run the demo | `educational/../educational/crossbar.demo.md` |
+| Review physics models | `reference/PHYSICS.md` (code) or `educational/../educational/crossbar.physics.md` (theory) |
 | See improvement plans | `planning/module2-plan-improvements.md` |
 
 ## Physics vs Physics
@@ -42,4 +42,4 @@ crossbar/
 Two physics documents exist for different purposes:
 
 - **`reference/PHYSICS.md`** - Documents physics *as implemented in code* (conductance models, drift equations, constants)
-- **`educational/crossbar.physics.md`** - Deep technical tutorial on crossbar physics theory (MVM, Ohm's law, KCL)
+- **`educational/../educational/crossbar.physics.md`** - Deep technical tutorial on crossbar physics theory (MVM, Ohm's law, KCL)

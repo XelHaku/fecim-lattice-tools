@@ -1117,7 +1117,7 @@ pip install --upgrade PySpice
 ### Key Papers & Resources
 
 - **SPICE Algorithm:** L. W. Nagel, D. O. Pederson (1973) - "SPICE (Simulation Program with Integrated Circuit Emphasis)"
-- **Ferroelectric Modeling:** Preisach, Tanh, and TDGL models in `docs/hysteresis/hysteresis.physics.md`
+- **Ferroelectric Modeling:** Preisach, Tanh, and TDGL models in `docs/hysteresis/../hysteresis/hysteresis.physics.md`
 - **CIM Circuits:** `docs/peripheral-circuits/circuits.research.md`
 
 ### Example Repositories
@@ -1133,8 +1133,8 @@ pip install --upgrade PySpice
 - **[circuits.CIM-fundamentals.md](../peripheral-circuits/circuits.CIM-fundamentals.md)** — Physics of CIM peripheral circuits
 - **[circuits.operations.md](../peripheral-circuits/circuits.operations.md)** — How read/write/compute operations work
 - **[circuits.opensource.md](../peripheral-circuits/circuits.opensource.md)** — Additional peripheral design tools
-- **[hysteresis.physics.md](../hysteresis/hysteresis.physics.md)** — Ferroelectric physics models
-- **[eda-learn-screen.md](../eda/_archive/eda-learn-screen.md)** — EDA tool learning resources (archived)
+- **[../hysteresis/hysteresis.physics.md](../hysteresis/../hysteresis/hysteresis.physics.md)** — Ferroelectric physics models
+- **[eda-learn-screen.md](../eda/guides/zero-to-asic.md)** — EDA tool learning resources (archived)
 
 ---
 

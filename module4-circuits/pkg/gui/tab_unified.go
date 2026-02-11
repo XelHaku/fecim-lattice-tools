@@ -42,6 +42,22 @@ const (
 	minSenseADCVrefSpan = 1e-3
 )
 
+type senseMeasurementPreset struct {
+	Name string
+	Rf   float64
+	Vmin float64
+	Vmax float64
+}
+
+var senseMeasurementPresets = []senseMeasurementPreset{
+	{Name: "Balanced", Rf: 10.0, Vmin: 0.00, Vmax: 1.00},
+	{Name: "High Sensitivity", Rf: 50.0, Vmin: 0.00, Vmax: 1.00},
+	{Name: "Wide Current Range", Rf: 5.0, Vmin: 0.00, Vmax: 1.20},
+	{Name: "Low-Current Focus", Rf: 100.0, Vmin: 0.10, Vmax: 0.90},
+}
+
+const customSensePresetName = "Custom"
+
 func formatCurrentA(currentA float64) string {
 	return formatSignedScaled(currentA, []scaledUnit{
 		{unit: "A", scale: 1.0},
@@ -826,6 +842,48 @@ func (ca *CircuitsApp) onDACVoltageChanged(col int, voltageStr string) {
 	ca.recomputeAndRefresh()
 }
 
+func (ca *CircuitsApp) setSensePresetSelection(name string) {
+	if ca.sensePresetSelect == nil {
+		return
+	}
+	ca.sensePresetUpdating = true
+	ca.sensePresetSelect.SetSelected(name)
+	ca.sensePresetUpdating = false
+}
+
+func (ca *CircuitsApp) setSensePresetCustom() {
+	ca.setSensePresetSelection(customSensePresetName)
+}
+
+func (ca *CircuitsApp) applySensePreset(name string) {
+	for _, preset := range senseMeasurementPresets {
+		if preset.Name != name {
+			continue
+		}
+		if ca.tia == nil || ca.adc == nil {
+			return
+		}
+		ca.tia.Gain = preset.Rf * 1e3
+		ca.tiaGain = preset.Rf
+		ca.adc.VrefLow = preset.Vmin
+		ca.adc.VrefHigh = preset.Vmax
+
+		sharedwidgets.SafeDo(func() {
+			if ca.senseRfEntry != nil {
+				ca.senseRfEntry.SetText(fmt.Sprintf("%.1f", preset.Rf))
+			}
+			if ca.senseAdcVminEntry != nil {
+				ca.senseAdcVminEntry.SetText(fmt.Sprintf("%.2f", preset.Vmin))
+			}
+			if ca.senseAdcVmaxEntry != nil {
+				ca.senseAdcVmaxEntry.SetText(fmt.Sprintf("%.2f", preset.Vmax))
+			}
+		})
+		ca.recomputeAndRefresh()
+		return
+	}
+}
+
 // applySenseRf updates the TIA feedback resistance (Rf) from UI input.
 func (ca *CircuitsApp) applySenseRf(valueStr string) {
 	if ca.tia == nil {
@@ -853,6 +911,7 @@ func (ca *CircuitsApp) applySenseRf(valueStr string) {
 			ca.senseRfEntry.SetText(fmt.Sprintf("%.1f", rfKOhm))
 		})
 	}
+	ca.setSensePresetCustom()
 	ca.recomputeAndRefresh()
 }
 
@@ -903,6 +962,7 @@ func (ca *CircuitsApp) applySenseADCRange() {
 			}
 		})
 	}
+	ca.setSensePresetCustom()
 	ca.recomputeAndRefresh()
 }
 
@@ -1192,9 +1252,11 @@ func (ca *CircuitsApp) updateSensePanel() {
 		}
 	}
 
-	codeText := fmt.Sprintf("%d", code)
+	codeText := fmt.Sprintf("Code %d", code)
 	if levels > 1 {
-		codeText = fmt.Sprintf("%d/%d", code, levels-1)
+		fullScale := float64(levels - 1)
+		pct := (float64(code) / fullScale) * 100.0
+		codeText = fmt.Sprintf("Code %d / %d (%.1f%% FS)", code, levels-1, pct)
 	}
 
 	rowText := fmt.Sprintf("Row %d", row)
@@ -1209,9 +1271,9 @@ func (ca *CircuitsApp) updateSensePanel() {
 		titleText = "Sense (COMPUTE)"
 	}
 
-	satText := "OK"
+	satText := "Linear"
 	if saturated {
-		satText = "SAT"
+		satText = "SATURATED (clipped)"
 	}
 
 	sharedwidgets.SafeDo(func() {

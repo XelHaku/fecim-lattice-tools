@@ -352,7 +352,7 @@ Expected files: `mnist_weights_30lvl.json`, etc.
 
 - [Architecture Overview](mnist.architecture.md)
 - [Fixes TODO](mnist.fixes.todo.md)
-- [FeCIM Honesty Audit](../../docs/cim/HONESTY_AUDIT.md)
+- [FeCIM Honesty Audit](../comparison/HONESTY_AUDIT.md)
 - [Fyne Documentation](https://developer.fyne.io/)
 
 ---

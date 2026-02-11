@@ -72,7 +72,7 @@ Based on research literature:
 - **[03-simulation-tools](../03-simulation-tools/)** - Tools like AIHWKit and CrossSim that implement these algorithms
 - **[04-cim-architectures](../04-cim-architectures/)** - Hardware architectures these algorithms target
 - **[05-neuromorphic](../05-neuromorphic/)** - Spiking neural network training with similar constraints
-- **[08-hardware-measurements](../08-hardware-measurements/)** - Validation of trained networks on actual hardware
+- **[08-hardware-measurements](../20-manufacturing-integration/)** - Validation of trained networks on actual hardware
 
 ## References for FeCIM Development
 

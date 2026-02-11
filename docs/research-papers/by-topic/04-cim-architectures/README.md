@@ -181,8 +181,8 @@ Recent findings (Temperature_Resilient_FeFET_CIM_2024.pdf):
 - **[03-simulation-tools](../03-simulation-tools/)** - Tools to simulate these architectures
 - **[05-neuromorphic](../05-neuromorphic/)** - Alternative computing paradigms
 - **[07-memory-architectures](../07-memory-architectures/)** - 3D memory integration
-- **[11-peripheral-circuits](../11-peripheral-circuits/)** - ADC/DAC/TIA design details
-- **[15-benchmarking](../15-benchmarking/)** - Performance comparison methodologies
+- **[11-peripheral-circuits](../07-memory-architectures/)** - ADC/DAC/TIA design details
+- **[15-benchmarking](../08-industry-reports/)** - Performance comparison methodologies
 
 ## Implementation Priorities for FeCIM Lattice Tools
 

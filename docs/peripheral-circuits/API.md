@@ -1402,7 +1402,7 @@ Typical per-operation breakdown:
 
 ## Related Documentation
 
-- Physics background: [circuits.physics.md](circuits.physics.md)
+- Physics background: [PHYSICS.md](PHYSICS.md)
 - Operation guide: [circuits.operations.md](circuits.operations.md)
 - ELI5 explanation: [circuits.ELI5.md](circuits.ELI5.md)
 - Research papers: [circuits.research.md](circuits.research.md)

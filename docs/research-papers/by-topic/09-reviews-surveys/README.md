@@ -43,7 +43,7 @@ The physics models in module1 (hysteresis, Preisach) and module2 (crossbar non-i
 ## Related Topics
 
 - **[08-industry-reports](../08-industry-reports/)** - Industry perspective on commercial readiness and market timing
-- **[01-material-physics](../01-material-physics/)** - Detailed physics underlying the technologies surveyed here
-- **[06-neural-networks-inference](../06-neural-networks-inference/)** - Specific DNN implementations discussed in CIM surveys
+- **[01-material-physics](../01-ferroelectric-materials/)** - Detailed physics underlying the technologies surveyed here
+- **[06-neural-networks-inference](../10-cim-compilers-mapping/)** - Specific DNN implementations discussed in CIM surveys
 - **[10-cim-compilers-mapping](../10-cim-compilers-mapping/)** - Software tools for mapping workloads to CIM architectures
 - **[19-variability-yield](../19-variability-yield/)** - Manufacturing challenges identified across surveyed technologies

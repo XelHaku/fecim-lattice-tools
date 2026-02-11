@@ -288,11 +288,11 @@ cat > docs/documentation/research-papers/01-ferroelectric-materials.md << 'DOC'
 # Ferroelectric Materials Research
 
 See full paper collection in:
-[Research Papers Library](../../research-papers/by-topic/01-ferroelectric-materials/)
+[Research Papers Library](./by-topic/01-ferroelectric-materials/)
 
 Key papers:
-- [HZO Superlattice First-Principles](../../research-papers/by-topic/01-ferroelectric-materials/first_principles_hfo2_superlattice_2024.pdf)
-- [Preisach Modeling](../../research-papers/by-topic/01-ferroelectric-materials/Preisach_Ferroelectric_Modeling_arXiv.pdf)
+- [HZO Superlattice First-Principles](./by-topic/01-ferroelectric-materials/first_principles_hfo2_superlattice_2024.pdf)
+- [Preisach Modeling](./by-topic/01-ferroelectric-materials/Preisach_Ferroelectric_Modeling_arXiv.pdf)
 DOC
 ```
 

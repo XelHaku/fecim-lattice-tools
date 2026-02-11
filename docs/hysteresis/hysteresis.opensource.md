@@ -573,7 +573,7 @@ def switching_progress(self, t, tau=1e-9, n=2.0):
 ### For Beginners
 
 1. **Run this project's demo** (`module1-hysteresis`)
-2. **Read [hysteresis.physics.md](hysteresis.physics.md)** for equations
+2. **Read [../hysteresis/hysteresis.physics.md](../hysteresis/hysteresis.physics.md)** for equations
 3. **Implement SimplePreisach** above in Python
 4. **Compare loop shapes** with different parameters
 
@@ -597,8 +597,8 @@ def switching_progress(self, t, tau=1e-9, n=2.0):
 
 ### Documentation
 
-- **This project's PHYSICS.md:** [hysteresis.physics.md](hysteresis.physics.md)
-- **This project's ELI5:** [hysteresis.ELI5.md](hysteresis.ELI5.md)
+- **This project's PHYSICS.md:** [../hysteresis/hysteresis.physics.md](../hysteresis/hysteresis.physics.md)
+- **This project's ELI5:** [../hysteresis/hysteresis.ELI5.md](../hysteresis/hysteresis.ELI5.md)
 - **FerroX documentation:** GitHub wiki
 - **MOOSE tutorials:** https://mooseframework.inl.gov/
 
@@ -606,7 +606,7 @@ def switching_progress(self, t, tau=1e-9, n=2.0):
 
 - FerroX paper: arXiv:2210.15668
 - NeuroSim papers: Various arXiv
-- Preisach modeling: See hysteresis.research.md
+- Preisach modeling: See ../hysteresis/hysteresis.research.md
 
 ### Online Courses
 
@@ -661,4 +661,4 @@ def switching_progress(self, t, tau=1e-9, n=2.0):
 
 ---
 
-*This document is part of the FeCIM Visualizer project. For the research meta-study, see [hysteresis.research.md](hysteresis.research.md). For beginner explanations, see [hysteresis.ELI5.md](hysteresis.ELI5.md). For deep physics, see [hysteresis.physics.md](hysteresis.physics.md). For demo docs, see [hysteresis.demo.md](hysteresis.demo.md).*
+*This document is part of the FeCIM Visualizer project. For the research meta-study, see [../hysteresis/hysteresis.research.md](../hysteresis/hysteresis.research.md). For beginner explanations, see [../hysteresis/hysteresis.ELI5.md](../hysteresis/hysteresis.ELI5.md). For deep physics, see [../hysteresis/hysteresis.physics.md](../hysteresis/hysteresis.physics.md). For demo docs, see [../hysteresis/hysteresis.demo.md](../hysteresis/hysteresis.demo.md).*

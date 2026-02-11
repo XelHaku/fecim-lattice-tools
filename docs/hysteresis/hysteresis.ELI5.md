@@ -567,8 +567,8 @@ $ fecim-hysteresis interactive
 
 ### Intermediate
 
-- **hysteresis.physics.md** for deep physics
-- **hysteresis.research.md** for paper references
+- **../hysteresis/hysteresis.physics.md** for deep physics
+- **../hysteresis/hysteresis.research.md** for paper references
 - **hysteresis.opensource.md** for tools
 
 ### Advanced
@@ -716,4 +716,4 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-too
 
 ---
 
-*This document is part of the FeCIM Visualizer project. For deep physics, see [hysteresis.physics.md](hysteresis.physics.md). For research details, see [hysteresis.research.md](hysteresis.research.md). For open-source tools, see [hysteresis.opensource.md](hysteresis.opensource.md). For demo-specific documentation, see [hysteresis.demo.md](hysteresis.demo.md).*
+*This document is part of the FeCIM Visualizer project. For deep physics, see [../hysteresis/hysteresis.physics.md](../hysteresis/hysteresis.physics.md). For research details, see [../hysteresis/hysteresis.research.md](../hysteresis/hysteresis.research.md). For open-source tools, see [hysteresis.opensource.md](hysteresis.opensource.md). For demo-specific documentation, see [../hysteresis/hysteresis.demo.md](../hysteresis/hysteresis.demo.md).*

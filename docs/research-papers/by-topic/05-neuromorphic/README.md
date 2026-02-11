@@ -167,7 +167,7 @@ DVS Camera (events) → FeFET SNN (feature extraction)
 - **[04-cim-architectures](../04-cim-architectures/)** - Crossbar architectures applicable to both paradigms
 - **[02-training-algorithms](../02-training-algorithms/)** - Comparison with backpropagation-based training
 - **[06-photonic-computing](../06-photonic-computing/)** - Alternative ultra-low-power computing approach
-- **[13-low-power-design](../13-low-power-design/)** - Power optimization techniques
+- **[13-low-power-design](../07-memory-architectures/)** - Power optimization techniques
 
 ## Implementation Considerations for FeCIM
 
