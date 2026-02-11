@@ -3,7 +3,6 @@ package widgets
 import (
 	"testing"
 
-	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/test"
 	"fyne.io/fyne/v2/widget"
@@ -18,24 +17,9 @@ func TestNewPhysicsEquationsWidget(t *testing.T) {
 		t.Fatal("NewPhysicsEquationsWidget should return non-nil")
 	}
 
-	root, ok := obj.(*fyne.Container)
+	tabs, ok := obj.(*container.AppTabs)
 	if !ok {
-		t.Fatalf("expected *fyne.Container, got %T", obj)
-	}
-
-	if len(root.Objects) < 1 {
-		t.Errorf("expected at least 1 top-level object, got %d", len(root.Objects))
-	}
-
-	var tabs *container.AppTabs
-	for _, child := range root.Objects {
-		if t, ok := child.(*container.AppTabs); ok {
-			tabs = t
-			break
-		}
-	}
-	if tabs == nil {
-		t.Fatal("expected AppTabs in equation widget")
+		t.Fatalf("expected *container.AppTabs, got %T", obj)
 	}
 	if len(tabs.Items) < 2 {
 		t.Fatalf("expected at least 2 tabs, got %d", len(tabs.Items))

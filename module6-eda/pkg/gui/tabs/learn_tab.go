@@ -13,6 +13,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/shared/logging"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // sizedContainer wraps a canvas object with a minimum size requirement
@@ -95,7 +96,7 @@ func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 			content = makeQuickStartContent()
 		}
 		contentScroll.Content = content
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			contentScroll.Refresh()
 		})
 	}
@@ -199,7 +200,6 @@ func makeIntroContent() fyne.CanvasObject {
 		disclaimerCard,
 	)
 }
-
 
 func makeCrossbarContent() fyne.CanvasObject {
 	title := widget.NewLabelWithStyle("The Crossbar Architecture", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})

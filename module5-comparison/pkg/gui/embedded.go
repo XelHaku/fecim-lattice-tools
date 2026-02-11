@@ -78,12 +78,16 @@ func (e *EmbeddedComparisonApp) Start() {
 
 	e.running = true
 	e.paused = false
+	e.animWG.Add(1)
 	e.animMu.Unlock()
 
 	// Auto-calculate on start to show real savings (not $0M)
 	e.updateCalculations()
 
-	go e.animationLoop()
+	go func() {
+		defer e.animWG.Done()
+		e.animationLoop()
+	}()
 
 	debug.Println("EmbeddedComparisonApp: Animation started")
 }
@@ -94,6 +98,7 @@ func (e *EmbeddedComparisonApp) Stop() {
 	e.running = false
 	e.animMu.Unlock()
 
+	e.animWG.Wait()
 	debug.Println("EmbeddedComparisonApp: Animation stopped")
 	e.EmbeddedAppBase.Stop()
 }

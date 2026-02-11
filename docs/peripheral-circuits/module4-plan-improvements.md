@@ -122,7 +122,7 @@ Real: 0T1R arrays have parallel sneak paths adding 5-20% error
 
 ### Task 1.3: IR Drop Model
 
-**Files:** `module4-circuits/pkg/peripherals/analysis.go`, `device_state.go`
+**Files:** `shared/peripherals/analysis.go`, `device_state.go`
 
 **Problem:**
 Current: All cells see exact DAC voltage
@@ -218,7 +218,7 @@ Real: Half-selected cells (same row or column) see V/2, causing gradual drift
 
 ### Task 2.1: Temperature Model
 
-**Files:** `module4-circuits/pkg/peripherals/temperature.go` (new), `device_state.go`
+**Files:** `shared/peripherals/temperature.go` (new), `device_state.go`
 
 **Changes:**
 
@@ -327,7 +327,7 @@ Real: Half-selected cells (same row or column) see V/2, causing gradual drift
 
 ### Task 2.4: TIA Frequency Response
 
-**Files:** `module4-circuits/pkg/peripherals/tia.go`
+**Files:** `shared/peripherals/tia.go`
 
 **Changes:**
 
@@ -359,7 +359,7 @@ Real: Half-selected cells (same row or column) see V/2, causing gradual drift
 
 ### Task 3.1: Charge Pump Transient Response
 
-**Files:** `module4-circuits/pkg/peripherals/chargepump.go`
+**Files:** `shared/peripherals/chargepump.go`
 
 **Changes:**
 - Add `TransientResponse(loadStep, duration float64) []float64`
@@ -370,7 +370,7 @@ Real: Half-selected cells (same row or column) see V/2, causing gradual drift
 
 ### Task 3.2: ADC Comparator Kickback
 
-**Files:** `module4-circuits/pkg/peripherals/adc.go`
+**Files:** `shared/peripherals/adc.go`
 
 **Changes:**
 - Add `KickbackCharge` parameter
@@ -381,7 +381,7 @@ Real: Half-selected cells (same row or column) see V/2, causing gradual drift
 
 ### Task 3.3: SET/RESET Timing Asymmetry
 
-**Files:** `module4-circuits/pkg/peripherals/analysis.go`
+**Files:** `shared/peripherals/analysis.go`
 
 **Changes:**
 - Separate SET and RESET pulse widths in timing analysis
@@ -405,7 +405,7 @@ Real: Half-selected cells (same row or column) see V/2, causing gradual drift
 
 ### Unit Tests
 
-**Location:** `module4-circuits/pkg/peripherals/peripherals_test.go`
+**Location:** `shared/peripherals/peripherals_test.go`
 
 ```go
 // Phase 1 tests

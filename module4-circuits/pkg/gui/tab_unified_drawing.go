@@ -534,7 +534,7 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 		archText = "1T1R"
 		archColor = color.RGBA{100, 220, 120, 255}
 	default:
-		archText = "PASSIVE"
+		archText = "0T1R"
 		archColor = color.RGBA{220, 150, 100, 255}
 	}
 	drawSimpleText(img, archText, w-len(archText)*6-10, 8, archColor)

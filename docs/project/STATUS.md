@@ -1,6 +1,6 @@
 # Project Status
 
-**Last updated**: 2026-02-02
+**Last updated**: 2026-02-07
 
 ## Phase
 
@@ -21,6 +21,7 @@
 
 - CI workflow `ci` runs `go test ./...` on every push/PR.
 - Run locally with `go test ./...` (race tests are optional).
+- Headless LK ISPP sanity/regression: `go test ./cmd/fecim-lattice-tools -run TestHeadlessLKRun_CompletesISPP`
 
 ## Coverage
 

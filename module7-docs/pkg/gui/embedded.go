@@ -298,52 +298,100 @@ func (app *EmbeddedDocsApp) createDocTree() *widget.Tree {
 		// Create - create a new tree node widget
 		func(branch bool) fyne.CanvasObject {
 			icon := widget.NewIcon(theme.DocumentIcon())
+			badge := NewCategoryBadge("")
+			badge.Hide()
 			label := widget.NewLabel("Document")
 			starBtn := widget.NewButtonWithIcon("", theme.ContentAddIcon(), nil)
 			starBtn.Importance = widget.LowImportance
 			starBtn.Hidden = true
-			return container.NewBorder(nil, nil, icon, starBtn, label)
+
+			center := container.NewHBox(badge, label)
+			return container.NewBorder(nil, nil, icon, starBtn, center)
 		},
 		// Update - update tree node with data
 		func(uid widget.TreeNodeID, branch bool, node fyne.CanvasObject) {
 			box := node.(*fyne.Container)
-			// Find widgets by type - don't rely on container object ordering
+			// Find widgets by type - don't rely on container object ordering.
 			var icon *widget.Icon
-			var label *widget.Label
 			var starBtn *widget.Button
+			var label *widget.Label
+			var badge *CategoryBadge
+
 			for _, obj := range box.Objects {
 				switch v := obj.(type) {
 				case *widget.Icon:
 					icon = v
-				case *widget.Label:
-					label = v
 				case *widget.Button:
 					starBtn = v
+				case *fyne.Container:
+					// Center container: [badge][label]
+					for _, child := range v.Objects {
+						switch c := child.(type) {
+						case *widget.Label:
+							label = c
+						case *CategoryBadge:
+							badge = c
+						}
+					}
 				}
 			}
 
 			if entry, ok := app.pathMap[uid]; ok {
 				label.SetText(entry.name)
+
+				// Category badge is a small curriculum-first signal.
+				category := ""
 				if entry.isDir {
 					icon.SetResource(theme.FolderIcon())
 					starBtn.Hidden = true
+
+					base := strings.ToLower(filepath.Base(entry.path))
+					switch {
+					case app.isModuleDir(entry.path):
+						category = "Module"
+					case base == "research-papers":
+						category = "Research"
+					}
 				} else {
 					icon.SetResource(getCategoryIcon(entry.name))
 					starBtn.Hidden = false
 
-					// Update star icon based on favorite status
+					nameLower := strings.ToLower(entry.name)
+					switch nameLower {
+					case "eli5.md":
+						category = "ELI5"
+					case "physics.md":
+						category = "Physics"
+					case "features.md", "opensource-tools.md", "readme.md", "modules.md":
+						category = "Guide"
+					default:
+						if strings.Contains(filepath.ToSlash(entry.path), "/research-papers/") {
+							category = "Research"
+						}
+					}
+
+					// Update star icon based on favorite status.
 					if app.history.IsFavorite(entry.path) {
 						starBtn.SetIcon(theme.ContentRemoveIcon())
 					} else {
 						starBtn.SetIcon(theme.ContentAddIcon())
 					}
 
-					// Capture path for closure
+					// Capture path for closure.
 					path := entry.path
 					starBtn.OnTapped = func() {
 						app.suppressSelect[path] = true
 						app.toggleFavorite(path)
 						app.tree.Refresh()
+					}
+				}
+
+				if badge != nil {
+					if category == "" {
+						badge.Hide()
+					} else {
+						badge.SetCategory(category)
+						badge.Show()
 					}
 				}
 			}

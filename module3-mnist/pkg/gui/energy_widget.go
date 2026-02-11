@@ -13,26 +13,24 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
+	"fecim-lattice-tools/module3-mnist/pkg/core"
 	"fecim-lattice-tools/shared/physics"
 	"fecim-lattice-tools/shared/utils"
 )
 
 // EnergyConfig defines energy parameters for calculations.
 type EnergyConfig struct {
-	// Per-operation energy costs
-	EnergyPerMAC_FeCIM float64 // ~50 fJ per MAC for FeCIM (analog in-memory compute)
-	EnergyPerMAC_GPU   float64 // ~500 pJ per MAC for GPU including DRAM access (Horowitz 2014)
-	EnergyPerDAC       float64 // ~0.1 pJ per DAC conversion (100 fJ)
-	EnergyPerADC       float64 // ~0.5 pJ per ADC conversion (500 fJ)
+	// GPU energy model (kept separate from FeCIM core model).
+	//
+	// FeCIM energy is computed via module3-mnist/pkg/core (bit-scaled fJ/MAC + ADC/DAC overhead)
+	// so that GUI and core stay aligned.
+	EnergyPerMAC_GPU float64 // ~500 pJ per MAC including DRAM access (Horowitz 2014)
 }
 
-// DefaultEnergyConfig returns energy parameters based on FeCIM research.
+// DefaultEnergyConfig returns energy parameters for the GUI.
 func DefaultEnergyConfig() EnergyConfig {
 	return EnergyConfig{
-		EnergyPerMAC_FeCIM: 50e-15,  // 50 femtojoules
-		EnergyPerMAC_GPU:   500e-12, // 500 picojoules per MAC including DRAM access (Horowitz 2014)
-		EnergyPerDAC:       0.1e-12, // 0.1 picojoules (100 fJ)
-		EnergyPerADC:       0.5e-12, // 0.5 picojoules (500 fJ)
+		EnergyPerMAC_GPU: 500e-12, // 500 picojoules per MAC including DRAM access (Horowitz 2014)
 	}
 }
 
@@ -91,43 +89,31 @@ func (ew *EnergyWidget) SetNetworkSize(inputSize, hiddenSize, outputSize int) {
 }
 
 // RecordInference records a new inference and updates energy totals.
-func (ew *EnergyWidget) RecordInference() {
+//
+// FeCIM energy is computed using the shared core model (bit-scaled energy per MAC + ADC/DAC overhead).
+// GPU energy uses a simple per-MAC constant (EnergyPerMAC_GPU).
+func (ew *EnergyWidget) RecordInference(cfg *core.NetworkConfig) {
 	ew.mu.Lock()
 	defer ew.mu.Unlock()
 
 	ew.totalInferences++
 
-	// Calculate MACs
-	// Layer 1: inputSize × hiddenSize
-	// Layer 2: hiddenSize × outputSize
-	layer1MACs := ew.inputSize * ew.hiddenSize
-	layer2MACs := ew.hiddenSize * ew.outputSize
-	totalMACs := layer1MACs + layer2MACs
+	est := core.EstimateInferenceEnergyJ(cfg, ew.inputSize, ew.hiddenSize, ew.outputSize)
 
-	// Calculate ADC/DAC counts
-	numDACs := ew.inputSize                  // One DAC per input
-	numADCs := ew.hiddenSize + ew.outputSize // ADCs at each layer output
-
-	// FeCIM energy calculation
-	// E = (MACs × energy_per_MAC) + (DACs × DAC_energy) + (ADCs × ADC_energy)
-	fecimEnergy := float64(totalMACs)*ew.config.EnergyPerMAC_FeCIM +
-		float64(numDACs)*ew.config.EnergyPerDAC +
-		float64(numADCs)*ew.config.EnergyPerADC
-
-	// GPU energy calculation (dominated by data movement)
-	gpuEnergy := float64(totalMACs) * ew.config.EnergyPerMAC_GPU
+	// GPU energy calculation (simple model dominated by data movement)
+	gpuEnergy := float64(est.TotalMACs) * ew.config.EnergyPerMAC_GPU
 
 	// Convert to nanojoules for display
-	ew.lastEnergyFeCIM = fecimEnergy * 1e9 // Convert J to nJ
+	ew.lastEnergyFeCIM = est.TotalJ * 1e9
 	ew.lastEnergyGPU = gpuEnergy * 1e9
 
 	// Calculate efficiency ratio
-	if fecimEnergy > 0 {
-		ew.efficiencyRatio = gpuEnergy / fecimEnergy
+	if est.TotalJ > 0 {
+		ew.efficiencyRatio = gpuEnergy / est.TotalJ
 	}
 
 	// Update running totals (in Joules)
-	ew.totalEnergyFeCIM += fecimEnergy
+	ew.totalEnergyFeCIM += est.TotalJ
 	ew.totalEnergyGPU += gpuEnergy
 
 	// Update stats label

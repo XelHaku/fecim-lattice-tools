@@ -13,7 +13,9 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
 	configphysics "fecim-lattice-tools/config/physics"
@@ -215,24 +217,16 @@ func (ca *CircuitsApp) createUnifiedConfigModeRow() fyne.CanvasObject {
 	couplingToggle := ca.createCouplingToggle()
 
 	// Mode buttons
-	ca.modeReadBtn = NewTooltipButton(
-		"READ",
-		"READ mode: safe read voltage on selected column; no programming.",
-		ca.window,
-		func() { ca.setOperationMode(OpModeRead) },
-	)
-	ca.modeWriteBtn = NewTooltipButton(
-		"WRITE",
-		"WRITE mode: arms write range and WL gating; no voltage until Program Cell.",
-		ca.window,
-		func() { ca.setOperationMode(OpModeWrite) },
-	)
-	ca.modeComputeBtn = NewTooltipButton(
-		"COMPUTE",
-		"COMPUTE mode: applies input vector across all rows for MVM.",
-		ca.window,
-		func() { ca.setOperationMode(OpModeCompute) },
-	)
+	ca.modeReadBtn = widget.NewButton("READ", func() { ca.setOperationMode(OpModeRead) })
+	ca.modeWriteBtn = widget.NewButton("WRITE", func() { ca.setOperationMode(OpModeWrite) })
+	ca.modeComputeBtn = widget.NewButton("COMPUTE", func() { ca.setOperationMode(OpModeCompute) })
+	modeInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+		dialog.ShowInformation("Operation Modes",
+			"READ: Safe read voltage on selected column; no programming.\n\n"+
+				"WRITE: Arms write range and WL gating; no voltage until Program Cell.\n\n"+
+				"COMPUTE: Applies input vector across all rows for MVM.", ca.window)
+	})
+	modeInfo.Importance = widget.LowImportance
 
 	// Set initial highlight (READ mode by default)
 	ca.modeReadBtn.Importance = widget.HighImportance
@@ -251,6 +245,7 @@ func (ca *CircuitsApp) createUnifiedConfigModeRow() fyne.CanvasObject {
 		ca.modeReadBtn,
 		ca.modeWriteBtn,
 		ca.modeComputeBtn,
+		modeInfo,
 		layout.NewSpacer(),
 		archToggle,
 	)
@@ -259,13 +254,13 @@ func (ca *CircuitsApp) createUnifiedConfigModeRow() fyne.CanvasObject {
 // createUnifiedActionRow creates the action buttons row
 func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 	// Primary action buttons
-	ca.actionWriteCellBtn = NewTooltipButton(
-		"Program Cell",
-		"Apply DAC write pulse to selected cell (ISPP). Passive arrays use V/2 half-select.",
-		ca.window,
-		func() { ca.onUnifiedProgram() },
-	)
+	ca.actionWriteCellBtn = widget.NewButton("Program Cell", func() { ca.onUnifiedProgram() })
 	ca.actionWriteCellBtn.Importance = widget.HighImportance
+	programInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+		dialog.ShowInformation("Program Cell",
+			"Apply DAC write pulse to selected cell (ISPP).\nPassive arrays use V/2 half-select.", ca.window)
+	})
+	programInfo.Importance = widget.LowImportance
 
 	ca.actionComputeBtn = widget.NewButton("MVM", func() {
 		ca.onUnifiedCompute()
@@ -307,7 +302,7 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 		ca.mu.Unlock()
 		logInput("zoom=%.2f", v)
 		ca.zoomLabel.SetText(fmt.Sprintf("%.0f%%", v*100))
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			if ca.sharedArrayCanvas != nil {
 				ca.sharedArrayCanvas.Refresh()
 			}
@@ -339,6 +334,7 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 	// Row: Program Cell | MVM | Sep | Undo | Random Array | Reset Array | Export | Overlay | Sep | Zoom controls | Spacer | Tools status
 	return container.NewHBox(
 		ca.actionWriteCellBtn,
+		programInfo,
 		ca.actionComputeBtn,
 		widget.NewSeparator(),
 		ca.undoHistoryBtn,
@@ -367,7 +363,7 @@ func (ca *CircuitsApp) createCouplingToggle() fyne.CanvasObject {
 	}
 
 	idealBtn := widget.NewButton("Ideal", nil)
-	approxBtn := widget.NewButton("Approx (Tier A)", nil)
+	approxBtn := widget.NewButton("Tier A", nil)
 
 	apply := func(mode arraysim.CouplingMode) {
 		idealBtn.Importance = widget.LowImportance
@@ -403,7 +399,12 @@ func (ca *CircuitsApp) createCouplingToggle() fyne.CanvasObject {
 
 	apply(current)
 
-	return container.NewHBox(widget.NewLabel("Coupling:"), ca.couplingToggle)
+	couplingInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+		dialog.ShowInformation("Coupling Model",
+			"Ideal: No parasitic effects.\n\nApprox: Includes IR drop, sneak paths, and line resistance for realistic array behavior.", ca.window)
+	})
+	couplingInfo.Importance = widget.LowImportance
+	return container.NewHBox(widget.NewLabel("Coupling:"), ca.couplingToggle, couplingInfo)
 }
 
 // ValidArraySizes defines the supported array dimensions
@@ -429,7 +430,12 @@ func (ca *CircuitsApp) createArraySizeSelector() fyne.CanvasObject {
 	// Set default selection
 	selector.SetSelected(fmt.Sprintf("%dx%d", ca.arrayRows, ca.arrayCols))
 
-	return container.NewHBox(widget.NewLabel("Array:"), selector)
+	sizeInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+		dialog.ShowInformation("Array Size",
+			"Crossbar array dimensions (rows x columns).\nLarger arrays increase compute parallelism but worsen sneak-path and IR-drop effects.", ca.window)
+	})
+	sizeInfo.Importance = widget.LowImportance
+	return container.NewHBox(widget.NewLabel("Size:"), selector, sizeInfo)
 }
 
 // resizeArray changes the array dimensions and reinitializes all related state
@@ -477,7 +483,7 @@ func (ca *CircuitsApp) resizeArray(rows, cols int) {
 	// Update status (must be on UI thread)
 	totalCells := rows * cols
 	bitCapacity := float64(totalCells) * 4.9 // ~4.9 bits per 30-level cell
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		if ca.operationsStatusLabel != nil {
 			ca.operationsStatusLabel.SetText(fmt.Sprintf("Array resized: %dx%d (%d cells, %.1f bits)",
 				rows, cols, totalCells, bitCapacity))
@@ -520,7 +526,12 @@ func (ca *CircuitsApp) createMaterialSelector() fyne.CanvasObject {
 		})
 	})
 
-	return container.NewHBox(widget.NewLabel("Material:"), ca.materialBtn)
+	materialInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+		dialog.ShowInformation("Material",
+			"Ferroelectric material preset.\nDetermines coercive voltage, remnant polarization, and write voltage range.", ca.window)
+	})
+	materialInfo.Importance = widget.LowImportance
+	return container.NewHBox(widget.NewLabel("Material:"), ca.materialBtn, materialInfo)
 }
 
 // getCurrentMaterialID returns the ID of the currently selected material
@@ -567,7 +578,12 @@ func (ca *CircuitsApp) createADCBitsSelector() fyne.CanvasObject {
 	// Set default selection
 	selector.SetSelected("5-bit (32)")
 
-	return container.NewHBox(widget.NewLabel("ADC:"), selector)
+	adcInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+		dialog.ShowInformation("ADC Resolution",
+			"Analog-to-digital converter bit width.\nHigher resolution distinguishes more conductance levels but increases area and power.", ca.window)
+	})
+	adcInfo.Importance = widget.LowImportance
+	return container.NewHBox(widget.NewLabel("ADC:"), selector, adcInfo)
 }
 
 // createDACInputSection creates the DAC status and manual control
@@ -609,7 +625,7 @@ func (ca *CircuitsApp) updateDACRangeModeLabel() {
 	rangeMode := ca.deviceState.GetDACRangeMode()
 	currentRange := ca.deviceState.GetCurrentVoltageRange()
 
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		// Only show in WRITE mode where voltage range matters
 		if mode == OpModeWrite {
 			var text string
@@ -718,7 +734,7 @@ func (ca *CircuitsApp) updateModeButtons() {
 
 	mode := ca.deviceState.GetOperationMode()
 
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		// Reset all to low importance
 		if ca.modeReadBtn != nil {
 			ca.modeReadBtn.Importance = widget.LowImportance
@@ -762,7 +778,7 @@ func (ca *CircuitsApp) updateActionButtons() {
 
 	mode := ca.deviceState.GetOperationMode()
 
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		// Program Cell: only in WRITE mode
 		if ca.actionWriteCellBtn != nil {
 			if mode == OpModeWrite {
@@ -833,7 +849,7 @@ func (ca *CircuitsApp) applySenseRf(valueStr string) {
 	ca.tiaGain = rfKOhm
 
 	if ca.senseRfEntry != nil {
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			ca.senseRfEntry.SetText(fmt.Sprintf("%.1f", rfKOhm))
 		})
 	}
@@ -878,7 +894,7 @@ func (ca *CircuitsApp) applySenseADCRange() {
 	ca.adc.VrefHigh = vmax
 
 	if ca.senseAdcVminEntry != nil || ca.senseAdcVmaxEntry != nil {
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			if ca.senseAdcVminEntry != nil {
 				ca.senseAdcVminEntry.SetText(fmt.Sprintf("%.2f", vmin))
 			}
@@ -975,13 +991,14 @@ func (ca *CircuitsApp) recomputeAndRefresh() {
 
 // recomputeAndRefreshNow forces an immediate recompute + UI refresh.
 func (ca *CircuitsApp) recomputeAndRefreshNow() {
+	// Hold the read lock for the duration of Compute() so concurrent writers
+	// (e.g. ISPP animation goroutines) cannot mutate the backing slices while
+	// the device simulator iterates.
 	ca.mu.RLock()
 	weights := ca.arrayWeights
 	levels := ca.quantLevels
-	ca.mu.RUnlock()
-
-	// Run device simulation
 	ca.deviceState.Compute(weights, levels)
+	ca.mu.RUnlock()
 
 	// Update output display
 	ca.updateOutputDisplay()
@@ -1031,7 +1048,7 @@ func (ca *CircuitsApp) scheduleRecomputeAndRefresh(force bool) {
 // refreshUnifiedArray refreshes the array canvas
 func (ca *CircuitsApp) refreshUnifiedArray() {
 	if ca.sharedArrayCanvas != nil {
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			ca.sharedArrayCanvas.Refresh()
 		})
 	}
@@ -1100,7 +1117,7 @@ func (ca *CircuitsApp) updateCellInfo() {
 	isActive := ca.deviceState.IsRowActive(selectedRow)
 	isPassive := ca.deviceState.IsPassiveMode()
 
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		// Build detailed info string with signal chain data
 		var infoStr string
 		if isActive && math.Abs(effectiveVoltage) > 0.01 {
@@ -1123,7 +1140,7 @@ func (ca *CircuitsApp) updateCellInfo() {
 
 	// Also update array info label with total row current
 	if ca.sharedArrayInfoLabel != nil {
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			ca.sharedArrayInfoLabel.SetText(fmt.Sprintf("Array: %dx%d | %d levels | Row %d sum: I=%.1fuA",
 				ca.arrayRows, ca.arrayCols, ca.quantLevels, selectedRow, rowCurrent))
 		})
@@ -1197,7 +1214,7 @@ func (ca *CircuitsApp) updateSensePanel() {
 		satText = "SAT"
 	}
 
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		if ca.senseTitleLabel != nil {
 			ca.senseTitleLabel.SetText(titleText)
 		}
@@ -1264,7 +1281,7 @@ func (ca *CircuitsApp) updateOperationClassification() {
 		helpText = "Select a mode: READ, WRITE, or COMPUTE."
 	}
 
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		ca.operationsModeHelp.SetText(helpText)
 	})
 }
@@ -1278,7 +1295,7 @@ func (ca *CircuitsApp) updateWriteTargetLabel() {
 	row := ca.deviceState.GetSelectedRow()
 	col := ca.deviceState.GetSelectedCol()
 
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		ca.mfuxWriteTargetLabel.SetText(fmt.Sprintf("[%d,%d]", row, col))
 	})
 }
@@ -1317,7 +1334,7 @@ func (ca *CircuitsApp) createArchitectureToggle() fyne.CanvasObject {
 	toggle := sharedwidgets.NewArchitectureToggle(sharedwidgets.ArchitectureToggleOptions{
 		Initial:      ca.architecture,
 		Style:        sharedwidgets.ArchitectureToggleStylePlain,
-		LabelPassive: "PASSIVE",
+		LabelPassive: "0T1R",
 		Label1T1R:    "1T1R",
 		Label2T1R:    "2T1R",
 		OnChanged:    handleArchChange,
@@ -1328,8 +1345,15 @@ func (ca *CircuitsApp) createArchitectureToggle() fyne.CanvasObject {
 	ca.arch2T1RBtn = toggle.TwoT1RButton
 	ca.archToggle = container.NewGridWithColumns(3, ca.archPassiveBtn, ca.arch1T1RBtn, ca.arch2T1RBtn)
 
-	archLabel := widget.NewLabel("Array:")
-	return container.NewHBox(archLabel, ca.archToggle)
+	archLabel := widget.NewLabel("Arch:")
+	archInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+		dialog.ShowInformation("Architecture",
+			"0T1R (Passive): No transistor; simpler but suffers sneak paths.\n\n"+
+				"1T1R: One transistor per cell; row selection via word-line gating.\n\n"+
+				"2T1R: Two transistors; enables bidirectional programming.", ca.window)
+	})
+	archInfo.Importance = widget.LowImportance
+	return container.NewHBox(archLabel, ca.archToggle, archInfo)
 }
 
 // ============================================================================
@@ -1411,7 +1435,7 @@ func (ca *CircuitsApp) onWriteLevelChanged(level int) {
 	appliedVoltage := targetVoltage
 	logInput("write_level=%d voltage=%.3f", level, targetVoltage)
 
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		if ca.mfuxWriteLevelLabel != nil {
 			ca.mfuxWriteLevelLabel.SetText(fmt.Sprintf("L:%d", level))
 		}
@@ -1492,14 +1516,20 @@ func (ca *CircuitsApp) createSensePanel() fyne.CanvasObject {
 	ca.senseRangeLabel = widget.NewLabel("n/a")
 	ca.senseLSBLabel = widget.NewLabel("n/a")
 
-	rangeTooltip := NewTooltipButton("?", "Measurable current range after TIA rails and ADC references.\nI = (V - Vref) / Rf, using Vmin/Vmax = max/min(TIA, ADC).", ca.window, nil)
-	rangeTooltip.Importance = widget.LowImportance
-	lsbTooltip := NewTooltipButton("?", "LSB current = (Vmax_eff - Vmin_eff) / (2^bits - 1) / Rf.", ca.window, nil)
-	lsbTooltip.Importance = widget.LowImportance
+	rangeInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+		dialog.ShowInformation("Measurable Range",
+			"Measurable current range after TIA rails and ADC references.\nI = (V - Vref) / Rf, using Vmin/Vmax = max/min(TIA, ADC).", ca.window)
+	})
+	rangeInfo.Importance = widget.LowImportance
+	lsbInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+		dialog.ShowInformation("LSB Current",
+			"LSB current = (Vmax_eff - Vmin_eff) / (2^bits - 1) / Rf.", ca.window)
+	})
+	lsbInfo.Importance = widget.LowImportance
 
 	rangeRow := container.NewHBox(
-		widget.NewLabel("I_range (A):"), ca.senseRangeLabel, rangeTooltip,
-		widget.NewLabel("LSB (A):"), ca.senseLSBLabel, lsbTooltip,
+		widget.NewLabel("I_range (A):"), ca.senseRangeLabel, rangeInfo,
+		widget.NewLabel("LSB (A):"), ca.senseLSBLabel, lsbInfo,
 	)
 
 	ca.senseRfEntry = widget.NewEntry()
@@ -1593,13 +1623,13 @@ func (ca *CircuitsApp) rebuildComputeInputs() {
 		if ca.deviceState != nil {
 			readMax = ca.deviceState.GetReadRange().Max
 		}
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			ca.computeInputTitle.SetText(fmt.Sprintf("Input Vector (%d inputs, 0–255 → 0–%.2fV):", ca.arrayCols, readMax))
 		})
 	}
 
 	// Rebuild entries
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		ca.buildComputeInputEntries()
 		ca.computeInputContainer.Refresh()
 	})
@@ -1668,7 +1698,7 @@ func (ca *CircuitsApp) randomizeInputVectorEntries() {
 	logAction("input_vector_randomized len=%d", len(valuesCopy))
 
 	// Update entry widgets (no lock - use copy)
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		for i, entry := range ca.mfuxInputVectorEntry {
 			if entry != nil && i < len(valuesCopy) {
 				entry.SetText(strconv.Itoa(valuesCopy[i]))
@@ -1704,7 +1734,7 @@ func (ca *CircuitsApp) clearInputVectorEntries() {
 	logAction("input_vector_cleared len=%d", len(ca.inputVector))
 
 	// Update entry widgets (no lock held - safe)
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		for _, entry := range ca.mfuxInputVectorEntry {
 			if entry != nil {
 				entry.SetText("0")
@@ -1725,7 +1755,7 @@ func (ca *CircuitsApp) clearInputVectorEntries() {
 
 // updateModePanels shows/hides mode-specific panels based on current mode
 func (ca *CircuitsApp) updateModePanels(mode OpMode) {
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		// Hide all panels first
 		if ca.writeModePanel != nil {
 			ca.writeModePanel.Hide()

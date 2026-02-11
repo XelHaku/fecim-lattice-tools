@@ -33,10 +33,11 @@ const (
 	FeCIMDefaultADC    = 8                     // 8-bit ADC resolution
 	FeCIMDefaultDAC    = 8                     // 8-bit DAC resolution
 
-	// Energy efficiency (model input; literature ranges are reported, not verified here)
-	FeCIMEnergyPerMAC = 50e-15  // 50 fJ/MAC (femtojoules)
-	GPUEnergyPerMAC   = 500e-12 // 500 pJ/MAC including DRAM access (Horowitz 2014)
-	EnergyRatioGPU    = 100     // Illustrative ratio for UI (model-based, not verified)
+	// Energy efficiency
+	//
+	// FeCIM energy is computed in core (bit-scaled fJ/MAC + ADC/DAC overhead) and then shown in the GUI.
+	// GPU energy here is a simple per-MAC constant (dominated by data movement; Horowitz 2014).
+	GPUEnergyPerMAC = 500e-12 // 500 pJ/MAC including DRAM access (Horowitz 2014)
 
 	// Accuracy reference (peer-reviewed baselines, not targets)
 	// Note: Accuracy varies with noise, levels, and architecture
@@ -391,18 +392,18 @@ func (app *DualModeApp) createHeader() fyne.CanvasObject {
 
 // createDrawingZone creates the drawing canvas zone (Zone 1).
 func (app *DualModeApp) createDrawingZone() fyne.CanvasObject {
-	label := widget.NewLabel("Draw Digit")
+	label := widget.NewLabel("Draw")
 	label.TextStyle = fyne.TextStyle{Bold: true}
 
 	app.digitCanvas = NewDigitCanvas()
 	app.digitCanvas.OnDigitChanged = app.onDigitChanged
 
-	// Pixel count display
-	pixelCountLabel := widget.NewLabel("Pixels: 0/784")
+	// Pixel count display (shortened for narrow widths)
+	pixelCountLabel := widget.NewLabel("0/784")
 	pixelCountLabel.TextStyle = fyne.TextStyle{Monospace: true}
 	app.digitCanvas.OnPixelCountChanged = func(count, total int) {
 		fyne.Do(func() {
-			pixelCountLabel.SetText(fmt.Sprintf("Pixels: %d/%d", count, total))
+			pixelCountLabel.SetText(fmt.Sprintf("%d/%d", count, total))
 		})
 	}
 

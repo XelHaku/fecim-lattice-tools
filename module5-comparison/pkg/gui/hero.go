@@ -153,15 +153,15 @@ func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
 	barWidth := float32(500)
 	barHeight := float32(32)
 
-	// "Today: GPU-based AI" label
-	todayLabel := canvas.NewText("Today: GPU-based AI", heroMutedColor)
+	// "Today: GPU AI" label (shortened to fit)
+	todayLabel := canvas.NewText("Today: GPU AI", heroMutedColor)
 	todayLabel.TextSize = 14
 	todayLabel.Alignment = fyne.TextAlignLeading
 
 	// GPU bar - full width (100 units = 100%)
 	e.gpuBar = canvas.NewRectangle(heroRedColor)
 	e.gpuBar.SetMinSize(fyne.NewSize(barWidth, barHeight))
-	e.gpuLabel = canvas.NewText("100 units power", heroTextColor)
+	e.gpuLabel = canvas.NewText("100 units", heroTextColor)
 	e.gpuLabel.TextSize = 14
 	e.gpuLabel.Alignment = fyne.TextAlignTrailing
 
@@ -171,15 +171,15 @@ func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
 		container.NewGridWrap(fyne.NewSize(120, barHeight), container.NewCenter(e.gpuLabel)),
 	)
 
-	// "FeCIM: Compute-in-Memory" label
-	fecimLabelText := canvas.NewText("FeCIM: Compute-in-Memory", heroMutedColor)
+	// "FeCIM" label (shortened to fit)
+	fecimLabelText := canvas.NewText("FeCIM", heroMutedColor)
 	fecimLabelText.TextSize = 14
 	fecimLabelText.Alignment = fyne.TextAlignLeading
 
 	// FeCIM bar - ~10% width (10 units = 90% reduction)
 	e.fecimBar = canvas.NewRectangle(heroGreenColor)
 	e.fecimBar.SetMinSize(fyne.NewSize(barWidth*0.1, barHeight))
-	e.fecimLabel = canvas.NewText("~10 units power", heroTextColor)
+	e.fecimLabel = canvas.NewText("~10 units", heroTextColor)
 	e.fecimLabel.TextSize = 14
 	e.fecimLabel.Alignment = fyne.TextAlignTrailing
 
@@ -279,8 +279,8 @@ func (e *AnimatedEnergyRace) doRefresh() {
 	var gpuText, fecimText string
 	if needsTextUpdate {
 		if progress > 0.9 {
-			gpuText = "100 units power"
-			fecimText = "~10 units power"
+			gpuText = "100 units"
+			fecimText = "~10 units"
 		} else {
 			gpuText = fmt.Sprintf("%.0f units", 100*progress)
 			fecimText = fmt.Sprintf("~%.0f units", 10*progress)

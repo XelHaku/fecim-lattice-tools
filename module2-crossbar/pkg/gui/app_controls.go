@@ -352,15 +352,13 @@ func (ca *CrossbarApp) createStatusFooter() *fyne.Container {
 	ca.modeIndicator = NewModeIndicatorBox()
 	ca.levelIndicator = NewLevelIndicator()
 
-	// Wrap hoverInfoLabel in fixed-size container to prevent layout recalc on text change
-	hoverInfoContainer := container.NewGridWrap(fyne.NewSize(300, 20), ca.hoverInfoLabel)
-
+	// Use direct label for flexibility at narrow widths
 	return container.NewHBox(
 		ca.modeIndicator,
 		widget.NewSeparator(),
 		ca.statusLabel,
 		layout.NewSpacer(),
-		hoverInfoContainer,
+		ca.hoverInfoLabel,
 		widget.NewSeparator(),
 		infoRow,
 	)

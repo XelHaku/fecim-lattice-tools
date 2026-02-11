@@ -1,106 +1,134 @@
 package physics
 
-import (
-	"math"
-)
+import "math"
 
-// AdaptiveISPP implements Incremental Step Pulse Programming
-// with Binary Search for high-speed FeCIM writing.
+// AdaptiveISPP implements a simple write-verify loop for reaching a target
+// polarization using single-pulse evaluation and voltage bracketing.
+//
+// Each candidate voltage is evaluated from the same pre-pulse baseline
+// polarization (the solver state at entry). This avoids trying to do a binary
+// search while applying pulses cumulatively (which breaks monotonicity).
+//
+// NOTE: This is a pedagogical controller; for richer ISPP diagnostics, use
+// WriteController in ispp_write.go.
 type AdaptiveISPP struct {
-	Solver *LKSolver
+	Solver   *LKSolver
 	Material *HZOMaterial
-	
-	// Control Parameters
-	MaxVoltage    float64
-	MinVoltage    float64
-	TargetTolerance float64 // Acceptable error in P/Ps
-	MaxIterations int
-	PulseWidth    float64 // Duration of write pulse (s)
+
+	MaxVoltage      float64
+	MinVoltage      float64
+	TargetTolerance float64 // fraction of Ps
+	MaxIterations   int
+	PulseWidth      float64 // seconds
 }
 
 func NewAdaptiveISPP(solver *LKSolver, mat *HZOMaterial) *AdaptiveISPP {
+	pw := 0.0
+	if mat != nil {
+		pw = mat.Tau
+	}
+	if pw <= 0 {
+		pw = 10e-9
+	}
 	return &AdaptiveISPP{
-		Solver: solver,
-		Material: mat,
-		MaxVoltage: 3.0, // 3V max for 10nm HZO
-		MinVoltage: -3.0,
-		TargetTolerance: 0.01, // 1% error
-		MaxIterations: 10,
-		PulseWidth: mat.Tau, // Use characteristic switching time (e.g. 1ns)
+		Solver:          solver,
+		Material:        mat,
+		MaxVoltage:      3.0,
+		MinVoltage:      -3.0,
+		TargetTolerance: 0.01,
+		MaxIterations:   12,
+		PulseWidth:      pw,
 	}
 }
 
-// PredictState estimates the required voltage to reach target Polarization
-// using a simplified inverse model (Linear or Tanh inverse).
+// PredictState estimates an initial voltage guess using a monotonic atanh model:
+//
+//	P ≈ Ps*tanh(E/Ec)  →  E ≈ Ec*atanh(P/Ps)  →  V ≈ E*d
 func (c *AdaptiveISPP) PredictState(targetP float64) float64 {
-	// Simple Tanh Inverse: P = Ps * Tanh((V - Vc)/Delta)
-	// V = Vc + Delta * Atanh(P/Ps)
-	
+	if c == nil || c.Material == nil {
+		return 0
+	}
 	Ps := c.Material.Ps
-	Vc := c.Material.Ec * c.Material.Thickness
-	Delta := 0.5 // Fitting parameter
-	
-	// Clamp target ratio to avoid infinity
+	if Ps == 0 || c.Material.Ec == 0 || c.Material.Thickness == 0 {
+		return 0
+	}
 	ratio := targetP / Ps
-	if ratio > 0.95 { ratio = 0.95 }
-	if ratio < -0.95 { ratio = -0.95 }
-	
-	V_est := Vc + Delta * math.Atanh(ratio)
-	return V_est
+	if ratio > 0.95 {
+		ratio = 0.95
+	}
+	if ratio < -0.95 {
+		ratio = -0.95
+	}
+	eEst := c.Material.Ec * math.Atanh(ratio)
+	return eEst * c.Material.Thickness
 }
 
-// BinarySearchWrite performs the write-verify-correct loop.
 func (c *AdaptiveISPP) BinarySearchWrite(targetP float64) (float64, int, bool) {
-	// 1. Prediction (Initial Guess)
-	V_next := c.PredictState(targetP)
-	
-	// Range for Binary Search
-	V_min := c.MinVoltage
-	V_max := c.MaxVoltage
-	
-	success := false
-	iter := 0
-	
-	for iter < c.MaxIterations {
-		iter++
-		
-		// 2. Pulse (Apply Voltage)
-		// Convert Voltage to Field: E = V / thickness
-		E_field := V_next / c.Material.Thickness
-		
-		// Run Physics (L-K Solver)
-		// We step for the duration of PulseWidth
-		c.Solver.Step(E_field, c.PulseWidth)
-		
-		// 3. Verify (Read State)
-		currentP := c.Solver.GetState()
-		
-		// Check error
-		errorP := currentP - targetP
-		
-		if math.Abs(errorP) <= c.TargetTolerance * c.Material.Ps {
-			success = true
-			break
+	if c == nil || c.Solver == nil || c.Material == nil {
+		return 0, 0, false
+	}
+	if c.Material.Ps == 0 || c.Material.Thickness == 0 || c.PulseWidth <= 0 {
+		return c.Solver.GetState(), 0, false
+	}
+
+	baseP := c.Solver.GetState()
+
+	vMin := c.MinVoltage
+	vMax := c.MaxVoltage
+	if vMin > vMax {
+		vMin, vMax = vMax, vMin
+	}
+	// Pick a voltage polarity consistent with the direction we need to move.
+	if targetP >= baseP {
+		if vMin < 0 {
+			vMin = 0
 		}
-		
-		// 4. Correction (Adaptive Binary Search)
-		if errorP < 0 {
-			// Too low (Need higher V)
-			V_min = V_next
-			V_next = (V_min + V_max) / 2
-		} else {
-			// Too high (Overshoot) - CRITICAL
-			// We cannot just lower V next time, we are already stuck at high P.
-			// We must RESET/ERASE slightly to drop P, then try lower V.
-			// Ideally, apply negative pulse.
-			
-			// Simple reset pulse strategy:
-			c.Solver.Step(-c.Material.Ec * c.Material.Thickness / c.Material.Thickness, c.PulseWidth)
-			
-			V_max = V_next
-			V_next = (V_min + V_max) / 2
+	} else {
+		if vMax > 0 {
+			vMax = 0
 		}
 	}
-	
-	return c.Solver.GetState(), iter, success
+
+	vNext := c.PredictState(targetP)
+	if vNext < vMin {
+		vNext = vMin
+	}
+	if vNext > vMax {
+		vNext = vMax
+	}
+
+	tolP := c.TargetTolerance * math.Abs(c.Material.Ps)
+	if tolP <= 0 {
+		tolP = 1e-6
+	}
+
+	bestP := baseP
+	bestErr := math.Abs(bestP - targetP)
+
+	for iter := 1; iter <= c.MaxIterations; iter++ {
+		c.Solver.SetState(baseP)
+		eField := vNext / c.Material.Thickness
+		c.Solver.Step(eField, c.PulseWidth)
+		p := c.Solver.GetState()
+		err := p - targetP
+		absErr := math.Abs(err)
+
+		if absErr < bestErr {
+			bestErr = absErr
+			bestP = p
+		}
+		if absErr <= tolP {
+			return p, iter, true
+		}
+
+		if err < 0 {
+			vMin = vNext
+		} else {
+			vMax = vNext
+		}
+		vNext = 0.5 * (vMin + vMax)
+	}
+
+	c.Solver.SetState(bestP)
+	return bestP, c.MaxIterations, bestErr <= tolP
 }

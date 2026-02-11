@@ -58,6 +58,7 @@ type ComparisonApp struct {
 
 	// Animation state (protected by animMu)
 	animMu           sync.RWMutex
+	animWG           sync.WaitGroup
 	running          bool
 	paused           bool
 	simTime          float64
@@ -151,13 +152,18 @@ func (ca *ComparisonApp) Run() {
 	ca.animMu.Lock()
 	ca.running = true
 	ca.animMu.Unlock()
-	go ca.animationLoop()
+	ca.animWG.Add(1)
+	go func() {
+		defer ca.animWG.Done()
+		ca.animationLoop()
+	}()
 
 	debug.Println("App: ShowAndRun starting")
 	ca.window.ShowAndRun()
 	ca.animMu.Lock()
 	ca.running = false
 	ca.animMu.Unlock()
+	ca.animWG.Wait()
 }
 
 // animationLoop runs the main animation at 30 FPS (reduced from 60 to prevent resize loops on tiling WMs).
@@ -208,7 +214,7 @@ func (ca *ComparisonApp) animationLoop() {
 		}
 
 		// Refresh UI
-		fyne.Do(func() {
+		sharedwidgets.SafeDo(func() {
 			if ca.energyRace != nil {
 				ca.energyRace.Refresh()
 			}
@@ -264,7 +270,7 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 		calcBtn.SetText("Calculating...")
 		go func() {
 			ca.updateCalculations()
-			fyne.Do(func() {
+			sharedwidgets.SafeDo(func() {
 				calcBtn.Enable()
 				calcBtn.SetText("Calculate")
 			})

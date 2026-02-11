@@ -354,7 +354,10 @@ func (d *DataCenterCalculator) SetResults(
 			canvas.Refresh(d.fecimCostText)
 		}
 		if d.savingsPercent != nil {
-			savingsPct := (gpuCost - fecimCost) / gpuCost * 100
+			savingsPct := 0.0
+			if gpuCost > 0 {
+				savingsPct = (gpuCost - fecimCost) / gpuCost * 100
+			}
 			d.savingsPercent.Text = fmt.Sprintf("MODEL SAVINGS: %.0f%%", savingsPct)
 			canvas.Refresh(d.savingsPercent)
 		}

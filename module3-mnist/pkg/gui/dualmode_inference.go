@@ -146,6 +146,12 @@ func (app *DualModeApp) updateResultDisplays(result *core.InferenceResult, quant
 	}
 
 	if app.comparisonCard != nil {
+		// Energy display uses the same FeCIM energy model as core (result.EnergyUsed is in µJ).
+		fecimEnergyJ := result.EnergyUsed * 1e-6
+		// Use core for MAC counting to keep single-layer/per-layer configurations consistent.
+		est := core.EstimateInferenceEnergyJ(app.network().Config, app.network().InputSize, app.network().HiddenSize, app.network().OutputSize)
+		gpuEnergyJ := float64(est.TotalMACs) * GPUEnergyPerMAC
+
 		compResult := &ComparisonResult{
 			FPPrediction:     result.FPPrediction,
 			FPConfidence:     result.FPConfidence,
@@ -155,9 +161,11 @@ func (app *DualModeApp) updateResultDisplays(result *core.InferenceResult, quant
 			CIMProbabilities: result.CIMProbabilities,
 			Match:            result.Agree,
 			ConfidenceDelta:  result.FPConfidence - result.CIMConfidence,
-			EnergyFeCIM:      result.EnergyUsed * 1e6,
-			EnergyGPU:        result.EnergyUsed * 1e6 * EnergyRatioGPU,
-			EnergyRatio:      float64(EnergyRatioGPU),
+			EnergyFeCIM:      fecimEnergyJ * 1e9, // nJ
+			EnergyGPU:        gpuEnergyJ * 1e9,   // nJ
+		}
+		if fecimEnergyJ > 0 {
+			compResult.EnergyRatio = gpuEnergyJ / fecimEnergyJ
 		}
 		if compResult.ConfidenceDelta < 0 {
 			compResult.ConfidenceDelta = -compResult.ConfidenceDelta
@@ -166,7 +174,7 @@ func (app *DualModeApp) updateResultDisplays(result *core.InferenceResult, quant
 	}
 
 	if app.energyWidget != nil {
-		app.energyWidget.RecordInference()
+		app.energyWidget.RecordInference(app.network().Config)
 	}
 }
 

@@ -138,7 +138,7 @@ func createHardwareRealityContent() fyne.CanvasObject {
 		widget.NewLabel("Reported in literature: 25-100× vs NAND/GPU (not verified here)"),
 		widget.NewLabel("This UI uses model inputs (Horowitz 2014 baseline)"),
 		widget.NewLabel(""),
-		widget.NewLabel("FeCIM Energy: ~50 fJ/MAC (ferroelectric switching + analog MVM)"),
+		widget.NewLabel("FeCIM Energy: ~10 fJ/bit/MAC × log2(levels) + ADC/DAC overhead (shared core model)"),
 		widget.NewLabel(""),
 		widget.NewLabel("Note: Exact improvement depends on workload and comparison baseline."),
 	)

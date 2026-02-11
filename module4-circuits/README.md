@@ -388,7 +388,7 @@ For deeper understanding of ferroelectric physics, architecture trade-offs, and 
 1. **5-Bit DAC/ADC**: Minimal resolution for 30-level FeCIM (uses 30 of 32 codes)
 2. **Dickson Charge Pump**: Simple, efficient topology suitable for CMOS integration
 3. **10 kΩ TIA Gain**: Balances speed (100 MHz) and noise (1 pA/√Hz)
-4. **Material-Derived Ranges**: Voltage limits calculated from Ec and thickness, not hardcoded
+4. **Material/Geometry-Derived Ranges**: Voltage limits calculated from Ec and film thickness (via shared/physics.CellGeometry), not hardcoded
 5. **Passive Mode Lock**: 0T1R architecture forces all WLs on; prevents misconfiguration
 
 ### Adding New Peripherals

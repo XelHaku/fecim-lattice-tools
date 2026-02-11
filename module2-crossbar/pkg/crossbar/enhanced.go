@@ -13,6 +13,25 @@ import (
 	"time"
 )
 
+// scaleAroundMidpoint01 scales a normalized value in [0,1] around 0.5 by a
+// multiplicative factor applied to its distance from the midpoint.
+//
+// factor > 1 widens the window (values move away from 0.5), factor < 1 narrows it.
+func scaleAroundMidpoint01(x, factor float64) float64 {
+	x = math.Max(0, math.Min(1, x))
+	if factor <= 0 {
+		return 0.5
+	}
+	y := 0.5 + (x-0.5)*factor
+	if y < 0 {
+		y = 0
+	}
+	if y > 1 {
+		y = 1
+	}
+	return y
+}
+
 // MVMOptions configures which non-idealities to include in MVM computation.
 type MVMOptions struct {
 	EnableIRDrop     bool
@@ -21,6 +40,10 @@ type MVMOptions struct {
 	EnableDrift      bool
 	Temperature      float64 // Kelvin (default 300K = 27C)
 	Architecture     string  // "1T1R" or "0T1R" - affects sneak path and IR drop calculations
+
+	// TemperatureProfile gates additional temperature scalings beyond wire resistance
+	// (conductance window, noise, drift). When nil, legacy behavior applies.
+	TemperatureProfile *TemperatureProfile
 }
 
 // Is1T1R returns true if the architecture uses single transistor isolation (1T1R).
@@ -64,6 +87,9 @@ func DefaultMVMOptions() *MVMOptions {
 		EnableDrift:      false,  // Drift usually simulated separately over time
 		Temperature:      300.0,  // Room temperature
 		Architecture:     "0T1R", // Default to passive crossbar (simpler, higher density)
+
+		// Keep legacy behavior by default (wire resistance scaling only).
+		TemperatureProfile: nil,
 	}
 }
 
@@ -182,12 +208,63 @@ func (a *Array) MVMWithNonIdealities(input []float64, opts *MVMOptions) (*MVMRes
 	for i := 0; i < a.config.Rows; i++ {
 		var sum float64
 		for j := 0; j < len(input); j++ {
-			// Get conductance
+			// Get conductance (normalized [0,1] in this simulator).
 			G := a.cells[i][j].Conductance
 
-			// Apply device variation
+			// Optional temperature-dependent effects beyond wire resistance.
+			// These are gated behind opts.TemperatureProfile to preserve legacy behavior.
+			tp := opts.TemperatureProfile
+			if tp != nil && tp.Enable {
+				te := NewTemperatureEffects(opts.Temperature)
+
+				if tp.ApplyConductanceWindow {
+					// Map the physical conductance-window change to a normalized window scaling.
+					adjMin, adjMax := te.AdjustedConductanceRange(GMin, GMax)
+					baseWin := (GMax - GMin)
+					adjWin := (adjMax - adjMin)
+					if baseWin > 0 {
+						winScale := adjWin / baseWin
+						G = scaleAroundMidpoint01(G, winScale)
+					}
+				}
+
+				// Apply a simplified read-time drift approximation (optional).
+				if opts.EnableDrift && tp.ApplyDrift {
+					// Use Arrhenius scaling relative to 300K.
+					driftScale := te.AdjustedDriftRate(1.0)
+					// Base drift coefficient is a small, unitless fraction per MVM read.
+					// This is a fast approximation; full drift should be simulated via DriftSimulator.
+					baseDrift := FeFETDriftCoefficients.Assumed
+					effective := baseDrift * driftScale
+					if effective < 0 {
+						effective = 0
+					}
+					if effective > 0.2 {
+						effective = 0.2 // cap to keep the approximation stable
+					}
+					G = 0.5 + (G-0.5)*(1.0-effective)
+					if G < 0 {
+						G = 0
+					}
+					if G > 1 {
+						G = 1
+					}
+				}
+			}
+
+			// Apply device/process variation.
 			if opts.EnableVariation {
-				G *= a.GetProcessVariationFactor(i, j)
+				varFactor := a.GetProcessVariationFactor(i, j)
+				// Optionally scale variation magnitude with temperature (thermal noise ~ sqrt(T)).
+				tp := opts.TemperatureProfile
+				if tp != nil && tp.Enable && tp.ApplyVariationNoise {
+					te := NewTemperatureEffects(opts.Temperature)
+					varFactor = 1.0 + (varFactor-1.0)*te.AdjustedNoise()
+					if varFactor < 0 {
+						varFactor = 0
+					}
+				}
+				G *= varFactor
 			}
 
 			// Get effective input voltage (DAC quantized, IR drop affected)

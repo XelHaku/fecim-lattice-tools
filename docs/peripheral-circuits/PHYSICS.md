@@ -17,7 +17,29 @@ This document provides the physics foundation for peripheral circuits in FeCIM s
 - **Timing Analysis**: Read/write cycle timing, throughput
 - **System Integration**: How peripheral circuits work together in a FeCIM crossbar
 
-**Note:** Numeric values in this document are model defaults or illustrative assumptions, not measured hardware data (DOI: (add)).
+**Note:** Unless explicitly cited, numeric values in this document are simulation defaults or illustrative assumptions from `shared/peripherals` (not measured hardware data). Equations are standard references.
+
+## Model Defaults Map (Doc ↔ Code)
+
+Quick map of numeric values used in this document to code defaults (simulation inputs). Values below are **not** measured unless explicitly cited.
+
+| Doc value (where used) | Code default | Source |
+|---|---|---|
+| ADC bits/levels (5‑bit, 32 levels; 30 used) | `DefaultBits=5`, `DefaultLevels=32`, `DefaultADC().Bits=5` | `shared/peripherals/defaults.go`, `shared/peripherals/adc.go` |
+| ADC Vref high/low (1.0V / 0.0V) | `ADCVrefHigh`, `ADCVrefLow`, `DefaultADC().Vref*` | `shared/peripherals/defaults.go`, `shared/peripherals/adc.go` |
+| ADC conversion time (50 ns) | `ADCConversionTime`, `DefaultADC().ConversionTime` | `shared/peripherals/defaults.go`, `shared/peripherals/adc.go` |
+| ADC INL/DNL (0.5 / 0.25 LSB) | `DefaultINL`, `DefaultDNL`, `DefaultADC().INL/DNL` | `shared/peripherals/defaults.go`, `shared/peripherals/adc.go` |
+| ADC energy per conversion (~25 fJ) | `ADC.EnergyPerConversion()` (`5e-15 * Bits` for SAR) | `shared/peripherals/adc.go` |
+| DAC Vref high/low (±1.5V) | `DACVrefHigh`, `DACVrefLow`, `DefaultDAC().Vref*` | `shared/peripherals/defaults.go`, `shared/peripherals/dac.go` |
+| DAC settle time (10 ns) | `DACSettleTime`, `DefaultDAC().SettleTime` | `shared/peripherals/defaults.go`, `shared/peripherals/dac.go` |
+| DAC INL/DNL (0.5 / 0.25 LSB) | `DefaultINL`, `DefaultDNL`, `DefaultDAC().INL/DNL` | `shared/peripherals/defaults.go`, `shared/peripherals/dac.go` |
+| DAC energy per conversion (~15 fJ) | `DAC.EnergyPerConversion()` (uses `capacitance=0.2e-15`) | `shared/peripherals/dac.go` |
+| TIA gain/bandwidth/noise/offset/max (10 kΩ, 100 MHz, 1 pA/√Hz, 5 mV, 100 µA, 1.0 V) | `DefaultTIA()` fields | `shared/peripherals/tia.go` |
+| TIA settling time (~11 ns) | `TIA.SettlingTime()` derived from bandwidth | `shared/peripherals/tia.go` |
+| Charge pump defaults (Vin 1.0V, Vout 1.5V, 2 stages, 0.3V drop, 50 MHz, 10 µA, 100 pF, 70%) | `DefaultChargePump()` fields | `shared/peripherals/chargepump.go` |
+| Charge pump rise time (~88 ns) | `ChargePump.RiseTime()` derived from stages/clock | `shared/peripherals/chargepump.go` |
+| Array settle (sneak/RC) 5 ns | `arraySettle := 5e-9` (constant; not parameterized) | `shared/peripherals/analysis.go` |
+| Program pulse 100 ns | `writePulse := 100e-9` (constant; not parameterized) | `shared/peripherals/analysis.go` |
 
 ---
 
@@ -63,7 +85,7 @@ Bit 0 (1s place):   Final bit set
 
 Result: 5-bit digital code (0-31)
 
-Time: 50 ns (5 comparisons × 10 ns each)
+Time: 50 ns (model default; `ADCConversionTime` / `DefaultADC().ConversionTime`; per‑bit timing is illustrative)
 ```
 
 ### Ideal Conversion Formula
@@ -286,14 +308,14 @@ Energy per conversion (writing one level):
 
 $$E_{\text{DAC}} = C_{\text{eff}} \times \left(\frac{V_{\text{span}}}{2}\right)^2 \times 2^N$$
 
-For FeCIM (effective switched‑cap model):
+For FeCIM (effective switched‑cap model; `DAC.EnergyPerConversion()` uses `C_eff = 0.2 fF` as a simulation input):
 - Effective unit capacitor: 0.2 fF
 - Vspan: 3.0 V (±1.5 V rails)
 - Number of levels: 32
 
 $$E_{\text{DAC}} = 0.2 \times 10^{-15}F \times \left(\frac{3.0}{2}\right)^2 \times 32 \approx 14.4 \text{ fJ}$$
 
-**Typical: ~15 fJ per conversion** (effective model; architecture-dependent)
+**Typical: ~15 fJ per conversion** (model default; architecture-dependent)
 
 ---
 
@@ -436,7 +458,7 @@ This uses the feedback gain $R_f$ as a proxy for the front‑end transconductanc
 
 - $P \approx 8.3 \times 10^{-8} \text{ W}$ (**~83 nW**)
 
-Energy per read window (using the full read time, ~76 ns):
+Energy per read window (using the default read time from `AnalyzeTiming`, ~76 ns):
 $$E \approx 83 \text{ nW} \times 76 \text{ ns} \approx 6.3 \text{ fJ}$$
 
 **Note:** Real high‑speed TIAs often draw **mW‑level bias power**; that static bias is **not** modeled here and can be layered on if needed.
@@ -514,7 +536,7 @@ The pump loses voltage in:
 $$V_{\text{out,unreg}} = V_{\text{out,ideal}} - (N \times V_{th}) - I_{load} \times R_{out}$$
 $$R_{out} \approx \frac{1}{C_{fly} \times f_{clk}}$$
 
-For FeCIM defaults (Vin=1V, N=2, Vth=0.3V, Cfly=100 pF, f=50 MHz, Iload=10 µA):
+For FeCIM defaults (model inputs from `DefaultChargePump()`: Vin=1V, N=2, Vth=0.3V, Cfly=100 pF, f=50 MHz, Iload=10 µA):
 $$R_{out} \approx \frac{1}{100pF \times 50MHz} \approx 200 \Omega$$
 $$V_{\text{out,unreg}} \approx 3.0V - 0.6V - 0.002V = 2.398V$$
 
@@ -578,7 +600,13 @@ $$\eta_{\text{ideal}} = \frac{V_{\text{out,unreg}}}{(N+1) \times V_{in}}$$
 
 With regulation to the 1.5V rail, we assume **70% power efficiency** as a practical switched‑cap value for this model.
 
-$$P_{\text{in}} = \frac{P_{\text{out}}}{\eta} = \frac{1.5V \times 10\mu A}{0.7} = 21.4 \text{ µW}$$
+$$P_{\text{in}} = \frac{P_{\text{out}}}{\eta}$$
+
+For the regulated/clamped case (default target rail +1.5V with achievable unregulated headroom), the model uses:
+$$P_{\text{out}} \approx V_{\text{out,actual}} \times I_{\text{load}} \approx 1.5V \times 10\mu A = 15 \text{ µW}$$
+$$P_{\text{in}} \approx \frac{15\text{ µW}}{0.7} = 21.4 \text{ µW}$$
+
+If the pump cannot reach the target rail (unregulated output below target), the code computes $P_{\text{out}}$ using the **actual achievable output voltage** returned by `ChargePump.ActualOutputVoltage()`.
 
 Most power is dissipated in:
 1. Diode drops: 60% of loss
@@ -631,7 +659,7 @@ Specifications identical to positive pump:
 
 ## Part 5: System Timing Analysis
 
-Timing values below are derived from model defaults in `shared/peripherals` and are illustrative.
+Timing values below are derived from model defaults in `shared/peripherals` and are illustrative. Array settle (sneak/RC) 5 ns and program pulse 100 ns are fixed constants in `AnalyzeTiming` (placeholders, not parameterized).
 
 ### FeCIM Operation Cycles
 
@@ -716,7 +744,7 @@ With realistic peripherals:
 
 ## Part 6: System Energy Analysis
 
-Energy numbers below are model-based estimates, not measured device values (DOI: (add)).
+Energy numbers below are model-based estimates using `shared/peripherals` defaults, not measured device values.
 
 ### Energy Breakdown Per Operation
 
@@ -872,11 +900,11 @@ $$t_{rise} = \frac{N \times 2.2}{f_{clk}}$$
 
 ### Timing
 
-**Read cycle:**
-$$t_{read} = t_{DAC} + t_{TIA} + t_{ADC}$$
+**Read cycle (as implemented in `AnalyzeTiming`):**
+$$t_{read} = t_{DAC} + t_{array\_settle} + t_{TIA} + t_{ADC}$$
 
-**Write cycle:**
-$$t_{write} = t_{DAC} + t_{pump\_rise} + t_{pulse}$$
+**Write cycle (as implemented in `AnalyzeTiming`):**
+$$t_{write} = t_{DAC} + t_{pump\_rise} + t_{pulse} + t_{array\_settle}$$
 
 **Full inference (64×64 weight matrix):**
 $$t_{inference} = 64 \times t_{read}$$
@@ -939,14 +967,13 @@ FeCIM uses SAR because it balances speed (50 ns) with power efficiency.
 - **[../hysteresis/hysteresis.physics.md](../hysteresis/hysteresis.physics.md)** — Ferroelectric hysteresis
 - **[../crossbar/reference/PHYSICS.md](../crossbar/reference/PHYSICS.md)** — Crossbar array physics
 
-### Key Measurements
+### External References
 
-The values in this document are based on:
-- **SAR ADC:** Industry standard 5-bit designs (46-48 dB SNR with INL/DNL) (DOI: (add))
-- **DAC:** Switched-capacitor 5-bit designs (synth + sim) (DOI: (add))
-- **TIA:** Standard noise-figure based on thermal noise kT/C (DOI: (add))
-- **Charge Pump:** Dickson topology literature (70% typical efficiency) (DOI: (add))
-- **Timing:** Spice simulations at 28-65nm geometry (DOI: (add))
+Standard references for equations and terminology. Unless explicitly cited above, **repo numbers are simulation defaults** (see `shared/peripherals`).
+
+- J. F. Dickson, "On-chip high-voltage generation in MNOS integrated circuits using an improved voltage multiplier technique," *IEEE Journal of Solid-State Circuits*, 1976. (charge pumps)
+- B. Razavi, *Data Conversion System Design*, IEEE Press/Wiley, 1995. (ADC architecture, noise/ENOB)
+- IEEE Std 1241-2010, *IEEE Standard for Terminology and Test Methods for ADCs*. (ADC performance metrics)
 
 ---
 

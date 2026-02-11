@@ -169,6 +169,37 @@ func TestChargePumpEfficiency(t *testing.T) {
 	}
 }
 
+func TestChargePumpEnergyMonotonicWithPulseDuration(t *testing.T) {
+	pump := DefaultChargePump()
+
+	d1 := 10e-9
+	d2 := 20e-9
+
+	e1 := pump.EnergyPerOperation(d1)
+	e2 := pump.EnergyPerOperation(d2)
+
+	if e2 <= e1 {
+		t.Fatalf("Energy should increase with pulse duration: E(%.0fns)=%.3e, E(%.0fns)=%.3e",
+			d1*1e9, e1, d2*1e9, e2)
+	}
+}
+
+func TestChargePumpPowerOutputUsesActualVoltage(t *testing.T) {
+	pump := DefaultChargePump()
+
+	// Force a case where target rail is unattainable due to huge diode drops.
+	pump.OutputVoltage = 1.5
+	pump.DiodeDrop = 2.0 // unrealistically large; makes unregulated headroom small
+
+	vActual := math.Abs(pump.ActualOutputVoltage())
+	pOut := pump.PowerOutput()
+
+	expected := vActual * math.Abs(pump.LoadCurrent)
+	if math.Abs(pOut-expected) > 1e-18 {
+		t.Fatalf("PowerOutput should use actual voltage: got %.3e, expected %.3e", pOut, expected)
+	}
+}
+
 // TestDACToADCRoundTrip verifies end-to-end conversion.
 func TestDACToADCRoundTrip(t *testing.T) {
 	dac := DefaultDAC()
@@ -314,4 +345,509 @@ func abs(x int) int {
 		return -x
 	}
 	return x
+}
+
+// ============================================================================
+// Additional Comprehensive Tests
+// ============================================================================
+
+// TestADCEnergyPerConversion_AllTypes verifies energy varies by ADC type.
+func TestADCEnergyPerConversion_AllTypes(t *testing.T) {
+	testCases := []struct {
+		name    string
+		adcType ADCType
+	}{
+		{"SAR", ADCTypeSAR},
+		{"Flash", ADCTypeFlash},
+		{"SigmaDelta", ADCTypeSigmaDelta},
+	}
+
+	energies := make(map[ADCType]float64)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			adc := DefaultADC()
+			adc.Type = tc.adcType
+			energy := adc.EnergyPerConversion()
+
+			if energy <= 0 {
+				t.Errorf("Expected positive energy, got %e", energy)
+			}
+			energies[tc.adcType] = energy
+		})
+	}
+
+	// Verify different types have different energies
+	if energies[ADCTypeSAR] == energies[ADCTypeFlash] {
+		t.Error("SAR and Flash should have different energy characteristics")
+	}
+}
+
+// TestADC_SARNoise_Enable verifies SAR noise enable/disable.
+func TestADC_SARNoise_Enable(t *testing.T) {
+	adc := DefaultADC()
+
+	if adc.NoiseConfig != nil {
+		t.Error("Expected NoiseConfig to be nil initially")
+	}
+
+	adc.EnableSARNoise()
+	if adc.NoiseConfig == nil {
+		t.Error("Expected NoiseConfig to be set after EnableSARNoise")
+	}
+
+	adc.DisableSARNoise()
+	if adc.NoiseConfig != nil {
+		t.Error("Expected NoiseConfig to be nil after DisableSARNoise")
+	}
+}
+
+// TestADC_SARNoise_ThermalNoise verifies thermal noise calculation.
+func TestADC_SARNoise_ThermalNoise(t *testing.T) {
+	adc := DefaultADC()
+	adc.EnableSARNoise()
+
+	thermalNoise := adc.GetThermalNoiseVoltage()
+	if thermalNoise <= 0 {
+		t.Errorf("Expected positive thermal noise, got %e", thermalNoise)
+	}
+
+	// Verify formula: sqrt(kT/C)
+	const kB = 1.380649e-23
+	T := adc.NoiseConfig.TemperatureK
+	C := adc.NoiseConfig.SamplingCapacitorF
+	expected := math.Sqrt(kB * T / C)
+
+	if math.Abs(thermalNoise-expected) > 1e-9 {
+		t.Errorf("Expected thermal noise %e, got %e", expected, thermalNoise)
+	}
+}
+
+// TestADC_SARNoise_EffectiveVref verifies reference drift with temperature.
+func TestADC_SARNoise_EffectiveVref(t *testing.T) {
+	adc := DefaultADC()
+	adc.EnableSARNoise()
+
+	// At reference temperature, drift should be minimal (aging only)
+	vrefLow1, vrefHigh1 := adc.GetEffectiveVref()
+
+	// Set different temperature (50K above reference)
+	adc.SetTemperature(350.0)
+	vrefLow2, vrefHigh2 := adc.GetEffectiveVref()
+
+	// Effective refs should drift with temperature change
+	if vrefLow1 == vrefLow2 && vrefHigh1 == vrefHigh2 {
+		t.Error("Expected effective Vref to drift with temperature change")
+	}
+}
+
+// TestADC_SARNoise_MetastabilityRate verifies metastability probability.
+func TestADC_SARNoise_MetastabilityRate(t *testing.T) {
+	adc := DefaultADC()
+	adc.EnableSARNoise()
+
+	threshold := 0.5
+	nearThreshold := 0.5001
+	farThreshold := 0.8
+
+	rateNear := adc.GetMetastabilityErrorRate(nearThreshold, threshold)
+	rateFar := adc.GetMetastabilityErrorRate(farThreshold, threshold)
+
+	if rateFar >= rateNear {
+		t.Errorf("Expected metastability rate higher near threshold: near=%e far=%e", rateNear, rateFar)
+	}
+
+	// Rate should be clamped to reasonable range
+	if rateNear > 0.5 || rateNear < 0 {
+		t.Errorf("Metastability rate should be in [0, 0.5], got %e", rateNear)
+	}
+}
+
+// TestADC_ConvertWithSARNoise verifies noisy conversion produces valid levels.
+func TestADC_ConvertWithSARNoise(t *testing.T) {
+	adc := DefaultADC()
+	adc.EnableSARNoise()
+
+	testCases := []struct {
+		voltage float64
+		seed    int64
+	}{
+		{0.0, 123},
+		{0.5, 456},
+		{1.0, 789},
+		{0.25, 111},
+		{0.75, 222},
+	}
+
+	for _, tc := range testCases {
+		level := adc.ConvertWithSARNoise(tc.voltage, tc.seed)
+
+		if level < 0 || level >= adc.Levels() {
+			t.Errorf("ConvertWithSARNoise(%.2f, %d) returned invalid level %d", tc.voltage, tc.seed, level)
+		}
+	}
+}
+
+// TestADC_SARNoiseReport verifies noise report structure.
+func TestADC_SARNoiseReport(t *testing.T) {
+	t.Run("Disabled", func(t *testing.T) {
+		adc := DefaultADC()
+		report := adc.GetSARNoiseReport()
+
+		if report["enabled"] != 0 {
+			t.Error("Expected enabled=0 when noise disabled")
+		}
+	})
+
+	t.Run("Enabled", func(t *testing.T) {
+		adc := DefaultADC()
+		adc.EnableSARNoise()
+		report := adc.GetSARNoiseReport()
+
+		if report["enabled"] != 1 {
+			t.Error("Expected enabled=1 when noise enabled")
+		}
+
+		expectedKeys := []string{
+			"vref_low_effective",
+			"vref_high_effective",
+			"vref_drift_ppm",
+			"temperature_k",
+			"thermal_noise_uv",
+			"thermal_noise_lsb",
+			"metastability_base_prob",
+			"effective_bits_with_noise",
+		}
+
+		for _, key := range expectedKeys {
+			if _, ok := report[key]; !ok {
+				t.Errorf("Expected report to contain key %s", key)
+			}
+		}
+	})
+}
+
+// TestDAC_VoltageRange verifies voltage range reporting.
+func TestDAC_VoltageRange(t *testing.T) {
+	dac := DefaultDAC()
+	min, max := dac.VoltageRange()
+
+	if min != dac.VrefLow {
+		t.Errorf("Expected min=%f, got %f", dac.VrefLow, min)
+	}
+	if max != dac.VrefHigh {
+		t.Errorf("Expected max=%f, got %f", dac.VrefHigh, max)
+	}
+}
+
+// TestDAC_Resolution verifies resolution calculation.
+func TestDAC_Resolution(t *testing.T) {
+	dac := DefaultDAC()
+	resolution := dac.Resolution()
+
+	expected := (dac.VrefHigh - dac.VrefLow) / float64(dac.Levels()-1)
+	if math.Abs(resolution-expected) > 1e-9 {
+		t.Errorf("Expected resolution %f, got %f", expected, resolution)
+	}
+}
+
+// TestDAC_EnergyPerConversion verifies energy calculation.
+func TestDAC_EnergyPerConversion(t *testing.T) {
+	dac := DefaultDAC()
+	energy := dac.EnergyPerConversion()
+
+	if energy <= 0 || math.IsInf(energy, 0) {
+		t.Errorf("Expected positive finite energy, got %e", energy)
+	}
+
+	// Verify formula: C * (Vspan/2)^2 * Levels
+	capacitance := 0.2e-15
+	levels := float64(dac.Levels())
+	vrefSpan := dac.VrefHigh - dac.VrefLow
+	vref := vrefSpan / 2.0
+	expected := capacitance * vref * vref * levels
+
+	if math.Abs(energy-expected) > 1e-20 {
+		t.Errorf("Expected energy %e, got %e", expected, energy)
+	}
+}
+
+// TestTIA_Convert_Linear verifies linear I-V conversion.
+func TestTIA_Convert_Linear(t *testing.T) {
+	tia := DefaultTIA()
+
+	testCases := []struct {
+		current  float64
+		expected float64
+	}{
+		{0, tia.OutputOffset},
+		{10e-6, 10e-6*tia.Gain + tia.OutputOffset},
+		{50e-6, 50e-6*tia.Gain + tia.OutputOffset},
+	}
+
+	for _, tc := range testCases {
+		output := tia.Convert(tc.current)
+
+		// Clamp expected to output range
+		expectedClamped := tc.expected
+		if expectedClamped < 0 {
+			expectedClamped = 0
+		}
+		if expectedClamped > tia.MaxOutputVoltage {
+			expectedClamped = tia.MaxOutputVoltage
+		}
+
+		if math.Abs(output-expectedClamped) > 1e-9 {
+			t.Errorf("Convert(%e) expected %f, got %f", tc.current, expectedClamped, output)
+		}
+	}
+}
+
+// TestTIA_SettlingTime verifies settling time calculation.
+func TestTIA_SettlingTime(t *testing.T) {
+	tia := DefaultTIA()
+	settleTime := tia.SettlingTime()
+
+	if settleTime <= 0 {
+		t.Errorf("Expected positive settling time, got %e", settleTime)
+	}
+
+	// Verify formula: ln(1/0.001) / (2*pi*BW)
+	accuracy := 0.001
+	expected := math.Log(1/accuracy) / (2 * math.Pi * tia.Bandwidth)
+
+	if math.Abs(settleTime-expected) > 1e-12 {
+		t.Errorf("Expected settling time %e, got %e", expected, settleTime)
+	}
+}
+
+// TestTIA_PowerConsumption verifies power calculation.
+func TestTIA_PowerConsumption(t *testing.T) {
+	tia := DefaultTIA()
+	power := tia.PowerConsumption()
+
+	if power <= 0 || math.IsInf(power, 0) {
+		t.Errorf("Expected positive finite power, got %e", power)
+	}
+}
+
+// TestChargePump_IdealOutputVoltage verifies ideal voltage formula.
+func TestChargePump_IdealOutputVoltage(t *testing.T) {
+	cp := DefaultChargePump()
+	ideal := cp.IdealOutputVoltage()
+
+	// For positive pump: (Stages+1) * InputVoltage
+	expected := float64(cp.Stages+1) * cp.InputVoltage
+	if math.Abs(ideal-expected) > 1e-9 {
+		t.Errorf("Expected ideal voltage %f, got %f", expected, ideal)
+	}
+}
+
+// TestChargePump_ActualOutputVoltage verifies voltage with losses.
+func TestChargePump_ActualOutputVoltage(t *testing.T) {
+	cp := DefaultChargePump()
+	actual := cp.ActualOutputVoltage()
+	ideal := cp.IdealOutputVoltage()
+
+	// Actual should be less than ideal
+	if actual > ideal {
+		t.Errorf("Expected actual <= ideal, got actual=%f ideal=%f", actual, ideal)
+	}
+
+	// Should be clamped to OutputVoltage
+	if actual > cp.OutputVoltage {
+		t.Errorf("Expected actual <= %f, got %f", cp.OutputVoltage, actual)
+	}
+}
+
+// TestChargePump_OutputRipple verifies ripple calculation.
+func TestChargePump_OutputRipple(t *testing.T) {
+	cp := DefaultChargePump()
+	ripple := cp.OutputRipple()
+
+	if ripple <= 0 {
+		t.Errorf("Expected positive ripple, got %e", ripple)
+	}
+
+	// Verify formula: |Iload| / (10*C*f)
+	cOut := cp.FlyCapacitance * 10
+	expected := math.Abs(cp.LoadCurrent) / (cOut * cp.ClockFrequency)
+
+	if math.Abs(ripple-expected) > 1e-15 {
+		t.Errorf("Expected ripple %e, got %e", expected, ripple)
+	}
+}
+
+// TestChargePump_BoostFactor verifies boost calculation.
+func TestChargePump_BoostFactor(t *testing.T) {
+	cp := DefaultChargePump()
+	boostFactor := cp.BoostFactor()
+
+	expected := cp.ActualOutputVoltage() / cp.InputVoltage
+	if math.Abs(boostFactor-expected) > 1e-9 {
+		t.Errorf("Expected boost factor %f, got %f", expected, boostFactor)
+	}
+
+	// Boost factor should be > 1 for positive pump
+	if boostFactor <= 1 {
+		t.Errorf("Expected boost factor > 1, got %f", boostFactor)
+	}
+}
+
+// TestChargePump_PowerConservation verifies energy balance.
+func TestChargePump_PowerConservation(t *testing.T) {
+	cp := DefaultChargePump()
+
+	pIn := cp.PowerInput()
+	pOut := cp.PowerOutput()
+	pLoss := cp.PowerLoss()
+
+	// Pin should be >= Pout
+	if pIn < pOut-1e-15 {
+		t.Errorf("Expected Pin >= Pout, got Pin=%e Pout=%e", pIn, pOut)
+	}
+
+	// Power balance: Pin = Pout + Ploss
+	if math.Abs(pIn-pOut-pLoss) > 1e-15 {
+		t.Errorf("Power balance failed: Pin=%e, Pout=%e, Ploss=%e", pIn, pOut, pLoss)
+	}
+}
+
+// TestChargePump_EnergyPerOperation verifies energy calculation.
+func TestChargePump_EnergyPerOperation(t *testing.T) {
+	cp := DefaultChargePump()
+
+	duration := 100e-9 // 100 ns
+	energy := cp.EnergyPerOperation(duration)
+
+	if energy <= 0 {
+		t.Errorf("Expected positive energy, got %e", energy)
+	}
+
+	// Verify: E = PowerInput * duration
+	expected := cp.PowerInput() * duration
+	if math.Abs(energy-expected) > 1e-20 {
+		t.Errorf("Expected energy %e, got %e", expected, energy)
+	}
+}
+
+// TestNegativePump verifies negative pump configuration.
+func TestNegativePump(t *testing.T) {
+	cp := NegativePump()
+
+	if cp.OutputVoltage != -1.5 {
+		t.Errorf("Expected OutputVoltage=-1.5, got %f", cp.OutputVoltage)
+	}
+
+	if cp.Stages != 2 {
+		t.Errorf("Expected Stages=2, got %d", cp.Stages)
+	}
+
+	// Ideal voltage should be negative
+	ideal := cp.IdealOutputVoltage()
+	if ideal >= 0 {
+		t.Errorf("Expected negative ideal voltage, got %f", ideal)
+	}
+}
+
+// TestChargePump_SupportsLevel verifies level support checking.
+func TestChargePump_SupportsLevel(t *testing.T) {
+	cp := DefaultChargePump()
+
+	// Should support all levels up to max
+	for level := 0; level <= 30; level++ {
+		if !cp.SupportsLevel(level, 30) {
+			t.Errorf("Expected to support level %d", level)
+		}
+	}
+}
+
+// TestChargePump_MaxCurrentCapability verifies max current calculation.
+func TestChargePump_MaxCurrentCapability(t *testing.T) {
+	cp := DefaultChargePump()
+	maxCurrent := cp.MaxCurrentCapability()
+
+	if maxCurrent <= 0 {
+		t.Errorf("Expected positive max current, got %e", maxCurrent)
+	}
+
+	// Verify formula: C * f * (N+1) * Vin / |Vout|
+	expected := cp.FlyCapacitance * cp.ClockFrequency * float64(cp.Stages+1) * cp.InputVoltage / math.Abs(cp.OutputVoltage)
+
+	if math.Abs(maxCurrent-expected) > 1e-15 {
+		t.Errorf("Expected max current %e, got %e", expected, maxCurrent)
+	}
+}
+
+// TestChargePump_Area verifies area estimation.
+func TestChargePump_Area(t *testing.T) {
+	cp := DefaultChargePump()
+	area := cp.Area()
+
+	if area <= 0 {
+		t.Errorf("Expected positive area, got %e", area)
+	}
+}
+
+// TestChargePump_ChargeTransferEfficiency verifies efficiency calculation.
+func TestChargePump_ChargeTransferEfficiency(t *testing.T) {
+	cp := DefaultChargePump()
+	efficiency := cp.ChargeTransferEfficiency()
+
+	// Efficiency should be between 0 and 1
+	if efficiency < 0 || efficiency > 1 {
+		t.Errorf("Expected efficiency in [0,1], got %f", efficiency)
+	}
+
+	// Verify: η = |actual/ideal|
+	ideal := cp.IdealOutputVoltage()
+	actual := cp.ActualOutputVoltage()
+	expected := math.Abs(actual / ideal)
+
+	if math.Abs(efficiency-expected) > 1e-9 {
+		t.Errorf("Expected efficiency %f, got %f", expected, efficiency)
+	}
+}
+
+// TestChargePump_RiseTime verifies rise time calculation.
+func TestChargePump_RiseTime(t *testing.T) {
+	cp := DefaultChargePump()
+	riseTime := cp.RiseTime()
+
+	if riseTime <= 0 {
+		t.Errorf("Expected positive rise time, got %e", riseTime)
+	}
+
+	// Verify: t = Stages * 2.2 / f
+	expected := float64(cp.Stages) * 2.2 / cp.ClockFrequency
+
+	if math.Abs(riseTime-expected) > 1e-12 {
+		t.Errorf("Expected rise time %e, got %e", expected, riseTime)
+	}
+}
+
+// TestADC_DefaultSARNoiseConfig verifies default noise parameters.
+func TestADC_DefaultSARNoiseConfig(t *testing.T) {
+	config := DefaultSARNoiseConfig()
+
+	if config.ComparatorGain <= 0 {
+		t.Error("Expected positive comparator gain")
+	}
+	if config.MetastabilityTau <= 0 {
+		t.Error("Expected positive metastability tau")
+	}
+	if config.MetastabilityProb <= 0 || config.MetastabilityProb >= 1 {
+		t.Error("Expected metastability probability in (0,1)")
+	}
+	if config.VrefDriftPPM <= 0 {
+		t.Error("Expected positive Vref drift")
+	}
+	if config.SamplingCapacitorF <= 0 {
+		t.Error("Expected positive sampling capacitor")
+	}
+	if !config.EnableMetastability {
+		t.Error("Expected metastability enabled by default")
+	}
+	if !config.EnableReferenceDrift {
+		t.Error("Expected reference drift enabled by default")
+	}
 }

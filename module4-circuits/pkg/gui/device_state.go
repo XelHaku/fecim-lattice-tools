@@ -178,10 +178,10 @@ func NewDeviceState(rows, cols int, tia *peripherals.TIA, adc *peripherals.ADC) 
 	defaultGeometry := arraysim.DefaultCellGeometry()
 	if defaultMaterial != nil {
 		if defaultMaterial.Thickness > 0 {
-			defaultGeometry.Thickness = defaultMaterial.Thickness
+			defaultGeometry.Film.Thickness = defaultMaterial.Thickness
 		}
 		if defaultMaterial.Area > 0 {
-			defaultGeometry.ActiveArea = defaultMaterial.Area
+			defaultGeometry.Film.Area = defaultMaterial.Area
 		}
 	}
 
@@ -293,6 +293,8 @@ func (ds *DeviceState) updateVoltageRanges() {
 
 // SetMaterial changes the ferroelectric material used for conductance calculation
 func (ds *DeviceState) SetMaterial(mat *sharedphysics.HZOMaterial) {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
 	ds.material = mat
 	ds.updateVoltageRanges() // Recalculate voltage ranges for new material
 
@@ -302,26 +304,32 @@ func (ds *DeviceState) SetMaterial(mat *sharedphysics.HZOMaterial) {
 		numLevels := mat.GetNumLevels()
 		ds.isppCalc = sharedphysics.NewISPPCalculator(ec, numLevels)
 		if mat.Thickness > 0 {
-			ds.cellGeometry.Thickness = mat.Thickness
+			ds.cellGeometry.Film.Thickness = mat.Thickness
 		}
 		if mat.Area > 0 {
-			ds.cellGeometry.ActiveArea = mat.Area
+			ds.cellGeometry.Film.Area = mat.Area
 		}
 	}
 }
 
 // GetMaterial returns the current material
 func (ds *DeviceState) GetMaterial() *sharedphysics.HZOMaterial {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
 	return ds.material
 }
 
 // SetDACNonlinearity enables/disables DAC nonlinearity in compute
 func (ds *DeviceState) SetDACNonlinearity(enable bool) {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
 	ds.enableDACNonlinearity = enable
 }
 
 // IsDACNonlinearityEnabled returns whether DAC nonlinearity is applied
 func (ds *DeviceState) IsDACNonlinearityEnabled() bool {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
 	return ds.enableDACNonlinearity
 }
 
@@ -359,6 +367,8 @@ func (ds *DeviceState) GetCellGeometry() arraysim.CellGeometry {
 
 // SetADCBits changes the ADC resolution (5, 6, 7, or 8 bits)
 func (ds *DeviceState) SetADCBits(bits int) {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
 	if ds.adc != nil && bits >= 5 && bits <= 8 {
 		ds.adc.Bits = bits
 	}
@@ -366,6 +376,8 @@ func (ds *DeviceState) SetADCBits(bits int) {
 
 // GetADCBits returns the current ADC resolution in bits
 func (ds *DeviceState) GetADCBits() int {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
 	if ds.adc != nil {
 		return ds.adc.Bits
 	}
@@ -374,6 +386,8 @@ func (ds *DeviceState) GetADCBits() int {
 
 // GetADCLevels returns the number of ADC output levels (2^bits)
 func (ds *DeviceState) GetADCLevels() int {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
 	if ds.adc != nil {
 		return 1 << ds.adc.Bits
 	}
@@ -382,6 +396,8 @@ func (ds *DeviceState) GetADCLevels() int {
 
 // GetMaterialName returns the name of the current material
 func (ds *DeviceState) GetMaterialName() string {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
 	if ds.material != nil {
 		return ds.material.Name
 	}
@@ -450,26 +466,36 @@ func (ds *DeviceState) conductanceToLevel(gPhys float64, levels int) int {
 
 // GetReadRange returns the voltage range for read/compute operations
 func (ds *DeviceState) GetReadRange() VoltageRange {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
 	return ds.readRange
 }
 
 // GetWriteRange returns the voltage range for write operations
 func (ds *DeviceState) GetWriteRange() VoltageRange {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
 	return ds.writeRange
 }
 
 // GetDACRangeMode returns the current DAC range mode
 func (ds *DeviceState) GetDACRangeMode() DACRangeMode {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
 	return ds.dacRangeMode
 }
 
 // SetDACRangeMode sets the DAC range mode (read vs write)
 func (ds *DeviceState) SetDACRangeMode(mode DACRangeMode) {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
 	ds.dacRangeMode = mode
 }
 
 // GetCurrentVoltageRange returns the voltage range for the current mode
 func (ds *DeviceState) GetCurrentVoltageRange() VoltageRange {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
 	if ds.dacRangeMode == DACRangeWrite {
 		return ds.writeRange
 	}
@@ -479,6 +505,8 @@ func (ds *DeviceState) GetCurrentVoltageRange() VoltageRange {
 // SetPassiveMode sets whether the device is in passive mode (0T1R)
 // In passive mode, all WLs are ALWAYS on and cannot be changed
 func (ds *DeviceState) SetPassiveMode(passive bool) {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
 	ds.isPassive = passive
 	if passive {
 		// Force all WLs on
@@ -499,6 +527,12 @@ func (ds *DeviceState) IsPassiveMode() bool {
 // SetWLSingle activates only the specified row
 // In passive mode, this is ignored - all WLs stay on
 func (ds *DeviceState) SetWLSingle(row int) {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
+	ds.setWLSingleLocked(row)
+}
+
+func (ds *DeviceState) setWLSingleLocked(row int) {
 	if ds.isPassive {
 		return // Passive mode: all WLs always on, ignore
 	}
@@ -511,6 +545,12 @@ func (ds *DeviceState) SetWLSingle(row int) {
 
 // SetWLAll activates all rows for MVM
 func (ds *DeviceState) SetWLAll() {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
+	ds.setWLAllLocked()
+}
+
+func (ds *DeviceState) setWLAllLocked() {
 	ds.wlMode = WLAll
 	for i := range ds.activeRows {
 		ds.activeRows[i] = true
@@ -520,6 +560,8 @@ func (ds *DeviceState) SetWLAll() {
 // SetWLCustom sets a custom WL pattern
 // In passive mode, this is ignored - all WLs stay on
 func (ds *DeviceState) SetWLCustom(pattern []bool) {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
 	if ds.isPassive {
 		return // Passive mode: all WLs always on, ignore
 	}
@@ -529,6 +571,12 @@ func (ds *DeviceState) SetWLCustom(pattern []bool) {
 
 // SetDACVoltage sets voltage for a single column
 func (ds *DeviceState) SetDACVoltage(col int, voltage float64) {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
+	ds.setDACVoltageLocked(col, voltage)
+}
+
+func (ds *DeviceState) setDACVoltageLocked(col int, voltage float64) {
 	if col >= 0 && col < ds.cols {
 		ds.dacVoltages[col] = voltage
 		ds.dacMode = DACManual
@@ -683,6 +731,8 @@ func (ds *DeviceState) applyDACNonlinearityLocked(voltage float64) float64 {
 
 // SetDACPreset applies a preset pattern using material-derived voltage ranges
 func (ds *DeviceState) SetDACPreset(preset DACMode, params ...float64) {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
 	ds.dacMode = preset
 
 	switch preset {
@@ -770,6 +820,8 @@ func (ds *DeviceState) SetDACPreset(preset DACMode, params ...float64) {
 // Maps the state to the appropriate voltage in the write range
 // numLevels specifies the quantization levels used by the app (typically 30 for FeCIM)
 func (ds *DeviceState) SetDACVoltageForState(col int, targetState int, numLevels int) {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
 	if col < 0 || col >= ds.cols {
 		return
 	}
@@ -800,6 +852,8 @@ func (ds *DeviceState) SetDACVoltageForState(col int, targetState int, numLevels
 // CalculateVoltageForState calculates the write voltage for a target state without setting it
 // Used for UI preview - actual voltage is only applied when user presses "Program Cell"
 func (ds *DeviceState) CalculateVoltageForState(targetState int, numLevels int) float64 {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
 	if numLevels <= 0 {
 		numLevels = ds.writeRange.NumLevels
 	}
@@ -819,6 +873,12 @@ func (ds *DeviceState) CalculateVoltageForState(targetState int, numLevels int) 
 
 // SetAllDACVoltages sets all DAC columns to the same voltage
 func (ds *DeviceState) SetAllDACVoltages(voltage float64) {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
+	ds.setAllDACVoltagesLocked(voltage)
+}
+
+func (ds *DeviceState) setAllDACVoltagesLocked(voltage float64) {
 	ds.dacMode = DACManual
 	for i := range ds.dacVoltages {
 		ds.dacVoltages[i] = voltage
@@ -853,10 +913,13 @@ func (ds *DeviceState) SetAllDACVoltages(voltage float64) {
 // For SET: WL = +V/2, BL = -V/2, giving target cell ΔV = +V_write
 // For ERASE: WL = -V/2, BL = +V/2, giving target cell ΔV = -V_write
 func (ds *DeviceState) ApplyHalfSelectWrite(targetRow, targetCol int, writeVoltage float64) {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
+
 	if !ds.isPassive {
 		// Non-passive modes use transistor isolation, not V/2
 		// Apply full voltage to selected BL only, WL controls transistor gate
-		ds.SetDACVoltage(targetCol, writeVoltage)
+		ds.setDACVoltageLocked(targetCol, writeVoltage)
 		return
 	}
 
@@ -888,6 +951,12 @@ func (ds *DeviceState) ApplyHalfSelectWrite(targetRow, targetCol int, writeVolta
 // ResetWriteVoltages returns all WL and BL voltages to 0V after write operation
 // Should be called after write completes to put array in safe idle state
 func (ds *DeviceState) ResetWriteVoltages() {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
+	ds.resetWriteVoltagesLocked()
+}
+
+func (ds *DeviceState) resetWriteVoltagesLocked() {
 	// Reset all WL voltages to 0
 	for i := range ds.wlVoltages {
 		ds.wlVoltages[i] = 0
@@ -901,6 +970,8 @@ func (ds *DeviceState) ResetWriteVoltages() {
 
 // GetWLVoltage returns the WL voltage for a specific row
 func (ds *DeviceState) GetWLVoltage(row int) float64 {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
 	if row >= 0 && row < len(ds.wlVoltages) {
 		return ds.wlVoltages[row]
 	}
@@ -922,10 +993,12 @@ func (ds *DeviceState) IsUsingHalfSelect() bool {
 
 // SetSelectedCell sets the currently selected cell
 func (ds *DeviceState) SetSelectedCell(row, col int) {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
 	ds.selectedRow = row
 	ds.selectedCol = col
 	if ds.wlMode == WLSingle {
-		ds.SetWLSingle(row)
+		ds.setWLSingleLocked(row)
 	}
 }
 
@@ -1189,6 +1262,8 @@ func (ds *DeviceState) computeWithArraysimLocked(weights [][]int, quantLevels in
 
 // GetRowCurrent returns the computed current for a row
 func (ds *DeviceState) GetRowCurrent(row int) float64 {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
 	if row >= 0 && row < ds.rows {
 		return ds.rowCurrents[row]
 	}
@@ -1197,6 +1272,8 @@ func (ds *DeviceState) GetRowCurrent(row int) float64 {
 
 // GetRowVoltage returns the TIA output voltage for a row
 func (ds *DeviceState) GetRowVoltage(row int) float64 {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
 	if row >= 0 && row < ds.rows {
 		return ds.rowVoltages[row]
 	}
@@ -1205,6 +1282,8 @@ func (ds *DeviceState) GetRowVoltage(row int) float64 {
 
 // GetRowLevel returns the ADC output level for a row
 func (ds *DeviceState) GetRowLevel(row int) int {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
 	if row >= 0 && row < ds.rows {
 		return ds.rowLevels[row]
 	}
@@ -1213,6 +1292,8 @@ func (ds *DeviceState) GetRowLevel(row int) int {
 
 // IsSaturated returns whether a row's output is saturated
 func (ds *DeviceState) IsSaturated(row int) bool {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
 	if row >= 0 && row < ds.rows {
 		return ds.saturated[row]
 	}
@@ -1221,6 +1302,8 @@ func (ds *DeviceState) IsSaturated(row int) bool {
 
 // IsRowActive returns whether a row's WL is active
 func (ds *DeviceState) IsRowActive(row int) bool {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
 	if row >= 0 && row < ds.rows {
 		return ds.activeRows[row]
 	}
@@ -1229,6 +1312,8 @@ func (ds *DeviceState) IsRowActive(row int) bool {
 
 // GetDACVoltage returns the DAC voltage for a column
 func (ds *DeviceState) GetDACVoltage(col int) float64 {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
 	if col >= 0 && col < ds.cols {
 		return ds.dacVoltages[col]
 	}
@@ -1237,11 +1322,15 @@ func (ds *DeviceState) GetDACVoltage(col int) float64 {
 
 // GetWLMode returns the current WL selection mode
 func (ds *DeviceState) GetWLMode() WLMode {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
 	return ds.wlMode
 }
 
 // GetDACMode returns the current DAC preset mode
 func (ds *DeviceState) GetDACMode() DACMode {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
 	return ds.dacMode
 }
 
@@ -1269,11 +1358,15 @@ func (ds *DeviceState) GetOperationMode() OpMode {
 // SetOperationMode sets the operation mode
 // This is called by the UI; actual WL/DAC configuration is done in tab_unified.go
 func (ds *DeviceState) SetOperationMode(mode OpMode) {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
 	ds.opMode = mode
 }
 
 // ClassifyOperation returns a string describing the current operation mode
 func (ds *DeviceState) ClassifyOperation() string {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
 	switch ds.opMode {
 	case OpModeRead:
 		return "READ"
@@ -1288,6 +1381,8 @@ func (ds *DeviceState) ClassifyOperation() string {
 
 // Resize updates the device state dimensions
 func (ds *DeviceState) Resize(rows, cols int) {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
 	if rows != ds.rows {
 		ds.rows = rows
 		ds.activeRows = make([]bool, rows)

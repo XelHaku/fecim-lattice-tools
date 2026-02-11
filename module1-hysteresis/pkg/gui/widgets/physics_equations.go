@@ -3,11 +3,10 @@ package widgets
 
 import (
 	"encoding/json"
+	"fmt"
 	"image/color"
 	"log"
 	"os"
-	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
@@ -15,22 +14,22 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+
+	eqassets "fecim-lattice-tools/shared/assets/equations"
 )
 
+// Equation asset identifiers (used as cache keys).
 const (
-	lkEquationSVGPath       = "shared/assets/equations/frankestein.svg"
-	lkEquationHotspotPath   = "shared/assets/equations/frankestein.hotspots.json"
-	preisachEquationSVGPath = "shared/assets/equations/preisach.svg"
+	lkEquationID       = "lk"
+	preisachEquationID = "preisach"
 )
 
 var (
-	equationSVGCacheMu sync.Mutex
-	equationSVGCache   = map[string]*equationSVGCacheEntry{}
+	equationSVGCacheMu  sync.Mutex
+	equationSVGCache    = map[string]*equationSVGCacheEntry{}
 	equationPerfEnabled = os.Getenv("FECIM_EQUATION_PERF") == "1"
-
-	equationBaseDirOnce sync.Once
-	equationBaseDir     string
 
 	lkHotspotsOnce sync.Once
 	cachedLkSpots  []hotspotDef
@@ -41,46 +40,6 @@ type equationSVGCacheEntry struct {
 	once sync.Once
 	res  fyne.Resource
 	ok   bool
-}
-
-func equationRepoBaseDir() string {
-	equationBaseDirOnce.Do(func() {
-		// Resolve paths regardless of `go test` package working directory.
-		// We search upwards for go.mod, then treat that directory as repo root.
-		wd, err := os.Getwd()
-		if err != nil {
-			equationBaseDir = ""
-			return
-		}
-		cur := wd
-		for {
-			if _, err := os.Stat(filepath.Join(cur, "go.mod")); err == nil {
-				equationBaseDir = cur
-				return
-			}
-			parent := filepath.Dir(cur)
-			if parent == cur {
-				break
-			}
-			cur = parent
-		}
-		// Fallback: if go.mod is not found, do not rewrite paths.
-		equationBaseDir = ""
-	})
-	return equationBaseDir
-}
-
-func resolveEquationPath(rel string) string {
-	// Keep absolute paths as-is.
-	if filepath.IsAbs(rel) {
-		return rel
-	}
-	// Normalize "./foo".
-	rel = strings.TrimPrefix(rel, "./")
-	if base := equationRepoBaseDir(); base != "" {
-		return filepath.Join(base, rel)
-	}
-	return rel
 }
 
 // TermChip is a small hoverable label that shows a tooltip for a coefficient.
@@ -149,6 +108,13 @@ func logEquationPerf(format string, args ...interface{}) {
 	log.Printf(format, args...)
 }
 
+func equationThemeKey() string {
+	c := theme.ForegroundColor()
+	r, g, b, a := c.RGBA()
+	// RGBA() returns 16-bit components.
+	return fmt.Sprintf("%02x%02x%02x%02x", uint8(r>>8), uint8(g>>8), uint8(b>>8), uint8(a>>8))
+}
+
 func newEquationLoadingSlot(message string) (*fyne.Container, *widget.ProgressBarInfinite) {
 	label := widget.NewLabel(message)
 	label.TextStyle = fyne.TextStyle{Italic: true}
@@ -166,38 +132,85 @@ func swapEquationSlotContent(slot *fyne.Container, bar *widget.ProgressBarInfini
 }
 
 // NewPhysicsEquationsWidget builds the equation display with tooltips.
-func NewPhysicsEquationsWidget(parent fyne.Window) fyne.CanvasObject {
+// The first (visible) tab is built synchronously; the other two are
+// constructed lazily on first selection so the dialog opens fast.
+func NewPhysicsEquationsWidget(parent fyne.Window, initialTab ...int) fyne.CanvasObject {
+	type lazyTab struct {
+		slot    *fyne.Container
+		bar     *widget.ProgressBarInfinite
+		loaded  bool
+		builder func() fyne.CanvasObject
+	}
+
+	// First tab: build synchronously (user sees it immediately).
+	lkContent := buildLkEquationTab(parent)
+	lk := &lazyTab{
+		slot:   container.NewStack(lkContent),
+		loaded: true,
+	}
+
+	// Other tabs: deferred until selected.
+	makeDeferred := func(builder func() fyne.CanvasObject) *lazyTab {
+		slot, bar := newEquationLoadingSlot("Loading…")
+		return &lazyTab{slot: slot, bar: bar, builder: builder}
+	}
+	preisach := makeDeferred(func() fyne.CanvasObject { return buildPreisachEquationTab(parent) })
+	ispp := makeDeferred(func() fyne.CanvasObject { return buildIsppControllerTab(parent) })
+
+	lazyTabs := []*lazyTab{lk, preisach, ispp}
+
 	tabs := container.NewAppTabs(
-		container.NewTabItem("L-K (dynamic)", buildLkEquationTab(parent)),
-		container.NewTabItem("Preisach (quasi-static)", buildPreisachEquationTab(parent)),
-		container.NewTabItem("ISPP / WRD", buildIsppControllerTab(parent)),
+		container.NewTabItem("L-K (dynamic)", lk.slot),
+		container.NewTabItem("Preisach (quasi-static)", preisach.slot),
+		container.NewTabItem("ISPP / WRD", ispp.slot),
 	)
 	tabs.SetTabLocation(container.TabLocationTop)
-	// Border ensures the tabs expand and reduces vbox-induced sizing surprises in dialogs.
-	return container.NewBorder(nil, nil, nil, nil, tabs)
+
+	if len(initialTab) > 0 && initialTab[0] > 0 && initialTab[0] < len(tabs.Items) {
+		tabs.SelectIndex(initialTab[0])
+	}
+
+	tabs.OnSelected = func(item *container.TabItem) {
+		idx := -1
+		for i, t := range tabs.Items {
+			if t == item {
+				idx = i
+				break
+			}
+		}
+		if idx < 0 || idx >= len(lazyTabs) {
+			return
+		}
+		lt := lazyTabs[idx]
+		if lt.loaded {
+			return
+		}
+		lt.loaded = true
+		go func() {
+			content := lt.builder()
+			fyne.Do(func() {
+				swapEquationSlotContent(lt.slot, lt.bar, content)
+			})
+		}()
+	}
+
+	return tabs
 }
 
 func buildLkEquationTab(parent fyne.Window) fyne.CanvasObject {
 	detailPanel, detailCard := newTermDetailPanel()
+
+	infoTabs, termTab := buildLkInfoTabsWithDetail(detailCard)
+
 	selectTerm := func(termID, fallback string) {
 		detailPanel.SetDetail(termID, fallback)
+		infoTabs.Select(termTab) // auto-switch to Selected Term
 	}
 
 	eqPanel := buildLkEquationPanel(parent, selectTerm)
 
 	eqScroll := container.NewScroll(eqPanel)
-	eqScroll.SetMinSize(fyne.NewSize(320, 200))
-
-	detailScroll := container.NewVScroll(detailCard)
-	detailScroll.SetMinSize(fyne.NewSize(200, 180))
-
-	// Give the equation panel ~70% of horizontal space so the SVG is not truncated.
-	split := container.NewHSplit(eqScroll, detailScroll)
-	split.Offset = 0.70
-
-	infoTabs := buildLkInfoTabs()
-	infoScroll := container.NewVScroll(infoTabs)
-	infoScroll.SetMinSize(fyne.NewSize(240, 140))
+	eqScroll.SetMinSize(fyne.NewSize(240, 120))
 
 	title := widget.NewLabelWithStyle(
 		"Landau-Khalatnikov Equation (Module 1)",
@@ -205,33 +218,26 @@ func buildLkEquationTab(parent fyne.Window) fyne.CanvasObject {
 		fyne.TextStyle{Bold: true},
 	)
 
-	// Use a vertical split so info never overlaps the equation area on small windows.
-	vs := container.NewVSplit(split, infoScroll)
-	vs.Offset = 0.65
-
-	return container.NewPadded(container.NewBorder(title, nil, nil, nil, vs))
+	top := container.NewBorder(title, nil, nil, nil, eqScroll)
+	split := container.NewVSplit(top, infoTabs)
+	split.Offset = 0.60
+	return split
 }
 
 func buildPreisachEquationTab(parent fyne.Window) fyne.CanvasObject {
 	detailPanel, detailCard := newTermDetailPanel()
+
+	infoTabs, termTab := buildPreisachInfoTabsWithDetail(detailCard)
+
 	selectTerm := func(termID, fallback string) {
 		detailPanel.SetDetail(termID, fallback)
+		infoTabs.Select(termTab)
 	}
 
 	eqPanel := buildPreisachEquationPanel(parent, selectTerm)
 
 	eqScroll := container.NewScroll(eqPanel)
-	eqScroll.SetMinSize(fyne.NewSize(320, 200))
-
-	detailScroll := container.NewVScroll(detailCard)
-	detailScroll.SetMinSize(fyne.NewSize(200, 180))
-
-	split := container.NewHSplit(eqScroll, detailScroll)
-	split.Offset = 0.70
-
-	infoTabs := buildPreisachInfoTabs()
-	infoScroll := container.NewVScroll(infoTabs)
-	infoScroll.SetMinSize(fyne.NewSize(240, 140))
+	eqScroll.SetMinSize(fyne.NewSize(240, 120))
 
 	title := widget.NewLabelWithStyle(
 		"Preisach Model (Module 1)",
@@ -239,17 +245,20 @@ func buildPreisachEquationTab(parent fyne.Window) fyne.CanvasObject {
 		fyne.TextStyle{Bold: true},
 	)
 
-	vs := container.NewVSplit(split, infoScroll)
-	vs.Offset = 0.65
-
-	return container.NewPadded(container.NewBorder(title, nil, nil, nil, vs))
+	top := container.NewBorder(title, nil, nil, nil, eqScroll)
+	split := container.NewVSplit(top, infoTabs)
+	split.Offset = 0.60
+	return split
 }
 
 func buildIsppControllerTab(parent fyne.Window) fyne.CanvasObject {
-	_ = parent
 	detailPanel, detailCard := newTermDetailPanel()
+
+	infoTabs, termTab := buildIsppInfoTabsWithDetail(detailCard)
+
 	selectTerm := func(termID, fallback string) {
 		detailPanel.SetDetail(termID, fallback)
+		infoTabs.Select(termTab)
 	}
 
 	// Simple, code-faithful controller summary. This is intentionally not a single
@@ -283,95 +292,81 @@ func buildIsppControllerTab(parent fyne.Window) fyne.CanvasObject {
 	)
 
 	eqScroll := container.NewScroll(eqPanel)
-	eqScroll.SetMinSize(fyne.NewSize(320, 200))
+	eqScroll.SetMinSize(fyne.NewSize(240, 120))
 
-	detailScroll := container.NewVScroll(detailCard)
-	detailScroll.SetMinSize(fyne.NewSize(200, 180))
-
-	split := container.NewHSplit(eqScroll, detailScroll)
-	split.Offset = 0.70
-
-	infoTabs := buildIsppInfoTabs()
-	infoScroll := container.NewVScroll(infoTabs)
-	infoScroll.SetMinSize(fyne.NewSize(240, 140))
-
-	vs := container.NewVSplit(split, infoScroll)
-	vs.Offset = 0.65
-
-	return container.NewPadded(container.NewBorder(nil, nil, nil, nil, vs))
+	split := container.NewVSplit(eqScroll, infoTabs)
+	split.Offset = 0.35
+	return split
 }
 
 func buildLkEquationPanel(parent fyne.Window, selectTerm func(string, string)) fyne.CanvasObject {
-	// Default view should be the SVG diagram + term inspector. The text form is
-	// still available, but collapsed to avoid overflow/visual clutter.
-	textPanel := buildLkEquationTextPanel(selectTerm, true)
-	textAcc := widget.NewAccordion(
-		widget.NewAccordionItem("Equation (text form)", container.NewVScroll(textPanel)),
-	)
-	// Collapsed by default.
-	textAcc.CloseAll()
+	textPanel := buildLkEquationTextPanel(selectTerm, false)
+	textContainer, _ := textPanel.(*fyne.Container)
+	caption := widget.NewLabel("Tap a coefficient or the LK nonlinearity row to see its purpose in Module 1.")
+	caption.TextStyle = fyne.TextStyle{Italic: true}
 
 	imageSlot, bar := newEquationLoadingSlot("Loading L-K equation diagram...")
 
-	go func() {
-		res, ok := loadEquationSVGResource(lkEquationSVGPath)
-		if !ok {
-			fyne.Do(func() {
-				swapEquationSlotContent(imageSlot, bar, widget.NewLabel("Equation SVG unavailable; showing text-only equation."))
-				textAcc.Open(0)
-			})
-			return
+	res, ok := loadEquationSVGResource(lkEquationID)
+	if !ok {
+		swapEquationSlotContent(imageSlot, bar, widget.NewLabel("Equation SVG unavailable; showing text-only equation."))
+		if textContainer != nil {
+			textContainer.Objects = append(textContainer.Objects, caption)
+			textContainer.Refresh()
 		}
+		return container.NewVBox(imageSlot, textPanel)
+	}
 
-		hotspots, minSize := loadLkHotspots()
-		fyne.Do(func() {
-			panel := buildLkEquationImagePanel(parent, selectTerm, res, hotspots, minSize)
-			if panel == nil {
-				swapEquationSlotContent(imageSlot, bar, widget.NewLabel("Equation SVG unavailable; showing text-only equation."))
-				textAcc.Open(0)
-				return
-			}
-			swapEquationSlotContent(imageSlot, bar, panel)
-		})
-	}()
+	hotspots, minSize := loadLkHotspots()
+	panel := buildLkEquationImagePanel(parent, selectTerm, res, hotspots, minSize)
+	if panel == nil {
+		swapEquationSlotContent(imageSlot, bar, widget.NewLabel("Equation SVG unavailable; showing text-only equation."))
+		if textContainer != nil {
+			textContainer.Objects = append(textContainer.Objects, caption)
+			textContainer.Refresh()
+		}
+		return container.NewVBox(imageSlot, textPanel)
+	}
+	swapEquationSlotContent(imageSlot, bar, panel)
 
-	return container.NewVBox(imageSlot, textAcc)
+	// SVG loaded — show image only; text panel is redundant.
+	return imageSlot
 }
 
 func buildLkEquationTextPanel(selectTerm func(string, string), withCaption bool) fyne.CanvasObject {
 	line1 := container.NewHBox(
-		NewTermChip("rho_eff_main", "\\rho_{eff}", "Effective viscosity: intrinsic damping plus series-resistance RC delay.", selectTerm),
+		NewTermChip("rho_eff_main", "ρ_eff", "Effective viscosity: intrinsic damping plus series-resistance RC delay.", selectTerm),
 		mathLabel(" dP/dt = "),
-		NewTermChip("e_applied", "E_{applied}", "Applied electric field drive term (external voltage across the film).", selectTerm),
+		NewTermChip("e_applied", "E_applied", "Applied electric field drive term (external voltage across the film).", selectTerm),
 		mathLabel(" - "),
-		NewTermChip("k_dep", "k_{dep}", "Depolarization factor: models interfacial layer; slants the loop for analog states.", selectTerm),
+		NewTermChip("k_dep", "k_dep", "Depolarization factor: models interfacial layer; slants the loop for analog states.", selectTerm),
 		mathLabel(" P - ("),
 	)
 
 	line2 := container.NewHBox(
-		NewTermChip("alpha", "2\\alpha", "Dynamic stiffness: temperature + stress dependent curvature of energy wells.", selectTerm),
+		NewTermChip("alpha", "2α", "Dynamic stiffness: temperature + stress dependent curvature of energy wells.", selectTerm),
 		mathLabel(" P + "),
-		NewTermChip("beta", "4\\beta", "First-order nonlinearity: negative for HZO to create the switching barrier.", selectTerm),
-		mathLabel(" P^3 + "),
-		NewTermChip("gamma", "6\\gamma", "Sixth-order stabilizer: keeps energy bounded at large polarization.", selectTerm),
-		mathLabel(" P^5)"),
+		NewTermChip("beta", "4β", "First-order nonlinearity: negative for HZO to create the switching barrier.", selectTerm),
+		mathLabel(" P³ + "),
+		NewTermChip("gamma", "6γ", "Sixth-order stabilizer: keeps energy bounded at large polarization.", selectTerm),
+		mathLabel(" P⁵)"),
 	)
 
 	lkRow := container.NewHBox(
-		NewTermChip("lk_terms", "LK nonlinearity", "Landau-Khalatnikov nonlinear energy term: 2αP + 4βP^3 + 6γP^5.", selectTerm),
+		NewTermChip("lk_terms", "LK nonlinearity", "Landau-Khalatnikov nonlinear energy term: 2αP + 4βP³ + 6γP⁵.", selectTerm),
 	)
 
 	line3 := container.NewHBox(
 		mathLabel("+ "),
-		NewTermChip("noise", "\\xi(t)", "Stochastic noise term (optional): captures thermal variability.", selectTerm),
+		NewTermChip("noise", "ξ(t)", "Stochastic noise term (optional): captures thermal variability.", selectTerm),
 	)
 
 	line4 := container.NewHBox(
-		NewTermChip("rho_eff_def", "\\rho_{eff}", "Effective viscosity definition used in the headless hysteresis path.", selectTerm),
+		NewTermChip("rho_eff_def", "ρ_eff", "Effective viscosity definition used in the headless hysteresis path.", selectTerm),
 		mathLabel(" = "),
-		NewTermChip("rho", "\\rho", "Intrinsic viscosity / damping coefficient.", selectTerm),
+		NewTermChip("rho", "ρ", "Intrinsic viscosity / damping coefficient.", selectTerm),
 		mathLabel(" + ("),
-		NewTermChip("r_series", "R_{series}", "Series resistance: absorbs RC delay into viscosity.", selectTerm),
+		NewTermChip("r_series", "R_series", "Series resistance: absorbs RC delay into viscosity.", selectTerm),
 		mathLabel(" A) / d"),
 	)
 
@@ -392,6 +387,54 @@ func buildLkEquationTextPanel(selectTerm func(string, string), withCaption bool)
 	return container.NewVBox(objects...)
 }
 
+func buildEquationDiagramWithZoom(parent fyne.Window, stack fyne.CanvasObject, baseSize fyne.Size, aspectFallback float32) fyne.CanvasObject {
+	// baseSize is the "natural" SVG size (used for aspect ratio). When unavailable,
+	// fall back to aspectFallback = height/width.
+
+	// Size based on window width; on narrow screens use more width.
+	canvasW := float32(0)
+	if parent != nil {
+		canvasW = parent.Canvas().Size().Width
+	}
+	if canvasW <= 0 {
+		canvasW = 900
+	}
+	frac := float32(0.62)
+	if canvasW < 620 {
+		frac = 0.92
+	}
+	targetW := canvasW * frac
+	if targetW < 260 {
+		targetW = 260
+	}
+	var targetH float32
+	if baseSize.Width > 0 && baseSize.Height > 0 {
+		s := targetW / baseSize.Width
+		targetH = baseSize.Height * s
+	} else if aspectFallback > 0 {
+		targetH = targetW * aspectFallback
+	} else {
+		targetH = 180
+	}
+
+	// Best-effort: if the stack contains a canvas.Image as the first child,
+	// set its min size for correct contain sizing.
+	if c, ok := stack.(*fyne.Container); ok {
+		if len(c.Objects) > 0 {
+			if img, ok := c.Objects[0].(*canvas.Image); ok {
+				img.SetMinSize(fyne.NewSize(targetW, targetH))
+			}
+		}
+	}
+
+	bg := canvas.NewRectangle(theme.InputBackgroundColor())
+	bg.StrokeColor = theme.ShadowColor()
+	bg.StrokeWidth = 1
+	framed := container.NewPadded(container.NewStack(bg, stack))
+
+	return framed
+}
+
 func buildLkEquationImagePanel(parent fyne.Window, selectTerm func(string, string), res fyne.Resource, hotspots []hotspotDef, minSize fyne.Size) fyne.CanvasObject {
 	debug := os.Getenv("FECIM_EQUATION_DEBUG") == "1"
 
@@ -403,62 +446,32 @@ func buildLkEquationImagePanel(parent fyne.Window, selectTerm func(string, strin
 	if res == nil {
 		return nil
 	}
+
 	image := canvas.NewImageFromResource(res)
 	image.FillMode = canvas.ImageFillContain
-	if minSize.Width > 0 && minSize.Height > 0 {
-		canvasSize := fyne.NewSize(0, 0)
-		if parent != nil {
-			canvasSize = parent.Canvas().Size()
-		}
-		// The image sits inside an HSplit (offset ~0.70) inside a dialog (~85% of
-		// window width), so available horizontal space is roughly
-		//   windowWidth * 0.85 * 0.70 ≈ 0.60 * windowWidth.
-		// Use 0.42 to leave comfortable margin for the detail panel + padding.
-		targetWidth := minSize.Width
-		if canvasSize.Width > 0 {
-			targetWidth = canvasSize.Width * 0.42
-		}
-		if targetWidth < 350 {
-			targetWidth = 350
-		}
-		if targetWidth > 500 {
-			targetWidth = 500
-		}
-		scale := targetWidth / minSize.Width
-		image.SetMinSize(fyne.NewSize(targetWidth, minSize.Height*scale))
-	}
 
 	overlay := container.New(&normalizedHotspotLayout{hotspots: hotspots}, hotspotWidgets...)
 	stack := container.NewStack(image, overlay)
-	return container.NewPadded(stack)
+
+	// LK: we know the SVG base size from the hotspot file, so aspect stays correct.
+	return buildEquationDiagramWithZoom(parent, stack, minSize, 0.35)
 }
 
 func buildPreisachEquationPanel(parent fyne.Window, selectTerm func(string, string)) fyne.CanvasObject {
 	imageSlot, bar := newEquationLoadingSlot("Loading Preisach equation diagram...")
+	res, ok := loadEquationSVGResource(preisachEquationID)
+	if !ok {
+		swapEquationSlotContent(imageSlot, bar, widget.NewLabel("Equation SVG unavailable; showing text-only equation."))
+		return container.NewVBox(
+			imageSlot,
+			buildPreisachEquationTextPanel(selectTerm),
+		)
+	}
+	panel := buildPreisachEquationImagePanel(parent, res)
+	swapEquationSlotContent(imageSlot, bar, panel)
 
-	textPanel := buildPreisachEquationTextPanel(selectTerm)
-	textAcc := widget.NewAccordion(
-		widget.NewAccordionItem("Equation (text form)", container.NewVScroll(textPanel)),
-	)
-	textAcc.CloseAll()
-
-	go func() {
-		res, ok := loadEquationSVGResource(preisachEquationSVGPath)
-		if !ok {
-			fyne.Do(func() {
-				swapEquationSlotContent(imageSlot, bar, widget.NewLabel("Equation SVG unavailable; showing text-only equation."))
-				textAcc.Open(0)
-			})
-			return
-		}
-
-		fyne.Do(func() {
-			panel := buildPreisachEquationImagePanel(parent, res)
-			swapEquationSlotContent(imageSlot, bar, panel)
-		})
-	}()
-
-	return container.NewVBox(imageSlot, textAcc)
+	// SVG loaded — show image only; text panel is redundant.
+	return imageSlot
 }
 
 func buildPreisachEquationImagePanel(parent fyne.Window, res fyne.Resource) fyne.CanvasObject {
@@ -468,29 +481,13 @@ func buildPreisachEquationImagePanel(parent fyne.Window, res fyne.Resource) fyne
 
 	img := canvas.NewImageFromResource(res)
 	img.FillMode = canvas.ImageFillContain
-	if parent != nil {
-		canvasSize := parent.Canvas().Size()
-		if canvasSize.Width > 0 {
-			targetWidth := canvasSize.Width * 0.42
-			if targetWidth < 350 {
-				targetWidth = 350
-			}
-			if targetWidth > 550 {
-				targetWidth = 550
-			}
-			minSize := img.MinSize()
-			if minSize.Width > 0 && minSize.Height > 0 {
-				scale := targetWidth / minSize.Width
-				img.SetMinSize(fyne.NewSize(targetWidth, minSize.Height*scale))
-			} else {
-				img.SetMinSize(fyne.NewSize(targetWidth, 140))
-			}
-		}
-	}
+
+	stack := container.NewStack(img)
+	diagram := buildEquationDiagramWithZoom(parent, stack, fyne.NewSize(0, 0), 0.40)
 
 	caption := widget.NewLabel("Quasi-static hysteron superposition model (no explicit dP/dt term).")
 	caption.TextStyle = fyne.TextStyle{Italic: true}
-	return container.NewVBox(img, caption)
+	return container.NewVBox(diagram, caption)
 }
 
 func buildPreisachEquationTextPanel(selectTerm func(string, string)) fyne.CanvasObject {
@@ -500,24 +497,24 @@ func buildPreisachEquationTextPanel(selectTerm func(string, string)) fyne.Canvas
 
 	line1 := container.NewHBox(
 		mathLabel("P(E) = ∬ "),
-		term("preisach_mu", "\\mu(\\alpha,\\beta)", "Weight/density of hysterons with thresholds (alpha, beta)."),
-		mathLabel(" * "),
-		term("preisach_gamma", "\\gamma_{\\alpha,\\beta}(E)", "Bistable hysteron state (+1/-1) with memory."),
-		mathLabel(" d\\alpha d\\beta"),
+		term("preisach_mu", "μ(α,β)", "Weight/density of hysterons with thresholds (α, β)."),
+		mathLabel(" · "),
+		term("preisach_gamma", "γ_{α,β}(E)", "Bistable hysteron state (+1/-1) with memory."),
+		mathLabel(" dα dβ"),
 	)
 
 	line2 := container.NewHBox(
-		mathLabel("\\gamma_{\\alpha,\\beta}(E) = +1 if E >= "),
-		term("preisach_alpha", "\\alpha", "Upper switching threshold for a hysteron."),
+		mathLabel("γ_{α,β}(E) = +1 if E >= "),
+		term("preisach_alpha", "α", "Upper switching threshold for a hysteron."),
 		mathLabel("; -1 if E <= "),
-		term("preisach_beta", "\\beta", "Lower switching threshold for a hysteron."),
+		term("preisach_beta", "β", "Lower switching threshold for a hysteron."),
 	)
 
 	line3 := container.NewHBox(
 		mathLabel("hold if "),
-		term("preisach_beta", "\\beta", "Lower switching threshold for a hysteron."),
+		term("preisach_beta", "β", "Lower switching threshold for a hysteron."),
 		mathLabel(" < E < "),
-		term("preisach_alpha", "\\alpha", "Upper switching threshold for a hysteron."),
+		term("preisach_alpha", "α", "Upper switching threshold for a hysteron."),
 		mathLabel("; state follows history "),
 		term("preisach_history", "history", "Turning-point memory that makes the model hysteretic."),
 	)
@@ -633,40 +630,51 @@ func (h *Hotspot) TappedSecondary(_ *fyne.PointEvent) {
 	h.Tapped(nil)
 }
 
-func loadEquationSVGResource(svgPath string) (fyne.Resource, bool) {
+// embeddedSVGData returns the embedded SVG bytes for a given equation ID.
+func embeddedSVGData(eqID string) []byte {
+	switch eqID {
+	case lkEquationID:
+		return eqassets.LkEquationSVG
+	case preisachEquationID:
+		return eqassets.PreisachEquationSVG
+	default:
+		return nil
+	}
+}
+
+func loadEquationSVGResource(eqID string) (fyne.Resource, bool) {
 	equationSVGCacheMu.Lock()
-	entry := equationSVGCache[svgPath]
+	cacheKey := eqID + "|" + equationThemeKey()
+	entry := equationSVGCache[cacheKey]
 	if entry == nil {
 		entry = &equationSVGCacheEntry{}
-		equationSVGCache[svgPath] = entry
+		equationSVGCache[cacheKey] = entry
 	}
 	equationSVGCacheMu.Unlock()
 
 	entry.once.Do(func() {
 		start := time.Now()
-		data, err := os.ReadFile(resolveEquationPath(svgPath))
-		if err != nil {
-			logEquationPerf("equation svg load failed path=%s err=%v", svgPath, err)
+		data := embeddedSVGData(eqID)
+		if data == nil {
+			logEquationPerf("equation svg embed missing id=%s", eqID)
 			return
 		}
-		readDur := time.Since(start)
 
-		white := color.NRGBA{R: 255, G: 255, B: 255, A: 255}
+		fg := theme.ForegroundColor()
 		recolorStart := time.Now()
-		recolored, err := canvas.RecolorSVG(data, white)
+		recolored, err := canvas.RecolorSVG(data, fg)
 		recolorDur := time.Since(recolorStart)
 		if err != nil {
-			logEquationPerf("equation svg recolor failed path=%s err=%v", svgPath, err)
+			logEquationPerf("equation svg recolor failed id=%s err=%v", eqID, err)
 			recolored = data
 		}
-		entry.res = fyne.NewStaticResource(filepath.Base(svgPath), recolored)
+		entry.res = fyne.NewStaticResource(eqID+".svg", recolored)
 		entry.ok = true
 
 		logEquationPerf(
-			"equation svg loaded path=%s bytes=%d read=%s recolor=%s total=%s",
-			svgPath,
+			"equation svg loaded id=%s bytes=%d recolor=%s total=%s",
+			eqID,
 			len(recolored),
-			readDur,
 			recolorDur,
 			time.Since(start),
 		)
@@ -675,36 +683,38 @@ func loadEquationSVGResource(svgPath string) (fyne.Resource, bool) {
 	return entry.res, entry.ok
 }
 
-func loadEquationSVG(svgPath string) *canvas.Image {
-	if res, ok := loadEquationSVGResource(svgPath); ok {
+func loadEquationSVG(eqID string) *canvas.Image {
+	if res, ok := loadEquationSVGResource(eqID); ok {
 		return canvas.NewImageFromResource(res)
 	}
-	return canvas.NewImageFromFile(svgPath)
+	return nil
+}
+
+// PrefetchEquationAssets pre-warms the SVG recolor cache for the current theme.
+// Call from a background goroutine at app startup so the equations dialog opens instantly.
+func PrefetchEquationAssets() {
+	loadEquationSVGResource(lkEquationID)
+	loadEquationSVGResource(preisachEquationID)
+	loadLkHotspots()
 }
 
 func loadLkHotspots() ([]hotspotDef, fyne.Size) {
 	lkHotspotsOnce.Do(func() {
 		defaultHotspots, defaultSize := defaultLkHotspots()
 		start := time.Now()
-		data, err := os.ReadFile(resolveEquationPath(lkEquationHotspotPath))
-		if err != nil {
-			logEquationPerf("equation hotspots load failed path=%s err=%v", lkEquationHotspotPath, err)
-			cachedLkSpots = defaultHotspots
-			cachedLkSize = defaultSize
-			return
-		}
-		readDur := time.Since(start)
+		data := eqassets.LkHotspotsJSON
 
 		var cfg hotspotConfig
 		parseStart := time.Now()
 		if err := json.Unmarshal(data, &cfg); err != nil {
-			log.Printf("failed to parse hotspots file: %v", err)
-			logEquationPerf("equation hotspots parse failed path=%s err=%v", lkEquationHotspotPath, err)
+			log.Printf("failed to parse embedded hotspots: %v", err)
+			logEquationPerf("equation hotspots parse failed err=%v", err)
 			cachedLkSpots = defaultHotspots
 			cachedLkSize = defaultSize
 			return
 		}
 		parseDur := time.Since(parseStart)
+		_ = start // used below
 
 		hotspots := defaultHotspots
 		if len(cfg.Hotspots) > 0 {
@@ -720,10 +730,8 @@ func loadLkHotspots() ([]hotspotDef, fyne.Size) {
 		cachedLkSize = size
 
 		logEquationPerf(
-			"equation hotspots loaded path=%s spots=%d read=%s parse=%s total=%s",
-			lkEquationHotspotPath,
+			"equation hotspots loaded (embedded) spots=%d parse=%s total=%s",
 			len(hotspots),
-			readDur,
 			parseDur,
 			time.Since(start),
 		)

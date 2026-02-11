@@ -50,7 +50,6 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 	var fpHidden []float64
 	var cimOutput, cimProbs []float64
 	var cimHidden []float64
-	var totalMACs int
 
 	if net.Config.SingleLayer {
 		// ============================================
@@ -71,8 +70,6 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 		cimProbs = softmax(cimOutput)
 		cimHidden = nil // No hidden layer in Tour mode
 
-		// Energy: single layer only
-		totalMACs = net.InputSize * net.OutputSize // 784 × 10 = 7,840 MACs
 	} else {
 		// ============================================
 		// STANDARD MODE: Two-Layer (784→128→10)
@@ -100,10 +97,6 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 		cimOutput = net.safeNoise(cimOutput, net.Config.NoiseLevel)
 		cimProbs = softmax(cimOutput)
 
-		// Energy: two layers
-		macs1 := net.InputSize * net.HiddenSize  // 784 × 128
-		macs2 := net.HiddenSize * net.OutputSize // 128 × 10
-		totalMACs = macs1 + macs2
 	}
 
 	// Store FP results
@@ -126,64 +119,9 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 	result.Agree = (result.FPPrediction == result.CIMPrediction)
 	result.Disagreement = klDivergence(result.FPProbabilities, result.CIMProbabilities)
 
-	// Energy calculation (Jerry et al. IEDM 2017: ~50 fJ/MAC at 30 levels)
-	// Energy scales with bits of precision: ~10 fJ/bit per MAC
-	// bits = log2(levels), so energy = 10 * log2(levels) fJ/MAC
-	// At 30 levels (~4.9 bits): 10 * 4.9 ≈ 50 fJ/MAC (matches literature)
-	// At 2 levels (1 bit): 10 * 1 = 10 fJ/MAC (5x more efficient)
-	//
-	// With per-layer quantization, calculate energy for each layer separately
-	var totalEnergy float64
-
-	// ADC/DAC overhead energy
-	// DAC: 0.1 pJ per conversion (one per input)
-	// ADC: 0.5 pJ per conversion (one per layer output)
-	dacEnergy := float64(net.InputSize) * 0.1e-12 // 784 * 0.1 pJ = 78.4 pJ
-	adcCount := net.HiddenSize + net.OutputSize
-	if net.Config.SingleLayer {
-		adcCount = net.OutputSize
-	}
-	adcEnergy := float64(adcCount) * 0.5e-12
-	adcDacOverhead := (dacEnergy + adcEnergy) * 1e6 // Convert to μJ
-
-	if net.Config.SingleLayer {
-		// Single layer uses Layer1Levels (or NumLevels if not per-layer)
-		levels := net.Config.NumLevels
-		if net.Config.PerLayerQuant {
-			levels = net.Config.Layer1Levels
-		}
-		bitsPerCell := math.Log2(float64(levels))
-		if bitsPerCell < 1 {
-			bitsPerCell = 1
-		}
-		energyPerMAC := 10e-15 * bitsPerCell
-		totalEnergy = float64(totalMACs)*energyPerMAC*1e6 + adcDacOverhead
-	} else {
-		// Two layers: calculate energy separately
-		macs1 := net.InputSize * net.HiddenSize
-		macs2 := net.HiddenSize * net.OutputSize
-
-		l1Levels := net.Config.NumLevels
-		l2Levels := net.Config.NumLevels
-		if net.Config.PerLayerQuant {
-			l1Levels = net.Config.Layer1Levels
-			l2Levels = net.Config.Layer2Levels
-		}
-
-		bits1 := math.Log2(float64(l1Levels))
-		if bits1 < 1 {
-			bits1 = 1
-		}
-		bits2 := math.Log2(float64(l2Levels))
-		if bits2 < 1 {
-			bits2 = 1
-		}
-
-		energy1 := float64(macs1) * 10e-15 * bits1 * 1e6 // Layer 1 energy in μJ
-		energy2 := float64(macs2) * 10e-15 * bits2 * 1e6 // Layer 2 energy in μJ
-		totalEnergy = energy1 + energy2 + adcDacOverhead
-	}
-	result.EnergyUsed = totalEnergy
+	// Energy calculation uses the shared model (core energy SSOT).
+	est := EstimateInferenceEnergyJ(net.Config, net.InputSize, net.HiddenSize, net.OutputSize)
+	result.EnergyUsed = est.TotalJ * 1e6
 
 	log.Calculation("Infer", map[string]interface{}{
 		"fpPred":       result.FPPrediction,

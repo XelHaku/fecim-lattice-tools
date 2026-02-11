@@ -30,8 +30,8 @@ func (a *App) currentTemperature() float64 {
 	if a.physicsEngine == PhysicsLandau && a.lkSolver != nil {
 		return a.lkSolver.Temperature
 	}
-	if a.preisach != nil {
-		return a.preisach.Temperature
+	if a.physicsEngine == PhysicsPreisach {
+		return 300
 	}
 	return 0
 }
@@ -115,9 +115,8 @@ func (a *App) setPhysicsEngine(engine PhysicsEngine) {
 			a.preisach = ferroelectric.NewPreisachModel(a.material)
 		}
 		if a.preisach != nil {
-			if a.lkSolver != nil {
-				a.preisach.SetTemperature(a.lkSolver.Temperature)
-			}
+			a.preisach.SetTemperature(300) // Fixed room temp for Preisach
+			a.preisach.SetStress(1.0)      // Fixed default stress for Preisach
 			a.preisach.Reset()
 			a.polarization = a.preisach.Update(a.electricField)
 			a.normalizedP = a.preisach.NormalizedPolarization()

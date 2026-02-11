@@ -10,6 +10,7 @@ import (
 	"fyne.io/fyne/v2"
 
 	sharedio "fecim-lattice-tools/shared/io"
+	sharedphysics "fecim-lattice-tools/shared/physics"
 )
 
 // PEDataExport represents the complete P-E hysteresis data export structure
@@ -69,7 +70,7 @@ func (a *App) exportPEDataToJSON(filename string) error {
 	eFieldMVcm := make([]float64, len(eData))
 	polarizationUcCm2 := make([]float64, len(pData))
 	for i := range eData {
-		eFieldMVcm[i] = eData[i] / 1e8        // V/m to MV/cm
+		eFieldMVcm[i] = sharedphysics.VPerMToMVPerCm(eData[i]) // V/m → MV/cm
 		polarizationUcCm2[i] = pData[i] * 1e2 // C/m² to μC/cm²
 	}
 
@@ -77,7 +78,7 @@ func (a *App) exportPEDataToJSON(filename string) error {
 	export := PEDataExport{
 		Metadata: ExportMetadata{
 			Material:     materialName,
-			EcMVcm:       ec / 1e8,
+			EcMVcm:       sharedphysics.VPerMToMVPerCm(ec),
 			PsUcCm2:      ps * 1e2,
 			PrUcCm2:      pr * 1e2,
 			TemperatureK: temp,
@@ -128,7 +129,7 @@ func (a *App) exportPEDataToCSV(filename string) error {
 
 	// Write data rows
 	for i := range eData {
-		eMVcm := eData[i] / 1e8  // V/m to MV/cm
+		eMVcm := sharedphysics.VPerMToMVPerCm(eData[i]) // V/m → MV/cm
 		pUcCm2 := pData[i] * 1e2 // C/m² to μC/cm²
 
 		row := []string{

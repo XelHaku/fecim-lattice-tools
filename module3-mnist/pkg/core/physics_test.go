@@ -303,19 +303,18 @@ func TestEnergyCalculation(t *testing.T) {
 		t.Error("Energy should be positive")
 	}
 
-	// MNIST network has: 784*128 + 128*10 = 101,632 MACs
-	// FeCIM energy: ~50 fJ/MAC = 5.08 µJ total
-	expectedMACs := 784*128 + 128*10
-	expectedEnergy := float64(expectedMACs) * 50e-15 * 1e6 // Convert to µJ
+	est := EstimateInferenceEnergyJ(net.Config, net.InputSize, net.HiddenSize, net.OutputSize)
+	expectedEnergy := est.TotalJ * 1e6
+	overheadUj := est.ADCDACJ * 1e6
+	expectedMACs := est.TotalMACs
 
-	// Allow 2x tolerance for estimation
-	if result.EnergyUsed < expectedEnergy*0.5 || result.EnergyUsed > expectedEnergy*2.0 {
-		t.Errorf("Energy %.2f µJ outside expected range [%.2f, %.2f] µJ",
-			result.EnergyUsed, expectedEnergy*0.5, expectedEnergy*2.0)
+	if math.Abs(result.EnergyUsed-expectedEnergy) > expectedEnergy*1e-12 {
+		t.Errorf("Energy %.8f µJ does not match model %.8f µJ", result.EnergyUsed, expectedEnergy)
 	}
 
-	t.Logf("FeCIM energy: %.2f µJ for %d MACs (%.2f fJ/MAC)",
-		result.EnergyUsed, expectedMACs, result.EnergyUsed*1e6/float64(expectedMACs))
+	computeFJMAC := (result.EnergyUsed - overheadUj) * 1e9 / float64(expectedMACs)
+	t.Logf("FeCIM energy: %.2f µJ for %d MACs (overhead %.3f µJ, %.2f fJ/MAC compute)",
+		result.EnergyUsed, expectedMACs, overheadUj, computeFJMAC)
 }
 
 // TestEnergyScalesWithLevels verifies that energy changes with quantization levels.
@@ -348,8 +347,18 @@ func TestEnergyScalesWithLevels(t *testing.T) {
 		net.SetNumLevels(levels)
 		result := net.Infer(input)
 
-		t.Logf("Levels=%2d: Energy=%.4f µJ (%.2f fJ/MAC)",
-			levels, result.EnergyUsed, result.EnergyUsed*1e6/101632)
+		cfg := *net.Config
+		cfg.NumLevels = levels
+		cfg.PerLayerQuant = false
+		est := EstimateInferenceEnergyJ(&cfg, net.InputSize, net.HiddenSize, net.OutputSize)
+		expectedEnergy := est.TotalJ * 1e6
+
+		if math.Abs(result.EnergyUsed-expectedEnergy) > expectedEnergy*1e-12 {
+			t.Errorf("Levels=%d: energy %.8f µJ does not match model %.8f µJ", levels, result.EnergyUsed, expectedEnergy)
+		}
+
+		t.Logf("Levels=%2d: Energy=%.4f µJ (model %.4f µJ, %.2f fJ/MAC compute)",
+			levels, result.EnergyUsed, expectedEnergy, est.EnergyPerMAC1J*1e15)
 
 		// Energy should increase with more levels
 		if prevEnergy > 0 && result.EnergyUsed <= prevEnergy {
@@ -359,21 +368,22 @@ func TestEnergyScalesWithLevels(t *testing.T) {
 		prevEnergy = result.EnergyUsed
 	}
 
-	// Verify 30-level is about 5x more energy than 2-level
-	// (log2(30) ≈ 4.9 bits vs log2(2) = 1 bit)
+	// Verify 30-level energy matches the shared model ratio vs 2-level.
 	net.SetNumLevels(2)
 	result2 := net.Infer(input)
 	net.SetNumLevels(30)
 	result30 := net.Infer(input)
 
 	ratio := result30.EnergyUsed / result2.EnergyUsed
-	expectedRatio := 4.9 // log2(30) / log2(2)
+	est2 := EstimateInferenceEnergyJ(&NetworkConfig{NumLevels: 2}, net.InputSize, net.HiddenSize, net.OutputSize)
+	est30 := EstimateInferenceEnergyJ(&NetworkConfig{NumLevels: 30}, net.InputSize, net.HiddenSize, net.OutputSize)
+	expectedRatio := est30.TotalJ / est2.TotalJ
 
-	if ratio < expectedRatio*0.8 || ratio > expectedRatio*1.2 {
-		t.Errorf("Energy ratio 30/2 levels = %.2f, expected ~%.2f", ratio, expectedRatio)
+	if math.Abs(ratio-expectedRatio) > expectedRatio*1e-3 {
+		t.Errorf("Energy ratio 30/2 levels = %.6f, expected %.6f", ratio, expectedRatio)
 	}
 
-	t.Logf("Energy ratio (30 levels / 2 levels) = %.2fx (expected ~%.1fx)", ratio, expectedRatio)
+	t.Logf("Energy ratio (30 levels / 2 levels) = %.4fx (expected %.4fx)", ratio, expectedRatio)
 }
 
 // =============================================================================

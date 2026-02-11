@@ -31,6 +31,37 @@ Thank you for your interest in contributing to the FeCIM Visualizer project.
    ```
 7. **Open a Pull Request** on GitHub
 
+## Calibration updates (drift guard)
+
+Calibration JSON files under:
+
+- `cmd/fecim-lattice-tools/data/calibrations/*.json`
+
+are treated as **drift-sensitive**. CI will fail if these files change unless the update is explicitly allowed.
+
+### CI bypass (intentional updates)
+
+- Local/dev:
+  ```bash
+  ALLOW_CALIBRATION_UPDATES=1 scripts/calib-guard.sh
+  ```
+- GitHub Actions: set the Actions variable `ALLOW_CALIBRATION_UPDATES=1` for the repository/org.
+
+### Optional pre-commit hook (not auto-installed)
+
+To block accidental calibration edits on your machine:
+
+```bash
+cp scripts/pre-commit-calib-guard.sh .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+```
+
+Bypass for one commit:
+
+```bash
+git commit --no-verify
+```
+
 ## Code Standards
 
 ### Go Code

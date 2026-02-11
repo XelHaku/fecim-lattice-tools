@@ -126,7 +126,7 @@ Related (authoritative) control semantics:
 - **New file** `device_state.go` - DeviceState struct manages all simulation state
 - **Mode buttons** replace RadioGroup: READ, WRITE, COMPUTE buttons with visual highlighting
 - **Material selector** - dropdown to select ferroelectric material (FeCIM HZO, etc.)
-- **Architecture toggle** - PASSIVE/1T1R/2T1R buttons
+- **Architecture toggle** - 0T1R/1T1R/2T1R buttons (compact labels)
 - **Dynamic voltage ranges** - derived from physics.yaml and material properties (no hardcoded values)
 
 ### Voltage Range System

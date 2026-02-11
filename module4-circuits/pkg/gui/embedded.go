@@ -94,7 +94,7 @@ func (e *EmbeddedCircuitsApp) Start() {
 	e.refreshReadZone()
 	e.refreshTimingDiagrams()
 	e.refreshUnifiedArray()
-	fyne.Do(func() {
+	sharedwidgets.SafeDo(func() {
 		if e.computeArrayCanvas != nil {
 			e.computeArrayCanvas.Refresh()
 		}

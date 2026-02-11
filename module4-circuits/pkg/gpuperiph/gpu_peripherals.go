@@ -538,11 +538,13 @@ func DefaultADCParams(size int) ADCParams {
 
 // DefaultTIAParams returns typical TIA parameters for FeCIM readout.
 func DefaultTIAParams(size int) TIAParams {
+	// Keep these aligned with shared/peripherals.DefaultTIA() so CPU/GPU
+	// simulations are comparable (within the GPU shader's simplified model).
 	return TIAParams{
-		Gain:       1e6,           // 1MΩ transimpedance gain
-		Bandwidth:  1e6,           // 1MHz bandwidth
-		InputNoise: 1e-12,         // 1pA/sqrt(Hz) input noise
-		Vmax:       1.0,           // ±1V output range
+		Gain:       10e3,          // 10 kΩ transimpedance gain (matches DefaultTIA)
+		Bandwidth:  100e6,         // 100 MHz bandwidth (matches DefaultTIA)
+		InputNoise: 1e-12,         // 1 pA/sqrt(Hz) input noise (matches DefaultTIA)
+		Vmax:       1.0,           // 1.0 V output saturation (docs + DefaultTIA)
 		Size:       int32(size),   // Number of conversions
 		Seed:       float32(9876), // Random seed
 	}

@@ -14,11 +14,20 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
           cache: true
+
+      - name: Calibration drift guard
+        run: scripts/calib-guard.sh
+        env:
+          # To intentionally update calibrations, set this repo variable to "1"
+          # (GitHub Settings → Secrets and variables → Actions → Variables).
+          ALLOW_CALIBRATION_UPDATES: ${{ vars.ALLOW_CALIBRATION_UPDATES }}
 
       - name: go test ./...
         shell: bash

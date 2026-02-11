@@ -15,7 +15,10 @@ import (
 // runMVM performs matrix-vector multiplication with animation.
 func (ca *CrossbarApp) runMVM() {
 	// M5 UX fix: Prevent starting new MVM while one is running
-	if ca.isMVMRunning {
+	ca.stateMu.RLock()
+	running := ca.isMVMRunning
+	ca.stateMu.RUnlock()
+	if running {
 		return
 	}
 
@@ -42,13 +45,17 @@ func (ca *CrossbarApp) runMVM() {
 // runMVMAnimated performs the MVM with visual animation.
 func (ca *CrossbarApp) runMVMAnimated(input []float64) {
 	// M5 UX fix: Set running flag and disable controls
+	ca.stateMu.Lock()
 	ca.isMVMRunning = true
+	ca.stateMu.Unlock()
 	fyne.Do(func() {
 		ca.setControlsEnabled(false)
 	})
 	// Ensure we re-enable controls when done
 	defer func() {
+		ca.stateMu.Lock()
 		ca.isMVMRunning = false
+		ca.stateMu.Unlock()
 		fyne.Do(func() {
 			ca.setControlsEnabled(true)
 		})

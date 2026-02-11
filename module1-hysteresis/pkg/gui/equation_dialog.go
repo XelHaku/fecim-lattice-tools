@@ -1,71 +1,67 @@
 package gui
 
 import (
-	"math"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
-	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/module1-hysteresis/pkg/gui/widgets"
 )
 
-// ShowPhysicsEquationsDialog displays the equation modal.
-//
-// This is exported so automated visual tests and screenshot crawlers can
-// reliably open the modal without fragile widget-tree clicking.
-func (a *App) ShowPhysicsEquationsDialog() {
-	a.showPhysicsEquationsDialog()
-}
-
+// showPhysicsEquationsDialog opens the equations modal. Kept unexported for normal UI wiring.
 func (a *App) showPhysicsEquationsDialog() {
 	if a.mainWindow == nil {
 		return
 	}
 
-	wasPaused := a.paused
+	wasPaused := a.paused.Load()
 	if !wasPaused {
-		a.paused = true
+		a.paused.Store(true)
 		if a.pauseBtn != nil {
 			a.pauseBtn.SetText("Resume")
 		}
 	}
 
-	content := widgets.NewPhysicsEquationsWidget(a.mainWindow)
+	initialTab := 0 // L-K
+	if a.physicsEngine == PhysicsPreisach {
+		initialTab = 1 // Preisach
+	}
+	content := widgets.NewPhysicsEquationsWidget(a.mainWindow, initialTab)
+	canvasSize := a.mainWindow.Canvas().Size()
+	width := canvasSize.Width * 0.92
+	height := canvasSize.Height * 0.95
+	if width <= 0 {
+		width = 900
+	}
+	if height <= 0 {
+		height = 700
+	}
 	framed := container.NewPadded(content)
 
-	// Responsive sizing: keep it large on desktop but never exceed the window.
-	canvasSize := a.mainWindow.Canvas().Size()
-	width := float32(1000)
-	height := float32(620)
-	if canvasSize.Width > 0 {
-		width = float32(math.Min(float64(width), float64(canvasSize.Width*0.95)))
-		width = float32(math.Max(float64(width), 640))
-	}
-	if canvasSize.Height > 0 {
-		height = float32(math.Min(float64(height), float64(canvasSize.Height*0.88)))
-		height = float32(math.Max(float64(height), 420))
-	}
-
-	var d dialog.Dialog
+	var dialog *widget.PopUp
 	closeBtn := widget.NewButton("Close", func() {
-		if d != nil {
-			d.Hide()
+		if dialog != nil {
+			dialog.Hide()
 		}
-		if !wasPaused && a.paused {
-			a.paused = false
+		if !wasPaused && a.paused.Load() {
+			a.paused.Store(false)
 			if a.pauseBtn != nil {
 				a.pauseBtn.SetText("Pause")
 			}
 		}
 	})
 
-	footer := container.NewHBox(layout.NewSpacer(), closeBtn)
-	body := container.NewBorder(nil, footer, nil, nil, framed)
+	dialog = widget.NewModalPopUp(
+		container.NewBorder(nil, closeBtn, nil, nil, framed),
+		a.mainWindow.Canvas(),
+	)
+	dialog.Resize(fyne.NewSize(width, height))
 
-	d = dialog.NewCustom("Physics Equations", "", body, a.mainWindow)
-	d.Resize(fyne.NewSize(width, height))
-	d.Show()
+	dialog.Show()
+}
+
+// ShowPhysicsEquationsDialogForCapture is a small exported wrapper used by the
+// headless screenshot harness (scripts/capture_fyne_window.go).
+func (a *App) ShowPhysicsEquationsDialogForCapture() {
+	a.showPhysicsEquationsDialog()
 }

@@ -27,7 +27,7 @@ func TestShowPhysicsEquationsDialog_AddsOverlay(t *testing.T) {
 	if after != before+1 {
 		t.Fatalf("expected overlays to increase by 1, got before=%d after=%d", before, after)
 	}
-	if !a.paused {
+	if !a.paused.Load() {
 		t.Fatal("expected equation dialog to pause simulation")
 	}
 }

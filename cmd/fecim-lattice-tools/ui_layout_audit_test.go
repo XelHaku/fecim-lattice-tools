@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"image"
 	"os"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -408,13 +407,4 @@ func safeName(s string) string {
 	return s
 }
 
-func ptrID(o any) uintptr {
-	v := reflect.ValueOf(o)
-	if !v.IsValid() {
-		return 0
-	}
-	if v.Kind() != reflect.Pointer {
-		return 0
-	}
-	return v.Pointer()
-}
+// ptrID is defined in ui_crawler_helpers.go

@@ -116,13 +116,18 @@ func (c *ChargePump) BoostFactor() float64 {
 // PowerInput returns input power consumption.
 func (c *ChargePump) PowerInput() float64 {
 	// Pin = Pout / efficiency
-	pOut := math.Abs(c.OutputVoltage) * math.Abs(c.LoadCurrent)
+	pOut := c.PowerOutput()
+	if c.Efficiency <= 0 {
+		return math.Inf(1)
+	}
 	return pOut / c.Efficiency
 }
 
 // PowerOutput returns delivered output power.
+// Uses the *actual* achievable output voltage (after losses/regulation clamp).
 func (c *ChargePump) PowerOutput() float64 {
-	return math.Abs(c.OutputVoltage) * math.Abs(c.LoadCurrent)
+	vOut := math.Abs(c.ActualOutputVoltage())
+	return vOut * math.Abs(c.LoadCurrent)
 }
 
 // PowerLoss returns power dissipated in the pump.

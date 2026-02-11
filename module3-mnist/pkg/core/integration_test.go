@@ -512,19 +512,17 @@ func TestSingleLayerModeE2E(t *testing.T) {
 	}
 
 	// Energy calculation should reflect single layer only (7,840 MACs)
-	expectedMACs := 784 * 10 // 7,840 MACs
-	bitsPerCell := math.Log2(30.0)
-	expectedEnergy := float64(expectedMACs) * 10e-15 * bitsPerCell * 1e6
-
-	if result.EnergyUsed < expectedEnergy*0.5 || result.EnergyUsed > expectedEnergy*2.0 {
-		t.Errorf("Single-layer energy %.4f µJ outside expected range [%.4f, %.4f] µJ",
-			result.EnergyUsed, expectedEnergy*0.5, expectedEnergy*2.0)
+	est := EstimateInferenceEnergyJ(net.Config, net.InputSize, net.HiddenSize, net.OutputSize)
+	expectedEnergy := est.TotalJ * 1e6
+	if math.Abs(result.EnergyUsed-expectedEnergy) > expectedEnergy*1e-12 {
+		t.Errorf("Single-layer energy %.6f µJ does not match model %.6f µJ",
+			result.EnergyUsed, expectedEnergy)
 	}
 
 	t.Logf("Single-layer mode: FP=%d (%.1f%%), CIM=%d (%.1f%%), Energy=%.4f µJ, MACs=%d",
 		result.FPPrediction, result.FPConfidence*100,
 		result.CIMPrediction, result.CIMConfidence*100,
-		result.EnergyUsed, expectedMACs)
+		result.EnergyUsed, est.TotalMACs)
 }
 
 // =============================================================================
@@ -572,16 +570,12 @@ func TestPerLayerQuantizationE2E(t *testing.T) {
 		t.Errorf("Invalid CIM prediction: %d", result.CIMPrediction)
 	}
 
-	// Energy calculation should reflect different bit depths
-	macs1 := 784 * 128
-	macs2 := 128 * 10
-	bits1 := math.Log2(20.0) // ~4.32 bits
-	bits2 := math.Log2(10.0) // ~3.32 bits
-	expectedEnergy := float64(macs1)*10e-15*bits1*1e6 + float64(macs2)*10e-15*bits2*1e6
-
-	if result.EnergyUsed < expectedEnergy*0.5 || result.EnergyUsed > expectedEnergy*2.0 {
-		t.Errorf("Per-layer quant energy %.4f µJ outside expected range [%.4f, %.4f] µJ",
-			result.EnergyUsed, expectedEnergy*0.5, expectedEnergy*2.0)
+	// Energy calculation should reflect per-layer configuration
+	est := EstimateInferenceEnergyJ(net.Config, net.InputSize, net.HiddenSize, net.OutputSize)
+	expectedEnergy := est.TotalJ * 1e6
+	if math.Abs(result.EnergyUsed-expectedEnergy) > expectedEnergy*1e-12 {
+		t.Errorf("Per-layer quant energy %.6f µJ does not match model %.6f µJ",
+			result.EnergyUsed, expectedEnergy)
 	}
 
 	t.Logf("Per-layer quantization: L1=%d levels, L2=%d levels, Energy=%.4f µJ, Agree=%v",
@@ -705,32 +699,27 @@ func TestEnergyCalculationVerification(t *testing.T) {
 	totalMACs := macs1 + macs2 // 101,632 MACs
 
 	// Test energy scaling with different levels
-	levelsToTest := []struct {
-		levels        int
-		expectedBits  float64
-		expectedFJMAC float64
-	}{
-		{2, 1.0, 10.0},  // 1 bit
-		{8, 3.0, 30.0},  // 3 bits
-		{16, 4.0, 40.0}, // 4 bits
-		{30, 4.9, 49.0}, // ~4.9 bits
-	}
+	levelsToTest := []int{2, 8, 16, 30}
 
-	for _, test := range levelsToTest {
-		net.SetNumLevels(test.levels)
+	for _, levels := range levelsToTest {
+		net.SetNumLevels(levels)
 		result := net.Infer(input)
 
-		// Energy formula: 10 * log2(levels) fJ/MAC
-		expectedEnergy := float64(totalMACs) * test.expectedFJMAC * 1e-15 * 1e6 // Convert to µJ
+		cfg := *net.Config
+		cfg.NumLevels = levels
+		cfg.PerLayerQuant = false
+		est := EstimateInferenceEnergyJ(&cfg, net.InputSize, net.HiddenSize, net.OutputSize)
+		expectedEnergy := est.TotalJ * 1e6
 
-		if math.Abs(result.EnergyUsed-expectedEnergy) > expectedEnergy*0.3 {
-			t.Errorf("Energy mismatch for %d levels: got %.4f µJ, expected %.4f µJ",
-				test.levels, result.EnergyUsed, expectedEnergy)
+		if math.Abs(result.EnergyUsed-expectedEnergy) > expectedEnergy*1e-12 {
+			t.Errorf("Energy mismatch for %d levels: got %.6f µJ, expected %.6f µJ",
+				levels, result.EnergyUsed, expectedEnergy)
 		}
 
-		actualFJMAC := result.EnergyUsed * 1e6 / float64(totalMACs)
-		t.Logf("Levels=%2d: Bits=%.1f, Energy=%.4f µJ, %.1f fJ/MAC (expected %.1f fJ/MAC)",
-			test.levels, test.expectedBits, result.EnergyUsed, actualFJMAC, test.expectedFJMAC)
+		expectedFJMAC := EnergyPerMACJ(levels) * 1e15
+		actualFJMAC := (result.EnergyUsed * 1e-6 / float64(totalMACs)) * 1e15
+		t.Logf("Levels=%2d: Energy=%.4f µJ, %.2f fJ/MAC (compute %.2f fJ/MAC, model %.4f µJ)",
+			levels, result.EnergyUsed, actualFJMAC, expectedFJMAC, expectedEnergy)
 	}
 
 	// Verify energy scales with levels (more levels = more energy)
@@ -740,13 +729,15 @@ func TestEnergyCalculationVerification(t *testing.T) {
 	result30 := net.Infer(input)
 
 	ratio := result30.EnergyUsed / result2.EnergyUsed
-	expectedRatio := 4.9 // log2(30) / log2(2)
+	est2 := EstimateInferenceEnergyJ(&NetworkConfig{NumLevels: 2}, net.InputSize, net.HiddenSize, net.OutputSize)
+	est30 := EstimateInferenceEnergyJ(&NetworkConfig{NumLevels: 30}, net.InputSize, net.HiddenSize, net.OutputSize)
+	expectedRatio := est30.TotalJ / est2.TotalJ
 
-	if ratio < expectedRatio*0.8 || ratio > expectedRatio*1.2 {
-		t.Errorf("Energy scaling ratio %.2f outside expected range [%.2f, %.2f]",
-			ratio, expectedRatio*0.8, expectedRatio*1.2)
+	if math.Abs(ratio-expectedRatio) > expectedRatio*1e-3 {
+		t.Errorf("Energy scaling ratio %.6f outside expected %.6f",
+			ratio, expectedRatio)
 	}
 
-	t.Logf("Energy scaling verification: 30-level/2-level = %.2fx (expected ~%.1fx)",
+	t.Logf("Energy scaling verification: 30-level/2-level = %.4fx (expected %.4fx)",
 		ratio, expectedRatio)
 }

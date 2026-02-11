@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -106,17 +107,22 @@ type App struct {
 	dataLogger *HysteresisDataLogger
 
 	// UI state
-	running       bool
-	paused        bool
-	uiUpdateOnce  sync.Once
-	uiUpdates     chan uiSnapshot
+	running       atomic.Bool
+	paused        atomic.Bool
 	autoMode      bool
 	waveform      WaveformType
 	physicsEngine PhysicsEngine
 	physicsSelect *widget.Select
-	frequency     float64
-	timeScale     float64 // Simulation time scaling (1.0 = real-time)
-	simTime       float64
+	tempContainer   *fyne.Container // Temperature controls (L-K only)
+	stressContainer *fyne.Container // Stress controls (L-K only)
+
+	// Plot view (presentation-only)
+	plotViewMode   PlotViewMode
+	plotViewSelect *widget.Select
+
+	frequency float64
+	timeScale float64 // Simulation time scaling (1.0 = real-time)
+	simTime   float64
 
 	// Write/Read Demo state (improved physics)
 	wrdPhase           int     // 0=prep, 1=unused (hold-prep), 2=write, 3/4=unused, 5=display
@@ -479,6 +485,7 @@ func NewApp() *App {
 		autoMode:                true,
 		waveform:                WaveformSine,
 		physicsEngine:           PhysicsPreisach,
+		plotViewMode:            PlotViewFullHistory,
 		frequency:               0.5, // 0.5 Hz default
 		timeScale:               1.0,
 		wrdTargetLevel:          28, // Start high for dramatic first write
@@ -498,6 +505,9 @@ func NewApp() *App {
 	// Initialize L-K Solver and Adaptive ISPP
 	uiApp.lkSolver = physics.NewLKSolver()
 	uiApp.lkSolver.ConfigureFromMaterial(mat) // Load material-specific params (K_dep, etc.)
+	// Module 1 expects deterministic LK dynamics for interactive demos and ISPP control.
+	uiApp.lkSolver.UseNLS = false
+	uiApp.lkSolver.EnableNoise = false
 	uiApp.adaptiveISPP = physics.NewAdaptiveISPP(uiApp.lkSolver, mat)
 
 	return uiApp
@@ -565,7 +575,6 @@ func NewAppWithMaterial(materialName string) *App {
 		physicsEngine:           PhysicsPreisach,
 		frequency:               0.5,
 		timeScale:               1.0,
-		paused:                  false,
 		autoRecalibrate:         true,
 		recalibrateOvershootMax: 2,
 		recalibratePulseMax:     12,
@@ -584,6 +593,9 @@ func NewAppWithMaterial(materialName string) *App {
 	// Initialize L-K Solver and Adaptive ISPP
 	uiApp.lkSolver = physics.NewLKSolver()
 	uiApp.lkSolver.ConfigureFromMaterial(mat) // Load material-specific params (K_dep, etc.)
+	// Module 1 expects deterministic LK dynamics for interactive demos and ISPP control.
+	uiApp.lkSolver.UseNLS = false
+	uiApp.lkSolver.EnableNoise = false
 	uiApp.adaptiveISPP = physics.NewAdaptiveISPP(uiApp.lkSolver, mat)
 
 	return uiApp
@@ -616,7 +628,9 @@ func (a *App) run() error {
 	a.setupShortcuts()
 
 	// Start simulation loop
-	a.running = true
+	a.running.Store(true)
+	stopCh := make(chan struct{})
+	var simWG sync.WaitGroup
 
 	// Try to load saved calibration, or perform fresh calibration at room temp
 	go func() {
@@ -632,10 +646,16 @@ func (a *App) run() error {
 		a.mu.Unlock()
 	}()
 
-	go a.simulationLoop()
+	simWG.Add(1)
+	go func() {
+		defer simWG.Done()
+		a.simulationLoop(stopCh)
+	}()
 
 	a.mainWindow.ShowAndRun()
-	a.running = false
+	a.running.Store(false)
+	close(stopCh)
+	simWG.Wait()
 	return nil
 }
 
@@ -808,7 +828,7 @@ func (a *App) createUI() fyne.CanvasObject {
 	adaptive.SetDesktopLayout(func(zones []fyne.CanvasObject) fyne.CanvasObject {
 		// Desktop: Left (Cell+Info) | Plot | Controls
 		innerSplit := container.NewHSplit(zones[1], zones[2])
-		innerSplit.SetOffset(0.70) // Plot gets more space while keeping controls readable
+		innerSplit.SetOffset(0.65) // Give controls more room (35% instead of 30%)
 
 		outerSplit := container.NewHSplit(zones[0], innerSplit)
 		outerSplit.SetOffset(0.22) // Slightly wider left column for log readability

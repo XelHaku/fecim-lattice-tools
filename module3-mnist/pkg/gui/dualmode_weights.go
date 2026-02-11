@@ -68,15 +68,12 @@ func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
 		app.showZoomedHeatmap()
 	})
 
+	// Stack labels vertically to prevent clipping at narrow widths
 	expandedHeader := container.NewVBox(
 		container.NewHBox(layout.NewSpacer(), layerSelect, zoomBtn),
-		container.NewHBox(
-			app.weightDimLabel,
-			widget.NewSeparator(),
-			app.weightRangeLabel,
-			widget.NewSeparator(),
-			app.weightLevelsLabel,
-		),
+		app.weightDimLabel,
+		app.weightRangeLabel,
+		app.weightLevelsLabel,
 	)
 
 	// Use DualWeightHeatmap to show FP vs Quantized side-by-side
@@ -181,15 +178,12 @@ func (app *DualModeApp) toggleWeightsCollapsed() {
 				app.showZoomedHeatmap()
 			})
 
+			// Stack labels vertically to prevent clipping at narrow widths
 			expandedHeader := container.NewVBox(
 				container.NewHBox(layout.NewSpacer(), layerSelect, zoomBtn),
-				container.NewHBox(
-					app.weightDimLabel,
-					widget.NewSeparator(),
-					app.weightRangeLabel,
-					widget.NewSeparator(),
-					app.weightLevelsLabel,
-				),
+				app.weightDimLabel,
+				app.weightRangeLabel,
+				app.weightLevelsLabel,
 			)
 
 			// Use DualWeightHeatmap to show FP vs Quantized side-by-side

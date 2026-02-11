@@ -179,7 +179,7 @@ go test -race ./...
 - `TestReLUCorrectness` - ReLU(x) = max(0, x) validation
 - `TestKLDivergenceProperties` - KL(P||P)=0, non-negativity, asymmetry
 - `TestArgmaxCorrectness` - Index of maximum value
-- `TestEnergyCalculation` - 50 fJ/MAC FeCIM energy estimate
+- `TestEnergyCalculation` - FeCIM energy estimate (10 fJ/bit/MAC × log2(levels) + ADC/DAC overhead; shared core model)
 
 ### 7. Network/Training Tests
 

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"math/rand"
 	"os"
 	"strconv"
 	"strings"
@@ -48,6 +49,15 @@ func runHysteresisMode(engine string) error {
 	}
 	log.Info("Headless hysteresis engine: %s", engine)
 
+	ensureFinite := func(label string, values ...float64) error {
+		for _, v := range values {
+			if math.IsNaN(v) || math.IsInf(v, 0) {
+				return fmt.Errorf("non-finite %s=%v", label, v)
+			}
+		}
+		return nil
+	}
+
 	mat := func() *physics.HZOMaterial {
 		// Optional material selector for headless testing.
 		// Examples:
@@ -79,6 +89,14 @@ func runHysteresisMode(engine string) error {
 			return physics.FeCIMMaterial()
 		}
 	}()
+
+	if mat.Ec > 0 {
+		// Headless LK diagnostics assume SI units (V/m). Catch MV/cm or V/cm mixups early.
+		// Typical Ec values for HZO presets are O(1e8) V/m (≈ 1 MV/cm).
+		if mat.Ec < 1e6 || mat.Ec > 1e10 {
+			return fmt.Errorf("material Ec=%g looks non-SI; expected V/m (~1e8). Refuse headless run", mat.Ec)
+		}
+	}
 	numLevels := mat.GetNumLevels()
 	if numLevels <= 0 {
 		numLevels = 30
@@ -100,6 +118,13 @@ func runHysteresisMode(engine string) error {
 	}
 	if rangeFrac <= 0 || rangeFrac > 1 {
 		rangeFrac = 1
+	}
+	// Many LK presets cannot reliably reach full ±Ps due to depolarization and relaxation.
+	// Materials provide TargetRangeFrac as the recommended "reachable" outer range.
+	// Clamp upward overrides to avoid pathological headless runs that time out.
+	if engine == "lk" && mat.TargetRangeFrac > 0 && mat.TargetRangeFrac <= 1 && rangeFrac > mat.TargetRangeFrac {
+		log.Info("Headless rangeFrac=%.3f exceeds material TargetRangeFrac=%.3f; clamping for reachability", rangeFrac, mat.TargetRangeFrac)
+		rangeFrac = mat.TargetRangeFrac
 	}
 	effPs := mat.Ps * rangeFrac
 
@@ -227,7 +252,10 @@ func runHysteresisMode(engine string) error {
 			currentP = stepPolarization(E, dt)
 		}
 		simTime += dt
-		recordHeadlessSnapshot(dataLogger, headlessEngineState{time: simTime, temperature: engineTemp, polarization: currentP}, mat, gmin, gmax, numLevels, nil, dt, E, sweepLabel, "SWEEP", nil)
+		if err := ensureFinite("sweep", currentP, E); err != nil {
+			return err
+		}
+		recordHeadlessSnapshot(dataLogger, headlessEngineState{time: simTime, temperature: engineTemp, polarization: currentP}, mat, effPs, gmin, gmax, numLevels, nil, dt, E, sweepLabel, "SWEEP", nil)
 	}
 	logPerf("SWEEP")
 
@@ -246,21 +274,38 @@ func runHysteresisMode(engine string) error {
 		phaseDuration = pulseDuration
 	}
 
-	dtNominal := 1e-4
-	dtMin := 1e-6
-	dtMax := 0.025
-	stableNominal := pulseDuration / 10000.0
-	if stableNominal > 0 && stableNominal < dtNominal {
-		dtNominal = stableNominal
+	// Headless integration tests can become extremely slow if we pick time steps that
+	// are too small relative to the pulse duration. Provide deterministic, opt-in
+	// speed controls via environment variables.
+	//
+	//   FECIM_ISPP_STEPS_PER_PULSE: target number of simulation steps per pulse (int)
+	//   FECIM_HEADLESS_FAST=1: convenience preset for CI (sets steps-per-pulse to 200)
+	stepsPerPulse := 2000
+	if s := strings.TrimSpace(os.Getenv("FECIM_ISPP_STEPS_PER_PULSE")); s != "" {
+		if v, err := strconv.Atoi(s); err == nil {
+			stepsPerPulse = v
+		}
 	}
+	if strings.TrimSpace(os.Getenv("FECIM_HEADLESS_FAST")) == "1" {
+		stepsPerPulse = 200
+	}
+	if stepsPerPulse < 20 {
+		stepsPerPulse = 20
+	}
+
+	// Nominal dt is pulseDuration/stepsPerPulse; allow dtMin to get smaller only
+	// near coercive points (for stability) but never below 1e-15 s.
+	dtNominal := pulseDuration / float64(stepsPerPulse)
 	if dtNominal <= 0 {
 		dtNominal = 1e-12
 	}
-	if dtMin > dtNominal {
-		dtMin = dtNominal
+	dtMin := dtNominal / 20.0
+	if dtMin < 1e-15 {
+		dtMin = 1e-15
 	}
-	if pulseDuration > 0 && pulseDuration < dtMax {
-		dtMax = pulseDuration
+	dtMax := pulseDuration / 2.0
+	if dtMax <= 0 {
+		dtMax = dtNominal
 	}
 
 	gWindow := gmax - gmin
@@ -276,27 +321,88 @@ func runHysteresisMode(engine string) error {
 		return gmin + float64(level-1)/float64(numLevels-1)*gWindow
 	}
 
-	lo3 := 3
-	lo5 := 5
-	hi2 := numLevels - 2
-	hi3 := numLevels - 3
-	mid := int(math.Round(0.66 * float64(numLevels)))
-	if mid < 1 {
-		mid = 1
+	// Build a deterministic target list that mixes extremes and mid-levels.
+	//
+	// Controls:
+	//   FECIM_ISPP_TARGETS: number of targets to run (default 5)
+	//   FECIM_ISPP_TARGET_SEED: deterministic seed for randomized fill (default 1)
+	targetCount := 5
+	if s := strings.TrimSpace(os.Getenv("FECIM_ISPP_TARGETS")); s != "" {
+		if v, err := strconv.Atoi(s); err == nil {
+			targetCount = v
+		}
 	}
-	if mid > numLevels {
-		mid = numLevels
+	if targetCount < 1 {
+		targetCount = 1
+	}
+	if targetCount > numLevels {
+		targetCount = numLevels
 	}
 
-	steps := []struct {
+	seed := int64(1)
+	if s := strings.TrimSpace(os.Getenv("FECIM_ISPP_TARGET_SEED")); s != "" {
+		if v, err := strconv.ParseInt(s, 10, 64); err == nil {
+			seed = v
+		}
+	}
+
+	buildTargets := func(numLevels, n int, seed int64) []int {
+		if n <= 0 {
+			return nil
+		}
+		if n > numLevels {
+			n = numLevels
+		}
+		mid := numLevels / 2
+		q1 := int(math.Round(0.25 * float64(numLevels)))
+		q3 := int(math.Round(0.75 * float64(numLevels)))
+		base := []int{1, 2, 3, q1, mid, q3, numLevels - 2, numLevels - 1, numLevels}
+		seen := map[int]bool{}
+		out := make([]int, 0, n)
+		push := func(level int) {
+			if level < 1 {
+				level = 1
+			}
+			if level > numLevels {
+				level = numLevels
+			}
+			if len(out) >= n {
+				return
+			}
+			if !seen[level] {
+				seen[level] = true
+				out = append(out, level)
+			}
+		}
+		for _, lvl := range base {
+			push(lvl)
+		}
+		rng := rand.New(rand.NewSource(seed))
+		for len(out) < n {
+			lvl := 1 + rng.Intn(numLevels)
+			push(lvl)
+		}
+		// Shuffle deterministically (we want a mixture during the run, not sorted).
+		for i := len(out) - 1; i > 0; i-- {
+			j := rng.Intn(i + 1)
+			out[i], out[j] = out[j], out[i]
+		}
+		return out
+	}
+
+	targetLevels := buildTargets(numLevels, targetCount, seed)
+	steps := make([]struct {
 		label   string
 		targetG float64
-	}{
-		{"HI2", levelToG(hi2)},
-		{"LO5", levelToG(lo5)},
-		{"HI3", levelToG(hi3)},
-		{"LO3", levelToG(lo3)},
-		{"MID", levelToG(mid)},
+	}, 0, len(targetLevels))
+	for i, lvl := range targetLevels {
+		steps = append(steps, struct {
+			label   string
+			targetG float64
+		}{
+			label:   fmt.Sprintf("T%02d_L%02d", i+1, lvl),
+			targetG: levelToG(lvl),
+		})
 	}
 
 	wrdTotalWrites := 0
@@ -310,7 +416,25 @@ func runHysteresisMode(engine string) error {
 		currentG := physics.PolarizationToConductance(currentP, effPs, gmin, gmax)
 		_, currentLevel := headlessLevelFromConductance(currentG, gmin, gmax, numLevels)
 		stepStart := simTime
-		maxSimTime := phaseDuration * float64(writeController.MaxRetries+100)
+		pulseBudget := 800
+		if s := strings.TrimSpace(os.Getenv("FECIM_ISPP_MAX_PULSES")); s != "" {
+			if v, err := strconv.Atoi(s); err == nil && v > 0 {
+				pulseBudget = v
+			}
+		}
+		if strings.TrimSpace(os.Getenv("FECIM_HEADLESS_FAST")) == "1" && pulseBudget < 1200 {
+			pulseBudget = 1200
+		}
+		// Headless-fast LK runs must not spin forever on difficult/unreachable targets.
+		// Prefer explicit controller failure/reset to a simulation-time timeout.
+		if strings.TrimSpace(os.Getenv("FECIM_HEADLESS_FAST")) == "1" && engine == "lk" {
+			writeController.MaxRetries = pulseBudget / 4
+			if writeController.MaxRetries < 100 {
+				writeController.MaxRetries = 100
+			}
+			writeController.ForceResetLimit = 1
+		}
+		maxSimTime := phaseDuration * float64(pulseBudget)
 		wrd := &headlessWRDState{
 			phase:         0,
 			phaseTimer:    0,
@@ -323,7 +447,7 @@ func runHysteresisMode(engine string) error {
 			successWrites: wrdSuccessWrites,
 		}
 
-		recordHeadlessSnapshot(dataLogger, headlessEngineState{time: simTime, temperature: engineTemp, polarization: currentP}, mat, gmin, gmax, numLevels, writeController, 0, currentField, "ISPP", "", wrd)
+		recordHeadlessSnapshot(dataLogger, headlessEngineState{time: simTime, temperature: engineTemp, polarization: currentP}, mat, effPs, gmin, gmax, numLevels, writeController, 0, currentField, "ISPP", "", wrd)
 
 		targetDone := false
 		// Track "written P" - the polarization captured at end of pulse (before E→0)
@@ -487,11 +611,14 @@ func runHysteresisMode(engine string) error {
 				currentP = stepPolarization(currentField, currentStep)
 			}
 			simTime += currentStep
-			recordHeadlessSnapshot(dataLogger, headlessEngineState{time: simTime, temperature: engineTemp, polarization: currentP}, mat, gmin, gmax, numLevels, writeController, currentStep, currentField, "ISPP", "", wrd)
+			if err := ensureFinite("ispp", currentP, currentField, currentStep); err != nil {
+				return err
+			}
+			recordHeadlessSnapshot(dataLogger, headlessEngineState{time: simTime, temperature: engineTemp, polarization: currentP}, mat, effPs, gmin, gmax, numLevels, writeController, currentStep, currentField, "ISPP", "", wrd)
 		}
 
 		if !targetDone {
-			log.Info("ISPP step %d (%s): timed out after %.3fs", i+1, step.label, simTime-stepStart)
+			return fmt.Errorf("ISPP step %d (%s): timed out after %.3fs", i+1, step.label, simTime-stepStart)
 		}
 		logPerf(fmt.Sprintf("ISPP_%s", step.label))
 
@@ -583,19 +710,19 @@ func headlessStateBand(levelIndex int, numLevels int) string {
 func headlessWRDPhaseName(phase int) string {
 	switch phase {
 	case 0:
-		return "RESET"
+		return "PREP"
 	case 1:
-		return "HOLD_RESET"
+		return "SETTLE"
 	case 2:
-		return "WRITE"
+		return "PROG_VERIFY"
 	case 3:
-		return "HOLD_WRITE"
+		return "HOLD"
 	case 4:
-		return "READ"
+		return "READBACK"
 	case 5:
-		return "DISPLAY"
+		return "RESULT"
 	case 6:
-		return "BOOST"
+		return "RETRY"
 	default:
 		return "UNKNOWN"
 	}
@@ -625,6 +752,7 @@ func recordHeadlessSnapshot(
 	logger *hysgui.HysteresisDataLogger,
 	state headlessEngineState,
 	mat *physics.HZOMaterial,
+	effPs float64,
 	gmin float64,
 	gmax float64,
 	numLevels int,
@@ -640,11 +768,13 @@ func recordHeadlessSnapshot(
 	}
 
 	currentP := state.polarization
-	rangeFrac := mat.TargetRangeFrac
-	if rangeFrac <= 0 || rangeFrac > 1 {
-		rangeFrac = 1
+	if effPs == 0 {
+		rangeFrac := mat.TargetRangeFrac
+		if rangeFrac <= 0 || rangeFrac > 1 {
+			rangeFrac = 1
+		}
+		effPs = mat.Ps * rangeFrac
 	}
-	effPs := mat.Ps * rangeFrac
 	currentG := physics.PolarizationToConductance(currentP, effPs, gmin, gmax)
 	levelIdx, level := headlessLevelFromConductance(currentG, gmin, gmax, numLevels)
 	normalizedP := 0.0
