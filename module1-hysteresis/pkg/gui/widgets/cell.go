@@ -27,7 +27,7 @@ type CellVisualizer struct {
 func NewCellVisualizer() *CellVisualizer {
 	c := &CellVisualizer{
 		level:     15,
-		numLevels: 30, // Default to 30 levels
+		numLevels: 30,                     // Default to 30 levels
 		minSize:   fyne.NewSize(180, 200), // Larger cell display (30% increase)
 	}
 	c.ExtendBaseWidget(c)
@@ -218,7 +218,7 @@ func (r *cellRenderer) layoutWithSize(size fyne.Size) {
 	labelY := cellY + cellSize + 10
 	levelLabelStr := fmt.Sprintf("Level %d/%d", level+1, numLevels)
 	levelLabel := canvas.NewText(levelLabelStr, color.RGBA{0, 212, 255, 255}) // Cyan for consistency
-	levelLabel.TextSize = 16 // Increased from 14
+	levelLabel.TextSize = 16                                                  // Increased from 14
 	levelLabel.TextStyle = fyne.TextStyle{Bold: true}
 	labelW := float32(len(levelLabelStr)) * 9.5 // Adjusted for larger text
 	levelLabel.Move(fyne.NewPos(cellX+(cellSize-labelW)/2, labelY))
@@ -234,7 +234,7 @@ func (r *cellRenderer) layoutWithSize(size fyne.Size) {
 		stateText = "Intermediate"
 	}
 	stateLabel := canvas.NewText(stateText, color.RGBA{220, 220, 220, 255})
-	stateLabel.TextSize = 13 // Increased from 12
+	stateLabel.TextSize = 14 // Increased from 12
 	stateLabelW := float32(len(stateText)) * 7.5
 	stateLabel.Move(fyne.NewPos(cellX+(cellSize-stateLabelW)/2, labelY+20))
 	r.objects = append(r.objects, stateLabel)

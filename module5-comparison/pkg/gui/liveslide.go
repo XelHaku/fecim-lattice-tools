@@ -251,7 +251,7 @@ func (r *comparisonModeRenderer) layoutWithSize(size fyne.Size) {
 	if fontSize > 14 {
 		fontSize = 14
 	}
-	if fontSize < 10 {
+	if fontSize < 14 {
 		fontSize = 10
 	}
 	text.TextSize = fontSize

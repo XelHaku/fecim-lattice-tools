@@ -56,7 +56,7 @@ func OperationModesVisual() fyne.CanvasObject {
 
 		// Mode name (centered in box)
 		nameText := canvas.NewText(mode.name, colorBgDark)
-		nameText.TextSize = 12
+		nameText.TextSize = 14
 		nameText.TextStyle = fyne.TextStyle{Bold: true}
 		// Center text horizontally
 		nameX := mode.x + (boxW-float32(len(mode.name))*7)/2
@@ -65,16 +65,16 @@ func OperationModesVisual() fyne.CanvasObject {
 
 		// Description (centered below name)
 		descText := canvas.NewText(mode.description, colorBgDark)
-		descText.TextSize = 10
+		descText.TextSize = 14
 		// Center description horizontally (approximate)
-		descX := mode.x + (boxW - float32(len(mode.description)*6)) / 2
+		descX := mode.x + (boxW-float32(len(mode.description)*6))/2
 		descText.Move(fyne.NewPos(descX, startY+50))
 		objects = append(objects, descText)
 	}
 
 	// Central FeCIM circle position
-	circleX := float32(300)  // Center of the diagram
-	circleY := float32(165)  // Below the boxes
+	circleX := float32(300) // Center of the diagram
+	circleY := float32(165) // Below the boxes
 	circleRadius := float32(20)
 
 	// Draw lines from each box to central circle
@@ -109,7 +109,7 @@ func OperationModesVisual() fyne.CanvasObject {
 
 	// "FeCIM" label in center
 	fecimLabel := canvas.NewText("FeCIM", colorBgDark)
-	fecimLabel.TextSize = 12
+	fecimLabel.TextSize = 14
 	fecimLabel.TextStyle = fyne.TextStyle{Bold: true}
 	fecimLabel.Move(fyne.NewPos(circleX-22, circleY-8))
 	objects = append(objects, fecimLabel)
@@ -117,7 +117,7 @@ func OperationModesVisual() fyne.CanvasObject {
 	// Quote below circle
 	quoteY := circleY + float32(30)
 	quote := canvas.NewText("\"Same device does all\"", colorBoxOurs)
-	quote.TextSize = 11
+	quote.TextSize = 14
 	quote.TextStyle = fyne.TextStyle{Italic: true}
 	quote.Move(fyne.NewPos(circleX-75, quoteY))
 	objects = append(objects, quote)

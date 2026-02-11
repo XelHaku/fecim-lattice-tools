@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/driver/desktop"
 )
@@ -26,12 +27,12 @@ type HelpTopic struct {
 
 // HelpSystem manages the in-app help system.
 type HelpSystem struct {
-	mu           sync.RWMutex
-	topics       map[string]*HelpTopic
-	contextMap   map[string]string // context key -> topic ID
-	currentCtx   string            // Current help context
-	window       fyne.Window
-	onShowHelp   func(topic *HelpTopic)
+	mu            sync.RWMutex
+	topics        map[string]*HelpTopic
+	contextMap    map[string]string // context key -> topic ID
+	currentCtx    string            // Current help context
+	window        fyne.Window
+	onShowHelp    func(topic *HelpTopic)
 	onShowBrowser func()
 }
 
@@ -239,26 +240,33 @@ func (hs *HelpSystem) Search(query string) []*HelpTopic {
 	return results
 }
 
-// SetupF1Shortcut configures the F1 key to show contextual help.
+// SetupF1Shortcut configures keyboard help shortcuts.
 func SetupF1Shortcut(window fyne.Window, helpSystem *HelpSystem) {
 	if window == nil || helpSystem == nil {
 		return
 	}
 
-	// F1 for contextual help
-	f1Shortcut := &desktop.CustomShortcut{
-		KeyName: fyne.KeyF1,
-	}
+	// F1: accessibility keyboard navigation help (A11Y-4)
+	f1Shortcut := &desktop.CustomShortcut{KeyName: fyne.KeyF1}
 	window.Canvas().AddShortcut(f1Shortcut, func(shortcut fyne.Shortcut) {
-		helpSystem.ShowContextualHelp()
+		sharedwidgets.ShowKeyboardHelp(window)
 	})
 
-	// Shift+F1 for help browser
+	// Shift+F1: contextual module help
 	shiftF1Shortcut := &desktop.CustomShortcut{
 		KeyName:  fyne.KeyF1,
 		Modifier: fyne.KeyModifierShift,
 	}
 	window.Canvas().AddShortcut(shiftF1Shortcut, func(shortcut fyne.Shortcut) {
+		helpSystem.ShowContextualHelp()
+	})
+
+	// Ctrl+F1: full help browser
+	ctrlF1Shortcut := &desktop.CustomShortcut{
+		KeyName:  fyne.KeyF1,
+		Modifier: fyne.KeyModifierControl,
+	}
+	window.Canvas().AddShortcut(ctrlF1Shortcut, func(shortcut fyne.Shortcut) {
 		helpSystem.ShowBrowser()
 	})
 }

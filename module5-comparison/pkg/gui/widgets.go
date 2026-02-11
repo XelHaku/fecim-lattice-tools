@@ -402,11 +402,11 @@ func (d *DataCenterCalculator) CreateRenderer() fyne.WidgetRenderer {
 
 	// === COMPARISON SECTION ===
 	d.gpuCostText = canvas.NewText("GPU Baseline: $0/month", color.RGBA{231, 76, 60, 255}) // Red
-	d.gpuCostText.TextSize = 12
+	d.gpuCostText.TextSize = 14
 	d.gpuCostText.Alignment = fyne.TextAlignCenter
 
 	d.fecimCostText = canvas.NewText("FeCIM (model input; TRL 4): $0/month", color.RGBA{46, 204, 113, 255}) // Green
-	d.fecimCostText.TextSize = 12
+	d.fecimCostText.TextSize = 14
 	d.fecimCostText.Alignment = fyne.TextAlignCenter
 
 	d.savingsPercent = canvas.NewText("MODEL SAVINGS: 99%", color.RGBA{0, 212, 255, 255}) // Cyan
@@ -424,7 +424,7 @@ func (d *DataCenterCalculator) CreateRenderer() fyne.WidgetRenderer {
 
 	// === CITATION ===
 	citation := canvas.NewText("Model input references (not validated): NVIDIA H100 datasheets, Intel/AMD datasheets | Cost: $0.10/kWh", color.RGBA{160, 180, 200, 255})
-	citation.TextSize = 9
+	citation.TextSize = 14
 	citation.TextStyle = fyne.TextStyle{Italic: true}
 	citation.Alignment = fyne.TextAlignCenter
 

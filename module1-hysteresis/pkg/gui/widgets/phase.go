@@ -200,7 +200,7 @@ func (r *phaseRenderer) layoutWithSize(size fyne.Size) {
 		// Phase label
 		labelText := phaseNames[i]
 		label := canvas.NewText(labelText, textColor)
-		label.TextSize = 8
+		label.TextSize = 14
 		if i == phase {
 			label.TextStyle = fyne.TextStyle{Bold: true}
 		}
@@ -251,7 +251,7 @@ func (r *phaseRenderer) layoutWithSize(size fyne.Size) {
 		}
 	}
 	desc := canvas.NewText(descText, color.RGBA{180, 190, 210, 255})
-	desc.TextSize = 9
+	desc.TextSize = 14
 	desc.Move(fyne.NewPos(6, descY))
 	r.objects = append(r.objects, desc)
 }

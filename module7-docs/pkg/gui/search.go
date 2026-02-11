@@ -664,7 +664,7 @@ func NewSearchDialog(index *SearchIndex, parent fyne.Window, onSelected func(pat
 		func() fyne.CanvasObject {
 			categoryBadge := canvas.NewText("Guide ", theme.ForegroundColor())
 			categoryBadge.TextStyle = fyne.TextStyle{Bold: true}
-			categoryBadge.TextSize = 11
+			categoryBadge.TextSize = 14
 			titleLabel := widget.NewLabel("Title")
 			return container.NewHBox(
 				widget.NewIcon(theme.DocumentIcon()),

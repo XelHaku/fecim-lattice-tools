@@ -88,7 +88,7 @@ func (f *FabricationReality) CreateRenderer() fyne.WidgetRenderer {
 		"Note: These are model input estimates based on industry-typical figures. Actual costs vary by process node and complexity.",
 		color.RGBA{150, 150, 150, 255},
 	)
-	disclaimer.TextSize = 10
+	disclaimer.TextSize = 14
 	disclaimer.TextStyle = fyne.TextStyle{Italic: true}
 	disclaimer.Alignment = fyne.TextAlignCenter
 

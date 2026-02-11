@@ -160,7 +160,7 @@ func (r *modeIndicatorRenderer) layoutWithSize(size fyne.Size) {
 
 	// Mode text - scale with widget size
 	fontSize := size.Height * 0.3
-	if fontSize < 10 {
+	if fontSize < 14 {
 		fontSize = 10
 	}
 	if fontSize > 16 {

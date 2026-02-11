@@ -109,14 +109,14 @@ func OpenLaneFlowDiagram() fyne.CanvasObject {
 
 		// Stage name
 		nameText := canvas.NewText(stage.name, colorText)
-		nameText.TextSize = 13
+		nameText.TextSize = 14
 		nameText.TextStyle = fyne.TextStyle{Bold: true}
 		nameText.Move(fyne.NewPos(stage.x+10, stage.y+10))
 		objects = append(objects, nameText)
 
 		// Tool name
 		toolText := canvas.NewText(stage.tool, colorTextMuted)
-		toolText.TextSize = 11
+		toolText.TextSize = 14
 		toolText.Move(fyne.NewPos(stage.x+10, stage.y+30))
 		objects = append(objects, toolText)
 
@@ -163,7 +163,7 @@ func OpenLaneFlowDiagram() fyne.CanvasObject {
 	objects = append(objects, vLine)
 
 	vLabel := canvas.NewText("↑ Our Verilog", colorHighlight)
-	vLabel.TextSize = 11
+	vLabel.TextSize = 14
 	vLabel.TextStyle = fyne.TextStyle{Bold: true}
 	vLabel.Move(fyne.NewPos(stages[0].x+boxW/2-40, stages[0].y-20))
 	objects = append(objects, vLabel)
@@ -176,7 +176,7 @@ func OpenLaneFlowDiagram() fyne.CanvasObject {
 	objects = append(objects, lefLine)
 
 	lefLabel := canvas.NewText("↑ Our LEF", colorHighlight)
-	lefLabel.TextSize = 11
+	lefLabel.TextSize = 14
 	lefLabel.TextStyle = fyne.TextStyle{Bold: true}
 	lefLabel.Move(fyne.NewPos(stages[2].x+boxW/2-25, stages[2].y-20))
 	objects = append(objects, lefLabel)
@@ -189,7 +189,7 @@ func OpenLaneFlowDiagram() fyne.CanvasObject {
 	objects = append(objects, defLine)
 
 	defLabel := canvas.NewText("↑ Our DEF (FIXED)", colorHighlight)
-	defLabel.TextSize = 11
+	defLabel.TextSize = 14
 	defLabel.TextStyle = fyne.TextStyle{Bold: true}
 	defLabel.Move(fyne.NewPos(stages[3].x+boxW/2-50, stages[3].y-20))
 	objects = append(objects, defLabel)
@@ -205,7 +205,7 @@ func OpenLaneFlowDiagram() fyne.CanvasObject {
 	objects = append(objects, legendBox1)
 
 	legendText1 := canvas.NewText("= OpenLane handles", colorTextMuted)
-	legendText1.TextSize = 11
+	legendText1.TextSize = 14
 	legendText1.Move(fyne.NewPos(startX+25, legendY))
 	objects = append(objects, legendText1)
 
@@ -217,7 +217,7 @@ func OpenLaneFlowDiagram() fyne.CanvasObject {
 	objects = append(objects, legendBox2)
 
 	legendText2 := canvas.NewText("= We provide input files", colorBoxOurs)
-	legendText2.TextSize = 11
+	legendText2.TextSize = 14
 	legendText2.Move(fyne.NewPos(startX+205, legendY))
 	objects = append(objects, legendText2)
 

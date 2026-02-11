@@ -78,7 +78,7 @@ func (ca *CircuitsApp) drawWriteSequenceTimingDiagram() fyne.CanvasObject {
 		// Create phase box with label and duration
 		label := canvas.NewText(fmt.Sprintf("%s\n%dns", p.name, p.duration), color.White)
 		label.Alignment = fyne.TextAlignCenter
-		label.TextSize = 10
+		label.TextSize = 14
 
 		bg := canvas.NewRectangle(bgColor)
 		bg.SetMinSize(fyne.NewSize(60, 40))

@@ -136,7 +136,7 @@ func (m *MarketOpportunityChart) CreateRenderer() fyne.WidgetRenderer {
 	m.heroText.Alignment = fyne.TextAlignCenter
 
 	m.heroSubtext = canvas.NewText("⚠️ SIMULATION ONLY | MODEL INPUTS (market scenarios) | TRL 4→9 Required", heroAmberColor)
-	m.heroSubtext.TextSize = 13
+	m.heroSubtext.TextSize = 14
 	m.heroSubtext.TextStyle = fyne.TextStyle{Bold: true}
 	m.heroSubtext.Alignment = fyne.TextAlignCenter
 
@@ -162,7 +162,7 @@ func (m *MarketOpportunityChart) CreateRenderer() fyne.WidgetRenderer {
 
 		// Market name label
 		m.marketLabels[i] = canvas.NewText(seg.Name, heroTextColor)
-		m.marketLabels[i].TextSize = 10
+		m.marketLabels[i].TextSize = 14
 		m.marketLabels[i].TextStyle = fyne.TextStyle{Bold: true}
 		m.marketLabels[i].Alignment = fyne.TextAlignCenter
 
@@ -194,7 +194,7 @@ func (m *MarketOpportunityChart) CreateRenderer() fyne.WidgetRenderer {
 
 	// === SOURCE ===
 	citation := canvas.NewText("Model input references (not validated): WSTS + Gartner (2025)", heroMutedColor)
-	citation.TextSize = 9
+	citation.TextSize = 14
 	citation.TextStyle = fyne.TextStyle{Italic: true}
 	citation.Alignment = fyne.TextAlignCenter
 
@@ -331,7 +331,7 @@ func (c *CompetitiveMatrix) MinSize() fyne.Size {
 func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
 	// Hero message
 	heroText := canvas.NewText("Model input comparison: FeCIM checks all categories", heroCyanColor)
-	heroText.TextSize = 12
+	heroText.TextSize = 14
 	heroText.TextStyle = fyne.TextStyle{Bold: true}
 	heroText.Alignment = fyne.TextAlignCenter
 
@@ -340,7 +340,7 @@ func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
 	var headerWidgets []fyne.CanvasObject
 	for _, h := range headers {
 		label := canvas.NewText(h, heroTextColor)
-		label.TextSize = 10
+		label.TextSize = 14
 		label.TextStyle = fyne.TextStyle{Bold: true}
 		label.Alignment = fyne.TextAlignCenter
 		headerWidgets = append(headerWidgets, container.NewCenter(label))
@@ -358,7 +358,7 @@ func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
 			nameText.Color = heroCyanColor
 			nameText.TextStyle = fyne.TextStyle{Bold: true}
 		}
-		nameText.TextSize = 10
+		nameText.TextSize = 14
 		rowWidgets = append(rowWidgets, container.NewCenter(nameText))
 
 		// Checkmark columns
@@ -387,7 +387,7 @@ func (c *CompetitiveMatrix) CreateRenderer() fyne.WidgetRenderer {
 
 	// === CITATION ===
 	citation := canvas.NewText("Sources: Samsung Nature 2025, IEEE IRPS 2022, Nano Letters 2024, CEA-Leti 2024", heroMutedColor)
-	citation.TextSize = 9
+	citation.TextSize = 14
 	citation.TextStyle = fyne.TextStyle{Italic: true}
 	citation.Alignment = fyne.TextAlignCenter
 

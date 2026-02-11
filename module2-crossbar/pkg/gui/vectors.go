@@ -307,8 +307,8 @@ func (m *MiniMatrixView) generateImage(w, h int) image.Image {
 	if len(m.data) == 0 || m.rows == 0 || m.cols == 0 {
 		// Draw placeholder text area
 		placeholderColor := color.RGBA{60, 60, 70, 255}
-		for y := h/4; y < 3*h/4; y++ {
-			for x := w/4; x < 3*w/4; x++ {
+		for y := h / 4; y < 3*h/4; y++ {
+			for x := w / 4; x < 3*w/4; x++ {
 				img.Set(x, y, placeholderColor)
 			}
 		}
@@ -440,7 +440,7 @@ func (m *MVMVisualization) SetWeights(weights [][]float64) {
 func (m *MVMVisualization) CreateRenderer() fyne.WidgetRenderer {
 	// Input label
 	inputLabel := canvas.NewText("Input Vector (V)", color.RGBA{150, 180, 255, 255})
-	inputLabel.TextSize = 11
+	inputLabel.TextSize = 14
 	inputLabel.Alignment = fyne.TextAlignCenter
 
 	// MVM operation symbol
@@ -450,12 +450,12 @@ func (m *MVMVisualization) CreateRenderer() fyne.WidgetRenderer {
 
 	// Matrix label
 	matrixLabel := canvas.NewText("Conductance Matrix (W)", color.RGBA{180, 180, 180, 255})
-	matrixLabel.TextSize = 10
+	matrixLabel.TextSize = 14
 	matrixLabel.Alignment = fyne.TextAlignCenter
 
 	// Output label
 	outputLabel := canvas.NewText("Output Current (I)", color.RGBA{255, 200, 150, 255})
-	outputLabel.TextSize = 11
+	outputLabel.TextSize = 14
 	outputLabel.Alignment = fyne.TextAlignCenter
 
 	// Stats

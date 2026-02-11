@@ -142,8 +142,8 @@ func (r *modeRenderer) layoutWithSize(size fyne.Size) {
 
 	// Condition text (centered, bottom) - scale with size
 	condTextSize := size.Height * 0.25
-	if condTextSize < 10 {
-		condTextSize = 10
+	if condTextSize < 14 {
+		condTextSize = 14
 	}
 	if condTextSize > 14 {
 		condTextSize = 14

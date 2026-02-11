@@ -16,13 +16,13 @@ var logSVG = logging.NewLogger("eda-export-svg")
 
 // SVGConfig holds configuration for SVG generation
 type SVGConfig struct {
-	CellWidth    float64 // Cell width in pixels
-	CellHeight   float64 // Cell height in pixels
-	Margin       float64 // Margin around array
-	ShowGrid     bool    // Show grid lines
-	ShowLabels   bool    // Show WL/BL/SL labels
-	ShowCellIDs  bool    // Show cell row,col labels
-	ColorScheme  string  // "default", "1t1r", "thermal"
+	CellWidth   float64 // Cell width in pixels
+	CellHeight  float64 // Cell height in pixels
+	Margin      float64 // Margin around array
+	ShowGrid    bool    // Show grid lines
+	ShowLabels  bool    // Show WL/BL/SL labels
+	ShowCellIDs bool    // Show cell row,col labels
+	ColorScheme string  // "default", "1t1r", "thermal"
 }
 
 // DefaultSVGConfig returns standard SVG generation parameters
@@ -71,8 +71,8 @@ func GenerateLayoutSVG(cfg config.ArrayConfig, svgCfg SVGConfig) string {
       .wire-wl { stroke: #ff6600; stroke-width: 2; }
       .wire-bl { stroke: #00cc66; stroke-width: 2; }
       .wire-sl { stroke: #cc66ff; stroke-width: 2; }
-      .label { font-family: monospace; font-size: 12px; fill: #00ccff; }
-      .label-small { font-family: monospace; font-size: 9px; fill: #66aacc; }
+      .label { font-family: monospace; font-size: 14px; fill: #00ccff; }
+      .label-small { font-family: monospace; font-size: 14px; fill: #66aacc; }
       .title { font-family: sans-serif; font-size: 14px; fill: #ffffff; font-weight: bold; }
       .grid { stroke: #334455; stroke-width: 0.5; stroke-dasharray: 2,2; }
       .pin { fill: #ffcc00; }

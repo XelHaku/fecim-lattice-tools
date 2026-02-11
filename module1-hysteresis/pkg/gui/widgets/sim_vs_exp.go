@@ -22,13 +22,13 @@ type SimVsExpComparison struct {
 	simSquareness float64 // Pr/Ps ratio
 
 	// Experimental/literature values
-	expPrMin      float64
-	expPrMax      float64
-	expEcMin      float64
-	expEcMax      float64
-	expSquareMin  float64
-	expSquareMax  float64
-	litSource     string
+	expPrMin     float64
+	expPrMax     float64
+	expEcMin     float64
+	expEcMax     float64
+	expSquareMin float64
+	expSquareMax float64
+	litSource    string
 
 	// UI elements
 	content fyne.CanvasObject
@@ -115,7 +115,7 @@ func (s *SimVsExpComparison) createContent() fyne.CanvasObject {
 	// Disclaimer banner
 	disclaimerBg := canvas.NewRectangle(color.RGBA{80, 60, 20, 255})
 	disclaimerText := canvas.NewText("⚠ PLACEHOLDER - Awaiting real experimental data", color.RGBA{255, 200, 100, 255})
-	disclaimerText.TextSize = 11
+	disclaimerText.TextSize = 14
 	disclaimerText.Alignment = fyne.TextAlignCenter
 	disclaimer := container.NewStack(
 		disclaimerBg,
@@ -182,11 +182,11 @@ func (s *SimVsExpComparison) createContent() fyne.CanvasObject {
 
 	// Legend
 	legendGreen := canvas.NewText("✓ Within range", color.RGBA{0, 200, 0, 255})
-	legendGreen.TextSize = 10
+	legendGreen.TextSize = 14
 	legendYellow := canvas.NewText("~ Close (<20% off)", color.RGBA{255, 200, 0, 255})
-	legendYellow.TextSize = 10
+	legendYellow.TextSize = 14
 	legendRed := canvas.NewText("✗ Out of range", color.RGBA{255, 80, 80, 255})
-	legendRed.TextSize = 10
+	legendRed.TextSize = 14
 
 	legend := container.NewHBox(legendGreen, legendYellow, legendRed)
 

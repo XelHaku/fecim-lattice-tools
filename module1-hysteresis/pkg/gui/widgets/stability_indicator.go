@@ -193,7 +193,7 @@ func (r *stabilityIndicatorRenderer) Objects() []fyne.CanvasObject {
 
 	// Status text
 	statusText := canvas.NewText(stabilityText, stabilityColor)
-	statusText.TextSize = 11
+	statusText.TextSize = 14
 	statusText.TextStyle = fyne.TextStyle{Bold: true}
 
 	content := container.NewHBox(

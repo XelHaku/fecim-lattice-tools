@@ -34,12 +34,12 @@ type DriftVisualization struct {
 	simulator *crossbar.DriftSimulator
 
 	// UI components
-	scaleLabels  []*widget.Label
-	driftBars    []*canvas.Rectangle
-	driftLabels  []*canvas.Text
-	statusLabel  *widget.Label
-	techCompare  *widget.Label
-	modelInfo    *widget.Label
+	scaleLabels []*widget.Label
+	driftBars   []*canvas.Rectangle
+	driftLabels []*canvas.Text
+	statusLabel *widget.Label
+	techCompare *widget.Label
+	modelInfo   *widget.Label
 }
 
 // NewDriftVisualization creates a new drift visualization widget.
@@ -129,7 +129,7 @@ func (w *DriftVisualization) CreateRenderer() fyne.WidgetRenderer {
 			fmt.Sprintf("%.3f%% drift", scale.DriftPct),
 			color.White,
 		)
-		w.driftLabels[i].TextSize = 11
+		w.driftLabels[i].TextSize = 14
 
 		row := container.NewHBox(
 			container.NewGridWrap(fyne.NewSize(80, 20), w.scaleLabels[i]),

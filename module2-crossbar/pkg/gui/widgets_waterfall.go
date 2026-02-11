@@ -85,14 +85,14 @@ func (w *AccuracyWaterfall) CreateRenderer() fyne.WidgetRenderer {
 	for i := 0; i <= 5; i++ {
 		pct := i * 20
 		label := canvas.NewText(fmt.Sprintf("%d%%", pct), labelColor)
-		label.TextSize = 10
+		label.TextSize = 14
 		label.Alignment = fyne.TextAlignTrailing
 		w.yAxisLabels[i] = label
 	}
 
 	// Create reference label showing peer-reviewed accuracy range
 	w.targetLabel = canvas.NewText("Peer-reviewed: 96.6-98.24%", color.RGBA{100, 200, 150, 255})
-	w.targetLabel.TextSize = 10
+	w.targetLabel.TextSize = 14
 	w.targetLabel.Alignment = fyne.TextAlignLeading
 
 	// Bar and step labels will be created/updated when data is set
@@ -320,7 +320,7 @@ func (r *waterfallRenderer) Refresh() {
 		w.barLabels = make([]*canvas.Text, len(w.steps))
 		for i, step := range w.steps {
 			label := canvas.NewText(fmt.Sprintf("%.1f%%", step.Accuracy), color.White)
-			label.TextSize = 11
+			label.TextSize = 14
 			label.TextStyle = fyne.TextStyle{Bold: true}
 			label.Alignment = fyne.TextAlignCenter
 			w.barLabels[i] = label
@@ -328,7 +328,7 @@ func (r *waterfallRenderer) Refresh() {
 	} else {
 		for i, step := range w.steps {
 			w.barLabels[i].Text = fmt.Sprintf("%.1f%%", step.Accuracy)
-			w.barLabels[i].TextSize = 11
+			w.barLabels[i].TextSize = 14
 			w.barLabels[i].TextStyle = fyne.TextStyle{Bold: true}
 		}
 	}
@@ -339,7 +339,7 @@ func (r *waterfallRenderer) Refresh() {
 		for i, step := range w.steps {
 			// Use full label name without truncation
 			label := canvas.NewText(step.Label, color.RGBA{150, 150, 150, 255})
-			label.TextSize = 10
+			label.TextSize = 14
 			label.Alignment = fyne.TextAlignCenter
 			w.stepLabels[i] = label
 		}

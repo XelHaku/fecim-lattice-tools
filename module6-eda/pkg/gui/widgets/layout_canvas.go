@@ -28,24 +28,24 @@ type LayoutCanvas struct {
 
 // Color definitions
 var (
-	colorBackground  = color.RGBA{10, 21, 32, 255}
-	colorCell        = color.RGBA{26, 58, 74, 255}
-	colorCell1T1R    = color.RGBA{42, 74, 58, 255}
-	colorTransistor  = color.RGBA{58, 90, 74, 255}
-	colorWL          = color.RGBA{255, 102, 0, 255}
-	colorBL          = color.RGBA{0, 204, 102, 255}
-	colorSL          = color.RGBA{204, 102, 255, 255}
-	colorPin         = color.RGBA{255, 204, 0, 255}
-	colorGrid        = color.RGBA{51, 68, 85, 128}
-	colorText        = color.RGBA{0, 204, 255, 255}
-	colorTextDim     = color.RGBA{102, 170, 204, 255}
+	colorBackground = color.RGBA{10, 21, 32, 255}
+	colorCell       = color.RGBA{26, 58, 74, 255}
+	colorCell1T1R   = color.RGBA{42, 74, 58, 255}
+	colorTransistor = color.RGBA{58, 90, 74, 255}
+	colorWL         = color.RGBA{255, 102, 0, 255}
+	colorBL         = color.RGBA{0, 204, 102, 255}
+	colorSL         = color.RGBA{204, 102, 255, 255}
+	colorPin        = color.RGBA{255, 204, 0, 255}
+	colorGrid       = color.RGBA{51, 68, 85, 128}
+	colorText       = color.RGBA{0, 204, 255, 255}
+	colorTextDim    = color.RGBA{102, 170, 204, 255}
 )
 
 // NewLayoutCanvas creates a new layout visualization widget
 func NewLayoutCanvas(cfg *config.ArrayConfig) *LayoutCanvas {
 	lc := &LayoutCanvas{
 		config:     cfg,
-		cellWidth:  50,  // Larger cells for better visibility
+		cellWidth:  50, // Larger cells for better visibility
 		cellHeight: 60,
 		margin:     70,
 	}
@@ -189,7 +189,7 @@ func (r *layoutCanvasRenderer) buildLayout() []fyne.CanvasObject {
 
 		// WL label
 		label := canvas.NewText(fmt.Sprintf("WL[%d]", row), colorText)
-		label.TextSize = 10
+		label.TextSize = 14
 		label.Move(fyne.NewPos(5, y-6))
 		objects = append(objects, label)
 	}
@@ -213,7 +213,7 @@ func (r *layoutCanvasRenderer) buildLayout() []fyne.CanvasObject {
 
 		// BL label
 		label := canvas.NewText(fmt.Sprintf("BL[%d]", col), colorText)
-		label.TextSize = 10
+		label.TextSize = 14
 		label.Move(fyne.NewPos(x-12, lc.margin+arrayHeight+28))
 		objects = append(objects, label)
 	}
@@ -245,7 +245,7 @@ func (r *layoutCanvasRenderer) buildLayout() []fyne.CanvasObject {
 
 			// SL label (below BL label)
 			label := canvas.NewText(fmt.Sprintf("SL[%d]", col), colorSL)
-			label.TextSize = 9
+			label.TextSize = 14
 			label.Move(fyne.NewPos(x-10, lc.margin+arrayHeight+42))
 			objects = append(objects, label)
 		}
@@ -306,7 +306,7 @@ func (r *layoutCanvasRenderer) buildLayout() []fyne.CanvasObject {
 	wlLegend.StrokeWidth = 2
 	objects = append(objects, wlLegend)
 	wlText := canvas.NewText("WL", colorTextDim)
-	wlText.TextSize = 9
+	wlText.TextSize = 14
 	wlText.Move(fyne.NewPos(lc.margin+25, legendY-5))
 	objects = append(objects, wlText)
 
@@ -317,7 +317,7 @@ func (r *layoutCanvasRenderer) buildLayout() []fyne.CanvasObject {
 	blLegend.StrokeWidth = 2
 	objects = append(objects, blLegend)
 	blText := canvas.NewText("BL", colorTextDim)
-	blText.TextSize = 9
+	blText.TextSize = 14
 	blText.Move(fyne.NewPos(lc.margin+85, legendY-5))
 	objects = append(objects, blText)
 
@@ -329,7 +329,7 @@ func (r *layoutCanvasRenderer) buildLayout() []fyne.CanvasObject {
 		slLegend.StrokeWidth = 2
 		objects = append(objects, slLegend)
 		slText := canvas.NewText("SL", colorTextDim)
-		slText.TextSize = 9
+		slText.TextSize = 14
 		slText.Move(fyne.NewPos(lc.margin+145, legendY-5))
 		objects = append(objects, slText)
 	}

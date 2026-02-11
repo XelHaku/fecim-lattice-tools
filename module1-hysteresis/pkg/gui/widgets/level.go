@@ -403,7 +403,7 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 	// Bits label - calculate log2(numLevels)
 	bitsPerCell := math.Log2(float64(numLevels))
 	bitsLabel := canvas.NewText(fmt.Sprintf("%.1f bits", bitsPerCell), color.RGBA{180, 180, 180, 255})
-	bitsLabel.TextSize = 12
+	bitsLabel.TextSize = 14
 	bitsLabel.Move(fyne.NewPos(10, 26))
 	r.objects = append(r.objects, bitsLabel)
 
@@ -421,7 +421,7 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 			modeText = "TARGET"
 		}
 		label := canvas.NewText(fmt.Sprintf("Target L%d (%s)", targetLevel, modeText), color.RGBA{255, 200, 120, 255})
-		label.TextSize = 11
+		label.TextSize = 14
 		label.Move(fyne.NewPos(8, 42))
 		r.objects = append(r.objects, label)
 	}
@@ -558,7 +558,7 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 		r.objects = append(r.objects, modeBg)
 
 		modeText := canvas.NewText("CLICK TO SET", color.RGBA{255, 255, 255, 255})
-		modeText.TextSize = 10
+		modeText.TextSize = 14
 		modeText.TextStyle = fyne.TextStyle{Bold: true}
 		modeText.Move(fyne.NewPos(8, modeY+4))
 		r.objects = append(r.objects, modeText)
@@ -570,7 +570,7 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 		r.objects = append(r.objects, modeBg)
 
 		modeText := canvas.NewText("AUTO", color.RGBA{150, 150, 170, 255})
-		modeText.TextSize = 10
+		modeText.TextSize = 14
 		modeText.Move(fyne.NewPos(20, modeY+4))
 		r.objects = append(r.objects, modeText)
 	}

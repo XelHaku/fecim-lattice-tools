@@ -192,23 +192,23 @@ func (t *DriftTab) updateChart() {
 
 	// Labels
 	yLabel := canvas.NewText(fmt.Sprintf("%.1e", maxDrift), color.White)
-	yLabel.TextSize = 10
+	yLabel.TextSize = 14
 	yLabel.Move(fyne.NewPos(5, 10))
 	t.driftChart.Add(yLabel)
 
 	xLabel := canvas.NewText("Time", color.White)
-	xLabel.TextSize = 10
+	xLabel.TextSize = 14
 	xLabel.Move(fyne.NewPos(chartWidth/2, chartHeight+10))
 	t.driftChart.Add(xLabel)
 
 	// Legend
 	maxLegend := canvas.NewText("Max Drift", color.RGBA{255, 100, 100, 255})
-	maxLegend.TextSize = 10
+	maxLegend.TextSize = 14
 	maxLegend.Move(fyne.NewPos(chartWidth-100, 10))
 	t.driftChart.Add(maxLegend)
 
 	avgLegend := canvas.NewText("Avg Drift", color.RGBA{100, 200, 100, 255})
-	avgLegend.TextSize = 10
+	avgLegend.TextSize = 14
 	avgLegend.Move(fyne.NewPos(chartWidth-100, 25))
 	t.driftChart.Add(avgLegend)
 

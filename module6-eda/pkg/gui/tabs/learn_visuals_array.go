@@ -61,7 +61,7 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 		// WL label - moved further left to avoid overlap
 		if showLabels && i < rows {
 			label := canvas.NewText("WL"+string(rune('0'+i)), colorWL)
-			label.TextSize = 12
+			label.TextSize = 14
 			label.TextStyle = fyne.TextStyle{Bold: true}
 			label.Move(fyne.NewPos(x1-50, y1-5))
 			objects = append(objects, label)
@@ -82,7 +82,7 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 		// BL label - moved higher to avoid overlap
 		if showLabels && j < cols {
 			label := canvas.NewText("BL"+string(rune('0'+j)), colorBL)
-			label.TextSize = 12
+			label.TextSize = 14
 			label.TextStyle = fyne.TextStyle{Bold: true}
 			label.Move(fyne.NewPos(x1-5, y1-35))
 			objects = append(objects, label)
@@ -129,7 +129,7 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 	wlBox.Move(fyne.NewPos(legendX, legendY))
 	objects = append(objects, wlBox)
 	wlText := canvas.NewText("Word Lines (WL) - Row Select", colorTextMuted)
-	wlText.TextSize = 12
+	wlText.TextSize = 14
 	wlText.Move(fyne.NewPos(legendX+25, legendY-2))
 	objects = append(objects, wlText)
 
@@ -139,7 +139,7 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 	blBox.Move(fyne.NewPos(legendX, legendY+18))
 	objects = append(objects, blBox)
 	blText := canvas.NewText("Bit Lines (BL) - Data/Output", colorTextMuted)
-	blText.TextSize = 12
+	blText.TextSize = 14
 	blText.Move(fyne.NewPos(legendX+25, legendY+16))
 	objects = append(objects, blText)
 
@@ -149,7 +149,7 @@ func IsometricCrossbar(rows, cols int, showLabels bool) fyne.CanvasObject {
 	feBox.Move(fyne.NewPos(legendX+3, legendY+36))
 	objects = append(objects, feBox)
 	feText := canvas.NewText("FeFET Device (stores weight/data)", colorTextMuted)
-	feText.TextSize = 12
+	feText.TextSize = 14
 	feText.Move(fyne.NewPos(legendX+25, legendY+36))
 	objects = append(objects, feText)
 
@@ -195,7 +195,7 @@ func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
 	objects = append(objects, title)
 
 	subtitle := canvas.NewText("(Transistor isolates each cell - NO sneak paths)", colorHighlight)
-	subtitle.TextSize = 12
+	subtitle.TextSize = 14
 	subtitle.Move(fyne.NewPos(20, 30))
 	objects = append(objects, subtitle)
 
@@ -212,7 +212,7 @@ func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
 
 		if i < rows {
 			label := canvas.NewText("WL"+string(rune('0'+i)), colorWL)
-			label.TextSize = 12
+			label.TextSize = 14
 			label.TextStyle = fyne.TextStyle{Bold: true}
 			label.Move(fyne.NewPos(x1-50, y1-5))
 			objects = append(objects, label)
@@ -232,7 +232,7 @@ func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
 
 		if j < cols {
 			label := canvas.NewText("BL"+string(rune('0'+j)), colorBL)
-			label.TextSize = 12
+			label.TextSize = 14
 			label.TextStyle = fyne.TextStyle{Bold: true}
 			label.Move(fyne.NewPos(x1-5, y1-35))
 			objects = append(objects, label)
@@ -256,7 +256,7 @@ func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
 
 		if j < cols {
 			label := canvas.NewText("SL"+string(rune('0'+j)), colorSL)
-			label.TextSize = 10
+			label.TextSize = 14
 			label.Move(fyne.NewPos(x2+8, y2-5))
 			objects = append(objects, label)
 		}
@@ -303,7 +303,7 @@ func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
 	tBox.Move(fyne.NewPos(legendX+3, legendY))
 	objects = append(objects, tBox)
 	tText := canvas.NewText("Select Transistor (gate on WL)", colorTextMuted)
-	tText.TextSize = 12
+	tText.TextSize = 14
 	tText.Move(fyne.NewPos(legendX+25, legendY))
 	objects = append(objects, tText)
 
@@ -313,7 +313,7 @@ func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
 	slBox.Move(fyne.NewPos(legendX, legendY+18))
 	objects = append(objects, slBox)
 	slText := canvas.NewText("Source Lines (SL) - Current path", colorTextMuted)
-	slText.TextSize = 12
+	slText.TextSize = 14
 	slText.Move(fyne.NewPos(legendX+25, legendY+18))
 	objects = append(objects, slText)
 
@@ -323,7 +323,7 @@ func Isometric1T1RCrossbar(rows, cols int) fyne.CanvasObject {
 	feBox.Move(fyne.NewPos(legendX+3, legendY+36))
 	objects = append(objects, feBox)
 	feText := canvas.NewText("FeFET Device (stores weight)", colorTextMuted)
-	feText.TextSize = 12
+	feText.TextSize = 14
 	feText.Move(fyne.NewPos(legendX+25, legendY+36))
 	objects = append(objects, feText)
 

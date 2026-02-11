@@ -185,7 +185,7 @@ func (r *mnistModeRenderer) layoutWithSize(size fyne.Size) {
 	if fontSize > 14 {
 		fontSize = 14
 	}
-	if fontSize < 10 {
+	if fontSize < 14 {
 		fontSize = 10
 	}
 	text.TextSize = fontSize
@@ -542,7 +542,7 @@ func (r *predictionRenderer) layoutWithSize(size fyne.Size) {
 
 	// Title - positioned relative to size
 	title := canvas.NewText("PREDICTION", color.RGBA{180, 180, 200, 255})
-	title.TextSize = 10
+	title.TextSize = 14
 	titleW := float32(70)
 	title.Move(fyne.NewPos((size.Width-titleW)/2, 5))
 	r.objects = append(r.objects, title)
@@ -595,7 +595,7 @@ func (r *predictionRenderer) layoutWithSize(size fyne.Size) {
 		confText = "-"
 	}
 	confLabel := canvas.NewText(confText, borderColor)
-	confLabel.TextSize = 11
+	confLabel.TextSize = 14
 	confLabelW := float32(40)
 	confLabel.Move(fyne.NewPos((size.Width-confLabelW)/2, meterY+meterHeight+4))
 	r.objects = append(r.objects, confLabel)

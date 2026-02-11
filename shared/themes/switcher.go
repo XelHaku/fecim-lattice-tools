@@ -14,9 +14,9 @@ import (
 type ThemeSwitcher struct {
 	widget.BaseWidget
 
-	manager     *Manager
-	selector    *widget.Select
-	previewCard *ThemePreviewCard
+	manager        *Manager
+	selector       *widget.Select
+	previewCard    *ThemePreviewCard
 	removeListener func()
 }
 
@@ -89,8 +89,8 @@ func (ts *ThemeSwitcher) Destroy() {
 // CompactThemeSwitcher is a minimal theme switcher for toolbars
 type CompactThemeSwitcher struct {
 	widget.BaseWidget
-	manager *Manager
-	button  *widget.Button
+	manager        *Manager
+	button         *widget.Button
 	removeListener func()
 }
 
@@ -243,7 +243,7 @@ func (r *themePreviewRenderer) buildPreview(size fyne.Size) {
 
 	// Surface label
 	surfaceLabel := canvas.NewText("Card", theme.Color("foreground", 0))
-	surfaceLabel.TextSize = 11
+	surfaceLabel.TextSize = 14
 	surfaceLabel.Move(fyne.NewPos(surfaceX+surfaceWidth/2-15, surfaceY+surfaceHeight/2-6))
 	r.objects = append(r.objects, surfaceLabel)
 }

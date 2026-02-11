@@ -243,10 +243,10 @@
 
 | ID | Task | Source | Status | Est. |
 |----|------|--------|--------|------|
-| A11Y-1 | Increase font sizes below 14px to minimum | `docs/ACCESSIBILITY_AUDIT.md` | ⏳ | 1-2hr |
+| A11Y-1 | Increase font sizes below 14px to minimum | `docs/ACCESSIBILITY_AUDIT.md` | ✅ | 1-2hr |
 | A11Y-2 | Wire up FocusIndicator to interactive widgets | `shared/widgets/accessibility.go` | ⏳ | 2-4hr |
 | A11Y-3 | Expose HighContrastTheme via settings menu | Settings | ⏳ | 1-2hr |
-| A11Y-4 | Show KeyboardNavigationHelp via F1 key | Settings | ⏳ | 30-60m |
+| A11Y-4 | Show KeyboardNavigationHelp via F1 key | Settings | ✅ | 30-60m |
 | A11Y-5 | Add Tab order to launcher demo cards | Launcher | ⏳ | 1-2hr |
 | A11Y-6 | Arrow key navigation in data widgets | Widgets | ⏳ | 2-4hr |
 

@@ -388,15 +388,15 @@ func (t *Toast) CreateRenderer() fyne.WidgetRenderer {
 	// Title
 	title := canvas.NewText(t.entry.Title, sharedtheme.ColorText)
 	title.TextStyle = fyne.TextStyle{Bold: true}
-	title.TextSize = 13
+	title.TextSize = 14
 
 	// Message
 	message := canvas.NewText(t.entry.Message, sharedtheme.ColorTextDim)
-	message.TextSize = 12
+	message.TextSize = 14
 
 	// Timestamp
 	timestamp := canvas.NewText(t.entry.Timestamp.Format("15:04:05"), sharedtheme.ColorTextDim)
-	timestamp.TextSize = 10
+	timestamp.TextSize = 14
 
 	// Close button (x)
 	closeBtn := widget.NewButtonWithIcon("", theme.CancelIcon(), func() {
@@ -492,11 +492,11 @@ func (r *toastRenderer) Destroy() {}
 type ToastContainer struct {
 	widget.BaseWidget
 
-	mu          sync.RWMutex
-	toasts      []*Toast
-	maxVisible  int
-	container   *fyne.Container
-	spacingY    float32
+	mu         sync.RWMutex
+	toasts     []*Toast
+	maxVisible int
+	container  *fyne.Container
+	spacingY   float32
 }
 
 // NewToastContainer creates a new toast container
@@ -781,7 +781,7 @@ func NewNotificationButton(manager *NotificationManager, onTap func()) *Notifica
 	nb.ExtendBaseWidget(nb)
 
 	nb.badge = canvas.NewText("0", sharedtheme.ColorText)
-	nb.badge.TextSize = 10
+	nb.badge.TextSize = 14
 	nb.badge.TextStyle = fyne.TextStyle{Bold: true}
 
 	nb.badgeBg = canvas.NewCircle(sharedtheme.ColorError)

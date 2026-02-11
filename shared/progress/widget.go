@@ -23,16 +23,16 @@ type ProgressWidget struct {
 	compact     bool
 
 	// UI elements
-	titleLabel   *widget.Label
-	phaseLabel   *widget.Label
-	detailLabel  *widget.Label
-	progressBar  *widget.ProgressBar
-	etaLabel     *widget.Label
-	rateLabel    *widget.Label
-	cancelBtn    *widget.Button
-	pauseBtn     *widget.Button
-	statusIcon   *canvas.Text
-	container    *fyne.Container
+	titleLabel  *widget.Label
+	phaseLabel  *widget.Label
+	detailLabel *widget.Label
+	progressBar *widget.ProgressBar
+	etaLabel    *widget.Label
+	rateLabel   *widget.Label
+	cancelBtn   *widget.Button
+	pauseBtn    *widget.Button
+	statusIcon  *canvas.Text
+	container   *fyne.Container
 
 	// Animation for indeterminate progress
 	indeterminateAnim *fyne.Animation
@@ -504,7 +504,7 @@ func NewMiniBadge(p *Progress) *MiniBadge {
 	}
 
 	b.circle.Resize(fyne.NewSize(16, 16))
-	b.label.TextSize = 10
+	b.label.TextSize = 14
 
 	b.container = container.NewHBox(b.circle, b.label)
 	b.ExtendBaseWidget(b)

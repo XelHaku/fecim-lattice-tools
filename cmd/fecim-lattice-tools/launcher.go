@@ -608,11 +608,11 @@ func drawPreviewThumbnail(demoNum int, x, y, width, height float32, accentColor 
 
 		// +/- symbols
 		plusText := canvas.NewText("+", circuitColor)
-		plusText.TextSize = 10 * scaleX
+		plusText.TextSize = 14 * scaleX
 		plusText.Move(fyne.NewPos(centerX-17*scaleX, centerY-14*scaleY))
 		objects = append(objects, plusText)
 		minusText := canvas.NewText("−", circuitColor)
-		minusText.TextSize = 12 * scaleX
+		minusText.TextSize = 14 * scaleX
 		minusText.Move(fyne.NewPos(centerX-17*scaleX, centerY+2*scaleY))
 		objects = append(objects, minusText)
 
@@ -642,7 +642,7 @@ func drawPreviewThumbnail(demoNum int, x, y, width, height float32, accentColor 
 
 		// Star on winner
 		starText := canvas.NewText("★", color.RGBA{255, 220, 100, 255})
-		starText.TextSize = 10 * scaleX
+		starText.TextSize = 14 * scaleX
 		starText.Move(fyne.NewPos(startX+barWidth/2-4*scaleX, baseY-barHeights[0]-10*scaleY))
 		objects = append(objects, starText)
 

@@ -130,11 +130,11 @@ func (cl *ColorLegend) CreateRenderer() fyne.WidgetRenderer {
 		// Position max label at top, min label at bottom
 		// Store references so SetRange can update them
 		cl.verticalMaxText = canvas.NewText(cl.formatLabel(cl.maxValue), color.White)
-		cl.verticalMaxText.TextSize = 11
+		cl.verticalMaxText.TextSize = 14
 		cl.verticalMaxText.Alignment = fyne.TextAlignLeading
 
 		cl.verticalMinText = canvas.NewText(cl.formatLabel(cl.minValue), color.White)
-		cl.verticalMinText.TextSize = 11
+		cl.verticalMinText.TextSize = 14
 		cl.verticalMinText.Alignment = fyne.TextAlignLeading
 
 		// Local references for layout
@@ -169,7 +169,7 @@ func (cl *ColorLegend) CreateRenderer() fyne.WidgetRenderer {
 				}
 
 				labelText := canvas.NewText(cl.formatLabel(labelVal), color.White)
-				labelText.TextSize = 10
+				labelText.TextSize = 14
 				labelText.Alignment = fyne.TextAlignLeading
 				intermediateLabels = append(intermediateLabels, labelText)
 			}

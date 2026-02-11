@@ -186,7 +186,7 @@ func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 		r.objects = append(r.objects, box)
 		// Label - increased from 12pt to 13pt
 		label := canvas.NewText(item.text, color.RGBA{200, 200, 200, 255})
-		label.TextSize = 13
+		label.TextSize = 14
 		label.Move(fyne.NewPos(legendX+20, legendY))
 		r.objects = append(r.objects, label)
 		legendX += 65
@@ -227,7 +227,7 @@ func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 		if i != 0 && (i == -numDivisions || i == numDivisions) {
 			eVal := float64(t) * r.plot.eMax / 1e8 // Convert to MV/cm
 			eTickLabel := canvas.NewText(fmt.Sprintf("%.1f", eVal), color.RGBA{200, 200, 200, 255})
-			eTickLabel.TextSize = 12
+			eTickLabel.TextSize = 14
 			eTickLabel.Move(fyne.NewPos(x-15, marginTop+plotH+5))
 			r.objects = append(r.objects, eTickLabel)
 		}
@@ -236,7 +236,7 @@ func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 		if i != 0 && (i == -numDivisions || i == numDivisions) {
 			pVal := float64(t) * r.plot.pMax * 100 // Convert to µC/cm²
 			pTickLabel := canvas.NewText(fmt.Sprintf("%.0f", pVal), color.RGBA{200, 200, 200, 255})
-			pTickLabel.TextSize = 12
+			pTickLabel.TextSize = 14
 			pTickLabel.Move(fyne.NewPos(marginLeft-35, y-7))
 			r.objects = append(r.objects, pTickLabel)
 		}
@@ -276,19 +276,19 @@ func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 
 	// Zero label (single, at corner to avoid overlap)
 	zeroLabel := canvas.NewText("0", color.RGBA{200, 200, 200, 255})
-	zeroLabel.TextSize = 12
+	zeroLabel.TextSize = 14
 	zeroLabel.Move(fyne.NewPos(centerX-10, centerY+4))
 	r.objects = append(r.objects, zeroLabel)
 
 	// Axis title labels (positioned at ends of axes) - larger
 	eLabel := canvas.NewText("E (MV/cm)", color.RGBA{0, 212, 255, 255})
-	eLabel.TextSize = 13
+	eLabel.TextSize = 14
 	eLabel.TextStyle = fyne.TextStyle{Bold: true}
 	eLabel.Move(fyne.NewPos(marginLeft+plotW-70, marginTop+plotH+15))
 	r.objects = append(r.objects, eLabel)
 
 	pLabelText := canvas.NewText("P (µC/cm²)", color.RGBA{0, 212, 255, 255})
-	pLabelText.TextSize = 13
+	pLabelText.TextSize = 14
 	pLabelText.TextStyle = fyne.TextStyle{Bold: true}
 	pLabelText.Move(fyne.NewPos(marginLeft-55, marginTop-18))
 	r.objects = append(r.objects, pLabelText)
@@ -313,7 +313,7 @@ func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 	r.objects = append(r.objects, ecPosLine)
 	// Label inside plot area with "Coercive Field" tooltip context
 	ecPosLabel := canvas.NewText("+Ec (Coercive)", color.RGBA{255, 150, 0, 255})
-	ecPosLabel.TextSize = 11
+	ecPosLabel.TextSize = 14
 	ecPosLabel.Move(fyne.NewPos(ecPosX+4, marginTop+5))
 	r.objects = append(r.objects, ecPosLabel)
 
@@ -325,7 +325,7 @@ func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 	r.objects = append(r.objects, ecNegLine)
 	// Label inside plot area with "Coercive Field" tooltip context
 	ecNegLabel := canvas.NewText("-Ec (Coercive)", color.RGBA{255, 150, 0, 255})
-	ecNegLabel.TextSize = 11
+	ecNegLabel.TextSize = 14
 	ecNegLabel.Move(fyne.NewPos(ecNegX-75, marginTop+5))
 	r.objects = append(r.objects, ecNegLabel)
 
@@ -337,7 +337,7 @@ func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 	r.objects = append(r.objects, noSwitchRect)
 	// Label for no-switching zone
 	noSwitchLabel := canvas.NewText("No switching below |Ec|", color.RGBA{255, 150, 150, 180})
-	noSwitchLabel.TextSize = 9
+	noSwitchLabel.TextSize = 14
 	noSwitchLabel.Move(fyne.NewPos(centerX-60, marginTop+plotH-20))
 	r.objects = append(r.objects, noSwitchLabel)
 
@@ -360,7 +360,7 @@ func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 	r.objects = append(r.objects, prPosLine)
 	// Label inside plot area
 	prPosLabel := canvas.NewText("+Pr", color.RGBA{0, 200, 150, 255})
-	prPosLabel.TextSize = 11
+	prPosLabel.TextSize = 14
 	prPosLabel.Move(fyne.NewPos(marginLeft+plotW-30, prPosY-14))
 	r.objects = append(r.objects, prPosLabel)
 
@@ -372,7 +372,7 @@ func (r *peplotRenderer) layoutWithSize(size fyne.Size) {
 	r.objects = append(r.objects, prNegLine)
 	// Label inside plot area
 	prNegLabel := canvas.NewText("-Pr", color.RGBA{0, 200, 150, 255})
-	prNegLabel.TextSize = 11
+	prNegLabel.TextSize = 14
 	prNegLabel.Move(fyne.NewPos(marginLeft+plotW-28, prNegY+4))
 	r.objects = append(r.objects, prNegLabel)
 

@@ -196,20 +196,20 @@ func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
 
 	// === KEY STAT STRIP ===
 	e.statStrip = canvas.NewText("Model inputs: 1000× vs CPU  |  100× vs GPU  |  ~1 pJ/MAC (TRL 4)", heroCyanColor)
-	e.statStrip.TextSize = 11
+	e.statStrip.TextSize = 14
 	e.statStrip.TextStyle = fyne.TextStyle{Bold: true}
 	e.statStrip.Alignment = fyne.TextAlignCenter
 
 	// === SYSTEM POWER BREAKDOWN (C10: Per Dr. Tour critique) ===
 	// Shows total system power distribution, not just array power
 	powerBreakdown := canvas.NewText("Model assumption: System Power = Array ~45% | ADC/DAC ~40% | Peripherals ~15%", heroAmberColor)
-	powerBreakdown.TextSize = 10
+	powerBreakdown.TextSize = 14
 	powerBreakdown.TextStyle = fyne.TextStyle{Italic: true}
 	powerBreakdown.Alignment = fyne.TextAlignCenter
 
 	// === CITATION ===
 	citation := canvas.NewText("Model input references (not validated): Samsung Nature 2025 range, NVIDIA H100 datasheets, Intel/AMD datasheets", heroMutedColor)
-	citation.TextSize = 9
+	citation.TextSize = 14
 	citation.TextStyle = fyne.TextStyle{Italic: true}
 	citation.Alignment = fyne.TextAlignCenter
 
@@ -387,13 +387,13 @@ func (p *PhasedStrategyDiagram) MinSize() fyne.Size {
 func (p *PhasedStrategyDiagram) CreateRenderer() fyne.WidgetRenderer {
 	// Phase 1: NAND Replacement
 	phase1Title := canvas.NewText("PHASE 1", heroCyanColor)
-	phase1Title.TextSize = 10
+	phase1Title.TextSize = 14
 	phase1Title.TextStyle = fyne.TextStyle{Bold: true}
 	phase1Name := canvas.NewText("NAND Replacement", heroTextColor)
-	phase1Name.TextSize = 12
+	phase1Name.TextSize = 14
 	phase1Name.TextStyle = fyne.TextStyle{Bold: true}
 	phase1Desc := canvas.NewText("No software changes", heroMutedColor)
-	phase1Desc.TextSize = 9
+	phase1Desc.TextSize = 14
 	phase1Box := container.NewVBox(
 		container.NewCenter(phase1Title),
 		container.NewCenter(phase1Name),
@@ -406,13 +406,13 @@ func (p *PhasedStrategyDiagram) CreateRenderer() fyne.WidgetRenderer {
 
 	// Phase 2: DRAM Replacement
 	phase2Title := canvas.NewText("PHASE 2", heroCyanColor)
-	phase2Title.TextSize = 10
+	phase2Title.TextSize = 14
 	phase2Title.TextStyle = fyne.TextStyle{Bold: true}
 	phase2Name := canvas.NewText("DRAM Replacement", heroTextColor)
-	phase2Name.TextSize = 12
+	phase2Name.TextSize = 14
 	phase2Name.TextStyle = fyne.TextStyle{Bold: true}
 	phase2Desc := canvas.NewText("Higher density", heroMutedColor)
-	phase2Desc.TextSize = 9
+	phase2Desc.TextSize = 14
 	phase2Box := container.NewVBox(
 		container.NewCenter(phase2Title),
 		container.NewCenter(phase2Name),
@@ -425,13 +425,13 @@ func (p *PhasedStrategyDiagram) CreateRenderer() fyne.WidgetRenderer {
 
 	// Phase 3: Full CIM
 	phase3Title := canvas.NewText("PHASE 3", heroGreenColor)
-	phase3Title.TextSize = 10
+	phase3Title.TextSize = 14
 	phase3Title.TextStyle = fyne.TextStyle{Bold: true}
 	phase3Name := canvas.NewText("Full CIM", heroTextColor)
-	phase3Name.TextSize = 12
+	phase3Name.TextSize = 14
 	phase3Name.TextStyle = fyne.TextStyle{Bold: true}
 	phase3Desc := canvas.NewText("80-90% model reduction", heroMutedColor)
-	phase3Desc.TextSize = 9
+	phase3Desc.TextSize = 14
 	phase3Box := container.NewVBox(
 		container.NewCenter(phase3Title),
 		container.NewCenter(phase3Name),
@@ -440,7 +440,7 @@ func (p *PhasedStrategyDiagram) CreateRenderer() fyne.WidgetRenderer {
 
 	// === CITATION ===
 	citation := canvas.NewText("Strategy based on WSTS/Gartner market analysis", heroMutedColor)
-	citation.TextSize = 8
+	citation.TextSize = 14
 	citation.TextStyle = fyne.TextStyle{Italic: true}
 	citation.Alignment = fyne.TextAlignCenter
 

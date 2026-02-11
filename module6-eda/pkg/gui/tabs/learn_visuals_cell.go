@@ -77,10 +77,10 @@ func CellComparisonTable() fyne.CanvasObject {
 			// Cell text - improved sizing
 			text := canvas.NewText(cellText, colorText)
 			if i == 0 {
-				text.TextSize = 12
+				text.TextSize = 14
 				text.TextStyle = fyne.TextStyle{Bold: true}
 			} else {
-				text.TextSize = 11
+				text.TextSize = 14
 			}
 
 			// Winner column gets special coloring
