@@ -374,7 +374,7 @@ array.ProgramMatrix(weights [][]float64) error
 - **[Crossbar Demo Guide](../educational/crossbar.demo.md)** - How to run the visualization
 - **[Crossbar ELI5](crossbar.ELI5.md)** - Simple analogies and explanations
 - **[Research Papers](../educational/crossbar.research.md)** - Academic references
-- **[Open Source Context](../crossbar/educational/crossbar.opensource.md)** - Relationship to other tools
+- **[Open Source Context](./crossbar.opensource.md)** - Relationship to other tools
 
 ---
 

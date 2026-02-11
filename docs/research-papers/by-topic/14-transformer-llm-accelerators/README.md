@@ -185,7 +185,7 @@ Input Embeddings (n × d)
   - Photonic attention for 1000× bandwidth
   - Hybrid electronic-photonic transformers
 
-- **[Topic 8: Reliability](../08-reliability-retention/)** - Long-context models
+- **[Topic 8: Reliability](../19-variability-yield/)** - Long-context models
   - KV-cache retention for multi-turn conversations
   - Error correction for critical weights
 

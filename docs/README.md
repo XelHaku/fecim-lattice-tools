@@ -113,7 +113,7 @@ This repository prioritizes simulation accuracy and clear labeling of assumption
 
 ## See Also
 
-- **Project root:** [../../CLAUDE.md](../../CLAUDE.md) - AI agent instructions and quick reference
-- **Root README:** [.../README.md](.../README.md) - Full project overview
+- **Project root:** [../CLAUDE.md](../CLAUDE.md) - AI agent instructions and quick reference
+- **Root README:** [../README.md](../README.md) - Full project overview
 - **About:** [about/](about/) - App info, contributors, thanks
 - **Glossary:** [GLOSSARY.md](GLOSSARY.md) - 100+ ferroelectric terms

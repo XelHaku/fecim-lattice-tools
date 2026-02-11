@@ -380,7 +380,7 @@ For large arrays (>64×64):
 - **[Physics Deep Dive](../educational/crossbar.physics.md)** - Complete technical reference
 - **[ELI5 Explanation](crossbar.ELI5.md)** - Simple analogies
 - **[Research Papers](../educational/crossbar.research.md)** - Academic citations
-- **[Implementation Notes](../../CLAUDE.md)** - Developer guide
+- **[Implementation Notes](../../../CLAUDE.md)** - Developer guide
 
 ---
 

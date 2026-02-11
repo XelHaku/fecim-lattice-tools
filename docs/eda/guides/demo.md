@@ -315,4 +315,4 @@ endmodule
 
 ---
 
-**Part of the FeCIM Lattice Tools educational suite** - See [../.../README.md](../.../README.md) for project overview.
+**Part of the FeCIM Lattice Tools educational suite** - See [../../README.md](../../README.md) for project overview.

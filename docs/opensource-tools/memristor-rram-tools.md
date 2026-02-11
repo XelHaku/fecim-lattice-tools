@@ -1467,9 +1467,9 @@ make -j$(nproc)
 ## Related Documentation
 
 - **[Crossbar Physics](../crossbar/educational/../educational/crossbar.physics.md)** - Physical principles
-- **[Crossbar Simulation](../crossbar/educational/../crossbar/educational/crossbar.opensource.md)** - Tool comparison
+- **[Crossbar Simulation](../crossbar/educational/crossbar.opensource.md)** - Tool comparison
 - **[Neural Network Tools](../neural-network/mnist.opensource.md)** - Training frameworks
-- **[Project README](.../README.md)** - FeCIM overview
+- **[Project README](../README.md)** - FeCIM overview
 - **[Research Notes](./research_notes_final.md)** - Academic background
 
 ---

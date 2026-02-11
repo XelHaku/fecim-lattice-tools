@@ -407,8 +407,8 @@ go test ./...
 
 ## References
 
-- [Source 1](url)
-- [Source 2](url)
+- [Source 1](https://example.com)
+- [Source 2](https://example.com)
 ```
 
 ---

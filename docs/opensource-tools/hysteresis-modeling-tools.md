@@ -1360,7 +1360,7 @@ def apply_cycles(self, E_cycling, n_cycles=100):
 - **[../hysteresis/hysteresis.ELI5.md](../hysteresis/hysteresis.ELI5.md)** - Beginner-friendly explanations
 - **[../hysteresis/hysteresis.demo.md](../hysteresis/hysteresis.demo.md)** - Using this project's visualization
 - **[../hysteresis/hysteresis.research.md](../hysteresis/hysteresis.research.md)** - Complete research meta-study
-- **[.../README.md](.../README.md)** - Index of all open-source tools
+- **[../README.md](../README.md)** - Index of all open-source tools
 
 ---
 
