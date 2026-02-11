@@ -27,6 +27,7 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	arch := ca.architecture
 	animStep := ca.animationStep
 	zoom := ca.zoomLevel
+	overlayMode := ca.readOverlayMode
 	ca.mu.RUnlock()
 
 	// Default zoom if not set
@@ -37,6 +38,7 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	if ca.deviceState == nil {
 		return img
 	}
+	overlayEnabled := ca.deviceState.GetOperationMode() == OpModeRead && overlayMode != "Off"
 
 	// Draw gradient background
 	bgTop := color.RGBA{12, 20, 35, 255}
@@ -331,6 +333,43 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 					textX := x0 + cw/2 - len(stateText)*3
 					textY := y0 + ch/2 - 3
 					drawSimpleText(img, stateText, textX, textY, textColor)
+				}
+			}
+
+			if overlayEnabled && cellSize >= 36 {
+				// Keep overlay legible and cheap for larger arrays by showing one label every N cells.
+				overlayStep := 1
+				switch {
+				case rows > 48 || cols > 48:
+					overlayStep = 8
+				case rows > 24 || cols > 24:
+					overlayStep = 4
+				case rows > 12 || cols > 12:
+					overlayStep = 2
+				}
+				if (r%overlayStep == 0 && c%overlayStep == 0) || isSelected {
+					vCell := ca.deviceState.GetEffectiveCellVoltage(r, c)
+					overlayText := ""
+					overlayColor := color.RGBA{210, 235, 255, 220}
+					if overlayMode == "Vcell" {
+						overlayText = formatSignedScaled(vCell, []scaledUnit{{unit: "V", scale: 1.0}, {unit: "mV", scale: 1e-3}, {unit: "uV", scale: 1e-6}, {unit: "nV", scale: 1e-9}})
+						overlayColor = color.RGBA{120, 220, 255, 220}
+					} else if overlayMode == "Icell" {
+						// Fast local estimate to avoid additional per-cell state allocations.
+						conductanceS := 0.0
+						material := ca.deviceState.GetMaterial()
+						if material != nil {
+							conductanceS = material.DiscreteLevel(level, levels)
+						} else if levels > 1 {
+							conductanceS = (1.0 + float64(level)/float64(levels-1)*99.0) * 1e-6
+						}
+						iCell := conductanceS * vCell
+						overlayText = formatSignedScaled(iCell, []scaledUnit{{unit: "A", scale: 1.0}, {unit: "mA", scale: 1e-3}, {unit: "uA", scale: 1e-6}, {unit: "nA", scale: 1e-9}, {unit: "pA", scale: 1e-12}})
+						overlayColor = color.RGBA{160, 255, 190, 220}
+					}
+					if overlayText != "" {
+						drawSimpleText(img, overlayText, x0+2, y0+ch-10, overlayColor)
+					}
 				}
 			}
 
@@ -690,6 +729,9 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	// Compact legend in top-left corner (below operation badge)
 	legendX := 8
 	legendY := 26
+	if overlayEnabled {
+		drawSimpleText(img, fmt.Sprintf("Overlay:%s", overlayMode), legendX, legendY-12, color.RGBA{180, 220, 255, 210})
+	}
 
 	// Draw semi-transparent background
 	legendBg := color.RGBA{15, 20, 35, 180}

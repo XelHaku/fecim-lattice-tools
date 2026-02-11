@@ -41,27 +41,45 @@ const (
 )
 
 func formatCurrentA(currentA float64) string {
-	absCurrent := math.Abs(currentA)
-	unit := "A"
-	scale := 1.0
-	switch {
-	case absCurrent >= 1:
-		unit = "A"
-		scale = 1.0
-	case absCurrent >= 1e-3:
-		unit = "mA"
-		scale = 1e-3
-	case absCurrent >= 1e-6:
-		unit = "uA"
-		scale = 1e-6
-	case absCurrent >= 1e-9:
-		unit = "nA"
-		scale = 1e-9
-	default:
-		unit = "pA"
-		scale = 1e-12
+	return formatSignedScaled(currentA, []scaledUnit{
+		{unit: "A", scale: 1.0},
+		{unit: "mA", scale: 1e-3},
+		{unit: "uA", scale: 1e-6},
+		{unit: "nA", scale: 1e-9},
+		{unit: "pA", scale: 1e-12},
+	})
+}
+
+type scaledUnit struct {
+	unit  string
+	scale float64
+}
+
+func formatSignedScaled(value float64, units []scaledUnit) string {
+	absValue := math.Abs(value)
+	if absValue < 1e-15 {
+		return fmt.Sprintf("0 %s", units[0].unit)
 	}
-	return fmt.Sprintf("%.3g %s", currentA/scale, unit)
+
+	chosen := units[len(units)-1]
+	for _, candidate := range units {
+		if absValue >= candidate.scale {
+			chosen = candidate
+			break
+		}
+	}
+	scaled := value / chosen.scale
+	absScaled := math.Abs(scaled)
+	format := "%+.3f"
+	switch {
+	case absScaled >= 100:
+		format = "%+.0f"
+	case absScaled >= 10:
+		format = "%+.1f"
+	case absScaled >= 1:
+		format = "%+.2f"
+	}
+	return fmt.Sprintf(format+" %s", scaled, chosen.unit)
 }
 
 // ============================================================================
@@ -307,7 +325,18 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 		ca.exportSimulationData()
 	})
 
-	// Row: Program Cell | MVM | Sep | Undo | Random Array | Reset Array | Export | Sep | Zoom controls | Spacer | Tools status
+	ca.readOverlaySelect = widget.NewSelect([]string{"Off", "Vcell", "Icell"}, func(mode string) {
+		if mode == "" {
+			mode = "Off"
+		}
+		ca.mu.Lock()
+		ca.readOverlayMode = mode
+		ca.mu.Unlock()
+		ca.refreshUnifiedArray()
+	})
+	ca.readOverlaySelect.SetSelected(ca.readOverlayMode)
+
+	// Row: Program Cell | MVM | Sep | Undo | Random Array | Reset Array | Export | Overlay | Sep | Zoom controls | Spacer | Tools status
 	return container.NewHBox(
 		ca.actionWriteCellBtn,
 		ca.actionComputeBtn,
@@ -316,6 +345,8 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 		ca.actionRandomArrayBtn,
 		ca.actionResetArrayBtn,
 		exportBtn,
+		widget.NewLabel("Overlay:"),
+		ca.readOverlaySelect,
 		widget.NewSeparator(),
 		widget.NewLabel("Zoom:"),
 		ca.zoomSlider,
