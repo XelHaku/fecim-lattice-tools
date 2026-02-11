@@ -199,7 +199,8 @@ func NewDeviceState(rows, cols int, tia *peripherals.TIA, adc *peripherals.ADC) 
 		tia:          tia,
 		adc:          adc,
 		dac:          peripherals.DefaultDAC(),
-		couplingMode: arraysim.CouplingIdeal,
+		// Default to Tier A so READ path uses coupled array-level simulation.
+		couplingMode: arraysim.CouplingTierA,
 		arrayEngine:  arraysim.NewTierASolver(),
 		cellGeometry: defaultGeometry,
 		wireParams:   arraysim.WireParams{},
@@ -428,15 +429,29 @@ func (ds *DeviceState) levelToConductance(level, levels int) float64 {
 	if mat == nil {
 		mat = sharedphysics.FeCIMMaterial()
 	}
-	if levels <= 0 {
-		levels = mat.GetNumLevels()
-	}
-	if levels <= 0 {
-		levels = 30
-	}
+	levels = ds.resolveConductanceLevels(levels)
 	baseG := mat.DiscreteLevel(level, levels)
 	referenceGeom := sharedphysics.GeometryFromMaterial(mat)
 	return baseG * ds.cellGeometry.Film.ConductanceScale(referenceGeom)
+}
+
+// resolveConductanceLevels picks quantization levels used for level→conductance mapping.
+// READ defaults to material-native levels so material selection propagates into READ current.
+func (ds *DeviceState) resolveConductanceLevels(quantLevels int) int {
+	if ds.opMode == OpModeRead && ds.material != nil {
+		if materialLevels := ds.material.GetNumLevels(); materialLevels > 0 {
+			return materialLevels
+		}
+	}
+	if quantLevels > 0 {
+		return quantLevels
+	}
+	if ds.material != nil {
+		if materialLevels := ds.material.GetNumLevels(); materialLevels > 0 {
+			return materialLevels
+		}
+	}
+	return 30
 }
 
 // conductanceToLevel maps conductance to a discrete level using material bounds.
