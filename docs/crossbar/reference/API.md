@@ -1,5 +1,7 @@
 # Crossbar Array API Reference
 
+> **Citation audit note:** Any factual/numeric claim in this file that does not include a verified DOI citation should be treated as **[CITATION NEEDED - placeholder value]**.
+
 The `module2-crossbar/pkg/crossbar` package provides a complete simulation suite for ferroelectric crossbar arrays with integrated non-ideality analysis. This document details all exported functions, types, and their usage.
 
 **Quick Links:**

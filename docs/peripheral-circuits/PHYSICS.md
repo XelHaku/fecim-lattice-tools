@@ -1,5 +1,7 @@
 # Peripheral Circuits Physics: Deep Technical Reference
 
+> **Citation audit note:** Any factual/numeric claim in this file that does not include a verified DOI citation should be treated as **[CITATION NEEDED - placeholder value]**.
+
 **FeCIM Lattice Tools - Module 4: Peripheral Circuits**
 
 > Start here for comprehensive physics understanding of ADCs, DACs, TIAs, and charge pumps that support ferroelectric compute-in-memory operations.

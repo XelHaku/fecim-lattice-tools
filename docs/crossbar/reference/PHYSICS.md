@@ -1,5 +1,7 @@
 # Module 2 Crossbar Physics Models
 
+> **Citation audit note:** Any factual/numeric claim in this file that does not include a verified DOI citation should be treated as **[CITATION NEEDED - placeholder value]**.
+
 This document describes the physics models implemented in module2-crossbar, covering conductance models, matrix operations, non-idealities, and device physics.
 
 > **Note:** These are simplified models for simulation and visualization. Numeric values are model defaults or reported ranges, not validated hardware specs.

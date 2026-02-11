@@ -1,5 +1,7 @@
 # Ferroelectric Physics: Deep Technical Reference
 
+> **Citation audit note:** Any factual/numeric claim in this file that does not include a verified DOI citation should be treated as **[CITATION NEEDED - placeholder value]**.
+
 Start here if you've never studied ferroelectrics before.
 
 **Note:** References to “30 levels” refer to the demo baseline (configurable). Literature reports multi-level states (not verified here). Numeric values below are simulation defaults or illustrative unless a peer-reviewed citation is provided (**[CITATION NEEDED - placeholder value]**).

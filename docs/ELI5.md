@@ -1,5 +1,7 @@
 # Ferroelectric CIM: The Complete ELI5 Guide
 
+> **Citation audit note:** Any factual/numeric claim in this file that does not include a verified DOI citation should be treated as **[CITATION NEEDED - placeholder value]**.
+
 **Goal:** After reading this, a 5-year-old could become the lead engineer.
 
 ---

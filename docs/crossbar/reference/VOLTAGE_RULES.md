@@ -1,5 +1,7 @@
 # Crossbar Voltage Rules and Operation Voltages
 
+> **Citation audit note:** Any factual/numeric claim in this file that does not include a verified DOI citation should be treated as **[CITATION NEEDED - placeholder value]**.
+
 **FeCIM Lattice Tools - Module 2: Voltage Reference**
 
 > Comprehensive voltage specifications for ferroelectric crossbar operations across 0T1R (Passive), 1T1R, and 2T1R architectures.
