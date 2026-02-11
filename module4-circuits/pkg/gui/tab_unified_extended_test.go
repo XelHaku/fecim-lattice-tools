@@ -728,13 +728,22 @@ func TestUnifiedTabISPPEngine(t *testing.T) {
 		t.Fatal("expected ISPP engine selector in write mode")
 	}
 
-	// Test engine selection
-	engines := []string{"Fast (Level)", "L-K (Physics)"}
-	for _, engine := range engines {
-		ca.isppEngineSelect.SetSelected(engine)
-		if ca.isppEngineSelect.Selected != engine {
-			t.Fatalf("failed to set ISPP engine to %s", engine)
+	// Test engine selection wiring to device state
+	cases := []struct {
+		label    string
+		expected ISPPEngine
+	}{
+		{label: "Fast (Level)", expected: ISPPEngineLevel},
+		{label: "L-K (Physics)", expected: ISPPEngineLK},
+	}
+	for _, tc := range cases {
+		ca.isppEngineSelect.SetSelected(tc.label)
+		if ca.isppEngineSelect.Selected != tc.label {
+			t.Fatalf("failed to set ISPP engine selector to %s", tc.label)
 		}
+		waitFor(t, 300*time.Millisecond, "device state ISPP engine sync", func() bool {
+			return ca.deviceState.GetISPPEngine() == tc.expected
+		})
 	}
 }
 

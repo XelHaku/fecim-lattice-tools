@@ -162,10 +162,10 @@
 | M3-P1 | Verify FP vs CIM inference pipeline + quantization/noise injection | `module3-mnist` | ⏳ | 2-4hr |
 | M3-P2 | Align energy model between core and GUI widgets | `module3-mnist` | ⏳ | 1-2hr |
 | M3-U2 | Decide dual-mode confusion matrix/metrics exposure | `module3-mnist` | ⏳ | 1-2hr |
-| M4-D1 | Update docs to reference `shared/peripherals` everywhere | `docs/.../module4-circuits/` | ⏳ | 30-60m |
-| M4-U1 | Validate ISPP engine toggle wiring (Fast vs L-K) | `module4-circuits` | ⏳ | 1-2hr |
+| M4-D1 | Update docs to reference `shared/peripherals` everywhere | `docs/.../module4-circuits/` | ✅ | Done (`docs/documentation/module4-circuits/FEATURES.md` explicitly marks `shared/peripherals` as canonical, adds `chargepump.go`) |
+| M4-U1 | Validate ISPP engine toggle wiring (Fast vs L-K) | `module4-circuits` | ✅ | Done (`tab_unified_voltage.go` routes by `GetISPPEngine()` and selector writes via `SetISPPEngine`; `tab_unified_extended_test.go` now asserts selector->state sync) |
 | M4-U3 | Sense-chain UI: TIA output, ADC code/saturation, measurement presets | `module4-circuits` | ✅ | 1-2hr |
-| M4-P1 | Audit DAC/ADC/TIA/ChargePump equations vs docs | `module4-circuits` | ⏳ | 2-4hr |
+| M4-P1 | Audit DAC/ADC/TIA/ChargePump equations vs docs | `module4-circuits` | ✅ | Done (`docs/documentation/module4-circuits/PHYSICS.md` equations aligned to `shared/peripherals/{dac,adc,tia,chargepump}.go`) |
 | M4-P3 | Define/centralize cell geometry (area, thickness, stack) | `module4-circuits` | ✅ | 1-2hr |
 | M4-P4 | **Tier B DC solver** (full resistive network) + regression tests | `module4-circuits/pkg/arraysim` | ⏳ | 4-12hr |
 | M4-U2d | Tests/visual checks for half-select disturb + DAC voltage display | `module4-circuits` | ⏳ | 1-2hr |

@@ -8,9 +8,12 @@
 
 ## Primary Components
 
+All peripheral circuit physics for Module 4 is sourced from `shared/peripherals`:
+
 - `shared/peripherals/dac.go`
 - `shared/peripherals/adc.go`
 - `shared/peripherals/tia.go`
+- `shared/peripherals/chargepump.go`
 - `shared/peripherals/analysis.go`
 - `module4-circuits/pkg/gui/app.go`
 

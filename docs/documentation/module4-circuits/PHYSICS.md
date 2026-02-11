@@ -19,21 +19,56 @@ Per `docs/comparison/HONESTY_AUDIT.md`, this module is **simulation-only**:
 - TIA maps analog currents to voltages.
 - ADC maps analog voltages back to digital codes.
 
-## Key Equations (Simplified)
+## Key Equations (Implemented in `shared/peripherals`)
 
-### DAC (Ideal linear code-to-voltage)
+### DAC (`shared/peripherals/dac.go`)
 
-- `LSB = Vref / (2^N)`
-- `V_dac(code) = Vmin + code * LSB` (clamped to `[Vmin, Vmax]`)
+- Levels: `L = 2^N`
+- LSB (code step):
+  - `LSB = (VrefHigh - VrefLow) / (L - 1)`
+- Ideal transfer (with code clamp to `[0, L-1]`):
+  - `V_dac(code) = VrefLow + code * LSB`
 
-### TIA (Ohmic transimpedance)
+Notes:
+- The model uses endpoint-inclusive mapping (`L-1` in denominator), matching the code.
+- Optional nonlinearity path adds deterministic INL/DNL perturbations before output.
 
-- `V_out = I_in * R_tia`
+### TIA (`shared/peripherals/tia.go`)
 
-### ADC (Uniform quantization)
+- Ideal transimpedance + offset:
+  - `V_out,raw = I_in * R_tia + V_offset`
+- Output clamp:
+  - `V_out = clamp(V_out,raw, 0, V_max)`
 
-- `code = round((V_in - Vmin) / LSB)` (clamped to valid code range)
-- `QuantizationError ≈ ±0.5 LSB`
+Noise path (`ConvertWithNoise`):
+- Input-referred RMS noise density to output RMS voltage:
+  - `V_noise,rms = I_noise,rms * R_tia * sqrt(BW)`
+- Demo path adds a deterministic +RMS offset and re-clamps.
+
+### ADC (`shared/peripherals/adc.go`)
+
+- Levels: `L = 2^N`
+- LSB:
+  - `LSB = (VrefHigh - VrefLow) / (L - 1)`
+- Input clamp first: `V = clamp(V_in, VrefLow, VrefHigh)`
+- Quantization (round-to-nearest, ties half-up):
+  - `code = round((V - VrefLow)/(VrefHigh - VrefLow) * (L - 1))`
+  - then clamp `code` to `[0, L-1]`
+- Quantization error bound (ideal mid-tread assumption): `≈ ±0.5 LSB`
+
+### Charge Pump (`shared/peripherals/chargepump.go`)
+
+- Ideal Dickson magnitude (sign follows target polarity):
+  - `V_ideal = sign(V_target) * (Stages + 1) * V_in`
+- Non-ideal losses:
+  - `V_th,drop = Stages * V_diode`
+  - `R_out ≈ 1 / (C_fly * f_clk)`
+  - `V_ir,drop = |I_load| * R_out`
+- Actual output magnitude and sign:
+  - `|V_actual| = max(|V_ideal| - V_th,drop - V_ir,drop, 0)`
+  - `V_actual = sign(V_ideal) * |V_actual|`
+- Regulation clamp to configured target magnitude:
+  - if `|V_actual| > |V_target|`, output is clamped to `±|V_target|` with target sign.
 
 ## Parameters And Units
 
