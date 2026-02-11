@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"fecim-lattice-tools/module4-circuits/pkg/arraysim"
+	sharedphysics "fecim-lattice-tools/shared/physics"
 )
 
 // TestReadCoupling_SignedPerCellVI validates signed per-cell READ voltages/currents
@@ -96,5 +97,49 @@ func TestReadCoupling_SignedPerCellVI(t *testing.T) {
 			assertNear("|Isel|/|Ihalf-row|", absRatio(iSel, iHalfRow), 2.0, ratioTol)
 			assertNear("|Isel|/|Ihalf-col|", absRatio(iSel, iHalfCol), 2.0, ratioTol)
 		})
+	}
+}
+
+func TestReadCoupling_DefaultsToTierA(t *testing.T) {
+	ds := newTestDeviceState(2, 2)
+	ds.SetOperationMode(OpModeRead)
+	ds.SetWLSingle(0)
+	ds.SetDACPreset(DACReadPreset, 0.2)
+
+	weights := [][]int{{15, 15}, {15, 15}}
+	ds.Compute(weights, 30)
+
+	vCells, iCells := ds.GetCoupledCellSnapshot()
+	if vCells == nil || iCells == nil {
+		t.Fatalf("expected coupled Tier-A snapshots in READ default path, got voltages=%v currents=%v", vCells, iCells)
+	}
+	if got := ds.GetCouplingMode(); got != arraysim.CouplingTierA {
+		t.Fatalf("default coupling mode mismatch: got=%v want=%v", got, arraysim.CouplingTierA)
+	}
+}
+
+func TestReadCoupling_MaterialSelectionChangesReadCurrent(t *testing.T) {
+	ds := newTestDeviceState(1, 1)
+	ds.SetOperationMode(OpModeRead)
+	ds.SetWLSingle(0)
+	ds.SetDACPreset(DACReadPreset, 0.25)
+
+	weights := [][]int{{15}}
+
+	ds.SetMaterial(sharedphysics.FeCIMMaterial())
+	ds.Compute(weights, 30)
+	feCIMCurrentUA := ds.GetRowCurrent(0)
+
+	ds.SetMaterial(sharedphysics.LiteratureSuperlattice())
+	ds.Compute(weights, 30)
+	superCurrentUA := ds.GetRowCurrent(0)
+
+	if feCIMCurrentUA <= 0 || superCurrentUA <= 0 {
+		t.Fatalf("expected positive READ currents, got FeCIM=%.6g uA superlattice=%.6g uA", feCIMCurrentUA, superCurrentUA)
+	}
+
+	// Materials have different Gmin/Gmax; READ current should reflect that.
+	if math.Abs(superCurrentUA-feCIMCurrentUA) < 1e-6 {
+		t.Fatalf("material-dependent READ current not observed: FeCIM=%.9f uA superlattice=%.9f uA", feCIMCurrentUA, superCurrentUA)
 	}
 }
