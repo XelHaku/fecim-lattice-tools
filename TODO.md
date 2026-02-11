@@ -36,6 +36,7 @@
   - `TestReadCoupling_DefaultsToTierA`
   - `TestReadCoupling_MaterialSelectionChangesReadCurrent`
   - Existing signed per-cell READ coupling test retained.
+- Verification command: `go test ./module4-circuits/pkg/gui -run "Test(ReadCoupling_SignedPerCellVI|ReadCoupling_DefaultsToTierA|ReadCoupling_MaterialSelectionChangesReadCurrent)" -count=1 -v` (PASS).
 
 ### 3. UI Fixes
 
@@ -201,11 +202,11 @@
 
 | ID | Task | Source | Status | Est. |
 |----|------|--------|--------|------|
-| M6-D1 | Sync docs with actual exports (JSON/CSV/SPICE/Verilog/DEF/LEF/Liberty/SVG) | `docs/.../module6-eda/` | ⏳ | 1-2hr |
-| M6-U1 | Check GUI/CLI parity (Start/Stop, defaults) | `module6-eda` | ⏳ | 1-2hr |
+| M6-D1 | Sync docs with actual exports (JSON/CSV/SPICE/Verilog/DEF/LEF/Liberty/SVG) | `docs/.../module6-eda/` | ✅ | Done (`module6-eda/README.md`, `docs/documentation/module6-eda/FEATURES.md`: export coverage clarified by surface: CLI vs GUI/API) |
+| M6-U1 | Check GUI/CLI parity (Start/Stop, defaults) | `module6-eda` | ✅ | Done (documented parity matrix: CLI defaults `compute 128x128`, GUI defaults `storage 4x4`; Start/Stop no background workers in embedded app) |
 | M6-P1 | Audit mapping/quantization/topology vs docs | `module6-eda` | ⏳ | 2-4hr |
-| M7-D1 | Confirm curriculum tree order + shortcuts match docs | `module7-docs` | ⏳ | 30-60m |
-| M7-U1 | Validate layout breakpoints + click targets | `module7-docs` | ⏳ | 1-2hr |
+| M7-D1 | Confirm curriculum tree order + shortcuts match docs | `module7-docs` | ✅ | Done (`docs_test.go`: `TestEmbeddedDocsApp_SortEntries_*`, `TestModuleShortcutsPanel_MappingAndDisableState`) |
+| M7-U1 | Validate layout breakpoints + click targets | `module7-docs` | ✅ | Done (`docs_test.go`: breakpoint coverage + `TestEmbeddedDocsApp_TreeClickTargets` for folder/file row behavior) |
 | M7-U2 | Add colored category badges in tree rows | `module7-docs` | ⏳ | 30-60m |
 | M7-U3 | Hide "On This Page" sidebar when ToC < 3 headings | `module7-docs` | ⏳ | 30-60m |
 | M7-P1 | Verify search ranking + reading time math | `module7-docs` | ⏳ | 1-2hr |
