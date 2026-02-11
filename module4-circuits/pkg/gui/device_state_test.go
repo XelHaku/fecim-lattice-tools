@@ -1666,3 +1666,26 @@ func TestApplyHalfSelectWrite_HalfSelectedCellVoltages(t *testing.T) {
 	diagonalEffectiveV := ds.GetWLVoltage(0) - ds.GetDACVoltage(0)
 	assertFloatEquals(t, "diagonal cell voltage", diagonalEffectiveV, 0.0)
 }
+
+func TestConvertSenseLocked_MatchesTIAAndADC_DefaultReadPath(t *testing.T) {
+	resetGlobalState()
+	ds := newTestDeviceState(2, 2)
+
+	currentsA := []float64{-10e-6, 0, 10e-6, 50e-6, 100e-6}
+	for _, currentA := range currentsA {
+		vout, code, sat := ds.convertSenseLocked(currentA, ds.tia.Gain, ds.tia.OutputOffset)
+		wantV := ds.tia.Convert(currentA)
+		wantCode := ds.adc.Convert(wantV)
+		wantSat := wantV <= ds.adc.VrefLow || wantCode >= (1<<ds.adc.Bits)-1
+
+		if math.Abs(vout-wantV) > 1e-12 {
+			t.Fatalf("I=%.3f µA: Vout got %.9f V, want %.9f V", currentA*1e6, vout, wantV)
+		}
+		if code != wantCode {
+			t.Fatalf("I=%.3f µA: code got %d, want %d", currentA*1e6, code, wantCode)
+		}
+		if sat != wantSat {
+			t.Fatalf("I=%.3f µA: saturated got %v, want %v", currentA*1e6, sat, wantSat)
+		}
+	}
+}

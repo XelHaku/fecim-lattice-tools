@@ -999,58 +999,73 @@ func (ds *DeviceState) computeIdealLocked(weights [][]int, quantLevels int) {
 
 		ds.rowCurrents[r] = totalCurrent
 
-		// TIA conversion with automatic gain scaling for MVM
-		// In MVM mode, multiple columns contribute current, so we need lower effective gain
-		// Max current = cols × Gmax × Vmax = cols × 100µS × 1.0V
-		// Scale TIA gain so max current maps to ~0.9V output
-		if ds.tia != nil {
-			currentA := totalCurrent * 1e-6 // µA to A
-
-			// Count active columns (columns with |effective voltage| > 0.01V)
-			activeColCount := 0
-			for c := 0; c < ds.cols; c++ {
-				v := ds.effectiveCellVoltageLocked(r, c)
-				if math.Abs(v) > 0.01 {
-					activeColCount++
-				}
-			}
-
-			if activeColCount > 1 {
-				// MVM mode: scale gain based on number of active columns
-				// Effective gain = base_gain / active_cols to prevent saturation
-				// This models a real MVM TIA with automatic range adjustment
-				scaleFactor := 1.0 / float64(activeColCount)
-				effectiveGain := ds.tia.Gain * scaleFactor
-				ds.rowVoltages[r] = currentA * effectiveGain
-				// Clamp to max output
-				if ds.rowVoltages[r] > ds.tia.MaxOutputVoltage {
-					ds.rowVoltages[r] = ds.tia.MaxOutputVoltage
-				}
-				if ds.rowVoltages[r] < 0 {
-					ds.rowVoltages[r] = 0
-				}
-			} else {
-				// Single-cell read: use standard TIA conversion
-				ds.rowVoltages[r] = ds.tia.Convert(currentA)
-			}
-		} else {
+		if ds.tia == nil {
 			ds.rowVoltages[r] = 0
-		}
-
-		// ADC conversion: voltage to level
-		if ds.adc != nil {
-			ds.rowLevels[r] = ds.adc.Convert(ds.rowVoltages[r])
-		} else {
 			ds.rowLevels[r] = 0
+			ds.saturated[r] = false
+			continue
 		}
 
-		// Check saturation
-		adcMaxLevel := 31 // Default 5-bit ADC max level
-		if ds.adc != nil {
-			adcMaxLevel = (1 << ds.adc.Bits) - 1 // 2^bits - 1
+		currentA := totalCurrent * 1e-6 // µA to A
+
+		// Count active columns (columns with |effective voltage| > 0.01V)
+		activeColCount := 0
+		for c := 0; c < ds.cols; c++ {
+			v := ds.effectiveCellVoltageLocked(r, c)
+			if math.Abs(v) > 0.01 {
+				activeColCount++
+			}
 		}
-		ds.saturated[r] = ds.rowLevels[r] >= adcMaxLevel
+
+		effectiveGain := ds.tia.Gain
+		if activeColCount > 1 {
+			// MVM mode: scale gain based on number of active columns to reduce saturation.
+			effectiveGain = ds.tia.Gain / float64(activeColCount)
+		}
+
+		vref := 0.0
+		if activeColCount <= 1 {
+			// Single-cell read path keeps the TIA output offset.
+			vref = ds.tia.OutputOffset
+		}
+
+		ds.rowVoltages[r], ds.rowLevels[r], ds.saturated[r] = ds.convertSenseLocked(currentA, effectiveGain, vref)
 	}
+}
+
+func (ds *DeviceState) convertSenseLocked(rowCurrentA, gainOhm, vrefV float64) (float64, int, bool) {
+	if ds.tia == nil {
+		return 0, 0, false
+	}
+
+	if ds.adc == nil {
+		vout := vrefV + rowCurrentA*gainOhm
+		if vout < 0 {
+			vout = 0
+		}
+		if vout > ds.tia.MaxOutputVoltage {
+			vout = ds.tia.MaxOutputVoltage
+		}
+		return vout, 0, false
+	}
+
+	sense := arraysim.SenseChain{
+		TIA: arraysim.TIAConfig{
+			Rf:   gainOhm,
+			Vref: vrefV,
+			Vmin: 0,
+			Vmax: ds.tia.MaxOutputVoltage,
+		},
+		ADC: arraysim.ADCConfig{
+			Bits: ds.adc.Bits,
+			Vmin: ds.adc.VrefLow,
+			Vmax: ds.adc.VrefHigh,
+		},
+	}
+	res := sense.ConvertCurrent(rowCurrentA)
+	adcMaxLevel := (1 << ds.adc.Bits) - 1
+	saturated := res.TIASaturated || res.ADCSaturated || res.Code >= adcMaxLevel
+	return res.Vout, res.Code, saturated
 }
 
 func (ds *DeviceState) computeWithArraysimLocked(weights [][]int, quantLevels int) bool {
@@ -1166,38 +1181,7 @@ func (ds *DeviceState) computeWithArraysimLocked(weights [][]int, quantLevels in
 			vref = ds.tia.OutputOffset
 		}
 
-		if ds.adc == nil {
-			vout := vref + rowCurrentA*effectiveGain
-			if vout < 0 {
-				vout = 0
-			}
-			if vout > ds.tia.MaxOutputVoltage {
-				vout = ds.tia.MaxOutputVoltage
-			}
-			ds.rowVoltages[r] = vout
-			ds.rowLevels[r] = 0
-			ds.saturated[r] = false
-			continue
-		}
-
-		sense := arraysim.SenseChain{
-			TIA: arraysim.TIAConfig{
-				Rf:   effectiveGain,
-				Vref: vref,
-				Vmin: 0,
-				Vmax: ds.tia.MaxOutputVoltage,
-			},
-			ADC: arraysim.ADCConfig{
-				Bits: ds.adc.Bits,
-				Vmin: ds.adc.VrefLow,
-				Vmax: ds.adc.VrefHigh,
-			},
-		}
-		senseResult := sense.ConvertCurrent(rowCurrentA)
-		ds.rowVoltages[r] = senseResult.Vout
-		ds.rowLevels[r] = senseResult.Code
-		adcMaxLevel := (1 << ds.adc.Bits) - 1
-		ds.saturated[r] = senseResult.TIASaturated || senseResult.ADCSaturated || ds.rowLevels[r] >= adcMaxLevel
+		ds.rowVoltages[r], ds.rowLevels[r], ds.saturated[r] = ds.convertSenseLocked(rowCurrentA, effectiveGain, vref)
 	}
 
 	return true
