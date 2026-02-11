@@ -15,8 +15,8 @@
 
 ## Key Workflows
 
-- Select a document from the curriculum tree.
-- Use module shortcuts to jump between learning layers.
+- Select a document from the curriculum tree (module-number sort at root, curriculum-file order inside modules).
+- Use module shortcuts to jump between learning layers (ELI5 → PHYSICS → FEATURES → OPENSOURCE-TOOLS).
 - Use search and glossary pills for cross-topic navigation.
 
 ## Extension Points
@@ -24,6 +24,14 @@
 - Add new category rules in `search.go`.
 - Extend the module shortcuts panel for new curriculum layers.
 - Customize layout breakpoints in `layout.go`.
+
+## Layout + Interaction Notes (Validated)
+
+- Breakpoints: Mobile `<600`, Tablet `600-899`, Desktop `900-1200`, Wide `>1200` (see `layout.go`).
+- Tree row click target behavior:
+  - Clicking a folder row toggles branch open/close.
+  - Clicking a file row loads markdown into the content pane.
+- Star/favorite button consumes the row-selection event once (`suppressSelect`) to prevent accidental document loads.
 
 ## Known Limitations
 

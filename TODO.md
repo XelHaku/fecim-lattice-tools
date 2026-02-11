@@ -211,6 +211,8 @@
 | M7-U3 | Hide "On This Page" sidebar when ToC < 3 headings | `module7-docs` | ⏳ | 30-60m |
 | M7-P1 | Verify search ranking + reading time math | `module7-docs` | ⏳ | 1-2hr |
 
+Evidence note (2026-02-11): `go test -race ./module6-eda/... ./module7-docs/...` passed after docs sync + new module7 curriculum/layout interaction tests.
+
 ### Cross-Module
 
 | ID | Task | Source | Status | Est. |

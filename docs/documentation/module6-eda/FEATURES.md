@@ -3,7 +3,7 @@
 ## What This Module Does
 
 - Compiles arrays for storage, memory, or compute modes.
-- Exports mappings to JSON, CSV, SPICE, Verilog, and DEF.
+- Supports module export formats: JSON, CSV, SPICE, Verilog, DEF, LEF, Liberty, and SVG.
 - Provides a GUI for configuration, validation, and learning visuals.
 
 ## Primary Components
@@ -18,6 +18,14 @@
 - Configure array settings and generate a design.
 - Export mapping to files for downstream tools.
 - Validate outputs (Yosys, DEF checks, cross-file consistency).
+
+## GUI/CLI Parity (Validated)
+
+- Shared: Verilog + DEF generation, validation pipeline entry points.
+- CLI defaults: compute mode, 128x128 array, passive architecture.
+- GUI defaults: storage mode, 4x4 array, passive architecture.
+- CLI export flags currently cover JSON/CSV/SPICE/Verilog/DEF.
+- GUI builder flow also generates LEF/Liberty; SVG is available through `pkg/export` APIs.
 
 ## Extension Points
 

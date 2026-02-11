@@ -9,6 +9,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/test"
+	"fyne.io/fyne/v2/widget"
 )
 
 // TestSearchIndex_NewSearchIndex verifies basic index initialization
@@ -730,6 +731,150 @@ func TestSearchIndex_SpecialCharacters(t *testing.T) {
 	results := index.Query("ferroelectric", 10)
 	if len(results) != 1 {
 		t.Errorf("Expected 1 result for 'ferroelectric', got %d", len(results))
+	}
+}
+
+func TestEmbeddedDocsApp_SortEntries_CurriculumOrder(t *testing.T) {
+	app := &EmbeddedDocsApp{docsPath: "/docs/documentation"}
+	entries := []*docEntry{
+		{name: "README.md", path: "/docs/documentation/README.md"},
+		{name: "module10-misc", path: "/docs/documentation/module10-misc", isDir: true},
+		{name: "module2-crossbar", path: "/docs/documentation/module2-crossbar", isDir: true},
+		{name: "research-papers", path: "/docs/documentation/research-papers", isDir: true},
+		{name: "MODULES.md", path: "/docs/documentation/MODULES.md"},
+		{name: "module1-hysteresis", path: "/docs/documentation/module1-hysteresis", isDir: true},
+	}
+
+	app.sortEntries(entries, app.docsPath)
+
+	ordered := make([]string, 0, len(entries))
+	for _, e := range entries {
+		ordered = append(ordered, e.name)
+	}
+
+	expected := []string{
+		"module1-hysteresis",
+		"module2-crossbar",
+		"module10-misc",
+		"research-papers",
+		"README.md",
+		"MODULES.md",
+	}
+
+	for i := range expected {
+		if ordered[i] != expected[i] {
+			t.Fatalf("unexpected order at %d: got %q want %q (full=%v)", i, ordered[i], expected[i], ordered)
+		}
+	}
+}
+
+func TestEmbeddedDocsApp_SortEntries_ModuleFileOrder(t *testing.T) {
+	app := &EmbeddedDocsApp{docsPath: "/docs/documentation"}
+	parent := "/docs/documentation/module6-eda"
+	entries := []*docEntry{
+		{name: "z-notes.md", path: parent + "/z-notes.md"},
+		{name: "PHYSICS.md", path: parent + "/PHYSICS.md"},
+		{name: "ELI5.md", path: parent + "/ELI5.md"},
+		{name: "FEATURES.md", path: parent + "/FEATURES.md"},
+		{name: "OPENSOURCE-TOOLS.md", path: parent + "/OPENSOURCE-TOOLS.md"},
+		{name: "assets", path: parent + "/assets", isDir: true},
+	}
+
+	app.sortEntries(entries, parent)
+
+	ordered := make([]string, 0, len(entries))
+	for _, e := range entries {
+		ordered = append(ordered, e.name)
+	}
+
+	expected := []string{"assets", "ELI5.md", "PHYSICS.md", "FEATURES.md", "OPENSOURCE-TOOLS.md", "z-notes.md"}
+	for i := range expected {
+		if ordered[i] != expected[i] {
+			t.Fatalf("unexpected module order at %d: got %q want %q (full=%v)", i, ordered[i], expected[i], ordered)
+		}
+	}
+}
+
+func TestModuleShortcutsPanel_MappingAndDisableState(t *testing.T) {
+	tmpDir := t.TempDir()
+	modulePath := filepath.Join(tmpDir, "moduleX")
+	if err := os.MkdirAll(modulePath, 0755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	_ = os.WriteFile(filepath.Join(modulePath, "ELI5.md"), []byte("# e"), 0644)
+	_ = os.WriteFile(filepath.Join(modulePath, "PHYSICS.md"), []byte("# p"), 0644)
+
+	var selected string
+	panel := NewModuleShortcutsPanel(func(path string) { selected = path })
+	panel.SetModulePath(modulePath)
+
+	btns := map[string]*widget.Button{}
+	for _, obj := range panel.container.Objects {
+		if b, ok := obj.(*widget.Button); ok {
+			btns[b.Text] = b
+		}
+	}
+
+	if len(btns) != 4 {
+		t.Fatalf("expected 4 shortcut buttons, got %d", len(btns))
+	}
+	if btns["ELI5"].Disabled() {
+		t.Fatal("ELI5 button should be enabled when file exists")
+	}
+	if btns["Physics"].Disabled() {
+		t.Fatal("Physics button should be enabled when file exists")
+	}
+	if !btns["Features"].Disabled() || !btns["Tools"].Disabled() {
+		t.Fatal("Features/Tools should be disabled when files are missing")
+	}
+
+	btns["ELI5"].OnTapped()
+	expectedPath := filepath.Join(modulePath, "ELI5.md")
+	if selected != expectedPath {
+		t.Fatalf("shortcut path mismatch: got %q want %q", selected, expectedPath)
+	}
+}
+
+func TestEmbeddedDocsApp_TreeClickTargets(t *testing.T) {
+	testApp := test.NewApp()
+	defer testApp.Quit()
+	w := testApp.NewWindow("docs")
+	defer w.Close()
+
+	tmpDir := t.TempDir()
+	docsRoot := filepath.Join(tmpDir, "docs", "documentation")
+	moduleDir := filepath.Join(docsRoot, "module1-hysteresis")
+	if err := os.MkdirAll(moduleDir, 0755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	filePath := filepath.Join(moduleDir, "ELI5.md")
+	if err := os.WriteFile(filePath, []byte("# Hello\n\nBody"), 0644); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+
+	app := NewEmbeddedDocsApp()
+	app.EmbeddedAppBase.Init(testApp, w)
+	app.docsPath = docsRoot
+	app.searchIndex = NewSearchIndex(docsRoot)
+	app.history = NewDocsHistory()
+	app.createUIComponents()
+	_ = app.buildSidebar()
+
+	if app.tree.IsBranchOpen(moduleDir) {
+		t.Fatal("branch should start closed")
+	}
+	app.tree.OnSelected(moduleDir)
+	if !app.tree.IsBranchOpen(moduleDir) {
+		t.Fatal("clicking folder row should open branch")
+	}
+	app.tree.OnSelected(moduleDir)
+	if app.tree.IsBranchOpen(moduleDir) {
+		t.Fatal("second click on folder row should close branch")
+	}
+
+	app.tree.OnSelected(filePath)
+	if app.currentFile != filePath {
+		t.Fatalf("clicking file row should load document: got %q want %q", app.currentFile, filePath)
 	}
 }
 

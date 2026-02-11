@@ -14,9 +14,10 @@ Module 6 provides an RTL-to-layout **exploration flow** for FeCIM arrays. It sup
 
 - **Three Operation Modes** - Storage, Memory, Compute
 - **CLI + GUI** - Scriptable CLI and an interactive GUI
-- **Export Formats (CLI)** - JSON, CSV, SPICE, Verilog, DEF
-- **Programmatic Generators** - LEF, Liberty, SVG via `pkg/export`
-- **Architecture Support** - Passive/1T1R in CLI; 2T1R available via API (`With2T1R`)
+- **Export Coverage (module-wide)** - JSON, CSV, SPICE, Verilog, DEF, LEF, Liberty, SVG
+- **CLI Exports** - JSON, CSV, SPICE, Verilog, DEF (flags)
+- **GUI/API Exports** - LEF, Liberty, SVG (via `pkg/export`; GUI uses LEF/Liberty directly)
+- **Architecture Support** - Passive/1T1R in CLI; 2T1R available via GUI/API (`With2T1R` path)
 - **PDK Support** - SKY130, GF180MCU, IHP_SG13G2
 - **OpenLane Helpers** - DEF + OpenLane config generation and validation
 
@@ -90,6 +91,21 @@ Export Formats:
 - `*_design.json`
 - `*_cells.csv`
 - `*.sp`, `*.v`, `*.def`
+
+## GUI/CLI Parity Notes
+
+Current defaults are intentionally different:
+
+- **CLI defaults:** `mode=compute`, `rows=128`, `cols=128`, `arch=passive`
+- **GUI defaults:** `mode=storage`, `rows=4`, `cols=4`, `arch=passive`
+
+Current export parity:
+
+- **Both GUI and CLI:** Verilog, DEF (core flow artifacts)
+- **CLI only (today):** JSON, CSV, SPICE flag-driven batch exports
+- **GUI/API only (today):** LEF + Liberty generation in Builder flow; SVG available via `pkg/export`
+
+This split is documented to avoid confusion when comparing headless automation (CLI) versus interactive learning flow (GUI).
 
 ---
 
