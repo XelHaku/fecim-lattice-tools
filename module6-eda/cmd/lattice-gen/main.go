@@ -63,6 +63,10 @@ func Run(args []string) error {
 		return nil
 	}
 
+	if err := export.ValidateLatticeDimensions(*rows, *cols); err != nil {
+		return fmt.Errorf("invalid lattice dimensions: %w", err)
+	}
+
 	// Create output directory if needed
 	if err := os.MkdirAll(*outputDir, 0755); err != nil {
 		logging.GlobalError("Error creating output dir: %v\n", err)

@@ -7,13 +7,35 @@ package export
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
 
+const (
+	maxLatticeDim   = 2048
+	maxLatticeCells = 1_000_000
+)
+
+func ValidateLatticeDimensions(rows, cols int) error {
+	if rows <= 0 || cols <= 0 {
+		return fmt.Errorf("rows and cols must be > 0")
+	}
+	if rows > maxLatticeDim || cols > maxLatticeDim {
+		return fmt.Errorf("rows/cols exceed max dimension %d", maxLatticeDim)
+	}
+	if rows > maxLatticeCells/cols {
+		return fmt.Errorf("array too large: %d x %d exceeds %d cells", rows, cols, maxLatticeCells)
+	}
+	return nil
+}
+
 // GenerateLatticeVerilog generates Verilog for a rows x cols FeCIM array
 // Uses cell_{row}_{col} naming convention
 func GenerateLatticeVerilog(rows, cols int) string {
+	if err := ValidateLatticeDimensions(rows, cols); err != nil {
+		return fmt.Sprintf("// invalid lattice dimensions: %v\n", err)
+	}
 	var sb strings.Builder
 
 	// Header
@@ -52,6 +74,9 @@ func GenerateLatticeVerilog(rows, cols int) string {
 // GenerateLatticeDEF generates DEF placement for a rows x cols FeCIM array
 // Uses cell_{row}_{col} naming convention matching the Verilog
 func GenerateLatticeDEF(rows, cols int) string {
+	if err := ValidateLatticeDimensions(rows, cols); err != nil {
+		return fmt.Sprintf("# invalid lattice dimensions: %v\n", err)
+	}
 	var sb strings.Builder
 
 	// Cell dimensions in microns
@@ -185,7 +210,10 @@ func GenerateLatticeDEF(rows, cols int) string {
 
 // WriteLatticeVerilog writes Verilog to lattice_{rows}x{cols}.v
 func WriteLatticeVerilog(rows, cols int, outputDir string) (string, error) {
-	filename := fmt.Sprintf("%s/lattice_%dx%d.v", outputDir, rows, cols)
+	if err := ValidateLatticeDimensions(rows, cols); err != nil {
+		return "", err
+	}
+	filename := filepath.Join(outputDir, fmt.Sprintf("lattice_%dx%d.v", rows, cols))
 	content := GenerateLatticeVerilog(rows, cols)
 	err := os.WriteFile(filename, []byte(content), 0644)
 	return filename, err
@@ -193,7 +221,10 @@ func WriteLatticeVerilog(rows, cols int, outputDir string) (string, error) {
 
 // WriteLatticeDEF writes DEF to lattice_{rows}x{cols}.def
 func WriteLatticeDEF(rows, cols int, outputDir string) (string, error) {
-	filename := fmt.Sprintf("%s/lattice_%dx%d.def", outputDir, rows, cols)
+	if err := ValidateLatticeDimensions(rows, cols); err != nil {
+		return "", err
+	}
+	filename := filepath.Join(outputDir, fmt.Sprintf("lattice_%dx%d.def", rows, cols))
 	content := GenerateLatticeDEF(rows, cols)
 	err := os.WriteFile(filename, []byte(content), 0644)
 	return filename, err

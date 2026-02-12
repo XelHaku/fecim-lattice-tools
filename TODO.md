@@ -840,6 +840,18 @@ git update-index --assume-unchanged cmd/fecim-lattice-tools/data/calibrations/li
 | ERR-14 | `cmd/fecim-lattice-tools/main.go:866` | `fmt.Println` used for recording-start error path | Medium | ✅ Fixed | Routed recording start errors through shared logging. |
 | ERR-15 | `shared/widgets/ui_lock.go:36` | Bare panic in non-test code | Medium | ⏳ Open | Panic enforces goroutine ownership contract; needs design decision (convert to error/log+no-op?). |
 
+## Security & Robustness Audit (2026-02-11)
+
+| ID | File:Line | Finding | Risk | Status | Evidence |
+|----|-----------|---------|------|--------|----------|
+| SEC-01 | `module6-eda/cmd/eda-cli/main.go` | Path traversal via `--name` in output filenames (`filepath.Join(output, name+...)` accepted `../...`) | Critical | ✅ Fixed | Added `validateDesignName()` with strict allowlist and separator/`..` rejection before export path construction. |
+| SEC-02 | `module6-eda/cmd/eda-cli/main.go` | Unbounded weight-file read from user `--input` (`os.ReadFile`) could exhaust memory | Critical | ✅ Fixed | Added size precheck (`maxWeightsFileBytes=32MiB`) before read; rejects oversized files. |
+| SEC-03 | `module6-eda/cmd/eda-cli/main.go` | Unsafe indexing `wf.Weights[0]` without validating non-empty/rectangular matrix | High | ✅ Fixed | Added non-empty + rectangular shape checks before logging/assignment; prevents panic. |
+| SEC-04 | `shared/recording/buffer_pool.go` | Unsafe type assertion `bp.pool.Get().([]byte)` can panic if pool polluted | High | ✅ Fixed | Replaced with comma-ok assertion and safe fallback allocation; added regression test with malformed pool item. |
+| SEC-05 | `shared/recording/buffer_pool.go` | Integer overflow / huge allocation risk in `width*height*3` size math | High | ✅ Fixed | Added `safeRGB24BufferSize()` overflow checks + hard ceiling (`maxBufferPoolBytes`); used in constructor/resize/frame buffer. |
+| SEC-06 | `module6-eda/pkg/export/lattice_generator.go` + `module6-eda/cmd/lattice-gen/main.go` | Missing bounds on rows/cols can trigger massive generation and overflow (`rows*cols`) | High | ✅ Fixed | Added `ValidateLatticeDimensions()` limits (`maxLatticeDim`, `maxLatticeCells`) and enforced in write/CLI paths. |
+| SEC-07 | `shared/cli/cli.go` | Config loader reads arbitrary-size config files without cap | Medium | ✅ Fixed | Added `maxConfigFileSizeBytes=10MiB` and `readFileWithLimit()` to reject oversized config files. |
+
 ## Agent Work Policy
 
 **This file is the single source of truth for all tasks.** No separate prompt files.

@@ -1,6 +1,7 @@
 package recording
 
 import (
+	"math"
 	"sync"
 	"sync/atomic"
 )
@@ -20,12 +21,29 @@ type bufferPoolStatsInternal struct {
 	misses int64
 }
 
+const maxBufferPoolBytes = 512 * 1024 * 1024 // 512 MiB safety ceiling
+
+func safeRGB24BufferSize(width, height int) int {
+	if width <= 0 || height <= 0 {
+		return 1
+	}
+	if width > math.MaxInt/height {
+		return 1
+	}
+	pixels := width * height
+	if pixels > math.MaxInt/3 {
+		return 1
+	}
+	size := pixels * 3
+	if size <= 0 || size > maxBufferPoolBytes {
+		return 1
+	}
+	return size
+}
+
 // NewBufferPool creates a new buffer pool for the given dimensions.
 func NewBufferPool(width, height int) *BufferPool {
-	size := width * height * 3 // RGB24
-	if size <= 0 {
-		size = 1 // Minimum size to avoid issues
-	}
+	size := safeRGB24BufferSize(width, height)
 	return NewBufferPoolWithSize(size)
 }
 
@@ -55,7 +73,12 @@ func (bp *BufferPool) Get() []byte {
 	currentSize := bp.bufferSize
 	bp.mu.RUnlock()
 
-	buf := bp.pool.Get().([]byte)
+	raw := bp.pool.Get()
+	buf, ok := raw.([]byte)
+	if !ok {
+		atomic.AddInt64(&bp.stats.misses, 1)
+		return make([]byte, currentSize)
+	}
 
 	// Ensure correct size (in case of resize)
 	if len(buf) != currentSize {
@@ -112,10 +135,7 @@ func (bp *BufferPool) Reset() {
 // Resize changes the buffer size for future allocations.
 // Thread-safe: uses mutex to protect bufferSize modification.
 func (bp *BufferPool) Resize(width, height int) {
-	newSize := width * height * 3
-	if newSize <= 0 {
-		newSize = 1
-	}
+	newSize := safeRGB24BufferSize(width, height)
 	bp.mu.Lock()
 	bp.bufferSize = newSize
 	bp.mu.Unlock()
@@ -134,8 +154,9 @@ type FrameBuffer struct {
 
 // NewFrameBuffer creates a new frame buffer.
 func NewFrameBuffer(width, height int) *FrameBuffer {
+	size := safeRGB24BufferSize(width, height)
 	return &FrameBuffer{
-		data:   make([]byte, width*height*3),
+		data:   make([]byte, size),
 		width:  width,
 		height: height,
 	}

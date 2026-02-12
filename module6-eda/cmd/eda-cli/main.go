@@ -22,6 +22,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"fecim-lattice-tools/module6-eda/pkg/compiler"
@@ -62,6 +63,40 @@ type EDAResult struct {
 	ThroughputGOPS float64  `json:"throughput_gops,omitempty"`
 	Technology     string   `json:"technology"`
 	OutputFiles    []string `json:"output_files"`
+}
+
+const (
+	maxWeightsFileBytes = 32 * 1024 * 1024 // 32 MiB
+	maxArrayDim         = 4096
+	maxArrayCells       = 4_000_000
+)
+
+var safeDesignNameRe = regexp.MustCompile(`^[A-Za-z0-9._-]+$`)
+
+func validateDesignName(name string) error {
+	if strings.TrimSpace(name) == "" {
+		return fmt.Errorf("design name cannot be empty")
+	}
+	if !safeDesignNameRe.MatchString(name) {
+		return fmt.Errorf("design name %q contains invalid characters", name)
+	}
+	if strings.Contains(name, "..") || strings.ContainsAny(name, `/\\`) {
+		return fmt.Errorf("design name %q is not path-safe", name)
+	}
+	return nil
+}
+
+func validateArrayGeometry(rows, cols int) error {
+	if rows <= 0 || cols <= 0 {
+		return fmt.Errorf("rows and cols must be > 0 (got %d x %d)", rows, cols)
+	}
+	if rows > maxArrayDim || cols > maxArrayDim {
+		return fmt.Errorf("rows/cols exceed limit (%d): got %d x %d", maxArrayDim, rows, cols)
+	}
+	if rows > maxArrayCells/cols {
+		return fmt.Errorf("array too large: %d x %d exceeds %d cells", rows, cols, maxArrayCells)
+	}
+	return nil
 }
 
 func Run(args []string) error {
@@ -176,6 +211,22 @@ func Run(args []string) error {
 		}
 	}
 
+	if err := validateDesignName(*designName); err != nil {
+		return err
+	}
+	if err := validateArrayGeometry(*rows, *cols); err != nil {
+		return err
+	}
+	if *levels < 2 || *levels > 30 {
+		return fmt.Errorf("levels must be in [2,30], got %d", *levels)
+	}
+	if *vdd <= 0 || *vdd > 5 {
+		return fmt.Errorf("vdd must be in (0,5], got %g", *vdd)
+	}
+	if *gmin <= 0 || *gmax <= 0 || *gmin >= *gmax {
+		return fmt.Errorf("conductance must satisfy 0 < gmin < gmax (got gmin=%g, gmax=%g)", *gmin, *gmax)
+	}
+
 	// Parse operation mode
 	var opMode compiler.OperationMode
 	switch strings.ToLower(*mode) {
@@ -209,6 +260,14 @@ func Run(args []string) error {
 
 	// Load weights for compute mode (if provided)
 	if opMode == compiler.ModeCompute && *inputFile != "" {
+		st, err := os.Stat(*inputFile)
+		if err != nil {
+			logging.Printf("Error reading weights file metadata: %v\n", err)
+			return err
+		}
+		if st.Size() > maxWeightsFileBytes {
+			return fmt.Errorf("weights file too large: %d bytes (max %d)", st.Size(), maxWeightsFileBytes)
+		}
 		data, err := os.ReadFile(*inputFile)
 		if err != nil {
 			logging.Printf("Error reading weights file: %v\n", err)
@@ -219,6 +278,17 @@ func Run(args []string) error {
 		if err := json.Unmarshal(data, &wf); err != nil {
 			logging.Printf("Error parsing weights JSON: %v\n", err)
 			return err
+		}
+		if len(wf.Weights) == 0 || len(wf.Weights[0]) == 0 {
+			return fmt.Errorf("weights matrix must be non-empty")
+		}
+		if err := validateArrayGeometry(len(wf.Weights), len(wf.Weights[0])); err != nil {
+			return fmt.Errorf("invalid weight matrix shape: %w", err)
+		}
+		for i := range wf.Weights {
+			if len(wf.Weights[i]) != len(wf.Weights[0]) {
+				return fmt.Errorf("weights row %d has %d columns, expected %d", i, len(wf.Weights[i]), len(wf.Weights[0]))
+			}
 		}
 
 		logging.Printf("Loaded weights: %s (%dx%d = %d weights)\n",

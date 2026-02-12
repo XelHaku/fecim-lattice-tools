@@ -14,6 +14,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const maxConfigFileSizeBytes int64 = 10 * 1024 * 1024 // 10 MiB
+
 // CommonFlags contains the standard CLI flags used across all commands.
 type CommonFlags struct {
 	JSON     bool   // Output results as JSON
@@ -189,6 +191,20 @@ func configSearchRoots() []string {
 	return roots
 }
 
+func readFileWithLimit(path string, maxBytes int64) ([]byte, error) {
+	if maxBytes <= 0 {
+		return nil, fmt.Errorf("invalid maxBytes: %d", maxBytes)
+	}
+	st, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	if st.Size() > maxBytes {
+		return nil, fmt.Errorf("file too large: %d bytes (max %d)", st.Size(), maxBytes)
+	}
+	return os.ReadFile(path)
+}
+
 func resolveConfigPath(path string) (string, error) {
 	trimmed := strings.TrimSpace(path)
 	if trimmed == "" {
@@ -238,7 +254,7 @@ func (cl *ConfigLoader) Load(target interface{}) error {
 		return fmt.Errorf("failed to resolve config file %q: %w", cl.configPath, err)
 	}
 
-	data, err := os.ReadFile(resolvedPath)
+	data, err := readFileWithLimit(resolvedPath, maxConfigFileSizeBytes)
 	if err != nil {
 		return fmt.Errorf("failed to read config file: %w", err)
 	}
