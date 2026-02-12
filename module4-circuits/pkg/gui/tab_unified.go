@@ -57,7 +57,17 @@ var senseMeasurementPresets = []senseMeasurementPreset{
 	{Name: "Ultra-Low Current", Rf: 500.0, Vmin: 0.20, Vmax: 0.80},
 }
 
-const customSensePresetName = "Custom"
+const (
+	customSensePresetName = "Custom"
+	actionLabelProgram    = "Program Cell"
+	actionLabelCompute    = "Run MVM"
+	actionLabelUndo       = "Undo"
+	actionLabelRandom     = "Random Array"
+	actionLabelReset      = "Reset Array"
+	actionLabelExport     = "Export"
+	labelOverlay          = "Overlay:"
+	labelZoom             = "Zoom:"
+)
 
 func formatCurrentA(currentA float64) string {
 	return formatSignedScaled(currentA, []scaledUnit{
@@ -271,7 +281,8 @@ func (ca *CircuitsApp) createUnifiedConfigModeRow() fyne.CanvasObject {
 // createUnifiedActionRow creates the action buttons row
 func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 	// Primary action buttons
-	ca.actionWriteCellBtn = widget.NewButton("Program Cell", func() { ca.onUnifiedProgram() })
+	ca.actionWriteCellBtn = widget.NewButton(actionLabelProgram, func() { ca.onUnifiedProgram() })
+	sharedwidgets.SetAccessibleLabel(ca.actionWriteCellBtn, "Program selected cell")
 	ca.actionWriteCellBtn.Importance = widget.HighImportance
 	programInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
 		dialog.ShowInformation("Program Cell",
@@ -279,23 +290,27 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 	})
 	programInfo.Importance = widget.LowImportance
 
-	ca.actionComputeBtn = widget.NewButton("MVM", func() {
+	ca.actionComputeBtn = widget.NewButton(actionLabelCompute, func() {
 		ca.onUnifiedCompute()
 	})
+	sharedwidgets.SetAccessibleLabel(ca.actionComputeBtn, "Run matrix-vector multiply")
 
 	// Utility buttons
-	ca.undoHistoryBtn = widget.NewButton("Undo", func() {
+	ca.undoHistoryBtn = widget.NewButton(actionLabelUndo, func() {
 		ca.onUndo()
 	})
+	sharedwidgets.SetAccessibleLabel(ca.undoHistoryBtn, "Undo last array operation")
 	ca.undoHistoryBtn.Disable()
 
-	ca.actionRandomArrayBtn = widget.NewButton("Random Array", func() {
+	ca.actionRandomArrayBtn = widget.NewButton(actionLabelRandom, func() {
 		ca.onUnifiedRandomArray()
 	})
+	sharedwidgets.SetAccessibleLabel(ca.actionRandomArrayBtn, "Fill array with random conductance levels")
 
-	ca.actionResetArrayBtn = widget.NewButton("Reset Array", func() {
+	ca.actionResetArrayBtn = widget.NewButton(actionLabelReset, func() {
 		ca.onUnifiedReset()
 	})
+	sharedwidgets.SetAccessibleLabel(ca.actionResetArrayBtn, "Reset all cells to default level")
 
 	// Tools button with status indicators
 	toolWidgets := sharedwidgets.NewToolValidationWidgets(sharedwidgets.ToolValidationOptions{
@@ -329,10 +344,12 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 	zoomOutBtn := widget.NewButton("−", func() {
 		ca.zoomSlider.SetValue(ca.zoomSlider.Value - ca.zoomSlider.Step)
 	})
+	sharedwidgets.SetAccessibleLabel(zoomOutBtn, "Zoom out")
 	zoomOutBtn.Importance = widget.LowImportance
 	zoomInBtn := widget.NewButton("+", func() {
 		ca.zoomSlider.SetValue(ca.zoomSlider.Value + ca.zoomSlider.Step)
 	})
+	sharedwidgets.SetAccessibleLabel(zoomInBtn, "Zoom in")
 	zoomInBtn.Importance = widget.LowImportance
 	zoomSliderWrap := container.NewGridWrap(fyne.NewSize(220, 36), ca.zoomSlider)
 
@@ -340,12 +357,14 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 		logAction("button_zoom_fit")
 		ca.zoomSlider.SetValue(1.0)
 	})
+	sharedwidgets.SetAccessibleLabel(ca.actionFitBtn, "Reset zoom to 100 percent")
 
 	// Export button
-	exportBtn := widget.NewButton("Export", func() {
+	exportBtn := widget.NewButton(actionLabelExport, func() {
 		logAction("button_export")
 		ca.exportSimulationData()
 	})
+	sharedwidgets.SetAccessibleLabel(exportBtn, "Export current simulation state")
 
 	ca.readOverlaySelect = widget.NewSelect([]string{"Off", "Vcell", "Icell"}, func(mode string) {
 		if mode == "" {
@@ -357,6 +376,8 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 		ca.refreshUnifiedArray()
 	})
 	ca.readOverlaySelect.SetSelected(ca.readOverlayMode)
+	sharedwidgets.SetAccessibleLabel(ca.readOverlaySelect, "Read overlay mode")
+	sharedwidgets.SetAccessibleLabel(ca.zoomSlider, "Array zoom level")
 
 	// Row: Program Cell | MVM | Sep | Undo | Random Array | Reset Array | Export | Overlay | Sep | Zoom controls | Spacer | Tools status
 	return container.NewHBox(
@@ -368,10 +389,10 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 		ca.actionRandomArrayBtn,
 		ca.actionResetArrayBtn,
 		exportBtn,
-		widget.NewLabel("Overlay:"),
+		widget.NewLabel(labelOverlay),
 		ca.readOverlaySelect,
 		widget.NewSeparator(),
-		widget.NewLabel("Zoom:"),
+		widget.NewLabel(labelZoom),
 		zoomOutBtn,
 		zoomSliderWrap,
 		zoomInBtn,
@@ -436,15 +457,22 @@ func (ca *CircuitsApp) createArraySizeSelector() fyne.CanvasObject {
 	selector := widget.NewSelect(options, func(selected string) {
 		// Parse size from "NxN" format
 		var rows, cols int
-		n, _ := fmt.Sscanf(selected, "%dx%d", &rows, &cols)
-		if n == 2 && rows > 0 && rows <= MaxArraySize && cols > 0 && cols <= MaxArraySize {
-			logInput("array_size=%s", selected)
-			ca.resizeArray(rows, cols)
+		n, err := fmt.Sscanf(selected, "%dx%d", &rows, &cols)
+		if err != nil || n != 2 {
+			dialog.ShowError(fmt.Errorf("invalid array size format %q; expected NxN", selected), ca.window)
+			return
 		}
+		if rows <= 0 || rows > MaxArraySize || cols <= 0 || cols > MaxArraySize {
+			dialog.ShowError(fmt.Errorf("array size %dx%d is outside supported range 1..%d", rows, cols, MaxArraySize), ca.window)
+			return
+		}
+		logInput("array_size=%s", selected)
+		ca.resizeArray(rows, cols)
 	})
 
 	// Set default selection
 	selector.SetSelected(fmt.Sprintf("%dx%d", ca.arrayRows, ca.arrayCols))
+	sharedwidgets.SetAccessibleLabel(selector, "Array size selector")
 
 	sizeInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
 		dialog.ShowInformation("Array Size",
@@ -582,7 +610,8 @@ func (ca *CircuitsApp) createADCBitsSelector() fyne.CanvasObject {
 		case "8-bit (256)":
 			bits = 8
 		default:
-			bits = 5
+			dialog.ShowError(fmt.Errorf("unsupported ADC selection %q", selected), ca.window)
+			return
 		}
 		logInput("adc_bits=%d", bits)
 		ca.deviceState.SetADCBits(bits)
@@ -593,6 +622,7 @@ func (ca *CircuitsApp) createADCBitsSelector() fyne.CanvasObject {
 
 	// Set default selection
 	selector.SetSelected("5-bit (32)")
+	sharedwidgets.SetAccessibleLabel(selector, "ADC resolution selector")
 
 	adcInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
 		dialog.ShowInformation("ADC Resolution",

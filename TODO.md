@@ -397,6 +397,16 @@ Evidence (2026-02-11):
 | G09 | LK perf evidence script: 3 targets → steps, dt stats, solverMs | `scripts/` | ✅ | Done (`scripts/lk_perf_evidence.sh` runs LO/MID/HI and prints perf + ISPP accounting) |
 | G10 | Add `pprof` toggle for headless hysteresis runs (`FECIM_PPROF=1`) | Debug | ✅ | Done (`FECIM_PPROF=1` + optional `FECIM_PPROF_ADDR`) |
 
+## Performance Hotspots (2026-02-11)
+
+| ID | Benchmark | Baseline | Threshold Trigger | Status | Notes |
+|----|-----------|----------|-------------------|--------|-------|
+| PERF-01 | `BenchmarkQuantize30Levels` (`module3-mnist/pkg/core`) | 1,234,561 ns/op, 165 allocs/op | >1ms/op and >10 allocs/op | ✅ | Optimized quantization output allocation to single contiguous backing slice in `module3-mnist/pkg/core/quantize.go`.
+| PERF-02 | `BenchmarkDualModeInference` (`module3-mnist/pkg/core`) | 723,934 ns/op, 427 allocs/op | >10 allocs/op | ⏳ | High allocation pressure in inference pipeline (`quantizeDAC`/`quantizeADC`/`relu`/`softmax` staging). Follow-up required for scratch-buffer/in-place path.
+| PERF-03 | `BenchmarkPreisachStack_Update` (`shared/physics`) | 2,033 ns/op, 45 allocs/op | >10 allocs/op | ✅ | Eliminated per-call temporary slice in `ComputePolarization` (allocation-free stack traversal) in `shared/physics/preisach.go`.
+| PERF-04 | `BenchmarkDiscreteLevel` (`shared/physics`) | 4,091 ns/op, 32 allocs/op | >10 allocs/op | ✅ | Removed hot-path structured debug logging allocations in `DiscreteLevel` (`shared/physics/material.go`).
+| PERF-05 | `BenchmarkAllMaterials` (`shared/physics`) | 2,240 ns/op, 14 allocs/op | >10 allocs/op | ⏳ | Config-load/material-construction allocations remain; candidate for cache-on-load optimization.
+
 ### GUI Correctness
 
 | ID | Task | Source | Status | Est. |
@@ -564,6 +574,12 @@ Evidence note (2026-02-11, EDA validation): added `module6-eda/pkg/compiler/mode
 | UXP-10 | Normalize inconsistent button casing (ALL CAPS vs Title Case) across module4 reference/comparison tabs | module4-circuits | ⏳ |
 | UXP-11 | Replace remaining one-letter field labels in builder panel (`W/H/Cap/Leak`) with descriptive labels while preserving compact layout | module6-eda | ⏳ |
 | UXP-12 | Add keyboard shortcuts for Builder actions (Generate All, Validate All, Export Package) | module6-eda | ⏳ |
+
+**Evidence (UXP-01..UXP-08, 2026-02-11):**
+- `module4-circuits/pkg/gui/tab_unified.go`: introduced shared action/label constants, added callback validation errors for invalid array-size and ADC selections, and added accessibility labels for unified action controls.
+- `module4-circuits/pkg/gui/keyboard.go`: added unified-view shortcuts (`=`, `-`, `F`, `E`, `Z`) and synced keyboard-help text to actual bindings.
+- `module7-docs/pkg/gui/embedded.go`: added accessible labels for icon-only top-bar buttons (search / TOC / sidebar).
+- `module7-docs/pkg/gui/search.go`: added accessible label for search query entry.
 
 ### Array Simulation Fidelity (from docs)
 

@@ -19,6 +19,8 @@ import (
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // IndexEntry represents a term occurrence in a document.
@@ -655,6 +657,7 @@ func NewSearchDialog(index *SearchIndex, parent fyne.Window, onSelected func(pat
 
 	sd.entry = widget.NewEntry()
 	sd.entry.SetPlaceHolder("Search documentation...")
+	sharedwidgets.SetAccessibleLabel(sd.entry, "Documentation search query")
 	sd.entry.OnChanged = sd.onQueryChanged
 
 	sd.resultsList = widget.NewList(

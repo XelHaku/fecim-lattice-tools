@@ -64,6 +64,11 @@ func (ca *CircuitsApp) setupKeyboard() {
 	km.AddCustomShortcut("read_mode", fyne.KeyD, 0, "Switch to Read mode")
 	km.AddCustomShortcut("compute_mode", fyne.KeyM, 0, "Switch to Compute mode")
 	km.AddCustomShortcut("animate", fyne.KeyA, 0, "Start/stop animation")
+	km.AddCustomShortcut("zoom_in", fyne.KeyEqual, 0, "Zoom in array view")
+	km.AddCustomShortcut("zoom_out", fyne.KeyMinus, 0, "Zoom out array view")
+	km.AddCustomShortcut("fit_view", fyne.KeyF, 0, "Reset zoom to 100%")
+	km.AddCustomShortcut("export_snapshot", fyne.KeyE, 0, "Export simulation snapshot")
+	km.AddCustomShortcut("undo", fyne.KeyZ, 0, "Undo last operation")
 
 	// Register the manager
 	km.Register()
@@ -108,6 +113,21 @@ func (ca *CircuitsApp) handleKeyPress(ke *fyne.KeyEvent) {
 	case fyne.KeySpace:
 		// Toggle animation (same as A)
 		ca.toggleAnimation()
+
+	case fyne.KeyEqual:
+		ca.adjustUnifiedZoom(1)
+
+	case fyne.KeyMinus:
+		ca.adjustUnifiedZoom(-1)
+
+	case fyne.KeyF:
+		ca.fitUnifiedZoom()
+
+	case fyne.KeyE:
+		ca.exportUnifiedSnapshot()
+
+	case fyne.KeyZ:
+		ca.undoUnifiedAction()
 
 	case fyne.KeySlash:
 		// Show help
@@ -248,6 +268,33 @@ func (ca *CircuitsApp) readSelectedCell() {
 func (ca *CircuitsApp) runCompute() {
 	if ca.opsComputeBtn != nil && ca.currentMode == ModeCompute {
 		ca.opsComputeBtn.OnTapped()
+		return
+	}
+	if ca.actionComputeBtn != nil && ca.currentMode == ModeCompute {
+		ca.actionComputeBtn.OnTapped()
+	}
+}
+
+func (ca *CircuitsApp) adjustUnifiedZoom(direction int) {
+	if ca.zoomSlider == nil || ca.zoomSlider.Step <= 0 {
+		return
+	}
+	ca.zoomSlider.SetValue(ca.zoomSlider.Value + float64(direction)*ca.zoomSlider.Step)
+}
+
+func (ca *CircuitsApp) fitUnifiedZoom() {
+	if ca.actionFitBtn != nil {
+		ca.actionFitBtn.OnTapped()
+	}
+}
+
+func (ca *CircuitsApp) exportUnifiedSnapshot() {
+	ca.exportSimulationData()
+}
+
+func (ca *CircuitsApp) undoUnifiedAction() {
+	if ca.undoHistoryBtn != nil && !ca.undoHistoryBtn.Disabled() {
+		ca.undoHistoryBtn.OnTapped()
 	}
 }
 
@@ -300,7 +347,9 @@ Operations:
   Ctrl+R    Reset array
   P         Program selected cell (Write mode)
   R         Read selected cell (Read mode)
-  C         Run compute operation (Compute mode)
+  C         Run MVM operation (Compute mode)
+  Z         Undo last operation
+  E         Export simulation snapshot
 
 Mode Switching:
   W         Switch to Write mode
@@ -310,6 +359,9 @@ Mode Switching:
 Configuration:
   +/=       Increase DAC bits
   -         Decrease DAC bits
+  =         Zoom in array view
+  -         Zoom out array view
+  F         Reset zoom to 100%
 
 Data:
   Ctrl+S    Save/Export data

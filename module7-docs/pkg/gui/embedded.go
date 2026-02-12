@@ -230,13 +230,16 @@ func (app *EmbeddedDocsApp) buildTopBar() fyne.CanvasObject {
 	searchBtn := widget.NewButtonWithIcon("", theme.SearchIcon(), func() {
 		app.showSearch()
 	})
+	sharedWidgets.SetAccessibleLabel(searchBtn, "Search documentation")
 
 	tocToggleBtn := widget.NewButtonWithIcon("", theme.ListIcon(), func() {
 		app.layoutManager.ToggleToc()
 	})
+	sharedWidgets.SetAccessibleLabel(tocToggleBtn, "Toggle table of contents")
 	sidebarToggleBtn := widget.NewButtonWithIcon("", theme.MenuIcon(), func() {
 		app.layoutManager.ToggleSidebar()
 	})
+	sharedWidgets.SetAccessibleLabel(sidebarToggleBtn, "Toggle document sidebar")
 
 	return container.NewBorder(
 		nil, nil,
