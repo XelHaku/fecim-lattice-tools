@@ -319,26 +319,28 @@ func (l *Logger) EntryChange(entryName string, text string) {
 // Calculation logs a physics/math calculation at DEBUG level
 // Format: [DEBUG] CALC: funcName(param1=value1, param2=value2) = result
 func (l *Logger) Calculation(funcName string, inputs map[string]interface{}, result interface{}) {
-	msg := fmt.Sprintf("%s(%s) = %v", funcName, formatParams(inputs), result)
+	safeInputs := sanitizeFields(inputs)
+	msg := fmt.Sprintf("%s(%s) = %v", funcName, formatParams(safeInputs), result)
 	entry := NewEntry(LevelDebug, l.demoName, msg).WithCategory("CALC")
-	entry.WithFields(inputs).WithField("result", result)
+	entry.WithFields(safeInputs).WithField("result", result)
 	AddToBuffer(entry)
 
 	if IsVerbose(VerbosityDebug) {
-		l.Printf("[DEBUG] CALC: %s(%s) = %v", funcName, formatParams(inputs), result)
+		l.Printf("[DEBUG] CALC: %s(%s) = %v", funcName, formatParams(safeInputs), result)
 	}
 }
 
 // Input logs function entry with parameters at DEBUG level
 // Format: [DEBUG] INPUT: funcName(param1=value1, param2=value2)
 func (l *Logger) Input(funcName string, params map[string]interface{}) {
-	msg := fmt.Sprintf("%s(%s)", funcName, formatParams(params))
+	safeParams := sanitizeFields(params)
+	msg := fmt.Sprintf("%s(%s)", funcName, formatParams(safeParams))
 	entry := NewEntry(LevelDebug, l.demoName, msg).WithCategory("INPUT")
-	entry.WithFields(params)
+	entry.WithFields(safeParams)
 	AddToBuffer(entry)
 
 	if IsVerbose(VerbosityDebug) {
-		l.Printf("[DEBUG] INPUT: %s(%s)", funcName, formatParams(params))
+		l.Printf("[DEBUG] INPUT: %s(%s)", funcName, formatParams(safeParams))
 	}
 }
 
@@ -383,22 +385,43 @@ func (l *Logger) ErrorContext(operation string, err error, details map[string]in
 		errMsg = "<nil>"
 	}
 
+	safeDetails := sanitizeFields(details)
 	var msg string
-	if len(details) > 0 {
-		msg = fmt.Sprintf("%s: %s (%s)", operation, errMsg, formatParams(details))
+	if len(safeDetails) > 0 {
+		msg = fmt.Sprintf("%s: %s (%s)", operation, errMsg, formatParams(safeDetails))
 	} else {
 		msg = fmt.Sprintf("%s: %s", operation, errMsg)
 	}
 
 	entry := NewEntry(LevelError, l.demoName, msg).WithError(err)
-	entry.WithField("operation", operation).WithFields(details)
+	entry.WithField("operation", operation).WithFields(safeDetails)
 	AddToBuffer(entry)
 
-	if len(details) > 0 {
-		l.Printf("[ERROR] %s: %s (%s)", operation, errMsg, formatParams(details))
+	if len(safeDetails) > 0 {
+		l.Printf("[ERROR] %s: %s (%s)", operation, errMsg, formatParams(safeDetails))
 	} else {
 		l.Printf("[ERROR] %s: %s", operation, errMsg)
 	}
+}
+
+func sanitizeFields(params map[string]interface{}) map[string]interface{} {
+	if len(params) == 0 {
+		return params
+	}
+	out := make(map[string]interface{}, len(params))
+	for k, v := range params {
+		if isSensitiveKey(k) {
+			out[k] = "[REDACTED]"
+			continue
+		}
+		out[k] = v
+	}
+	return out
+}
+
+func isSensitiveKey(k string) bool {
+	k = strings.ToLower(strings.TrimSpace(k))
+	return strings.Contains(k, "password") || strings.Contains(k, "passwd") || strings.Contains(k, "secret") || strings.Contains(k, "token") || strings.Contains(k, "api_key") || strings.Contains(k, "apikey")
 }
 
 // formatParams formats a map of parameters as "key1=value1, key2=value2"

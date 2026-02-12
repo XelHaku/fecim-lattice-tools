@@ -5,6 +5,8 @@ package presets
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -193,6 +195,12 @@ func (p *Preset) Validate() error {
 	}
 	if p.Config == nil {
 		return fmt.Errorf("preset config is required")
+	}
+	if p.Metadata.ID == "" {
+		return fmt.Errorf("preset id is required")
+	}
+	if strings.Contains(p.Metadata.ID, "..") || filepath.Base(p.Metadata.ID) != p.Metadata.ID || strings.ContainsAny(p.Metadata.ID, `/\\`) {
+		return fmt.Errorf("preset id contains unsafe path characters")
 	}
 	return nil
 }
