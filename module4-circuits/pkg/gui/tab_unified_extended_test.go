@@ -58,14 +58,14 @@ func TestUnifiedTabSliders(t *testing.T) {
 	if ca.zoomSlider == nil {
 		t.Fatal("expected zoom slider")
 	}
-	if ca.zoomSlider.Min != 0.5 {
-		t.Fatalf("zoom slider min: got %.2f, want 0.5", ca.zoomSlider.Min)
+	if ca.zoomSlider.Min != 0.25 {
+		t.Fatalf("zoom slider min: got %.2f, want 0.25", ca.zoomSlider.Min)
 	}
-	if ca.zoomSlider.Max != 3.0 {
-		t.Fatalf("zoom slider max: got %.2f, want 3.0", ca.zoomSlider.Max)
+	if ca.zoomSlider.Max != 4.0 {
+		t.Fatalf("zoom slider max: got %.2f, want 4.0", ca.zoomSlider.Max)
 	}
-	if ca.zoomSlider.Step != 0.1 {
-		t.Fatalf("zoom slider step: got %.2f, want 0.1", ca.zoomSlider.Step)
+	if ca.zoomSlider.Step != 0.05 {
+		t.Fatalf("zoom slider step: got %.2f, want 0.05", ca.zoomSlider.Step)
 	}
 
 	// Test zoom value change

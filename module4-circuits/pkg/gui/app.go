@@ -301,9 +301,12 @@ type CircuitsApp struct {
 
 	// Action buttons (stored for mode-based enable/disable)
 	actionWriteCellBtn   *widget.Button
+	actionProgramInfoBtn *widget.Button
 	actionComputeBtn     *widget.Button
 	actionRandomArrayBtn *widget.Button
 	actionResetArrayBtn  *widget.Button
+	actionZoomOutBtn     *widget.Button
+	actionZoomInBtn      *widget.Button
 	actionFitBtn         *widget.Button
 }
 
@@ -382,71 +385,14 @@ func (ca *CircuitsApp) Run() {
 	ca.window.ShowAndRun()
 }
 
-// createMainLayout builds the main application layout with 3 views.
+// createMainLayout builds the main application layout.
+// Only OPERATIONS view is exposed; legacy View selector removed.
 func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
-	// Create tab contents (pre-loaded to avoid layout cascades on Wayland/Sway)
-	operationsContent := ca.createUnifiedView()   // UNIFIED: from tab_unified.go (replaces tab_operations.go)
-	comparisonContent := ca.createComparisonTab() // KEEP: from tab_comparison.go
-	referenceContent := ca.createReferenceTab()   // KEEP: from tab_reference.go
+	operationsContent := ca.createUnifiedView()
 
-	// All views for Hide/Show toggling
-	viewNames := []string{"OPERATIONS", "COMPARISON", "REFERENCE"}
-	allViews := []fyne.CanvasObject{
-		operationsContent, comparisonContent, referenceContent,
-	}
-
-	// View selector dropdown
-	viewSelector := widget.NewSelect(viewNames, nil)
-	viewSelector.SetSelected("OPERATIONS")
-
-	// Content container using Stack
-	contentContainer := container.NewStack(allViews...)
-
-	// Track current view
-	currentView := ""
-
-	// Update view based on selection
-	viewSelector.OnChanged = func(view string) {
-		sharedwidgets.DebugInteraction(fmt.Sprintf("circuits viewSelector changed to '%s'", view))
-		logAction("view_switch %s", view)
-		if view == currentView {
-			return
-		}
-		currentView = view
-
-		// Hide all views, then show selected
-		for i, v := range allViews {
-			if viewNames[i] == view {
-				v.Show()
-			} else {
-				v.Hide()
-			}
-		}
-
-		// Refresh canvases when specific views shown
-		if view == "OPERATIONS" {
-			ca.refreshUnifiedArray()
-		} else if view == "REFERENCE" {
-			ca.refreshTimingDiagrams()
-		}
-	}
-
-	// Initialize: show first view, hide others
-	for i, v := range allViews {
-		if i == 0 {
-			v.Show()
-		} else {
-			v.Hide()
-		}
-	}
-	currentView = "OPERATIONS"
-
-	// Header with inline view selector (title moved to main navbar)
 	headerRow := container.NewHScroll(container.NewHBox(
-		widget.NewLabel("View:"),
-		viewSelector,
+		widget.NewLabel("OPERATIONS | DAC -> FeFET -> TIA -> ADC"),
 		layout.NewSpacer(),
-		widget.NewLabel("3 Views | DAC -> FeFET -> TIA -> ADC"),
 	))
 
 	header := container.NewVBox(
@@ -454,7 +400,6 @@ func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 		widget.NewSeparator(),
 	)
 
-	// Footer
 	footerLabel := widget.NewLabel("FeCIM Ferroelectric Compute-in-Memory | Based on Published Research")
 	footerLabel.Alignment = fyne.TextAlignCenter
 
@@ -463,7 +408,7 @@ func (ca *CircuitsApp) createMainLayout() fyne.CanvasObject {
 		footerLabel,
 	)
 
-	return container.NewBorder(header, footer, nil, nil, contentContainer)
+	return container.NewBorder(header, footer, nil, nil, operationsContent)
 }
 
 // ============================================================================

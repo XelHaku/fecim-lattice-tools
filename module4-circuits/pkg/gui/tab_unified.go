@@ -8,6 +8,7 @@ import (
 	"math"
 	"math/rand"
 	"strconv"
+	"strings"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -21,6 +22,7 @@ import (
 	configphysics "fecim-lattice-tools/config/physics"
 	"fecim-lattice-tools/module4-circuits/pkg/arraysim"
 	sharedphysics "fecim-lattice-tools/shared/physics"
+	"fecim-lattice-tools/shared/validation"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
@@ -273,11 +275,11 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 	// Primary action buttons
 	ca.actionWriteCellBtn = widget.NewButton("Program Cell", func() { ca.onUnifiedProgram() })
 	ca.actionWriteCellBtn.Importance = widget.HighImportance
-	programInfo := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+	ca.actionProgramInfoBtn = widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
 		dialog.ShowInformation("Program Cell",
 			"Apply DAC write pulse to selected cell (ISPP).\nPassive arrays use V/2 half-select.", ca.window)
 	})
-	programInfo.Importance = widget.LowImportance
+	ca.actionProgramInfoBtn.Importance = widget.LowImportance
 
 	ca.actionComputeBtn = widget.NewButton("MVM", func() {
 		ca.onUnifiedCompute()
@@ -307,6 +309,30 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 		IncludeInstall:      true,
 		IncludeInstallNotes: true,
 	})
+	go func() {
+		tools := validation.CheckAllTools()
+		missing := make([]string, 0)
+		for _, tool := range tools {
+			if tool.Status != validation.StatusInstalled {
+				missing = append(missing, tool.Name)
+			}
+		}
+		if len(missing) == 0 {
+			return
+		}
+		sharedwidgets.SafeDo(func() {
+			if ca.operationsStatusLabel != nil {
+				ca.operationsStatusLabel.SetText(fmt.Sprintf("Missing validation tools: %s (open Tools)", strings.Join(missing, ", ")))
+			}
+			if ca.window != nil {
+				dialog.ShowInformation(
+					"Validation tools missing",
+					fmt.Sprintf("Missing at startup: %s.\n\nUse the Tools button to install or re-check.", strings.Join(missing, ", ")),
+					ca.window,
+				)
+			}
+		})
+	}()
 
 	// Zoom controls
 	ca.zoomLabel = widget.NewLabel("100%")
@@ -325,6 +351,16 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 			}
 		})
 	}
+
+	ca.actionZoomOutBtn = widget.NewButton("−", func() {
+		ca.zoomSlider.SetValue(ca.zoomSlider.Value - ca.zoomSlider.Step)
+	})
+	ca.actionZoomOutBtn.Importance = widget.LowImportance
+	ca.actionZoomInBtn = widget.NewButton("+", func() {
+		ca.zoomSlider.SetValue(ca.zoomSlider.Value + ca.zoomSlider.Step)
+	})
+	ca.actionZoomInBtn.Importance = widget.LowImportance
+	zoomSliderWrap := container.NewGridWrap(fyne.NewSize(220, 36), ca.zoomSlider)
 
 	ca.actionFitBtn = widget.NewButton("Fit", func() {
 		logAction("button_zoom_fit")
@@ -351,7 +387,7 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 	// Row: Program Cell | MVM | Sep | Undo | Random Array | Reset Array | Export | Overlay | Sep | Zoom controls | Spacer | Tools status
 	return container.NewHBox(
 		ca.actionWriteCellBtn,
-		programInfo,
+		ca.actionProgramInfoBtn,
 		ca.actionComputeBtn,
 		widget.NewSeparator(),
 		ca.undoHistoryBtn,
@@ -362,7 +398,9 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 		ca.readOverlaySelect,
 		widget.NewSeparator(),
 		widget.NewLabel("Zoom:"),
-		ca.zoomSlider,
+		ca.actionZoomOutBtn,
+		zoomSliderWrap,
+		ca.actionZoomInBtn,
 		ca.zoomLabel,
 		ca.actionFitBtn,
 		layout.NewSpacer(),
@@ -783,23 +821,34 @@ func (ca *CircuitsApp) updateActionButtons() {
 	mode := ca.deviceState.GetOperationMode()
 
 	sharedwidgets.SafeDo(func() {
-		// Program Cell: only in WRITE mode
+		// Program Cell: visible/enabled only in WRITE mode
 		if ca.actionWriteCellBtn != nil {
 			if mode == OpModeWrite {
+				ca.actionWriteCellBtn.Show()
 				ca.actionWriteCellBtn.Enable()
 				ca.actionWriteCellBtn.Importance = widget.HighImportance
 			} else {
+				ca.actionWriteCellBtn.Hide()
 				ca.actionWriteCellBtn.Disable()
 				ca.actionWriteCellBtn.Importance = widget.MediumImportance
 			}
 			ca.actionWriteCellBtn.Refresh()
 		}
+		if ca.actionProgramInfoBtn != nil {
+			if mode == OpModeWrite {
+				ca.actionProgramInfoBtn.Show()
+			} else {
+				ca.actionProgramInfoBtn.Hide()
+			}
+		}
 
-		// Compute MVM: only in COMPUTE mode
+		// MVM: visible/enabled only in COMPUTE mode
 		if ca.actionComputeBtn != nil {
 			if mode == OpModeCompute {
+				ca.actionComputeBtn.Show()
 				ca.actionComputeBtn.Enable()
 			} else {
+				ca.actionComputeBtn.Hide()
 				ca.actionComputeBtn.Disable()
 			}
 		}
@@ -1630,18 +1679,34 @@ func (ca *CircuitsApp) createSensePanel() fyne.CanvasObject {
 	})
 	ca.setSensePresetSelection(senseMeasurementPresets[0].Name)
 
-	controlsRow := container.NewGridWithColumns(4,
-		container.NewHBox(widget.NewLabel("Preset:"), ca.sensePresetSelect),
-		container.NewHBox(widget.NewLabel("Rf (kΩ):"), ca.senseRfEntry),
-		container.NewHBox(widget.NewLabel("ADC Vmin (V):"), ca.senseAdcVminEntry),
-		container.NewHBox(widget.NewLabel("Vmax (V):"), ca.senseAdcVmaxEntry),
+	controlWithHelp := func(label, title, msg string, input fyne.CanvasObject) fyne.CanvasObject {
+		info := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+			dialog.ShowInformation(title, msg, ca.window)
+		})
+		info.Importance = widget.LowImportance
+		labelRow := container.NewHBox(widget.NewLabel(label), info)
+		row := container.NewBorder(nil, nil, labelRow, nil, input)
+		return container.NewGridWrap(fyne.NewSize(260, 36), row)
+	}
+
+	controlsContent := container.NewHBox(
+		controlWithHelp("Preset:", "Sense Preset",
+			"Preset configures the read chain end-to-end (DAC Vread → array current → TIA gain → ADC range). Choose by expected current magnitude.", ca.sensePresetSelect),
+		controlWithHelp("Rf (kΩ):", "TIA Feedback Resistor (Rf)",
+			"TIA stage converts row current to voltage: Vout = Irow × Rf. Larger Rf increases sensitivity but can saturate sooner.", ca.senseRfEntry),
+		controlWithHelp("ADC Vmin (V):", "ADC Lower Reference (Vmin)",
+			"ADC maps TIA output to codes between Vmin and Vmax. Set Vmin near the minimum expected TIA output in READ mode.", ca.senseAdcVminEntry),
+		controlWithHelp("ADC Vmax (V):", "ADC Upper Reference (Vmax)",
+			"ADC full-scale top for the read chain. Keep Vmax above expected TIA output peaks to avoid clipping and preserve linear code mapping.", ca.senseAdcVmaxEntry),
 	)
+	controlsScroll := container.NewHScroll(controlsContent)
+	controlsScroll.SetMinSize(fyne.NewSize(980, 44))
 
 	return container.NewVBox(
 		headerRow,
 		metricsRow,
 		rangeRow,
-		controlsRow,
+		controlsScroll,
 	)
 }
 
