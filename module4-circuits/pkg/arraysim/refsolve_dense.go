@@ -11,13 +11,13 @@ import (
 // The network model is a resistive wordline/bitline grid with a conductance at each
 // intersection.
 //
-// Boundary conditions (scaffolding choice):
-//   - Each row wordline is driven from the left through one segment resistance RWordLine.
-//   - Each column bitline is driven from the top through one segment resistance RBitLine.
-//   - Wordline segments connect adjacent columns.
-//   - Bitline segments connect adjacent rows.
-//
-// TODO(tier-b): Revisit boundary conditions to match the project SPICE conventions.
+// Boundary conditions (aligned with project SPICE deck conventions):
+//   - Each row WL is driven from the left through one segment resistance RWordLine
+//     (Thevenin drive point at c=0).
+//   - Each column BL is driven from the top through one segment resistance RBitLine
+//     (Thevenin drive point at r=0).
+//   - Opposite ends are left open (no explicit termination resistor).
+//   - Wordline segments connect adjacent columns; bitline segments connect adjacent rows.
 func referenceSolveDense(params SolveParams) (DCResult, error) {
 	rows := len(params.Conductance)
 	if rows == 0 {

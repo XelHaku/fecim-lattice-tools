@@ -51,6 +51,9 @@
 - Verification (FOCUS-31/32): `go test ./shared/theme`; `go test -race ./shared/theme ./shared/widgets -run TestFeCIMTheme_VariantAwareColors -count=1`; `go test -race ./shared/widgets -run TestNotificationType_String -count=1` (PASS).
 - FOCUS-34: `shared/widgets/debug.go` now bounds layout debug maps with `maxTrackedLayoutWidgets=1024` and periodic cleanup (`layoutCleanupInterval=256`) to prevent unbounded growth of `layoutCallCounts`/`lastLayoutTime`.
 - FOCUS-35: `shared/widgets/debug.go` debug prints (`[LAYOUT]`, `[RESIZE]`, `[RESIZE-BUG]`, `[INTERACTION]`) were migrated from `fmt.Printf` to `shared/logging.Printf` so debug output flows through the project logging system.
+- FOCUS-33: `shared/widgets/accessibility.go` now implements real accessibility hooks: `Announce()` trims/stores the latest message and emits `[A11Y][ANNOUNCE] ...` via shared logging, while `SetAccessibleLabel()` persists per-widget labels with `GetAccessibleLabel()` retrieval support.
+- FOCUS-33 tests added in `shared/widgets/accessibility_test.go`: `TestAnnounceStoresAndLogsMessage` and `TestSetAccessibleLabelStoresExposesAndClears`.
+- Verification (FOCUS-33): `go test ./shared/widgets -run 'Test(AnnounceStoresAndLogsMessage|SetAccessibleLabelStoresExposesAndClears|FocusIndicatorForwardsFocusableEvents|ContrastChecker)' -count=1`; `go test -race ./shared/widgets -run 'Test(AnnounceStoresAndLogsMessage|SetAccessibleLabelStoresExposesAndClears)' -count=1` (PASS).
 
 ### 3. UI Fixes
 
@@ -60,7 +63,7 @@
 | FOCUS-09 | Re-range values and layout so output is readable and meaningful | ⏳ |
 | FOCUS-31 | Toast/notification layout uses magic numbers (padding=12, icon=20, close=24) — not DPI-aware | ✅ |
 | FOCUS-32 | Theme has no dark/light mode variants — `FeCIMTheme.Color()` ignores variant parameter | ✅ |
-| FOCUS-33 | Screen reader `Announce()` and `SetAccessibleLabel()` are no-ops — placeholder only | ⏳ |
+| FOCUS-33 | Screen reader `Announce()` and `SetAccessibleLabel()` are no-ops — placeholder only | ✅ |
 | FOCUS-34 | Debug layout tracker uses unbounded maps (`layoutCallCounts`, `lastLayoutTime`) — memory leak risk | ✅ |
 | FOCUS-35 | Debug output goes to `fmt.Printf` (stdout) instead of logging system | ✅ |
 
@@ -319,17 +322,30 @@
 | M4-U3 | Sense-chain UI: TIA output, ADC code/saturation, measurement presets | `module4-circuits` | ✅ | 1-2hr |
 | M4-P1 | Audit DAC/ADC/TIA/ChargePump equations vs docs | `module4-circuits` | ✅ | Done (`docs/documentation/module4-circuits/PHYSICS.md` equations aligned to `shared/peripherals/{dac,adc,tia,chargepump}.go`) |
 | M4-P3 | Define/centralize cell geometry (area, thickness, stack) | `module4-circuits` | ✅ | 1-2hr |
-| M4-P4 | **Tier B DC solver** (full resistive network) + regression tests | `module4-circuits/pkg/arraysim` | ⏳ | 4-12hr |
+| M4-P4 | **Tier B DC solver** (full resistive network) + regression tests | `module4-circuits/pkg/arraysim` | ✅ | 4-12hr |
 | M4-U2d | Tests/visual checks for half-select disturb + DAC voltage display | `module4-circuits` | ✅ | Done (`tab_unified_halfselect_voltage_test.go`: verifies V/2 indicator text + overlay colors, disturb change reporting count, and ISPP status DAC voltage/code display) |
 
 ### Tier B Array Simulation (from code TODOs)
 
 | ID | Task | Source | Status | Est. |
 |----|------|--------|--------|------|
-| TIERB-1 | Replace dense reference solver with scalable sparse/iterative solver | `module4-circuits/pkg/arraysim/tier_b.go:11` | ⏳ | 4-8hr |
-| TIERB-2 | Add realistic boundary conditions and selector devices | `module4-circuits/pkg/arraysim/tier_b.go:12` | ⏳ | 2-4hr |
-| TIERB-3 | Validate against SPICE golden vectors | `module4-circuits/pkg/arraysim/tier_b.go:13` | ⏳ | 4-8hr |
-| TIERB-4 | Revisit boundary conditions to match SPICE conventions | `module4-circuits/pkg/arraysim/refsolve_dense.go:20` | ⏳ | 2-4hr |
+| TIERB-1 | Replace dense reference solver with scalable sparse/iterative solver | `module4-circuits/pkg/arraysim/tier_b.go` | ✅ | 4-8hr |
+| TIERB-2 | Add realistic boundary conditions and selector devices | `module4-circuits/pkg/arraysim/tier_b.go` | ⏳ | 2-4hr |
+| TIERB-3 | Validate against SPICE golden vectors | `module4-circuits/pkg/arraysim/tier_b.go` | ⏳ | 4-8hr |
+| TIERB-4 | Revisit boundary conditions to match SPICE conventions | `module4-circuits/pkg/arraysim/refsolve_dense.go` | ✅ | 2-4hr |
+
+**Evidence (TIERB-1 / TIERB-4 / M4-P4, 2026-02-11):**
+- Replaced Tier-B dense size-gated scaffold with scalable sparse iterative DC solver in `module4-circuits/pkg/arraysim/tier_b.go`:
+  - matrix-free PCG (Jacobi preconditioned) over full WL/BL nodal network,
+  - returns full node voltages (`WLNodes`, `BLNodes`) plus per-cell/row/col currents.
+- Clarified and locked boundary conventions in `module4-circuits/pkg/arraysim/refsolve_dense.go` to match SPICE deck assumptions:
+  - WL driven from left, BL driven from top, opposite ends open, segment resistance at drive point.
+- Added Tier-B DC regression coverage in:
+  - `module4-circuits/pkg/arraysim/tier_b_test.go` (dense-oracle equivalence + 64x64 convergence + boundary convention behavior),
+  - `module4-circuits/pkg/arraysim/tier_b_regression_test.go` (multi-size randomized oracle regressions).
+- Verification commands:
+  - `go test ./module4-circuits/pkg/arraysim -count=1` (PASS)
+  - `go test -race ./module4-circuits/pkg/arraysim -count=1` (PASS)
 
 ### Citations Pending
 
