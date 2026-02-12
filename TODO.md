@@ -78,6 +78,57 @@
 | FOCUS-47 | GPU peripherals size mismatch panics — should return error (`gpu_peripherals.go:506`) | ⏳ |
 | FOCUS-48 | Physics config init panics on missing YAML — should use `log.Fatal` or return error (`physics.go:432`) | ⏳ |
 
+### 3e. Module 1 Hysteresis (from hysteresis-prompt.md)
+
+| ID | Task | Status |
+|----|------|--------|
+| FOCUS-49 | L-K performance: quantify why slow — dtNominal too small, 21k-221k solver steps/target, math-bound | ⏳ |
+| FOCUS-50 | Frankenstein equation fidelity: verify all terms/signs/units match `hysteresis-gemini.md` formulation | ⏳ |
+| FOCUS-51 | Target/marker parity: GUI yellow target must match active controller target (no early jump to next) | ⏳ |
+| FOCUS-52 | Headless Preisach WRD/ISPP parity with GUI — run headless to debug target/marker mismatches | ⏳ |
+| FOCUS-53 | Physics equations UI: keep labels/links coherent across L-K, Preisach, and ISPP tabs | ⏳ |
+
+### 3f. Module 2 Crossbar (from module2-prompt.md)
+
+| ID | Task | Status |
+|----|------|--------|
+| FOCUS-54 | Verify conductance models (linear, exponential, lookup) and quantization to 30 levels match docs | ⏳ |
+| FOCUS-55 | Validate MVM/VMM equations, Ohm's law, DAC/ADC quantization, output normalization vs PHYSICS.md | ⏳ |
+| FOCUS-56 | Confirm IR drop solver (wire params, iterative relaxation, effective voltage) matches docs | ⏳ |
+| FOCUS-57 | Confirm sneak path modeling (3-cell paths, simplified vs full) and SNR math | ⏳ |
+| FOCUS-58 | Validate drift models (log/power-law), temperature effects (Arrhenius), and variation | ⏳ |
+| FOCUS-59 | Verify endurance/fatigue and half-select disturb behavior if enabled | ⏳ |
+| FOCUS-60 | Ensure MVMWithNonIdealities pipeline ordering matches documented signal flow | ⏳ |
+
+### 3g. Module 3 MNIST (from module3-prompt.md)
+
+| ID | Task | Status |
+|----|------|--------|
+| FOCUS-61 | Verify FP path math: linear layers, ReLU, softmax, normalization, output probabilities | ⏳ |
+| FOCUS-62 | Validate CIM path: weight quantization to N levels, DAC/ADC quantization, noise injection order | ⏳ |
+| FOCUS-63 | Confirm disagreement metrics (KL divergence), accuracy tracking, confusion matrix logic | ⏳ |
+| FOCUS-64 | Verify energy/performance models in GUI match documented formulas and defaults | ⏳ |
+| FOCUS-65 | Validate MNIST IDX parsing, bounds checks, and sanity limits for dataset sizes | ⏳ |
+| FOCUS-66 | Verify weight file loading, QAT level selection, and fallback behavior — document silent fallbacks | ⏳ |
+
+### 3h. Module 6 EDA (from module6-prompt.md)
+
+| ID | Task | Status |
+|----|------|--------|
+| FOCUS-67 | Verify ArrayConfig/CellConfig defaults (rows, cols, levels, gmin/gmax, vdd, tech, architecture) | ⏳ |
+| FOCUS-68 | Validate storage/memory/compute mode behavior and mode-specific parameters | ⏳ |
+| FOCUS-69 | Confirm weight mapping and quantization including sign handling | ⏳ |
+| FOCUS-70 | Validate export format correctness: JSON/CSV/SPICE/Verilog/DEF contents and indexing | ⏳ |
+| FOCUS-71 | Ensure CLI and GUI flows produce equivalent outputs given same configuration | ⏳ |
+
+### 3i. Documentation Curriculum (from documentation-prompt.md)
+
+| ID | Task | Status |
+|----|------|--------|
+| FOCUS-72 | Ensure `docs/documentation/` has complete curriculum: ELI5/PHYSICS/FEATURES/OPENSOURCE-TOOLS per module | ⏳ |
+| FOCUS-73 | Module 7 sidebar order: module folders first, then research-papers, then README/MODULES | ⏳ |
+| FOCUS-74 | Content standards: distinguish demonstrated vs modeled vs aspirational in all docs | ⏳ |
+
 ### 4. Scope Control
 
 - **Skip/defer Module 5** for now to reduce complexity.
@@ -387,14 +438,14 @@ All 46 items complete:
 
 | Priority | Total | Complete | Remaining |
 |----------|-------|----------|-----------|
-| **Current Focus** | **48** | **4** | **44** |
+| **Current Focus** | **74** | **4** | **70** |
 | 🔴 Critical | 8 | 3 | 5 |
 | 🟠 High | 48 | 15 | 33 |
 | 🟡 Medium | 32 | 5 | 27 |
 | 🟢 Low | 22 | 0 | 22 |
-| **Total** | **158** | **27** | **131** |
+| **Total** | **184** | **27** | **157** |
 
-*Note: "Current Focus" items (FOCUS-01 through FOCUS-48) are the active work direction. Module 5 is deferred.*
+*Note: "Current Focus" items (FOCUS-01 through FOCUS-74) are the active work direction. Module 5 is deferred.*
 
 ---
 
@@ -440,11 +491,17 @@ git update-index --assume-unchanged cmd/fecim-lattice-tools/data/calibrations/li
 
 ## Agent Work Policy
 
+**This file is the single source of truth for all tasks.** No separate prompt files.
+
 Any agent tackling a task from this TODO **must**:
 
-1. **Work fully autonomously** — complete the task end-to-end without stopping for manual intervention.
-2. **Validate progress continuously** — run `go test ./...` (headless) or launch the GUI to verify changes work. Never claim "done" without fresh test/build evidence.
-3. **Update this TODO.md** — mark completed items as ✅, add any new tasks discovered during implementation, and update the progress summary.
+1. **Read TODO.md first** — align with current priorities before starting work.
+2. **Work fully autonomously** — complete the task end-to-end without stopping for manual intervention. If ambiguity remains, choose the most reasonable default and document the choice.
+3. **Validate progress continuously** — run `go test ./...` (headless) or launch the GUI to verify changes work. Never claim "done" without fresh test/build evidence.
+4. **Headless-first** — use CLI + tests as primary validation. GUI runs only when explicitly needed.
+5. **Minimal changes** — prefer targeted fixes over refactors unless required for correctness. Keep code changes within the smallest possible surface area.
+6. **Update this TODO.md** — mark completed items as ✅, add any new tasks discovered during implementation, and update the progress summary.
+7. **Never skip validation** — if blocked, report exact error output and last command run.
 
 ---
 
