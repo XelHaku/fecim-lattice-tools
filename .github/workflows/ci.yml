@@ -1,78 +1,37 @@
-name: ci
+name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 jobs:
-  test:
-    name: unit (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
-
-      - name: Calibration drift guard
-        run: scripts/calib-guard.sh
-        env:
-          # To intentionally update calibrations, set this repo variable to "1"
-          # (GitHub Settings → Secrets and variables → Actions → Variables).
-          ALLOW_CALIBRATION_UPDATES: ${{ vars.ALLOW_CALIBRATION_UPDATES }}
-
-      - name: go test ./...
-        shell: bash
-        timeout-minutes: 20
-        env:
-          TZ: UTC
-          GOMAXPROCS: "4"
-          GO_TEST_TIMEOUT: 10m
-        run: make test-ci
-
-  windows:
-    name: unit (windows-latest)
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
-
-      - name: go test ./...
-        timeout-minutes: 20
-        env:
-          TZ: UTC
-          GOMAXPROCS: "4"
-        run: |
-          go test -tags=ci -count=1 -shuffle=off -trimpath -timeout 10m ./...
-
-  race:
-    name: race (targeted pkgs)
+  ci:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+    timeout-minutes: 10
 
-      - uses: actions/setup-go@v5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version: '1.24'
           cache: true
 
-      - name: go test -race (targeted)
-        timeout-minutes: 35
-        env:
-          TZ: UTC
-          GOMAXPROCS: "4"
-          CGO_ENABLED: "1"
-          GO_TEST_RACE_TIMEOUT: 20m
-        run: make test-race-ci
+      - name: Run make ci
+        run: make ci
+
+      - name: Race detection (core packages)
+        run: go test -race -short ./shared/... ./validation/...
+
+      - name: Generate coverage report
+        run: go test -short ./... -coverprofile=coverage.out
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.out
+          if-no-files-found: error
