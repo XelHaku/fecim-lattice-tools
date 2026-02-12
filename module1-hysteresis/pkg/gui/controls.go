@@ -84,16 +84,30 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	a.eFieldModeLabel = widget.NewLabel("AUTO")
 	a.eFieldModeLabel.TextStyle = fyne.TextStyle{Italic: true}
 
-	// Waveform selector
+	// Waveform selector + inline explainability label
 	waveforms := []string{"Manual", "Sine Wave", "Triangle Wave", "ISPP (Write/Read)", "Time-Resolved Switching"}
+	waveformDescriptions := map[string]string{
+		"Manual":                  "Direct E-field control via slider",
+		"Sine Wave":               "Continuous sinusoidal E-field sweep",
+		"Triangle Wave":           "Linear ramp E-field sweep (standard P-E loop)",
+		"ISPP (Write/Read)":       "Write-Read-Demo: programs target levels via pulse sequence",
+		"Time-Resolved Switching": "LK switching dynamics visualization",
+	}
+	a.waveformHelp = widget.NewLabel(waveformDescriptions["ISPP (Write/Read)"])
+	a.waveformHelp.TextStyle = fyne.TextStyle{Italic: true}
 	a.waveformSelect = widget.NewSelect(waveforms, func(s string) {
 		log.Selection("Waveform", s)
 		a.mu.Lock()
 		defer a.mu.Unlock()
+		if a.waveformHelp != nil {
+			a.waveformHelp.SetText(waveformDescriptions[s])
+		}
 		switch s {
 		case "Manual":
 			a.waveform = WaveformManual
 			a.autoMode = false
+			a.resetHistoryLocked()
+			a.simTime = 0
 			if a.eFieldSlider != nil {
 				a.eFieldSlider.Enable()
 			}
@@ -115,6 +129,8 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		case "Sine Wave":
 			a.waveform = WaveformSine
 			a.autoMode = true
+			a.resetHistoryLocked()
+			a.simTime = 0
 			if a.eFieldSlider != nil {
 				a.eFieldSlider.Disable()
 			}
@@ -127,6 +143,8 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		case "Triangle Wave":
 			a.waveform = WaveformTriangle
 			a.autoMode = true
+			a.resetHistoryLocked()
+			a.simTime = 0
 			if a.eFieldSlider != nil {
 				a.eFieldSlider.Disable()
 			}
@@ -139,6 +157,8 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		case "ISPP (Write/Read)":
 			a.waveform = WaveformWriteReadDemo
 			a.autoMode = true
+			a.resetHistoryLocked()
+			a.simTime = 0
 			if a.eFieldSlider != nil {
 				a.eFieldSlider.Disable()
 			}
@@ -187,6 +207,8 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		case "Time-Resolved Switching":
 			a.waveform = WaveformTimeResolved
 			a.autoMode = true
+			a.resetHistoryLocked()
+			a.simTime = 0
 			if a.eFieldSlider != nil {
 				a.eFieldSlider.Disable()
 			}
@@ -240,11 +262,11 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		})
 	})
 
-	// Levels selector (2-256 levels)
-	a.levelsLabel = widget.NewLabel(fmt.Sprintf("Levels: %d (%.1f bits)", a.numLevels, math.Log2(float64(a.numLevels))))
+	// Levels selector (2-64 levels)
+	a.levelsLabel = widget.NewLabel(fmt.Sprintf("LE%d (%.1f bits)", a.numLevels, math.Log2(float64(a.numLevels))))
 	a.levelsEntry = widget.NewEntry()
 	a.levelsEntry.SetText(fmt.Sprintf("%d", a.numLevels))
-	a.levelsEntry.SetPlaceHolder("2-256")
+	a.levelsEntry.SetPlaceHolder("2-64")
 	a.levelsEntry.OnChanged = func(s string) {
 		n, err := strconv.Atoi(s)
 		if err != nil {
@@ -253,8 +275,8 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		if n < 2 {
 			n = 2
 		}
-		if n > 256 {
-			n = 256
+		if n > 64 {
+			n = 64
 		}
 		log.Selection("Levels", fmt.Sprintf("%d", n))
 
@@ -285,7 +307,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 
 		// Update label
 		bits := math.Log2(float64(n))
-		a.levelsLabel.SetText(fmt.Sprintf("Levels: %d (%.1f bits)", n, bits))
+		a.levelsLabel.SetText(fmt.Sprintf("LE%d (%.1f bits)", n, bits))
 
 		// Run calibration immediately for new level count
 		a.mu.Lock()
@@ -301,7 +323,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 
 	// Target range (effective Ps back-off for level mapping)
 	a.wrdRangeLabel = widget.NewLabel(a.rangeFracLabelText(a.wrdRangeFrac))
-	a.wrdRangeSlider = widget.NewSlider(0.8, 1.0)
+	a.wrdRangeSlider = widget.NewSlider(0.5, 1.0)
 	a.wrdRangeSlider.Step = 0.005
 	a.wrdRangeSlider.Value = clampRangeFrac(a.wrdRangeFrac)
 	a.wrdRangeSlider.OnChanged = func(v float64) {
@@ -547,11 +569,13 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	initialScale := a.timeScale
 	a.mu.RUnlock()
 	updateDisplayLabel(initialFreq, initialScale)
-	// Stress slider (Phase 4.1: Electrostriction control)
+	// Mechanical stress control (active physics coupling)
 	stressSlider := widget.NewSlider(0, 5.0) // 0 to 5 GPa
 	stressSlider.Step = 0.1
 	stressSlider.Value = 1.0
-	stressLabel := widget.NewLabel("Stress: 1.0 GPa")
+	stressLabel := widget.NewLabel("Mechanical Stress: 1.0 GPa")
+	stressCouplingLabel := widget.NewLabel("Active: modifies switching thresholds via stress-coupled Ec")
+	_ = stressCouplingLabel
 
 	// Stress slider (Phase 4.1: Electrostriction control)
 	stressSlider.OnChanged = func(v float64) {
@@ -565,7 +589,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			a.lkSolver.Stress = v * 1e9
 		}
 		a.mu.Unlock()
-		stressLabel.SetText(fmt.Sprintf("Stress: %.1f GPa", v))
+		stressLabel.SetText(fmt.Sprintf("Mechanical Stress: %.1f GPa", v))
 	}
 
 	// Temperature slider (Dr. Tour recommendation: show HZO's high Tc advantage)
@@ -573,6 +597,8 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	tempSlider.Step = 25
 	tempSlider.Value = 300 // Room temperature (300K = 27°C)
 	tempLabel := widget.NewLabel("T: 300 K (27°C)")
+	tempCouplingLabel := widget.NewLabel("Active: Ec scales as (1-T/Tc)^0.5, Pr scales similarly")
+	_ = tempCouplingLabel
 	tempSlider.OnChanged = func(v float64) {
 		log.SliderChange("Temperature", v)
 
@@ -633,9 +659,19 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	freqEntryRow := container.NewGridWithColumns(2, freqEntry, unitSelect)
 	actionRow := container.NewGridWithColumns(3, a.pauseBtn, resetBtn, eli5Btn)
 
-	section := func(title string, content ...fyne.CanvasObject) fyne.CanvasObject {
-		return widget.NewCard(title, "", container.NewPadded(container.NewVBox(content...)))
-	}
+	levelsHint := widget.NewLabel("Number of discrete polarization levels (2–64)")
+	levelsHint.TextStyle = fyne.TextStyle{Italic: true}
+	rangeHint := widget.NewLabel("Fraction of Ec used for ISPP voltage bounds (0.5–1.0)")
+	rangeHint.TextStyle = fyne.TextStyle{Italic: true}
+
+	levelsGrid := container.NewGridWithColumns(2,
+		container.NewVBox(a.levelsLabel, levelsHint),
+		a.levelsEntry,
+	)
+	rangeGrid := container.NewGridWithColumns(2,
+		container.NewVBox(a.wrdRangeLabel, rangeHint),
+		a.wrdRangeSlider,
+	)
 
 	// Helper to create a row with an info button for tooltips
 	withInfo := func(content fyne.CanvasObject, tc sharedwidgets.TooltipContent) fyne.CanvasObject {
@@ -645,33 +681,158 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	// Tooltips reference
 	tips := sharedwidgets.HysteresisTooltips
 
-	return container.NewVBox(
-		section("Material & Mode",
+	mainSections := container.NewVBox(
+		widget.NewCard("Material & Mode", "", container.NewVBox(
 			withInfo(a.materialBtn, tips.Material),
-			withInfo(a.waveformSelect, tips.Waveform),
+			withInfo(container.NewVBox(a.waveformSelect, a.waveformHelp), tips.Waveform),
 			withInfo(physicsRow, tips.PhysicsEngine),
 			lkPolydomainCheck,
-		),
-		section("Levels & Range",
-			withInfo(container.NewVBox(a.levelsLabel, a.levelsEntry), tips.Levels),
-			withInfo(container.NewVBox(a.wrdRangeLabel, a.wrdRangeSlider), tips.TargetRange),
-		),
-		section("Drive & Timing",
+		)),
+		widget.NewCard("Levels & Range", "", container.NewVBox(
+			withInfo(levelsGrid, tips.Levels),
+			withInfo(rangeGrid, tips.TargetRange),
+		)),
+		widget.NewCard("Drive & Timing", "", container.NewVBox(
 			withInfo(container.NewVBox(eFieldHeader, a.eFieldSlider), tips.EField),
 			withInfo(container.NewVBox(freqLabel, freqSlider, freqEntryRow), tips.Frequency),
 			withInfo(container.NewVBox(timeScaleLabel, timeScaleSlider, displayFreqLabel), tips.TimeScale),
-		),
-		section("Environment",
-			withInfo(container.NewVBox(tempLabel, tempSlider), tips.Temperature),
-			withInfo(container.NewVBox(stressLabel, stressSlider), tips.Stress),
-		),
-		section("Trail",
-			withInfo(container.NewVBox(trailLabel, trailSlider), tips.TrailLength),
-		),
-		section("Run",
-			actionRow,
-		),
+		)),
+		widget.NewCard("Run", "", actionRow),
 	)
+
+	advanced := widget.NewAccordion(
+		widget.NewAccordionItem("Environment", container.NewVBox(
+			withInfo(container.NewVBox(tempLabel, tempSlider, tempCouplingLabel), tips.Temperature),
+			withInfo(container.NewVBox(stressLabel, stressSlider, stressCouplingLabel), tips.Stress),
+		)),
+		widget.NewAccordionItem("History / Trail", withInfo(container.NewVBox(trailLabel, trailSlider), tips.TrailLength)),
+	)
+
+	return container.NewVBox(mainSections, advanced)
+}
+
+func (a *App) resetAllState() {
+	a.mu.Lock()
+	a.resetAllStateLocked()
+	a.mu.Unlock()
+
+	// Update UI elements (outside lock to avoid deadlock with fyne.Do)
+	fyne.Do(func() {
+		if a.eFieldSlider != nil {
+			a.eFieldSlider.SetValue(0)
+		}
+		if a.logText != nil {
+			a.logText.SetText("")
+		}
+		if a.statusLabel != nil {
+			a.statusLabel.SetText("RESET — all state cleared")
+		}
+		if a.cyclesLabel != nil {
+			a.cyclesLabel.SetText("0")
+		}
+		if a.wakeupLabel != nil {
+			a.wakeupLabel.SetText("100%")
+		}
+		if a.fatigueLabel != nil {
+			a.fatigueLabel.SetText("0%")
+		}
+		if a.cyclePhaseLabel != nil {
+			a.cyclePhaseLabel.SetText("WAKE-UP")
+		}
+	})
+}
+
+func (a *App) resetAllStateLocked() {
+	a.electricField = 0
+	a.polarization = 0
+	a.normalizedP = 0
+	a.simTime = 0
+
+	// Reset physics model state.
+	if a.useLKSolver() {
+		resetP := a.lkDefaultPolarization()
+		if a.lkSolver != nil {
+			a.lkSolver.SetState(resetP)
+			a.lkSolver.Time = 0
+			a.polarization = a.lkSolver.GetState()
+		} else {
+			a.polarization = resetP
+		}
+	} else if a.preisach != nil {
+		a.preisach.Reset()
+	}
+	a.syncDiscreteLevelLocked()
+
+	// Reset trail/history.
+	a.resetHistoryLocked()
+
+	// Reset WRD (Write/Read Demo) state.
+	a.wrdPhase = 0
+	a.wrdPhaseTimer = 0
+	a.wrdTargetLevel = a.numLevels / 2
+	a.wrdNextTargetLevel = 0
+	a.wrdStartLevel = a.numLevels / 2
+	a.wrdReadLevel = 0
+	a.wrdRetryCount = 0
+	a.wrdWriteE = 0
+	a.wrdPrepE = 0
+	a.wrdSettleE = 0
+	a.wrdPrevP = 0
+	a.wrdResetStartP = 0
+	a.wrdResetEndP = 0
+	a.wrdResetEndLvl = 0
+	a.wrdWriteStartP = 0
+	a.wrdWriteEndP = 0
+	a.wrdWriteEndLvl = 0
+	a.wrdReadStartP = 0
+	a.wrdLastControllerState = controller.StateIdle
+	a.wrdLastControllerPulse = 0
+	a.wrdLastProgressLog = 0
+	a.wrdLastLogState = controller.StateIdle
+	a.wrdLastBranch = 0
+	a.wrdForceReset = false
+	a.wrdSkipPrep = !a.useLKSolver()
+	a.wrdTotalWrites = 0
+	a.wrdSuccessWrites = 0
+	a.wrdTotalEnergyfJ = 0
+	a.wrdCycleEnergy = 0
+	if a.writeController != nil {
+		a.writeController.ResetState()
+	}
+
+	// Reset ISPP state.
+	a.isppPulseCount = 0
+	a.isppCurrentVoltage = 0
+	a.isppStartVoltage = 0
+	a.isppVoltageStep = 0
+	a.isppPhase = 0
+	a.isppPhaseTimer = 0
+	a.isppLastVerifyLvl = 0
+	a.isppTotalPulses = 0
+	a.isppLastError = 0
+	a.isppOscillationCount = 0
+	a.isppUseBisection = false
+	a.isppReversedOnce = false
+	a.isppLowVoltage = 0
+	a.isppHighVoltage = 0
+
+	// Reset manual mode animation state.
+	a.manualAnimating = false
+	a.manualTargetLevel = a.numLevels / 2
+	a.manualStartLevel = 0
+	a.manualPhase = 0
+	a.manualPhaseTime = 0
+
+	// Reset Time-Resolved animation state.
+	a.timeResAnimating = false
+	a.timeResIndex = 0
+	a.timeResDataTimes = nil
+	a.timeResDataPols = nil
+	a.timeResDataSwitch = nil
+
+	// Reset logs.
+	a.logEntries = a.logEntries[:0]
+	a.lastLogPhase = -1
 }
 
 // getCurrentMaterialID returns the ID of the currently selected material.
@@ -764,8 +925,14 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 	// Use material's nominal Pr (not GetEffectivePr which recalculates from current state)
 	effPr := a.material.Pr
 
-	// Update number of levels based on material
+	// Update number of levels based on material (GUI-validated range)
 	newLevels := a.material.GetNumLevels()
+	if newLevels < 2 {
+		newLevels = 2
+	}
+	if newLevels > 64 {
+		newLevels = 64
+	}
 	a.numLevels = newLevels
 
 	// Recreate calibration manager + write controller for the new material/levels
@@ -859,7 +1026,7 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 		a.levelsEntry.SetText(fmt.Sprintf("%d", newLevels))
 	}
 	if a.levelsLabel != nil {
-		a.levelsLabel.SetText(fmt.Sprintf("Levels: %d (%.1f bits)", newLevels, math.Log2(float64(newLevels))))
+		a.levelsLabel.SetText(fmt.Sprintf("LE%d (%.1f bits)", newLevels, math.Log2(float64(newLevels))))
 	}
 	if a.wrdRangeLabel != nil {
 		a.wrdRangeLabel.SetText(a.rangeFracLabelText(a.wrdRangeFrac))
