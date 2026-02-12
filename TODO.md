@@ -972,3 +972,39 @@ Coverage audit ran `go test -short -cover` per-package (74 passed, 11 build-fail
 | RACE-04 | `shared/widgets/tutorial_controller.go` | `TutorialController.run()` loop read `t.currentStep` in loop condition without lock while other methods mutate it under lock (`JumpToStep`, `PreviousStep`). | High | ✅ Fixed | Reworked run loop to check step bounds inside `RLock` each iteration. |
 | RACE-05 | `shared/widgets/tutorial_controller.go` | `NewTutorialControlBar` toggled `fastMode` via direct field read (`ctrl.fastMode`) without lock from UI callback. | Medium | ✅ Fixed | Added `FastMode()` getter with `RLock`; callback now uses `ctrl.FastMode()`. |
 | RACE-06 | `shared/recentfiles/recentfiles.go` | `notifyChange()` shallow-copied `[]*RecentFile`; callbacks could race with manager updates through shared pointers. | High | ✅ Fixed | Switched to deep-copy of each `RecentFile` before async callback dispatch. |
+
+## Module 4: CMOS Cell Physics & Selector Model (2026-02-12)
+
+Observation: Module 4 models the analog signal chain (DAC→crossbar→TIA→ADC) with real wire parasitics and noise, but the selector transistor in 1T1R/2T1R is a boolean mask, not a sized MOSFET. Cell area is film-only (100 nm²), not layout footprint.
+
+| ID | Task | Priority | Status | Notes |
+|----|------|----------|--------|-------|
+| M4-CMOS-01 | Add MOSFET selector model with W/L, Vth, Ion/Ioff, Cgate | High | ⏳ | Affects read current accuracy, write disturb, and leakage. Implement in `shared/physics/selector.go` |
+| M4-CMOS-02 | Cell footprint calculator: FeFET area + selector area + routing overhead | High | ⏳ | 0T1R=4F², 1T1R≈6-12F², 2T1R≈12-20F². Needed for density comparison vs SRAM (120-150F²) |
+| M4-CMOS-03 | Technology node selector in Module 4 UI (130nm, 65nm, 28nm, 14nm) | Medium | ⏳ | Scale wire R, transistor params, leakage with node. Shared with Module 6 technology config |
+| M4-CMOS-04 | Selector I-V curve in read path: Ion limits read current, Ioff contributes sneak | Medium | ⏳ | Replace boolean selector mask with conductance-based series model in `arraysim/` solvers |
+| M4-CMOS-05 | Gate capacitance loading on wordline from selector transistors | Low | ⏳ | WL RC delay = R_wire × (C_wire + N×C_gate). Currently only wire R modeled |
+| M4-CMOS-06 | Display cell footprint and array density (cells/mm²) in Module 4 reference tab | Medium | ⏳ | Use M4-CMOS-02 calculator, show alongside timing/spec tables |
+
+## Module 6: EDA Depth & Characterization (2026-02-12)
+
+Observation: Module 6 has the right EDA skeleton (LEF/Liberty/Verilog/SPICE/DEF for 3 PDKs) but all timing/power values are placeholders. The SPICE model uses fixed resistors instead of FeFET compact models. No DRC/LVS validation path exists.
+
+| ID | Task | Priority | Status | Notes |
+|----|------|----------|--------|-------|
+| M6-SPICE-01 | Replace fixed-resistor FeFET model with voltage-dependent piecewise I-V | Critical | ⏳ | Current: R=1/G (static). Need: at minimum Gmin/Gmax states + threshold switching. File: `export/spice.go` |
+| M6-SPICE-02 | Add ferroelectric capacitance to SPICE model (C_fe = ε₀·εr·A/t) | High | ⏳ | Captures displacement current and RC time constant |
+| M6-SPICE-03 | Generate SPICE subcircuit for 1T1R/2T1R with MOSFET + FeFET | High | ⏳ | Use SKY130 MOSFET models + FeFET subcircuit. Enables real transient simulation |
+| M6-LIB-01 | Replace Liberty placeholder timing with published FeFET characterization data | High | ⏳ | Sources: Muller 2013 (28nm FDSOI), Trentzsch 2016 (28nm), Dunkel 2017 (22nm). File: `export/liberty.go` |
+| M6-LIB-02 | Add NLDM lookup tables to Liberty (rise/fall vs input slew × output load) | Medium | ⏳ | Currently scalar values only. 7×7 table minimum for STA accuracy |
+| M6-LIB-03 | Multi-corner Liberty generation (fast/typical/slow × temperature) | Medium | ⏳ | Currently only "typical" corner. Need FF/TT/SS at -40/25/125°C |
+| M6-POWER-01 | Dynamic power model: P_dyn = C_eff · V² · f per cell, array-level summation | High | ⏳ | Currently placeholder leakage only (0.0003 nW). Need switching + leakage + short-circuit |
+| M6-POWER-02 | Back-annotate Module 4 energy model into Liberty power tables | Medium | ⏳ | Module 4 has DAC/MVM/TIA energy. Should feed M6 Liberty internal_power groups |
+| M6-DRC-01 | Basic DRC rule checking against PDK design rules | Medium | ⏳ | At minimum: metal spacing, via enclosure, minimum width checks on generated LEF |
+| M6-DRC-02 | LVS consistency check: LEF pins match Verilog ports match SPICE netlist | Medium | ⏳ | Currently no cross-format validation |
+| M6-GUI-01 | Add Export Viewer tab to Module 6 GUI (preview LEF/Liberty/Verilog/SPICE) | Medium | ⏳ | Currently only Builder + Learn tabs. Users can't preview generated files in-app |
+| M6-GUI-02 | Add Layout Visualizer tab with metal layer overlay | Low | ⏳ | SVG already exists; render it interactive with layer toggles |
+| M6-TECH-01 | Shared TechnologyNode type between Module 4 and Module 6 | High | ⏳ | Unify cell dimensions, wire params, transistor models. Put in `shared/physics/technology.go` |
+| M6-TECH-02 | Wire Module 4 simulation results back to Module 6 characterization | Medium | ⏳ | Timing from M4 transient sim → M6 Liberty. Power from M4 energy model → M6 Liberty |
+| M6-VALID-01 | Round-trip test: generate all EDA files, parse back, verify consistency | High | ⏳ | LEF→parse→check dimensions. Verilog→parse→check ports. SPICE→parse→check nodes |
+| M6-VALID-02 | Validate generated files against PDK constraints (SKY130 metal rules) | Medium | ⏳ | Pin placement within cell bounds, metal width ≥ min, spacing ≥ min |
