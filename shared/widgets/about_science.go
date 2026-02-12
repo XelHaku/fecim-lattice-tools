@@ -26,143 +26,93 @@ func aboutScienceData() []ScienceSection {
 		{
 			Title:    "What is FeCIM?",
 			IconName: theme.IconNameInfo,
-			Summary:  "Ferroelectric Compute-in-Memory",
-			Details: "FeCIM uses ferroelectric materials (like HfO2-ZrO2 superlattices) to store data as " +
-				"electric polarization states. Unlike traditional memory that separates storage and computation, " +
-				"FeCIM performs calculations directly where data is stored using Ohm's law (V=IR).\n\n" +
-				"Key advantage: Matrix-vector multiplication in a single step, enabling 100-1000x energy " +
-				"efficiency for AI workloads compared to traditional processors.",
+			Summary:  "Compute-in-memory with ferroelectric devices",
+			Details: "FeCIM (Ferroelectric Compute-in-Memory) stores analog weights inside memory cells and computes in place.\n\n" +
+				"Rows apply voltages, columns sum currents, and the array performs matrix-vector multiplication in parallel using Ohm's and Kirchhoff's laws.",
 			LearnMore: "https://en.wikipedia.org/wiki/Compute-in-memory",
 		},
 		{
-			Title:    "30 Analog States (Claim)",
-			IconName: theme.IconNameList,
-			Summary:  "Multi-level cell storage (~4.9 bits/cell)",
-			Details: "This demo uses a 30-level baseline from a conference claim (COSM 2025; pending peer review). " +
-				"Peer-reviewed devices report 32–140 analog states in related ferroelectric devices.\n\n" +
-				"Compared to 2 states (0/1) in traditional binary memory, multi-level storage increases density " +
-				"and can enable compact neural network weight storage (~4.9 bits/cell at 30 levels).",
-			LearnMore: "https://doi.org/10.1038/s41928-024-01234-5",
-		},
-		{
-			Title:    "Hysteresis & Memory",
+			Title:    "HZO material",
 			IconName: theme.IconNameStorage,
-			Summary:  "Path-dependent polarization enables non-volatile storage",
-			Details: "Hysteresis is the 'memory' of ferroelectric materials. When you apply an electric field " +
-				"and remove it, the polarization doesn't return to zero - it stays at a remnant value (Pr).\n\n" +
-				"The P-E loop shows this behavior:\n" +
-				"- Apply positive field: polarization goes positive\n" +
-				"- Remove field: polarization stays at +Pr (stored '1')\n" +
-				"- Apply negative field: switches to -Pr (stored '0')\n\n" +
-				"This bistability (or multi-stability with dozens of levels; the demo uses a 30-level baseline) is what makes ferroelectric memory non-volatile.",
-			LearnMore: "https://en.wikipedia.org/wiki/Ferroelectric_RAM",
+			Summary:  "Why hafnium-zirconium oxide matters",
+			Details: "HZO (Hf0.5Zr0.5O2) is a CMOS-compatible ferroelectric material used to build non-volatile analog cells.\n\n" +
+				"Its polarization can be switched with electric fields, enabling compact memory-plus-compute primitives for FeCIM hardware.",
+			LearnMore: "https://en.wikipedia.org/wiki/Hafnium(IV)_oxide",
 		},
 		{
-			Title:    "Crossbar Architecture",
+			Title:    "Hysteresis",
+			IconName: theme.IconNameMediaReplay,
+			Summary:  "The memory effect in the P-E loop",
+			Details: "Ferroelectrics show a polarization-electric-field (P-E) hysteresis loop.\n\n" +
+				"When field returns to zero, remanent polarization remains. This is the physical basis of non-volatile states and multi-level programming.",
+			LearnMore: "https://en.wikipedia.org/wiki/Ferroelectricity",
+		},
+		{
+			Title:    "Crossbar arrays",
 			IconName: theme.IconNameGrid,
-			Summary:  "Parallel computation via Ohm's and Kirchhoff's laws",
-			Details: "A crossbar array arranges memory cells at intersections of horizontal (wordlines) and " +
-				"vertical (bitlines) wires. This enables massively parallel computation:\n\n" +
-				"1. Apply input voltages to wordlines\n" +
-				"2. Each cell multiplies voltage by its conductance (Ohm's law: I=V*G)\n" +
-				"3. Currents sum on bitlines (Kirchhoff's current law)\n" +
-				"4. Result: full matrix-vector multiplication in one step!\n\n" +
-				"A 64x64 array performs 4,096 multiply-accumulate operations simultaneously.",
+			Summary:  "Hardware matrix math at array scale",
+			Details: "Crossbar arrays map neural weights to cell conductances.\n\n" +
+				"A single analog operation can evaluate many multiply-accumulate terms in parallel, while non-idealities (IR drop, variation, leakage) set practical limits.",
 			LearnMore: "https://doi.org/10.1038/s41586-020-2181-2",
 		},
 		{
-			Title:    "Energy Efficiency (Reported)",
-			IconName: theme.IconNameRadioButton,
-			Summary:  "Reported literature figures; unverified by this simulator", 
-			Details: "FeCIM achieves superior energy efficiency through:\n\n" +
-				"1. In-memory computing: No data movement between memory and processor\n" +
-				"2. Analog computation: Single-step MAC vs multiple digital operations\n" +
-				"3. Low switching energy: Ferroelectric switching ~1-10 fJ/bit\n\n" +
-				"Verified claims (Samsung Nature 2025):\n" +
-				"- 25-100x vs NAND flash for inference\n" +
-				"- 200-400 TOPS/W demonstrated\n\n" +
-				"This makes FeCIM ideal for edge AI where power is limited.",
-			LearnMore: "https://doi.org/10.1038/s41586-025-xxxxx",
-		},
-		{
-			Title:    "Endurance & Reliability (Reported)",
-			IconName: theme.IconNameConfirm,
-			Summary:  "Reported literature figures; unverified by this simulator",
-			Details: "Endurance measures how many times a memory cell can be written before failure.\n\n" +
-				"Verified endurance levels:\n" +
-				"- 10^9 cycles: Standard HZO (IEEE IRPS 2022)\n" +
-				"- 10^12 cycles: V:HfO2 doped (Nano Letters 2024, Science 2024)\n\n" +
-				"For comparison:\n" +
-				"- NAND flash: 10^3-10^5 cycles\n" +
-				"- DRAM: Unlimited (but volatile)\n\n" +
-				"Automotive grade (AEC-Q100) achieved by Fraunhofer IPMS 2024.",
-			LearnMore: "https://doi.org/10.1021/acs.nanolett.2024.xxxxx",
+			Title:    "Neuromorphic computing",
+			IconName: theme.IconNameComputer,
+			Summary:  "Brain-inspired efficiency goals",
+			Details: "Neuromorphic systems co-locate memory and compute to reduce data movement energy.\n\n" +
+				"FeCIM crossbars are one route to this goal: analog in-memory MACs with non-volatile weights for low-power AI inference.",
+			LearnMore: "https://en.wikipedia.org/wiki/Neuromorphic_engineering",
 		},
 	}
 }
 
 // ShowAboutScience displays the unified "About the Science" dialog.
 func ShowAboutScience(parent fyne.Window) {
-	// Create accordion with all sections
 	sections := aboutScienceData()
 	items := make([]*widget.AccordionItem, len(sections))
 
 	for i, section := range sections {
-		// Create content for this section
 		detailsLabel := widget.NewLabel(section.Details)
 		detailsLabel.Wrapping = fyne.TextWrapWord
 
-		var learnMoreBtn *widget.Button
+		contentItems := []fyne.CanvasObject{detailsLabel}
 		if section.LearnMore != "" {
 			parsedURL, err := url.Parse(section.LearnMore)
 			if err == nil {
-				learnMoreBtn = widget.NewButtonWithIcon("Learn More", theme.DocumentIcon(), func() {
+				learnMoreBtn := widget.NewButtonWithIcon("Learn More", theme.DocumentIcon(), func() {
 					_ = fyne.CurrentApp().OpenURL(parsedURL)
 				})
 				learnMoreBtn.Importance = widget.LowImportance
+				contentItems = append(contentItems, container.NewHBox(learnMoreBtn))
 			}
 		}
 
-		var content fyne.CanvasObject
-		if learnMoreBtn != nil {
-			content = container.NewVBox(
-				detailsLabel,
-				container.NewHBox(learnMoreBtn),
-			)
-		} else {
-			content = detailsLabel
-		}
-
 		items[i] = widget.NewAccordionItem(
-			section.Title+" - "+section.Summary,
-			content,
+			section.Title+" — "+section.Summary,
+			container.NewVBox(contentItems...),
 		)
 	}
 
 	accordion := widget.NewAccordion(items...)
 	accordion.MultiOpen = true
 
-	// Header
 	header := container.NewVBox(
 		widget.NewLabelWithStyle("About the Science", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-		widget.NewLabel("Learn how FeCIM technology works"),
+		widget.NewLabel("Unified Learn More primer for ferroelectric computing"),
 		widget.NewSeparator(),
 	)
 
-	// Footer with references link
 	footer := container.NewVBox(
 		widget.NewSeparator(),
-		widget.NewRichTextFromMarkdown("*Verification source of truth: docs/comparison/HONESTY_AUDIT.md (claims not listed there are unverified)*"),
+		widget.NewRichTextFromMarkdown("*Concise overview; use each section's Learn More link for deeper reading.*"),
 	)
 
-	// Scrollable content
 	scroll := container.NewScroll(accordion)
-	scroll.SetMinSize(fyne.NewSize(550, 400))
+	scroll.SetMinSize(fyne.NewSize(580, 420))
 
 	content := container.NewBorder(header, footer, nil, nil, scroll)
-
 	d := dialog.NewCustom("About the Science", "Close", content, parent)
-	d.Resize(fyne.NewSize(650, 550))
+	d.Resize(fyne.NewSize(700, 600))
 	d.Show()
 }
 

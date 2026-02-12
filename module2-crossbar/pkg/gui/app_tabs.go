@@ -6,6 +6,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
@@ -38,7 +39,7 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 
 	// Create color legends using shared widget and store in app
 	ca.condLegend = sharedwidgets.NewColorLegendWithColormap(0, 29, "Level", true, "fecim")
-	ca.irLegend = sharedwidgets.NewColorLegendWithColormap(0, 10, "%", true, "viridis") // Typical IR drop range ~1-10%
+	ca.irLegend = sharedwidgets.NewColorLegendWithColormap(0, 10, "%", true, "viridis")    // Typical IR drop range ~1-10%
 	ca.sneakLegend = sharedwidgets.NewColorLegendWithColormap(0, 100, "%", true, "plasma") // Sneak ratio: 0-100% of signal
 
 	// Initialize per-tab colormap tracking with defaults
@@ -278,8 +279,13 @@ func (ca *CrossbarApp) createMainLayoutStructure(metricsPanel *MetricsPanel, com
 	// Status footer - delegated to app_controls.go
 	simpleFooter := ca.createStatusFooter()
 
-	// Header separator (title moved to main navbar)
-	header := widget.NewSeparator()
+	// Header: lightweight access to shared science primer
+	aboutScienceBtn := sharedwidgets.CreateAboutScienceButton(ca.window)
+	aboutScienceBtn.Importance = widget.LowImportance
+	header := container.NewVBox(
+		container.NewHBox(layout.NewSpacer(), aboutScienceBtn),
+		widget.NewSeparator(),
+	)
 
 	// Layout with HSplit
 	ca.leftCenterSplit = container.NewHSplit(leftPanel, ca.tabs)

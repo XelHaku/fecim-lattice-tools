@@ -10,6 +10,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/shared/logging"
@@ -120,8 +121,11 @@ func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 	split.SetOffset(0.22) // Slightly narrower sidebar for cleaner look
 
 	// Header
+	title := widget.NewLabelWithStyle("FeCIM Array Builder - Learning Center", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	aboutScienceBtn := sharedwidgets.CreateAboutScienceButton(w)
+	aboutScienceBtn.Importance = widget.LowImportance
 	header := container.NewVBox(
-		widget.NewLabelWithStyle("FeCIM Array Builder - Learning Center", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		container.NewHBox(layout.NewSpacer(), title, layout.NewSpacer(), aboutScienceBtn),
 		widget.NewLabel("Understanding OpenLane and where our tool fits in"),
 		widget.NewSeparator(),
 	)

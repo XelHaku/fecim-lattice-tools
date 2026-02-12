@@ -283,12 +283,19 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 	titleLabel.Alignment = fyne.TextAlignCenter
 
+	aboutScienceBtn := sharedwidgets.CreateAboutScienceButton(ma.window)
+	aboutScienceBtn.Importance = widget.LowImportance
+
 	viewSelectorRow := container.NewHBox(
+		titleLabel,
+		layout.NewSpacer(),
 		widget.NewLabel("View:"),
 		drawBtn,
 		metricsBtn,
 		layout.NewSpacer(),
 		widget.NewLabel("784 -> 128 -> 10 | 30 Levels (claim) | Accuracy varies with config"),
+		layout.NewSpacer(),
+		aboutScienceBtn,
 	)
 
 	header := container.NewVBox(

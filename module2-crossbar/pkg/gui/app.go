@@ -530,9 +530,11 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	titleLabel := widget.NewLabel("FeCIM Crossbar Array Visualization")
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 	titleLabel.Alignment = fyne.TextAlignCenter
+	aboutScienceBtn := sharedwidgets.CreateAboutScienceButton(ca.window)
+	aboutScienceBtn.Importance = widget.LowImportance
 
 	header := container.NewVBox(
-		titleLabel,
+		container.NewHBox(layout.NewSpacer(), titleLabel, layout.NewSpacer(), aboutScienceBtn),
 		widget.NewSeparator(),
 	)
 
