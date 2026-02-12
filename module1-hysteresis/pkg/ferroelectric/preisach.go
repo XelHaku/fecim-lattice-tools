@@ -41,27 +41,29 @@ type TanhEverett struct {
 //
 // Let's implement this factorization.
 func (t *TanhEverett) Calculate(alpha, beta float64) float64 {
-	// F(x) = Tanh((x - Ec) / Delta) ?
-	// No, Tanh is symmetric around Ec (if we account for bias).
-	// Let's assume standard centered loop for the hysteron distribution Basis.
+	// Product-form Everett function for the factorized sech² Preisach density:
+	//
+	//   µ(α,β) = (Ps / 4Δ²) · sech²((α − Ec)/Δ) · sech²((β + Ec)/Δ)
+	//
+	// The Everett integral over the triangle {α' ≤ α, β' ≥ β} gives:
+	//
+	//   E(α,β) = (Ps/4) · [1 + tanh((α − Ec)/Δ)] · [1 − tanh((β + Ec)/Δ)]
+	//
+	// Both factors lie in [0, 2], so the product is always non-negative.
+	// This preserves the Preisach wipe-out continuity property that the
+	// previous factorized-difference form violated (it went negative for
+	// minor loops within the coercive gap, requiring a hard zero-clamp
+	// that caused polarization teleportation during ISPP programming).
+	//
+	// The major loop shape and remanent polarization are identical to the
+	// difference form because for Esat >> Ec the limit factors collapse
+	// to the same expression.
+	ascCDF := 1.0 + math.Tanh((alpha-t.Ec)/t.Delta)   // CDF of ascending distribution ∈ [0, 2]
+	descSurv := 1.0 - math.Tanh((beta+t.Ec)/t.Delta)  // Survival of descending distribution ∈ [0, 2]
 
-	// Major ascending branch: P_asc(E)
-	// Major descending branch: P_desc(E)
-
-	// Factorized Everett function formulation:
-	// E(alpha, beta) ~ (P_asc(alpha) - P_desc(beta)) / 2
-
-	valAlpha := math.Tanh((alpha - t.Ec) / t.Delta)
-	valBeta := math.Tanh((beta + t.Ec) / t.Delta) // Offset for descending branch
-
-	// We return the "volume" of dipoles in the triangle (alpha, beta).
-	// Everett areas must be non-negative; clamp to preserve physical meaning.
-	val := (valAlpha - valBeta) * 0.5 * t.Ps
-	if val < 0 {
-		return 0
-	}
+	val := ascCDF * descSurv * t.Ps * 0.25
 	if val > t.Ps {
-		return t.Ps
+		return t.Ps // Safety clamp for floating-point edge cases
 	}
 	return val
 }

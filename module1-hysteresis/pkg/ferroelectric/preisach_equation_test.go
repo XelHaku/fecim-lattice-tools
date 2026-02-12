@@ -5,19 +5,22 @@ import (
 	"testing"
 )
 
-func TestTanhEverett_SymmetricPairMatchesTanh(t *testing.T) {
+func TestTanhEverett_SymmetricPairMatchesProductForm(t *testing.T) {
 	everett := &TanhEverett{
 		Ps:    0.30,
 		Ec:    1.0,
 		Delta: 0.2,
 	}
 
-	for _, x := range []float64{0, 0.2, 0.6} {
+	for _, x := range []float64{0, 0.2, 0.6, 1.0, 3.0} {
 		alpha := everett.Ec + x
 		beta := -everett.Ec - x
 
 		got := everett.Calculate(alpha, beta)
-		expected := math.Tanh(x/everett.Delta) * everett.Ps
+		// Product-form identity for symmetric pairs (α=Ec+x, β=-Ec-x):
+		//   E(α,β) = [1+tanh(x/Δ)]² · Ps/4
+		tanhVal := math.Tanh(x / everett.Delta)
+		expected := (1.0 + tanhVal) * (1.0 + tanhVal) * everett.Ps / 4.0
 
 		if math.Abs(got-expected) > math.Abs(expected)*1e-8+1e-12 {
 			t.Fatalf("x=%.3f: got %.12f, expected %.12f", x, got, expected)
