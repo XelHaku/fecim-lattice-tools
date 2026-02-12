@@ -1,10 +1,15 @@
 package logging
 
 import (
+	"bufio"
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -929,5 +934,164 @@ func TestFormatParams(t *testing.T) {
 			// Just verify it doesn't panic and returns a string
 			_ = result
 		})
+	}
+}
+
+func TestStructuredLoggingOutputsValidJSON(t *testing.T) {
+	entry := NewEntry(LevelInfo, "logging-test", "structured log").
+		WithCategory("TEST").
+		WithField("request_id", "req-123").
+		WithField("count", 7)
+
+	data, err := json.Marshal(entry)
+	if err != nil {
+		t.Fatalf("expected entry to marshal to JSON, got error: %v", err)
+	}
+
+	var decoded map[string]interface{}
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		t.Fatalf("expected valid JSON payload, got error: %v", err)
+	}
+
+	if decoded["Source"] != "logging-test" {
+		t.Fatalf("unexpected source in JSON: %v", decoded["Source"])
+	}
+	if decoded["Message"] != "structured log" {
+		t.Fatalf("unexpected message in JSON: %v", decoded["Message"])
+	}
+}
+
+func TestLogLevelsFilterCorrectly(t *testing.T) {
+	var buf strings.Builder
+	logger := createTestLogger(&buf, "level-filter")
+
+	original := GetVerbosity()
+	defer SetVerbosity(original)
+
+	SetVerbosity(VerbosityInfo)
+	logger.Info("visible info")
+	logger.Debug("hidden debug")
+	logger.Trace("hidden trace")
+
+	output := buf.String()
+	if !strings.Contains(output, "[INFO] visible info") {
+		t.Fatalf("expected INFO log to be visible at INFO level, output=%q", output)
+	}
+	if strings.Contains(output, "hidden debug") || strings.Contains(output, "hidden trace") {
+		t.Fatalf("expected DEBUG/TRACE logs to be filtered at INFO level, output=%q", output)
+	}
+
+	buf.Reset()
+	SetVerbosity(VerbosityTrace)
+	logger.Info("info at trace")
+	logger.Debug("debug at trace")
+	logger.Trace("trace at trace")
+
+	output = buf.String()
+	for _, want := range []string{"[INFO] info at trace", "[DEBUG] debug at trace", "[TRACE] trace at trace"} {
+		if !strings.Contains(output, want) {
+			t.Fatalf("expected %q in output at TRACE level, output=%q", want, output)
+		}
+	}
+}
+
+func TestFileLoggingCreatesValidLogFiles(t *testing.T) {
+	tmpDir := t.TempDir()
+	logPath := filepath.Join(tmpDir, "app.log")
+
+	if err := Init("file-test", logPath); err != nil {
+		t.Fatalf("failed to initialize logger: %v", err)
+	}
+
+	SetVerbosity(VerbosityInfo)
+	GlobalInfo("file logging smoke test")
+	CloseGlobal()
+
+	data, err := os.ReadFile(logPath)
+	if err != nil {
+		t.Fatalf("expected log file to exist, read error: %v", err)
+	}
+	if len(data) == 0 {
+		t.Fatal("expected log file to be non-empty")
+	}
+	content := string(data)
+	if !strings.Contains(content, "Logging initialized to:") {
+		t.Fatalf("expected initialization line in log file, content=%q", content)
+	}
+	if !strings.Contains(content, "file logging smoke test") {
+		t.Fatalf("expected application log line in log file, content=%q", content)
+	}
+}
+
+func TestLogRotationWorksWhenConfigured(t *testing.T) {
+	bufferMu.Lock()
+	origBuffer := buffer
+	origBufferSize := bufferSize
+	origWriteAt := bufferWriteAt
+	origCount := bufferCount
+
+	bufferSize = 3
+	buffer = make([]*Entry, bufferSize)
+	bufferWriteAt = 0
+	bufferCount = 0
+	bufferMu.Unlock()
+
+	defer func() {
+		bufferMu.Lock()
+		buffer = origBuffer
+		bufferSize = origBufferSize
+		bufferWriteAt = origWriteAt
+		bufferCount = origCount
+		bufferMu.Unlock()
+	}()
+
+	for i := 0; i < 5; i++ {
+		AddToBuffer(NewEntry(LevelInfo, "rotation", fmt.Sprintf("entry-%d", i)))
+	}
+
+	entries := ReadBuffer(10)
+	if len(entries) != 3 {
+		t.Fatalf("expected rotated buffer to keep 3 entries, got %d", len(entries))
+	}
+	if entries[0].Message != "entry-2" || entries[1].Message != "entry-3" || entries[2].Message != "entry-4" {
+		t.Fatalf("unexpected rotated entries: got [%s, %s, %s]", entries[0].Message, entries[1].Message, entries[2].Message)
+	}
+}
+
+func TestConcurrentLoggingDoesNotProduceInterleavedOutput(t *testing.T) {
+	var out bytes.Buffer
+	logger := &Logger{Logger: log.New(&out, "", 0), demoName: "concurrency"}
+
+	const workers = 8
+	const perWorker = 50
+
+	var wg sync.WaitGroup
+	wg.Add(workers)
+	for w := 0; w < workers; w++ {
+		go func(worker int) {
+			defer wg.Done()
+			for i := 0; i < perWorker; i++ {
+				logger.Printf("worker=%d seq=%d", worker, i)
+			}
+		}(w)
+	}
+	wg.Wait()
+
+	scanner := bufio.NewScanner(strings.NewReader(out.String()))
+	lineCount := 0
+	for scanner.Scan() {
+		line := scanner.Text()
+		lineCount++
+		if !strings.Contains(line, "worker=") || !strings.Contains(line, "seq=") {
+			t.Fatalf("detected malformed/interleaved line: %q", line)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		t.Fatalf("failed scanning log output: %v", err)
+	}
+
+	expected := workers * perWorker
+	if lineCount != expected {
+		t.Fatalf("expected %d complete lines, got %d", expected, lineCount)
 	}
 }
