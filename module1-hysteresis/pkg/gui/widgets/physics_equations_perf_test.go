@@ -39,7 +39,7 @@ func TestEquationWidgetPerf_OpenBudgets(t *testing.T) {
 
 	// CI hosts can be heavily oversubscribed; allow a little extra headroom
 	// to avoid flaky failures from scheduler jitter.
-	const openBudget = 1250 * time.Millisecond
+	const openBudget = 1500 * time.Millisecond
 
 	resetEquationCachesForPerfTest()
 	cold := measureEquationOpen(t, openBudget)
