@@ -365,9 +365,9 @@ Evidence note (2026-02-11, EDA validation): added `module6-eda/pkg/compiler/mode
 |----|------|--------|--------|------|
 | CM-P1 | Define "physics accuracy" acceptance criteria per module | Shared | ✅ | 30-60m |
 | CM-D1 | Keep HONESTY_AUDIT.md as SSOT; ensure UI labels match | Shared | ✅ | 30-60m |
-| CM-U1 | Ensure UI values/plots never desync from engine state | Shared | ⏳ | 1-2hr |
-| CM-D2 | Equation widgets pipeline: LaTeX→SVG SSOT, hotspot alignment | Shared | ⏳ | 1-2hr |
-| CM-P2 | Minimal headless regression suite per engine with JSON summary | Shared | ⏳ | 2-4hr |
+| CM-U1 | Ensure UI values/plots never desync from engine state | Shared | ✅ | 1-2hr |
+| CM-D2 | Equation widgets pipeline: LaTeX→SVG SSOT, hotspot alignment | Shared | ✅ | 1-2hr |
+| CM-P2 | Minimal headless regression suite per engine with JSON summary | Shared | ✅ | 2-4hr |
 | CM-D3 | Tighten module docs: equations, assumptions, units, validated labels | Shared | ✅ | 2-4hr |
 
 ### UX Polish

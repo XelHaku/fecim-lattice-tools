@@ -2,7 +2,7 @@
   "suite": "headless-wrd-ispp-regression",
   "material": "Literature Superlattice (Cheema 2020)",
   "model": "preisach",
-  "timestamp": "2026-02-11T18:46:43-06:00",
+  "timestamp": "2026-02-11T18:49:54-06:00",
   "targets": [
     {
       "name": "LO",
