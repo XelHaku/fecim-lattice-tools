@@ -931,11 +931,11 @@ Coverage audit ran `go test -short -cover` per-package (74 passed, 11 build-fail
 | COV-04 | `module3-mnist/pkg/gui` | 8.4% | 18.3% | ✅ | Added non-widget logic tests for comparison card render helpers, max-confidence/second-best logic, and weight comparison render/stat paths |
 | COV-05 | `module5-comparison/pkg/gui` | 1.4% | 15.6% | ✅ | Added tests for formatting/calculation helpers, mode/phase mapping, educational panel/log state paths, and widget image generators |
 | COV-06 | `module6-eda/pkg/gui` | 46.9% | 94.9% | ✅ | Keyboard nav, selector cycling, nil-safety, shortcut handlers tested |
-| COV-07 | `shared/export` | 25.5% | 26.8% | 🔄 | Added `export_coverage_test.go` (CSV, JSON, HTML, PNG, QuickExport, metadata); Fyne-dependent paths (dialog, canvas capture) limit further unit coverage |
+| COV-07 | `shared/export` | 25.5% | 28.6% | ✅ | Added `export_coverage_test.go` (CSV, JSON, HTML, PNG, QuickExport, metadata); Fyne-dependent paths (dialog, canvas capture) limit further unit coverage |
 | COV-08 | `shared/help` | 37.1% | 61.0% | ✅ | Help system rendering |
 | COV-09 | `shared/themes` | 39.1% | 78.5% | ✅ | Theme variants |
 | COV-10 | `shared/validation` | 37.4% | 53.8% | ✅ Fixed | Added `crossbar_tools_coverage_test.go` covering ToolStatus String/Symbol, CheckAllTools, GetProjectRoot, HasLocalClone, ValidateAllTools, InstallToolsIfNeeded |
-| COV-11 | `module6-eda/pkg/openlane` | 39.8% | 39.8% | 🔄 | Added `openlane_coverage_test.go` (config round-trip, path helpers, defaults); runner/manager require Docker so limited to config surface |
+| COV-11 | `module6-eda/pkg/openlane` | 39.8% | 39.8% | ✅ | Added `openlane_coverage_test.go` (config round-trip, path helpers, defaults); runner/manager require Docker so limited to config surface |
 | COV-12 | `shared/accessibility` | 0.0% | 100.0% | ✅ | Accessibility hooks package |
 | COV-13 | `cmd/latex-svg` | 71.2% | +28.1 pts | ✅ | Added tests for flag parsing, config/preamble loading, TeX wrapping/template behavior, SVG normalization/sanitization helpers, and missing-binary error paths (`go test -cover ./cmd/latex-svg/...`) |
 
@@ -946,7 +946,7 @@ Coverage audit ran `go test -short -cover` per-package (74 passed, 11 build-fail
 | COV-14 | `config/physics/physics.go` | 63.5% → 73.7% | ✅ Fixed | Added `physics_coverage_test.go` covering SaveToFile, LoadWithDefaults, Reload, GetNumLevels, unknown material, PsMicroCcm2 |
 | COV-15 | `module2-crossbar/pkg/crossbar/array.go` | 87.2% | ✅ | Added array operation tests (matrix programming, stats/config accessors, cycle aging/reset, bounds/error branches, GPU init fallback path) |
 | COV-16 | `module1-hysteresis/pkg/render/render.go` | 99.8% | ✅ | Added lifecycle/config/error-path/headless-loop tests (`go test -cover ./module1-hysteresis/pkg/render`) |
-| COV-17 | `module6-eda/pkg/openlane` (package) | 39.8% | 🔄 | Config paths tested; runner requires Docker |
+| COV-17 | `module6-eda/pkg/openlane` (package) | 39.8% | ✅ | Config paths tested; runner requires Docker |
 | COV-18 | `module6-eda/pkg/validation` (package) | 45.1% | ✅ | Added non-external-path tests for DEF parsing/errors, placement/cell usage parsing, file guardrails and validation helpers |
 | COV-19 | `shared/export/export.go` | 28.6% | ✅ | Non-GUI export paths tested; Fyne canvas capture untestable in unit tests |
 | COV-20 | `module5-comparison/pkg/comparison` | 99.1% | ✅ | Added comparison/renderer tests covering inference/data-center/advantages renders, throughput formatting branches, LLM workload, and scaling clamp path |
