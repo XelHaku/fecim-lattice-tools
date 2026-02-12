@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"fecim-lattice-tools/shared/logging"
 	"fyne.io/fyne/v2"
 )
 
@@ -23,6 +24,7 @@ var (
 	// Track layout call counts for detecting infinite loops
 	layoutCallCounts = make(map[string]int)
 	layoutMu         sync.Mutex
+	layoutCallSeq    uint64
 
 	// Last layout time for detecting rapid layout cycles
 	lastLayoutTime = make(map[string]time.Time)
@@ -40,6 +42,11 @@ var (
 	startupStable     = false
 	startupStableMu   sync.Mutex
 	startupWindowSize fyne.Size // First "real" window size after 0x0
+)
+
+const (
+	maxTrackedLayoutWidgets = 1024
+	layoutCleanupInterval   = 256
 )
 
 type refreshCall struct {
@@ -75,7 +82,7 @@ func getShortStack() string {
 // Use for tracking Layout(), Refresh(), and MinSize() calls.
 func DebugLog(format string, args ...interface{}) {
 	if DebugLayout {
-		fmt.Printf("[LAYOUT] "+format+"\n", args...)
+		logging.Printf("[LAYOUT] "+format, args...)
 	}
 }
 
@@ -91,6 +98,10 @@ func DebugLayoutCall(widgetName string, size fyne.Size) bool {
 
 	key := widgetName
 	layoutCallCounts[key]++
+	layoutCallSeq++
+	if len(layoutCallCounts) > maxTrackedLayoutWidgets || layoutCallSeq%layoutCleanupInterval == 0 {
+		cleanupLayoutTrackingLocked()
+	}
 	count := layoutCallCounts[key]
 
 	now := time.Now()
@@ -99,7 +110,7 @@ func DebugLayoutCall(widgetName string, size fyne.Size) bool {
 		// If we're getting layout calls faster than 10ms with count > 50, something might be wrong
 		// Higher threshold (50) ignores normal startup initialization which can call Layout many times
 		if elapsed < 10*time.Millisecond && count > 50 {
-			fmt.Printf("[LAYOUT] WARNING: %s Layout() called %d times in rapid succession (%.2fms)\n",
+			logging.Printf("[LAYOUT] WARNING: %s Layout() called %d times in rapid succession (%.2fms)",
 				widgetName, count, float64(elapsed.Nanoseconds())/1e6)
 			return true
 		}
@@ -112,6 +123,41 @@ func DebugLayoutCall(widgetName string, size fyne.Size) bool {
 	}
 
 	return count > 1000 // Definitely something wrong if over 1000 calls
+}
+
+// cleanupLayoutTrackingLocked bounds debug tracking maps to avoid unbounded growth.
+// Must be called with layoutMu held.
+func cleanupLayoutTrackingLocked() {
+	if len(layoutCallCounts) <= maxTrackedLayoutWidgets {
+		return
+	}
+
+	toRemove := len(layoutCallCounts) - maxTrackedLayoutWidgets
+	for i := 0; i < toRemove; i++ {
+		oldestKey := ""
+		var oldestTime time.Time
+
+		for k, t := range lastLayoutTime {
+			if oldestKey == "" || t.Before(oldestTime) {
+				oldestKey = k
+				oldestTime = t
+			}
+		}
+
+		if oldestKey == "" {
+			for k := range layoutCallCounts {
+				oldestKey = k
+				break
+			}
+		}
+
+		if oldestKey == "" {
+			break
+		}
+
+		delete(layoutCallCounts, oldestKey)
+		delete(lastLayoutTime, oldestKey)
+	}
 }
 
 // DebugRefreshCall logs a Refresh() call.
@@ -144,8 +190,8 @@ func DebugRefreshCall(widgetName string, widgetSize fyne.Size) {
 			}
 		}
 		if rapidCount > 15 {
-			fmt.Printf("[RESIZE-BUG] RAPID REFRESH: %s called %d times in 100ms!\n", widgetName, rapidCount)
-			fmt.Printf("[RESIZE-BUG] Stack: %s\n", call.stack)
+			logging.Printf("[RESIZE-BUG] RAPID REFRESH: %s called %d times in 100ms!", widgetName, rapidCount)
+			logging.Printf("[RESIZE-BUG] Stack: %s", call.stack)
 		}
 		refreshCallsMu.Unlock()
 	}
@@ -184,7 +230,7 @@ func ShouldSuppressResize(oldSize, newSize fyne.Size) bool {
 	if time.Since(startupTime) > 1*time.Second {
 		startupStable = true
 		if DebugResize {
-			fmt.Printf("[RESIZE] Startup stabilization complete at %s\n", time.Now().Format("15:04:05.000"))
+			logging.Printf("[RESIZE] Startup stabilization complete at %s", time.Now().Format("15:04:05.000"))
 		}
 		return false
 	}
@@ -195,7 +241,7 @@ func ShouldSuppressResize(oldSize, newSize fyne.Size) bool {
 
 	if widthDiff <= 2 && heightDiff <= 2 && oldSize.Width > 0 && oldSize.Height > 0 {
 		if DebugResize {
-			fmt.Printf("[RESIZE] Suppressing startup resize: %.0fx%.0f -> %.0fx%.0f (diff: %.0fx%.0f)\n",
+			logging.Printf("[RESIZE] Suppressing startup resize: %.0fx%.0f -> %.0fx%.0f (diff: %.0fx%.0f)",
 				oldSize.Width, oldSize.Height, newSize.Width, newSize.Height, widthDiff, heightDiff)
 		}
 		return true
@@ -221,17 +267,17 @@ func DebugWindowResize(newSize fyne.Size) {
 	defer windowResizeMu.Unlock()
 
 	if lastWindowSize.Width != newSize.Width || lastWindowSize.Height != newSize.Height {
-		fmt.Printf("[RESIZE] Window: %.0fx%.0f -> %.0fx%.0f\n",
+		logging.Printf("[RESIZE] Window: %.0fx%.0f -> %.0fx%.0f",
 			lastWindowSize.Width, lastWindowSize.Height, newSize.Width, newSize.Height)
 
 		// Print recent refresh calls that might have caused this
 		refreshCallsMu.Lock()
 		if len(recentRefreshCalls) > 0 {
-			fmt.Printf("[RESIZE] Recent refresh calls before resize:\n")
+			logging.Printf("[RESIZE] Recent refresh calls before resize:")
 			for _, c := range recentRefreshCalls {
-				fmt.Printf("  - %s at %s\n", c.widget, c.timestamp.Format("15:04:05.000"))
+				logging.Printf("  - %s at %s", c.widget, c.timestamp.Format("15:04:05.000"))
 				if c.stack != "" {
-					fmt.Printf("    Stack: %s\n", c.stack)
+					logging.Printf("    Stack: %s", c.stack)
 				}
 			}
 		}
@@ -246,7 +292,7 @@ func DebugInteraction(action string) {
 	if !DebugResize {
 		return
 	}
-	fmt.Printf("[INTERACTION] %s at %s\n", action, time.Now().Format("15:04:05.000"))
+	logging.Printf("[INTERACTION] %s at %s", action, time.Now().Format("15:04:05.000"))
 
 	// Clear recent refresh calls to track what happens after this interaction
 	refreshCallsMu.Lock()
@@ -268,6 +314,7 @@ func ResetLayoutCounts() {
 	defer layoutMu.Unlock()
 	layoutCallCounts = make(map[string]int)
 	lastLayoutTime = make(map[string]time.Time)
+	layoutCallSeq = 0
 }
 
 // ConstrainSize ensures a size doesn't exceed the minimum size.
@@ -318,7 +365,7 @@ func WrapSliderCallback(name string, original func(float64)) func(float64) {
 	return func(value float64) {
 		if DebugResize {
 			// Only log slider changes in verbose mode since they're frequent
-			fmt.Printf("[INTERACTION] Slider[%s] changed to %.2f at %s\n", name, value, time.Now().Format("15:04:05.000"))
+			logging.Printf("[INTERACTION] Slider[%s] changed to %.2f at %s", name, value, time.Now().Format("15:04:05.000"))
 		}
 		if original != nil {
 			original(value)
