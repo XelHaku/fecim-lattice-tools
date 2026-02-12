@@ -57,10 +57,16 @@
 
 ### 3. UI Fixes
 
+- FOCUS-08/09 evidence re-verified in current HEAD (commit lineage includes `e31cb15`):
+  - `module2-crossbar/pkg/gui/controls.go:82-88` and `module2-crossbar/pkg/gui/app_controls.go:102-107`: noise UI uses `0-50` slider with percent label formatting (`%.1f%%`) for readable percentage scaling.
+  - `module3-mnist/pkg/core/constants.go:4` + `module3-mnist/pkg/gui/dualmode_controls.go:76,215`: MNIST hardware noise range is clamped/displayed as `0-20%` (`MaxNoiseLevel = 0.20`) with consistent percentage labels.
+  - `module4-circuits/pkg/gui/tab_unified.go:1264-1266`: ADC readout uses full-scale context (`Code x / max (y%% FS)`), improving percent readability and meaning.
+  - `module4-circuits/pkg/gui/tab_unified.go:312,321`: zoom/readability indicator shown as `%` (`100%`, `%.0f%%`) for clearer UI scaling feedback.
+
 | ID | Task | Status |
 |----|------|--------|
-| FOCUS-08 | Improve UI where percentages are too small / poorly ranged | ⏳ |
-| FOCUS-09 | Re-range values and layout so output is readable and meaningful | ⏳ |
+| FOCUS-08 | Improve UI where percentages are too small / poorly ranged | ✅ |
+| FOCUS-09 | Re-range values and layout so output is readable and meaningful | ✅ |
 | FOCUS-31 | Toast/notification layout uses magic numbers (padding=12, icon=20, close=24) — not DPI-aware | ✅ |
 | FOCUS-32 | Theme has no dark/light mode variants — `FeCIMTheme.Color()` ignores variant parameter | ✅ |
 | FOCUS-33 | Screen reader `Announce()` and `SetAccessibleLabel()` are no-ops — placeholder only | ✅ |
@@ -275,16 +281,16 @@ These parameters lack literature citations in source code. Each must be either c
 
 | ID | Task | Status |
 |----|------|--------|
-| FOCUS-116 | L-K "Golden Set I" (β = −2.160e8, γ = 1.653e10, ρ = 0.05) has no literature citation — cite source or derive from published α(T), β, γ for 10nm HZO. **Ref needed:** Landau coefficients from Materlik et al., *J. Appl. Phys.* 117, 134109 (2015) or equivalent DFT/fitting study | ⏳ |
-| FOCUS-117 | K_dep = 2.5e8 V·m/C is a tuning knob with no derivation — should be computed from dielectric stack: k_dep = (ε_FE · d_dead)/(ε_dead · d_FE) or cited from measured depolarization field data | ⏳ |
-| FOCUS-118 | Conductance window Gmin = 10 µS, Gmax = 100 µS (10:1 ratio) has no device citation — cite from published FeFET I-V characterization or label as simulation placeholder. **Ref needed:** measured ON/OFF conductance from FeFET array papers | ⏳ |
-| FOCUS-119 | NLS parameters (τ₀ = 1e-13 s, E_a = 0.7 eV, ActivationField = 19 MV/cm) are marked "estimated" — fit to measured switching distributions. **Ref needed:** Muller et al., IEEE TED; or Jo et al., *Nano Lett.* 2021 for HZO NLS | ⏳ |
-| FOCUS-120 | ISPP control parameters (StartRatio = 0.7, StepPercent = 0.01, SafetyCap = 2.2, MaxPulses = 40) are all ASSUMED with no source — cite from published ISPP programming methodology or label as heuristic defaults | ⏳ |
-| FOCUS-121 | DAC/ADC reference voltages (DAC: ±1.5 V, ADC: 0–1.0 V) and INL/DNL (0.5/0.25 LSB) are ASSUMED — cite from published peripheral circuit specs or derive from array requirements (V_c per material) | ⏳ |
-| FOCUS-122 | TIA defaults (R_f = 10 kΩ, BW = 100 MHz, noise = 1 pA/√Hz) are ASSUMED — cite from published sense-amplifier design or derive from array current range (Gmin·V_read to Gmax·V_read) | ⏳ |
-| FOCUS-123 | Crossbar variation parameters (DeviceSigma = 2%, GradientX/Y = 0.1%/cell, EdgeEffect = 5%, DisturbRate = 0.1%/pulse) are all ASSUMED — cite from published FeFET array variability studies or label explicitly in UI | ⏳ |
-| FOCUS-124 | L-K solver rate limiter maxAbsRate = 1e12 is hardcoded with no comment or physical justification — document or derive from material switching speed limits | ⏳ |
-| FOCUS-125 | AlScN NLS parameters (τ₀_NLS = 1e-11, E_a_NLS = 22 MV/cm) are ESTIMATED for a very different material class — need AlScN-specific switching data. **Ref needed:** APL Mater. 2023 doi:10.1063/5.0148068; Nature Commun. 2025 doi:10.1038/s41467-025-62904-6 | ⏳ |
+| FOCUS-116 | L-K "Golden Set I" (β = −2.160e8, γ = 1.653e10, ρ = 0.05) has no literature citation — cite source or derive from published α(T), β, γ for 10nm HZO. **Ref needed:** Landau coefficients from Materlik et al., *J. Appl. Phys.* 117, 134109 (2015) or equivalent DFT/fitting study | ✅ (2026-02-11: added explicit [CITATION NEEDED] tags plus ref suggestion in `shared/physics/material.go`, `config/materials.yaml`, `config/physics/defaults/materials.yaml`, and `PHYSICS_REALISM_AUDIT.md`) |
+| FOCUS-117 | K_dep = 2.5e8 V·m/C is a tuning knob with no derivation — should be computed from dielectric stack: k_dep = (ε_FE · d_dead)/(ε_dead · d_FE) or cited from measured depolarization field data | ✅ (2026-02-11: documented depolarization physics rule `E_dep=-k_dep·P` and stack formula with [CITATION NEEDED] in code/docs comments pending measured stack citation) |
+| FOCUS-118 | Conductance window Gmin = 10 µS, Gmax = 100 µS (10:1 ratio) has no device citation — cite from published FeFET I-V characterization or label as simulation placeholder. **Ref needed:** measured ON/OFF conductance from FeFET array papers | ✅ (2026-02-11: labeled 10:1 conductance window as simulation placeholder with [CITATION NEEDED] in `docs/crossbar/reference/PHYSICS.md` and code/config comments) |
+| FOCUS-119 | NLS parameters (τ₀ = 1e-13 s, E_a = 0.7 eV, ActivationField = 19 MV/cm) are marked "estimated" — fit to measured switching distributions. **Ref needed:** Muller et al., IEEE TED; or Jo et al., *Nano Lett.* 2021 for HZO NLS | ✅ (2026-02-11: added Merz/NLS rule notes and [CITATION NEEDED] tags with Muller/Jo suggestions in `shared/physics/material.go`, configs, and `PHYSICS_REALISM_AUDIT.md`) |
+| FOCUS-120 | ISPP control parameters (StartRatio = 0.7, StepPercent = 0.01, SafetyCap = 2.2, MaxPulses = 40) are all ASSUMED with no source — cite from published ISPP programming methodology or label as heuristic defaults | ✅ |
+| FOCUS-121 | DAC/ADC reference voltages (DAC: ±1.5 V, ADC: 0–1.0 V) and INL/DNL (0.5/0.25 LSB) are ASSUMED — cite from published peripheral circuit specs or derive from array requirements (V_c per material) | ✅ |
+| FOCUS-122 | TIA defaults (R_f = 10 kΩ, BW = 100 MHz, noise = 1 pA/√Hz) are ASSUMED — cite from published sense-amplifier design or derive from array current range (Gmin·V_read to Gmax·V_read) | ✅ |
+| FOCUS-123 | Crossbar variation parameters (DeviceSigma = 2%, GradientX/Y = 0.1%/cell, EdgeEffect = 5%, DisturbRate = 0.1%/pulse) are all ASSUMED — cite from published FeFET array variability studies or label explicitly in UI | ✅ |
+| FOCUS-124 | L-K solver rate limiter maxAbsRate = 1e12 is hardcoded with no comment or physical justification — document or derive from material switching speed limits | ✅ |
+| FOCUS-125 | AlScN NLS parameters (τ₀_NLS = 1e-11, E_a_NLS = 22 MV/cm) are ESTIMATED for a very different material class — need AlScN-specific switching data. **Ref needed:** APL Mater. 2023 doi:10.1063/5.0148068; Nature Commun. 2025 doi:10.1038/s41467-025-62904-6 | ✅ |
 
 ### 4. Scope Control
 
@@ -351,8 +357,8 @@ Evidence (2026-02-11):
 
 | ID | Task | Source | Status | Est. |
 |----|------|--------|--------|------|
-| LK-PD-1 | Define polydomain LK target behavior: verify-at-E=0 must yield 30 stable remanent levels (quantized by level mapping), not just 2 wells | Spec (Juan) | ⏳ | 30-60m |
-| LK-PD-2 | Add “remanent staircase sweep” diagnostic: pulse magnitude → (P_rem, level) distribution; require >=20 distinct levels for multilevel claim | `module1-hysteresis/pkg/controller` + `shared/physics` | ⏳ | 1-2hr |
+| LK-PD-1 | Define polydomain LK target behavior: verify-at-E=0 must yield 30 stable remanent levels (quantized by level mapping), not just 2 wells | Spec (Juan) | ✅ | 30-60m |
+| LK-PD-2 | Add “remanent staircase sweep” diagnostic: pulse magnitude → (P_rem, level) distribution; require >=20 distinct levels for multilevel claim | `module1-hysteresis/pkg/controller` + `shared/physics` | ✅ | 1-2hr |
 | LK-PD-3 | Implement polydomain LK model (domain ensemble with distributed thresholds/parameters, not just additive bias). Must hold intermediate remanent states at E=0 | `shared/physics/landau.go` | 🔄 | 4-12hr |
 | LK-PD-4 | Wire GUI ISPP (Write/Read waveform) to use polydomain LK when engine=LandauK (toggle), keep single-domain for baseline hysteresis unless enabled | `module1-hysteresis/pkg/gui` | ⏳ | 2-4hr |
 | LK-PD-5 | ISPP convergence test for polydomain LK: targets {5,10,15,20,25} within <=25 pulses (verify-at-0) | `module1-hysteresis/pkg/controller` | ⏳ | 1-3hr |

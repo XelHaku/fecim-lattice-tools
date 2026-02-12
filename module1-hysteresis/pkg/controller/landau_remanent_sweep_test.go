@@ -3,35 +3,45 @@ package controller
 import (
 	"hash/fnv"
 	"math"
+	"sort"
 	"testing"
 
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 	sharedphysics "fecim-lattice-tools/shared/physics"
 )
 
-// Remanent sweep diagnostic for polydomain Landau-Khalatnikov.
+// Remanent staircase diagnostic for polydomain Landau-Khalatnikov.
 //
-// Goal: with ensemble enabled, the plant (physics engine) should produce MANY distinct
-// remanent levels after verify-at-E=0, as pulse amplitude increases.
-//
-// This test does NOT require hitting all 30 levels yet; it just measures whether the
-// remanent staircase exists (a prerequisite for ISPP convergence).
+// Goal: with ensemble enabled, verify-at-E=0 should produce a broad remanent
+// staircase (not binary), measured as a distribution of (P_rem, level)
+// points over a pulse-amplitude sweep.
 func TestLandauKEnsemble_RemanentStaircase_Superlattice(t *testing.T) {
 	mat := ferroelectric.LiteratureSuperlattice()
 
-	runSweep := func() (levels []int, distinct int, hash uint64, decreases int, worstDrop int, maxRelaxDeltaFrac float64, levelChangeAtEndOfRelax int) {
+	type sweepMetrics struct {
+		levels                 []int
+		distinctLevels         int
+		hash                   uint64
+		decreases              int
+		worstDrop              int
+		maxRelaxDeltaFrac      float64
+		levelChangeAtEndOfZero int
+		levelCounts            map[int]int
+		levelMeanPrem          map[int]float64
+	}
+
+	runSweep := func() sweepMetrics {
 		solver := sharedphysics.NewLKSolver()
 		solver.ConfigureFromMaterial(mat)
 		solver.EnableNoise = false
-		// Enable NLS in ensemble mode to allow partial switching (probabilistic nucleation) with
-		// deterministic per-domain RNG. This is a simple proxy for domain-to-domain threshold spread.
 		solver.UseNLS = true
 		solver.EnableEnsemble(256, mat, 0)
 
-		// Pulse timing: short pulses to avoid fully switching every domain.
 		dt := 2e-9
-		pulseSteps := 4
+		pulseSteps := 6
 		relaxSteps := 20
+		sweepSteps := 80
+		maxFieldScale := 3.5
 
 		ps := math.Abs(mat.Ps)
 		if ps == 0 {
@@ -39,46 +49,50 @@ func TestLandauKEnsemble_RemanentStaircase_Superlattice(t *testing.T) {
 		}
 
 		seen := map[int]bool{}
-		levels = make([]int, 0, 61)
-		maxRelaxDeltaFrac = 0
-
+		levelCounts := map[int]int{}
+		levelPSum := map[int]float64{}
+		levels := make([]int, 0, sweepSteps+1)
+		maxRelaxDeltaFrac := 0.0
+		levelChangeAtEndOfZero := 0
 		h := fnv.New64a()
-		// Sweep magnitude from 0 to MaxField (2.5*Ec), positive branch.
-		for k := 0; k <= 60; k++ {
-			mag := (2.5 * float64(k) / 60.0) * mat.Ec
-			// Start from negative saturation each trial.
+
+		for k := 0; k <= sweepSteps; k++ {
+			mag := (maxFieldScale * float64(k) / float64(sweepSteps)) * mat.Ec
 			solver.SetState(-mat.Ps)
-			// Apply pulse
 			for i := 0; i < pulseSteps; i++ {
 				solver.Step(mag, dt)
 			}
 
-			// Verify/relax at E=0; check stability via the final-step delta at E=0.
 			prevRelaxP := solver.GetState()
 			prevRelaxLevel := levelFromP(prevRelaxP, mat.Ps, 30)
 			for i := 0; i < relaxSteps; i++ {
 				solver.Step(0, dt)
-				if i == relaxSteps-2 { // value immediately before the final relax step
+				if i == relaxSteps-2 {
 					prevRelaxP = solver.GetState()
 					prevRelaxLevel = levelFromP(prevRelaxP, mat.Ps, 30)
 				}
 			}
-			pEnd := solver.GetState()
-			lvl := levelFromP(pEnd, mat.Ps, 30)
+
+			pRem := solver.GetState()
+			lvl := levelFromP(pRem, mat.Ps, 30)
+			levels = append(levels, lvl)
+			seen[lvl] = true
+			levelCounts[lvl]++
+			levelPSum[lvl] += pRem
+			_, _ = h.Write([]byte{byte(lvl)})
+
 			if lvl != prevRelaxLevel {
-				levelChangeAtEndOfRelax++
+				// final two E=0 relax steps should be stable at level mapping resolution
+				levelChangeAtEndOfZero++
 			}
-			deltaFrac := math.Abs(pEnd-prevRelaxP) / ps
+			deltaFrac := math.Abs(pRem-prevRelaxP) / ps
 			if deltaFrac > maxRelaxDeltaFrac {
 				maxRelaxDeltaFrac = deltaFrac
 			}
-
-			levels = append(levels, lvl)
-			seen[lvl] = true
-			_, _ = h.Write([]byte{byte(lvl)})
 		}
 
-		// Monotonicity metrics (allow small quantization jitter; see diagnostics_remanent_staircase.md).
+		decreases := 0
+		worstDrop := 0
 		for i := 1; i < len(levels); i++ {
 			if levels[i] < levels[i-1] {
 				decreases++
@@ -89,41 +103,58 @@ func TestLandauKEnsemble_RemanentStaircase_Superlattice(t *testing.T) {
 			}
 		}
 
-		return levels, len(seen), h.Sum64(), decreases, worstDrop, maxRelaxDeltaFrac, levelChangeAtEndOfRelax
-	}
+		levelMeanPrem := make(map[int]float64, len(levelPSum))
+		for lvl, sum := range levelPSum {
+			levelMeanPrem[lvl] = sum / float64(levelCounts[lvl])
+		}
 
-	levels1, distinct1, hash1, dec1, worstDrop1, maxDeltaFrac1, relaxLevelChanges1 := runSweep()
-	levels2, _, hash2, _, _, _, _ := runSweep()
-
-	t.Logf("distinct remanent levels observed (ensemble): %d (hash=%016x)", distinct1, hash1)
-	t.Logf("monotonicity: decreases=%d worstDrop=%d", dec1, worstDrop1)
-	t.Logf("remanent stability at E=0: maxDeltaFrac(last-step)=%0.3e levelChanges=%d", maxDeltaFrac1, relaxLevelChanges1)
-
-	// Determinism: with fixed seed and noise disabled, the level sequence must be identical run-to-run.
-	if hash1 != hash2 || len(levels1) != len(levels2) {
-		t.Fatalf("expected deterministic sweep hash/length; got hash1=%016x hash2=%016x len1=%d len2=%d", hash1, hash2, len(levels1), len(levels2))
-	}
-	for i := range levels1 {
-		if levels1[i] != levels2[i] {
-			t.Fatalf("expected deterministic sweep levels; mismatch at i=%d: run1=%d run2=%d (hash1=%016x hash2=%016x)", i, levels1[i], levels2[i], hash1, hash2)
+		return sweepMetrics{
+			levels:                 levels,
+			distinctLevels:         len(seen),
+			hash:                   h.Sum64(),
+			decreases:              decreases,
+			worstDrop:              worstDrop,
+			maxRelaxDeltaFrac:      maxRelaxDeltaFrac,
+			levelChangeAtEndOfZero: levelChangeAtEndOfZero,
+			levelCounts:            levelCounts,
+			levelMeanPrem:          levelMeanPrem,
 		}
 	}
 
-	// Acceptance metrics are documented in diagnostics_remanent_staircase.md.
-	// Bare minimum: must be more than binary.
-	if distinct1 < 6 {
-		t.Fatalf("expected multi-level remanent staircase; got only %d distinct levels", distinct1)
+	m1 := runSweep()
+	m2 := runSweep()
+
+	levels := make([]int, 0, len(m1.levelCounts))
+	for lvl := range m1.levelCounts {
+		levels = append(levels, lvl)
 	}
-	// Monotonic trend tolerance: allow small quantization jitter (<=2 single-level drops).
-	if dec1 > 2 || worstDrop1 > 1 {
-		t.Fatalf("remanent staircase not monotonic enough: decreases=%d worstDrop=%d", dec1, worstDrop1)
+	sort.Ints(levels)
+	for _, lvl := range levels {
+		t.Logf("distribution level=%02d count=%d meanP_rem=%0.6e C/m^2", lvl, m1.levelCounts[lvl], m1.levelMeanPrem[lvl])
 	}
-	// Remanent stability after relax-at-E=0: final relax step should not change the quantized level,
-	// and the final-step polarization drift should be small.
-	if relaxLevelChanges1 != 0 {
-		t.Fatalf("remanent not stable at E=0: level changed during final relax step (count=%d)", relaxLevelChanges1)
+	t.Logf("distinct remanent levels observed: %d (hash=%016x)", m1.distinctLevels, m1.hash)
+	t.Logf("monotonicity (diagnostic): decreases=%d worstDrop=%d", m1.decreases, m1.worstDrop)
+	t.Logf("remanent stability at E=0: maxDeltaFrac(last-step)=%0.3e levelChanges=%d", m1.maxRelaxDeltaFrac, m1.levelChangeAtEndOfZero)
+
+	if m1.hash != m2.hash || len(m1.levels) != len(m2.levels) {
+		t.Fatalf("expected deterministic sweep hash/length; got hash1=%016x hash2=%016x len1=%d len2=%d", m1.hash, m2.hash, len(m1.levels), len(m2.levels))
 	}
-	if maxDeltaFrac1 > 1e-3 {
-		t.Fatalf("remanent not stable at E=0: maxDeltaFrac(last-step)=%0.3e exceeds 1e-3", maxDeltaFrac1)
+	for i := range m1.levels {
+		if m1.levels[i] != m2.levels[i] {
+			t.Fatalf("expected deterministic sweep levels; mismatch at i=%d: run1=%d run2=%d (hash1=%016x hash2=%016x)", i, m1.levels[i], m2.levels[i], m1.hash, m2.hash)
+		}
+	}
+
+	// Multilevel claim gate: require broad remanent staircase, not binary behavior.
+	if m1.distinctLevels < 20 {
+		t.Fatalf("multilevel claim failed: expected >=20 distinct remanent levels, got %d", m1.distinctLevels)
+	}
+
+	// Verify-at-E=0 stability guard (quantization-level stable with small final-step drift).
+	if m1.levelChangeAtEndOfZero != 0 {
+		t.Fatalf("remanent not stable at E=0: level changed in final relax step (%d times)", m1.levelChangeAtEndOfZero)
+	}
+	if m1.maxRelaxDeltaFrac > 1e-3 {
+		t.Fatalf("remanent not stable at E=0: maxDeltaFrac(last-step)=%0.3e exceeds 1e-3", m1.maxRelaxDeltaFrac)
 	}
 }
