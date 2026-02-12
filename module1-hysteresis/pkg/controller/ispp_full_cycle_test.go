@@ -92,6 +92,9 @@ func TestISPPFullCycle_All30Levels_ResearchLikeBehavior(t *testing.T) {
 		results = append(results, res)
 		totalPulses += res.pulses
 
+		t.Logf("Level %d: %d pulses (final=%d converged=%v state=%s max|E|=%.6g)",
+			target, res.pulses, res.finalLevel, res.converged, res.writeState.String(), res.maxAbsField)
+
 		absErr := absInt(res.finalLevel - target)
 		if absErr > worstAbsError {
 			worstAbsError = absErr
