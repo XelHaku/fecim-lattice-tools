@@ -573,7 +573,7 @@ Evidence note (2026-02-11, EDA validation): added `module6-eda/pkg/compiler/mode
 | UXP-09 | Add explicit keyboard shortcut to open docs search using `/` in addition to Cmd/Ctrl+K | module7-docs | ✅ |
 | UXP-10 | Normalize inconsistent button casing (ALL CAPS vs Title Case) across module4 reference/comparison tabs | module4-circuits | ✅ |
 | UXP-11 | Replace remaining one-letter field labels in builder panel (`W/H/Cap/Leak`) with descriptive labels while preserving compact layout | module6-eda | ✅ |
-| UXP-12 | Add keyboard shortcuts for Builder actions (Generate All, Validate All, Export Package) | module6-eda | ⏳ |
+| UXP-12 | Add keyboard shortcuts for Builder actions (Generate All, Validate All, Export Package) | module6-eda | ✅ |
 
 **Evidence (UXP-01..UXP-08, 2026-02-11):**
 - `module4-circuits/pkg/gui/tab_unified.go`: introduced shared action/label constants, added callback validation errors for invalid array-size and ADC selections, and added accessibility labels for unified action controls.
@@ -725,9 +725,9 @@ Evidence note (2026-02-11, EDA validation): added `module6-eda/pkg/compiler/mode
 | PGAP-03 | `docs/hysteresis/hysteresis.ELI5.md` claimed `GetPreisachPlane()` / distribution getters exist; no such public API found in module1/shared physics | High | ✅ Fixed (status changed to not implemented) |
 | PGAP-04 | `docs/crossbar/reference/PHYSICS.md` documented architecture as only `0T1R/1T1R`; code supports `2T1R` path in `MVMOptions` and non-ideality scaling | High | ✅ Fixed (2T1R added to architecture docs) |
 | PGAP-05 | `docs/peripheral-circuits/PHYSICS.md` omitted code-implemented optional SAR noise path (`EnableSARNoise`: metastability, Vref drift, kT/C noise) | High | ✅ Fixed (ADC section now documents optional SAR noise model) |
-| PGAP-06 | `docs/hysteresis/hysteresis.ELI5.md` still includes legacy “perfect module” pseudo-APIs (`export_verilog_a_params`, `export_neurosim_config`) not implemented as callable module APIs | Medium | ⏳ Open |
-| PGAP-07 | `docs/hysteresis/hysteresis.physics.md` still describes write/read mode using simple `|E|>Ec` threshold, while current write/read demo logic is phase-machine/controller-driven (`module1-hysteresis/pkg/controller`) | Medium | ⏳ Open |
-| PGAP-08 | `docs/hysteresis/*.md` do not consistently state that current Preisach implementation uses a tanh Everett approximation rather than FORC-calibrated distributions | Medium | ⏳ Open |
+| PGAP-06 | `docs/hysteresis/hysteresis.ELI5.md` legacy pseudo-API references removed; export section now reflects current/non-stable interfaces only | Medium | ✅ Done |
+| PGAP-07 | `docs/hysteresis/hysteresis.physics.md` now documents controller/phase-machine-driven write/read flow instead of threshold-only description | Medium | ✅ Done |
+| PGAP-08 | Added consistent implementation note across hysteresis docs: tanh Everett approximation (not FORC-calibrated Preisach distribution) | Medium | ✅ Done |
 
 ---
 
@@ -932,11 +932,11 @@ Coverage audit ran `go test -short -cover` per-package (74 passed, 11 build-fail
 | COV-05 | `module5-comparison/pkg/gui` | 1.4% | — | ⏳ | GUI package |
 | COV-06 | `module6-eda/pkg/gui` | 46.9% | — | ⏳ | Partially tested; remaining coverage in GUI tab widgets |
 | COV-07 | `shared/export` | 25.5% | 26.8% | 🔄 | Added `export_coverage_test.go` (CSV, JSON, HTML, PNG, QuickExport, metadata); Fyne-dependent paths (dialog, canvas capture) limit further unit coverage |
-| COV-08 | `shared/help` | 37.1% | — | ⏳ | Help system rendering |
-| COV-09 | `shared/themes` | 39.1% | — | ⏳ | Theme variants |
+| COV-08 | `shared/help` | 37.1% | 61.0% | ✅ | Help system rendering |
+| COV-09 | `shared/themes` | 39.1% | 78.5% | ✅ | Theme variants |
 | COV-10 | `shared/validation` | 37.4% | 53.8% | ✅ Fixed | Added `crossbar_tools_coverage_test.go` covering ToolStatus String/Symbol, CheckAllTools, GetProjectRoot, HasLocalClone, ValidateAllTools, InstallToolsIfNeeded |
 | COV-11 | `module6-eda/pkg/openlane` | 39.8% | 39.8% | 🔄 | Added `openlane_coverage_test.go` (config round-trip, path helpers, defaults); runner/manager require Docker so limited to config surface |
-| COV-12 | `shared/accessibility` | 0.0% | — | ⏳ | Accessibility hooks package |
+| COV-12 | `shared/accessibility` | 0.0% | 100.0% | ✅ | Accessibility hooks package |
 | COV-13 | `cmd/latex-svg` | 43.1% | — | ⏳ | LaTeX→SVG pipeline; requires `latex` binary on host |
 
 ### Critical Physics/Algorithm Files <70% Coverage
