@@ -30,6 +30,9 @@ func TestGPUBaselineAgainstPublishedNVIDIA(t *testing.T) {
 	if !withinPercent(gpu.TDP, 400.0, 10.0) {
 		t.Fatalf("GPU TDP baseline drifted: got %.1f W, expected ~400 W (A100 class, ±10%%)", gpu.TDP)
 	}
+	if !withinPercent(gpu.ProcessNode, 4.0, 10.0) {
+		t.Fatalf("GPU process-node baseline drifted: got %.1f nm, expected ~4 nm (H100-class process, ±10%%)", gpu.ProcessNode)
+	}
 	if !withinPercent(gpu.MemorySize, 80.0, 10.0) {
 		t.Fatalf("GPU memory size baseline drifted: got %.1f GB, expected ~80 GB (A100/H100 class, ±10%%)", gpu.MemorySize)
 	}
