@@ -317,9 +317,9 @@
 | M6-P1 | Audit mapping/quantization/topology vs docs | `module6-eda` | ⏳ | 2-4hr |
 | M7-D1 | Confirm curriculum tree order + shortcuts match docs | `module7-docs` | ✅ | Done (`docs_test.go`: `TestEmbeddedDocsApp_SortEntries_*`, `TestModuleShortcutsPanel_MappingAndDisableState`) |
 | M7-U1 | Validate layout breakpoints + click targets | `module7-docs` | ✅ | Done (`docs_test.go`: breakpoint coverage + `TestEmbeddedDocsApp_TreeClickTargets` for folder/file row behavior) |
-| M7-U2 | Add colored category badges in tree rows | `module7-docs` | ⏳ | 30-60m |
-| M7-U3 | Hide "On This Page" sidebar when ToC < 3 headings | `module7-docs` | ⏳ | 30-60m |
-| M7-P1 | Verify search ranking + reading time math | `module7-docs` | ⏳ | 1-2hr |
+| M7-U2 | Add colored category badges in tree rows | `module7-docs` | ✅ | Done (`embedded.go`: centralized `treeCategory` mapping + tree row badge rendering; `docs_test.go`: `TestEmbeddedDocsApp_TreeCategoryBadges`) |
+| M7-U3 | Hide "On This Page" sidebar when ToC < 3 headings | `module7-docs` | ✅ | Done (`layout.go`: `SetTocVisible`; `embedded.go`: auto-toggle after `ParseMarkdown`; `docs_test.go`: `TestEmbeddedDocsApp_LoadDocument_TocVisibility`) |
+| M7-P1 | Verify search ranking + reading time math | `module7-docs` | ✅ | Done (`search.go`: IDF floor fix for common terms; `docs_test.go`: `TestRankResults`, `TestExtractMetadata_ReadingTimeMath`) |
 
 Evidence note (2026-02-11): `go test -race ./module6-eda/... ./module7-docs/...` passed after docs sync + new module7 curriculum/layout interaction tests.
 
@@ -380,11 +380,11 @@ Evidence note (2026-02-11): `go test -race ./module6-eda/... ./module7-docs/...`
 | ID | Task | Source | Status | Est. |
 |----|------|--------|--------|------|
 | A11Y-1 | Increase font sizes below 14px to minimum | `docs/ACCESSIBILITY_AUDIT.md` | ✅ | 1-2hr |
-| A11Y-2 | Wire up FocusIndicator to interactive widgets | `shared/widgets/accessibility.go` | ⏳ | 2-4hr |
-| A11Y-3 | Expose HighContrastTheme via settings menu | Settings | ⏳ | 1-2hr |
+| A11Y-2 | Wire up FocusIndicator to interactive widgets | `shared/widgets/accessibility.go` | ✅ | 2-4hr |
+| A11Y-3 | Expose HighContrastTheme via settings menu | Settings | ✅ | 1-2hr |
 | A11Y-4 | Show KeyboardNavigationHelp via F1 key | Settings | ✅ | 30-60m |
-| A11Y-5 | Add Tab order to launcher demo cards | Launcher | ⏳ | 1-2hr |
-| A11Y-6 | Arrow key navigation in data widgets | Widgets | ⏳ | 2-4hr |
+| A11Y-5 | Add Tab order to launcher demo cards | Launcher | ✅ | 1-2hr |
+| A11Y-6 | Arrow key navigation in data widgets | Widgets | ✅ | 2-4hr |
 
 ---
 

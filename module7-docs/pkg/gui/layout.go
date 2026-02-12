@@ -169,6 +169,23 @@ func (lm *LayoutManager) ToggleToc() {
 	}
 }
 
+// SetTocVisible explicitly controls ToC visibility and reapplies layout.
+func (lm *LayoutManager) SetTocVisible(visible bool) {
+	lm.mu.Lock()
+	defer lm.mu.Unlock()
+
+	if lm.tocVisible == visible {
+		return
+	}
+
+	lm.tocVisible = visible
+	lm.applyLayoutMode()
+
+	if lm.onTocToggle != nil {
+		lm.onTocToggle(lm.tocVisible)
+	}
+}
+
 // BuildLayout creates the layout container based on current mode
 func (lm *LayoutManager) BuildLayout() *fyne.Container {
 	lm.mu.Lock()

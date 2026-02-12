@@ -263,6 +263,40 @@ func getCategoryIcon(filename string) fyne.Resource {
 	}
 }
 
+// treeCategory returns the badge category for a tree row.
+func (app *EmbeddedDocsApp) treeCategory(entry *docEntry) string {
+	if entry == nil {
+		return ""
+	}
+
+	if entry.isDir {
+		base := strings.ToLower(filepath.Base(entry.path))
+		switch {
+		case app.isModuleDir(entry.path):
+			return "Module"
+		case base == "research-papers":
+			return "Research"
+		default:
+			return ""
+		}
+	}
+
+	nameLower := strings.ToLower(entry.name)
+	switch nameLower {
+	case "eli5.md":
+		return "ELI5"
+	case "physics.md":
+		return "Physics"
+	case "features.md", "opensource-tools.md", "readme.md", "modules.md":
+		return "Guide"
+	default:
+		if strings.Contains(filepath.ToSlash(entry.path), "/research-papers/") {
+			return "Research"
+		}
+		return ""
+	}
+}
+
 // createDocTree builds the documentation file tree widget
 func (app *EmbeddedDocsApp) createDocTree() *widget.Tree {
 	tree := widget.NewTree(
@@ -339,36 +373,13 @@ func (app *EmbeddedDocsApp) createDocTree() *widget.Tree {
 			if entry, ok := app.pathMap[uid]; ok {
 				label.SetText(entry.name)
 
-				// Category badge is a small curriculum-first signal.
-				category := ""
+				category := app.treeCategory(entry)
 				if entry.isDir {
 					icon.SetResource(theme.FolderIcon())
 					starBtn.Hidden = true
-
-					base := strings.ToLower(filepath.Base(entry.path))
-					switch {
-					case app.isModuleDir(entry.path):
-						category = "Module"
-					case base == "research-papers":
-						category = "Research"
-					}
 				} else {
 					icon.SetResource(getCategoryIcon(entry.name))
 					starBtn.Hidden = false
-
-					nameLower := strings.ToLower(entry.name)
-					switch nameLower {
-					case "eli5.md":
-						category = "ELI5"
-					case "physics.md":
-						category = "Physics"
-					case "features.md", "opensource-tools.md", "readme.md", "modules.md":
-						category = "Guide"
-					default:
-						if strings.Contains(filepath.ToSlash(entry.path), "/research-papers/") {
-							category = "Research"
-						}
-					}
 
 					// Update star icon based on favorite status.
 					if app.history.IsFavorite(entry.path) {
@@ -453,6 +464,9 @@ func (app *EmbeddedDocsApp) loadDocument(path string) {
 	// Update ToC (use original markdown to avoid bold markers in headings)
 	fyne.Do(func() {
 		app.toc.ParseMarkdown(markdown)
+		if app.layoutManager != nil {
+			app.layoutManager.SetTocVisible(app.toc.HeadingCount() >= 3)
+		}
 	})
 
 	// Detect glossary terms and update metadata

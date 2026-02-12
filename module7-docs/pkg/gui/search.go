@@ -391,9 +391,11 @@ func (si *SearchIndex) Query(query string, limit int) []SearchResult {
 				continue
 			}
 
-			// IDF: log(N / df) where df is document frequency
+			// IDF: log(N / df) where df is document frequency.
+			// Clamp to a small floor so common terms still retain ranking signal
+			// from title/heading boosts and frequency.
 			idf := math.Log(totalDocs / float64(len(entries)))
-			if idf < 0 {
+			if idf <= 0 {
 				idf = 0.1
 			}
 

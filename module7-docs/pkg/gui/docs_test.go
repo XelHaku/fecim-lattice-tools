@@ -160,12 +160,38 @@ This is a test document with about 200 words to test reading time calculation.
 		t.Errorf("Expected title 'Test Document', got '%s'", meta.Title)
 	}
 
-	if meta.ReadingTime <= 0 {
-		t.Error("Reading time should be calculated")
+	if meta.ReadingTime != 2 {
+		t.Errorf("Expected reading time to ceil to 2 min, got %d", meta.ReadingTime)
 	}
 
 	if meta.Path != "/test/docs/test.md" {
 		t.Errorf("Expected path /test/docs/test.md, got %s", meta.Path)
+	}
+}
+
+func TestExtractMetadata_ReadingTimeMath(t *testing.T) {
+	index := NewSearchIndex("/test/docs")
+	info := &mockFileInfo{name: "doc.md", modTime: time.Now()}
+
+	tests := []struct {
+		name     string
+		words    int
+		expected int
+	}{
+		{name: "minimum one minute", words: 0, expected: 1},
+		{name: "exactly one page", words: 200, expected: 1},
+		{name: "ceil to two", words: 201, expected: 2},
+		{name: "ceil to three", words: 401, expected: 3},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			content := strings.Repeat("w ", tt.words)
+			meta := index.extractMetadata("/test/docs/doc.md", content, info)
+			if meta.ReadingTime != tt.expected {
+				t.Fatalf("reading time mismatch: words=%d got=%d want=%d", tt.words, meta.ReadingTime, tt.expected)
+			}
+		})
 	}
 }
 
@@ -262,9 +288,9 @@ func TestRankResults(t *testing.T) {
 
 	// Create documents with different term frequencies
 	testDocs := map[string]string{
-		"title_match.md": "# Ferroelectric\n\nSome content here.",
-		"heading_match.md": "# Document\n\n## Ferroelectric Materials\n\nContent.",
-		"content_match.md": "# Document\n\nThis mentions ferroelectric once.",
+		"title_match.md":    "# Ferroelectric\n\nSome content here.",
+		"heading_match.md":  "# Document\n\n## Ferroelectric Materials\n\nContent.",
+		"content_match.md":  "# Document\n\nThis mentions ferroelectric once.",
 		"frequent_match.md": "# Document\n\nFerroelectric ferroelectric ferroelectric.",
 	}
 
@@ -280,8 +306,8 @@ func TestRankResults(t *testing.T) {
 
 	results := index.Query("ferroelectric", 10)
 
-	if len(results) < 2 {
-		t.Fatalf("Expected at least 2 results, got %d", len(results))
+	if len(results) < 4 {
+		t.Fatalf("Expected 4 results, got %d", len(results))
 	}
 
 	// Verify results are sorted by relevance (descending)
@@ -292,19 +318,19 @@ func TestRankResults(t *testing.T) {
 		}
 	}
 
-	// Title match should have highest relevance
-	titleMatchFound := false
-	for _, result := range results {
-		if strings.Contains(result.DocPath, "title_match.md") {
-			if result.MatchType != "title" {
-				t.Errorf("Expected MatchType='title', got '%s'", result.MatchType)
-			}
-			titleMatchFound = true
-			break
-		}
+	if !strings.Contains(results[0].DocPath, "title_match.md") {
+		t.Fatalf("expected title match as top result, got %q", results[0].DocPath)
 	}
-	if !titleMatchFound {
-		t.Error("Title match document not found in results")
+	if results[0].MatchType != "title" {
+		t.Fatalf("expected top MatchType=title, got %q", results[0].MatchType)
+	}
+
+	scoreByName := map[string]float64{}
+	for _, result := range results {
+		scoreByName[filepath.Base(result.DocPath)] = result.Relevance
+	}
+	if scoreByName["heading_match.md"] <= scoreByName["content_match.md"] {
+		t.Fatalf("expected heading boost > content: heading=%f content=%f", scoreByName["heading_match.md"], scoreByName["content_match.md"])
 	}
 }
 
@@ -875,6 +901,79 @@ func TestEmbeddedDocsApp_TreeClickTargets(t *testing.T) {
 	app.tree.OnSelected(filePath)
 	if app.currentFile != filePath {
 		t.Fatalf("clicking file row should load document: got %q want %q", app.currentFile, filePath)
+	}
+}
+
+func TestEmbeddedDocsApp_TreeCategoryBadges(t *testing.T) {
+	app := &EmbeddedDocsApp{docsPath: "/docs/documentation"}
+
+	tests := []struct {
+		name     string
+		entry    *docEntry
+		expected string
+	}{
+		{name: "module directory", entry: &docEntry{name: "module7-docs", path: "/docs/documentation/module7-docs", isDir: true}, expected: "Module"},
+		{name: "research directory", entry: &docEntry{name: "research-papers", path: "/docs/documentation/research-papers", isDir: true}, expected: "Research"},
+		{name: "eli5 file", entry: &docEntry{name: "ELI5.md", path: "/docs/documentation/module1/ELI5.md"}, expected: "ELI5"},
+		{name: "physics file", entry: &docEntry{name: "PHYSICS.md", path: "/docs/documentation/module1/PHYSICS.md"}, expected: "Physics"},
+		{name: "guide file", entry: &docEntry{name: "FEATURES.md", path: "/docs/documentation/module1/FEATURES.md"}, expected: "Guide"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := app.treeCategory(tt.entry)
+			if got != tt.expected {
+				t.Fatalf("treeCategory mismatch: got=%q want=%q", got, tt.expected)
+			}
+			if _, ok := CategoryColors[got]; !ok {
+				t.Fatalf("category %q missing color mapping", got)
+			}
+		})
+	}
+}
+
+func TestEmbeddedDocsApp_LoadDocument_TocVisibility(t *testing.T) {
+	testApp := test.NewApp()
+	defer testApp.Quit()
+	w := testApp.NewWindow("docs")
+	defer w.Close()
+
+	tmpDir := t.TempDir()
+	docsRoot := filepath.Join(tmpDir, "docs", "documentation")
+	moduleDir := filepath.Join(docsRoot, "module1-hysteresis")
+	if err := os.MkdirAll(moduleDir, 0755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	shortDoc := filepath.Join(moduleDir, "short.md")
+	longDoc := filepath.Join(moduleDir, "long.md")
+	if err := os.WriteFile(shortDoc, []byte("# A\n\n## B"), 0644); err != nil {
+		t.Fatalf("write short doc: %v", err)
+	}
+	if err := os.WriteFile(longDoc, []byte("# A\n\n## B\n\n### C"), 0644); err != nil {
+		t.Fatalf("write long doc: %v", err)
+	}
+
+	app := NewEmbeddedDocsApp()
+	app.EmbeddedAppBase.Init(testApp, w)
+	app.window = w
+	app.docsPath = docsRoot
+	app.searchIndex = NewSearchIndex(docsRoot)
+	app.history = NewDocsHistory()
+	app.createUIComponents()
+	app.layoutManager = NewLayoutManager()
+	app.layoutManager.SetComponents(app.buildSidebar(), app.buildMainContent(), app.buildTocSidebar(), app.buildTopBar())
+	_ = app.layoutManager.BuildLayout()
+
+	app.loadDocument(shortDoc)
+	fyne.DoAndWait(func() {})
+	if app.layoutManager.IsTocVisible() {
+		t.Fatal("ToC should be hidden when document has fewer than 3 headings")
+	}
+
+	app.loadDocument(longDoc)
+	fyne.DoAndWait(func() {})
+	if !app.layoutManager.IsTocVisible() {
+		t.Fatal("ToC should be visible when document has 3+ headings")
 	}
 }
 

@@ -189,6 +189,11 @@ func (toc *TableOfContentsWidget) SetCurrentSection(anchor string) {
 	toc.Refresh()
 }
 
+// HeadingCount returns the number of parsed headings.
+func (toc *TableOfContentsWidget) HeadingCount() int {
+	return len(toc.headings)
+}
+
 // CreateRenderer implements the fyne.Widget interface
 func (toc *TableOfContentsWidget) CreateRenderer() fyne.WidgetRenderer {
 	toc.refresh()
