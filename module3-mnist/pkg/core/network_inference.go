@@ -195,7 +195,7 @@ func (net *DualModeNetwork) forwardFP(input []float64, weights [][]float64, bias
 			return result
 		}
 		log.Trace("forwardFP: GPU fallback to CPU (err=%v)", err)
-		// Fall back to CPU on GPU error (silent fallback)
+		net.emitNotification(fmt.Sprintf("GPU inference failed (%v). Falling back to CPU.", err))
 	}
 
 	// CPU path (original implementation)

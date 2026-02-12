@@ -36,6 +36,7 @@ type NetworkController struct {
 	// Callbacks for UI notifications
 	onWeightsLoaded func(level int)
 	onError         func(err error)
+	onNotice        func(message string)
 }
 
 // NewNetworkController creates a new network controller.
@@ -65,6 +66,11 @@ func NewNetworkController(inputSize, hiddenSize, outputSize int) *NetworkControl
 
 	// Create network
 	nc.network = core.NewDualModeNetwork(inputSize, hiddenSize, outputSize)
+	nc.network.SetNotificationHandler(func(message string) {
+		if nc.onNotice != nil {
+			nc.onNotice(message)
+		}
+	})
 
 	// Load pretrained weights
 	weightsPath := filepath.Join(nc.weightsDir, "pretrained_weights.json")
@@ -252,6 +258,11 @@ func (nc *NetworkController) SetOnError(callback func(err error)) {
 	nc.onError = callback
 }
 
+// SetOnNotice sets the callback for non-fatal user-facing notices.
+func (nc *NetworkController) SetOnNotice(callback func(message string)) {
+	nc.onNotice = callback
+}
+
 // QATLoadResult represents the result of a QAT weight loading attempt.
 type QATLoadResult int
 
@@ -260,6 +271,10 @@ const (
 	QATAlreadyLoaded QATLoadResult = iota
 	// QATLoaded indicates weights were successfully loaded.
 	QATLoaded
+	// QATFallbackDefault indicates missing level-specific weights and default weights loaded.
+	QATFallbackDefault
+	// QATFallbackDefaultFirstWarning indicates first warning for fallback-to-default.
+	QATFallbackDefaultFirstWarning
 	// QATNotFound indicates no weights file exists for this level.
 	QATNotFound
 	// QATNotFoundFirstWarning indicates first warning for missing weights.
@@ -276,12 +291,19 @@ func (nc *NetworkController) TryLoadQATWeights(targetLevel int) (QATLoadResult, 
 		return QATAlreadyLoaded, nil
 	}
 
+	requestedPath := filepath.Join(nc.weightsDir, fmt.Sprintf("pretrained_weights_%d.json", targetLevel))
+	hasLevelSpecific := targetLevel == FeCIMDefaultLevels
+	if !hasLevelSpecific {
+		if _, err := os.Stat(requestedPath); err == nil {
+			hasLevelSpecific = true
+		}
+	}
+
 	// Find the weights file for this level
 	weightsPath := core.GetWeightsFilename(nc.weightsDir, targetLevel)
 
-	// Check if the file exists
+	// Check if the selected file exists
 	if _, err := os.Stat(weightsPath); os.IsNotExist(err) {
-		// No level-specific weights
 		alreadyWarned := nc.HasWarnedMissingLevel(targetLevel)
 		if !alreadyWarned {
 			nc.SetWarnedMissingLevel(targetLevel)
@@ -290,12 +312,20 @@ func (nc *NetworkController) TryLoadQATWeights(targetLevel int) (QATLoadResult, 
 		return QATNotFound, nil
 	}
 
-	// Load the new weights
+	// Load the selected weights
 	if err := nc.network.LoadWeights(weightsPath); err != nil {
 		return QATLoadError, err
 	}
 
 	// Update tracking
 	nc.SetCurrentQATLevel(targetLevel)
+	if !hasLevelSpecific {
+		alreadyWarned := nc.HasWarnedMissingLevel(targetLevel)
+		if !alreadyWarned {
+			nc.SetWarnedMissingLevel(targetLevel)
+			return QATFallbackDefaultFirstWarning, nil
+		}
+		return QATFallbackDefault, nil
+	}
 	return QATLoaded, nil
 }

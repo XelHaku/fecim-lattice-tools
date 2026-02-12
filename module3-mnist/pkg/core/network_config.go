@@ -1,21 +1,34 @@
 package core
 
+import "fmt"
+
+func formatLevelClampMessage(source string, requested, actual int) string {
+	return fmt.Sprintf("%s requested %d levels, clamped to %d", source, requested, actual)
+}
+
 // SetNumLevels updates the quantization levels and re-quantizes weights.
 // Minimum is 2 levels (required by QuantizeWeights), maximum is MaxDemoLevels.
 func (net *DualModeNetwork) SetNumLevels(levels int) {
-	oldLevels := net.Config.NumLevels
-	net.mu.Lock()
-	defer net.mu.Unlock()
+	requested := levels
+	clamped := false
 
+	net.mu.Lock()
+	oldLevels := net.Config.NumLevels
 	if levels < 2 {
 		levels = 2
+		clamped = true
 	}
 	if levels > MaxDemoLevels {
 		levels = MaxDemoLevels
+		clamped = true
 	}
 	net.Config.NumLevels = levels
 	net.requantizeWeightsLocked()
+	net.mu.Unlock()
 
+	if clamped {
+		net.emitNotification(formatLevelClampMessage("SetNumLevels", requested, levels))
+	}
 	if levels > FeCIMLevels {
 		log.Info("Using overspec quantization level %d (FeCIM max %d) for comparison only", levels, FeCIMLevels)
 	}

@@ -363,6 +363,25 @@ func (app *DualModeApp) tryLoadQATWeights(targetLevel int) {
 			}
 		})
 
+	case QATFallbackDefaultFirstWarning:
+		fyne.Do(func() {
+			if app.statusLabel != nil {
+				app.statusLabel.SetText(fmt.Sprintf("No %d-level weights; using default weights", targetLevel))
+			}
+			if app.window != nil {
+				dialog.ShowInformation("Using Default Weights",
+					fmt.Sprintf("No level-specific QAT weights were found for %d levels.\n\nLoaded default pretrained weights instead.", targetLevel),
+					app.window)
+			}
+		})
+
+	case QATFallbackDefault:
+		fyne.Do(func() {
+			if app.statusLabel != nil {
+				app.statusLabel.SetText(fmt.Sprintf("Using default weights (no %d-level QAT file)", targetLevel))
+			}
+		})
+
 	case QATNotFoundFirstWarning:
 		fyne.Do(func() {
 			if app.statusLabel != nil {

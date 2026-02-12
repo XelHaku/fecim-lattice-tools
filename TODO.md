@@ -80,9 +80,15 @@
 | ID | Task | Status |
 |----|------|--------|
 | FOCUS-42 | Recent Files menu TODO — clicking doesn't load file (`main.go:1228`) | ⏳ |
-| FOCUS-43 | 9 undocumented env vars (FECIM_MATERIAL, FECIM_RANGE_FRAC, etc.) — add to `--help` output | ⏳ |
-| FOCUS-44 | Screenshots/recordings dirs hardcoded to `screenshots/` and `recordings/` — no CLI override | ⏳ |
-| FOCUS-45 | Config search only uses relative paths — no XDG_CONFIG_HOME or `~/.config/fecim/` support | ⏳ |
+| FOCUS-43 | 9 undocumented env vars (FECIM_MATERIAL, FECIM_RANGE_FRAC, etc.) — add to `--help` output | ✅ (2026-02-11: `cmd/fecim-lattice-tools --help` now prints dedicated headless env var section listing all 9 vars) |
+| FOCUS-44 | Screenshots/recordings dirs hardcoded to `screenshots/` and `recordings/` — no CLI override | ✅ (2026-02-11: added `--screenshot-dir` and `--recording-dir` flags; capture paths now configurable) |
+| FOCUS-45 | Config search only uses relative paths — no XDG_CONFIG_HOME or `~/.config/fecim/` support | ✅ (2026-02-11: `shared/cli.ConfigLoader` now resolves via `$XDG_CONFIG_HOME/fecim` then `~/.config/fecim`) |
+
+**Evidence (FOCUS-43/44/45, 2026-02-11):**
+- `cmd/fecim-lattice-tools/main.go`: added custom `flag.Usage` section documenting 9 headless env vars (`FECIM_MATERIAL`, `FECIM_RANGE_FRAC`, `FECIM_ISPP_STEPS_PER_PULSE`, `FECIM_HEADLESS_FAST`, `FECIM_ISPP_TARGETS`, `FECIM_ISPP_TARGET_SEED`, `FECIM_ISPP_TARGET_LEVELS`, `FECIM_ISPP_MAX_PULSES`, `FECIM_HEADLESS_ALLOW_TIMEOUT`).
+- `cmd/fecim-lattice-tools/main.go`: added `--screenshot-dir` and `--recording-dir`; replaced hardcoded `screenshots/` and `recordings/` outputs with flag-driven directories.
+- `shared/cli/cli.go`: added config path resolution with XDG/home search roots (`$XDG_CONFIG_HOME/fecim`, `$HOME/.config/fecim`) plus `~/` expansion.
+- `shared/cli/cli_test.go`: added path-resolution tests for XDG and home config fallback.
 
 ### 3d. Error Handling (panic → graceful)
 
