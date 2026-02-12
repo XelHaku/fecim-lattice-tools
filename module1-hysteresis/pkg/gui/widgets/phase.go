@@ -96,6 +96,13 @@ func (p *PhaseIndicator) SetMinSize(size fyne.Size) {
 	p.minSize = size
 }
 
+// CurrentPhase returns the active phase and mode for diagnostics/tests.
+func (p *PhaseIndicator) CurrentPhase() (int, string) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	return p.phase, p.mode
+}
+
 // MinSize returns the minimum size.
 func (p *PhaseIndicator) MinSize() fyne.Size {
 	return p.minSize

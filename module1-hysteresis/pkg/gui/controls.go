@@ -204,6 +204,10 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			a.timeResDataSwitch = nil
 		}
 	})
+	// Default to WRD mode explicitly so PROGRAM/VERIFY/RESULT state indicator is active on startup.
+	// (SetSelected callback behavior can vary by toolkit/runtime init ordering.)
+	a.waveform = WaveformWriteReadDemo
+	a.autoMode = true
 	a.waveformSelect.SetSelected("ISPP (Write/Read)")
 
 	// Physics engine selector

@@ -16,6 +16,16 @@ type INLDNLAnalysis struct {
 	WorstCode int       // Code with worst INL
 }
 
+// PVTINLDNLAnalysis captures INL/DNL behavior across temperature and process corner.
+type PVTINLDNLAnalysis struct {
+	TemperatureK float64
+	Corner       ProcessCorner
+	INLScale     float64
+	DNLScale     float64
+	DAC          *INLDNLAnalysis
+	ADC          *INLDNLAnalysis
+}
+
 // AnalyzeINLDNL computes detailed INL/DNL for a DAC.
 func (d *DAC) AnalyzeINLDNL() *INLDNLAnalysis {
 	log.Input("DAC.AnalyzeINLDNL", map[string]interface{}{
@@ -146,6 +156,63 @@ func findCodeWidth(a *ADC, code int, lsb float64) float64 {
 	return baseWidth * dnlFactor
 }
 
+// AnalyzeINLDNLAtCondition computes DAC/ADC INL-DNL at a specific temperature and corner.
+func AnalyzeINLDNLAtCondition(dac *DAC, adc *ADC, temperatureK float64, corner ProcessCorner) *PVTINLDNLAnalysis {
+	if temperatureK <= 0 {
+		temperatureK = referenceTemperatureK
+	}
+
+	dacINL, dacDNL := EffectiveINLDNL(dac.INL, dac.DNL, temperatureK, corner)
+	adcINL, adcDNL := EffectiveINLDNL(adc.INL, adc.DNL, temperatureK, corner)
+
+	dacClone := *dac
+	dacClone.INL = dacINL
+	dacClone.DNL = dacDNL
+
+	adcClone := *adc
+	adcClone.INL = adcINL
+	adcClone.DNL = adcDNL
+
+	inlScale := 0.0
+	dnlScale := 0.0
+	if dac.INL != 0 {
+		inlScale = dacINL / dac.INL
+	}
+	if dac.DNL != 0 {
+		dnlScale = dacDNL / dac.DNL
+	}
+
+	return &PVTINLDNLAnalysis{
+		TemperatureK: temperatureK,
+		Corner:       corner,
+		INLScale:     inlScale,
+		DNLScale:     dnlScale,
+		DAC:          dacClone.AnalyzeINLDNL(),
+		ADC:          adcClone.AnalyzeINLDNL(),
+	}
+}
+
+// ProcessCornerAnalysis aggregates typical/fast/slow analyses at one temperature.
+type ProcessCornerAnalysis struct {
+	TemperatureK float64
+	Fast         *PVTINLDNLAnalysis
+	Typical      *PVTINLDNLAnalysis
+	Slow         *PVTINLDNLAnalysis
+}
+
+// AnalyzeProcessCorners computes fast/typical/slow corner INL-DNL analyses.
+func AnalyzeProcessCorners(dac *DAC, adc *ADC, temperatureK float64) *ProcessCornerAnalysis {
+	if temperatureK <= 0 {
+		temperatureK = referenceTemperatureK
+	}
+	return &ProcessCornerAnalysis{
+		TemperatureK: temperatureK,
+		Fast:         AnalyzeINLDNLAtCondition(dac, adc, temperatureK, CornerFast),
+		Typical:      AnalyzeINLDNLAtCondition(dac, adc, temperatureK, CornerTypical),
+		Slow:         AnalyzeINLDNLAtCondition(dac, adc, temperatureK, CornerSlow),
+	}
+}
+
 // TimingAnalysis contains timing parameters for peripheral operations.
 type TimingAnalysis struct {
 	DACSettle     float64 // DAC settling time (s)
@@ -167,8 +234,8 @@ func AnalyzeTiming(dac *DAC, adc *ADC, tia *TIA, pump *ChargePump) *TimingAnalys
 		"adc_conv_time":   adc.ConversionTime,
 	})
 
-	arraySettle := 5e-9   // Array RC/sneak settling time (5 ns)
-	writePulse := 100e-9  // Write pulse duration (100 ns)
+	arraySettle := 5e-9  // Array RC/sneak settling time (5 ns)
+	writePulse := 100e-9 // Write pulse duration (100 ns)
 
 	t := &TimingAnalysis{
 		DACSettle:   dac.SettleTime * 1e-9,
@@ -282,10 +349,10 @@ type TransferFunction struct {
 // ComputeTransferFunction traces signals through the full peripheral chain.
 func ComputeTransferFunction(dac *DAC, adc *ADC, tia *TIA, pump *ChargePump) *TransferFunction {
 	log.Input("ComputeTransferFunction", map[string]interface{}{
-		"dac_bits":  dac.Bits,
-		"adc_bits":  adc.Bits,
-		"tia_gain":  tia.Gain,
-		"pump_eff":  pump.Efficiency,
+		"dac_bits": dac.Bits,
+		"adc_bits": adc.Bits,
+		"tia_gain": tia.Gain,
+		"pump_eff": pump.Efficiency,
 	})
 
 	tf := &TransferFunction{
@@ -328,8 +395,8 @@ func ComputeTransferFunction(dac *DAC, adc *ADC, tia *TIA, pump *ChargePump) *Tr
 	}
 
 	log.Calculation("ComputeTransferFunction", map[string]interface{}{
-		"levels":     30,
-		"max_error":  maxAbsError(tf.Errors),
+		"levels":    30,
+		"max_error": maxAbsError(tf.Errors),
 	}, tf)
 
 	return tf

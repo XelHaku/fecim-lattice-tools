@@ -811,8 +811,7 @@ func main() {
 		filename := takeScreenshot(window, sectionName)
 		if filename != "" {
 			log.Debug("Screenshot saved: %s", filename)
-			// Show toast notification
-			notificationManager.Success("Screenshot Saved", filename)
+			// Save silently to avoid intrusive UI interruptions during demos.
 		}
 	})
 

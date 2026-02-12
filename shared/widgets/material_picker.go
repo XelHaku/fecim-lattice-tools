@@ -47,18 +47,23 @@ var materialColumns = []struct {
 	Name        string
 	Width       float32
 	Description string
-	Models      string // [P] for Preisach, [LK] for Landau-Khalatnikov
+	Models      string // [P] for Preisach, [LK] for Landau-Khalatnikov, [P,LK] for both
 }{
-	{"Name", 160, "Material name", ""},
-	{"States", 70, "Number of analog states (bits/cell)", ""},
-	{"Pr", 85, "Remanent polarization (µC/cm²)", "[P][LK]"},
-	{"Ps", 85, "Saturation polarization (µC/cm²)", "[P][LK]"},
-	{"Ec", 85, "Coercive field (MV/cm)", "[P][LK]"},
+	{"Name", 170, "Material name", ""},
+	{"Eng", 65, "Engine support: [P], [LK], [P,LK]", ""},
+	{"States", 72, "Number of analog states (bits/cell)", ""},
+	{"Pr", 80, "Remanent polarization (µC/cm²)", "[P,LK]"},
+	{"Ps", 80, "Saturation polarization (µC/cm²)", "[P,LK]"},
+	{"Ec", 80, "Coercive field (MV/cm)", "[P,LK]"},
 	{"τ", 70, "Switching time", "[P]"},
-	{"Tc", 80, "Curie temperature", "[P][LK]"},
-	{"Endurance", 90, "Write cycle endurance", ""},
-	{"Thickness", 70, "Film thickness (nm)", "[P][LK]"},
-	{"Reference", 200, "Data source / citation", ""},
+	{"εHF", 65, "High-frequency relative permittivity", "[P,LK]"},
+	{"β", 75, "Landau β coefficient", "[LK]"},
+	{"γ", 75, "Landau γ coefficient", "[LK]"},
+	{"ρ", 75, "L-K viscosity coefficient", "[LK]"},
+	{"Tc", 70, "Curie temperature", "[P,LK]"},
+	{"Endurance", 88, "Write cycle endurance", ""},
+	{"Thickness", 72, "Film thickness (nm)", "[P,LK]"},
+	{"Reference", 190, "Data source / citation", ""},
 }
 
 func isLKCompatible(mat *physics.Material) bool {
@@ -67,6 +72,28 @@ func isLKCompatible(mat *physics.Material) bool {
 	}
 	thermo := mat.Thermodynamics
 	return thermo.BetaLandau != 0 && thermo.GammaLandau != 0 && thermo.RhoViscosity != 0
+}
+
+func isPreisachCompatible(mat *physics.Material) bool {
+	if mat == nil {
+		return false
+	}
+	return mat.PrCM2 > 0 && mat.PsCM2 > 0 && mat.EcVM > 0
+}
+
+func engineSupportTag(mat *physics.Material) string {
+	hasP := isPreisachCompatible(mat)
+	hasLK := isLKCompatible(mat)
+	switch {
+	case hasP && hasLK:
+		return "[P,LK]"
+	case hasP:
+		return "[P]"
+	case hasLK:
+		return "[LK]"
+	default:
+		return "—"
+	}
 }
 
 // NewMaterialPicker creates a new material picker widget.
@@ -205,35 +232,53 @@ func (mp *MaterialPicker) getCellValue(row, col int) string {
 
 	switch col {
 	case 0: // Name
-		name := mat.Name
-		if isLKCompatible(mat) {
-			name += " [LK]"
-		}
-		return name
-	case 1: // States
+		return mat.Name
+	case 1: // Engine support
+		return engineSupportTag(mat)
+	case 2: // States
 		if mat.AnalogStates > 0 {
 			bits := math.Log2(float64(mat.AnalogStates))
 			return fmt.Sprintf("%d (%.1fb)", mat.AnalogStates, bits)
 		}
 		return "—"
-	case 2: // Pr
+	case 3: // Pr
 		return FormatPolarization(mat.PrCM2)
-	case 3: // Ps
+	case 4: // Ps
 		return FormatPolarization(mat.PsCM2)
-	case 4: // Ec
+	case 5: // Ec
 		return FormatField(mat.EcVM)
-	case 5: // τ (Tau)
+	case 6: // τ (Tau)
 		return FormatTime(mat.TauS)
-	case 6: // Tc (Curie temp)
+	case 7: // εHF
+		if mat.EpsilonHF > 0 {
+			return fmt.Sprintf("%.0f", mat.EpsilonHF)
+		}
+		return "—"
+	case 8: // β
+		if mat.Thermodynamics.BetaLandau != 0 {
+			return fmt.Sprintf("%.2g", mat.Thermodynamics.BetaLandau)
+		}
+		return "—"
+	case 9: // γ
+		if mat.Thermodynamics.GammaLandau != 0 {
+			return fmt.Sprintf("%.2g", mat.Thermodynamics.GammaLandau)
+		}
+		return "—"
+	case 10: // ρ
+		if mat.Thermodynamics.RhoViscosity != 0 {
+			return fmt.Sprintf("%.2g", mat.Thermodynamics.RhoViscosity)
+		}
+		return "—"
+	case 11: // Tc (Curie temp)
 		if mat.CurieTempK > 0 {
 			return fmt.Sprintf("%.0f K", mat.CurieTempK)
 		}
 		return "—"
-	case 7: // Endurance
+	case 12: // Endurance
 		return FormatEndurance(mat.EnduranceCycles)
-	case 8: // Thickness
+	case 13: // Thickness
 		return FormatThickness(mat.ThicknessM)
-	case 9: // Reference
+	case 14: // Reference
 		if mat.Reference != "" {
 			return TruncateString(mat.Reference, 35)
 		}
@@ -266,7 +311,7 @@ func (mp *MaterialPicker) CreateRenderer() fyne.WidgetRenderer {
 	}
 
 	// Info label for tooltips
-	mp.infoLabel = widget.NewLabel("Click a row to select. [P] = Preisach parameter, [LK] = Landau-Khalatnikov compatible material/field.")
+	mp.infoLabel = widget.NewLabel("Click a row to select. Eng tags: [P] Preisach, [LK] Landau-Khalatnikov, [P,LK] supports both.")
 	mp.infoLabel.Wrapping = fyne.TextWrapWord
 	mp.infoLabel.TextStyle = fyne.TextStyle{Italic: true}
 

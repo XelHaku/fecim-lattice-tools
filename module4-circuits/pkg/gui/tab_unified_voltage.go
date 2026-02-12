@@ -661,10 +661,26 @@ func (ca *CircuitsApp) updateISPPUI() {
 			if dacCode >= 0 {
 				voltageText = fmt.Sprintf("V=%.2fV (DAC %d)", appliedVoltage, dacCode)
 			}
-			ca.operationsStatusLabel.SetText(fmt.Sprintf("ISPP [%d/%d]: Level %d -> %d | %s | %s",
+
+			trail := ""
+			if n := len(isppStatus.History); n > 0 {
+				start := 0
+				if n > 6 {
+					start = n - 6
+				}
+				trail = " | cycle "
+				for i := start; i < n; i++ {
+					if i > start {
+						trail += "->"
+					}
+					trail += fmt.Sprintf("L%d", isppStatus.History[i].Level)
+				}
+			}
+
+			ca.operationsStatusLabel.SetText(fmt.Sprintf("ISPP [%d/%d]: Level %d -> %d | %s | %s%s",
 				isppStatus.Iteration, isppStatus.MaxIter,
 				isppStatus.CurrentLevel, isppStatus.TargetLevel,
-				voltageText, dirStr))
+				voltageText, dirStr, trail))
 		}
 
 		// Update direction indicator if we have one

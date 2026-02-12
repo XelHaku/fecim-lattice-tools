@@ -33,9 +33,9 @@ type SARNoiseConfig struct {
 	MetastabilityProb float64 // Base probability of metastability error (typical: 1e-6 to 1e-4)
 
 	// Reference voltage drift
-	VrefDriftPPM       float64 // Reference drift (ppm/°C, typical: 10-50)
-	VrefAgingPPMYear   float64 // Reference aging (ppm/year, typical: 20-100)
-	TemperatureK       float64 // Operating temperature (K)
+	VrefDriftPPM          float64 // Reference drift (ppm/°C, typical: 10-50)
+	VrefAgingPPMYear      float64 // Reference aging (ppm/year, typical: 20-100)
+	TemperatureK          float64 // Operating temperature (K)
 	ReferenceTemperatureK float64 // Reference calibration temperature (K)
 
 	// Thermal noise (kT/C)
@@ -43,7 +43,7 @@ type SARNoiseConfig struct {
 	ThermalNoiseEnable bool    // Enable thermal noise simulation
 
 	// Enable flags
-	EnableMetastability bool
+	EnableMetastability  bool
 	EnableReferenceDrift bool
 }
 
@@ -116,20 +116,9 @@ func (a *ADC) Convert(voltage float64) int {
 	return level
 }
 
-// ConvertWithNonlinearity adds INL/DNL errors to conversion.
+// ConvertWithNonlinearity adds INL/DNL errors to conversion at nominal PVT.
 func (a *ADC) ConvertWithNonlinearity(voltage float64) int {
-	// Add noise before quantization
-	lsb := (a.VrefHigh - a.VrefLow) / float64(a.Levels()-1)
-
-	// INL error (code-dependent)
-	idealLevel := a.Convert(voltage)
-	inlOffset := a.INL * lsb * math.Sin(math.Pi*float64(idealLevel)/float64(a.Levels()-1))
-
-	// DNL error (random per level)
-	dnlOffset := a.DNL * lsb * (0.5 - float64(idealLevel%5)/4.0)
-
-	// Re-convert with errors
-	return a.Convert(voltage + inlOffset + dnlOffset)
+	return a.ConvertWithCondition(voltage, referenceTemperatureK, CornerTypical)
 }
 
 // Resolution returns the voltage per LSB.
@@ -150,7 +139,7 @@ func (a *ADC) ENOB() float64 {
 	enob := float64(a.Bits) - math.Log2(math.Sqrt(noiseFactorSq))
 
 	log.Calculation("ADC.ENOB", map[string]interface{}{
-		"bits":           a.Bits,
+		"bits":            a.Bits,
 		"noise_factor_sq": noiseFactorSq,
 	}, enob)
 
@@ -194,9 +183,9 @@ func (a *ADC) EffectiveSNR() float64 {
 func DefaultSARNoiseConfig() *SARNoiseConfig {
 	return &SARNoiseConfig{
 		// Comparator metastability
-		ComparatorGain:    50.0,   // Moderate regeneration gain
-		MetastabilityTau:  0.5,    // 0.5 ns time constant
-		MetastabilityProb: 1e-5,   // Base probability (1 in 100,000)
+		ComparatorGain:    50.0, // Moderate regeneration gain
+		MetastabilityTau:  0.5,  // 0.5 ns time constant
+		MetastabilityProb: 1e-5, // Base probability (1 in 100,000)
 
 		// Reference drift (typical bandgap reference)
 		VrefDriftPPM:          25.0,  // 25 ppm/°C typical
@@ -325,7 +314,7 @@ func (a *ADC) ConvertWithSARNoise(voltage float64, seed int64) int {
 	// Add thermal noise to input
 	thermalNoise := a.GetThermalNoiseVoltage()
 	// Simple pseudo-random based on seed (deterministic for testing)
-	noiseSign := float64((seed % 2) * 2 - 1) // -1 or +1
+	noiseSign := float64((seed%2)*2 - 1) // -1 or +1
 	noiseMagnitude := thermalNoise * float64(seed%100) / 100.0
 	noisyVoltage := voltage + noiseSign*noiseMagnitude
 

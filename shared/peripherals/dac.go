@@ -2,8 +2,6 @@
 package peripherals
 
 import (
-	"math"
-
 	"fecim-lattice-tools/shared/logging"
 )
 
@@ -80,7 +78,7 @@ func (d *DAC) Convert(level int) float64 {
 	return voltage
 }
 
-// ConvertWithNonlinearity adds INL/DNL errors to conversion.
+// ConvertWithNonlinearity adds INL/DNL errors to conversion at nominal PVT.
 func (d *DAC) ConvertWithNonlinearity(level int) float64 {
 	log.Input("DAC.ConvertWithNonlinearity", map[string]interface{}{
 		"level": level,
@@ -88,24 +86,10 @@ func (d *DAC) ConvertWithNonlinearity(level int) float64 {
 		"dnl":   d.DNL,
 	})
 
-	idealVoltage := d.Convert(level)
-
-	// LSB size
-	lsb := (d.VrefHigh - d.VrefLow) / float64(d.Levels()-1)
-
-	// Add INL error (varies with code)
-	inlError := d.INL * lsb * math.Sin(math.Pi*float64(level)/float64(d.Levels()-1))
-
-	// Add DNL error (pseudo-random per level)
-	dnlError := d.DNL * lsb * (0.5 - float64(level%5)/4.0)
-
-	result := idealVoltage + inlError + dnlError
+	result := d.ConvertWithCondition(level, referenceTemperatureK, CornerTypical)
 
 	log.Calculation("DAC.ConvertWithNonlinearity", map[string]interface{}{
-		"level":          level,
-		"ideal_voltage":  idealVoltage,
-		"inl_error":      inlError,
-		"dnl_error":      dnlError,
+		"level": level,
 	}, result)
 
 	return result

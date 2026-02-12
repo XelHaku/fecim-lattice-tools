@@ -44,7 +44,7 @@ func NewSimVsExpComparison() *SimVsExpComparison {
 		expEcMax:     1.5e8, // 1.5 MV/cm
 		expSquareMin: 0.60,
 		expSquareMax: 0.95,
-		litSource:    "Park et al. 2015, Nature Commun. 2025",
+		litSource:    "HZO literature envelope (e.g., Park et al., Nature 2015; follow-up reports)",
 	}
 	s.ExtendBaseWidget(s)
 	return s
@@ -112,10 +112,10 @@ func (s *SimVsExpComparison) createContent() fyne.CanvasObject {
 		container.NewCenter(headerText),
 	)
 
-	// Disclaimer banner
-	disclaimerBg := canvas.NewRectangle(color.RGBA{80, 60, 20, 255})
-	disclaimerText := canvas.NewText("⚠ PLACEHOLDER - Awaiting real experimental data", color.RGBA{255, 200, 100, 255})
-	disclaimerText.TextSize = 14
+	// Context banner
+	disclaimerBg := canvas.NewRectangle(color.RGBA{35, 55, 40, 255})
+	disclaimerText := canvas.NewText("Model output compared against literature ranges (not device-specific lab data)", color.RGBA{170, 235, 180, 255})
+	disclaimerText.TextSize = 13
 	disclaimerText.Alignment = fyne.TextAlignCenter
 	disclaimer := container.NewStack(
 		disclaimerBg,
@@ -124,8 +124,8 @@ func (s *SimVsExpComparison) createContent() fyne.CanvasObject {
 
 	// Column headers
 	colParam := widget.NewLabelWithStyle("Parameter", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	colSim := widget.NewLabelWithStyle("Simulated", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	colExp := widget.NewLabelWithStyle("Literature", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	colSim := widget.NewLabelWithStyle("Simulation", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	colExp := widget.NewLabelWithStyle("Literature range", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	colStatus := widget.NewLabelWithStyle("Status", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 
 	headerRow := container.NewGridWithColumns(4, colParam, colSim, colExp, colStatus)

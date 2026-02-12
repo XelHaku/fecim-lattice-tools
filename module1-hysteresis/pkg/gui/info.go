@@ -57,13 +57,13 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 	})
 	matInfoBtn.Importance = widget.LowImportance
 
-	// Compact material line
-	matLine := widget.NewLabel(fmt.Sprintf("Pr=%.0f Ec=%.1f End=%.0e",
+	// Compact material line (validated units)
+	matLine := widget.NewLabel(fmt.Sprintf("Pr=%.1f µC/cm²  Ec=%.2f MV/cm  End=%.0e cycles",
 		a.material.Pr*100, a.material.Ec/1e8, a.material.EnduranceCycles))
 
 	// Wake-up/Fatigue - single compact line
 	a.cyclesLabel = widget.NewLabel("0")
-	a.wakeupLabel = widget.NewLabel("80%")
+	a.wakeupLabel = widget.NewLabel("100%")
 	a.fatigueLabel = widget.NewLabel("0%")
 	// L01: Cycle phase indicator (WAKE-UP, STABLE, FATIGUE)
 	a.cyclePhaseLabel = widget.NewLabel("WAKE-UP")
@@ -76,10 +76,16 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 		widget.NewLabel("|"), a.cyclePhaseLabel,
 	)
 
-	// Temperature-dependent metrics (with uncertainty notation)
-	a.effEcLabel = widget.NewLabel("Ec(T): 1.00±0.15 MV/cm")
-	a.effPrLabel = widget.NewLabel("Pr(T): 20.0±5 µC/cm²")
-	a.squarenessLabel = widget.NewLabel("Squareness: 0.60")
+	// Temperature-dependent metrics (initialized from active material)
+	ecVal := a.material.Ec / 1e8
+	prVal := a.material.Pr * 100
+	sqVal := 0.0
+	if a.material.Ps > 0 {
+		sqVal = a.material.Pr / a.material.Ps
+	}
+	a.effEcLabel = widget.NewLabel(fmt.Sprintf("Ec(T): %.2f±%.2f MV/cm", ecVal, ecVal*0.15))
+	a.effPrLabel = widget.NewLabel(fmt.Sprintf("Pr(T): %.1f±%.1f µC/cm²", prVal, prVal*0.20))
+	a.squarenessLabel = widget.NewLabel(fmt.Sprintf("Squareness: %.2f", sqVal))
 	a.switchedLabel = widget.NewLabel("Switched: 0%")
 
 	metricsRow1 := container.NewHBox(
@@ -269,18 +275,14 @@ func (a *App) addLogEntry(entry string) {
 	}
 }
 
-// getLogText returns the formatted log text (M07: supports verbose/compact modes)
-func (a *App) getLogText() string {
-	a.mu.RLock()
-	defer a.mu.RUnlock()
-
-	if len(a.logEntries) == 0 {
+func formatLogEntries(logEntries []string, logVerbose bool) string {
+	if len(logEntries) == 0 {
 		return "Waiting for operations..."
 	}
 
 	// M07: Compact mode shows only last 3 entries without decorative lines
-	if !a.logVerbose {
-		compactEntries := a.logEntries
+	if !logVerbose {
+		compactEntries := logEntries
 		// Skip header decorations (lines starting with ═ or ─ or spaces)
 		filtered := make([]string, 0, len(compactEntries))
 		for _, e := range compactEntries {
@@ -320,10 +322,17 @@ func (a *App) getLogText() string {
 
 	// Verbose mode: show everything
 	result := ""
-	for _, e := range a.logEntries {
+	for _, e := range logEntries {
 		result += e + "\n"
 	}
 	return result
+}
+
+// getLogText returns the formatted log text (M07: supports verbose/compact modes)
+func (a *App) getLogText() string {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+	return formatLogEntries(a.logEntries, a.logVerbose)
 }
 
 // showELI5Dialog displays the "Explain Like I'm 5" hysteresis guide
