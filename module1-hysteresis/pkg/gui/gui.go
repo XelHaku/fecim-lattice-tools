@@ -107,12 +107,12 @@ type App struct {
 	dataLogger *HysteresisDataLogger
 
 	// UI state
-	running       atomic.Bool
-	paused        atomic.Bool
-	autoMode      bool
-	waveform      WaveformType
-	physicsEngine PhysicsEngine
-	physicsSelect *widget.Select
+	running         atomic.Bool
+	paused          atomic.Bool
+	autoMode        bool
+	waveform        WaveformType
+	physicsEngine   PhysicsEngine
+	physicsSelect   *widget.Select
 	tempContainer   *fyne.Container // Temperature controls (L-K only)
 	stressContainer *fyne.Container // Stress controls (L-K only)
 
@@ -160,8 +160,10 @@ type App struct {
 	wrdRangeTimer          *time.Timer
 
 	// UI update throttling
-	lastUIUpdate          time.Time
-	lastTargetMismatchLog time.Time
+	lastUIUpdate             time.Time
+	lastTargetMismatchLog    time.Time
+	lastWrdBoundaryLog       time.Time
+	lastWrdBoundaryLogTarget int
 
 	// Dr. Tour Demo Metrics (impressive stats!)
 	wrdTotalWrites   int     // Total write operations
