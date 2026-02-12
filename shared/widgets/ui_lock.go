@@ -1,6 +1,7 @@
 package widgets
 
 import (
+	"log"
 	"runtime"
 	"sync"
 	"sync/atomic"
@@ -32,8 +33,10 @@ func lockUI() {
 
 func unlockUI() {
 	gid := goroutineID()
-	if uiLockOwner.Load() != gid {
-		panic("widgets: unlockUI called from non-owner goroutine")
+	owner := uiLockOwner.Load()
+	if owner != gid {
+		log.Println("widgets: unlockUI called from non-owner goroutine; ignoring unlock request")
+		return
 	}
 	if uiLockDepth.Add(-1) == 0 {
 		uiLockOwner.Store(0)
