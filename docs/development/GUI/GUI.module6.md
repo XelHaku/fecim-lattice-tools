@@ -3,7 +3,7 @@ Module: module6-eda
 Name: FeCIM Design Suite - EDA
 Entry: module6-eda/cmd/eda-gui/main.go
 Package: fecim-lattice-tools/module6-eda/pkg/gui
-Last Updated: 2026-02-02
+Last Updated: 2026-02-11
 Description: |
   Educational array builder that demonstrates FeCIM crossbar array design with
   open-source EDA tools (OpenLane). Generates custom FeCIM cell libraries (LEF/LIB/V),
@@ -18,6 +18,11 @@ Conventions:
   - File paths are relative to module6-eda unless noted
   - Widget types refer to Fyne (`widget.*`, `container.*`, `canvas.*`) or shared widgets
   - Bindings list event handlers or UI update calls impacting the component
+
+Recent Changes (2026-02-11):
+  - Learn tab content scroll min size reduced from `750x500` to `360x260` (`tabs/learn_tab.go`) to avoid forced clipping on smaller windows.
+  - Builder/Validation validation summary row now uses `container.NewHScroll(validationResultsGrid)` to avoid overlap of status cells on narrow widths.
+  - Added resize regression test `tabs/learn_tab_resize_test.go::TestMakeLearnTab_ContentScrollUsesCompactMinSize`.
 
 Bugs:
   (None currently tracked)

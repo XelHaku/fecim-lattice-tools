@@ -1239,7 +1239,7 @@ Date: %s
 	)
 	validationRow := container.NewVBox(
 		validationHeader,
-		validationResultsGrid,
+		container.NewHScroll(validationResultsGrid),
 	)
 
 	// Log section with improved visibility

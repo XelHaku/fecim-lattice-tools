@@ -64,12 +64,15 @@ func (ca *CircuitsApp) createComparisonTab() fyne.CanvasObject {
 		container.NewVBox(widget.NewLabel("LIVE COMPARISON"), tableSection),
 	)
 
+	comparisonBody := container.NewVBox(topRow, widget.NewSeparator(), bottomRow)
+	comparisonBodyScroll := container.NewVScroll(container.NewHScroll(comparisonBody))
+
 	return container.NewBorder(
 		container.NewVBox(headerLabel, widget.NewSeparator()),
 		container.NewVBox(widget.NewSeparator(), buttonBox),
 		nil,
 		nil,
-		container.NewVBox(topRow, widget.NewSeparator(), bottomRow),
+		comparisonBodyScroll,
 	)
 }
 
@@ -352,12 +355,14 @@ func (ca *CircuitsApp) createCompTableSection() fyne.CanvasObject {
 	contextLabel := widget.NewLabel("GPU row shown as sequential-equivalent work for one MVM; batched GPU kernels can raise throughput while using more system power.")
 	contextLabel.Wrapping = fyne.TextWrapWord
 
-	return container.NewVBox(
+	tableContent := container.NewVBox(
 		arraySizeLabel,
 		contextLabel,
 		widget.NewSeparator(),
 		grid,
 	)
+
+	return container.NewVScroll(container.NewHScroll(tableContent))
 }
 
 func (ca *CircuitsApp) onRunComparison() {

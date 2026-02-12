@@ -352,6 +352,7 @@ For questions about GUI documentation or implementation:
 
 ## Document Version
 
-- **Last Updated**: 2026-02-02
+- **Last Updated**: 2026-02-11
 - **Coverage**: Modules 1-7 (Hysteresis, Crossbar, MNIST, Circuits, Comparison, EDA, Documentation)
 - **Status**: Active maintenance
+- **Latest Audit**: `DOC_DRIFT_AUDIT_2026-02-11.md` (layout/resize + docs drift sweep)

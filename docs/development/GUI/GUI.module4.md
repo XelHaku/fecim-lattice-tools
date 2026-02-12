@@ -5,7 +5,7 @@ Entry: cmd/circuits-gui/main.go
 Package: fecim-lattice-tools/module4-circuits/pkg/gui
 Theme: FeCIMTheme
 Architecture: Unified 3-view design with embedded interface
-Last Updated: 2026-02-03
+Last Updated: 2026-02-11
 ---
 
 Conventions:
@@ -48,6 +48,13 @@ Related (authoritative) control semantics:
 - [x] UX-M4-002: Fallback numLevels undocumented - FIXED (2026-01-28): Added comment documenting FeCIMLevels consistency
 
 ---
+
+## Recent Changes (2026-02-11)
+
+### Resize/Clipping Guardrails (G14)
+- `tab_comparison.go` now wraps the 2x2 comparison grid with nested `VScroll(HScroll(...))` to prevent overlap/clipping on narrow or short windows.
+- `createCompTableSection()` now returns a scroll-wrapped table container, preventing row/column truncation when the panel is compressed.
+- Added regression test `tab_comparison_resize_test.go::TestComparisonTab_HasScrollGuardsForResize` to assert scroll protections remain in place.
 
 ## Recent Changes (2026-02-03)
 

@@ -75,7 +75,7 @@ func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 
 	// Content area - increased width for better card layout
 	contentScroll := container.NewScroll(makeQuickStartContent())
-	contentScroll.SetMinSize(fyne.NewSize(750, 500))
+	contentScroll.SetMinSize(fyne.NewSize(360, 260))
 
 	// Connect topic selector to content
 	topicSelector.OnSelected = func(id widget.ListItemID) {

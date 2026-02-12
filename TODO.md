@@ -231,8 +231,8 @@
 | G01 | Calibration drift guard: `scripts/calib-guard.sh` fails CI on uncommitted calibration JSON changes | `cmd/.../calibrations/` | ✅ | 1-2hr |
 | G02 | Intentional calibration update policy: require evidence log links in commits | Process | ✅ | 30m |
 | G03 | Provide optional pre-commit hook template that warns on calibration JSON changes | Process | ✅ | 30m |
-| G04 | Headless WRD/ISPP regression suite: Preisach HI/MID/LO targets + JSON summary | Shared | ⏳ | 2-4hr |
-| G05 | Headless LK regression suite: same targets + overshoot/pulse stats | Shared | ⏳ | 2-4hr |
+| G04 | Headless WRD/ISPP regression suite: Preisach HI/MID/LO targets + JSON summary | Shared | ✅ | Done (`module1-hysteresis/pkg/controller/headless_regression_test.go`, `validation/testdata/ispp_regression/preisach_wrd_ispp_regression.json`, `scripts/run_headless_ispp_regressions.sh`) |
+| G05 | Headless LK regression suite: same targets + overshoot/pulse stats | Shared | ✅ | Done (`module1-hysteresis/pkg/controller/headless_regression_test.go`, `validation/testdata/ispp_regression/lk_wrd_ispp_regression.json`, `scripts/run_headless_ispp_regressions.sh`) |
 | G06 | Normalize/verify CLI engine selector (`--engine {preisach,lk}`) | CLI | ✅ | 30-60m |
 | G06b | Verification matrix: Preisach + LK for each material → HI/MID/LO | Testing | ✅ | 1-2hr |
 | G04b | One-source-of-truth ISPP write engine: refactor duplicates to `shared/physics` | `shared/physics` | ⏳ | 4-12hr |
@@ -242,7 +242,7 @@
 
 | ID | Task | Source | Status | Est. |
 |----|------|--------|--------|------|
-| G07 | LK ISPP overshoot accounting: overshoots/target, max Δ, stuck-breaker count | `shared/physics` | ⏳ | 1-2hr |
+| G07 | LK ISPP overshoot accounting: overshoots/target, max Δ, stuck-breaker count | `shared/physics` | ✅ | Done (headless LK logs now include `overshoots`, `maxLevelDelta`, `stuckBreakers` per target) |
 | G08 | Define acceptance criteria for Literature Superlattice MID stability | `hysteresis-prompt.md` | ⏳ | 30-60m |
 | LK05 | ISPP controller not optimized for L-K dynamics (overshoots near MID) | `module1-hysteresis` | ⏳ | 4-8hr |
 | LK07 | Need longer WAIT phases for L-K settling | `module1-hysteresis` | ⏳ | 2-4hr |
@@ -251,8 +251,8 @@
 
 | ID | Task | Source | Status | Est. |
 |----|------|--------|--------|------|
-| G09 | LK perf evidence script: 3 targets → steps, dt stats, solverMs | `scripts/` | ⏳ | 1-2hr |
-| G10 | Add `pprof` toggle for headless hysteresis runs (`FECIM_PPROF=1`) | Debug | ⏳ | 1-2hr |
+| G09 | LK perf evidence script: 3 targets → steps, dt stats, solverMs | `scripts/` | ✅ | Done (`scripts/lk_perf_evidence.sh` runs LO/MID/HI and prints perf + ISPP accounting) |
+| G10 | Add `pprof` toggle for headless hysteresis runs (`FECIM_PPROF=1`) | Debug | ✅ | Done (`FECIM_PPROF=1` + optional `FECIM_PPROF_ADDR`) |
 
 ### GUI Correctness
 
@@ -340,9 +340,9 @@ Evidence note (2026-02-11): `go test -race ./module6-eda/... ./module7-docs/...`
 | ID | Task | Source | Status | Est. |
 |----|------|--------|--------|------|
 | G13 | Define minimum supported GUI size (1024×768) | UX | ✅ | 30-60m |
-| G14 | GUI overlap audit: fix widget overlap/clipping on resize | UX | ⏳ | 1-2hr |
-| G15 | Update GUI layout docs to match current code | `docs/development/GUI/` | ⏳ | 1-2hr |
-| G16 | Documentation mapping sweep: audit docs for drift vs code | `docs/development/GUI/` | ⏳ | 2-4hr |
+| G14 | GUI overlap audit: fix widget overlap/clipping on resize | UX | ✅ | 1-2hr |
+| G15 | Update GUI layout docs to match current code | `docs/development/GUI/` | ✅ | 1-2hr |
+| G16 | Documentation mapping sweep: audit docs for drift vs code | `docs/development/GUI/` | ✅ | 2-4hr |
 
 **Evidence (CM-P1 / CM-D1 / G13, 2026-02-11):**
 - Added cross-module acceptance criteria doc: `docs/development/PHYSICS_ACCEPTANCE_CRITERIA.md`.
@@ -356,6 +356,24 @@ Evidence note (2026-02-11): `go test -race ./module6-eda/... ./module7-docs/...`
 - Validation commands:
   - `go test ./shared/widgets -run TestQuickTermLookup -count=1` (PASS)
   - `go test ./cmd/fecim-lattice-tools -run TestMainWindow_.* -count=1` (PASS; no tests matched, package build succeeded)
+
+**Evidence (G14 / G15 / G16, 2026-02-11):**
+- Resize overlap/clipping fixes:
+  - `module4-circuits/pkg/gui/tab_comparison.go` (comparison + table scroll guards)
+  - `module6-eda/pkg/gui/tabs/learn_tab.go` (reduced learn content min size)
+  - `module6-eda/pkg/gui/tabs/builder_validation_tab.go` (validation grid horizontal scroll)
+- Added resize regression tests:
+  - `module4-circuits/pkg/gui/tab_comparison_resize_test.go`
+  - `module6-eda/pkg/gui/tabs/learn_tab_resize_test.go`
+- Updated GUI docs to match code:
+  - `docs/development/GUI/GUI.module4.md`
+  - `docs/development/GUI/GUI.module6.md`
+  - `docs/development/GUI/README.md`
+- Documentation drift mapping artifact:
+  - `docs/development/GUI/DOC_DRIFT_AUDIT_2026-02-11.md`
+- Validation commands:
+  - `go test ./module4-circuits/pkg/gui -run TestComparisonTab_HasScrollGuardsForResize` (PASS)
+  - `go test ./module6-eda/pkg/gui/tabs -run TestMakeLearnTab_ContentScrollUsesCompactMinSize -v` (PASS)
 
 ### Array Simulation Fidelity (from docs)
 
