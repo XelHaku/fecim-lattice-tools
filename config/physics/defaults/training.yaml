@@ -6,13 +6,13 @@
 # =============================================================================
 training:
   # Learning parameters
-  learning_rate: 0.01
+  learning_rate: 0.01          # Optimizer step size per batch update
   weight_decay: 1.0e-4          # L2 regularization
-  momentum: 0.9
+  momentum: 0.9                # SGD momentum factor (0 disables momentum)
 
   # Batch settings
-  default_batch_size: 32
-  gradient_clip: 1.0
+  default_batch_size: 32       # Samples processed per optimizer step
+  gradient_clip: 1.0           # Max gradient norm before clipping
 
   # Hardware-aware constraints
   weight_clip_min: 0.0          # Minimum weight (maps to Gmin)

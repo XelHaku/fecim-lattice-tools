@@ -798,3 +798,20 @@ See `CONTRIBUTING.md` and `CLAUDE.md` for development guidelines.
 
 *This TODO prioritizes scientific rigor and educational honesty over promotional considerations.*
 *Document consolidated: 2026-02-07 | Refocused: 2026-02-11*
+
+## Documentation Completeness Audit (2026-02-11)
+
+| ID | Gap | Status | Evidence |
+|----|-----|--------|----------|
+| DOCA-01 | Exported Go APIs missing doc comments in several packages (`cmd/`, `module2-crossbar`, `module3-mnist`, `module5-comparison`, etc.) | ⚠️ Open (repo-wide backlog) | Audit script found 967 exported decls lacking Godoc-style comments (non-test `.go` files). |
+| DOCA-02 | `ValidationError.Error()` lacked explicit Godoc comment | ✅ Fixed | `validation/configvalidator/validator.go` now documents `Error` method. |
+| DOCA-03 | Module README missing in `module1-hysteresis/` | ✅ Fixed | Added `module1-hysteresis/README.md`. |
+| DOCA-04 | Module README missing in `module3-mnist/` | ✅ Fixed | Added `module3-mnist/README.md`. |
+| DOCA-05 | Module README missing in `module5-comparison/` | ✅ Fixed | Added `module5-comparison/README.md`. |
+| DOCA-06 | Module README missing in `module7-docs/` | ✅ Fixed | Added `module7-docs/README.md`. |
+| DOCA-07 | Shared/validation package directories lacked README overviews | ✅ Fixed | Added `shared/README.md` and `validation/README.md`. |
+| DOCA-08 | Top-level launcher CLI flags were not centrally documented in `docs/CLI.md` | ✅ Fixed | Added `Top-level launcher flags` table covering all flags from `cmd/fecim-lattice-tools/main.go`. |
+| DOCA-09 | `training.yaml` had fields without inline field descriptions | ✅ Fixed | Added descriptions for `learning_rate`, `momentum`, `default_batch_size`, `gradient_clip` in `config/training.yaml`. |
+| DOCA-10 | Default mirrored training config had same missing field descriptions | ✅ Fixed | Added same descriptions in `config/physics/defaults/training.yaml`. |
+| DOCA-11 | Some config YAML files still contain undocumented scalar fields (notably large material catalogs and mirrored defaults) | ⚠️ Open (backlog) | Remaining candidates reported by audit across `config/materials.yaml` and `config/physics/defaults/materials.yaml`. |
+| DOCA-12 | Not all module/config roots have README-level entry docs (`config/` currently missing) | ⚠️ Open (backlog) | `config/README.md` absent. |

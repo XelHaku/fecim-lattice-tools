@@ -18,6 +18,7 @@ type ValidationError struct {
 	Value   any    // The invalid value, if applicable
 }
 
+// Error implements the error interface for ValidationError.
 func (e ValidationError) Error() string {
 	if e.Value != nil {
 		return fmt.Sprintf("%s: %s (got: %v)", e.Field, e.Message, e.Value)

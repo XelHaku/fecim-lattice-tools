@@ -2,6 +2,27 @@
 
 This document describes the command-line interface for all FeCIM Lattice Tools modules.
 
+## Top-level launcher flags (`cmd/fecim-lattice-tools`)
+
+The primary binary exposes these flags:
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--logger` | Enable file logging (or pass level token) | `false` |
+| `--verbosity` | Log level (`off\|info\|debug\|trace`) when logger is enabled | `info` |
+| `--calibrate` | Run hysteresis calibration and exit | `false` |
+| `--material` | Material to calibrate (`all` or explicit name) | `all` |
+| `--force` | Force recalibration even if cache exists | `false` |
+| `--verify` | Verify calibration quality after calibration | `false` |
+| `--list-materials` | Print available materials and exit | `false` |
+| `--mode` | Run headless mode and exit (for example `hysteresis`) | empty |
+| `--engine` | Headless hysteresis engine: `preisach` or `lk` | `preisach` |
+| `--screenshot-dir` | Output directory for GUI screenshots | `screenshots` |
+| `--recording-dir` | Output directory for GUI recordings | `recordings` |
+| `--module` | Initial module (`home`, `hysteresis`, `crossbar`, `mnist`, `circuits`, `comparison`, `eda`, `docs`) | `home` |
+
+Use `fecim-lattice-tools --help` for the canonical, runtime-generated list.
+
 ## Common CLI Flags
 
 All CLI commands support these common flags:
