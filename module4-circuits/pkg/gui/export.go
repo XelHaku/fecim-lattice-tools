@@ -381,7 +381,6 @@ func (ca *CircuitsApp) buildSpiceNetlist(weights [][]int) (string, error) {
 		ActiveRows:  append([]bool(nil), ca.deviceState.activeRows...),
 		Geometry:    ca.deviceState.cellGeometry,
 		Wire:        ca.deviceState.wireParams,
-		Boundary:    ca.deviceState.boundaryParams,
 	}
 	return arraysim.ExportCrossbarSPICE(params, arraysim.SpiceExportConfig{Title: "Module4 Circuits crossbar behavioral deck"})
 }

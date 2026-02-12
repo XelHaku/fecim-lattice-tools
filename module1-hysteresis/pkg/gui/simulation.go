@@ -1998,7 +1998,6 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 	}
 
 	// Update phase/target widgets from a single UI snapshot struct (G11b).
-	waveform := snapshot.waveform
 	a.mu.RLock()
 	lastPhase := a.lastLogPhase
 	a.mu.RUnlock()
@@ -2020,7 +2019,6 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 		)
 	}
 	wrdDisplayPhase := widgetState.phase.phase
-	wrdSettled := !widgetState.target.highlight && waveform == WaveformWriteReadDemo
 
 	if a.phaseIndicator != nil {
 		a.phaseIndicator.SetPhase(widgetState.phase.phase, widgetState.phase.mode)
@@ -2092,15 +2090,15 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 			writeCount := wrdTotalWrites
 
 			switch wrdDisplayPhase {
-			case wrdPhaseProgram:
+			case 0:
 				direction := "+"
 				if wrdTarget <= midLevel {
 					direction = "-"
 				}
 				phaseStr = fmt.Sprintf("PROGRAM L%d | %sE>Ec", wrdTarget, direction)
-			case wrdPhaseVerify:
+			case 1:
 				phaseStr = fmt.Sprintf("VERIFY L%d | E=0", wrdTarget)
-			case wrdPhaseResult:
+			case 2:
 				successRate := 0.0
 				if writeCount > 0 {
 					successRate = float64(wrdSuccessWrites) / float64(writeCount) * 100

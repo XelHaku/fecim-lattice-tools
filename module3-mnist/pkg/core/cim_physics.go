@@ -28,7 +28,9 @@ func applyNoiseComponent(values []float64, sigma float64, rng *RandomSource) []f
 	if sigma <= 0 {
 		return values
 	}
-	AddGaussianNoiseInPlace(values, sigma, rng)
+	for i := range values {
+		values[i] += rng.NormFloat64() * sigma
+	}
 	return values
 }
 
