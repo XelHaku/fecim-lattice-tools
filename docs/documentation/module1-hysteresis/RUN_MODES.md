@@ -11,6 +11,12 @@ It also clarifies **Preisach vs Landau-Khalatnikov (L-K)** defaults by entry pat
 
 ---
 
+## Evidence Status (Demonstrated vs Modeled vs Aspirational)
+
+- **Demonstrated:** Repository structure, navigation behavior, and code paths referenced in this page are implemented in this repo and verifiable from source/tests.
+- **Modeled:** Equations, defaults, and performance/quality estimates are simulator or documentation models unless explicitly tied to cited measured data.
+- **Aspirational:** Any production-scale, silicon-parity, or ecosystem-wide claims are roadmap intent and must not be reported as demonstrated results.
+
 ## 1) Entry Points
 
 Module 1 can be started from two CLI paths:

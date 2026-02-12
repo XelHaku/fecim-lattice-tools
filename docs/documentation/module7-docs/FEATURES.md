@@ -1,5 +1,11 @@
 # Module 7: Docs - Features
 
+## Evidence Status (Demonstrated vs Modeled vs Aspirational)
+
+- **Demonstrated:** Repository structure, navigation behavior, and code paths referenced in this page are implemented in this repo and verifiable from source/tests.
+- **Modeled:** Equations, defaults, and performance/quality estimates are simulator or documentation models unless explicitly tied to cited measured data.
+- **Aspirational:** Any production-scale, silicon-parity, or ecosystem-wide claims are roadmap intent and must not be reported as demonstrated results.
+
 ## What This Module Does
 
 - Provides a curriculum-first documentation viewer.
@@ -15,7 +21,7 @@
 
 ## Key Workflows
 
-- Select a document from the curriculum tree (module-number sort at root, curriculum-file order inside modules).
+- Select a document from the curriculum tree (root order: module folders → `research-papers` → `README.md` → `MODULES.md`; inside modules: ELI5 → PHYSICS → FEATURES → OPENSOURCE-TOOLS).
 - Use module shortcuts to jump between learning layers (ELI5 → PHYSICS → FEATURES → OPENSOURCE-TOOLS).
 - Use search and glossary pills for cross-topic navigation.
 

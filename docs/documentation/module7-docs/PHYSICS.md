@@ -1,5 +1,11 @@
 # Module 7: Docs - Physics
 
+## Evidence Status (Demonstrated vs Modeled vs Aspirational)
+
+- **Demonstrated:** Repository structure, navigation behavior, and code paths referenced in this page are implemented in this repo and verifiable from source/tests.
+- **Modeled:** Equations, defaults, and performance/quality estimates are simulator or documentation models unless explicitly tied to cited measured data.
+- **Aspirational:** Any production-scale, silicon-parity, or ecosystem-wide claims are roadmap intent and must not be reported as demonstrated results.
+
 ## Prerequisites
 
 - Basic understanding of markdown
@@ -9,6 +15,7 @@
 
 - Documents are indexed and ranked for search.
 - The UI provides three parallel navigation paths: tree, breadcrumbs, and search.
+- Root sidebar ordering is deterministic: module folders first, then `research-papers`, then `README.md`, then `MODULES.md`.
 - Category detection is filename-driven for deterministic behavior.
 
 ## Key Equations (Simplified)
