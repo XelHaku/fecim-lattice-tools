@@ -1,3 +1,5 @@
+**Implementation note:** Current Preisach behavior is computed with a **tanh Everett approximation** (`Delta`-tuned), **not** with a FORC-calibrated Preisach distribution extracted from measured FORC data.
+
 # Preisach Hysteresis Model (Module 1)
 
 **Scope**

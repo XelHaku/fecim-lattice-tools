@@ -8,6 +8,8 @@
 
 ---
 
+**Implementation note:** Current Preisach behavior is computed with a **tanh Everett approximation** (`Delta`-tuned), **not** with a FORC-calibrated Preisach distribution extracted from measured FORC data.
+
 ## Executive Summary
 
 This meta-study synthesizes research from 50+ papers focused on ferroelectric hysteresis, Preisach modeling, domain dynamics, and HfO2-based materials. The analysis identifies key findings, modeling approaches, and actionable recommendations for the FeCIM Visualizer project's hysteresis simulation module.

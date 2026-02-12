@@ -6,6 +6,8 @@
 
 **Note:** References to “30 levels” refer to the demo baseline (configurable). Literature reports multi-level states (not verified here).
 
+**Implementation note:** Current Preisach behavior is computed with a **tanh Everett approximation** (`Delta`-tuned), **not** with a FORC-calibrated Preisach distribution extracted from measured FORC data.
+
 ## Part 1: What is Hysteresis? (The Rubber Band)
 
 ### The Simplest Explanation
@@ -432,22 +434,17 @@ for state in states:
 
 | Requirement | Description | Current State |
 |-------------|-------------|---------------|
-| **P-E loop export** | Save loop data (CSV/JSON) | ⚠️ Easy to add |
-| **SPICE model export** | Generate Verilog-A parameters | ⚠️ Missing |
+| **P-E loop export** | Save loop data (CSV/JSON) | ⚠️ Not exposed as a stable module API yet |
 | **Crossbar integration** | Feed conductances to Module 2 | ✅ Via 30-level baseline |
-| **NeuroSim format** | Export for architecture sim | ⚠️ Missing |
+| **Controller telemetry export** | Emit WRD phase/controller state for analysis | ⚠️ Available in diagnostics paths, not packaged as one-click export API |
 
 **What "production-ready" looks like:**
 ```python
-# Export P-E loop
-model.export_loop("hysteresis_loop.csv")
+# Export loop + controller telemetry in one call
+model.export_trace("hysteresis_trace.csv")
 
-# Export for SPICE
-model.export_verilog_a_params("fefet_params.json")
-# Output: {"Pr": 0.25, "Ps": 0.30, "Ec": 1.2e8, ...}
-
-# Export for NeuroSim
-model.export_neurosim_config("neurosim_device.json")
+# Include: E, P, normalized_P, level,
+# WRD phase, controller state, target/readback level
 ```
 
 ---
@@ -586,7 +583,7 @@ $ fecim-hysteresis interactive
 1. **The loop shape** comes from millions of tiny switches (hysterons)
 2. **The memory** comes from the gap between "flip up" and "flip down" voltages
 3. **30-level baseline** gives us ~5x more storage than binary
-4. **Write vs Read** is controlled by the Ec threshold
+4. **Write vs Read** is orchestrated by a WRD phase-machine/controller (with `|E|` vs `Ec` as physics context)
 
 ### What Demo 1 Shows
 
@@ -624,7 +621,7 @@ For the curious, here's what the demo actually computes:
 | The smooth curve | Controlled by Everett width parameter `Delta` |
 | The 30 levels (baseline) | Simple formula: `Level = round((P/Ps + 1) × 14.5)` |
 | Memory effect | Turning-point/stack memory in Preisach operator |
-| WRITE/READ indicator | Compares `|E|` vs `Ec` in real-time |
+| WRITE/READ behavior | Driven by WRD phase-machine + controller; UI also shows `|E|` vs `Ec` context |
 | Memory Log | Tracks phase transitions in Write/Read Demo mode |
 
 The physics is real — the loop is **emergent**, not drawn!
@@ -649,8 +646,8 @@ The physics is real — the loop is **emergent**, not drawn!
 │     Tc = 723 K       (Curie temperature)                   │
 │                                                             │
 │  OPERATIONS:                                                │
-│     WRITE: |E| > Ec   → P changes                          │
-│     READ:  |E| < Ec   → P unchanged                        │
+│     WRITE: WRD controller applies pulse/verify cycles      │
+│     READ:  WRD read phase uses bounded sensing pulses       │
 │     HOLD:  E = 0      → P persists (MEMORY!)               │
 │                                                             │
 │  LEVELS:                                                    │

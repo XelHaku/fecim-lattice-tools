@@ -9,6 +9,8 @@
 
 ---
 
+**Implementation note:** Current Preisach behavior is computed with a **tanh Everett approximation** (`Delta`-tuned), **not** with a FORC-calibrated Preisach distribution extracted from measured FORC data.
+
 ## Overview
 
 The Hysteresis demo provides an interactive visualization of ferroelectric hysteresis in HfO2-ZrO2 (HZO) superlattice materials. This demo illustrates the fundamental physics of ferroelectric memory cells that enable FeCIM's compute-in-memory technology.

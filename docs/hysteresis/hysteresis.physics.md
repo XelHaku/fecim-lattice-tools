@@ -6,6 +6,8 @@ Start here if you've never studied ferroelectrics before.
 
 **Note:** References to “30 levels” refer to the demo baseline (configurable). Literature reports multi-level states (not verified here). Numeric values below are simulation defaults or illustrative unless a peer-reviewed citation is provided (**[CITATION NEEDED - placeholder value]**).
 
+**Implementation note:** Current Preisach behavior is computed with a **tanh Everett approximation** (`Delta`-tuned), **not** with a FORC-calibrated Preisach distribution extracted from measured FORC data.
+
 ---
 
 ## Part 1: What Are We Even Talking About?
@@ -269,49 +271,39 @@ This is the **Preisach model**: The macroscopic hysteresis loop emerges from the
 
 ## Part 6: Write vs Read Operations
 
-### The Fundamental Principle
+### The Actual Demo Control Flow (Controller + Phase Machine)
 
-Ferroelectric memory has a built-in threshold (Ec) that separates destructive and non-destructive operations:
+The current Write/Read demo is **controller-driven**, not a single-threshold comparator.
+`|E|` vs `Ec` still matters physically, but operation sequencing is orchestrated by a
+phase machine in `simulation.go` plus the write controller in
+`module1-hysteresis/pkg/controller`.
 
 ```
-         │←───── READ ZONE ─────→│←── WRITE ──→│
-         │     (safe sensing)    │  (changes P) │
-         │                       │              │
-    ─────┼───────────────────────┼──────────────┼────→ |E|
-         0                      Ec            Emax
+WRITE(target) → HOLD(settle) → READ(sense) → DISPLAY(result) → next target
 ```
 
-### WRITE Operation: |E| > Ec
+### WRITE Phase (ISPP-style pulse/verify loop)
 
-When the applied field exceeds the coercive field:
-- Hysterons begin switching
-- Polarization changes
-- New state is written to memory
+During WRITE, the controller applies bounded pulses, verifies readback level, and
+iterates until target level is reached (or retry limits trigger failure).
 
-```go
-// In simulation: when |E| > Ec, hysterons flip
-if E >= hysteron.Alpha {
-    hysteron.State = +1  // Switch UP
-}
-```
+- Pulse amplitude/duration are stepped under controller policy
+- Verification gates progress to the next phase
+- Convergence and recalibration happen between targets when needed
 
-### READ Operation: |E| < Ec
+### READ Phase (bounded sensing in sequence)
 
-When the applied field stays below the coercive field:
-- No hysterons switch
-- Polarization remains unchanged
-- State can be sensed non-destructively
+READ is a dedicated phase in the WRD sequence. It uses sensing conditions intended
+to avoid state disturbance while obtaining readback level for compare/logging.
 
-```go
-// In simulation: when Beta < E < Alpha, state persists
-// This is implicit — no code needed, hysteron just keeps its state!
-```
+- Readback is evaluated against target/programmed level
+- Result is surfaced in UI log/telemetry before advancing
 
 ### Why This Matters
 
-1. **Non-destructive readout** — In this simplified model, reads below Ec do not change state
-2. **Clear write threshold** — You know exactly when you're modifying vs sensing
-3. **The demo shows this** — Watch the mode indicator switch between [WRITE] and (READ)
+1. **Matches implementation reality** — behavior comes from phase/controller logic
+2. **Closer to practical memory operation** — write-verify loops, not one-shot thresholding
+3. **Physics still visible** — UI `|E|` vs `Ec` indicator provides field-context diagnostics
 
 ---
 
@@ -360,7 +352,7 @@ With this understanding, Demo 1 shows:
 2. **The 30 States** - See which analog level you're at based on P value
 3. **Minor Loops** - Reverse direction partway and see the inner loops form
 4. **Material Comparison** - Different Ec, Ps values → different loop shapes
-5. **WRITE vs READ** - Real-time indicator shows when |E| > Ec (WRITE) vs |E| < Ec (READ)
+5. **WRITE vs READ** - WRD phase-machine executes WRITE/HOLD/READ/DISPLAY while UI also shows `|E|` vs `Ec` context
 6. **Memory Operations Log** - Watch actual WRITE/READ cycles in the Write/Read Demo mode
 
 ### The Write/Read Demo Mode
@@ -505,7 +497,7 @@ This is a pragmatic simulator model; it is **not** currently a Curie-law collaps
 | Loop shape | From Everett kernel shape (`Delta`) + Preisach stack memory | ✅ Emergent, not forced |
 | 30 levels (baseline) | Linear discretization of P | ✅ Simple & correct |
 | Minor loops | Implicit via hysteron states | ✅ Works correctly |
-| Write vs Read | |E| > Ec threshold detection | ✅ Model-based |
+| Write vs Read | WRD phase-machine + controller sequencing (with `|E|`/`Ec` context indicator) | ✅ Implemented |
 | τ switching | Defined but not used in viz | ⚠️ Quasistatic approx |
 | Temperature | Ec(T) scaling implemented | ✅ Model-based |
 
