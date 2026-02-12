@@ -1,8 +1,12 @@
 package main
 
 import (
+	"encoding/csv"
+	"errors"
+	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -75,6 +79,57 @@ func TestHeadlessHysteresis_VerificationMatrix_NoNaNOrCrash(t *testing.T) {
 	}
 }
 
+func TestHeadlessLK_ISPPConvergenceMatrix_AllMaterials_LO_MID_HI(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping convergence matrix test in -short")
+	}
+
+	materials := []string{
+		"fecim_hzo",
+		"fecim_hzo_target",
+		"default_hzo",
+		"literature_superlattice",
+		"cryogenic_hzo",
+		"hzo_standard_32",
+		"hzo_ftj_140",
+		"hzo_custom_14",
+		"alscn",
+	}
+
+	for _, material := range materials {
+		material := material
+		t.Run(material, func(t *testing.T) {
+			before := time.Now()
+			t.Setenv("FECIM_MATERIAL", material)
+			t.Setenv("FECIM_HEADLESS_FAST", "1")
+			t.Setenv("FECIM_ISPP_TARGET_LEVELS", "lo,mid,hi")
+			t.Setenv("FECIM_RANGE_FRAC", "1")
+			// FOCUS-77: mid-range regressions should converge, not time out.
+			t.Setenv("FECIM_HEADLESS_ALLOW_TIMEOUT", "0")
+
+			if err := runMode("hysteresis", "lk"); err != nil {
+				t.Fatalf("runMode lk failed for %s: %v", material, err)
+			}
+
+			logPath, err := newestHysteresisLogAfter(before)
+			if err != nil {
+				t.Fatalf("unable to find log after run (%s): %v", material, err)
+			}
+
+			finalSuccessWrites, finalTotalWrites, err := readFinalWriteCounters(logPath)
+			if err != nil {
+				t.Fatalf("failed to parse write counters in %s: %v", logPath, err)
+			}
+
+			const expectedTargets = 3
+			if finalSuccessWrites != expectedTargets || finalTotalWrites != expectedTargets {
+				t.Fatalf("ISPP convergence failure for %s: success=%d total=%d expected=%d (log=%s)",
+					material, finalSuccessWrites, finalTotalWrites, expectedTargets, logPath)
+			}
+		})
+	}
+}
+
 func newestHysteresisLogAfter(after time.Time) (string, error) {
 	paths, err := filepath.Glob(filepath.Join("logs", "hysteresis-*.csv"))
 	if err != nil {
@@ -99,4 +154,63 @@ func newestHysteresisLogAfter(after time.Time) (string, error) {
 		return "", os.ErrNotExist
 	}
 	return newestPath, nil
+}
+
+func readFinalWriteCounters(logPath string) (successWrites int, totalWrites int, err error) {
+	f, err := os.Open(logPath)
+	if err != nil {
+		return 0, 0, err
+	}
+	defer f.Close()
+
+	r := csv.NewReader(f)
+	header, err := r.Read()
+	if err != nil {
+		return 0, 0, err
+	}
+	idxSuccess := -1
+	idxTotal := -1
+	for i, h := range header {
+		switch h {
+		case "wrd_success_writes":
+			idxSuccess = i
+		case "wrd_total_writes":
+			idxTotal = i
+		}
+	}
+	if idxSuccess < 0 || idxTotal < 0 {
+		return 0, 0, os.ErrInvalid
+	}
+
+	lastSuccess := "0"
+	lastTotal := "0"
+	for {
+		row, readErr := r.Read()
+		if readErr != nil {
+			if errors.Is(readErr, io.EOF) {
+				break
+			}
+			// Some historical logs end with a partially-written final line.
+			// Keep the last valid counters instead of failing the whole regression.
+			if !errors.Is(readErr, csv.ErrFieldCount) {
+				return 0, 0, readErr
+			}
+		}
+		if idxSuccess < len(row) {
+			lastSuccess = row[idxSuccess]
+		}
+		if idxTotal < len(row) {
+			lastTotal = row[idxTotal]
+		}
+	}
+
+	sw, err := strconv.Atoi(strings.TrimSpace(lastSuccess))
+	if err != nil {
+		return 0, 0, err
+	}
+	tw, err := strconv.Atoi(strings.TrimSpace(lastTotal))
+	if err != nil {
+		return 0, 0, err
+	}
+	return sw, tw, nil
 }
