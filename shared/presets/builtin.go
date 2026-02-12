@@ -654,7 +654,7 @@ func getEDAPresets() []*Preset {
 		),
 		builtInPreset(
 			"eda-timing-analysis",
-			"Timing Analysis",
+			"EDA Timing Analysis",
 			"Static timing analysis configuration",
 			ModuleEDA,
 			CategoryResearch,
