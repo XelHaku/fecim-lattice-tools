@@ -114,8 +114,8 @@
 |----|------|--------|
 | FOCUS-49 | L-K performance: quantify why slow — dtNominal too small, 21k-221k solver steps/target, math-bound | ✅ (2026-02-11: added headless LK diagnostics: dtNominal/dtMin/dtMax + per-target wallMs, solverShare, stepNs; profiled RK4 path with CPU pprof) |
 | FOCUS-50 | Frankenstein equation fidelity: verify all terms/signs/units match `hysteresis-gemini.md` formulation | ✅ (2026-02-11: equation identity + units test added for `rho_eff*dP/dt = E_applied - k_dep·P - (2αP+4βP^3+6γP^5) + ξ(t)`) |
-| FOCUS-51 | Target/marker parity: GUI yellow target must match active controller target (no early jump to next) | ⏳ |
-| FOCUS-52 | Headless Preisach WRD/ISPP parity with GUI — run headless to debug target/marker mismatches | ⏳ |
+| FOCUS-51 | Target/marker parity: GUI yellow target must match active controller target (no early jump to next) | ✅ (2026-02-11: idle controller no longer overrides WRD target in widget snapshot) |
+| FOCUS-52 | Headless Preisach WRD/ISPP parity with GUI — run headless to debug target/marker mismatches | ✅ (2026-02-11: added deterministic headless target-progression parity test) |
 | FOCUS-53 | Physics equations UI: keep labels/links coherent across L-K, Preisach, and ISPP tabs | ✅ (2026-02-11: ISPP equation info tabs now align naming with L-K/Preisach: `Code References`, `Assumptions`, `References`) |
 
 **Evidence (FOCUS-49/50, 2026-02-11):**
@@ -132,6 +132,11 @@
     - `BenchmarkLKSolverStep_StiffImplicitPath`: ~64–67 ns/op, 0 allocs
   - `go tool pprof -top /tmp/lk_cpu.prof` from benchmark profile:
     - `math.archExp` 66.78% flat, `checkIncubation` 88.26% cumulative → compute/math dominated (NLS exponential path), not allocation-bound.
+
+**Evidence (FOCUS-51/52, 2026-02-11):**
+- `module1-hysteresis/pkg/gui/simulation.go`: WRD target selection in `buildWidgetSnapshot` now trusts `controllerTargetLevel` only while controller state is active (`!= StateIdle`), preventing yellow target from jumping early to queued/stale targets.
+- `module1-hysteresis/pkg/gui/ui_sync_test.go`: added `TestBuildWidgetSnapshot_WRDIdleDoesNotUseControllerTarget` to lock idle-state parity behavior.
+- `cmd/fecim-lattice-tools/mode_preisach_target_progression_test.go`: added `TestHeadlessPreisachRun_WRDTargetProgressionMatchesSequence` to verify deterministic headless target sequence (`3,15,27`) and ensure target transitions occur at PREP/WRITE boundaries.
 
 ### 3f. Module 2 Crossbar (from module2-prompt.md)
 
@@ -205,6 +210,33 @@
 |----|------|--------|
 | FOCUS-80 | Screenshot opens a modal and is intrusive — use non-blocking toast or save silently | ⏳ |
 
+#### Module 4
+
+| ID | Task | Status |
+|----|------|--------|
+| FOCUS-81 | All cells show V/2 and it's unclear why — needs explanation or fix | ⏳ |
+| FOCUS-82 | Electrical Current value appears above the cell instead of inside it — looks like it belongs to another cell | ⏳ |
+| FOCUS-83 | TIA cell number has no units displayed | ⏳ |
+| FOCUS-84 | ADC cell number has no units displayed | ⏳ |
+| FOCUS-85 | DAC cell number has no units displayed | ⏳ |
+| FOCUS-86 | Preset, Rf, ADC Vmin/Vmax don't fit layout — also needs Info button | ⏳ |
+| FOCUS-87 | Zoom slider is too small | ⏳ |
+| FOCUS-88 | In READ mode, MVM and Program Cell buttons should be hidden (confusing) | ⏳ |
+| FOCUS-89 | In WRITE mode, MVM button should be hidden (confusing) | ⏳ |
+| FOCUS-90 | Validation tools must be installed (missing dependency check) | ⏳ |
+| FOCUS-91 | DAC needs min/max voltage input; digital 0 should map to negative voltage; slider range (1.0V–2.50V) is wrong — must learn actual min/max from hysteresis module per material and reuse code | ⏳ |
+| FOCUS-92 | View dropdown is unnecessary — only OPERATIONS view will exist | ⏳ |
+| FOCUS-93 | DAC only shows positive values, but TIA shows negative — inconsistency | ⏳ |
+| FOCUS-94 | Overlay dropdown appears to do nothing | ⏳ |
+| FOCUS-95 | Random inputs don't always update DAC after changing array size | ⏳ |
+| FOCUS-96 | Export crashes the app | ⏳ |
+| FOCUS-97 | ADC shows all 0s | ⏳ |
+| FOCUS-98 | Cells show nV even in 2T1R architecture — should show 0 | ⏳ |
+| FOCUS-99 | On READ, unselected cells look fuzzy — undesirable visual effect | ⏳ |
+| FOCUS-100 | PROGRAM CELLS must affect involved cells by their hysteresis profile and circuit | ⏳ |
+| FOCUS-101 | PROGRAM CELL button should be disabled while programming is in progress | ⏳ |
+| FOCUS-102 | Refactor Module 4 for easier maintenance | ⏳ |
+
 ### 4. Scope Control
 
 - **Skip/defer Module 5** for now to reduce complexity.
@@ -214,8 +246,12 @@
 
 | ID | Task | Status |
 |----|------|--------|
-| FOCUS-10 | Push integration framing for chip-design flow using open-source EDA tools | ⏳ |
-| FOCUS-11 | Keep physics assumptions consistent when moving toward schematic/chip flow | ⏳ |
+| FOCUS-10 | Push integration framing for chip-design flow using open-source EDA tools | ✅ |
+| FOCUS-11 | Keep physics assumptions consistent when moving toward schematic/chip flow | ✅ |
+
+Evidence (2026-02-11):
+- `docs/documentation/module6-eda/OPENSOURCE-TOOLS.md` now includes a concrete OpenLane/OpenROAD integration path (artifact generation, config injection points, run/verify steps).
+- `docs/documentation/module6-eda/PHYSICS.md` now includes a stage-by-stage physics simplification audit and consistency rules from mapping through signoff interpretation.
 
 ---
 
