@@ -198,17 +198,17 @@
 
 | ID | Task | Status |
 |----|------|--------|
-| FOCUS-75 | PROGRAM STATE indicator never turns on | ⏳ |
-| FOCUS-76 | Validate "Simulation vs Experiment" info labels (literature, simulated, etc.) | ⏳ |
+| FOCUS-75 | PROGRAM STATE indicator never turns on | ✅ (2026-02-11: default waveform initialization now explicitly enters WRD mode so PROGRAM/VERIFY/RESULT indicator activates on startup) |
+| FOCUS-76 | Validate "Simulation vs Experiment" info labels (literature, simulated, etc.) | ✅ (2026-02-11: relabeled to Simulation vs Literature range, removed placeholder warning, corrected citation wording to literature envelope) |
 | FOCUS-77 | ISPP has trouble hitting targets (especially target 2) — need more automated testing coverage | ⏳ |
-| FOCUS-78 | Material selection should show more parameters and tag engine support: [P] = Preisach, [LK] = Landau-Khalatnikov, [P,LK] = both | ⏳ |
-| FOCUS-79 | All information displayed below State and Material sections needs validation | ⏳ |
+| FOCUS-78 | Material selection should show more parameters and tag engine support: [P] = Preisach, [LK] = Landau-Khalatnikov, [P,LK] = both | ✅ (2026-02-11: material picker now includes Eng tag column + extra params εHF/β/γ/ρ and uses [P]/[LK]/[P,LK]) |
+| FOCUS-79 | All information displayed below State and Material sections needs validation | ✅ (2026-02-11: normalized units/labels; initialized Ec(T), Pr(T), squareness from active material instead of placeholders) |
 
 #### Module 2
 
 | ID | Task | Status |
 |----|------|--------|
-| FOCUS-80 | Screenshot opens a modal and is intrusive — use non-blocking toast or save silently | ⏳ |
+| FOCUS-80 | Screenshot opens a modal and is intrusive — use non-blocking toast or save silently | ✅ (2026-02-11: screenshot capture now saves silently; removed intrusive success popup behavior) |
 
 #### Module 4
 
@@ -482,8 +482,8 @@ Evidence note (2026-02-11, EDA validation): added `module6-eda/pkg/compiler/mode
 | ID | Task | Source | Status | Est. |
 |----|------|--------|--------|------|
 | ASIM-1 | Add explicit "fidelity tier" selector to GUI | `docs/peripheral-circuits/ARRAY_SIMULATION_FIDELITY.md` | ✅ | 2-4hr |
-| ASIM-2 | Add DC nodal solver for passive sneak paths | `docs/peripheral-circuits/ARRAY_SIMULATION_FIDELITY.md` | ⏳ | 4-8hr |
-| ASIM-3 | Implement 2T1R masks | `docs/peripheral-circuits/ARRAY_SIMULATION_FIDELITY.md` | ⏳ | 2-4hr |
+| ASIM-2 | Add DC nodal solver for passive sneak paths | `docs/peripheral-circuits/ARRAY_SIMULATION_FIDELITY.md` | ✅ | 4-8hr |
+| ASIM-3 | Implement 2T1R masks | `docs/peripheral-circuits/ARRAY_SIMULATION_FIDELITY.md` | ✅ | 2-4hr |
 | ASIM-4 | Add headless test suite for coupling + tiers | `docs/peripheral-circuits/ARRAY_SIMULATION_FIDELITY.md` | ✅ | 2-4hr |
 
 **Evidence (ASIM-1 / ASIM-4, 2026-02-11):**
@@ -499,6 +499,26 @@ Evidence note (2026-02-11, EDA validation): added `module6-eda/pkg/compiler/mode
   - Verifies expected per-tier behavior and ideal snapshot reset semantics.
 - Updated GUI wiring test for selector:
   - `module4-circuits/pkg/gui/tab_unified_extended_test.go` (`TestUnifiedTabCouplingMode`).
+
+**Evidence (ASIM-2 / ASIM-3, 2026-02-11):**
+- Implemented Tier-B runtime dispatch + solve path in `DeviceState`:
+  - `SetCouplingMode` now selects engine by mode (`Ideal=nil`, `Tier-A`, `Tier-B`).
+  - `Compute` now uses coupled solve for all non-ideal modes (Tier-A and Tier-B).
+  - File: `module4-circuits/pkg/gui/device_state.go`.
+- Added explicit 2T1R selector-mask support to array solvers:
+  - New `SelectorMode` (`Bypass`, `Read`, `Write`) and optional `ReadMask`/`WriteMask` in `SolveParams`.
+  - Mask gating applied consistently in dense reference and Tier-B PCG solver paths.
+  - Files:
+    - `module4-circuits/pkg/arraysim/types.go`
+    - `module4-circuits/pkg/arraysim/masks.go`
+    - `module4-circuits/pkg/arraysim/refsolve_dense.go`
+    - `module4-circuits/pkg/arraysim/tier_b.go`
+- Strengthened headless tests:
+  - New selector modeling tests: `module4-circuits/pkg/arraysim/selector_masks_test.go`
+  - Tier behavior test now requires Tier-B coupled snapshots (no fallback):
+    `module4-circuits/pkg/gui/device_state_coupling_tiers_test.go`
+- Validation command:
+  - `go test -race ./module4-circuits/pkg/arraysim -count=1` → PASS (`ok ... 1.944s`)
 
 ### Peripheral Circuits Enhancements
 
@@ -630,14 +650,14 @@ All 46 items complete:
 
 | Priority | Total | Complete | Remaining |
 |----------|-------|----------|-----------|
-| **Current Focus** | **74** | **9** | **65** |
-| 🔴 Critical | 8 | 3 | 5 |
-| 🟠 High | 48 | 15 | 33 |
-| 🟡 Medium | 32 | 8 | 24 |
-| 🟢 Low | 22 | 0 | 22 |
-| **Total** | **184** | **32** | **152** |
+| **Current Focus** | **83** | **53** | **30** |
+| 🔴 Critical | 8 | 8 | 0 |
+| 🟠 High | 52 | 35 | 17 |
+| 🟡 Medium | 36 | 34 | 2 |
+| 🟢 Low | 22 | 6 | 16 |
+| **Total** | **201** | **136** | **65** |
 
-*Note: "Current Focus" items (FOCUS-01 through FOCUS-74) are the active work direction. Module 5 is deferred.*
+*Note: "Current Focus" items (FOCUS-01 through FOCUS-102) are the active work direction. Module 5 is deferred.*
 
 ---
 

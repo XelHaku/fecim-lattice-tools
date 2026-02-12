@@ -91,13 +91,33 @@ func (w WireParams) WithDefaults(geom CellGeometry) WireParams {
 }
 
 // SolveParams collects inputs for a coupling solve.
+// SelectorMode chooses which 2T1R selector path mask is applied.
+type SelectorMode int
+
+const (
+	// SelectorBypass ignores selector masks (default / non-2T1R behavior).
+	SelectorBypass SelectorMode = iota
+	// SelectorRead applies ReadMask to gate cell conduction.
+	SelectorRead
+	// SelectorWrite applies WriteMask to gate cell conduction.
+	SelectorWrite
+)
+
 type SolveParams struct {
 	WLVoltages  []float64   // Row (WL) driver voltages (V)
 	BLVoltages  []float64   // Column (BL) driver voltages (V)
 	Conductance [][]float64 // Cell conductances (S)
 	ActiveRows  []bool      // Optional row enable mask (nil = all active)
-	Geometry    CellGeometry
-	Wire        WireParams
+
+	// Optional 2T1R selector masks.
+	// If mode is SelectorRead/SelectorWrite and corresponding mask is non-nil,
+	// only cells with true mask entries are electrically connected.
+	SelectorMode SelectorMode
+	ReadMask     [][]bool
+	WriteMask    [][]bool
+
+	Geometry CellGeometry
+	Wire     WireParams
 }
 
 // SolveResult captures Tier A solver outputs.

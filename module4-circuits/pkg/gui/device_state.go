@@ -154,7 +154,9 @@ type DeviceState struct {
 	coupledCellVoltages [][]float64 // Last coupled Vcell (V)
 	coupledCellCurrents [][]float64 // Last coupled Icell (A)
 
-	enableDACNonlinearity bool // Apply DAC INL/DNL in compute path
+	enableDACNonlinearity bool                      // Apply DAC INL/DNL in compute path
+	peripheralTemperature float64                   // Temperature for peripheral nonlinearity model (K)
+	processCorner         peripherals.ProcessCorner // Process corner for peripheral nonlinearity
 
 	// Embedded state machines (previously global)
 	hysteresisState    HysteresisState
@@ -200,10 +202,12 @@ func NewDeviceState(rows, cols int, tia *peripherals.TIA, adc *peripherals.ADC) 
 		adc:          adc,
 		dac:          peripherals.DefaultDAC(),
 		// Default to Tier A so READ path uses coupled array-level simulation.
-		couplingMode: arraysim.CouplingTierA,
-		arrayEngine:  arraysim.NewTierASolver(),
-		cellGeometry: defaultGeometry,
-		wireParams:   arraysim.WireParams{},
+		couplingMode:          arraysim.CouplingTierA,
+		arrayEngine:           arraysim.NewTierASolver(),
+		cellGeometry:          defaultGeometry,
+		wireParams:            arraysim.WireParams{},
+		peripheralTemperature: 300.0,
+		processCorner:         peripherals.CornerTypical,
 		// Initialize embedded state machines
 		hysteresisState: HysteresisState{
 			LastLevel: make(map[string]int),
@@ -322,15 +326,47 @@ func (ds *DeviceState) IsDACNonlinearityEnabled() bool {
 	return ds.enableDACNonlinearity
 }
 
+// SetPeripheralPVT configures temperature + process corner for DAC/ADC nonlinearity models.
+func (ds *DeviceState) SetPeripheralPVT(temperatureK float64, corner peripherals.ProcessCorner) {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
+	if temperatureK <= 0 {
+		temperatureK = 300.0
+	}
+	ds.peripheralTemperature = temperatureK
+	switch corner {
+	case peripherals.CornerFast, peripherals.CornerSlow, peripherals.CornerTypical:
+		ds.processCorner = corner
+	default:
+		ds.processCorner = peripherals.CornerTypical
+	}
+}
+
+// GetPeripheralPVT returns the current peripheral temperature and process corner.
+func (ds *DeviceState) GetPeripheralPVT() (float64, peripherals.ProcessCorner) {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
+	return ds.peripheralTemperature, ds.processCorner
+}
+
 // SetCouplingMode enables/disables array coupling simulation.
 func (ds *DeviceState) SetCouplingMode(mode arraysim.CouplingMode) {
 	ds.mu.Lock()
+	defer ds.mu.Unlock()
+
 	ds.couplingMode = mode
-	if mode == arraysim.CouplingIdeal {
+	switch mode {
+	case arraysim.CouplingIdeal:
+		ds.arrayEngine = nil
 		ds.coupledCellVoltages = nil
 		ds.coupledCellCurrents = nil
+	case arraysim.CouplingTierA:
+		ds.arrayEngine = arraysim.NewTierASolver()
+	case arraysim.CouplingTierB:
+		ds.arrayEngine = arraysim.NewTierBSolver()
+	default:
+		ds.arrayEngine = arraysim.NewTierASolver()
 	}
-	ds.mu.Unlock()
 }
 
 // GetCouplingMode returns the active coupling model.
@@ -689,7 +725,7 @@ func (ds *DeviceState) dacWriteVoltageLocked(targetVoltage float64) (float64, in
 
 	var applied float64
 	if ds.enableDACNonlinearity {
-		applied = ds.dac.ConvertWithNonlinearity(code)
+		applied = ds.dac.ConvertWithCondition(code, ds.peripheralTemperature, ds.processCorner)
 	} else {
 		applied = ds.dac.Convert(code)
 	}
@@ -732,7 +768,8 @@ func (ds *DeviceState) applyDACNonlinearityLocked(voltage float64) float64 {
 		normalized = 0
 	}
 	level := int(normalized * float64(ds.dac.Levels()-1))
-	return math.Copysign(ds.dac.ConvertWithNonlinearity(level), voltage)
+	applied := ds.dac.ConvertWithCondition(level, ds.peripheralTemperature, ds.processCorner)
+	return math.Copysign(applied, voltage)
 }
 
 // SetDACPreset applies a preset pattern using material-derived voltage ranges
@@ -1013,7 +1050,7 @@ func (ds *DeviceState) Compute(weights [][]int, quantLevels int) {
 	ds.mu.Lock()
 	defer ds.mu.Unlock()
 
-	if ds.couplingMode == arraysim.CouplingTierA && ds.arrayEngine != nil {
+	if ds.couplingMode != arraysim.CouplingIdeal && ds.arrayEngine != nil {
 		if ds.computeWithArraysimLocked(weights, quantLevels) {
 			ds.LogCompute(weights, quantLevels)
 			return
@@ -1828,6 +1865,13 @@ const (
 	ISPPMaxIterations = 40 // More pulses for finer convergence (matched to shared/physics)
 )
 
+// ISPPHistoryPoint stores one write-verify iteration snapshot.
+type ISPPHistoryPoint struct {
+	Iteration int
+	Level     int
+	Voltage   float64
+}
+
 // ISPPState holds the state of an active ISPP (Incremental Step Pulse Programming) loop
 type ISPPState struct {
 	Active       bool
@@ -1842,6 +1886,7 @@ type ISPPState struct {
 	Verified     bool
 	Complete     bool
 	Success      bool
+	History      []ISPPHistoryPoint
 }
 
 // StartISPP begins an ISPP loop for a cell
@@ -1858,6 +1903,7 @@ func (ds *DeviceState) StartISPP(row, col, targetLevel, currentLevel int) {
 		ds.isppState.Verified = true
 		ds.isppState.Complete = true
 		ds.isppState.Success = true
+		ds.isppState.History = []ISPPHistoryPoint{{Iteration: 0, Level: currentLevel, Voltage: 0}}
 		return
 	}
 
@@ -1898,6 +1944,7 @@ func (ds *DeviceState) StartISPP(row, col, targetLevel, currentLevel int) {
 	ds.isppState.Verified = false
 	ds.isppState.Complete = false
 	ds.isppState.Success = false
+	ds.isppState.History = []ISPPHistoryPoint{{Iteration: 0, Level: currentLevel, Voltage: startVoltage}}
 }
 
 // ISPPIterate performs one write-verify iteration
@@ -1912,6 +1959,11 @@ func (ds *DeviceState) ISPPIterate(newCurrentLevel int) ISPPResult {
 
 	ds.isppState.CurrentLevel = newCurrentLevel
 	ds.isppState.Iteration++
+	ds.isppState.History = append(ds.isppState.History, ISPPHistoryPoint{
+		Iteration: ds.isppState.Iteration,
+		Level:     ds.isppState.CurrentLevel,
+		Voltage:   ds.isppState.Voltage,
+	})
 
 	// Map local direction to shared direction type
 	var sharedDirection sharedphysics.HysteresisDirection
@@ -2007,7 +2059,11 @@ func (ds *DeviceState) HandleOvershoot(row, col int) bool {
 func (ds *DeviceState) GetISPPStatus() ISPPState {
 	ds.mu.RLock()
 	defer ds.mu.RUnlock()
-	return ds.isppState
+	status := ds.isppState
+	if len(ds.isppState.History) > 0 {
+		status.History = append([]ISPPHistoryPoint(nil), ds.isppState.History...)
+	}
+	return status
 }
 
 // CancelISPP aborts the current ISPP loop
@@ -2060,6 +2116,7 @@ func (ds *DeviceState) beginISPPTracking(row, col, targetLevel, currentLevel int
 	ds.isppState.Verified = false
 	ds.isppState.Complete = false
 	ds.isppState.Success = false
+	ds.isppState.History = []ISPPHistoryPoint{{Iteration: 0, Level: currentLevel, Voltage: 0}}
 }
 
 func (ds *DeviceState) updateISPPTracking(iteration int, voltage float64, currentLevel int) {
@@ -2069,6 +2126,11 @@ func (ds *DeviceState) updateISPPTracking(iteration int, voltage float64, curren
 	ds.isppState.Iteration = iteration
 	ds.isppState.Voltage = voltage
 	ds.isppState.CurrentLevel = currentLevel
+	ds.isppState.History = append(ds.isppState.History, ISPPHistoryPoint{
+		Iteration: iteration,
+		Level:     currentLevel,
+		Voltage:   voltage,
+	})
 }
 
 func (ds *DeviceState) endISPPTracking(success bool, currentLevel int) {

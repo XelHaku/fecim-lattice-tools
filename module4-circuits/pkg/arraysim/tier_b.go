@@ -153,7 +153,7 @@ func (t *TierBSolver) SolveDC(params SolveParams) (DCResult, error) {
 			if r < len(params.Conductance) && c < len(params.Conductance[r]) {
 				gcell = params.Conductance[r][c]
 			}
-			if !rowActive(r) {
+			if !rowActive(r) || !selectorEnabled(params, r, c) {
 				gcell = 0
 			}
 			diag[w] += gcell
@@ -189,7 +189,7 @@ func (t *TierBSolver) SolveDC(params SolveParams) (DCResult, error) {
 				if r < len(params.Conductance) && c < len(params.Conductance[r]) {
 					gcell = params.Conductance[r][c]
 				}
-				if !rowActive(r) {
+				if !rowActive(r) || !selectorEnabled(params, r, c) {
 					gcell = 0
 				}
 				if gcell != 0 {
@@ -227,7 +227,7 @@ func (t *TierBSolver) SolveDC(params SolveParams) (DCResult, error) {
 			if r < len(params.Conductance) && c < len(params.Conductance[r]) {
 				gcell = params.Conductance[r][c]
 			}
-			if !rowActive(r) {
+			if !rowActive(r) || !selectorEnabled(params, r, c) {
 				gcell = 0
 			}
 

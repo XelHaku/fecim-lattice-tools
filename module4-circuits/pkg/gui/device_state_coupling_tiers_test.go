@@ -14,14 +14,13 @@ import (
 //   - Tier-B: coupled snapshot is produced by DC nodal reference solver.
 func TestCouplingFidelityTiers_ExpectedBehavior(t *testing.T) {
 	tiers := []struct {
-		name                     string
-		mode                     arraysim.CouplingMode
-		expectCoupledResult      bool
-		allowCoupledFallbackPath bool
+		name                string
+		mode                arraysim.CouplingMode
+		expectCoupledResult bool
 	}{
 		{name: "Ideal", mode: arraysim.CouplingIdeal, expectCoupledResult: false},
 		{name: "Tier-A", mode: arraysim.CouplingTierA, expectCoupledResult: true},
-		{name: "Tier-B", mode: arraysim.CouplingTierB, expectCoupledResult: true, allowCoupledFallbackPath: true},
+		{name: "Tier-B", mode: arraysim.CouplingTierB, expectCoupledResult: true},
 	}
 
 	weights := [][]int{{20, 10}, {8, 24}}
@@ -42,20 +41,17 @@ func TestCouplingFidelityTiers_ExpectedBehavior(t *testing.T) {
 			vCells, iCells := ds.GetCoupledCellSnapshot()
 			if tc.expectCoupledResult {
 				if vCells == nil || iCells == nil {
-					if !tc.allowCoupledFallbackPath {
-						t.Fatalf("%s expected coupled snapshots, got voltages=%v currents=%v", tc.name, vCells, iCells)
+					t.Fatalf("%s expected coupled snapshots, got voltages=%v currents=%v", tc.name, vCells, iCells)
+				}
+				if len(vCells) != 2 || len(vCells[0]) != 2 {
+					cols := 0
+					if len(vCells) > 0 {
+						cols = len(vCells[0])
 					}
-				} else {
-					if len(vCells) != 2 || len(vCells[0]) != 2 {
-						cols := 0
-						if len(vCells) > 0 {
-							cols = len(vCells[0])
-						}
-						t.Fatalf("%s coupled voltage shape mismatch: got %dx%d", tc.name, len(vCells), cols)
-					}
-					if got := ds.GetEffectiveCellVoltage(0, 0); math.Abs(got-vCells[0][0]) > 1e-12 {
-						t.Fatalf("%s effective voltage must come from coupled snapshot: got %.9g want %.9g", tc.name, got, vCells[0][0])
-					}
+					t.Fatalf("%s coupled voltage shape mismatch: got %dx%d", tc.name, len(vCells), cols)
+				}
+				if got := ds.GetEffectiveCellVoltage(0, 0); math.Abs(got-vCells[0][0]) > 1e-12 {
+					t.Fatalf("%s effective voltage must come from coupled snapshot: got %.9g want %.9g", tc.name, got, vCells[0][0])
 				}
 			} else {
 				if vCells != nil || iCells != nil {

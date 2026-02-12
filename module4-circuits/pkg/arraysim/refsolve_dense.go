@@ -123,7 +123,7 @@ func referenceSolveDense(params SolveParams) (DCResult, error) {
 			if r < len(params.Conductance) && c < len(params.Conductance[r]) {
 				gcell = params.Conductance[r][c]
 			}
-			if !active {
+			if !active || !selectorEnabled(params, r, c) {
 				gcell = 0
 			}
 			addConductance(w, bl, gcell)
@@ -157,7 +157,7 @@ func referenceSolveDense(params SolveParams) (DCResult, error) {
 			if r < len(params.Conductance) && c < len(params.Conductance[r]) {
 				gcell = params.Conductance[r][c]
 			}
-			if !rowActive(r) {
+			if !rowActive(r) || !selectorEnabled(params, r, c) {
 				gcell = 0
 			}
 
