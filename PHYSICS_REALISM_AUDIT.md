@@ -148,6 +148,20 @@ Citation audit notes:
 
 ---
 
+## Test Evidence Matrix (Claim → Test → Result)
+
+This matrix links each core physics claim to an executable test and a concrete last-known outcome.
+
+| Physics Claim Area | Claim Being Evidenced | Test File | Exact Test Function | Tolerance / Acceptance Criteria | Last-Known Result |
+|--------------------|-----------------------|-----------|---------------------|----------------------------------|------------------|
+| **Preisach** | Published HZO P-E loop fit can meet the audit target quality band in calibration workflow | `module1-hysteresis/pkg/ferroelectric/preisach_calibration_test.go` | `TestCalibratePreisachToPublishedHZOData_RMSBelow10PercentPr` | Normalized RMS error must be `< 10%` of published `Pr` | **PASS (2026-02-12):** `RMS = 0.632 uC/cm^2 = 4.00% of Pr=15.80`, with fitted params `Ps=22.00`, `Ec=-0.000 MV/cm`, `Delta=1.110 MV/cm`, `gamma=1.50` |
+| **Landau-Khalatnikov (LK)** | LK implementation matches documented equation identity and effective-viscosity units | `shared/physics/landau_equation_test.go` | `TestLKSolver_FrankensteinEquation_IdentityAndUnits` | `|rho_eff*dPdt - rhs| <= 1e-6 * max(1, |rhs|)` and `rho_eff - rho == R*A/d` within `1e-18` | **PASS (2026-02-12):** identity/units checks satisfied with no tolerance violations |
+| **Crossbar non-idealities** | MVM degradation pipeline ordering is stable and includes expected non-ideality chain | `module2-crossbar/pkg/crossbar/focus_54_60_validation_test.go` | `TestFocus60_MVMWithNonIdealitiesPipelineOrdering` | Pipeline sources must exactly match order: `ADC/DAC Quantization → IR Drop → Device Variation → Sneak Paths` | **PASS (2026-02-12):** exact 4-step order matched; run log also reported `Max IR Drop=1.1792%` |
+| **Peripherals (DAC/ADC/TIA/CP)** | ADC model honors canonical quantization-limited SNR baseline used by audit targeting | `shared/peripherals/peripherals_test.go` | `TestADCTheoreticalSNR` | `TheoreticalSNR == 6.02*N + 1.76 dB` within `±0.01 dB` | **PASS (2026-02-12):** `N=5` bits case validated at formula tolerance |
+| **CIM inference path** | Conductance-based CIM forward path remains numerically close to FP baseline (bounded delegation gap) | `module3-mnist/pkg/core/cim_physics_test.go` | `TestForwardCIM_ConductancePathMatchesFP_BoundedError` | Relative error per output must be `<= 5%` (`rel = |cim-fp|/max(1e-9,|fp|)`) | **PASS (2026-02-12):** all output neurons within 5% bound |
+
+---
+
 ## Priority Recommendations
 
 ### P0: Correctness & Disclosure (Required)
@@ -216,3 +230,4 @@ Key literature for calibration and validation:
 | 2026-02-03 | Added executive summary, actionable task tables, validation plan |
 | 2026-02-11 | Major update: refreshed all sections with current validation status, added precise physics equations, expanded upgrade paths, added polydomain and Tier-B status, cross-referenced TODO.md items |
 | 2026-02-11 | Physics-doc gap audit added to TODO (`PGAP-01..PGAP-08`); corrected top critical doc-code mismatches (Preisach implementation path/model, temperature law claims, missing Preisach-plane API claims, 2T1R architecture docs, SAR-noise docs) |
+| 2026-02-12 | Added comprehensive **Test Evidence Matrix** linking major physics claim areas (Preisach, LK, crossbar, peripherals, CIM) to exact test files/functions, explicit acceptance criteria, and last-known results |
