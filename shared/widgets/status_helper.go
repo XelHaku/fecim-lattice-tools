@@ -19,8 +19,6 @@ type StatusBar struct {
 	mu       sync.Mutex
 }
 
-var uiUpdateMu sync.Mutex
-
 // safeUIUpdate executes fn on the UI thread if a Fyne app is running,
 // otherwise executes directly (safe for tests and initialization).
 //
@@ -31,15 +29,11 @@ func safeUIUpdate(fn func()) {
 	defer func() {
 		if r := recover(); r != nil {
 			// No Fyne app running, execute directly.
-			uiUpdateMu.Lock()
-			defer uiUpdateMu.Unlock()
-			fn()
+			WithUILock(fn)
 		}
 	}()
 	fyne.Do(func() {
-		uiUpdateMu.Lock()
-		defer uiUpdateMu.Unlock()
-		fn()
+		WithUILock(fn)
 	})
 }
 

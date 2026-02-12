@@ -106,7 +106,8 @@ func TestBaseRendererHelper_LogMinSize(t *testing.T) {
 }
 
 func TestLayoutHelpers_CenterObject(t *testing.T) {
-	test.NewApp()
+	app := test.NewApp()
+	t.Cleanup(app.Quit)
 
 	rect := canvas.NewRectangle(nil)
 	rect.SetMinSize(fyne.NewSize(50, 50))
@@ -125,7 +126,8 @@ func TestLayoutHelpers_CenterObject(t *testing.T) {
 }
 
 func TestLayoutHelpers_ResizeAndPosition(t *testing.T) {
-	test.NewApp()
+	app := test.NewApp()
+	t.Cleanup(app.Quit)
 
 	rect := canvas.NewRectangle(nil)
 	helpers := LayoutHelpers{}
@@ -144,7 +146,8 @@ func TestLayoutHelpers_ResizeAndPosition(t *testing.T) {
 }
 
 func TestLayoutHelpers_FillContainer(t *testing.T) {
-	test.NewApp()
+	app := test.NewApp()
+	t.Cleanup(app.Quit)
 
 	rect := canvas.NewRectangle(nil)
 	helpers := LayoutHelpers{}
@@ -261,7 +264,8 @@ func TestRoundSize(t *testing.T) {
 }
 
 func TestSafeResize(t *testing.T) {
-	test.NewApp()
+	app := test.NewApp()
+	t.Cleanup(app.Quit)
 
 	tests := []struct {
 		name     string

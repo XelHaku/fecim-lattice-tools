@@ -25,7 +25,8 @@ func TestNewResizeDetector(t *testing.T) {
 }
 
 func TestResizeDetector_CreateRenderer(t *testing.T) {
-	test.NewApp()
+	app := test.NewApp()
+	t.Cleanup(app.Quit)
 
 	detector := NewResizeDetector(nil)
 	renderer := detector.CreateRenderer()
@@ -48,7 +49,8 @@ func TestResizeDetector_CreateRenderer(t *testing.T) {
 }
 
 func TestResizeDetector_CallbackOnResize(t *testing.T) {
-	test.NewApp()
+	app := test.NewApp()
+	t.Cleanup(app.Quit)
 
 	var callCount int32
 	var lastSize fyne.Size
@@ -89,7 +91,8 @@ func TestResizeDetector_CallbackOnResize(t *testing.T) {
 }
 
 func TestResizeDetector_NilCallback(t *testing.T) {
-	test.NewApp()
+	app := test.NewApp()
+	t.Cleanup(app.Quit)
 
 	detector := NewResizeDetector(nil)
 	renderer := detector.CreateRenderer()
@@ -172,7 +175,8 @@ func TestResponsiveDetector_CurrentBreakpoint(t *testing.T) {
 }
 
 func TestResponsiveDetector_CreateRenderer(t *testing.T) {
-	test.NewApp()
+	app := test.NewApp()
+	t.Cleanup(app.Quit)
 
 	detector := NewResponsiveDetector(nil)
 	renderer := detector.CreateRenderer()
@@ -188,7 +192,8 @@ func TestResponsiveDetector_CreateRenderer(t *testing.T) {
 }
 
 func TestResponsiveDetector_BreakpointChangeCallback(t *testing.T) {
-	test.NewApp()
+	app := test.NewApp()
+	t.Cleanup(app.Quit)
 
 	var callCount int32
 	var lastBp Breakpoint
@@ -232,7 +237,8 @@ func TestResponsiveDetector_BreakpointChangeCallback(t *testing.T) {
 }
 
 func TestResponsiveDetector_NilCallback(t *testing.T) {
-	test.NewApp()
+	app := test.NewApp()
+	t.Cleanup(app.Quit)
 
 	detector := NewResponsiveDetector(nil)
 	renderer := detector.CreateRenderer()
