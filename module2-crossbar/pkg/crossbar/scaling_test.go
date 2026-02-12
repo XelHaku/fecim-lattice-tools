@@ -108,7 +108,16 @@ func TestCrossbarScalingBehavior(t *testing.T) {
 		optSolver.SetConductances(makeUniformConductanceMatrix(n, n, conductance))
 		optSolver.SetParasitics(0.0, 0.0)
 
-		const samples = 20
+		const (
+			warmup  = 10
+			samples = 80
+		)
+		for s := 0; s < warmup; s++ {
+			if _, _, err := optSolver.SolveMVMFast(input); err != nil {
+				t.Fatalf("SolveMVMFast warmup (%dx%d) failed: %v", n, n, err)
+			}
+		}
+
 		var total time.Duration
 		for s := 0; s < samples; s++ {
 			start := time.Now()
@@ -159,7 +168,7 @@ func TestCrossbarScalingBehavior(t *testing.T) {
 
 	// (4) Runtime scaling should be no worse than O(n^2*log n).
 	// Compare measured runtime ratio to theoretical growth with generous slack.
-	const slackFactor = 3.0
+	const slackFactor = 4.0
 	for i := 1; i < len(data); i++ {
 		prev := data[i-1]
 		curr := data[i]

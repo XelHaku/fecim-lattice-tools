@@ -4,7 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -136,11 +135,14 @@ func TestModule7DocsIntegrity(t *testing.T) {
 
 func resolveDocsRoot(t *testing.T) string {
 	t.Helper()
-	_, thisFile, _, ok := runtime.Caller(0)
-	if !ok {
-		t.Fatal("unable to resolve caller path")
+	root := filepath.Clean(filepath.Join("..", "..", "..", "docs", "documentation"))
+	if !filepath.IsAbs(root) {
+		cwd, err := os.Getwd()
+		if err != nil {
+			t.Fatalf("unable to resolve working directory: %v", err)
+		}
+		root = filepath.Join(cwd, root)
 	}
-	root := filepath.Clean(filepath.Join(filepath.Dir(thisFile), "..", "..", "..", "docs", "documentation"))
 	if _, err := os.Stat(root); err != nil {
 		t.Fatalf("docs root not found at %s: %v", root, err)
 	}
