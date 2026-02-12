@@ -390,6 +390,36 @@ func (ds *DeviceState) GetCellGeometry() arraysim.CellGeometry {
 	return ds.cellGeometry
 }
 
+// SetDACBits changes the DAC resolution (4-8 bits) and recreates the DAC peripheral.
+func (ds *DeviceState) SetDACBits(bits int) {
+	ds.mu.Lock()
+	defer ds.mu.Unlock()
+	if bits < 4 || bits > 8 {
+		return
+	}
+
+	base := peripherals.DefaultDAC()
+	if ds.dac != nil {
+		base.VrefLow = ds.dac.VrefLow
+		base.VrefHigh = ds.dac.VrefHigh
+		base.INL = ds.dac.INL
+		base.DNL = ds.dac.DNL
+		base.SettleTime = ds.dac.SettleTime
+	}
+	base.Bits = bits
+	ds.dac = base
+}
+
+// GetDACBits returns the current DAC resolution in bits.
+func (ds *DeviceState) GetDACBits() int {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
+	if ds.dac != nil {
+		return ds.dac.Bits
+	}
+	return peripherals.DefaultDAC().Bits
+}
+
 // SetADCBits changes the ADC resolution (5, 6, 7, or 8 bits)
 func (ds *DeviceState) SetADCBits(bits int) {
 	ds.mu.Lock()
