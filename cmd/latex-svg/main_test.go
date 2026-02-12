@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/xml"
+	"flag"
 	"os"
 	"path/filepath"
 	"strings"
@@ -102,6 +104,175 @@ func TestInlineSVGUses(t *testing.T) {
 	}
 	if !strings.Contains(output, "d=\"M0 0 L1 0\"") {
 		t.Fatalf("missing inlined path: %s", output)
+	}
+}
+
+func TestParseFlags(t *testing.T) {
+	orig := flag.CommandLine
+	defer func() { flag.CommandLine = orig }()
+
+	flag.CommandLine = flag.NewFlagSet("latex-svg", flag.ContinueOnError)
+	_ = flag.CommandLine.Parse([]string{})
+	os.Args = []string{"latex-svg", "-in", "eq.tex", "-out", "out.svg", "-inline", "-keep", "-latex", "pdflatex", "-dvisvgm", "dvisvgm-custom", "-fonts", "-bbox", "exact", "-force-wrap"}
+
+	opts := parseFlags()
+	if opts.inputPath != "eq.tex" || opts.outputPath != "out.svg" || !opts.inlineMath || !opts.keepTemp || !opts.forceWrap {
+		t.Fatalf("unexpected parsed options: %+v", opts)
+	}
+	if opts.latexBinary != "pdflatex" || opts.dvisvgmBinary != "dvisvgm-custom" || !opts.useFonts || opts.bboxMode != "exact" {
+		t.Fatalf("unexpected binary/bbox flags: %+v", opts)
+	}
+}
+
+func TestReadOptionalPreamble(t *testing.T) {
+	if got, err := readOptionalPreamble(""); err != nil || got != "" {
+		t.Fatalf("empty path: got %q err=%v", got, err)
+	}
+
+	dir := t.TempDir()
+	p := filepath.Join(dir, "preamble.tex")
+	if err := os.WriteFile(p, []byte("\\usepackage{siunitx}\n"), 0644); err != nil {
+		t.Fatalf("write preamble: %v", err)
+	}
+	got, err := readOptionalPreamble(p)
+	if err != nil || !strings.Contains(got, "siunitx") {
+		t.Fatalf("read preamble: got %q err=%v", got, err)
+	}
+	if _, err := readOptionalPreamble(filepath.Join(dir, "missing.tex")); err == nil {
+		t.Fatalf("expected error for missing preamble")
+	}
+}
+
+func TestPrepareTex(t *testing.T) {
+	full := "\\documentclass{article}\n\\begin{document}x\\end{document}"
+	if got := prepareTex(full, "", options{}); got != full {
+		t.Fatalf("full document should not be wrapped")
+	}
+	wrapped := prepareTex("x+y", "\\usepackage{physics}", options{forceWrap: true, inlineMath: true})
+	if !containsAll(wrapped, []string{"\\usepackage{physics}", "\\(", "x+y", "\\)"}) {
+		t.Fatalf("force wrapped output missing pieces: %s", wrapped)
+	}
+}
+
+func TestDefaultOutputPath(t *testing.T) {
+	if got := defaultOutputPath("eq.tex"); got != "eq.svg" {
+		t.Fatalf("got %q", got)
+	}
+	if got := defaultOutputPath("equation"); got != "equation.svg" {
+		t.Fatalf("got %q", got)
+	}
+}
+
+func TestCreateWorkDirAndEnsureBinary(t *testing.T) {
+	dir, cleanup, err := createWorkDir(false)
+	if err != nil {
+		t.Fatalf("createWorkDir: %v", err)
+	}
+	if _, err := os.Stat(dir); err != nil {
+		t.Fatalf("temp dir missing: %v", err)
+	}
+	cleanup()
+	if _, err := os.Stat(dir); !os.IsNotExist(err) {
+		t.Fatalf("expected temp dir removed, stat err=%v", err)
+	}
+
+	dir2, cleanup2, err := createWorkDir(true)
+	if err != nil {
+		t.Fatalf("createWorkDir keep: %v", err)
+	}
+	cleanup2()
+	if _, err := os.Stat(dir2); err != nil {
+		t.Fatalf("expected kept dir: %v", err)
+	}
+	_ = os.RemoveAll(dir2)
+
+	if err := ensureBinary("sh"); err != nil {
+		t.Fatalf("expected shell binary available: %v", err)
+	}
+	if err := ensureBinary("definitely-not-a-real-binary-12345"); err == nil {
+		t.Fatalf("expected missing binary error")
+	}
+}
+
+func TestRunCommandsErrorPaths(t *testing.T) {
+	opts := options{latexBinary: "definitely-not-a-real-binary-12345", dvisvgmBinary: "definitely-not-a-real-binary-67890"}
+	if _, err := runLatex(opts, t.TempDir(), filepath.Join(t.TempDir(), "equation.tex")); err == nil {
+		t.Fatalf("expected runLatex error when binary is missing")
+	}
+	if err := runDvisvgm(opts, filepath.Join(t.TempDir(), "equation.dvi"), filepath.Join(t.TempDir(), "out.svg")); err == nil {
+		t.Fatalf("expected runDvisvgm error when binary is missing")
+	}
+}
+
+func TestNormalizeSVGViewBoxErrors(t *testing.T) {
+	dir := t.TempDir()
+	noViewBox := filepath.Join(dir, "novb.svg")
+	if err := os.WriteFile(noViewBox, []byte("<svg><defs></defs></svg>"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := normalizeSVGViewBox(noViewBox); err == nil {
+		t.Fatalf("expected missing viewBox error")
+	}
+
+	badFormat := filepath.Join(dir, "bad.svg")
+	if err := os.WriteFile(badFormat, []byte("<svg viewBox='1 2 3'><defs></defs></svg>"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := normalizeSVGViewBox(badFormat); err == nil {
+		t.Fatalf("expected malformed viewBox error")
+	}
+
+	zeroShift := filepath.Join(dir, "zero.svg")
+	if err := os.WriteFile(zeroShift, []byte("<svg viewBox='0 0 10 20'><defs></defs></svg>"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := normalizeSVGViewBox(zeroShift); err != nil {
+		t.Fatalf("expected no-op on zero origin: %v", err)
+	}
+}
+
+func TestSanitizeSVGRoot(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "root.svg")
+	input := "<svg width='10pt' height='20pt' viewBox='0 0 10 20' class='x'><g/></svg>"
+	if err := os.WriteFile(path, []byte(input), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := sanitizeSVGRoot(path); err != nil {
+		t.Fatalf("sanitizeSVGRoot: %v", err)
+	}
+	out, _ := os.ReadFile(path)
+	s := string(out)
+	if !containsAll(s, []string{"xmlns='http://www.w3.org/2000/svg'", "xmlns:xlink='http://www.w3.org/1999/xlink'", "version='1.1'"}) {
+		t.Fatalf("sanitized root missing attrs: %s", s)
+	}
+
+	bad := filepath.Join(dir, "badroot.svg")
+	if err := os.WriteFile(bad, []byte("<svg width='10pt'><g/></svg>"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := sanitizeSVGRoot(bad); err == nil {
+		t.Fatalf("expected missing attributes error")
+	}
+}
+
+func TestHelpers(t *testing.T) {
+	attrs := []xml.Attr{{Name: xml.Name{Local: "id"}, Value: "p1"}, {Name: xml.Name{Local: "d"}, Value: "M0 0"}, {Name: xml.Name{Local: "fill"}, Value: "none"}}
+	inherited := inheritPathAttrs(attrs)
+	if len(inherited) != 1 || inherited[0].Name.Local != "fill" {
+		t.Fatalf("unexpected inherited attrs: %+v", inherited)
+	}
+	base := []xml.Attr{{Name: xml.Name{Local: "fill"}, Value: "red"}}
+	extra := []xml.Attr{{Name: xml.Name{Local: "fill"}, Value: "blue"}, {Name: xml.Name{Local: "stroke"}, Value: "black"}}
+	merged := appendUniqueAttrs(base, extra)
+	if len(merged) != 2 {
+		t.Fatalf("expected unique merge, got %+v", merged)
+	}
+	if got := attrValueFromTag("<svg width='10' viewBox='0 0 1 1'>", "viewBox"); got != "0 0 1 1" {
+		t.Fatalf("attrValueFromTag mismatch: %q", got)
+	}
+	if got := formatFloat(10.5); got != "10.5" {
+		t.Fatalf("formatFloat mismatch: %q", got)
 	}
 }
 

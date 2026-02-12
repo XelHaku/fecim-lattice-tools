@@ -937,7 +937,7 @@ Coverage audit ran `go test -short -cover` per-package (74 passed, 11 build-fail
 | COV-10 | `shared/validation` | 37.4% | 53.8% | ✅ Fixed | Added `crossbar_tools_coverage_test.go` covering ToolStatus String/Symbol, CheckAllTools, GetProjectRoot, HasLocalClone, ValidateAllTools, InstallToolsIfNeeded |
 | COV-11 | `module6-eda/pkg/openlane` | 39.8% | 39.8% | 🔄 | Added `openlane_coverage_test.go` (config round-trip, path helpers, defaults); runner/manager require Docker so limited to config surface |
 | COV-12 | `shared/accessibility` | 0.0% | 100.0% | ✅ | Accessibility hooks package |
-| COV-13 | `cmd/latex-svg` | 43.1% | — | ⏳ | LaTeX→SVG pipeline; requires `latex` binary on host |
+| COV-13 | `cmd/latex-svg` | 71.2% | +28.1 pts | ✅ | Added tests for flag parsing, config/preamble loading, TeX wrapping/template behavior, SVG normalization/sanitization helpers, and missing-binary error paths (`go test -cover ./cmd/latex-svg/...`) |
 
 ### Critical Physics/Algorithm Files <70% Coverage
 
