@@ -4,12 +4,16 @@ package widgets
 
 import (
 	"image/color"
+	"strings"
+	"sync"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+
+	"fecim-lattice-tools/shared/logging"
 )
 
 // AccessibilityMode represents the current accessibility setting.
@@ -78,6 +82,36 @@ func (fi *FocusIndicator) SetFocused(focused bool) {
 // CreateRenderer implements fyne.Widget.
 func (fi *FocusIndicator) CreateRenderer() fyne.WidgetRenderer {
 	return &focusIndicatorRenderer{indicator: fi}
+}
+
+// FocusGained implements fyne.Focusable.
+func (fi *FocusIndicator) FocusGained() {
+	fi.SetFocused(true)
+	if focusable, ok := fi.content.(fyne.Focusable); ok {
+		focusable.FocusGained()
+	}
+}
+
+// FocusLost implements fyne.Focusable.
+func (fi *FocusIndicator) FocusLost() {
+	fi.SetFocused(false)
+	if focusable, ok := fi.content.(fyne.Focusable); ok {
+		focusable.FocusLost()
+	}
+}
+
+// TypedRune forwards rune input to wrapped focusable content.
+func (fi *FocusIndicator) TypedRune(r rune) {
+	if focusable, ok := fi.content.(fyne.Focusable); ok {
+		focusable.TypedRune(r)
+	}
+}
+
+// TypedKey forwards key input to wrapped focusable content.
+func (fi *FocusIndicator) TypedKey(ev *fyne.KeyEvent) {
+	if focusable, ok := fi.content.(fyne.Focusable); ok {
+		focusable.TypedKey(ev)
+	}
 }
 
 type focusIndicatorRenderer struct {
@@ -258,20 +292,69 @@ func pow(base, exp float64) float64 {
 	return result
 }
 
-// Announce sends a message to screen readers (placeholder for future implementation).
-// In Fyne, this would require platform-specific accessibility APIs.
+var (
+	accessibilityMu     sync.RWMutex
+	accessibleLabels    = make(map[fyne.CanvasObject]string)
+	lastAnnouncementMsg string
+)
+
+// Announce sends an accessibility announcement to assistive technology bridges.
+// Until platform-native screen reader APIs are available, announcements are
+// recorded in-process and emitted to the shared logging pipeline.
 func Announce(message string) {
-	// Placeholder: Fyne doesn't currently have direct screen reader support
-	// This would integrate with platform accessibility APIs in the future
-	_ = message
+	trimmed := strings.TrimSpace(message)
+	if trimmed == "" {
+		return
+	}
+
+	accessibilityMu.Lock()
+	lastAnnouncementMsg = trimmed
+	accessibilityMu.Unlock()
+
+	logging.Printf("[A11Y][ANNOUNCE] %s", trimmed)
 }
 
-// SetAccessibleLabel sets an accessible label for a canvas object.
-// This is a placeholder for future Fyne accessibility improvements.
+// LastAnnouncement returns the most recent accessibility announcement.
+func LastAnnouncement() string {
+	accessibilityMu.RLock()
+	defer accessibilityMu.RUnlock()
+	return lastAnnouncementMsg
+}
+
+// SetAccessibleLabel stores an accessibility label for a canvas object.
+// Labels are retained in a shared registry to support future screen-reader
+// bridges and current test/runtime introspection.
 func SetAccessibleLabel(obj fyne.CanvasObject, label string) {
-	// Placeholder: Would set aria-label equivalent when Fyne supports it
-	_ = obj
-	_ = label
+	if obj == nil {
+		return
+	}
+
+	trimmed := strings.TrimSpace(label)
+	accessibilityMu.Lock()
+	defer accessibilityMu.Unlock()
+	if trimmed == "" {
+		delete(accessibleLabels, obj)
+		return
+	}
+	accessibleLabels[obj] = trimmed
+}
+
+// GetAccessibleLabel returns the stored accessibility label for obj.
+func GetAccessibleLabel(obj fyne.CanvasObject) (string, bool) {
+	if obj == nil {
+		return "", false
+	}
+	accessibilityMu.RLock()
+	defer accessibilityMu.RUnlock()
+	label, ok := accessibleLabels[obj]
+	return label, ok
+}
+
+func resetAccessibilityStateForTest() {
+	accessibilityMu.Lock()
+	defer accessibilityMu.Unlock()
+	accessibleLabels = make(map[fyne.CanvasObject]string)
+	lastAnnouncementMsg = ""
 }
 
 // HighContrastTheme returns a high contrast theme variant.

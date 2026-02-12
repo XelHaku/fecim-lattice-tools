@@ -1,7 +1,10 @@
 package widgets
 
 import (
+	"bytes"
 	"image/color"
+	"log"
+	"strings"
 	"testing"
 
 	"fyne.io/fyne/v2"
@@ -70,7 +73,7 @@ func TestContrastChecker(t *testing.T) {
 func TestAccessibleColors(t *testing.T) {
 	// Just verify these colors are defined and reasonable
 	// The actual WCAG compliance should be verified visually or with accurate tools
-	
+
 	colors := []struct {
 		name  string
 		color color.RGBA
@@ -102,10 +105,10 @@ func TestMinTextSizes(t *testing.T) {
 		input    float32
 		expected float32
 	}{
-		{10.0, MinBodyTextSize},    // Too small, should be minimum
-		{12.0, MinBodyTextSize},    // Too small, should be minimum
-		{14.0, 14.0},               // At minimum, keep
-		{18.0, 18.0},               // Above minimum, keep
+		{10.0, MinBodyTextSize}, // Too small, should be minimum
+		{12.0, MinBodyTextSize}, // Too small, should be minimum
+		{14.0, 14.0},            // At minimum, keep
+		{18.0, 18.0},            // Above minimum, keep
 	}
 
 	for _, tc := range tests {
@@ -203,18 +206,18 @@ func TestFocusIndicator(t *testing.T) {
 	// Create a simple canvas rectangle as content
 	rect := canvas.NewRectangle(color.RGBA{100, 100, 100, 255})
 	fi := NewFocusIndicator(rect)
-	
+
 	// Test initial state
 	if fi.focused {
 		t.Error("Initial focused state should be false")
 	}
-	
+
 	// Test setting focused
 	fi.focused = true // Direct set to avoid Refresh() call without renderer
 	if !fi.focused {
 		t.Error("Setting focused = true did not work")
 	}
-	
+
 	fi.focused = false
 	if fi.focused {
 		t.Error("Setting focused = false did not work")
@@ -237,5 +240,102 @@ func TestHighContrastTheme(t *testing.T) {
 	r, g, b, _ = fg.RGBA()
 	if r != 0xFFFF || g != 0xFFFF || b != 0xFFFF {
 		t.Errorf("High contrast foreground is not pure white: %v", fg)
+	}
+}
+
+type fakeFocusable struct {
+	focused bool
+	typed   fyne.KeyName
+}
+
+func (f *fakeFocusable) FocusGained()               { f.focused = true }
+func (f *fakeFocusable) FocusLost()                 { f.focused = false }
+func (f *fakeFocusable) TypedRune(_ rune)           {}
+func (f *fakeFocusable) TypedKey(ev *fyne.KeyEvent) { f.typed = ev.Name }
+func (f *fakeFocusable) MinSize() fyne.Size         { return fyne.NewSize(10, 10) }
+func (f *fakeFocusable) Move(fyne.Position)         {}
+func (f *fakeFocusable) Position() fyne.Position    { return fyne.NewPos(0, 0) }
+func (f *fakeFocusable) Resize(fyne.Size)           {}
+func (f *fakeFocusable) Size() fyne.Size            { return fyne.NewSize(10, 10) }
+func (f *fakeFocusable) Hide()                      {}
+func (f *fakeFocusable) Show()                      {}
+func (f *fakeFocusable) Visible() bool              { return true }
+func (f *fakeFocusable) Refresh()                   {}
+
+func TestFocusIndicatorForwardsFocusableEvents(t *testing.T) {
+	ff := &fakeFocusable{}
+	fi := NewFocusIndicator(ff)
+	fi.FocusGained()
+	if !ff.focused || !fi.focused {
+		t.Fatal("focus gained should update wrapper and wrapped focusable")
+	}
+	fi.TypedKey(&fyne.KeyEvent{Name: fyne.KeyRight})
+	if ff.typed != fyne.KeyRight {
+		t.Fatalf("typed key was not forwarded: got %v", ff.typed)
+	}
+	fi.FocusLost()
+	if ff.focused || fi.focused {
+		t.Fatal("focus lost should clear wrapper and wrapped focusable")
+	}
+}
+
+func TestAnnounceStoresAndLogsMessage(t *testing.T) {
+	resetAccessibilityStateForTest()
+
+	oldWriter := log.Writer()
+	oldFlags := log.Flags()
+	oldPrefix := log.Prefix()
+	defer func() {
+		log.SetOutput(oldWriter)
+		log.SetFlags(oldFlags)
+		log.SetPrefix(oldPrefix)
+	}()
+
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+	log.SetFlags(0)
+	log.SetPrefix("")
+
+	Announce("  Simulation started  ")
+
+	if got := LastAnnouncement(); got != "Simulation started" {
+		t.Fatalf("LastAnnouncement() = %q, want %q", got, "Simulation started")
+	}
+
+	logged := buf.String()
+	if !strings.Contains(logged, "[A11Y][ANNOUNCE] Simulation started") {
+		t.Fatalf("announcement not logged, got %q", logged)
+	}
+
+	Announce("   ")
+	if got := LastAnnouncement(); got != "Simulation started" {
+		t.Fatalf("blank announcement should be ignored, got %q", got)
+	}
+}
+
+func TestSetAccessibleLabelStoresExposesAndClears(t *testing.T) {
+	resetAccessibilityStateForTest()
+
+	rectA := canvas.NewRectangle(color.Black)
+	rectB := canvas.NewRectangle(color.White)
+
+	SetAccessibleLabel(rectA, "  Read current chart  ")
+	SetAccessibleLabel(rectB, "Write voltage slider")
+
+	if got, ok := GetAccessibleLabel(rectA); !ok || got != "Read current chart" {
+		t.Fatalf("GetAccessibleLabel(rectA) = (%q, %v), want (%q, true)", got, ok, "Read current chart")
+	}
+	if got, ok := GetAccessibleLabel(rectB); !ok || got != "Write voltage slider" {
+		t.Fatalf("GetAccessibleLabel(rectB) = (%q, %v), want (%q, true)", got, ok, "Write voltage slider")
+	}
+
+	SetAccessibleLabel(rectA, "")
+	if got, ok := GetAccessibleLabel(rectA); ok || got != "" {
+		t.Fatalf("label should be cleared, got (%q, %v)", got, ok)
+	}
+
+	SetAccessibleLabel(nil, "ignored")
+	if got, ok := GetAccessibleLabel(nil); ok || got != "" {
+		t.Fatalf("nil object should not have a label, got (%q, %v)", got, ok)
 	}
 }
