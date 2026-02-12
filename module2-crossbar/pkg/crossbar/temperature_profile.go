@@ -11,7 +11,8 @@ package crossbar
 //     profile so existing simulations remain unchanged unless explicitly enabled.
 //   - When nil, callers get legacy behavior (wire resistance only).
 //
-// TODO M2-P2: This struct enables temperature scalings beyond wire resistance.
+// M2-P2 completed: this profile enables temperature scalings beyond wire
+// resistance while keeping legacy behavior available when profile=nil.
 //
 // Rationale: a profile object keeps MVMOptions reasonably small while allowing
 // coherent defaults and future extensions (e.g., per-line thermal gradients).

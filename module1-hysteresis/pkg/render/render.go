@@ -3,7 +3,10 @@
 package render
 
 import (
+	"errors"
+	"fmt"
 	"math"
+	"time"
 
 	"fecim-lattice-tools/shared/physics"
 )
@@ -300,16 +303,39 @@ func GetLevel(value float64) int {
 }
 
 // Renderer is the main rendering interface.
-// TODO: Implement with actual Vulkan calls using go-vk or vgpu.
+// Current implementation provides a deterministic headless loop suitable for
+// tests/CI while Vulkan-backed drawing is under active development.
 type Renderer struct {
-	config  *Config
-	plot    *HysteresisPlot
-	cell    *CellDisplay
-	levels  *LevelIndicator // 30-level indicator (conference-claim baseline)
-	running bool
+	config      *Config
+	plot        *HysteresisPlot
+	cell        *CellDisplay
+	levels      *LevelIndicator // 30-level indicator (conference-claim baseline)
+	running     bool
+	initialized bool
 
 	// Callbacks
 	onUpdate func()
+}
+
+var (
+	// ErrRendererNotInitialized indicates Run was called before Initialize.
+	ErrRendererNotInitialized = errors.New("renderer not initialized")
+	// ErrRendererAlreadyRunning indicates Run was called while loop is active.
+	ErrRendererAlreadyRunning = errors.New("renderer already running")
+)
+
+// Validate checks renderer configuration sanity.
+func (c *Config) Validate() error {
+	if c == nil {
+		return fmt.Errorf("config is nil")
+	}
+	if c.Width <= 0 || c.Height <= 0 {
+		return fmt.Errorf("invalid viewport size %dx%d", c.Width, c.Height)
+	}
+	if c.TargetFPS <= 0 {
+		return fmt.Errorf("target FPS must be > 0 (got %d)", c.TargetFPS)
+	}
+	return nil
 }
 
 // NewRenderer creates a new renderer with the given configuration.
@@ -347,33 +373,56 @@ func (r *Renderer) GetLevelIndicator() *LevelIndicator {
 	return r.levels
 }
 
-// Initialize sets up the Vulkan context and window.
-// TODO: Implement actual Vulkan initialization.
+// Initialize validates config and initializes headless state.
 func (r *Renderer) Initialize() error {
-	// Placeholder for Vulkan initialization:
-	// 1. Create GLFW window
-	// 2. Initialize Vulkan instance
-	// 3. Create surface and device
-	// 4. Setup swap chain
-	// 5. Create render pass and pipelines
-	// 6. Create command buffers
-
+	if r == nil {
+		return fmt.Errorf("renderer is nil")
+	}
+	if err := r.config.Validate(); err != nil {
+		return err
+	}
+	if r.cell == nil {
+		r.cell = NewCellDisplay()
+	}
+	if r.levels == nil {
+		r.levels = NewLevelIndicator()
+	}
+	r.running = false
+	r.initialized = true
 	return nil
 }
 
 // Run starts the main render loop.
-// TODO: Implement actual render loop.
+// Current loop is headless/timer-based; Vulkan drawing will plug into this API.
 func (r *Renderer) Run() error {
-	r.running = true
+	if r == nil {
+		return fmt.Errorf("renderer is nil")
+	}
+	if err := r.config.Validate(); err != nil {
+		return err
+	}
+	if !r.initialized {
+		return ErrRendererNotInitialized
+	}
+	if r.running {
+		return ErrRendererAlreadyRunning
+	}
 
-	// Placeholder render loop structure:
-	// for r.running {
-	//     // Poll events
-	//     // Call update callback
-	//     // Begin frame
-	//     // Record commands: draw cell, draw plot
-	//     // End frame and present
-	// }
+	r.running = true
+	frameDur := time.Second / time.Duration(r.config.TargetFPS)
+	if frameDur <= 0 {
+		frameDur = time.Millisecond
+	}
+	ticker := time.NewTicker(frameDur)
+	defer ticker.Stop()
+	defer func() { r.running = false }()
+
+	for r.running {
+		<-ticker.C
+		if r.onUpdate != nil {
+			r.onUpdate()
+		}
+	}
 
 	return nil
 }
@@ -383,6 +432,11 @@ func (r *Renderer) Stop() {
 	r.running = false
 }
 
+// IsRunning reports whether the render loop is active.
+func (r *Renderer) IsRunning() bool {
+	return r != nil && r.running
+}
+
 // Cleanup releases renderer state/resources.
 func (r *Renderer) Cleanup() {
 	r.running = false
@@ -390,6 +444,7 @@ func (r *Renderer) Cleanup() {
 	r.cell = nil
 	r.levels = nil
 	r.onUpdate = nil
+	r.initialized = false
 }
 
 // DrawAxes generates vertices for plot axes.

@@ -683,6 +683,21 @@ Evidence note (2026-02-11, EDA validation): added `module6-eda/pkg/compiler/mode
 
 ---
 
+## Physics-Doc Gaps (2026-02-11)
+
+| ID | Gap | Severity | Fix Status |
+|----|-----|----------|------------|
+| PGAP-01 | `docs/hysteresis/hysteresis.physics.md` claimed implementation in `preisach_advanced.go` with explicit per-hysteron update loop; actual code is Preisach stack + `TanhEverett` in `module1-hysteresis/pkg/ferroelectric/preisach.go` | Critical | ✅ Fixed (doc corrected to real code path/model) |
+| PGAP-02 | `docs/hysteresis/hysteresis.physics.md`/`hysteresis.ELI5.md` claimed Curie-law temperature collapse `Ec(T)=Ec0*sqrt(1-T/Tc)` and `Ec,Pr→0` above Tc; actual code uses linear `TempCoeffEc/TempCoeffPr` scaling + clamps | Critical | ✅ Fixed (equations/status/docs corrected) |
+| PGAP-03 | `docs/hysteresis/hysteresis.ELI5.md` claimed `GetPreisachPlane()` / distribution getters exist; no such public API found in module1/shared physics | High | ✅ Fixed (status changed to not implemented) |
+| PGAP-04 | `docs/crossbar/reference/PHYSICS.md` documented architecture as only `0T1R/1T1R`; code supports `2T1R` path in `MVMOptions` and non-ideality scaling | High | ✅ Fixed (2T1R added to architecture docs) |
+| PGAP-05 | `docs/peripheral-circuits/PHYSICS.md` omitted code-implemented optional SAR noise path (`EnableSARNoise`: metastability, Vref drift, kT/C noise) | High | ✅ Fixed (ADC section now documents optional SAR noise model) |
+| PGAP-06 | `docs/hysteresis/hysteresis.ELI5.md` still includes legacy “perfect module” pseudo-APIs (`export_verilog_a_params`, `export_neurosim_config`) not implemented as callable module APIs | Medium | ⏳ Open |
+| PGAP-07 | `docs/hysteresis/hysteresis.physics.md` still describes write/read mode using simple `|E|>Ec` threshold, while current write/read demo logic is phase-machine/controller-driven (`module1-hysteresis/pkg/controller`) | Medium | ⏳ Open |
+| PGAP-08 | `docs/hysteresis/*.md` do not consistently state that current Preisach implementation uses a tanh Everett approximation rather than FORC-calibrated distributions | Medium | ⏳ Open |
+
+---
+
 ## Completed Items (Recent)
 
 ### MNIST Module (from mnist.fixes.todo.md) ✅
@@ -772,6 +787,26 @@ git update-index --assume-unchanged cmd/fecim-lattice-tools/data/calibrations/li
 
 ---
 
+## Error Handling Audit (2026-02-11)
+
+| ID | File:Line | Issue Type | Severity | Status | Notes |
+|----|-----------|------------|----------|--------|-------|
+| ERR-01 | `module3-mnist/pkg/training/single_layer.go:32` | Ignored constructor error (`crossbar.NewArray`) | Critical | ✅ Fixed | `NewSingleLayerNetwork()` now returns `(*SingleLayerNetwork, error)` and propagates failure. |
+| ERR-02 | `module3-mnist/cmd/train-single-layer/main.go:47` | Missing error return handling after constructor change | High | ✅ Fixed | CLI now exits with explicit error when single-layer network creation fails. |
+| ERR-03 | `module3-mnist/train_and_save.go:368` | Ignored constructor error (`crossbar.NewArray` layer1) | Critical | ✅ Fixed | Added fatal error handling before quantization/export path. |
+| ERR-04 | `module3-mnist/train_and_save.go:375` | Ignored constructor error (`crossbar.NewArray` layer2) | Critical | ✅ Fixed | Added fatal error handling before quantization/export path. |
+| ERR-05 | `module3-mnist/pkg/training/network.go:202` | Ignored MVM error (`layer1.MVM`) | High | ✅ Fixed | Added checked error path with warning and safe fallback activations. |
+| ERR-06 | `module3-mnist/pkg/training/network.go:216` | Ignored MVM error (`layer2.MVM`) | High | ✅ Fixed | Added checked error path with warning and safe fallback logits. |
+| ERR-07 | `module2-crossbar/pkg/gui/tabbed_app.go:51` | Ignored constructor error (`crossbar.NewArray`) | High | ✅ Fixed | Added checked initialization + logged fallback minimal array config. |
+| ERR-08 | `module6-eda/cmd/lattice-gen/main.go:18` | Ignored `os.UserHomeDir()` error | Medium | ✅ Fixed | Return wrapped error if home directory resolution fails. |
+| ERR-09 | `module6-eda/cmd/eda-cli/main.go:68` | Ignored `os.UserHomeDir()` error | Medium | ✅ Fixed | Return wrapped error if home directory resolution fails. |
+| ERR-10 | `module2-crossbar/pkg/crossbar/demo_logging.go:39` | Ignored MVM error in demo executable | Medium | ✅ Fixed | Demo now checks MVM error and exits non-zero on failure. |
+| ERR-11 | `cmd/fecim-lattice-tools/main.go:136` | `fmt.Println` used for operational error path | Medium | ✅ Fixed | Routed screenshot directory creation errors through shared logging. |
+| ERR-12 | `cmd/fecim-lattice-tools/main.go:153` | `fmt.Println` used for operational error path | Medium | ✅ Fixed | Routed screenshot metadata save errors through shared logging. |
+| ERR-13 | `cmd/fecim-lattice-tools/main.go:838` | `fmt.Println` used for recording-stop error path | Medium | ✅ Fixed | Routed recording stop errors through shared logging. |
+| ERR-14 | `cmd/fecim-lattice-tools/main.go:866` | `fmt.Println` used for recording-start error path | Medium | ✅ Fixed | Routed recording start errors through shared logging. |
+| ERR-15 | `shared/widgets/ui_lock.go:36` | Bare panic in non-test code | Medium | ⏳ Open | Panic enforces goroutine ownership contract; needs design decision (convert to error/log+no-op?). |
+
 ## Agent Work Policy
 
 **This file is the single source of truth for all tasks.** No separate prompt files.
@@ -815,3 +850,24 @@ See `CONTRIBUTING.md` and `CLAUDE.md` for development guidelines.
 | DOCA-10 | Default mirrored training config had same missing field descriptions | ✅ Fixed | Added same descriptions in `config/physics/defaults/training.yaml`. |
 | DOCA-11 | Some config YAML files still contain undocumented scalar fields (notably large material catalogs and mirrored defaults) | ⚠️ Open (backlog) | Remaining candidates reported by audit across `config/materials.yaml` and `config/physics/defaults/materials.yaml`. |
 | DOCA-12 | Not all module/config roots have README-level entry docs (`config/` currently missing) | ⚠️ Open (backlog) | `config/README.md` absent. |
+
+## Discovered from Code Audit (2026-02-11)
+
+| ID | File:Line | Comment | Category | Status | Notes |
+|----|-----------|---------|----------|--------|-------|
+| CODE-01 | `module2-crossbar/pkg/crossbar/temperature_profile.go:14` | `TODO M2-P2: This struct enables temperature scalings beyond wire resistance.` | physics-fix | ✅ | TODO marker removed; comment updated to completion note and legacy-behavior rationale retained. |
+| CODE-02 | `module1-hysteresis/pkg/render/render.go:303` | `TODO: Implement with actual Vulkan calls using go-vk or vgpu.` | ui-fix | ✅ | Replaced placeholder-only contract with headless deterministic renderer loop API, config validation, and explicit lifecycle errors. |
+| CODE-03 | `module1-hysteresis/pkg/render/render.go:351` | `TODO: Implement actual Vulkan initialization.` | cleanup | ✅ | `Initialize()` now validates config, sets renderer state consistently, and returns concrete errors. |
+| CODE-04 | `module1-hysteresis/pkg/render/render.go:365` | `TODO: Implement actual render loop.` | perf | ✅ | `Run()` now executes FPS-driven ticker loop with callback, safe stop, init guard, and re-entrancy guard. |
+
+**Top-impact summary (found in Go comments):** 4 items total (no additional TODO/FIXME/HACK/XXX comment markers were present in `.go` files).
+
+**8 easy/high-impact fixes completed from this audit:**
+1. Added `Config.Validate()` for renderer config sanity checks.
+2. Added concrete renderer lifecycle errors: `ErrRendererNotInitialized`, `ErrRendererAlreadyRunning`.
+3. Hardened `Initialize()` with nil/config validation and deterministic state setup.
+4. Implemented timer-driven headless `Run()` loop at target FPS.
+5. Added re-entrancy guard to prevent double-start of render loop.
+6. Added `IsRunning()` helper for safe lifecycle checks.
+7. Added targeted renderer tests (`render_test.go`) for config, init, run lifecycle, and init guard.
+8. Removed/resolved all TODO/FIXME/HACK/XXX comment markers from `.go` files discovered in this audit.
