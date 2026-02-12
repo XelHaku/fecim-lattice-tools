@@ -56,6 +56,11 @@ var undoManager *undo.Manager
 // Global logger for the main application
 var log *logging.Logger
 
+var (
+	screenshotOutputDir = "screenshots"
+	recordingOutputDir  = "recordings"
+)
+
 func isVerbosityToken(token string) bool {
 	switch strings.ToLower(strings.TrimSpace(token)) {
 	case "0", "off", "none", "1", "info", "2", "debug", "3", "trace", "all":
@@ -125,7 +130,7 @@ func sectionNameFromTab(viewName string) string {
 // L02: Embeds PNG metadata (title, timestamp, module name, simulation parameters)
 func takeScreenshot(window fyne.Window, sectionName string) string {
 	// Create screenshots directory if it doesn't exist
-	screenshotDir := "screenshots"
+	screenshotDir := screenshotOutputDir
 	if err := os.MkdirAll(screenshotDir, 0755); err != nil {
 		fmt.Println("Error creating screenshots directory:", err)
 		return ""
@@ -162,7 +167,7 @@ func (rs *RecordingState) startRecording(window fyne.Window) error {
 	}
 
 	// Create recordings directory if it doesn't exist
-	recordingDir := "recordings"
+	recordingDir := recordingOutputDir
 	if err := os.MkdirAll(recordingDir, 0755); err != nil {
 		return fmt.Errorf("error creating recordings directory: %w", err)
 	}
@@ -425,6 +430,10 @@ const (
 	// Default window dimensions
 	defaultWindowWidth  = 1400
 	defaultWindowHeight = 900
+
+	// Minimum supported GUI size (G13)
+	minWindowWidth  = 1024
+	minWindowHeight = 768
 )
 
 // loadWindowSize loads saved window dimensions from preferences
@@ -432,12 +441,12 @@ func loadWindowSize(prefs fyne.Preferences) fyne.Size {
 	w := prefs.FloatWithFallback(prefKeyWindowWidth, defaultWindowWidth)
 	h := prefs.FloatWithFallback(prefKeyWindowHeight, defaultWindowHeight)
 
-	// Clamp to reasonable minimum size
-	if w < 800 {
-		w = 800
+	// Clamp to minimum supported GUI size (G13)
+	if w < minWindowWidth {
+		w = minWindowWidth
 	}
-	if h < 600 {
-		h = 600
+	if h < minWindowHeight {
+		h = minWindowHeight
 	}
 
 	// Round to even integers and add 2-pixel buffer to prevent Fyne/Wayland
@@ -482,7 +491,30 @@ func main() {
 	listMaterialsFlag := flag.Bool("list-materials", false, "List available materials and exit")
 	modeFlag := flag.String("mode", "", "Run a headless mode (e.g., hysteresis) and exit")
 	engineFlag := flag.String("engine", "", "Headless hysteresis engine for --mode hysteresis: preisach|lk (default: preisach)")
+	screenshotDirFlag := flag.String("screenshot-dir", screenshotOutputDir, "Output directory for GUI screenshots")
+	recordingDirFlag := flag.String("recording-dir", recordingOutputDir, "Output directory for GUI recordings")
 	var moduleFlag = flag.String("module", "home", "Start module: home, hysteresis, crossbar, mnist, circuits, comparison, eda, docs")
+	flag.Usage = func() {
+		out := flag.CommandLine.Output()
+		fmt.Fprintln(out, "FeCIM Lattice Tools")
+		fmt.Fprintln(out)
+		fmt.Fprintln(out, "Usage:")
+		fmt.Fprintln(out, "  fecim-lattice-tools [flags]")
+		fmt.Fprintln(out)
+		fmt.Fprintln(out, "Flags:")
+		flag.PrintDefaults()
+		fmt.Fprintln(out)
+		fmt.Fprintln(out, "Headless hysteresis environment variables (--mode hysteresis):")
+		fmt.Fprintln(out, "  FECIM_MATERIAL              Material preset (fecim_hzo, literature_superlattice, default_hzo, etc.)")
+		fmt.Fprintln(out, "  FECIM_RANGE_FRAC            Reachable polarization fraction (0,1], clamped for LK reachability")
+		fmt.Fprintln(out, "  FECIM_ISPP_STEPS_PER_PULSE  Target simulation steps per pulse (integer)")
+		fmt.Fprintln(out, "  FECIM_HEADLESS_FAST         Fast preset for CI (1 enables shorter LK budgets)")
+		fmt.Fprintln(out, "  FECIM_ISPP_TARGETS          Number of randomized ISPP targets")
+		fmt.Fprintln(out, "  FECIM_ISPP_TARGET_SEED      Deterministic seed for randomized ISPP target fill")
+		fmt.Fprintln(out, "  FECIM_ISPP_TARGET_LEVELS    Explicit ISPP target levels (e.g., lo,mid,hi or numeric list)")
+		fmt.Fprintln(out, "  FECIM_ISPP_MAX_PULSES       Per-target pulse budget override")
+		fmt.Fprintln(out, "  FECIM_HEADLESS_ALLOW_TIMEOUT Continue after per-target timeout when set to 1")
+	}
 	flag.Parse()
 
 	verbosityProvided := false
@@ -491,6 +523,13 @@ func main() {
 			verbosityProvided = true
 		}
 	})
+	if dir := strings.TrimSpace(*screenshotDirFlag); dir != "" {
+		screenshotOutputDir = filepath.Clean(dir)
+	}
+	if dir := strings.TrimSpace(*recordingDirFlag); dir != "" {
+		recordingOutputDir = filepath.Clean(dir)
+	}
+
 	if *loggerFlag && !verbosityProvided {
 		if args := flag.Args(); len(args) > 0 && isVerbosityToken(args[0]) {
 			*verbosityFlag = args[0]
@@ -1302,6 +1341,23 @@ func main() {
 		fyne.NewMenuItem("Documentation", func() { selectView(7) }),
 	)
 
+	// Create Settings menu (includes accessibility theme options)
+	settingsMenu := fyne.NewMenu("Settings",
+		fyne.NewMenuItem("Theme: Dark (FeCIM)", func() {
+			themeManager.SetTheme(themes.ThemeDark)
+		}),
+		fyne.NewMenuItem("Theme: Light", func() {
+			themeManager.SetTheme(themes.ThemeLight)
+		}),
+		fyne.NewMenuItem("Theme: High Contrast", func() {
+			themeManager.SetTheme(themes.ThemeHighContrast)
+		}),
+		fyne.NewMenuItemSeparator(),
+		fyne.NewMenuItem("Keyboard Shortcuts", func() {
+			sharedwidgets.ShowKeyboardHelp(window)
+		}),
+	)
+
 	// Create Help menu
 	helpMenu := fyne.NewMenu("Help",
 		fyne.NewMenuItem("Help Topics", func() {
@@ -1324,7 +1380,7 @@ func main() {
 	)
 
 	// Set main menu
-	mainMenu := fyne.NewMainMenu(fileMenu, editMenu, viewMenu, helpMenu)
+	mainMenu := fyne.NewMainMenu(fileMenu, editMenu, viewMenu, settingsMenu, helpMenu)
 	window.SetMainMenu(mainMenu)
 	fmt.Println("[STARTUP] File menu created")
 

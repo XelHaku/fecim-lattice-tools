@@ -244,6 +244,9 @@ The keyboard system is implemented in `shared/keyboard/` and can be extended for
 
 This repository does **not** present hardware performance claims. External scientific claims (if any) are tracked in `docs/comparison/HONESTY_AUDIT.md`. If a claim is not listed there, treat it as **unverified**.
 
+Physics acceptance criteria are defined in `docs/development/PHYSICS_ACCEPTANCE_CRITERIA.md`.
+GUI minimum supported size is documented in `docs/development/GUI_MINIMUMS.md` (1024×768).
+
 ---
 
 ## Technical Stack

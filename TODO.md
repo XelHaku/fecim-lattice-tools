@@ -337,6 +337,19 @@ Evidence note (2026-02-11): `go test -race ./module6-eda/... ./module7-docs/...`
 | G15 | Update GUI layout docs to match current code | `docs/development/GUI/` | ⏳ | 1-2hr |
 | G16 | Documentation mapping sweep: audit docs for drift vs code | `docs/development/GUI/` | ⏳ | 2-4hr |
 
+**Evidence (CM-P1 / CM-D1 / G13, 2026-02-11):**
+- Added cross-module acceptance criteria doc: `docs/development/PHYSICS_ACCEPTANCE_CRITERIA.md`.
+- UI honesty labels aligned to SSOT language in:
+  - `shared/widgets/about_science.go`
+  - `shared/widgets/glossary.go`
+- Fixed HONESTY audit local-link path to `docs/comparison/HONESTY_AUDIT.md`.
+- Defined and enforced minimum supported GUI size in code:
+  - `cmd/fecim-lattice-tools/main.go` (`minWindowWidth=1024`, `minWindowHeight=768`).
+- Documented GUI minimum in `docs/development/GUI_MINIMUMS.md` and linked from `README.md`.
+- Validation commands:
+  - `go test ./shared/widgets -run TestQuickTermLookup -count=1` (PASS)
+  - `go test ./cmd/fecim-lattice-tools -run TestMainWindow_.* -count=1` (PASS; no tests matched, package build succeeded)
+
 ### Array Simulation Fidelity (from docs)
 
 | ID | Task | Source | Status | Est. |
@@ -458,12 +471,12 @@ All 46 items complete:
 
 | Priority | Total | Complete | Remaining |
 |----------|-------|----------|-----------|
-| **Current Focus** | **74** | **6** | **68** |
+| **Current Focus** | **74** | **9** | **65** |
 | 🔴 Critical | 8 | 3 | 5 |
 | 🟠 High | 48 | 15 | 33 |
-| 🟡 Medium | 32 | 5 | 27 |
+| 🟡 Medium | 32 | 8 | 24 |
 | 🟢 Low | 22 | 0 | 22 |
-| **Total** | **184** | **29** | **155** |
+| **Total** | **184** | **32** | **152** |
 
 *Note: "Current Focus" items (FOCUS-01 through FOCUS-74) are the active work direction. Module 5 is deferred.*
 

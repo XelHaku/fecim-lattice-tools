@@ -71,9 +71,9 @@ func aboutScienceData() []ScienceSection {
 			LearnMore: "https://doi.org/10.1038/s41586-020-2181-2",
 		},
 		{
-			Title:    "Energy Efficiency",
+			Title:    "Energy Efficiency (Reported)",
 			IconName: theme.IconNameRadioButton,
-			Summary:  "25-100x better than NAND flash",
+			Summary:  "Reported literature figures; unverified by this simulator", 
 			Details: "FeCIM achieves superior energy efficiency through:\n\n" +
 				"1. In-memory computing: No data movement between memory and processor\n" +
 				"2. Analog computation: Single-step MAC vs multiple digital operations\n" +
@@ -85,9 +85,9 @@ func aboutScienceData() []ScienceSection {
 			LearnMore: "https://doi.org/10.1038/s41586-025-xxxxx",
 		},
 		{
-			Title:    "Endurance & Reliability",
+			Title:    "Endurance & Reliability (Reported)",
 			IconName: theme.IconNameConfirm,
-			Summary:  "10^9 to 10^12 write cycles demonstrated",
+			Summary:  "Reported literature figures; unverified by this simulator",
 			Details: "Endurance measures how many times a memory cell can be written before failure.\n\n" +
 				"Verified endurance levels:\n" +
 				"- 10^9 cycles: Standard HZO (IEEE IRPS 2022)\n" +
@@ -152,7 +152,7 @@ func ShowAboutScience(parent fyne.Window) {
 	// Footer with references link
 	footer := container.NewVBox(
 		widget.NewSeparator(),
-		widget.NewRichTextFromMarkdown("*All claims verified per HONESTY_AUDIT.md standards*"),
+		widget.NewRichTextFromMarkdown("*Verification source of truth: docs/comparison/HONESTY_AUDIT.md (claims not listed there are unverified)*"),
 	)
 
 	// Scrollable content

@@ -36,7 +36,7 @@ var TermsData = []GlossaryEntry{
 	},
 	{
 		Term:       "Pr",
-		Definition: "Remnant Polarization - Polarization remaining after electric field removal. Verified range: 15-34 µC/cm² at room temperature, 75 µC/cm² at 4K. Higher Pr enables larger on/off ratios and analog storage capacity.",
+		Definition: "Remnant Polarization - Polarization remaining after electric field removal. Reported literature ranges exist, but this simulator treats specific numeric values as modeled unless explicitly marked verified in HONESTY_AUDIT.md.",
 		Category:   "Physics",
 	},
 	{
@@ -56,7 +56,7 @@ var TermsData = []GlossaryEntry{
 	},
 	{
 		Term:       "Endurance",
-		Definition: "Number of write/erase cycles before device failure. Demonstrated: 10⁹ cycles (standard HZO), 10¹² cycles (V:HfO₂ doping). Automotive grade (AEC-Q100) requires 10⁶ cycles minimum.",
+		Definition: "Number of write/erase cycles before device failure. Literature reports wide ranges; in this UI, treat numbers as reported context unless verified in HONESTY_AUDIT.md.",
 		Category:   "Physics",
 	},
 
@@ -122,7 +122,7 @@ var TermsData = []GlossaryEntry{
 	},
 	{
 		Term:       "TOPS/W",
-		Definition: "Tera-Operations Per Second per Watt - energy efficiency metric. FeCIM demonstrated: 200-400 TOPS/W (inference). Digital ASIC: ~10 TOPS/W. Energy savings from analog MAC and in-memory computation.",
+		Definition: "Tera-Operations Per Second per Watt - energy efficiency metric. Any numeric comparisons shown here are literature-reported context and are not simulator-verified unless listed in HONESTY_AUDIT.md.",
 		Category:   "Metrics",
 	},
 	{
@@ -370,7 +370,7 @@ var ReferencesData = []ReferenceEntry{
 		Title:    "Scientific Honesty Audit",
 		Citation: "Local Documentation",
 		DOI:      "",
-		URL:      "/docs/cim/HONESTY_AUDIT.md",
+		URL:      "/docs/comparison/HONESTY_AUDIT.md",
 	},
 	{
 		Title:    "Dr. Tour COSM 2025 Transcript",
