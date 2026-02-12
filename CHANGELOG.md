@@ -2,6 +2,42 @@
 
 All notable changes to this project are documented here.
 
+## [2026-02-12] Sprint Continuation (Waves 10–17)
+
+Follow-up work extended the 2026-02-11 sprint with additional stabilization, testing breadth, and documentation.
+
+### Highlights
+
+- **Wave execution completed (10–17)** with focus on test depth, reliability, and docs maturity.
+- **Total commit count updated to 877**.
+
+### Testing Expansion
+
+Added/expanded the following categories:
+
+- Fuzz tests
+- Property-based tests
+- Boundary/edge-case tests
+- Stress tests
+- PVT corner tests
+- Noise robustness tests
+- Determinism tests
+- Security tests
+
+### Key Fixes
+
+- Resolved remaining race-condition issues in concurrent/shared flows.
+- Fixed GUI widget deadlock behavior.
+- Repaired module4 and module6 test failures.
+- Improved equation-path performance in core compute logic.
+
+### Documentation Additions
+
+- API reference docs
+- Test guide
+- CI workflow documentation
+- CONTRIBUTING updates
+
 ## [2026-02-11] Massive TODO Sprint
 
 This sprint closed a large TODO backlog across physics fidelity, validation, reliability, UX, accessibility, docs, and performance.
