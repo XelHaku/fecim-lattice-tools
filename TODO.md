@@ -68,7 +68,7 @@
 
 | ID | Task | Status |
 |----|------|--------|
-| FOCUS-36 | CIM forward pass is purely semantic (delegates to FP) — conductance mapping Gmin/Gmax only in comments | ⏳ |
+| FOCUS-36 | CIM forward pass is purely semantic (delegates to FP) — conductance mapping Gmin/Gmax only in comments | ✅ (2026-02-11: limitation now explicitly documented in `forwardCIM` + runtime warning emitted once) |
 | FOCUS-37 | DAC quantization assumes input [0,1] but never validates — silent clamp | ✅ (2026-02-11: added invalid-range validation + clamp warning in `quantizeDAC`) |
 | FOCUS-38 | Silent fallback to CPU on GPU error with no user notification | ✅ (2026-02-11: emit user notice on GPU→CPU fallback in `forwardFP`) |
 | FOCUS-39 | Silent fallback to default weights if level-specific file missing — user not warned | ✅ (2026-02-11: controller now warns when loading default weights due to missing level-specific file) |
@@ -79,7 +79,7 @@
 
 | ID | Task | Status |
 |----|------|--------|
-| FOCUS-42 | Recent Files menu TODO — clicking doesn't load file (`main.go:1228`) | ⏳ |
+| FOCUS-42 | Recent Files menu TODO — clicking doesn't load file (`main.go:1228`) | ✅ (2026-02-11: Recent Files now launches selected path via `xdg-open`, validates existence, and re-tracks access time) |
 | FOCUS-43 | 9 undocumented env vars (FECIM_MATERIAL, FECIM_RANGE_FRAC, etc.) — add to `--help` output | ✅ (2026-02-11: `cmd/fecim-lattice-tools --help` now prints dedicated headless env var section listing all 9 vars) |
 | FOCUS-44 | Screenshots/recordings dirs hardcoded to `screenshots/` and `recordings/` — no CLI override | ✅ (2026-02-11: added `--screenshot-dir` and `--recording-dir` flags; capture paths now configurable) |
 | FOCUS-45 | Config search only uses relative paths — no XDG_CONFIG_HOME or `~/.config/fecim/` support | ✅ (2026-02-11: `shared/cli.ConfigLoader` now resolves via `$XDG_CONFIG_HOME/fecim` then `~/.config/fecim`) |
@@ -113,7 +113,7 @@
 | FOCUS-50 | Frankenstein equation fidelity: verify all terms/signs/units match `hysteresis-gemini.md` formulation | ⏳ |
 | FOCUS-51 | Target/marker parity: GUI yellow target must match active controller target (no early jump to next) | ⏳ |
 | FOCUS-52 | Headless Preisach WRD/ISPP parity with GUI — run headless to debug target/marker mismatches | ⏳ |
-| FOCUS-53 | Physics equations UI: keep labels/links coherent across L-K, Preisach, and ISPP tabs | ⏳ |
+| FOCUS-53 | Physics equations UI: keep labels/links coherent across L-K, Preisach, and ISPP tabs | ✅ (2026-02-11: ISPP equation info tabs now align naming with L-K/Preisach: `Code References`, `Assumptions`, `References`) |
 
 ### 3f. Module 2 Crossbar (from module2-prompt.md)
 
@@ -249,14 +249,17 @@
 | G06 | Normalize/verify CLI engine selector (`--engine {preisach,lk}`) | CLI | ✅ | 30-60m |
 | G06b | Verification matrix: Preisach + LK for each material → HI/MID/LO | Testing | ✅ | 1-2hr |
 | G04b | One-source-of-truth ISPP write engine: refactor duplicates to `shared/physics` | `shared/physics` | ⏳ | 4-12hr |
-| G04c | Shared ISPP migration plan: define API, adapters, deprecation plan | Architecture | ⏳ | 1-2hr |
+| G04c | Shared ISPP migration plan: define API, adapters, deprecation plan | Architecture | ✅ | Done (`docs/development/ISPP_MIGRATION.md`) |
+
+**Evidence (G04c, 2026-02-11):**
+- Added `docs/development/ISPP_MIGRATION.md` with proposed shared API surface (`shared/ispp`), module1/module4 adapter contracts, phased rollout, and N→N+3 deprecation timeline for legacy call sites.
 
 ### LK Stabilization
 
 | ID | Task | Source | Status | Est. |
 |----|------|--------|--------|------|
 | G07 | LK ISPP overshoot accounting: overshoots/target, max Δ, stuck-breaker count | `shared/physics` | ✅ | Done (headless LK logs now include `overshoots`, `maxLevelDelta`, `stuckBreakers` per target) |
-| G08 | Define acceptance criteria for Literature Superlattice MID stability | `hysteresis-prompt.md` | ⏳ | 30-60m |
+| G08 | Define acceptance criteria for Literature Superlattice MID stability | `hysteresis-prompt.md` | ✅ | Done (`docs/development/LITERATURE_SUPERLATTICE_MID_STABILITY_SPEC.md`, evidence: `docs/development/evidence/G08-mid-stability-evidence-2026-02-11.md`) |
 | LK05 | ISPP controller not optimized for L-K dynamics (overshoots near MID) | `module1-hysteresis` | ⏳ | 4-8hr |
 | LK07 | Need longer WAIT phases for L-K settling | `module1-hysteresis` | ⏳ | 2-4hr |
 
@@ -440,7 +443,7 @@ Evidence note (2026-02-11, EDA validation): added `module6-eda/pkg/compiler/mode
 | L08 | Web deployment (WASM) for browser-based demos | TODO.md | ⏳ | 16hr |
 | L09 | Vulkan rendering implementation for large arrays | TODO.md | ⏳ | 20hr |
 | L10 | 3D multi-layer visualization (512-layer roadmap) | TODO.md | ⏳ | 24hr |
-| L11 | Add [LK] indicators to material_picker.go | `module1-hysteresis` | ⏳ | 1hr |
+| L11 | Add [LK] indicators to material_picker.go | `module1-hysteresis` | ✅ (2026-02-11: LK-compatible materials now tagged `[LK]` in name column; legend text updated) | 1hr |
 | L05 | "About the Science" unified Learn More section | `drtour_todo_fixes.md` | ⏳ | 2hr |
 
 ### Architecture Improvements (from ARCHITECTURE.md)
@@ -468,7 +471,7 @@ Evidence note (2026-02-11, EDA validation): added `module6-eda/pkg/compiler/mode
 
 | ID | Task | Source | Status | Est. |
 |----|------|--------|--------|------|
-| SKY-1 | Add Apache 2.0 LICENSE.txt for PDK | `docs/eda/pdk/sky130.md:238` | ⏳ | 15m |
+| SKY-1 | Add Apache 2.0 LICENSE.txt for PDK | `docs/eda/pdk/sky130.md:238` | ✅ (2026-02-11: added `docs/sky130-reference/LICENSE.txt` Apache-2.0 text) | 15m |
 
 ---
 
