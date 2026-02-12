@@ -260,14 +260,14 @@
 
 | ID | Task | Status |
 |----|------|--------|
-| FOCUS-108 | Add model-limitation tooltips per module — each simplified physics model (Preisach, L-K, crossbar IR drop, CIM quantization, peripheral circuits) needs a tooltip or info panel explaining what is approximated and why | ⏳ |
-| FOCUS-109 | Calibrate Preisach Everett function to one published HZO P-E dataset — fit tanh parameters to measured FORC data; target RMS error < 10% of Pr (15–34 µC/cm²). **Ref:** Park et al., *Adv. Mater.* 27, 1811 (2015); Nature Commun. 2025 doi:10.1038/s41467-025-61758-2 | ⏳ |
-| FOCUS-110 | Calibrate drift model to published retention data — fit log/power-law decay exponent and Arrhenius activation energy to measured 10-year extrapolation curve. **Ref:** *Nano Letters* 2024 (V:HfO₂, 10¹² cycles, 10-year retention) | ⏳ |
-| FOCUS-111 | Wire CIM inference to actual conductance-based MVM — replace FP-delegated semantic path with G = Gmin + (level/N)·(Gmax−Gmin) accumulation; quantify accuracy delta vs FP. **Ref:** Nature Commun. 2023 (96.6% MNIST in FeFET CIM array) | ⏳ |
-| FOCUS-112 | Decompose CIM noise into physical components — replace single Gaussian proxy with σ²_total = σ²_ADC + σ²_thermal + σ²_1/f + σ²_cell_variation | ⏳ |
-| FOCUS-113 | Add TIA bandwidth model — replace ideal V_out = I·R_f with GBW-limited response V_out = I·R_f/(1 + s·R_f·C_f) and input-referred noise floor. **Ref:** Razavi, *Principles of Data Conversion System Design* | ⏳ |
-| FOCUS-114 | Add ADC throughput constraint to CIM inference — model t_read = N_rows × t_ADC_conversion to expose real peripheral bottleneck | ⏳ |
-| FOCUS-115 | Validate ADC SNR against known architectural model — SAR ADC should match SNR = 6.02·N + 1.76 dB within 3 dB. **Ref:** Razavi, *Principles of Data Conversion System Design* | ⏳ |
+| FOCUS-108 | Add model-limitation tooltips per module — each simplified physics model (Preisach, L-K, crossbar IR drop, CIM quantization, peripheral circuits) needs a tooltip or info panel explaining what is approximated and why | ✅ |
+| FOCUS-109 | Calibrate Preisach Everett function to one published HZO P-E dataset — fit tanh parameters to measured FORC data; target RMS error < 10% of Pr (15–34 µC/cm²). **Ref:** Park et al., *Adv. Mater.* 27, 1811 (2015); Nature Commun. 2025 doi:10.1038/s41467-025-61758-2 | ✅ |
+| FOCUS-110 | Calibrate drift model to published retention data — fit log/power-law decay exponent and Arrhenius activation energy to measured 10-year extrapolation curve. **Ref:** *Nano Letters* 2024 (V:HfO₂, 10¹² cycles, 10-year retention) | ✅ |
+| FOCUS-111 | Wire CIM inference to actual conductance-based MVM — replace FP-delegated semantic path with G = Gmin + (level/N)·(Gmax−Gmin) accumulation; quantify accuracy delta vs FP. **Ref:** Nature Commun. 2023 (96.6% MNIST in FeFET CIM array) | ✅ |
+| FOCUS-112 | Decompose CIM noise into physical components — replace single Gaussian proxy with σ²_total = σ²_ADC + σ²_thermal + σ²_1/f + σ²_cell_variation | ✅ |
+| FOCUS-113 | Add TIA bandwidth model — replace ideal V_out = I·R_f with GBW-limited response V_out = I·R_f/(1 + s·R_f·C_f) and input-referred noise floor. **Ref:** Razavi, *Principles of Data Conversion System Design* | ✅ |
+| FOCUS-114 | Add ADC throughput constraint to CIM inference — model t_read = N_rows × t_ADC_conversion to expose real peripheral bottleneck | ✅ |
+| FOCUS-115 | Validate ADC SNR against known architectural model — SAR ADC should match SNR = 6.02·N + 1.76 dB within 3 dB. **Ref:** Razavi, *Principles of Data Conversion System Design* | ✅ |
 
 #### Unsourced Parameters — Hallucination Risk (from code audit)
 

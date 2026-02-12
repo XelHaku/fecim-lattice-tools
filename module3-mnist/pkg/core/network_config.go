@@ -222,11 +222,15 @@ func (net *DualModeNetwork) IsSingleLayer() bool {
 // safeNoise applies Gaussian noise with thread-safe RNG access.
 // This prevents data races when multiple goroutines hold RLock on the network.
 func (net *DualModeNetwork) safeNoise(data []float64, noiseLevel float64) []float64 {
-	if noiseLevel <= 0 {
+	components := net.cimNoiseComponentsLocked()
+	if components.TotalSigma() == 0 && noiseLevel > 0 {
+		components = defaultNoiseComponents(noiseLevel)
+	}
+	if components.TotalSigma() == 0 {
 		return data
 	}
 	net.rngMu.Lock()
-	result := AddGaussianNoise(data, noiseLevel, net.rng)
+	result := applyDecomposedNoise(data, components, net.rng)
 	net.rngMu.Unlock()
 	return result
 }

@@ -53,6 +53,7 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 	var fpHidden []float64
 	var cimOutput, cimProbs []float64
 	var cimHidden []float64
+	cimReadLatencyS := 0.0
 
 	if net.Config.SingleLayer {
 		// ============================================
@@ -68,6 +69,7 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 		// CIM PATH (single layer with quantization)
 		dacInput := quantizeDAC(input, net.Config.DACBits)
 		cimOutput = net.forwardCIM(dacInput, net.QuantSingleLayerWeights, net.QuantSingleLayerBias)
+		cimReadLatencyS += net.adcReadLatencySecondsLocked(len(net.QuantSingleLayerWeights))
 		cimOutput = quantizeADC(cimOutput, net.Config.ADCBits)
 		cimOutput = net.safeNoise(cimOutput, net.Config.NoiseLevel)
 		cimProbs = softmax(cimOutput)
@@ -90,12 +92,14 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 
 		// Layer 1: Use QUANTIZED weights (30-level FeCIM quantization)
 		cimHidden = net.forwardCIM(dacInput, net.QuantWeights1, net.QuantBias1)
+		cimReadLatencyS += net.adcReadLatencySecondsLocked(len(net.QuantWeights1))
 		cimHidden = quantizeADC(cimHidden, net.Config.ADCBits)
 		cimHidden = net.safeNoise(cimHidden, net.Config.NoiseLevel)
 		cimHidden = relu(cimHidden)
 
 		// Layer 2: Use QUANTIZED weights (30-level FeCIM quantization)
 		cimOutput = net.forwardCIM(cimHidden, net.QuantWeights2, net.QuantBias2)
+		cimReadLatencyS += net.adcReadLatencySecondsLocked(len(net.QuantWeights2))
 		cimOutput = quantizeADC(cimOutput, net.Config.ADCBits)
 		cimOutput = net.safeNoise(cimOutput, net.Config.NoiseLevel)
 		cimProbs = softmax(cimOutput)
@@ -115,6 +119,7 @@ func (net *DualModeNetwork) Infer(input []float64) *InferenceResult {
 	result.CIMPrediction = argmax(cimProbs)
 	result.CIMConfidence = cimProbs[result.CIMPrediction]
 	result.CIMHidden = cimHidden
+	result.ReadLatencyUS = cimReadLatencyS * 1e6
 
 	// ============================================
 	// COMPARISON
@@ -232,19 +237,12 @@ func (net *DualModeNetwork) forwardFP(input []float64, weights [][]float64, bias
 	return output
 }
 
-// forwardCIM performs the current educational CIM approximation.
-//
-// IMPORTANT LIMITATION (FOCUS-36):
-// This path uses quantized weights but does not yet run an explicit physical
-// conductance-domain solve (e.g., differential pair current accumulation with
-// explicit Gmin/Gmax currents per cell). It currently reuses the same matrix
-// multiply math as forwardFP, with CIM effects coming from quantization,
-// DAC/ADC quantization, and injected noise around that pipeline.
+// forwardCIM performs conductance-domain CIM MVM using a differential-pair map.
 func (net *DualModeNetwork) forwardCIM(input []float64, weights [][]float64, bias []float64) []float64 {
 	cimSemanticNoticeOnce.Do(func() {
-		log.Warn("forwardCIM uses a semantic CIM approximation (quantized weights + DAC/ADC/noise) and not a full conductance-domain current solve yet")
+		log.Info("forwardCIM uses conductance-domain differential MVM (G+/G-) with quantization and peripheral constraints")
 	})
-	return net.forwardFP(input, weights, bias)
+	return net.forwardCIMConductance(input, weights, bias)
 }
 
 // relu applies ReLU activation.

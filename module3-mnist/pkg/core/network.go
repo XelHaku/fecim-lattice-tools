@@ -23,6 +23,21 @@ type NetworkConfig struct {
 	IRDrop      bool    // Enable IR drop simulation
 	SingleLayer bool    // Calibration Mode: use single-layer (784→10) like hardware demo
 
+	// CIM physical-noise decomposition (σ/μ per component)
+	NoiseADC           float64
+	NoiseThermal       float64
+	NoiseFlicker       float64
+	NoiseCellVariation float64
+
+	// Peripheral constraints
+	TIAFeedbackOhms float64 // TIA Rf
+	TIACapF         float64 // TIA Cf
+	TIAGBWHZ        float64 // TIA op-amp GBW
+	TIAInputNoiseV  float64 // input-referred RMS voltage noise
+
+	ADCConversionTimeS float64 // per conversion latency
+	ADCParallelism     int     // rows converted in parallel
+
 	// Per-layer PTQ configuration
 	PerLayerQuant bool // Enable per-layer quantization levels
 	Layer1Levels  int  // Quantization levels for layer 1 (hidden layer)
@@ -32,13 +47,23 @@ type NetworkConfig struct {
 // DefaultNetworkConfig returns the default configuration for optimal FeCIM operation.
 func DefaultNetworkConfig() *NetworkConfig {
 	return &NetworkConfig{
-		NumLevels:     30,   // Demo baseline (conference claim; pending peer review)
-		NoiseLevel:    0.01, // Low noise
-		ADCBits:       8,    // 8-bit ADC
-		DACBits:       8,    // 8-bit DAC
-		PerLayerQuant: false,
-		Layer1Levels:  30, // Default same as NumLevels
-		Layer2Levels:  30, // Default same as NumLevels
+		NumLevels:          30,   // Demo baseline (conference claim; pending peer review)
+		NoiseLevel:         0.01, // Low noise
+		ADCBits:            8,    // 8-bit ADC
+		DACBits:            8,    // 8-bit DAC
+		NoiseADC:           0,
+		NoiseThermal:       0,
+		NoiseFlicker:       0,
+		NoiseCellVariation: 0,
+		TIAFeedbackOhms:    100e3,
+		TIACapF:            0.5e-12,
+		TIAGBWHZ:           20e6,
+		TIAInputNoiseV:     0,
+		ADCConversionTimeS: 0,
+		ADCParallelism:     1,
+		PerLayerQuant:      false,
+		Layer1Levels:       30, // Default same as NumLevels
+		Layer2Levels:       30, // Default same as NumLevels
 	}
 }
 
@@ -107,9 +132,10 @@ type InferenceResult struct {
 	CIMHidden []float64
 
 	// Comparison metrics
-	Agree        bool    // Do FP and CIM predictions match?
-	Disagreement float64 // KL divergence between probability distributions
-	EnergyUsed   float64 // Estimated energy in μJ
+	Agree         bool    // Do FP and CIM predictions match?
+	Disagreement  float64 // KL divergence between probability distributions
+	EnergyUsed    float64 // Estimated energy in μJ
+	ReadLatencyUS float64 // ADC throughput-constrained read latency (μs)
 }
 
 // NewDualModeNetwork creates a new dual-mode network with the specified architecture.

@@ -242,6 +242,7 @@ var ModuleOverviewTooltips = struct {
 		Description: "Explore ferroelectric P-E curves and multi-level polarization switching. This module demonstrates the fundamental physics that enables FeCIM: the ability to store and read multiple analog states in a single ferroelectric cell.",
 		Physics:     "Ferroelectric materials like HfO₂ (HZO) have two stable polarization states. By carefully controlling the applied electric field, we can access many intermediate states, each corresponding to a distinct conductance level for analog computing.",
 		Tips: []string{
+			"Model limitation: Preisach/LK options are reduced-order models (not full domain-field micromagnetics).",
 			"Start with 'ISPP (Write/Read)' mode to see multi-level programming",
 			"Use 'Manual' mode to explore the P-E curve interactively",
 			"Try different materials to see how they affect the loop shape",
@@ -253,6 +254,7 @@ var ModuleOverviewTooltips = struct {
 		Description: "Visualize how FeCIM performs matrix-vector multiplication in memory. The crossbar architecture enables massively parallel analog computation using Ohm's law: current = conductance × voltage.",
 		Physics:     "Each cell stores a weight as conductance G. Input voltages V applied to rows produce currents I = G×V. Columns sum these currents (Kirchhoff's law), computing the dot product in O(1) time regardless of matrix size.",
 		Tips: []string{
+			"Model limitation: IR-drop/sneak analyses use compact circuit abstractions, not full post-layout parasitic extraction.",
 			"'Run MVM' to see matrix multiplication in action",
 			"'Analyze IR Drop' shows voltage loss along wires",
 			"'Analyze Sneak Paths' reveals parasitic current problems",
@@ -264,6 +266,7 @@ var ModuleOverviewTooltips = struct {
 		Description: "Test a real neural network running on simulated FeCIM hardware. Draw digits and watch the network recognize them, comparing ideal floating-point to quantized analog computation.",
 		Physics:     "The network weights are stored as discrete conductance levels. Input pixels become voltages, and the crossbar computes weighted sums. ReLU activation and multiple layers classify the digit.",
 		Tips: []string{
+			"Model limitation: MNIST CIM path is inference-only and omits full training-time hardware adaptation.",
 			"Draw thick, centered digits for best recognition",
 			"Use 'Hardware' preset to see realistic accuracy",
 			"'Noisy' preset shows degradation under stress",
@@ -275,6 +278,7 @@ var ModuleOverviewTooltips = struct {
 		Description: "Learn about the peripheral electronics that interface with the FeCIM array: DACs that generate input voltages, TIAs that sense output currents, and ADCs that digitize results.",
 		Physics:     "Real CIM systems need precision analog circuits. DACs convert digital inputs to voltages. Crossbar computes analog sums. TIAs convert currents to voltages. ADCs digitize for further processing.",
 		Tips: []string{
+			"Model limitation: peripheral blocks are first-order behavioral models (not full transistor-level SPICE).",
 			"Explore DAC operation: digital codes → analog voltages",
 			"See how TIA gain affects current sensing",
 			"Understand ADC resolution vs. noise trade-offs",
@@ -286,6 +290,7 @@ var ModuleOverviewTooltips = struct {
 		Description: "Compare FeCIM to conventional computing: CPU, GPU, DRAM, and NAND. Understand the energy efficiency advantage and see projected data center impact.",
 		Physics:     "The 'memory wall' limits conventional computers: moving data costs 100-1000× more energy than computing. CIM eliminates data movement by computing where data lives, potentially saving orders of magnitude in energy.",
 		Tips: []string{
+			"Model limitation: comparison numbers are scenario projections, not measured product benchmarks.",
 			"All FeCIM numbers are PROJECTIONS (TRL 4)",
 			"Energy per MAC is the key efficiency metric",
 			"Data center savings assume full technology maturation",
@@ -297,6 +302,7 @@ var ModuleOverviewTooltips = struct {
 		Description: "Introduction to electronic design automation for chip layout. This educational module shows how FeCIM arrays would be implemented in silicon using standard EDA tools.",
 		Physics:     "Chip design uses hierarchical abstraction: transistors → cells → blocks → chip. Layout must satisfy manufacturing rules (DRC) and match intended connectivity (LVS).",
 		Tips: []string{
+			"Model limitation: EDA flow is educational and omits foundry sign-off corners and full DFM checks.",
 			"This is educational, not tapeout-ready",
 			"View standard cell layouts and I/O pad arrangements",
 			"Learn industry formats: GDS, LEF, DEF",
