@@ -3,6 +3,7 @@ package physics
 
 import (
 	"math"
+	"sync"
 
 	"fecim-lattice-tools/config/physics"
 	"fecim-lattice-tools/shared/logging"
@@ -10,6 +11,11 @@ import (
 
 // Package-level logger for material calculations
 var matLog *logging.Logger
+
+var (
+	allMaterialsOnce   sync.Once
+	allMaterialsCached []*HZOMaterial
+)
 
 func init() {
 	matLog = logging.NewLogger("material")
@@ -508,25 +514,36 @@ func AlScN() *HZOMaterial {
 // AllMaterials returns a slice of all available CMOS-compatible materials.
 // Use this to populate material selection dropdowns in the GUI.
 // Prefers loading from config/physics.yaml, falls back to hardcoded values.
+//
+// Material construction is cached after the first load to avoid hot-path
+// allocations in callers such as benchmarks and UI refresh loops.
 func AllMaterials() []*HZOMaterial {
-	// Try to load from YAML config first
-	cfg, err := physics.Load()
-	if err == nil && cfg != nil && len(cfg.Materials) > 0 {
-		return AllMaterialsFromConfig(cfg)
-	}
+	allMaterialsOnce.Do(func() {
+		// Try to load from YAML config first
+		cfg, err := physics.Load()
+		if err == nil && cfg != nil && len(cfg.Materials) > 0 {
+			allMaterialsCached = AllMaterialsFromConfig(cfg)
+			return
+		}
 
-	// Fallback to hardcoded values
-	return []*HZOMaterial{
-		DefaultHZO(),
-		FeCIMMaterial(),
-		FeCIMMaterialTarget(),
-		LiteratureSuperlattice(),
-		CryogenicHZO(),
-		HZOStandard32(),
-		HZOCustom14(),
-		HZOFJT140(),
-		AlScN(),
-	}
+		// Fallback to hardcoded values
+		allMaterialsCached = []*HZOMaterial{
+			DefaultHZO(),
+			FeCIMMaterial(),
+			FeCIMMaterialTarget(),
+			LiteratureSuperlattice(),
+			CryogenicHZO(),
+			HZOStandard32(),
+			HZOCustom14(),
+			HZOFJT140(),
+			AlScN(),
+		}
+	})
+
+	// Return a shallow copy to avoid accidental slice-header mutation by callers.
+	materials := make([]*HZOMaterial, len(allMaterialsCached))
+	copy(materials, allMaterialsCached)
+	return materials
 }
 
 // AllMaterialsFromConfig loads all materials from the physics config.

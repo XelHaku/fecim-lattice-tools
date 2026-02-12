@@ -405,7 +405,7 @@ Evidence (2026-02-11):
 | PERF-02 | `BenchmarkDualModeInference` (`module3-mnist/pkg/core`) | 723,934 ns/op, 427 allocs/op | >10 allocs/op | ⏳ | High allocation pressure in inference pipeline (`quantizeDAC`/`quantizeADC`/`relu`/`softmax` staging). Follow-up required for scratch-buffer/in-place path.
 | PERF-03 | `BenchmarkPreisachStack_Update` (`shared/physics`) | 2,033 ns/op, 45 allocs/op | >10 allocs/op | ✅ | Eliminated per-call temporary slice in `ComputePolarization` (allocation-free stack traversal) in `shared/physics/preisach.go`.
 | PERF-04 | `BenchmarkDiscreteLevel` (`shared/physics`) | 4,091 ns/op, 32 allocs/op | >10 allocs/op | ✅ | Removed hot-path structured debug logging allocations in `DiscreteLevel` (`shared/physics/material.go`).
-| PERF-05 | `BenchmarkAllMaterials` (`shared/physics`) | 2,240 ns/op, 14 allocs/op | >10 allocs/op | ⏳ | Config-load/material-construction allocations remain; candidate for cache-on-load optimization.
+| PERF-05 | `BenchmarkAllMaterials` (`shared/physics`) | 2,240 ns/op, 14 allocs/op | >10 allocs/op | ✅ | Cached AllMaterials construction after first load and return shallow-copy slice: benchmark now ~30 ns/op, 1 alloc/op (count=3).
 
 ### GUI Correctness
 
@@ -570,7 +570,7 @@ Evidence note (2026-02-11, EDA validation): added `module6-eda/pkg/compiler/mode
 | UXP-06 | Update keyboard-shortcut help text to match actual bindings and naming (`Run MVM`) | module4-circuits | ✅ |
 | UXP-07 | Add accessibility labels for icon-only docs top-bar buttons (search, TOC toggle, sidebar toggle) | module7-docs | ✅ |
 | UXP-08 | Add accessibility label for search query entry field in docs search dialog | module7-docs | ✅ |
-| UXP-09 | Add explicit keyboard shortcut to open docs search using `/` in addition to Cmd/Ctrl+K | module7-docs | ⏳ |
+| UXP-09 | Add explicit keyboard shortcut to open docs search using `/` in addition to Cmd/Ctrl+K | module7-docs | ✅ |
 | UXP-10 | Normalize inconsistent button casing (ALL CAPS vs Title Case) across module4 reference/comparison tabs | module4-circuits | ✅ |
 | UXP-11 | Replace remaining one-letter field labels in builder panel (`W/H/Cap/Leak`) with descriptive labels while preserving compact layout | module6-eda | ✅ |
 | UXP-12 | Add keyboard shortcuts for Builder actions (Generate All, Validate All, Export Package) | module6-eda | ⏳ |
