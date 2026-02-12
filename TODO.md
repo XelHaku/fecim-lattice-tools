@@ -947,7 +947,7 @@ Coverage audit ran `go test -short -cover` per-package (74 passed, 11 build-fail
 | COV-15 | `module2-crossbar/pkg/crossbar/array.go` | 87.2% | ✅ | Added array operation tests (matrix programming, stats/config accessors, cycle aging/reset, bounds/error branches, GPU init fallback path) |
 | COV-16 | `module1-hysteresis/pkg/render/render.go` | 99.8% | ✅ | Added lifecycle/config/error-path/headless-loop tests (`go test -cover ./module1-hysteresis/pkg/render`) |
 | COV-17 | `module6-eda/pkg/openlane` (package) | 39.8% | 🔄 | Config paths tested; runner requires Docker |
-| COV-18 | `module6-eda/pkg/validation` (package) | 27.0% | ⏳ | Circuit/layout image generation + DEF validation; requires external tools |
+| COV-18 | `module6-eda/pkg/validation` (package) | 45.1% | ✅ | Added non-external-path tests for DEF parsing/errors, placement/cell usage parsing, file guardrails and validation helpers |
 | COV-19 | `shared/export/export.go` | 28.6% | ✅ | Non-GUI export paths tested; Fyne canvas capture untestable in unit tests |
 | COV-20 | `module5-comparison/pkg/comparison` | 99.1% | ✅ | Added comparison/renderer tests covering inference/data-center/advantages renders, throughput formatting branches, LLM workload, and scaling clamp path |
 
