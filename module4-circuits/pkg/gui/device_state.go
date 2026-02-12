@@ -879,8 +879,8 @@ func (ds *DeviceState) SetDACPreset(preset DACMode, params ...float64) {
 	case DACWritePreset:
 		// Use write range from material calibration
 		ds.dacRangeMode = DACRangeWrite
-		// Default to middle of write range for selected column
-		writeVoltage := (ds.writeRange.Min + ds.writeRange.Max) / 2
+		// Default to a positive write pulse for selected column
+		writeVoltage := ds.writeRange.Max * 0.5
 		if len(params) > 0 {
 			writeVoltage = params[0]
 		}

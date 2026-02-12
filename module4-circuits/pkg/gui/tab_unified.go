@@ -325,8 +325,8 @@ func (ca *CircuitsApp) createUnifiedActionRow() fyne.CanvasObject {
 
 	// Zoom controls
 	ca.zoomLabel = widget.NewLabel("100%")
-	ca.zoomSlider = widget.NewSlider(0.25, 4.0)
-	ca.zoomSlider.Step = 0.05
+	ca.zoomSlider = widget.NewSlider(0.5, 3.0)
+	ca.zoomSlider.Step = 0.1
 	ca.zoomSlider.Value = 1.0
 	ca.zoomSlider.OnChanged = func(v float64) {
 		ca.mu.Lock()

@@ -243,10 +243,11 @@ func TestVoltageRulesCompliance(t *testing.T) {
 			readRange.Max, Vc)
 	}
 
-	// Rule 2: Write voltage >= Vc (ensure switching)
-	if writeRange.Min < Vc {
-		t.Errorf("VIOLATION: Write voltage min (%.3f V) < Vc (%.3f V) - writes may not switch",
-			writeRange.Min, Vc)
+	// Rule 2: Write voltage must include at least one polarity at/above Vc.
+	// In this model write range is bipolar [-Vmax, +Vmax].
+	if writeRange.Max < Vc {
+		t.Errorf("VIOLATION: Write voltage max (%.3f V) < Vc (%.3f V) - writes may not switch",
+			writeRange.Max, Vc)
 	}
 
 	// Rule 3: Half-select V/2 < Vc (minimize disturb in passive mode)

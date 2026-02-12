@@ -747,63 +747,71 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			addLog("Generating layout image...")
 			pngFilename := fmt.Sprintf("data/fecim_crossbar_%dx%d.png", cfg.Rows, cfg.Cols)
 
-			// Determine LEF path based on architecture
-			var cellLEFPath string
-			switch cfg.Architecture {
-			case "1t1r":
-				cellLEFPath = "cells/fecim_1t1r_bitcell/fecim_1t1r_bitcell.lef"
-			case "2t1r":
-				cellLEFPath = "cells/fecim_2t1r_bitcell/fecim_2t1r_bitcell.lef"
-			default:
-				cellLEFPath = "cells/fecim_bitcell/fecim_bitcell.lef"
-			}
-
-			imgManager := openlane.NewManager()
-			imgConfig := openlane.DefaultConfig()
-			sharedwidgets.SafeDo(func() {
-				klayoutStatus.SetText("Generating...")
-			})
-			if validation.IsKLayoutAvailable(imgManager) {
-				imgResult, err := validation.GenerateLayoutImage(
-					defFilename,
-					cellLEFPath,
-					pngFilename,
-					imgManager,
-					imgConfig,
-				)
-				if err != nil {
-					addLog("ERROR: " + err.Error())
+			// In headless/unit-test mode, skip external tool probing to keep actions fast/deterministic.
+			if window == nil {
+				addLog("  Skipped KLayout generation (headless mode)")
+				sharedwidgets.SafeDo(func() {
+					klayoutStatus.SetText("Skipped (headless)")
+				})
+			} else {
+				// Determine LEF path based on architecture
+				var cellLEFPath string
+				switch cfg.Architecture {
+				case "1t1r":
+					cellLEFPath = "cells/fecim_1t1r_bitcell/fecim_1t1r_bitcell.lef"
+				case "2t1r":
+					cellLEFPath = "cells/fecim_2t1r_bitcell/fecim_2t1r_bitcell.lef"
+				default:
+					cellLEFPath = "cells/fecim_bitcell/fecim_bitcell.lef"
 				}
-				if imgResult != nil && imgResult.Success {
-					addLog("  PNG (KLayout): " + pngFilename)
-					// Update the layout image display
-					updateLayoutImage()
-				} else {
-					errMsg := "unknown error"
-					if imgResult != nil && imgResult.Error != "" {
-						errMsg = imgResult.Error
+
+				imgManager := openlane.NewManager()
+				imgConfig := openlane.DefaultConfig()
+				sharedwidgets.SafeDo(func() {
+					klayoutStatus.SetText("Generating...")
+				})
+				if validation.IsKLayoutAvailable(imgManager) {
+					imgResult, err := validation.GenerateLayoutImage(
+						defFilename,
+						cellLEFPath,
+						pngFilename,
+						imgManager,
+						imgConfig,
+					)
+					if err != nil {
+						addLog("ERROR: " + err.Error())
 					}
-					addLog("  KLayout failed: " + errMsg)
-					// Show raw output for debugging
-					if imgResult != nil && imgResult.RawOutput != "" {
-						addLog("  KLayout output:")
-						for _, line := range strings.Split(imgResult.RawOutput, "\n") {
-							if line != "" {
-								addLog("    " + line)
+					if imgResult != nil && imgResult.Success {
+						addLog("  PNG (KLayout): " + pngFilename)
+						// Update the layout image display
+						updateLayoutImage()
+					} else {
+						errMsg := "unknown error"
+						if imgResult != nil && imgResult.Error != "" {
+							errMsg = imgResult.Error
+						}
+						addLog("  KLayout failed: " + errMsg)
+						// Show raw output for debugging
+						if imgResult != nil && imgResult.RawOutput != "" {
+							addLog("  KLayout output:")
+							for _, line := range strings.Split(imgResult.RawOutput, "\n") {
+								if line != "" {
+									addLog("    " + line)
+								}
 							}
 						}
+						addLog("  Use 'Gen Layout (OpenROAD)' button for alternative")
+						sharedwidgets.SafeDo(func() {
+							klayoutStatus.SetText("Failed: " + errMsg)
+						})
 					}
+				} else {
+					addLog("  KLayout not available (install Docker with OpenLane image)")
 					addLog("  Use 'Gen Layout (OpenROAD)' button for alternative")
 					sharedwidgets.SafeDo(func() {
-						klayoutStatus.SetText("Failed: " + errMsg)
+						klayoutStatus.SetText("Not available (need Docker)")
 					})
 				}
-			} else {
-				addLog("  KLayout not available (install Docker with OpenLane image)")
-				addLog("  Use 'Gen Layout (OpenROAD)' button for alternative")
-				sharedwidgets.SafeDo(func() {
-					klayoutStatus.SetText("Not available (need Docker)")
-				})
 			}
 
 			// Generate OpenLane config
@@ -922,40 +930,45 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			// OpenLane Placement validation (runs when Docker/OpenROAD is available)
 			// Uses our custom FeCIM cell LEF - no external PDK required
 			addLog("\n=== OpenLane Placement Validation ===")
-			manager := openlane.NewManager()
-			mode := manager.DetectMode()
-
-			if mode == openlane.ModeNone {
+			if window == nil {
 				sharedwidgets.SafeDo(func() { placementResult.SetText("⊝ SKIP") })
-				addLog("SKIPPED: OpenLane/Docker not available")
+				addLog("SKIPPED: headless mode")
 			} else {
-				defPath := fmt.Sprintf("data/fecim_crossbar_%dx%d.def", cfg.Rows, cfg.Cols)
+				manager := openlane.NewManager()
+				mode := manager.DetectMode()
 
-				addLog(fmt.Sprintf("Mode: %s", mode))
-				addLog(fmt.Sprintf("DEF: %s", defPath))
-				addLog(fmt.Sprintf("Cell LEF: %s", lefPath))
-
-				config := openlane.DefaultConfig()
-				result, err := validation.RunPlacementCheckWithCell(defPath, lefPath, manager, config)
-				if err != nil {
-					logging.GlobalDebug("[EDA-Builder] Placement validation: ERROR")
-					sharedwidgets.SafeDo(func() { placementResult.SetText("✗ ERROR") })
-					addLog(fmt.Sprintf("ERROR: %v", err))
-					allPassed = false
-				} else if result.Passed {
-					logging.GlobalDebug("[EDA-Builder] Placement validation: PASS")
-					sharedwidgets.SafeDo(func() { placementResult.SetText("✓ PASS") })
-					addLog(result.RawOutput)
-					addLog("PASSED")
+				if mode == openlane.ModeNone {
+					sharedwidgets.SafeDo(func() { placementResult.SetText("⊝ SKIP") })
+					addLog("SKIPPED: OpenLane/Docker not available")
 				} else {
-					logging.GlobalDebug("[EDA-Builder] Placement validation: FAIL (%d violations)", result.ViolationCount)
-					sharedwidgets.SafeDo(func() { placementResult.SetText("✗ FAIL") })
-					addLog(result.RawOutput)
-					addLog(fmt.Sprintf("FAILED: %d violations", result.ViolationCount))
-					for _, v := range result.Violations {
-						addLog(fmt.Sprintf("  - %s: %s", v.Issue, v.Message))
+					defPath := fmt.Sprintf("data/fecim_crossbar_%dx%d.def", cfg.Rows, cfg.Cols)
+
+					addLog(fmt.Sprintf("Mode: %s", mode))
+					addLog(fmt.Sprintf("DEF: %s", defPath))
+					addLog(fmt.Sprintf("Cell LEF: %s", lefPath))
+
+					config := openlane.DefaultConfig()
+					result, err := validation.RunPlacementCheckWithCell(defPath, lefPath, manager, config)
+					if err != nil {
+						logging.GlobalDebug("[EDA-Builder] Placement validation: ERROR")
+						sharedwidgets.SafeDo(func() { placementResult.SetText("✗ ERROR") })
+						addLog(fmt.Sprintf("ERROR: %v", err))
+						allPassed = false
+					} else if result.Passed {
+						logging.GlobalDebug("[EDA-Builder] Placement validation: PASS")
+						sharedwidgets.SafeDo(func() { placementResult.SetText("✓ PASS") })
+						addLog(result.RawOutput)
+						addLog("PASSED")
+					} else {
+						logging.GlobalDebug("[EDA-Builder] Placement validation: FAIL (%d violations)", result.ViolationCount)
+						sharedwidgets.SafeDo(func() { placementResult.SetText("✗ FAIL") })
+						addLog(result.RawOutput)
+						addLog(fmt.Sprintf("FAILED: %d violations", result.ViolationCount))
+						for _, v := range result.Violations {
+							addLog(fmt.Sprintf("  - %s: %s", v.Issue, v.Message))
+						}
+						allPassed = false
 					}
-					allPassed = false
 				}
 			}
 

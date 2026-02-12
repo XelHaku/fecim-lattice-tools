@@ -22,8 +22,15 @@ func TestModule1MaterialFeedsModule4VoltageRanges(t *testing.T) {
 	readRange := ds.GetReadRange()
 
 	wantVc := module1Mat.CoerciveVoltage()
-	if math.Abs(writeRange.Min-wantVc) > wantVc*1e-12 {
-		t.Fatalf("writeRange.Min mismatch from module1 material Vc: got=%g V want=%g V", writeRange.Min, wantVc)
+	wantWriteMax := ds.calibParams.FieldMaxRatio * wantVc
+	if wantWriteMax > MaxPracticalVoltage {
+		wantWriteMax = MaxPracticalVoltage
+	}
+	if math.Abs(writeRange.Max-wantWriteMax) > wantVc*1e-12 {
+		t.Fatalf("writeRange.Max mismatch from module1 material Vc: got=%g V want=%g V", writeRange.Max, wantWriteMax)
+	}
+	if math.Abs(writeRange.Min+wantWriteMax) > wantVc*1e-12 {
+		t.Fatalf("writeRange.Min mismatch (expected bipolar symmetric): got=%g V want=%g V", writeRange.Min, -wantWriteMax)
 	}
 
 	if writeRange.NumLevels != module1Mat.GetNumLevels() {

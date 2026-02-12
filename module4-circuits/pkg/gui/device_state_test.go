@@ -4,6 +4,7 @@ import (
 	"math"
 	"testing"
 
+	"fecim-lattice-tools/module4-circuits/pkg/arraysim"
 	"fecim-lattice-tools/shared/peripherals"
 	sharedphysics "fecim-lattice-tools/shared/physics"
 )
@@ -142,9 +143,12 @@ func TestNewDeviceState_VoltageRanges(t *testing.T) {
 		t.Errorf("read range stepSize %.6f should be > 0", ds.readRange.StepSize)
 	}
 
-	// Write range should be valid and start at Vc
-	if ds.writeRange.Min <= 0 {
-		t.Errorf("write range min %.6f should be > 0 (Vc)", ds.writeRange.Min)
+	// Write range is bipolar: [-Vmax, +Vmax]
+	if ds.writeRange.Min >= 0 {
+		t.Errorf("write range min %.6f should be < 0 (bipolar)", ds.writeRange.Min)
+	}
+	if ds.writeRange.Max <= 0 {
+		t.Errorf("write range max %.6f should be > 0 (bipolar)", ds.writeRange.Max)
 	}
 	if ds.writeRange.Max <= ds.writeRange.Min {
 		t.Errorf("write range max %.6f should be > min %.6f", ds.writeRange.Max, ds.writeRange.Min)
@@ -211,19 +215,18 @@ func TestUpdateVoltageRanges_WriteRange(t *testing.T) {
 
 	Vc := ds.material.CoerciveVoltage()
 
-	// Write range should start at Vc
-	if math.Abs(ds.writeRange.Min-Vc) > testEpsilon {
-		t.Errorf("write range min: got %.6f, want Vc=%.6f", ds.writeRange.Min, Vc)
+	// Write range is bipolar: Min = -FieldMaxRatio*Vc, Max = +FieldMaxRatio*Vc
+	expectedMaxAbs := ds.calibParams.FieldMaxRatio * Vc
+	if expectedMaxAbs > MaxPracticalVoltage {
+		expectedMaxAbs = MaxPracticalVoltage
 	}
 
-	// Write range max should be FieldMaxRatio * Vc (capped at MaxPracticalVoltage)
-	expectedMax := ds.calibParams.FieldMaxRatio * Vc
-	if expectedMax > MaxPracticalVoltage {
-		expectedMax = MaxPracticalVoltage
+	if math.Abs(ds.writeRange.Min-(-expectedMaxAbs)) > testEpsilon {
+		t.Errorf("write range min: got %.6f, want %.6f", ds.writeRange.Min, -expectedMaxAbs)
 	}
 
-	if math.Abs(ds.writeRange.Max-expectedMax) > testEpsilon {
-		t.Errorf("write range max: got %.6f, want %.6f", ds.writeRange.Max, expectedMax)
+	if math.Abs(ds.writeRange.Max-expectedMaxAbs) > testEpsilon {
+		t.Errorf("write range max: got %.6f, want %.6f", ds.writeRange.Max, expectedMaxAbs)
 	}
 }
 
@@ -249,9 +252,13 @@ func TestUpdateVoltageRanges_MaterialCoerciveVoltage(t *testing.T) {
 				t.Errorf("Vc calculation: Ec*Thickness=%.9f, CoerciveVoltage()=%.9f", Vc, materialVc)
 			}
 
-			// Write range min should match Vc
-			if math.Abs(ds.writeRange.Min-materialVc) > testEpsilon {
-				t.Errorf("write range min %.6f should equal material Vc %.6f", ds.writeRange.Min, materialVc)
+			// Write range is bipolar: min should be -FieldMaxRatio*Vc
+			expectedMaxAbs := ds.calibParams.FieldMaxRatio * materialVc
+			if expectedMaxAbs > MaxPracticalVoltage {
+				expectedMaxAbs = MaxPracticalVoltage
+			}
+			if math.Abs(ds.writeRange.Min-(-expectedMaxAbs)) > testEpsilon {
+				t.Errorf("write range min %.6f should equal -%.6f (bipolar)", ds.writeRange.Min, expectedMaxAbs)
 			}
 		})
 	}
@@ -881,6 +888,7 @@ func TestCompute_AllRowsActive(t *testing.T) {
 	ds := newTestDeviceState(4, 4)
 
 	// Set up: all rows active
+	ds.SetCouplingMode(arraysim.CouplingIdeal)
 	ds.SetWLAll()
 	ds.SetDACVoltage(0, 0.5)
 
@@ -1217,9 +1225,9 @@ func TestNilMaterial_FallbackBehavior(t *testing.T) {
 	ds.material = nil
 	ds.updateVoltageRanges()
 
-	// Fallback Vc should be 1.0, numLevels should be 30
-	if ds.writeRange.Min != 1.0 {
-		t.Errorf("fallback Vc: got %.6f, want 1.0", ds.writeRange.Min)
+	// Fallback uses default material-derived bipolar write range and 30 levels.
+	if ds.writeRange.Min >= 0 || ds.writeRange.Max <= 0 {
+		t.Errorf("fallback write range should be bipolar, got [%.6f, %.6f]", ds.writeRange.Min, ds.writeRange.Max)
 	}
 	if ds.writeRange.NumLevels != 30 {
 		t.Errorf("fallback numLevels: got %d, want 30", ds.writeRange.NumLevels)

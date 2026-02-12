@@ -742,13 +742,13 @@ func (ca *CircuitsApp) updateHalfSelectVisualization() {
 // Used by array visualization to color cells during V/2 mode
 func (ca *CircuitsApp) getHalfSelectCellColor(row, col int) (color.Color, bool) {
 	hsState := ca.deviceState.GetHalfSelectState()
-	if !hsState.Enabled || ca.deviceState.GetOperationMode() != OpModeWrite {
+	if !hsState.Enabled {
 		return nil, false
 	}
 
-	// Only show V/2 overlay on unselected half-selected neighbors.
+	// Target cell gets full-voltage highlight; neighbors get half-select highlight.
 	if row == hsState.SelectedRow && col == hsState.SelectedCol {
-		return nil, false
+		return colorFullVoltage, true
 	}
 	if ca.deviceState.IsHalfSelected(row, col) {
 		return colorHalfSelect, true
