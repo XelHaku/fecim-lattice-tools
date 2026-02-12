@@ -927,9 +927,9 @@ Coverage audit ran `go test -short -cover` per-package (74 passed, 11 build-fail
 |----|---------|--------|-------|--------|-------|
 | COV-01 | `module1-hysteresis/pkg/ferroelectric` | 41.5% | 82.3% | ✅ Fixed | Added `render_coverage_test.go` covering all 6 renderer methods (PELoop, DomainStates, SwitchingDynamics, Temperature, MaterialComparison) |
 | COV-02 | `module1-hysteresis/pkg/render` | 22.1% | — | ⏳ | Vulkan renderer stubs; limited testable surface beyond lifecycle (already tested in `render_test.go`) |
-| COV-03 | `module2-crossbar/pkg/gui` | 3.8% | — | ⏳ | GUI package; requires Fyne test app harness for meaningful coverage |
-| COV-04 | `module3-mnist/pkg/gui` | 8.4% | — | ⏳ | GUI package; same Fyne harness constraint |
-| COV-05 | `module5-comparison/pkg/gui` | 1.4% | — | ⏳ | GUI package |
+| COV-03 | `module2-crossbar/pkg/gui` | 3.8% | 15.6% | ✅ | Added logic-focused tests for tooltips, heatmap/color mapping, liveslide content/state, and comparison helper paths |
+| COV-04 | `module3-mnist/pkg/gui` | 8.4% | 18.3% | ✅ | Added non-widget logic tests for comparison card render helpers, max-confidence/second-best logic, and weight comparison render/stat paths |
+| COV-05 | `module5-comparison/pkg/gui` | 1.4% | 15.6% | ✅ | Added tests for formatting/calculation helpers, mode/phase mapping, educational panel/log state paths, and widget image generators |
 | COV-06 | `module6-eda/pkg/gui` | 46.9% | 94.9% | ✅ | Keyboard nav, selector cycling, nil-safety, shortcut handlers tested |
 | COV-07 | `shared/export` | 25.5% | 26.8% | 🔄 | Added `export_coverage_test.go` (CSV, JSON, HTML, PNG, QuickExport, metadata); Fyne-dependent paths (dialog, canvas capture) limit further unit coverage |
 | COV-08 | `shared/help` | 37.1% | 61.0% | ✅ | Help system rendering |
