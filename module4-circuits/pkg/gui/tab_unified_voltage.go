@@ -250,24 +250,30 @@ func (ca *CircuitsApp) runISPPWithAnimation(row, col, targetLevel int) {
 		// Clear write voltages before verify/next iteration
 		ca.deviceState.ResetWriteVoltages()
 
-		// Simulate write: move at most one level per pulse toward calibrated level.
-		// Use effective coupled target-cell voltage so per-cell hysteresis follows array coupling.
+		// Simulate write using physics update from the *actual* coupled target-cell voltage
+		// (post-DAC quantization + IR-drop/neighbor coupling), not the ideal pulse request.
 		ascending := isppStatus.Direction == DirectionAscending
-		effectiveV := math.Abs(ca.deviceState.GetEffectiveCellVoltage(row, col))
+		effectiveV := ca.deviceState.GetEffectiveCellVoltage(row, col)
 		if effectiveV == 0 {
-			effectiveV = math.Abs(isppStatus.Voltage)
+			effectiveV = isppStatus.Voltage
 		}
-		estimatedLevel := ca.deviceState.GetLevelForVoltage(effectiveV, ascending)
-		nextLevel := currentLevel
+		nextLevel := ca.deviceState.programLevelFromCoupledVoltage(
+			currentLevel,
+			effectiveV,
+			float64(PhaseWriteDurationNs)*1e-9,
+			ca.quantLevels,
+		)
 		if ascending {
-			if estimatedLevel > currentLevel {
-				nextLevel = currentLevel + 1
-				if nextLevel > targetLevel {
-					nextLevel = targetLevel
-				}
+			if nextLevel < currentLevel {
+				nextLevel = currentLevel
 			}
-		} else if estimatedLevel < currentLevel {
-			nextLevel = currentLevel - 1
+			if nextLevel > targetLevel {
+				nextLevel = targetLevel
+			}
+		} else {
+			if nextLevel > currentLevel {
+				nextLevel = currentLevel
+			}
 			if nextLevel < targetLevel {
 				nextLevel = targetLevel
 			}

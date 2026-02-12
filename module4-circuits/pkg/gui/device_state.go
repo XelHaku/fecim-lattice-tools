@@ -506,6 +506,72 @@ func (ds *DeviceState) conductanceToLevel(gPhys float64, levels int) int {
 	return sharedphysics.GetLevel(gNorm, levels)
 }
 
+// programLevelFromCoupledVoltage advances one cell's programmed level using the
+// *actual* cell voltage seen after DAC + array coupling (IR drop / half-select).
+// This is used by the level-engine ISPP write path to avoid ideal-voltage updates.
+func (ds *DeviceState) programLevelFromCoupledVoltage(currentLevel int, effectiveV float64, pulseWidth float64, quantLevels int) int {
+	ds.mu.RLock()
+	defer ds.mu.RUnlock()
+
+	levels := ds.resolveConductanceLevels(quantLevels)
+	if levels < 2 {
+		levels = 2
+	}
+	if currentLevel < 0 {
+		currentLevel = 0
+	}
+	if currentLevel >= levels {
+		currentLevel = levels - 1
+	}
+	if math.Abs(effectiveV) < 1e-12 {
+		return currentLevel
+	}
+
+	mat := ds.material
+	if mat == nil {
+		mat = sharedphysics.FeCIMMaterial()
+	}
+	if mat.Ps == 0 {
+		return currentLevel
+	}
+
+	if pulseWidth <= 0 {
+		pulseWidth = mat.Tau
+	}
+	if pulseWidth <= 0 {
+		pulseWidth = float64(PhaseWriteDurationNs) * 1e-9
+	}
+
+	gmin, gmax := ds.conductanceBounds()
+	currentG := ds.levelToConductance(currentLevel, levels)
+	currentP := sharedphysics.ConductanceToPolarization(currentG, gmin, gmax, mat.Ps)
+
+	solver := sharedphysics.NewLKSolver()
+	solver.ConfigureFromMaterial(mat)
+	solver.Temperature = 300
+	solver.EnableNoise = false
+	solver.UseNLS = false
+	if !solver.UseMaterialAlpha {
+		solver.UpdateParams()
+	}
+	solver.SetState(currentP)
+
+	geom := ds.cellGeometry.WithDefaults()
+	eField := geom.Film.ElectricField(effectiveV)
+	solver.Step(eField, pulseWidth)
+
+	newP := solver.GetState()
+	newG := sharedphysics.PolarizationToConductance(newP, mat.Ps, gmin, gmax)
+	newLevel := ds.conductanceToLevel(newG, levels)
+	if newLevel < 0 {
+		newLevel = 0
+	}
+	if newLevel >= levels {
+		newLevel = levels - 1
+	}
+	return newLevel
+}
+
 // GetReadRange returns the voltage range for read/compute operations
 func (ds *DeviceState) GetReadRange() VoltageRange {
 	ds.mu.RLock()

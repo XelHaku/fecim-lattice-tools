@@ -397,7 +397,7 @@ Evidence (2026-02-11):
 |----|------|--------|--------|------|
 | G11 | Throttled WRD phase-boundary logging spec | `module1-hysteresis` | ✅ | Done (`docs/development/GUI/WRD_PHASE_BOUNDARY_LOGGING_SPEC.md`, throttle gate `shouldEmitWRDPhaseBoundaryLog`) |
 | G11b | Refactor target/phase snapshot wiring: single snapshot struct for widgets | `module1-hysteresis` | ✅ | Done (`module1-hysteresis/pkg/gui/simulation.go`: `widgetSnapshot` with phase+target SSOT) |
-| G11c | Write Cell ISPP + circuit-coupled updates: DAC→array, neighbor polarization | `module4-circuits` | ⏳ | 4-12hr |
+| G11c | Write Cell ISPP + circuit-coupled updates: DAC→array, neighbor polarization | `module4-circuits` | ✅ | Done (`tab_unified_voltage.go` now updates target conductance from coupled Vcell via LK step; `device_state.go` adds `programLevelFromCoupledVoltage`; tests: `device_state_halfselect_dac_arraysim_test.go`, `device_state_ispp_coupled_write_test.go`) |
 | G12 | GUI parity smoke test checklist: log lines + screenshots | Testing | ✅ | Done (`docs/development/evidence/G12-gui-parity-smoke-checklist-2026-02-11.md`, screenshot under `docs/development/evidence/g12-gui-parity-screenshots/`) |
 
 ### Module-Specific High Priority
