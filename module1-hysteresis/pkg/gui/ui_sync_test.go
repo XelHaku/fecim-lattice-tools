@@ -37,14 +37,14 @@ func TestRefreshGUI_SnapshotStaysInSyncWithRenderedValues(t *testing.T) {
 	hE := []float64{-1.2e8, 0, 1.1e8}
 	hP := []float64{-0.21, 0.02, 0.19}
 	s := uiSnapshot{
-		fE:          1.1e8,
-		pV:          0.19,
-		dL:          22,
-		eC:          1.0e8,
-		hE:          hE,
-		hP:          hP,
-		numLevels:   30,
-		waveform:    WaveformSine,
+		fE:            1.1e8,
+		pV:            0.19,
+		dL:            22,
+		eC:            1.0e8,
+		hE:            hE,
+		hP:            hP,
+		numLevels:     30,
+		waveform:      WaveformSine,
 		physicsEngine: PhysicsPreisach,
 	}
 
@@ -92,6 +92,8 @@ func TestRefreshGUI_WRDTargetUsesControllerStateAsTruth(t *testing.T) {
 		wrdTargetLevel:        11,
 		controllerState:       controller.StateVerify,
 		controllerTargetLevel: 17,
+		widgets:               (&App{}).buildWidgetSnapshot(0.4e8, 10, 1.0e8, WaveformWriteReadDemo, 3, 11, false, 0, 0, controller.StateVerify, 17, -1),
+		logText:               "snapshot log",
 	}
 
 	a.refreshGUI(s)
@@ -99,5 +101,30 @@ func TestRefreshGUI_WRDTargetUsesControllerStateAsTruth(t *testing.T) {
 	target, highlight, mode := a.levelIndicator.TargetState()
 	if target != 17 || !highlight || mode != widgets.TargetModeVerify {
 		t.Fatalf("target highlight desync: got level=%d highlight=%v mode=%v", target, highlight, mode)
+	}
+	if got := a.logText.Text; got != "snapshot log" {
+		t.Fatalf("log text should come from snapshot; got %q", got)
+	}
+}
+
+func TestBuildWidgetSnapshot_WRDSettledUsesControllerTarget(t *testing.T) {
+	a := &App{}
+	ws := a.buildWidgetSnapshot(0.0, 16, 1.0e8, WaveformWriteReadDemo, 3, 11, false, 0, 0, controller.StateVerify, 17, -1)
+	if ws.target.highlight {
+		t.Fatalf("expected settled target to clear highlight when level matches controller target")
+	}
+	if ws.target.level != 17 {
+		t.Fatalf("expected controller target level 17, got %d", ws.target.level)
+	}
+	if ws.phase.phase != 2 {
+		t.Fatalf("expected WRD result phase (2) when settled, got %d", ws.phase.phase)
+	}
+}
+
+func TestBuildWidgetSnapshot_WRDIdleDoesNotUseControllerTarget(t *testing.T) {
+	a := &App{}
+	ws := a.buildWidgetSnapshot(0.0, 10, 1.0e8, WaveformWriteReadDemo, 5, 11, false, 0, 0, controller.StateIdle, 17, -1)
+	if ws.target.level != 11 {
+		t.Fatalf("expected WRD target while controller idle; got %d", ws.target.level)
 	}
 }
