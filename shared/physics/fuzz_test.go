@@ -90,7 +90,7 @@ func TestFuzz_ISPPRandomSequences_ConvergeOrCleanFailure(t *testing.T) {
 		solver.SetState(fuzzRange(r, -0.9*mat.Pr, 0.9*mat.Pr))
 
 		ispp := NewAdaptiveISPP(solver, mat)
-		ispp.MaxIterations = 8 + r.Intn(9)           // 8..16
+		ispp.MaxIterations = 8 + r.Intn(9)              // 8..16
 		ispp.TargetTolerance = fuzzRange(r, 0.01, 0.04) // 1..4% of Ps
 		ispp.MaxVoltage = fuzzRange(r, 1.5, 4.0)
 		ispp.MinVoltage = -ispp.MaxVoltage

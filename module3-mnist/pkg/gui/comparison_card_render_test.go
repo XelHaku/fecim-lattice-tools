@@ -10,9 +10,9 @@ func TestComparisonCard_GenerateImagePaths(t *testing.T) {
 	}
 
 	cc.result = &ComparisonResult{
-		FPPrediction:    1,
-		FPConfidence:    0.6,
-		FPProbabilities: []float64{0.1, 0.6, 0.3, 0, 0, 0, 0, 0, 0, 0},
+		FPPrediction:     1,
+		FPConfidence:     0.6,
+		FPProbabilities:  []float64{0.1, 0.6, 0.3, 0, 0, 0, 0, 0, 0, 0},
 		CIMPrediction:    2,
 		CIMConfidence:    0.7,
 		CIMProbabilities: []float64{0.05, 0.2, 0.7, 0.05, 0, 0, 0, 0, 0, 0},

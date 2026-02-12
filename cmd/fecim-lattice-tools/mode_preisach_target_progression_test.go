@@ -11,6 +11,9 @@ import (
 )
 
 func TestHeadlessPreisachRun_WRDTargetProgressionMatchesSequence(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping Preisach target progression in -short")
+	}
 	t.Setenv("FECIM_MATERIAL", "literature_superlattice")
 	t.Setenv("FECIM_ISPP_TARGET_LEVELS", "3,15,27")
 

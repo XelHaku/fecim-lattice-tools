@@ -9,8 +9,10 @@ import (
 )
 
 // Published HZO temperature coefficients used in this repository baseline:
-//   dEc/dT ≈ -2.0e5 V/m/K
-//   dPr/dT ≈ -5.0e-5 C/m²/K
+//
+//	dEc/dT ≈ -2.0e5 V/m/K
+//	dPr/dT ≈ -5.0e-5 C/m²/K
+//
 // These are encoded in DefaultHZO() from the HZO literature calibration.
 func TestTemperatureDependence_PreisachEc_DecreasesWithTemperature(t *testing.T) {
 	mat := physics.DefaultHZO()

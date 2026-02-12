@@ -13,6 +13,9 @@ import (
 // ISPP rows/phases in the CSV log. This is a lightweight integration check that
 // the ISPP write/read demo path is exercised under the LK engine.
 func TestHeadlessLKRun_EmitsISPPPhases(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping LK ISPP phases test in -short")
+	}
 	t.Setenv("FECIM_MATERIAL", "literature_superlattice")
 
 	before := time.Now()

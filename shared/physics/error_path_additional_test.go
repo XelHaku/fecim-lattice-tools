@@ -35,8 +35,8 @@ func TestLKSolver_InvalidMaterialParamsHandledGracefully(t *testing.T) {
 
 	invalid := DefaultHZO()
 	invalid.Thickness = -10e-9 // invalid; should be ignored
-	invalid.Area = -1           // invalid; should be ignored
-	invalid.Ec = 0              // invalid for Ec-derived scaling path
+	invalid.Area = -1          // invalid; should be ignored
+	invalid.Ec = 0             // invalid for Ec-derived scaling path
 
 	base.ConfigureFromMaterial(invalid)
 

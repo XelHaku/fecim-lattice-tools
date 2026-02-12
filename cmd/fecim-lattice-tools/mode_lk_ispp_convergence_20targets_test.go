@@ -14,6 +14,9 @@ import (
 // This runs the headless LK hysteresis mode with a deterministic 20-target
 // list (mix of extremes + mid-levels) and fails on any timeout/non-finite.
 func TestHeadlessLKRun_ISPPConverges20Targets_NoTimeout(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping 20-target convergence test in -short")
+	}
 	// Pick a stable, deterministic preset.
 	t.Setenv("FECIM_MATERIAL", "fecim_hzo")
 

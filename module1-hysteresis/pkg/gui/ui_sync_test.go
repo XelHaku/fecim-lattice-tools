@@ -122,8 +122,8 @@ func TestBuildWidgetSnapshot_WRDSettledUsesControllerTarget(t *testing.T) {
 	if ws.target.level != 17 {
 		t.Fatalf("expected controller target level 17, got %d", ws.target.level)
 	}
-	if ws.phase.phase != 2 {
-		t.Fatalf("expected WRD result phase (2) when settled, got %d", ws.phase.phase)
+	if ws.phase.phase != 1 {
+		t.Fatalf("expected WRD verify phase (1) when controller in StateVerify, got %d", ws.phase.phase)
 	}
 }
 

@@ -19,11 +19,11 @@ func (e materialEverett) Calculate(alpha, beta float64) float64 {
 }
 
 func randomValidMaterial(r *rand.Rand, idx int) *HZOMaterial {
-	ps := randRange(r, 0.15, 0.60)          // C/m^2
-	pr := randRange(r, 0.05*ps, 0.95*ps)    // enforce Pr <= Ps
-	ec := randRange(r, 0.4e8, 2.5e8)        // V/m, strictly > 0
-	thickness := randRange(r, 5e-9, 30e-9)  // m
-	area := randRange(r, 25e-18, 6400e-18)  // m^2 (25nm^2..80nm^2)
+	ps := randRange(r, 0.15, 0.60)         // C/m^2
+	pr := randRange(r, 0.05*ps, 0.95*ps)   // enforce Pr <= Ps
+	ec := randRange(r, 0.4e8, 2.5e8)       // V/m, strictly > 0
+	thickness := randRange(r, 5e-9, 30e-9) // m
+	area := randRange(r, 25e-18, 6400e-18) // m^2 (25nm^2..80nm^2)
 	eps := randRange(r, 20, 45)
 
 	return &HZOMaterial{

@@ -13,6 +13,9 @@ import (
 )
 
 func TestHeadlessLKRun_ISPP5Targets_NoNaNInf_AndEFieldUnitsConsistent(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping ISPP 5-target test in -short")
+	}
 	t.Setenv("FECIM_MATERIAL", "literature_superlattice")
 	t.Setenv("FECIM_ISPP_TARGETS", "5")
 	t.Setenv("FECIM_ISPP_TARGET_SEED", "1")

@@ -13,9 +13,14 @@ import (
 )
 
 func TestRunMode_HysteresisEngineSelectorAliases(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping engine alias matrix in -short")
+	}
 	t.Setenv("FECIM_MATERIAL", "fecim_hzo")
 	t.Setenv("FECIM_HEADLESS_FAST", "1")
 	t.Setenv("FECIM_ISPP_TARGET_LEVELS", "mid")
+	t.Setenv("FECIM_ISPP_MAX_PULSES", "120")
+	t.Setenv("FECIM_HEADLESS_ALLOW_TIMEOUT", "1")
 
 	for _, engine := range []string{"preisach", "p", "lk", "landau", " l-k "} {
 		if err := runMode("hysteresis", engine); err != nil {

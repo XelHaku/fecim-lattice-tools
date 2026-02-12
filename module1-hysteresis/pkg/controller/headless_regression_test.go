@@ -72,6 +72,9 @@ func defaultRegressionTargets() []regressionTarget {
 }
 
 func TestHeadlessRegression_WRD_ISPP_Preisach(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping headless regression (Preisach) in -short")
+	}
 	mat := ferroelectric.LiteratureSuperlattice()
 	targets := defaultRegressionTargets()
 
@@ -169,6 +172,9 @@ func runHeadlessPreisachRegressionCase(t *testing.T, mat *sharedphysics.HZOMater
 }
 
 func TestHeadlessRegression_WRD_ISPP_LK(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping headless regression (LK) in -short")
+	}
 	mat := ferroelectric.LiteratureSuperlattice()
 	targets := defaultRegressionTargets()
 
