@@ -105,6 +105,23 @@ func TestHZOFJT140(t *testing.T) {
 	}
 }
 
+func TestPZT(t *testing.T) {
+	mat := PZT()
+
+	if mat == nil {
+		t.Fatal("PZT should return non-nil")
+	}
+	if math.Abs(mat.Pr-0.30) > 1e-9 {
+		t.Fatalf("PZT Pr: got %f, want 0.30 C/m²", mat.Pr)
+	}
+	if math.Abs(mat.Ps-0.40) > 1e-9 {
+		t.Fatalf("PZT Ps: got %f, want 0.40 C/m²", mat.Ps)
+	}
+	if math.Abs(mat.Ec-6.0e6) > 1 {
+		t.Fatalf("PZT Ec: got %e, want 6.0e6 V/m", mat.Ec)
+	}
+}
+
 func TestAlScN(t *testing.T) {
 	mat := AlScN()
 
@@ -136,6 +153,23 @@ func TestAllMaterials(t *testing.T) {
 		if mat.Pr <= 0 {
 			t.Errorf("material %q has invalid Pr", mat.Name)
 		}
+	}
+}
+
+func TestCorePresetCount(t *testing.T) {
+	presets := []*HZOMaterial{
+		DefaultHZO(),
+		FeCIMMaterial(),
+		FeCIMMaterialTarget(),
+		LiteratureSuperlattice(),
+		CryogenicHZO(),
+		HZOStandard32(),
+		HZOFJT140(),
+		PZT(),
+		AlScN(),
+	}
+	if len(presets) != 9 {
+		t.Fatalf("expected 9 core presets, got %d", len(presets))
 	}
 }
 

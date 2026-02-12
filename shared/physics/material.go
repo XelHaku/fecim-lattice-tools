@@ -471,6 +471,47 @@ func HZOCustom14() *HZOMaterial {
 	}
 }
 
+// PZT returns parameters for Lead Zirconate Titanate (Pb[Zr_xTi_{1-x}]O3).
+// Included as a classic ferroelectric reference preset.
+func PZT() *HZOMaterial {
+	return &HZOMaterial{
+		Name:                "PZT",
+		Pr:                  30e-2, // 30 µC/cm²
+		Ps:                  40e-2, // 40 µC/cm²
+		Ec:                  6.0e6, // 60 kV/cm
+		Epsilon:             450,
+		EpsilonLF:           650,
+		LossAngle:           0.03,
+		Thickness:           100e-9,
+		Area:                100e-12,
+		Tau:                 20e-9,
+		Tau0:                1e-12,
+		Ea:                  0.4,
+		Alpha:               2.0,
+		CurieTemp:           673,
+		TempCoeffEc:         -5e4,
+		TempCoeffPr:         -2e-5,
+		EnduranceCycles:     1e9,
+		RetentionTime:       3.15e8,
+		ImrintField:         1e6,
+		NumLevels:           30,
+		TargetRangeFrac:     0.90,
+		Tau0NLS:             1e-10,
+		EaNLS:               6e7,
+		Gmin:                1e-6,
+		Gmax:                120e-6,
+		BetaLandau:          -2.0e8,
+		GammaLandau:         1.0e10,
+		RhoViscosity:        0.05,
+		CurieConst:          1.0e5,
+		SeriesResistanceOhm: 50.0,
+		K_dep:               2.0e8,
+		StressGPa:           0.5,
+		Q11:                 0.08,
+		Q12:                 -0.03,
+	}
+}
+
 // AlScN returns parameters for Aluminum Scandium Nitride.
 // AlScN has VERY HIGH Pr (120 µC/cm²) but also very high Ec (5 MV/cm),
 // which limits practical state granularity to 8-16 levels.
@@ -534,8 +575,8 @@ func AllMaterials() []*HZOMaterial {
 			LiteratureSuperlattice(),
 			CryogenicHZO(),
 			HZOStandard32(),
-			HZOCustom14(),
 			HZOFJT140(),
+			PZT(),
 			AlScN(),
 		}
 	})
@@ -558,6 +599,7 @@ func AllMaterialsFromConfig(cfg *physics.Config) []*HZOMaterial {
 		"cryogenic_hzo",
 		"hzo_standard_32",
 		"hzo_ftj_140",
+		"pzt",
 		"alscn",
 		"in2se3",
 	}
