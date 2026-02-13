@@ -1,5 +1,13 @@
+// CHARACTERIZATION PROVENANCE
+// CHAR_STATUS: ESTIMATED_SCALAR
+// WARNING: This Liberty file is generated from analytical models,
+// NOT from silicon measurement or SPICE post-layout simulation.
+// Timing values are estimated from Landau-Khalatnikov transient simulation.
+// NOT suitable for signoff or tapeout. Educational/research use only.
+// For production characterization, use Cadence Liberate or Synopsys SiliconSmart
+// with measured device data.
 // FeCIM Crossbar Array - Auto-generated
-// Date: 2026-02-12
+// Date: 2026-02-13
 // Rows: 2, Cols: 2
 // Mode: storage
 // Architecture: passive
