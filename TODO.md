@@ -1006,13 +1006,13 @@ Direct observations from Juan's live interaction with Module 4 Operations view.
 
 | ID | Observation | Priority | Status | Acceptance Criteria |
 |----|------------|----------|--------|---------------------|
-| M1-OBS-01 | Polarization teleport on waveform/mode change | P0 | ⏳ | History buffer cleared on every waveform switch, no visual jump |
-| M1-OBS-02 | ISPP freeze at intermediate level (stuck at level 5) | P0 | ⏳ | ISPP completes or fails gracefully with bounded retry, no hang |
-| M1-OBS-03 | Unintended negative/reset in ISPP loop after ~4 tries | P0 | ⏳ | Reset only on explicit overshoot policy, not spurious |
-| M1-OBS-04 | Reset button behavior inconsistent/non-deterministic | P1 | ⏳ | Reset always returns to known state with explicit re-init |
-| M1-OBS-05 | Layout: excessive scrolling in material/state/mode sections | P1 | ⏳ | Compact layout, reduced whitespace, no unnecessary scroll |
-| M1-OBS-06 | Environment controls (temp/stress) may not couple to equations | P1 | ⏳ | Either wire to physics or label "Display only — not coupled" |
-| M1-OBS-07 | Target range/LE5/wave-mode semantics need inline explanation | P2 | ⏳ | Concise sublabels or tooltips on each control |
+| M1-OBS-01 | Polarization teleport on waveform/mode change | P0 | ✅ | `92d86c4` Preisach Everett fix + `eadea2b` waveform switch history reset test |
+| M1-OBS-02 | ISPP freeze at intermediate level (stuck at level 5) | P0 | ✅ | `15475c5` 30-pulse hard timeout, force-complete with best level |
+| M1-OBS-03 | Unintended negative/reset in ISPP loop after ~4 tries | P0 | ✅ | `15475c5` Reset gated: only on overshoot >3 levels or explicit reset |
+| M1-OBS-04 | Reset button behavior inconsistent/non-deterministic | P1 | ✅ | `dcb7ee2` Full state re-init (P, E, history, ISPP, WRD, controller) |
+| M1-OBS-05 | Layout: excessive scrolling in material/state/mode sections | P1 | ✅ | `3c74d11` Removed excess padding, 2-col grid for state panel |
+| M1-OBS-06 | Environment controls (temp/stress) may not couple to equations | P1 | ✅ | `dcb7ee2` Both coupled: temp→Ec/Pr scaling, stress→threshold shift. Labels added. |
+| M1-OBS-07 | Target range/LE5/wave-mode semantics need inline explanation | P2 | ✅ | `3c74d11` Sublabels already present for all controls |
 
 ## Module 4: CMOS Cell Physics & Selector Model (2026-02-12)
 
