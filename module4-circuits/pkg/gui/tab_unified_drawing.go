@@ -732,6 +732,11 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 	drawRect(img, legendX+32, legendY-2, 10, 8, color.RGBA{200, 180, 60, 255})
 	drawRect(img, legendX+44, legendY-2, 15, 8, color.RGBA{220, 100, 60, 255})
 
+	if overlayMode == "Vcell" {
+		spec := ca.currentVCLegendSpec()
+		drawVCLegend(img, legendX+95, legendY-17, 180, 10, spec)
+	}
+
 	// Compact energy/timing info in bottom-right (C10 requirement simplified)
 	infoY := h - 20
 	infoX := w - 180
