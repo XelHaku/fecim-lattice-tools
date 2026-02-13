@@ -5,7 +5,6 @@ import (
 
 	"fecim-lattice-tools/shared/keyboard"
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/driver/desktop"
 )
 
 // exportShortcut implements fyne.Shortcut for Ctrl+E (export).
@@ -15,33 +14,31 @@ func (s *exportShortcut) ShortcutName() string {
 	return "Export P-E Data"
 }
 
-// setupShortcuts registers custom keyboard shortcuts
+// setupShortcuts registers custom keyboard shortcuts.
 func (a *App) setupShortcuts() {
-	// Register Ctrl+E for file export
-	ctrlE := &desktop.CustomShortcut{
-		KeyName:  fyne.KeyE,
-		Modifier: fyne.KeyModifierControl,
-	}
-
-	a.mainWindow.Canvas().AddShortcut(ctrlE, func(shortcut fyne.Shortcut) {
-		log.Info("Export shortcut triggered (Ctrl+E)")
-		go a.exportPEData()
+	km := keyboard.NewManager(a.mainWindow)
+	km.SetHandlers(map[keyboard.Action]func(){
+		keyboard.ActionExport: func() {
+			log.Info("Export shortcut triggered (Ctrl+E)")
+			go a.exportPEData()
+		},
+		keyboard.Action("export_clipboard"): func() {
+			go func() {
+				if err := a.exportPEDataToClipboard(); err != nil {
+					log.Printf("Clipboard export failed: %v", err)
+					fyne.Do(func() {
+						a.setStatus(fmt.Sprintf("Clipboard export failed: %v", err))
+					})
+				}
+			}()
+		},
 	})
+	km.AddCustomShortcut("export_clipboard", fyne.KeyE, fyne.KeyModifierControl|fyne.KeyModifierShift, "Copy CSV-formatted P-E data to clipboard")
+	km.Register()
 
-	// Register Ctrl+Shift+E for clipboard export
-	ctrlShiftE := &desktop.CustomShortcut{
-		KeyName:  fyne.KeyE,
-		Modifier: fyne.KeyModifierControl | fyne.KeyModifierShift,
-	}
-	a.mainWindow.Canvas().AddShortcut(ctrlShiftE, func(shortcut fyne.Shortcut) {
-		go func() {
-			if err := a.exportPEDataToClipboard(); err != nil {
-				log.Printf("Clipboard export failed: %v", err)
-				fyne.Do(func() {
-					a.setStatus(fmt.Sprintf("Clipboard export failed: %v", err))
-				})
-			}
-		}()
+	// Module 1 has extensive single-key behavior (E/D/T/G/...), keep local dispatch.
+	a.mainWindow.Canvas().SetOnTypedKey(func(ke *fyne.KeyEvent) {
+		a.handleKeyPress(ke)
 	})
 }
 
@@ -148,18 +145,10 @@ func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 		log.Info("Frequency decreased to %.3g Hz", newFreq)
 
 	case fyne.KeyW:
-		// Cycle to next waveform (5 modes: Manual, Sine, Triangle, ISPP (Write/Read), Time-Resolved)
-		a.mu.Lock()
-		nextWaveform := (a.waveform + 1) % 5
-		a.mu.Unlock()
-
-		// Trigger the same logic as waveformSelect.OnChanged
-		waveformNames := []string{"Manual", "Sine Wave", "Triangle Wave", "ISPP (Write/Read)", "Time-Resolved Switching"}
-		selectedName := waveformNames[nextWaveform]
-
-		// Call the select widget to trigger the OnChanged callback
-		a.waveformSelect.SetSelected(selectedName)
-		log.Info("Waveform changed to %s", selectedName)
+		// Cycle to next waveform.
+		if keyboard.SelectNextOption(a.waveformSelect) {
+			log.Info("Waveform changed to %s", a.waveformSelect.Selected)
+		}
 
 	case fyne.KeySpace:
 		// Toggle pause
