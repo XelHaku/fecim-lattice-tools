@@ -54,6 +54,14 @@ func ValidateLEFDRCFile(lefPath string, rules DRCRules) error {
 	return ValidateLEFDRC(string(content), rules)
 }
 
+func ValidateLEFWithPDKConstraintsFile(lefPath string, rules DRCRules) error {
+	content, err := os.ReadFile(lefPath)
+	if err != nil {
+		return fmt.Errorf("read lef: %w", err)
+	}
+	return ValidateLEFWithPDKConstraints(string(content), rules)
+}
+
 // ValidateLEFDRC checks basic LEF geometry against provided rules.
 func ValidateLEFDRC(lefContent string, rules DRCRules) error {
 	rects, err := parseLEFRects(lefContent)
@@ -112,6 +120,30 @@ func ValidateLEFDRC(lefContent string, rules DRCRules) error {
 	return nil
 }
 
+// ValidateLEFWithPDKConstraints extends DRC with pin-within-bounds checks.
+func ValidateLEFWithPDKConstraints(lefContent string, rules DRCRules) error {
+	if err := ValidateLEFDRC(lefContent, rules); err != nil {
+		return err
+	}
+	rects, err := parseLEFRects(lefContent)
+	if err != nil {
+		return err
+	}
+	w, h, ok := parseLEFMacroSize(lefContent)
+	if !ok {
+		return fmt.Errorf("missing MACRO SIZE in LEF")
+	}
+	for _, r := range rects {
+		if r.Pin == "" {
+			continue
+		}
+		if r.X1 < 0 || r.Y1 < 0 || r.X2 > w || r.Y2 > h {
+			return fmt.Errorf("pin %s rectangle out of bounds: rect %.3f %.3f %.3f %.3f outside macro %.3f x %.3f", r.Pin, r.X1, r.Y1, r.X2, r.Y2, w, h)
+		}
+	}
+	return nil
+}
+
 func parseLEFRects(lef string) ([]lefRect, error) {
 	lines := strings.Split(lef, "\n")
 	layerRe := regexp.MustCompile(`^LAYER\s+(\S+)`)
@@ -167,6 +199,20 @@ func rectSpacing(a, b lefRect) float64 {
 		return dx
 	}
 	return math.Hypot(dx, dy)
+}
+
+func parseLEFMacroSize(lef string) (float64, float64, bool) {
+	sizeRe := regexp.MustCompile(`(?m)^\s*SIZE\s+([\d.]+)\s+BY\s+([\d.]+)`) // SIZE w BY h
+	m := sizeRe.FindStringSubmatch(lef)
+	if m == nil {
+		return 0, 0, false
+	}
+	w, errW := strconv.ParseFloat(m[1], 64)
+	h, errH := strconv.ParseFloat(m[2], 64)
+	if errW != nil || errH != nil {
+		return 0, 0, false
+	}
+	return w, h, true
 }
 
 func encloses(metal, via lefRect, enclosure float64) bool {

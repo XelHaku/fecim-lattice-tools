@@ -76,7 +76,7 @@ MACRO %s
     USE SIGNAL ;
     PORT
       LAYER met1 ;
-      RECT 0.000 1.200 0.100 1.400 ;
+      RECT 0.000 1.200 0.140 1.400 ;
     END
   END WL
 
@@ -85,7 +85,7 @@ MACRO %s
     USE SIGNAL ;
     PORT
       LAYER met1 ;
-      RECT 0.360 1.200 0.460 1.400 ;
+      RECT 0.320 1.200 0.460 1.400 ;
     END
   END BL
 
@@ -94,7 +94,7 @@ MACRO %s
     USE POWER ;
     PORT
       LAYER met1 ;
-      RECT 0.000 2.620 0.460 2.720 ;
+      RECT 0.000 2.580 0.460 2.720 ;
     END
   END VPWR
 
@@ -103,7 +103,7 @@ MACRO %s
     USE GROUND ;
     PORT
       LAYER met1 ;
-      RECT 0.000 0.000 0.460 0.100 ;
+      RECT 0.000 0.000 0.460 0.140 ;
     END
   END VGND
 
@@ -183,7 +183,7 @@ MACRO %s
     USE SIGNAL ;
     PORT
       LAYER met1 ;
-      RECT 0.000 1.600 0.100 1.800 ;
+      RECT 0.000 1.600 0.140 1.800 ;
     END
   END WL
 
@@ -192,7 +192,7 @@ MACRO %s
     USE SIGNAL ;
     PORT
       LAYER met1 ;
-      RECT 0.820 1.600 0.920 1.800 ;
+      RECT 0.780 1.600 0.920 1.800 ;
     END
   END BL
 
@@ -201,7 +201,7 @@ MACRO %s
     USE SIGNAL ;
     PORT
       LAYER met1 ;
-      RECT 0.410 0.100 0.510 0.300 ;
+      RECT 0.390 0.100 0.530 0.300 ;
     END
   END SL
 
@@ -210,7 +210,7 @@ MACRO %s
     USE POWER ;
     PORT
       LAYER met1 ;
-      RECT 0.000 3.300 0.920 3.400 ;
+      RECT 0.000 3.260 0.920 3.400 ;
     END
   END VPWR
 
@@ -219,7 +219,7 @@ MACRO %s
     USE GROUND ;
     PORT
       LAYER met1 ;
-      RECT 0.000 0.000 0.920 0.100 ;
+      RECT 0.000 0.000 0.920 0.140 ;
     END
   END VGND
 
@@ -293,7 +293,7 @@ MACRO %s
     USE SIGNAL ;
     PORT
       LAYER met1 ;
-      RECT 0.000 1.600 0.100 1.800 ;
+      RECT 0.000 1.600 0.140 1.800 ;
     END
   END WL
 
@@ -302,7 +302,7 @@ MACRO %s
     USE SIGNAL ;
     PORT
       LAYER met1 ;
-      RECT 1.280 1.600 1.380 1.800 ;
+      RECT 1.240 1.600 1.380 1.800 ;
     END
   END CSL
 
@@ -311,7 +311,7 @@ MACRO %s
     USE SIGNAL ;
     PORT
       LAYER met1 ;
-      RECT 0.640 3.300 0.740 3.400 ;
+      RECT 0.620 3.260 0.760 3.400 ;
     END
   END BL
 
@@ -320,7 +320,7 @@ MACRO %s
     USE SIGNAL ;
     PORT
       LAYER met1 ;
-      RECT 0.640 0.000 0.740 0.100 ;
+      RECT 0.620 0.000 0.760 0.140 ;
     END
   END SL
 
@@ -329,7 +329,7 @@ MACRO %s
     USE POWER ;
     PORT
       LAYER met1 ;
-      RECT 0.000 3.300 1.380 3.400 ;
+      RECT 0.000 3.260 1.380 3.400 ;
     END
   END VPWR
 
@@ -338,7 +338,7 @@ MACRO %s
     USE GROUND ;
     PORT
       LAYER met1 ;
-      RECT 0.000 0.000 1.380 0.100 ;
+      RECT 0.000 0.000 1.380 0.140 ;
     END
   END VGND
 
