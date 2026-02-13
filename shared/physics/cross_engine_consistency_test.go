@@ -104,7 +104,7 @@ func preisachPrEcAtTemp(tempK float64) (pr, ec float64) {
 	model := ferroelectric.NewPreisachModel(mat)
 	model.SetTemperature(tempK)
 
-	satE := 3.0 * model.GetEffectiveEc()
+	satE := 5.0 * model.GetEffectiveEc()
 	model.Reset()
 	model.Update(-satE)
 	model.Update(satE)
@@ -128,9 +128,6 @@ func collectCrossEngineSweep(t *testing.T) (temps, prPreisach, prLK, ecPreisach,
 }
 
 func TestCrossEngine_PrVsTemperature(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping cross-engine consistency test in short mode")
-	}
 	temps, prPreisach, prLK, _, _ := collectCrossEngineSweep(t)
 	for i := 1; i < len(temps); i++ {
 		if prPreisach[i] > prPreisach[i-1]+1e-9 {
@@ -143,9 +140,6 @@ func TestCrossEngine_PrVsTemperature(t *testing.T) {
 }
 
 func TestCrossEngine_EcVsTemperature(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping cross-engine consistency test in short mode")
-	}
 	temps, _, _, ecPreisach, ecLK := collectCrossEngineSweep(t)
 	for i := 1; i < len(temps); i++ {
 		if ecPreisach[i] > ecPreisach[i-1]+1e-6 {
@@ -158,12 +152,25 @@ func TestCrossEngine_EcVsTemperature(t *testing.T) {
 }
 
 func TestCrossEngine_PrMagnitudeAgreement(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping cross-engine consistency test in short mode")
+	// Compare default engine operating points at room temperature.
+	// For LK we keep default configured alpha mode (UseMaterialAlpha=true after ConfigureFromMaterial).
+	prPreisach, _ := preisachPrEcAtTemp(300.0)
+
+	mat := physics.DefaultHZO()
+	s := physics.NewLKSolver()
+	s.ConfigureFromMaterial(mat)
+	s.UseNLS = false
+	s.EnableNoise = false
+	s.SetState(-math.Abs(mat.Pr))
+
+	satE := 5.0 * mat.Ec
+	for i := 0; i < 3000; i++ {
+		s.Step(satE, 2e-12)
 	}
-	temp := 300.0
-	prPreisach, _ := preisachPrEcAtTemp(temp)
-	prLK, _ := lkExtractPrEcAtTemp(t, temp)
+	for i := 0; i < 3000; i++ {
+		s.Step(0, 2e-12)
+	}
+	prLK := math.Abs(s.GetState())
 
 	if prPreisach <= 0 || prLK <= 0 {
 		t.Fatalf("invalid Pr values: Preisach=%.6e LK=%.6e", prPreisach, prLK)
@@ -171,6 +178,6 @@ func TestCrossEngine_PrMagnitudeAgreement(t *testing.T) {
 
 	relDiff := math.Abs(prPreisach-prLK) / math.Max(prPreisach, prLK)
 	if relDiff > 0.30 {
-		t.Fatalf("Pr mismatch exceeds 30%% at %.1fK: Preisach=%.6e LK=%.6e relDiff=%.2f%%", temp, prPreisach, prLK, relDiff*100)
+		t.Fatalf("Pr mismatch exceeds 30%% at 300K: Preisach=%.6e LK=%.6e relDiff=%.2f%%", prPreisach, prLK, relDiff*100)
 	}
 }
