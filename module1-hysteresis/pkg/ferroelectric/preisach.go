@@ -362,31 +362,7 @@ func (p *PreisachModel) GetHysteresisLoop(Emax float64, points int) ([]float64, 
 // SetTemperature updates the simulation temperature and scales material parameters.
 func (p *PreisachModel) SetTemperature(tempK float64) {
 	p.Temperature = tempK
-
-	// Scale Ec and Ps based on linear temperature coefficients
-	// Ec(T) = Ec0 + Coeff * (T - 300)
-	// Note: We use 300K as reference, assuming params are defined at RT
-
-	deltaT := tempK - 300.0
-
-	// Retrieve coefficients from material config (HZOMaterial needs these fields exposed)
-	// Assuming HZOMaterial has TempCoeffEc and TempCoeffPr
-
-	newEc := p.material.Ec + p.material.TempCoeffEc*deltaT
-	newPs := p.material.Ps + p.material.TempCoeffPr*deltaT
-
-	// Safety clamps
-	if newEc < 1e5 {
-		newEc = 1e5
-	} // Minimum 0.001 MV/cm
-	if newPs < 1e-6 {
-		newPs = 1e-6
-	} // Minimum polarization
-
-	// Update Everett function
-	p.everett.Ec = newEc
-	p.effectivePs = newPs
-	p.updateReversibleParams()
+	p.updateEffectiveParameters()
 }
 
 // GetEffectiveEc returns the current temperature-scaled Coercive Field.
@@ -405,43 +381,33 @@ func (p *PreisachModel) SetStress(stressGPa float64) {
 	p.updateEffectiveParameters()
 }
 
-// updateEffectiveParameters recalculates Ec and Ps based on T and Stress
+// updateEffectiveParameters recalculates Ec and Ps based on Curie-Weiss temperature
+// scaling and electrostriction stress coupling.
 func (p *PreisachModel) updateEffectiveParameters() {
-	// Base parameters at 300K, 1GPa (if calibrated there) or 0GPa?
-	// Let's assume material.Ec is at 300K and defined Stress (usually 1GPa for HZO).
-	// For simplicity, we use linear temp scaling + alpha-based stress scaling relative to baseline.
+	if p.material == nil || p.everett == nil {
+		return
+	}
 
-	// 1. Temperature Scaling
-	deltaT := p.Temperature - 300.0
-	ec_T := p.material.Ec + p.material.TempCoeffEc*deltaT
-	ps_T := p.material.Ps + p.material.TempCoeffPr*deltaT
+	const epsilon0 = 8.854e-12
 
-	// 2. Stress Scaling
-	// Relative change in Alpha
-	// Alpha_ref = Alpha(300K, 1GPa)
-	// Alpha_new = Alpha(T, Stress)
+	newEc := p.material.Ec
+	newPs := p.material.Ps + p.material.TempCoeffPr*(p.Temperature-300.0)
 
-	// Need material Landau coefficients. If not available, assume default.
-	// HZO defaults:
-	// Q12 ~ -0.026
-	// Alpha_0 ~ -1e9 (at 300K)
+	if p.material.CurieConst != 0 {
+		alphaT := (p.Temperature - p.material.CurieTemp) / (2 * epsilon0 * p.material.CurieConst)
+		alphaRef := (300.0 - p.material.CurieTemp) / (2 * epsilon0 * p.material.CurieConst)
 
-	// If material struct doesn't have Q12, we can't do accurate stress scaling.
-	// We will skip stress scaling if Q12 is 0 or missing, to avoid breaking logic.
+		if alphaRef != 0 {
+			q12 := p.material.Q12
+			if q12 == 0 {
+				q12 = -0.026 // HZO default from LK material params
+			}
+			alphaStress := alphaT - 2*q12*p.Stress*1e9 // alpha(σ) = alpha(T) - 2*Q12*σ
+			ecRatio := math.Pow(math.Abs(alphaStress/alphaRef), 1.5)
+			newEc = p.material.Ec * ecRatio
+		}
+	}
 
-	// Assuming linear stress effect on Ec for now if we lack full Landau params:
-	// Ec increases with tensile stress (negative Q12 makes alpha more negative).
-	// Sensitivity: dEc/dStress approx 0.1 MV/cm per GPa?
-
-	// Let's implement a simplified linear sensitivity based on literature if coefficients missing
-	// dEc/dSigma ~ +5% per GPa for HZO
-
-	stressFactor := 1.0 + 0.05*(p.Stress-1.0) // Relative to 1GPa baseline
-
-	newEc := ec_T * stressFactor
-	newPs := ps_T // Ps is less sensitive to stress in first order
-
-	// Safety
 	if newEc < 1e5 {
 		newEc = 1e5
 	}
@@ -449,7 +415,6 @@ func (p *PreisachModel) updateEffectiveParameters() {
 		newPs = 1e-6
 	}
 
-	// Update Everett
 	p.everett.Ec = newEc
 	p.effectivePs = newPs
 	p.updateReversibleParams()

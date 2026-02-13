@@ -3,6 +3,8 @@ package ferroelectric
 import (
 	"math"
 	"testing"
+
+	sharedphysics "fecim-lattice-tools/shared/physics"
 )
 
 func TestTanhEverett_SymmetricPairMatchesProductForm(t *testing.T) {
@@ -28,85 +30,61 @@ func TestTanhEverett_SymmetricPairMatchesProductForm(t *testing.T) {
 	}
 }
 
-func TestPreisachModel_SetTemperatureUpdatesEverett(t *testing.T) {
-	material := DefaultHZO()
+func TestPreisach_TemperatureSweep(t *testing.T) {
+	material := sharedphysics.MaterlikHfO2()
 	model := NewPreisachModel(material)
+	model.SetStress(0.0) // isolate temperature effect
 
-	tempK := 400.0
-	model.SetTemperature(tempK)
+	model.SetTemperature(250.0)
+	ec250 := model.GetEffectiveEc()
+	model.SetTemperature(300.0)
+	ec300 := model.GetEffectiveEc()
+	model.SetTemperature(350.0)
+	ec350 := model.GetEffectiveEc()
 
-	deltaT := tempK - 300.0
-	expectedEc := material.Ec + material.TempCoeffEc*deltaT
-	expectedPs := material.Ps + material.TempCoeffPr*deltaT
-	if expectedEc < 1e5 {
-		expectedEc = 1e5
-	}
-	if expectedPs < 1e-6 {
-		expectedPs = 1e-6
-	}
-
-	gotEc := model.GetEffectiveEc()
-	if math.Abs(gotEc-expectedEc) > math.Abs(expectedEc)*1e-8+1e-12 {
-		t.Fatalf("Ec mismatch: got %.6e, expected %.6e", gotEc, expectedEc)
-	}
-
-	gotPs := model.everett.Ps
-	const epsilon0 = 8.854e-12
-	chi := 0.0
-	if material.EpsilonLF > 1 {
-		chi = epsilon0 * (material.EpsilonLF - 1)
-	} else if material.Epsilon > 1 {
-		chi = epsilon0 * (material.Epsilon - 1)
-	}
-	revPSat := chi * expectedEc
-	expectedIrrev := expectedPs - revPSat
-	if expectedIrrev < 0 {
-		expectedIrrev = 0
-	}
-	if math.Abs(gotPs-expectedIrrev) > math.Abs(expectedIrrev)*1e-8+1e-12 {
-		t.Fatalf("Ps mismatch: got %.6e, expected %.6e", gotPs, expectedIrrev)
-	}
-
-	expectedDelta := tuneDeltaForPr(expectedEc, model.stack.SaturationE, expectedIrrev, material.Pr)
-	if math.Abs(model.everett.Delta-expectedDelta) > math.Abs(expectedDelta)*1e-8+1e-12 {
-		t.Fatalf("Delta mismatch: got %.6e, expected %.6e", model.everett.Delta, expectedDelta)
+	if !(ec250 > ec300 && ec300 > ec350) {
+		t.Fatalf("expected Ec to decrease as temperature approaches Tc: Ec250=%.6e Ec300=%.6e Ec350=%.6e", ec250, ec300, ec350)
 	}
 }
 
-func TestPreisachModel_SetStressUpdatesEverett(t *testing.T) {
-	material := DefaultHZO()
+func TestPreisach_StressEffect(t *testing.T) {
+	material := sharedphysics.MaterlikHfO2()
 	model := NewPreisachModel(material)
+	model.SetTemperature(300.0)
+	model.SetStress(0.0)
+	ecNoStress := model.GetEffectiveEc()
+	model.SetStress(1.0)
+	ecWithStress := model.GetEffectiveEc()
 
-	model.SetStress(2.0)
+	if math.Abs(ecWithStress-ecNoStress) <= math.Abs(ecNoStress)*1e-6 {
+		t.Fatalf("expected stress to modify Ec via electrostriction: Ec(0GPa)=%.6e Ec(1GPa)=%.6e", ecNoStress, ecWithStress)
+	}
+}
 
-	expectedEc := material.Ec * (1.0 + 0.05*(2.0-1.0))
-	if expectedEc < 1e5 {
-		expectedEc = 1e5
-	}
-	expectedPs := material.Ps
-	if expectedPs < 1e-6 {
-		expectedPs = 1e-6
-	}
+func TestPreisach_LK_TemperatureConsistency(t *testing.T) {
+	material := sharedphysics.MaterlikHfO2()
+	model := NewPreisachModel(material)
+	model.SetStress(0.0)
 
-	gotEc := model.GetEffectiveEc()
-	if math.Abs(gotEc-expectedEc) > math.Abs(expectedEc)*1e-8+1e-12 {
-		t.Fatalf("Ec mismatch: got %.6e, expected %.6e", gotEc, expectedEc)
-	}
+	temps := []float64{250.0, 300.0, 350.0}
+	prevPreisachEc := math.Inf(1)
+	prevLKEc := math.Inf(1)
 
-	gotPs := model.everett.Ps
-	const epsilon0 = 8.854e-12
-	chi := 0.0
-	if material.EpsilonLF > 1 {
-		chi = epsilon0 * (material.EpsilonLF - 1)
-	} else if material.Epsilon > 1 {
-		chi = epsilon0 * (material.Epsilon - 1)
-	}
-	revPSat := chi * expectedEc
-	expectedIrrev := expectedPs - revPSat
-	if expectedIrrev < 0 {
-		expectedIrrev = 0
-	}
-	if math.Abs(gotPs-expectedIrrev) > math.Abs(expectedIrrev)*1e-8+1e-12 {
-		t.Fatalf("Ps mismatch: got %.6e, expected %.6e", gotPs, expectedIrrev)
+	for _, temp := range temps {
+		model.SetTemperature(temp)
+		preisachEc := model.GetEffectiveEc()
+		lkEc := material.CoerciveFieldAtTemp(temp)
+
+		if !(preisachEc < prevPreisachEc) {
+			t.Fatalf("preisach Ec trend mismatch at T=%.1fK: prev=%.6e curr=%.6e", temp, prevPreisachEc, preisachEc)
+		}
+		if lkEc > 0 && !(lkEc < prevLKEc) {
+			t.Fatalf("LK Ec trend mismatch at T=%.1fK: prev=%.6e curr=%.6e", temp, prevLKEc, lkEc)
+		}
+
+		prevPreisachEc = preisachEc
+		if lkEc > 0 {
+			prevLKEc = lkEc
+		}
 	}
 }
