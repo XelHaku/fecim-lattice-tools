@@ -147,12 +147,15 @@ type DeviceState struct {
 	dac *peripherals.DAC
 
 	// Coupling simulation (Tier A arraysim)
-	couplingMode        arraysim.CouplingMode
-	arrayEngine         arraysim.Engine
-	cellGeometry        arraysim.CellGeometry
-	wireParams          arraysim.WireParams
-	coupledCellVoltages [][]float64 // Last coupled Vcell (V)
-	coupledCellCurrents [][]float64 // Last coupled Icell (A)
+	couplingMode               arraysim.CouplingMode
+	arrayEngine                arraysim.Engine
+	cellGeometry               arraysim.CellGeometry
+	wireParams                 arraysim.WireParams
+	selectorEnabled            bool
+	selectorRon                float64
+	selectorLeakageConductance float64
+	coupledCellVoltages        [][]float64 // Last coupled Vcell (V)
+	coupledCellCurrents        [][]float64 // Last coupled Icell (A)
 
 	enableDACNonlinearity bool                      // Apply DAC INL/DNL in compute path
 	peripheralTemperature float64                   // Temperature for peripheral nonlinearity model (K)
@@ -202,12 +205,15 @@ func NewDeviceState(rows, cols int, tia *peripherals.TIA, adc *peripherals.ADC) 
 		adc:          adc,
 		dac:          peripherals.DefaultDAC(),
 		// Default to Tier A so READ path uses coupled array-level simulation.
-		couplingMode:          arraysim.CouplingTierA,
-		arrayEngine:           arraysim.NewTierASolver(),
-		cellGeometry:          defaultGeometry,
-		wireParams:            arraysim.WireParams{},
-		peripheralTemperature: 300.0,
-		processCorner:         peripherals.CornerTypical,
+		couplingMode:               arraysim.CouplingTierA,
+		arrayEngine:                arraysim.NewTierASolver(),
+		cellGeometry:               defaultGeometry,
+		wireParams:                 arraysim.WireParams{},
+		selectorEnabled:            false,
+		selectorRon:                0,
+		selectorLeakageConductance: 0,
+		peripheralTemperature:      300.0,
+		processCorner:              peripherals.CornerTypical,
 		// Initialize embedded state machines
 		hysteresisState: HysteresisState{
 			LastLevel: make(map[string]int),
@@ -388,6 +394,22 @@ func (ds *DeviceState) GetCellGeometry() arraysim.CellGeometry {
 	ds.mu.RLock()
 	defer ds.mu.RUnlock()
 	return ds.cellGeometry
+}
+
+// SetWireParams updates wire resistance parameters for coupled solvers.
+func (ds *DeviceState) SetWireParams(wire arraysim.WireParams) {
+	ds.mu.Lock()
+	ds.wireParams = wire
+	ds.mu.Unlock()
+}
+
+// SetSelectorSeriesParams configures Tier-A selector series-R and leakage model.
+func (ds *DeviceState) SetSelectorSeriesParams(enabled bool, ronOhm, leakageConductance float64) {
+	ds.mu.Lock()
+	ds.selectorEnabled = enabled
+	ds.selectorRon = ronOhm
+	ds.selectorLeakageConductance = leakageConductance
+	ds.mu.Unlock()
 }
 
 // SetDACBits changes the DAC resolution (4-8 bits) and recreates the DAC peripheral.
@@ -1327,12 +1349,19 @@ func (ds *DeviceState) computeWithArraysimLocked(weights [][]int, quantLevels in
 	}
 
 	params := arraysim.SolveParams{
-		WLVoltages:  wlApplied,
-		BLVoltages:  blSolve,
-		Conductance: conductance,
-		ActiveRows:  ds.activeRows,
-		Geometry:    ds.cellGeometry,
-		Wire:        ds.wireParams,
+		WLVoltages:      wlApplied,
+		BLVoltages:      blSolve,
+		Conductance:     conductance,
+		ActiveRows:      ds.activeRows,
+		SelectorEnabled: ds.selectorEnabled,
+		SelectorRon:     ds.selectorRon,
+		Selector: arraysim.SelectorDeviceParams{
+			Enabled:        ds.selectorLeakageConductance > 0,
+			OnConductance:  math.Inf(1),
+			OffConductance: ds.selectorLeakageConductance,
+		},
+		Geometry: ds.cellGeometry,
+		Wire:     ds.wireParams,
 	}
 	result, err := ds.arrayEngine.Solve(params)
 	if err != nil {

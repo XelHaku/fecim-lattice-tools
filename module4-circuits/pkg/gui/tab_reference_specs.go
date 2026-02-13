@@ -328,6 +328,13 @@ func (ca *CircuitsApp) createSpecTIASection() fyne.CanvasObject {
 }
 
 func (ca *CircuitsApp) createSpecFeFETSection() fyne.CanvasObject {
+	if ca.refCellFootprintLbl == nil {
+		ca.refCellFootprintLbl = widget.NewLabel("-")
+	}
+	if ca.refCellDensityLbl == nil {
+		ca.refCellDensityLbl = widget.NewLabel("-")
+	}
+
 	specGrid := container.NewGridWithColumns(3,
 		widget.NewLabelWithStyle("Parameter", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		widget.NewLabelWithStyle("Value", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
@@ -369,10 +376,15 @@ func (ca *CircuitsApp) createSpecFeFETSection() fyne.CanvasObject {
 		widget.NewLabel("10 years"),
 		widget.NewLabel("data persistence without power"),
 
-		widget.NewLabel("Cell Size"),
-		widget.NewLabel("~0.01 µm²"),
-		widget.NewLabel("silicon area footprint"),
+		widget.NewLabel("Cell Footprint"),
+		ca.refCellFootprintLbl,
+		widget.NewLabel("from shared/physics CalculateFootprint"),
+
+		widget.NewLabel("Array Density"),
+		ca.refCellDensityLbl,
+		widget.NewLabel("cells per mm²"),
 	)
+	ca.updateFootprintReference()
 
 	helpText := widget.NewLabel("Note: Rise/fall times typically 2-10 ns; capacitance 0.1-10 pF; leakage < 1 nW per cell")
 	helpText.TextStyle = fyne.TextStyle{Italic: true}

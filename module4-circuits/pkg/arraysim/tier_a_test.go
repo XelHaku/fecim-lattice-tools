@@ -233,6 +233,54 @@ func TestTierA_MatchesDenseReferenceSolve(t *testing.T) {
 	}
 }
 
+func TestTierA_SelectorRonReducesReadCurrentAndMargin(t *testing.T) {
+	solver := NewTierASolver()
+
+	buildParams := func(targetG float64, selectorOn bool) SolveParams {
+		return SolveParams{
+			WLVoltages:      []float64{0.2},
+			BLVoltages:      []float64{0.0},
+			Conductance:     [][]float64{{targetG}},
+			ActiveRows:      []bool{true},
+			Wire:            WireParams{RWordLine: 1e-18, RBitLine: 1e-18},
+			SelectorEnabled: selectorOn,
+			SelectorRon:     20e3,
+		}
+	}
+
+	highOff, err := solver.Solve(buildParams(80e-6, false))
+	if err != nil {
+		t.Fatalf("highOff solve error: %v", err)
+	}
+	lowOff, err := solver.Solve(buildParams(20e-6, false))
+	if err != nil {
+		t.Fatalf("lowOff solve error: %v", err)
+	}
+	highOn, err := solver.Solve(buildParams(80e-6, true))
+	if err != nil {
+		t.Fatalf("highOn solve error: %v", err)
+	}
+	lowOn, err := solver.Solve(buildParams(20e-6, true))
+	if err != nil {
+		t.Fatalf("lowOn solve error: %v", err)
+	}
+
+	iHighOff := math.Abs(highOff.RowCurrents[0])
+	iLowOff := math.Abs(lowOff.RowCurrents[0])
+	iHighOn := math.Abs(highOn.RowCurrents[0])
+	iLowOn := math.Abs(lowOn.RowCurrents[0])
+
+	if !(iHighOn < iHighOff && iLowOn < iLowOff) {
+		t.Fatalf("selector should reduce read current: high off/on=%g/%g low off/on=%g/%g", iHighOff, iHighOn, iLowOff, iLowOn)
+	}
+
+	marginOff := iHighOff - iLowOff
+	marginOn := iHighOn - iLowOn
+	if !(marginOn < marginOff) {
+		t.Fatalf("selector should degrade read margin: off=%g on=%g", marginOff, marginOn)
+	}
+}
+
 func TestSenseChain_ConvertCurrent(t *testing.T) {
 	sense := SenseChain{
 		TIA: TIAConfig{

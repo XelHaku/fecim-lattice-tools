@@ -148,6 +148,12 @@ type SolveParams struct {
 	WriteMask    [][]bool
 	Selector     SelectorDeviceParams
 
+	// Tier-A read-path selector series model (M4-CMOS-04).
+	// When enabled, per-cell conductance is reduced as:
+	//   G_eff = 1 / (1/G_cell + SelectorRon)
+	SelectorEnabled bool
+	SelectorRon     float64 // ohm
+
 	Geometry CellGeometry
 	Wire     WireParams
 	Boundary BoundaryParams

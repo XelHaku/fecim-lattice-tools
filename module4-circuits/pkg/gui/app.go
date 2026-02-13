@@ -196,11 +196,11 @@ type CircuitsApp struct {
 	opsComputeButtons   *fyne.Container
 
 	// Animation state
-	animationStep      int // 0=none, 1=DAC, 2=Array, 3=ADC
-	animationActive    bool
-	programmingActive  bool
-	stopChan           chan struct{} // Closed to signal all goroutines to stop
-	stopped            bool          // True when Stop() has been called
+	animationStep     int // 0=none, 1=DAC, 2=Array, 3=ADC
+	animationActive   bool
+	programmingActive bool
+	stopChan          chan struct{} // Closed to signal all goroutines to stop
+	stopped           bool          // True when Stop() has been called
 
 	// Zoom state
 	zoomLevel  float64 // 1.0 = 100%, range 0.5 to 3.0
@@ -236,6 +236,12 @@ type CircuitsApp struct {
 
 	// Material selection button (like module 1)
 	materialBtn *widget.Button
+
+	// Technology node selection (CMOS scaling)
+	techNodeSelect      *widget.Select
+	selectedTechNodeNm  float64
+	refCellFootprintLbl *widget.Label
+	refCellDensityLbl   *widget.Label
 
 	// Unified view WL selector widgets
 	unifiedWLChecks    []*widget.Check
@@ -332,6 +338,7 @@ func NewCircuitsApp() *CircuitsApp {
 		zoomLevel:             1.0,                            // Default zoom 100%
 		readOverlayMode:       "Off",
 		showCurrentInCellInfo: false,
+		selectedTechNodeNm:    130,
 	}
 
 	// Create Fyne app

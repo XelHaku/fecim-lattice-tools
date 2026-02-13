@@ -29,18 +29,26 @@ func effectiveCellConductance(params SolveParams, r, c int) float64 {
 	}
 
 	enabled := selectorEnabled(params, r, c)
+	gEff := gCell
 	if !params.Selector.Enabled {
-		if enabled {
-			return gCell
+		if !enabled {
+			return 0
 		}
-		return 0
+	} else {
+		gSel := params.Selector.OffConductance
+		if enabled {
+			gSel = params.Selector.OnConductance
+		}
+		gEff = seriesConductance(gEff, gSel)
 	}
 
-	gSel := params.Selector.OffConductance
-	if enabled {
-		gSel = params.Selector.OnConductance
+	if params.SelectorEnabled && params.SelectorRon > 0 {
+		if gEff <= 0 {
+			return 0
+		}
+		gEff = 1.0 / (1.0/gEff + params.SelectorRon)
 	}
-	return seriesConductance(gCell, gSel)
+	return gEff
 }
 
 func seriesConductance(g1, g2 float64) float64 {
