@@ -1337,19 +1337,24 @@ func (ca *CircuitsApp) updateCellInfo() {
 		if isActive {
 			rowState = "ON"
 		}
-		vCellField := fmt.Sprintf("V_cell (V): %+.2f V", effectiveVoltage)
+		voltageField := fmt.Sprintf("V_cell (V): %+.2f V", effectiveVoltage)
 		if isPassive {
-			vCellField = fmt.Sprintf("WL (V): %+.2f V | BL (V): %+.2f V | V_cell (V): %+.2f V", wlVoltage, blVoltage, effectiveVoltage)
+			voltageField = fmt.Sprintf("WL (V): %+.2f V | BL (V): %+.2f V | V_cell (V): %+.2f V", wlVoltage, blVoltage, effectiveVoltage)
 		}
+
+		primaryField := voltageField
+		if ca.showCurrentInCellInfo {
+			primaryField = fmt.Sprintf("I_cell (µA): %s", formatMetricICellUA(expectedCurrent))
+		}
+
 		infoStr := fmt.Sprintf(
-			"Cell [%d,%d] | Level: %s/%d | G (µS): %s | %s | I_cell (µA): %s | V_TIA (V): %s | ADC Code: %s | Row: %s | Material: %s",
+			"Cell [%d,%d] | Level: %s/%d | G (µS): %s | %s | V_TIA (V): %s | ADC Code: %s | Row: %s | Material: %s",
 			selectedRow,
 			selectedCol,
 			formatMetricLevel(level),
 			levels-1,
 			formatMetricConductanceUS(conductanceUS),
-			vCellField,
-			formatMetricICellUA(expectedCurrent),
+			primaryField,
 			formatMetricVTIAMV(rowVoltage),
 			formatMetricADCCode(adcLevel),
 			rowState,

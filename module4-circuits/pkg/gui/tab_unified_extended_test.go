@@ -593,10 +593,10 @@ func TestUnifiedTabCellInfoSignedToggle(t *testing.T) {
 	ca.updateCellInfo()
 
 	if !strings.Contains(ca.sharedCellInfoLabel.Text, "V_cell (V):") {
-		t.Fatalf("expected explicit voltage label, got %q", ca.sharedCellInfoLabel.Text)
+		t.Fatalf("expected explicit voltage label in default mode, got %q", ca.sharedCellInfoLabel.Text)
 	}
-	if !strings.Contains(ca.sharedCellInfoLabel.Text, "I_cell (µA):") {
-		t.Fatalf("expected explicit current label, got %q", ca.sharedCellInfoLabel.Text)
+	if strings.Contains(ca.sharedCellInfoLabel.Text, "I_cell (µA):") {
+		t.Fatalf("did not expect current label in voltage mode, got %q", ca.sharedCellInfoLabel.Text)
 	}
 	if !(strings.Contains(ca.sharedCellInfoLabel.Text, "V_TIA (mV):") || strings.Contains(ca.sharedCellInfoLabel.Text, "V_TIA (V):")) || !strings.Contains(ca.sharedCellInfoLabel.Text, "ADC Code:") {
 		t.Fatalf("expected TIA/ADC labels, got %q", ca.sharedCellInfoLabel.Text)
@@ -606,6 +606,9 @@ func TestUnifiedTabCellInfoSignedToggle(t *testing.T) {
 	ca.updateCellInfo()
 	if !strings.Contains(ca.sharedCellInfoLabel.Text, "I_cell (µA):") {
 		t.Fatalf("expected current label after toggle, got %q", ca.sharedCellInfoLabel.Text)
+	}
+	if strings.Contains(ca.sharedCellInfoLabel.Text, "V_cell (V):") {
+		t.Fatalf("did not expect voltage label in current mode, got %q", ca.sharedCellInfoLabel.Text)
 	}
 }
 

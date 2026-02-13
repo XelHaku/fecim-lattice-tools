@@ -6,6 +6,8 @@
 
 **Source Documents**: `CRITIQUE_MASTER_LIST.md`, `docs/neural-network/mnist.fixes.todo.md`, `docs/ACCESSIBILITY_AUDIT.md`, `docs/peripheral-circuits/ARRAY_SIMULATION_FIDELITY.md`, `docs/development/ARCHITECTURE.md`, `PHYSICS_REALISM_AUDIT.md`, `OBSERVATIONS.md`, code comments
 
+**Phase 5 note (2026-02-12):** M1–M4 claim-matrix FALSE-claim cleanup completed: Claim 18 fixed in code/tests (signed V/I cell-info toggle now functional), Claim 5 marked DEFERRED with rationale (missing calibrated PZT/BTO presets), and Claim 19 marked DEFERRED as Module 5 scope (SRAM/ReRAM/MRAM comparison).
+
 ---
 
 ## Current Focus & Direction
