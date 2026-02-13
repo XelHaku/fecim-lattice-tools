@@ -993,14 +993,14 @@ Direct observations from Juan's live interaction with Module 4 Operations view.
 
 | ID | Observation | Priority | Status | Acceptance Criteria |
 |----|------------|----------|--------|---------------------|
-| M4-OBS-01 | Read-mode metric labels unclear (TIA/current/voltage/LSB/R0 ambiguous) | Critical | ⏳ | Every displayed number has label + unit + formula sublabel |
-| M4-OBS-02 | Overlay toggle adds phantom/extra cell | High | ⏳ | Overlay cell count == arrayRows × arrayCols, no extra cells |
-| M4-OBS-03 | Program Cell button not disabled during active ISPP write | High | ⏳ | Controls locked during programming, status shows "PROGRAMMING" |
-| M4-OBS-04 | VC legend lacks units, sign convention, and color mapping explanation | High | ⏳ | Legend shows "Cell Voltage (V)", signed range, color semantics |
-| M4-OBS-05 | 0T1R passive mode appears too localized (missing row/col half-select effects) | High | ⏳ | Either fix disturb propagation or add explicit model boundary disclosure |
-| M4-OBS-06 | ISPP engine label uses speed marketing ("Fast") instead of model provenance | Medium | ⏳ | Labels read "Preisach (Level-based)" / "L-K (Physics ODE)" |
-| M4-OBS-07 | Per-cell dual numbers confusing (two similar values without clear distinction) | High | ⏳ | Top = "L: XX" (level), Bottom = "V: ±X.XX V" or "I: ±X.XX µA" |
-| M4-OBS-08 | Read-mode UI precision: displayed values need consistent decimal places and ranges | Medium | ⏳ | All currents to 2 decimal µA, voltages to 3 decimal mV, ADC codes as integers |
+| M4-OBS-01 | Read-mode metric labels unclear (TIA/current/voltage/LSB/R0 ambiguous) | Critical | ✅ | `7a80866` V_TIA label with formula sublabel |
+| M4-OBS-02 | Overlay toggle adds phantom/extra cell | High | ✅ | `c73bb57` Bounded draw dims, regression test |
+| M4-OBS-03 | Program Cell button not disabled during active ISPP write | High | ✅ | `01df869` Controls locked during programming |
+| M4-OBS-04 | VC legend lacks units, sign convention, and color mapping explanation | High | ✅ | `c17e89e` Signed legend with BL/WL semantics |
+| M4-OBS-05 | 0T1R passive mode appears too localized (missing row/col half-select effects) | High | ✅ | `6d5da99` V/2 disturb disclosure on row+col |
+| M4-OBS-06 | ISPP engine label uses speed marketing ("Fast") instead of model provenance | Medium | ✅ | `774b4fc` "Preisach (Level-based)" / "L-K (Physics ODE)" |
+| M4-OBS-07 | Per-cell dual numbers confusing (two similar values without clear distinction) | High | ✅ | `7a80866` Top="L: XX", Bottom="V: ±X.XX V" |
+| M4-OBS-08 | Read-mode UI precision: displayed values need consistent decimal places and ranges | Medium | ✅ | `530b9a9` %.2f I/V, integer ADC codes |
 
 ## Module 1: UI/Physics Observations from User Testing (2026-02-12)
 
