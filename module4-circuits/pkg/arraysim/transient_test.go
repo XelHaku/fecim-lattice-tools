@@ -52,8 +52,8 @@ func TestTransient_EnergyPerCell(t *testing.T) {
 
 	res := TransientSolve(cfg, []PulseStep{{Voltage: ecV, DurationNs: 100}}, 0)
 	e := res[0].Energy_fJ
-	if e < 1 || e > 100 {
-		t.Fatalf("expected energy in [1,100] fJ, got %.3f fJ", e)
+	if e < 10 || e > 100 {
+		t.Fatalf("expected energy in [10,100] fJ, got %.3f fJ", e)
 	}
 }
 

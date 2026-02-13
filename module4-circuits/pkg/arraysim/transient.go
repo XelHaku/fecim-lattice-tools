@@ -119,7 +119,7 @@ func TransientSolve(config ArrayConfig, waveform []PulseStep, dt float64) []Tran
 					iTotal = ohmicI + displacementI
 				}
 				// Arraysim reports compact per-cell switching energy for module-level budgeting.
-				res.Energy_fJ += v * iTotal * dtThisS * 1e13
+				res.Energy_fJ += v * iTotal * dtThisS * 1e15
 
 				t += dtThisNs
 				res.TimeNs = append(res.TimeNs, t)
