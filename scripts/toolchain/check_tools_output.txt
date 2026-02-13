@@ -1,0 +1,10 @@
+go                   FOUND    go version go1.24.12 linux/amd64
+ngspice              NOT FOUND (required)
+heracles             NOT FOUND (optional)
+crosssim             NOT FOUND (optional)
+iverilog             NOT FOUND (optional)
+verilator            NOT FOUND (optional)
+openroad             NOT FOUND (optional)
+openlane             NOT FOUND (optional)
+python3              FOUND    Python 3.12.3
+numpy/scipy          FOUND    python stack unavailable: No module named 'scipy'
