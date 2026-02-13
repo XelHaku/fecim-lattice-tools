@@ -1105,13 +1105,13 @@ Goal: benchmark FeCIM outputs against external/open models where sensible, and k
 | OST-06 | ngspice round-trip validation | ✅ | `3c991a3` |
 | OST-07 | Add Verilog simulation sanity checks (iverilog/verilator if available) for generated behavioral models | ⏳ |
 | OST-08 | Compatibility matrix doc | ✅ | `318a3db` |
-| OST-09 | Add confidence policy: external-tool agreement bands (`green/yellow/red`) for each metric type | ⏳ |
-| OST-10 | Add CI job that runs available external-tool validations when tools exist; skips with explicit reason when missing | ⏳ |
-| OST-11 | Create `validation/external/baselines/` and store locked comparator baselines per tool+version | ⏳ |
-| OST-12 | Add drift detector that flags when dependency version changes invalidate prior baselines | ⏳ |
-| OST-13 | Add quarterly dependency review checklist (security + model-quality + compatibility impact) | ⏳ |
-| OST-14 | Evaluate “Verox” feasibility: define exact target tool/package, supported IO format, and meaningful validation scope | ⏳ |
-| OST-15 | Publish “100% coverage boundary” doc: what can be fully tested internally vs what requires external data/fab measurements | ⏳ |
+| OST-09 | Add confidence policy: external-tool agreement bands (`green/yellow/red`) for each metric type | ✅ `89d26c6` |
+| OST-10 | Add CI job that runs available external-tool validations when tools exist; skips with explicit reason when missing | ✅ `ffb757c` |
+| OST-11 | Create `validation/external/baselines/` and store locked comparator baselines per tool+version | ✅ `3304ea0` |
+| OST-12 | Add drift detector that flags when dependency version changes invalidate prior baselines | ✅ `36da8d9` |
+| OST-13 | Add quarterly dependency review checklist (security + model-quality + compatibility impact) | ✅ `d082011` |
+| OST-14 | Evaluate “Verox” feasibility: define exact target tool/package, supported IO format, and meaningful validation scope | ✅ `f6c11f1` |
+| OST-15 | Publish “100% coverage boundary” doc: what can be fully tested internally vs what requires external data/fab measurements | ✅ `71cd0ec` |
 
 ## Module 5 Deep Upgrade Roadmap (2026-02-13)
 
