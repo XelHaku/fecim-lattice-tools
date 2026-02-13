@@ -1,20 +1,8 @@
-// pkg/export/liberty.go
-// Liberty timing file generator for FeCIM bitcell
-//
-// References:
-// [1] Liberty Timing Format - Synopsys standard for timing libraries
-//
-//	https://people.eecs.berkeley.edu/~alanmi/publications/other/liberty07_03.pdf
-//
-// [2] SkyWater SKY130 PDK: https://skywater-pdk.readthedocs.io/
-//
-// Timing defaults use published FeFET characterization anchors:
-// - Trentzsch et al., IEDM 2016 (28nm FDSOI FeFET): ~50ns write, ~5ns read
-// - Muller et al., IEEE TED 2013: ultra-low leakage NC-FinFET operating envelope
 package export
 
 import (
 	"fmt"
+	"strings"
 
 	"fecim-lattice-tools/module6-eda/pkg/config"
 	"fecim-lattice-tools/shared/logging"
@@ -24,18 +12,43 @@ import (
 var logLiberty = logging.NewLogger("eda-export-liberty")
 
 const (
-	publishedWriteRiseNS      = 50.0   // Trentzsch et al., IEDM 2016 (28nm FDSOI FeFET)
-	publishedReadFallNS       = 5.0    // Trentzsch et al., IEDM 2016 typical read latency scale
-	publishedInputCapPF       = 0.015  // Mid-range FeFET input capacitance used in literature-calibrated flows
-	publishedLeakagePowerNW   = 0.0003 // Muller et al., IEEE TED 2013 NC-FinFET low-leakage envelope
-	publishedTransitionFactor = 0.30   // Slew approximated as 30% of propagation delay
+	publishedWriteRiseNS      = 50.0
+	publishedReadFallNS       = 5.0
+	publishedInputCapPF       = 0.015
+	publishedLeakagePowerNW   = 0.0003
+	publishedTransitionFactor = 0.30
 )
 
-// CharacterizationResult aliases module-shared transient characterization output.
 type CharacterizationResult = sharedphysics.CharacterizationResult
 
-// GenerateLibertyFromCharacterization applies transient-characterized timing when provided.
-// If char is nil, existing default behavior is preserved.
+// Module4EnergyModel carries per-operation energy from Module 4 (J/op).
+// These terms are back-annotated into Liberty internal_power groups.
+type Module4EnergyModel struct {
+	DACEnergyJ float64
+	MVMEnergyJ float64
+	TIAEnergyJ float64
+}
+
+type libertyCorner struct {
+	Name         string
+	Process      float64
+	TempC        float64
+	TimingScale  float64
+	VoltageScale float64
+}
+
+var defaultCorners = []libertyCorner{
+	{Name: "ff_n40c", Process: 0.8, TempC: -40.0, TimingScale: 0.76, VoltageScale: 1.05},
+	{Name: "ff_25c", Process: 0.8, TempC: 25.0, TimingScale: 0.82, VoltageScale: 1.02},
+	{Name: "ff_125c", Process: 0.8, TempC: 125.0, TimingScale: 0.93, VoltageScale: 0.98},
+	{Name: "tt_n40c", Process: 1.0, TempC: -40.0, TimingScale: 0.90, VoltageScale: 1.02},
+	{Name: "tt_25c", Process: 1.0, TempC: 25.0, TimingScale: 1.00, VoltageScale: 1.00},
+	{Name: "tt_125c", Process: 1.0, TempC: 125.0, TimingScale: 1.12, VoltageScale: 0.97},
+	{Name: "ss_n40c", Process: 1.2, TempC: -40.0, TimingScale: 1.08, VoltageScale: 0.98},
+	{Name: "ss_25c", Process: 1.2, TempC: 25.0, TimingScale: 1.20, VoltageScale: 0.95},
+	{Name: "ss_125c", Process: 1.2, TempC: 125.0, TimingScale: 1.35, VoltageScale: 0.92},
+}
+
 func GenerateLibertyFromCharacterization(cfg config.CellConfig, char *CharacterizationResult) string {
 	if char == nil {
 		return GenerateLiberty(cfg)
@@ -47,64 +60,106 @@ func GenerateLibertyFromCharacterization(cfg config.CellConfig, char *Characteri
 	if char.ReadTimeNs > 0 {
 		cfgWithChar.FallTime = char.ReadTimeNs
 	}
+	if char.ReadEnergy_fJ > 0 {
+		cfgWithChar.LeakagePower = char.ReadEnergy_fJ * 1e-6
+	}
 	return GenerateLiberty(cfgWithChar)
 }
 
-// GenerateLiberty generates a Liberty (.lib) timing file for the FeCIM bitcell
-// This is required by synthesis and STA tools (OpenROAD, OpenLane)
-// Format: Liberty Timing Format [Ref 1]
-// Supports both passive and 1T1R architectures
-//
-// ⚠️ WARNING: Generated timing values are PLACEHOLDERS requiring characterization
+// GenerateLibertyWithModule4Energy back-annotates Module 4 energies into internal_power groups.
+func GenerateLibertyWithModule4Energy(cfg config.CellConfig, energy *Module4EnergyModel) string {
+	return injectModule4InternalPower(GenerateLiberty(cfg), cfg, energy)
+}
+
+// GenerateLibertyFromCharacterizationWithEnergy applies timing characterization + M4 power annotation.
+func GenerateLibertyFromCharacterizationWithEnergy(cfg config.CellConfig, char *CharacterizationResult, energy *Module4EnergyModel) string {
+	if char == nil {
+		return GenerateLibertyWithModule4Energy(cfg, energy)
+	}
+	cfgWithChar := cfg
+	if char.WriteTimeNs > 0 {
+		cfgWithChar.RiseTime = char.WriteTimeNs
+	}
+	if char.ReadTimeNs > 0 {
+		cfgWithChar.FallTime = char.ReadTimeNs
+	}
+	if char.ReadEnergy_fJ > 0 {
+		cfgWithChar.LeakagePower = char.ReadEnergy_fJ * 1e-6
+	}
+	return injectModule4InternalPower(GenerateLiberty(cfgWithChar), cfgWithChar, energy)
+}
+
+func injectModule4InternalPower(lib string, cfg config.CellConfig, energy *Module4EnergyModel) string {
+	if energy == nil {
+		return lib
+	}
+	cfg = normalizeCellConfig(cfg)
+	cycleTimeS := (cfg.RiseTime + cfg.FallTime) * 1e-9
+	if cycleTimeS <= 0 {
+		cycleTimeS = 1e-9
+	}
+	toNW := func(eJ float64) float64 {
+		if eJ <= 0 {
+			return 0
+		}
+		return (eJ / cycleTimeS) * 1e9
+	}
+	dacNW := toNW(energy.DACEnergyJ)
+	mvmNW := toNW(energy.MVMEnergyJ)
+	tiaNW := toNW(energy.TIAEnergyJ)
+
+	var sb strings.Builder
+	sb.WriteString("\n      internal_power() {\n")
+	sb.WriteString("        related_pin : \"WL\" ;\n")
+	sb.WriteString(fmt.Sprintf("        rise_power(scalar) { values(\"%.6f\") ; }\n", dacNW))
+	sb.WriteString(fmt.Sprintf("        fall_power(scalar) { values(\"%.6f\") ; }\n", dacNW))
+	sb.WriteString("      }\n")
+	sb.WriteString("\n      internal_power() {\n")
+	sb.WriteString("        related_pin : \"BL\" ;\n")
+	sb.WriteString(fmt.Sprintf("        rise_power(scalar) { values(\"%.6f\") ; }\n", mvmNW))
+	sb.WriteString(fmt.Sprintf("        fall_power(scalar) { values(\"%.6f\") ; }\n", mvmNW))
+	sb.WriteString("      }\n")
+	sb.WriteString("\n      internal_power() {\n")
+	sb.WriteString("        related_pin : \"BL\" ;\n")
+	sb.WriteString(fmt.Sprintf("        rise_power(scalar) { values(\"%.6f\") ; }\n", tiaNW))
+	sb.WriteString(fmt.Sprintf("        fall_power(scalar) { values(\"%.6f\") ; }\n", tiaNW))
+	sb.WriteString("      }\n")
+
+	return strings.Replace(lib, "    pin(VPWR)", sb.String()+"\n    pin(VPWR)", 1)
+}
+
+// GenerateMultiCornerLiberty emits 9 corner libraries: FF/TT/SS at -40/25/125C.
+func GenerateMultiCornerLiberty(cfg config.CellConfig) string {
+	parts := make([]string, 0, len(defaultCorners))
+	for _, c := range defaultCorners {
+		ccfg := cfg
+		ccfg.Process = c.Process
+		ccfg.Temperature = c.TempC
+		if ccfg.Voltage <= 0 {
+			ccfg.Voltage = defaultVoltageForTechnology(cfg.Technology)
+		}
+		ccfg.Voltage *= c.VoltageScale
+		parts = append(parts, generateCornerLiberty(ccfg, c))
+	}
+	return strings.Join(parts, "\n\n")
+}
+
 func GenerateLiberty(cfg config.CellConfig) string {
-	logLiberty.Input("GenerateLiberty", map[string]interface{}{
-		"cellName": cfg.Name, "cellType": cfg.CellType, "width": cfg.Width, "height": cfg.Height,
-	})
+	logLiberty.Input("GenerateLiberty", map[string]interface{}{"cellName": cfg.Name, "cellType": cfg.CellType})
+	return generateCornerLiberty(normalizeCellConfig(cfg), libertyCorner{Name: "typical", Process: cfg.Process, TempC: cfg.Temperature, TimingScale: 1.0, VoltageScale: 1.0})
+}
 
-	if cfg.CellType == "1t1r" {
-		return Generate1T1RLiberty(cfg)
-	}
-	if cfg.CellType == "2t1r" {
-		return Generate2T1RLiberty(cfg)
-	}
-	area := cfg.Width * cfg.Height
-
-	// Use configured operating conditions with sensible defaults
-	voltage := cfg.Voltage
-	if voltage <= 0 {
-		voltage = 1.8 // SKY130 default
-	}
-	temperature := cfg.Temperature
-	if temperature <= 0 {
-		temperature = 25.0 // Typical corner
-	}
-	process := cfg.Process
-	if process <= 0 {
-		process = 1.0 // Typical process
-	}
-
-	riseTime := cfg.RiseTime
-	if riseTime <= 0 {
-		riseTime = publishedWriteRiseNS
-	}
-	fallTime := cfg.FallTime
-	if fallTime <= 0 {
-		fallTime = publishedReadFallNS
-	}
-	inputCap := cfg.InputCap
-	if inputCap <= 0 {
-		inputCap = publishedInputCapPF
-	}
-	leakagePower := cfg.LeakagePower
-	if leakagePower <= 0 {
-		leakagePower = publishedLeakagePowerNW
-	}
-
-	// Transition time ≈30% of propagation delay (published FeFET timing heuristic)
+func generateCornerLiberty(cfg config.CellConfig, corner libertyCorner) string {
+	cfg = normalizeCellConfig(cfg)
+	riseTime := cfg.RiseTime * corner.TimingScale
+	fallTime := cfg.FallTime * corner.TimingScale
 	riseTransition := riseTime * publishedTransitionFactor
 	fallTransition := fallTime * publishedTransitionFactor
 
-	return fmt.Sprintf(`library(fecim_cells) {
+	libraryName := libraryNameForCellType(cfg.CellType, corner.Name)
+	cellName, area, blFunction, inputPins := cellMetadata(cfg)
+
+	return fmt.Sprintf(`library(%s) {
   technology (cmos) ;
   delay_model : table_lookup ;
 
@@ -114,43 +169,28 @@ func GenerateLiberty(cfg config.CellConfig) string {
   capacitive_load_unit (1, pf) ;
   leakage_power_unit : "1nW" ;
 
-  operating_conditions(typical) {
+  lu_table_template(fecim_nldm_7x7) {
+    variable_1 : input_net_transition ;
+    variable_2 : total_output_net_capacitance ;
+    index_1("0.005, 0.010, 0.020, 0.040, 0.080, 0.120, 0.180") ;
+    index_2("0.005, 0.010, 0.020, 0.040, 0.080, 0.120, 0.180") ;
+  }
+
+  operating_conditions(%s) {
     process : %.1f ;
     temperature : %.1f ;
-    voltage : %.2f ;
+    voltage : %.3f ;
   }
-  default_operating_conditions : typical ;
+  default_operating_conditions : %s ;
 
   cell(%s) {
     area : %.4f ;
-    cell_leakage_power : %.4f ;
-
-    pin(WL) {
-      direction : input ;
-      capacitance : %.4f ;
-    }
-
+    cell_leakage_power : %.6f ;
+%s
     pin(BL) {
       direction : output ;
-      function : "WL" ;
-
-      timing() {
-        related_pin : "WL" ;
-        timing_sense : positive_unate ;
-
-        cell_rise(scalar) {
-          values("%.3f") ;
-        }
-        cell_fall(scalar) {
-          values("%.3f") ;
-        }
-        rise_transition(scalar) {
-          values("%.3f") ;
-        }
-        fall_transition(scalar) {
-          values("%.3f") ;
-        }
-      }
+      function : "%s" ;
+%s
     }
 
     pin(VPWR) {
@@ -164,84 +204,128 @@ func GenerateLiberty(cfg config.CellConfig) string {
     }
   }
 }
-`, process, temperature, voltage, cfg.Name, area, leakagePower, inputCap, riseTime, fallTime, riseTransition, fallTransition)
+`, libraryName, corner.Name, corner.Process, corner.TempC, cfg.Voltage, corner.Name, cellName, area, cfg.LeakagePower, inputPins, blFunction,
+		buildTimingBlocks(cfg.CellType, riseTime, fallTime, riseTransition, fallTransition))
 }
 
-// Generate1T1RLiberty generates Liberty file for 1T1R FeCIM bitcell with SL pin
-// 1T1R has additional SL (Source Line) input for sneak path mitigation
-func Generate1T1RLiberty(cfg config.CellConfig) string {
-	cellName := cfg.Name
-	if cellName == "fecim_bitcell" {
-		cellName = "fecim_1t1r_bitcell"
+func buildTimingBlocks(cellType string, riseTime, fallTime, riseTransition, fallTransition float64) string {
+	relatedPins := []string{"WL"}
+	if cellType == "1t1r" {
+		relatedPins = []string{"WL", "SL"}
+	} else if cellType == "2t1r" {
+		relatedPins = []string{"WL", "CSL", "SL"}
 	}
-	// Use larger dimensions for 1T1R
-	width := cfg.Width
-	height := cfg.Height
-	if width < 0.9 {
-		width = 0.920
-	}
-	if height < 3.0 {
-		height = 3.400
-	}
-	area := width * height
+	blocks := make([]string, 0, len(relatedPins))
+	for _, pin := range relatedPins {
+		blocks = append(blocks, fmt.Sprintf(`
+      timing() {
+        related_pin : "%s" ;
+        timing_sense : positive_unate ;
 
-	// Use configured operating conditions with sensible defaults
-	voltage := cfg.Voltage
-	if voltage <= 0 {
-		voltage = 1.8 // SKY130 default
+        cell_rise(fecim_nldm_7x7) {
+%s
+        }
+        cell_fall(fecim_nldm_7x7) {
+%s
+        }
+        rise_transition(fecim_nldm_7x7) {
+%s
+        }
+        fall_transition(fecim_nldm_7x7) {
+%s
+        }
+      }`, pin,
+			formatNLDMValues(riseTime), formatNLDMValues(fallTime), formatNLDMValues(riseTransition), formatNLDMValues(fallTransition)))
 	}
-	temperature := cfg.Temperature
-	if temperature <= 0 {
-		temperature = 25.0 // Typical corner
+	return strings.Join(blocks, "\n")
+}
+
+func formatNLDMValues(base float64) string {
+	slewScale := []float64{0.85, 0.92, 1.00, 1.10, 1.22, 1.35, 1.50}
+	loadScale := []float64{0.82, 0.90, 1.00, 1.12, 1.25, 1.40, 1.56}
+	rows := make([]string, 0, 7)
+	for _, ss := range slewScale {
+		vals := make([]string, 0, 7)
+		for _, ls := range loadScale {
+			vals = append(vals, fmt.Sprintf("%.3f", base*ss*ls))
+		}
+		rows = append(rows, fmt.Sprintf("          \"%s\"", strings.Join(vals, ", ")))
 	}
-	process := cfg.Process
-	if process <= 0 {
-		process = 1.0 // Typical process
+	return fmt.Sprintf("          values(\\\n%s\\\n          ) ;", strings.Join(rows, ", \\\n"))
+}
+
+func normalizeCellConfig(cfg config.CellConfig) config.CellConfig {
+	if cfg.Name == "" {
+		cfg.Name = "fecim_bitcell"
 	}
-
-	riseTime := cfg.RiseTime
-	if riseTime <= 0 {
-		riseTime = publishedWriteRiseNS
+	if cfg.CellType == "" {
+		cfg.CellType = "passive"
 	}
-	fallTime := cfg.FallTime
-	if fallTime <= 0 {
-		fallTime = publishedReadFallNS
+	tech := sharedphysics.TechnologyNodeFromName(cfg.Technology)
+	if cfg.Width <= 0 {
+		cfg.Width = tech.CellPitchX * 1e6
 	}
-	inputCap := cfg.InputCap
-	if inputCap <= 0 {
-		inputCap = publishedInputCapPF
+	if cfg.Height <= 0 {
+		cfg.Height = tech.CellRowHeight * 1e6
 	}
-	leakagePower := cfg.LeakagePower
-	if leakagePower <= 0 {
-		leakagePower = publishedLeakagePowerNW
+	if cfg.Voltage <= 0 {
+		cfg.Voltage = tech.VDD
 	}
+	if cfg.Temperature == 0 {
+		cfg.Temperature = 25.0
+	}
+	if cfg.Process <= 0 {
+		cfg.Process = 1.0
+	}
+	if cfg.RiseTime <= 0 {
+		cfg.RiseTime = publishedWriteRiseNS
+	}
+	if cfg.FallTime <= 0 {
+		cfg.FallTime = publishedReadFallNS
+	}
+	if cfg.InputCap <= 0 {
+		cfg.InputCap = publishedInputCapPF
+	}
+	if cfg.LeakagePower <= 0 {
+		cfg.LeakagePower = publishedLeakagePowerNW
+	}
+	return cfg
+}
 
-	// Transition time ≈30% of propagation delay
-	riseTransition := riseTime * publishedTransitionFactor
-	fallTransition := fallTime * publishedTransitionFactor
+func defaultVoltageForTechnology(tech string) float64 {
+	return sharedphysics.TechnologyNodeFromName(tech).VDD
+}
 
-	return fmt.Sprintf(`library(fecim_1t1r_cells) {
-  technology (cmos) ;
-  delay_model : table_lookup ;
+func libraryNameForCellType(cellType, corner string) string {
+	prefix := "fecim_cells"
+	switch cellType {
+	case "1t1r":
+		prefix = "fecim_1t1r_cells"
+	case "2t1r":
+		prefix = "fecim_2t1r_cells"
+	}
+	if corner == "typical" {
+		return prefix
+	}
+	return fmt.Sprintf("%s_%s", prefix, corner)
+}
 
-  time_unit : "1ns" ;
-  voltage_unit : "1V" ;
-  current_unit : "1mA" ;
-  capacitive_load_unit (1, pf) ;
-  leakage_power_unit : "1nW" ;
-
-  operating_conditions(typical) {
-    process : %.1f ;
-    temperature : %.1f ;
-    voltage : %.2f ;
-  }
-  default_operating_conditions : typical ;
-
-  cell(%s) {
-    area : %.4f ;
-    cell_leakage_power : %.4f ;
-
-    pin(WL) {
+func cellMetadata(cfg config.CellConfig) (cellName string, area float64, blFunction string, inputPins string) {
+	width, height := cfg.Width, cfg.Height
+	cellName = cfg.Name
+	switch cfg.CellType {
+	case "1t1r":
+		if cellName == "fecim_bitcell" {
+			cellName = "fecim_1t1r_bitcell"
+		}
+		if width < 0.9 {
+			width = 0.920
+		}
+		if height < 3.0 {
+			height = 3.400
+		}
+		blFunction = "(WL & SL)"
+		inputPins = fmt.Sprintf(`    pin(WL) {
       direction : input ;
       capacitance : %.4f ;
     }
@@ -250,138 +334,19 @@ func Generate1T1RLiberty(cfg config.CellConfig) string {
       direction : input ;
       capacitance : %.4f ;
     }
-
-    pin(BL) {
-      direction : output ;
-      function : "(WL & SL)" ;
-
-      timing() {
-        related_pin : "WL" ;
-        timing_sense : positive_unate ;
-
-        cell_rise(scalar) {
-          values("%.3f") ;
-        }
-        cell_fall(scalar) {
-          values("%.3f") ;
-        }
-        rise_transition(scalar) {
-          values("%.3f") ;
-        }
-        fall_transition(scalar) {
-          values("%.3f") ;
-        }
-      }
-
-      timing() {
-        related_pin : "SL" ;
-        timing_sense : positive_unate ;
-
-        cell_rise(scalar) {
-          values("%.3f") ;
-        }
-        cell_fall(scalar) {
-          values("%.3f") ;
-        }
-        rise_transition(scalar) {
-          values("%.3f") ;
-        }
-        fall_transition(scalar) {
-          values("%.3f") ;
-        }
-      }
-    }
-
-    pin(VPWR) {
-      direction : inout ;
-      pg_type : primary_power ;
-    }
-
-    pin(VGND) {
-      direction : inout ;
-      pg_type : primary_ground ;
-    }
-  }
-}
-`, process, temperature, voltage, cellName, area, leakagePower, inputCap, inputCap, riseTime, fallTime, riseTransition, fallTransition, riseTime, fallTime, riseTransition, fallTransition)
-}
-
-// Generate2T1RLiberty generates Liberty file for 2T1R FeCIM bitcell with CSL pin
-// 2T1R has WL (Word Line), CSL (Column Select Line), SL (Source Line), and BL (Bit Line)
-// CSL enables individual cell addressing, differentiating it from 1T1R
-func Generate2T1RLiberty(cfg config.CellConfig) string {
-	cellName := cfg.Name
-	if cellName == "fecim_bitcell" {
-		cellName = "fecim_2t1r_bitcell"
-	}
-	// Use larger dimensions for 2T1R (more transistors than 1T1R)
-	width := cfg.Width
-	height := cfg.Height
-	if width < 1.1 {
-		width = 1.200
-	}
-	if height < 3.5 {
-		height = 3.800
-	}
-	area := width * height
-
-	// Use configured operating conditions with sensible defaults
-	voltage := cfg.Voltage
-	if voltage <= 0 {
-		voltage = 1.8 // SKY130 default
-	}
-	temperature := cfg.Temperature
-	if temperature <= 0 {
-		temperature = 25.0 // Typical corner
-	}
-	process := cfg.Process
-	if process <= 0 {
-		process = 1.0 // Typical process
-	}
-
-	riseTime := cfg.RiseTime
-	if riseTime <= 0 {
-		riseTime = publishedWriteRiseNS
-	}
-	fallTime := cfg.FallTime
-	if fallTime <= 0 {
-		fallTime = publishedReadFallNS
-	}
-	inputCap := cfg.InputCap
-	if inputCap <= 0 {
-		inputCap = publishedInputCapPF
-	}
-	leakagePower := cfg.LeakagePower
-	if leakagePower <= 0 {
-		leakagePower = publishedLeakagePowerNW
-	}
-
-	// Transition time ≈30% of propagation delay
-	riseTransition := riseTime * publishedTransitionFactor
-	fallTransition := fallTime * publishedTransitionFactor
-
-	return fmt.Sprintf(`library(fecim_2t1r_cells) {
-  technology (cmos) ;
-  delay_model : table_lookup ;
-
-  time_unit : "1ns" ;
-  voltage_unit : "1V" ;
-  current_unit : "1mA" ;
-  capacitive_load_unit (1, pf) ;
-  leakage_power_unit : "1nW" ;
-
-  operating_conditions(typical) {
-    process : %.1f ;
-    temperature : %.1f ;
-    voltage : %.2f ;
-  }
-  default_operating_conditions : typical ;
-
-  cell(%s) {
-    area : %.4f ;
-    cell_leakage_power : %.4f ;
-
-    pin(WL) {
+`, cfg.InputCap, cfg.InputCap)
+	case "2t1r":
+		if cellName == "fecim_bitcell" {
+			cellName = "fecim_2t1r_bitcell"
+		}
+		if width < 1.1 {
+			width = 1.200
+		}
+		if height < 3.5 {
+			height = 3.800
+		}
+		blFunction = "(WL & CSL & SL)"
+		inputPins = fmt.Sprintf(`    pin(WL) {
       direction : input ;
       capacitance : %.4f ;
     }
@@ -395,79 +360,14 @@ func Generate2T1RLiberty(cfg config.CellConfig) string {
       direction : input ;
       capacitance : %.4f ;
     }
-
-    pin(BL) {
-      direction : output ;
-      function : "(WL & CSL & SL)" ;
-
-      timing() {
-        related_pin : "WL" ;
-        timing_sense : positive_unate ;
-
-        cell_rise(scalar) {
-          values("%.3f") ;
-        }
-        cell_fall(scalar) {
-          values("%.3f") ;
-        }
-        rise_transition(scalar) {
-          values("%.3f") ;
-        }
-        fall_transition(scalar) {
-          values("%.3f") ;
-        }
-      }
-
-      timing() {
-        related_pin : "CSL" ;
-        timing_sense : positive_unate ;
-
-        cell_rise(scalar) {
-          values("%.3f") ;
-        }
-        cell_fall(scalar) {
-          values("%.3f") ;
-        }
-        rise_transition(scalar) {
-          values("%.3f") ;
-        }
-        fall_transition(scalar) {
-          values("%.3f") ;
-        }
-      }
-
-      timing() {
-        related_pin : "SL" ;
-        timing_sense : positive_unate ;
-
-        cell_rise(scalar) {
-          values("%.3f") ;
-        }
-        cell_fall(scalar) {
-          values("%.3f") ;
-        }
-        rise_transition(scalar) {
-          values("%.3f") ;
-        }
-        fall_transition(scalar) {
-          values("%.3f") ;
-        }
-      }
+`, cfg.InputCap, cfg.InputCap, cfg.InputCap)
+	default:
+		blFunction = "WL"
+		inputPins = fmt.Sprintf(`    pin(WL) {
+      direction : input ;
+      capacitance : %.4f ;
     }
-
-    pin(VPWR) {
-      direction : inout ;
-      pg_type : primary_power ;
-    }
-
-    pin(VGND) {
-      direction : inout ;
-      pg_type : primary_ground ;
-    }
-  }
-}
-`, process, temperature, voltage, cellName, area, leakagePower, inputCap, inputCap, inputCap,
-		riseTime, fallTime, riseTransition, fallTransition,
-		riseTime, fallTime, riseTransition, fallTransition,
-		riseTime, fallTime, riseTransition, fallTransition)
+`, cfg.InputCap)
+	}
+	return cellName, width * height, blFunction, inputPins
 }
