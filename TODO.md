@@ -981,13 +981,13 @@ These require analysis/simulation before a fix can be proposed. Each produces a 
 
 | ID | Investigation | Priority | Status | Notes |
 |----|--------------|----------|--------|-------|
-| M4-INV-01 | Selector Ron impact on read margin vs array size | High | ✅ | Completed with `TestM4INV01_ReadMarginVsSelectorRon` and results in `docs/validation/m4-inv-01-results.md` (commit: pending). |
-| M4-INV-02 | Wordline RC delay vs array size | High | ✅ | Completed with `TestM4INV02_WordlineRCDelayBudget` and results in `docs/validation/m4-inv-02-results.md` (commit: pending). |
-| M4-INV-03 | Half-select disturb budget | Medium | ✅ | Completed with `TestM4INV03_HalfSelectDisturbBudget` and results in `docs/validation/m4-inv-03-results.md` (commit: pending). |
-| M4-INV-04 | Thermal noise floor vs ADC resolution | Medium | ✅ | Refined via `TestM4INV04_ThermalNoiseVsADCRefine` + noise sweeps; results in `docs/validation/m4-inv-04-results.md` (commit: pending). |
-| M4-INV-05 | Charge pump efficiency model | Low | ✅ | Completed with `TestM4INV05_ChargePumpDicksonEfficiencyAt3V`; results in `docs/validation/m4-inv-05-results.md` (commit: pending). |
-| M4-INV-06 | Comparison view: replace CPU/GPU/FeFET with architecture-aware metrics | Medium | ✅ | Dynamic metrics implemented (`computeComparisonMetrics`) and validated in `TestM4INV06_DynamicTOPSWMetrics`; results in `docs/validation/m4-inv-06-results.md` (commit: pending). |
-| M4-INV-07 | SPICE export from Module 4 state | Medium | ✅ | ngspice export validated via `TestM4INV07_SPICEExportFromArrayState`; results in `docs/validation/m4-inv-07-results.md` (commit: pending). |
+| M4-INV-01 | Selector Ron impact on read margin vs array size | High | ✅ | Completed with `TestM4INV01_ReadMarginVsSelectorRon` and results in `docs/validation/m4-inv-01-results.md` (commit: 001a540). |
+| M4-INV-02 | Wordline RC delay vs array size | High | ✅ | Completed with `TestM4INV02_WordlineRCDelayBudget` and results in `docs/validation/m4-inv-02-results.md` (commit: 001a540). |
+| M4-INV-03 | Half-select disturb budget | Medium | ✅ | Completed with `TestM4INV03_HalfSelectDisturbBudget` and results in `docs/validation/m4-inv-03-results.md` (commit: 001a540). |
+| M4-INV-04 | Thermal noise floor vs ADC resolution | Medium | ✅ | Refined via `TestM4INV04_ThermalNoiseVsADCRefine` + noise sweeps; results in `docs/validation/m4-inv-04-results.md` (commit: 001a540). |
+| M4-INV-05 | Charge pump efficiency model | Low | ✅ | Completed with `TestM4INV05_ChargePumpDicksonEfficiencyAt3V`; results in `docs/validation/m4-inv-05-results.md` (commit: 001a540). |
+| M4-INV-06 | Comparison view: replace CPU/GPU/FeFET with architecture-aware metrics | Medium | ✅ | Dynamic metrics implemented (`computeComparisonMetrics`) and validated in `TestM4INV06_DynamicTOPSWMetrics`; results in `docs/validation/m4-inv-06-results.md` (commit: 001a540). |
+| M4-INV-07 | SPICE export from Module 4 state | Medium | ✅ | ngspice export validated via `TestM4INV07_SPICEExportFromArrayState`; results in `docs/validation/m4-inv-07-results.md` (commit: 001a540). |
 
 ## Module 4: UI/Physics Observations from User Testing (2026-02-12)
 
