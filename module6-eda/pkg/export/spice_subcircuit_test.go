@@ -1,8 +1,6 @@
 package export
 
 import (
-	"regexp"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -11,6 +9,9 @@ import (
 
 func TestGenerateFeFETSubcircuit_BalancedBlocks(t *testing.T) {
 	s := GenerateFeFETSubcircuit(DefaultHzoFeFETMaterial())
+	if !strings.Contains(s, ".subckt FECAP_HZO pos neg") {
+		t.Fatal("missing LK FECAP_HZO subcircuit")
+	}
 	if !strings.Contains(s, ".subckt fefet_cell") {
 		t.Fatal("missing .subckt fefet_cell")
 	}
@@ -22,20 +23,16 @@ func TestGenerateFeFETSubcircuit_BalancedBlocks(t *testing.T) {
 	}
 }
 
-func TestGenerateFeFETSubcircuit_CFeRange(t *testing.T) {
+func TestGenerateFeFETSubcircuit_UsesMaterlikDefaults(t *testing.T) {
 	s := GenerateFeFETSubcircuit(DefaultHzoFeFETMaterial())
-	re := regexp.MustCompile(`(?m)^\.param C_fe=([0-9.eE+-]+)$`)
-	m := re.FindStringSubmatch(s)
-	if len(m) != 2 {
-		t.Fatalf("missing C_fe param in subcircuit:\n%s", s)
+	if !strings.Contains(s, "beta=-6.720000e+08") {
+		t.Fatalf("missing Materlik beta default in generated subckt:\n%s", s)
 	}
-	cfe, err := strconv.ParseFloat(m[1], 64)
-	if err != nil {
-		t.Fatalf("invalid C_fe value %q: %v", m[1], err)
+	if !strings.Contains(s, "gamma=1.950000e+10") {
+		t.Fatalf("missing Materlik gamma default in generated subckt:\n%s", s)
 	}
-	cfeFF := cfe * 1e15
-	if cfeFF < 1.0 || cfeFF > 10.0 {
-		t.Fatalf("C_fe out of expected range: %.3f fF (want 1..10 fF)", cfeFF)
+	if !strings.Contains(s, "full nonlinear LK production models generally require Verilog-A") {
+		t.Fatalf("missing LK limitation note in generated subckt:\n%s", s)
 	}
 }
 

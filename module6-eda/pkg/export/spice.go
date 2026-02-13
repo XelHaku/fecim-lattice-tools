@@ -7,12 +7,11 @@ import (
 	"strings"
 
 	"fecim-lattice-tools/module6-eda/pkg/compiler"
+	sharedexport "fecim-lattice-tools/shared/export"
 	"fecim-lattice-tools/shared/logging"
 )
 
 var logSPICE = logging.NewLogger("eda-export-spice")
-
-const vacuumPermittivity = 8.854e-12 // F/m
 
 // FeFETMaterial describes ferroelectric stack parameters used by SPICE generator.
 type FeFETMaterial struct {
@@ -23,17 +22,16 @@ type FeFETMaterial struct {
 }
 
 // DefaultHzoFeFETMaterial returns default HZO values used by Module 6 SPICE export.
-// Effective default area is chosen so C_fe is in the expected ~2.2fF range.
 func DefaultHzoFeFETMaterial() FeFETMaterial {
 	return FeFETMaterial{
 		RelativePermittivity: 25.0,
 		ThicknessM:           10e-9,
-		AreaM2:               1e-13,
+		AreaM2:               2.025e-15,
 		CoerciveFieldVM:      1e8,
 	}
 }
 
-// GenerateFeFETSubcircuit creates the FeFET primitive with ferroelectric capacitance.
+// GenerateFeFETSubcircuit creates the FeFET primitive using shared LK FeCap export.
 func GenerateFeFETSubcircuit(mat FeFETMaterial) string {
 	if mat.RelativePermittivity <= 0 {
 		mat.RelativePermittivity = 25.0
@@ -42,25 +40,22 @@ func GenerateFeFETSubcircuit(mat FeFETMaterial) string {
 		mat.ThicknessM = 10e-9
 	}
 	if mat.AreaM2 <= 0 {
-		mat.AreaM2 = 1e-13
-	}
-	if mat.CoerciveFieldVM <= 0 {
-		mat.CoerciveFieldVM = 1e8
+		mat.AreaM2 = 2.025e-15
 	}
 
-	cFe := vacuumPermittivity * mat.RelativePermittivity * mat.AreaM2 / mat.ThicknessM
-	vc := mat.CoerciveFieldVM * mat.ThicknessM
+	params := sharedexport.DefaultMaterlikFECapParams()
+	params.Name = "FECAP_HZO"
+	params.EpsR = mat.RelativePermittivity
+	params.Thick_m = mat.ThicknessM
+	params.Area_m2 = mat.AreaM2
 
 	var sb strings.Builder
-	sb.WriteString(".subckt fefet_cell TE BE LEVEL=15\n")
-	sb.WriteString("* Voltage-dependent FeFET: piecewise linear G(V)\n")
-	sb.WriteString("* Below Vc: G = Gmin (HRS), Above Vc: G = Gmax (LRS)\n")
-	sb.WriteString("* Vc = coercive voltage = Ec * thickness\n")
-	sb.WriteString(fmt.Sprintf("* Computed defaults: C_fe=%.3ef F, Vc=%.3f V\n", cFe*1e15, vc))
-	sb.WriteString(fmt.Sprintf(".param C_fe=%.6e\n", cFe))
-	sb.WriteString(".param R_level=1e4\n")
+	sb.WriteString(sharedexport.GenerateFECapSubcircuit(params))
+	sb.WriteString("\n")
+	sb.WriteString(".subckt fefet_cell TE BE PARAMS: R_level=1e4\n")
+	sb.WriteString("* FeFET wrapper: programmable channel resistance + LK ferroelectric capacitor\n")
 	sb.WriteString("Rfe TE n1 {R_level}\n")
-	sb.WriteString("Cfe n1 BE {C_fe}\n")
+	sb.WriteString("XFE n1 BE FECAP_HZO\n")
 	sb.WriteString(".ends fefet_cell\n\n")
 	return sb.String()
 }
@@ -162,7 +157,7 @@ func GenerateSPICE(design *compiler.ArrayDesign, vdd float64) string {
 	sb.WriteString("\n")
 
 	// FeFET cells as subcircuit instances
-	sb.WriteString("* FeFET Cells (subcircuit model: R_level = 1/G, includes C_fe)\n")
+	sb.WriteString("* FeFET Cells (subcircuit model: R_level = 1/G + LK FeCap)\n")
 	for _, cell := range cellsToExport {
 		// Use Resistance field if set, otherwise calculate from Conductance
 		resistance := cell.Resistance

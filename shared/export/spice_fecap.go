@@ -11,39 +11,74 @@ const vacuumPermittivity = 8.8541878128e-12 // F/m
 
 // FECapParams contains parameters for Landau-Khalatnikov ferroelectric capacitor SPICE export.
 type FECapParams struct {
-	Name     string  // e.g. "FECAP_HZO_10nm"
-	Alpha    float64 // Landau coefficient (C^-2 m^2 N)
-	Beta     float64 // C^-4 m^6 N
-	Gamma    float64 // C^-6 m^10 N
-	Rho      float64 // damping/viscosity (Ohm*m)
-	EpsR     float64 // relative permittivity
-	Area_m2  float64 // device area
-	Thick_m  float64 // film thickness
+	Name    string  // e.g. "FECAP_HZO"
+	Alpha   float64 // Landau alpha coefficient (SI)
+	Beta    float64 // Landau beta coefficient (SI)
+	Gamma   float64 // Landau gamma coefficient (SI)
+	Rho     float64 // damping/viscosity (Ohm*m)
+	EpsR    float64 // relative permittivity for linear dielectric branch
+	Area_m2 float64 // device area
+	Thick_m float64 // film thickness
+}
+
+// DefaultMaterlikFECapParams returns LK defaults anchored to Materlik 2015
+// coefficients used in shared/physics/material.go.
+func DefaultMaterlikFECapParams() FECapParams {
+	m := physics.MaterlikHfO2()
+	return FECapParams{
+		Name:    "FECAP_HZO",
+		Alpha:   -1.0e8, // practical ngspice default; full alpha(T) calibration needs full LK flow
+		Beta:    m.BetaLandau,
+		Gamma:   m.GammaLandau,
+		Rho:     m.RhoViscosity,
+		EpsR:    25.0,
+		Area_m2: 2.025e-15,
+		Thick_m: 10e-9,
+	}
 }
 
 // GenerateFECapSubcircuit returns an ngspice-compatible Landau-Khalatnikov FeCap subcircuit.
 func GenerateFECapSubcircuit(params FECapParams) string {
-	name := strings.TrimSpace(params.Name)
-	if name == "" {
-		name = "FECAP"
+	if strings.TrimSpace(params.Name) == "" {
+		params.Name = "FECAP_HZO"
+	}
+	if params.Alpha == 0 {
+		params.Alpha = -1.0e8
+	}
+	if params.Beta == 0 || params.Gamma == 0 || params.Rho <= 0 || params.EpsR <= 0 || params.Area_m2 <= 0 || params.Thick_m <= 0 {
+		d := DefaultMaterlikFECapParams()
+		if params.Beta == 0 {
+			params.Beta = d.Beta
+		}
+		if params.Gamma == 0 {
+			params.Gamma = d.Gamma
+		}
+		if params.Rho <= 0 {
+			params.Rho = d.Rho
+		}
+		if params.EpsR <= 0 {
+			params.EpsR = d.EpsR
+		}
+		if params.Area_m2 <= 0 {
+			params.Area_m2 = d.Area_m2
+		}
+		if params.Thick_m <= 0 {
+			params.Thick_m = d.Thick_m
+		}
 	}
 
-	cFe := vacuumPermittivity * params.EpsR * params.Area_m2 / params.Thick_m
-	rVisc := params.Rho * params.Thick_m / params.Area_m2
-
-	// Polarization approximation from electrostatics: Q = C*V, P = Q/A.
-	pExpr := fmt.Sprintf("((V(pos,mid)*%.12e)/%.12e)", cFe, params.Area_m2)
-	vLandauExpr := fmt.Sprintf("-(2*%.12e*(%s) + 4*%.12e*pow((%s),3) + 6*%.12e*pow((%s),5))*%.12e",
-		params.Alpha, pExpr, params.Beta, pExpr, params.Gamma, pExpr, params.Thick_m)
-
-	return fmt.Sprintf(`.subckt %s pos neg
-* Ferroelectric capacitor — Landau-Khalatnikov model
-* Reference: Sivasubramanian & Widom, IEEE (2003); Materlik et al., J. Appl. Phys. 117, 134109 (2015)
-C_fe pos mid %.12e
-R_visc mid neg %.12e
-B_landau mid neg V = %s
+	return fmt.Sprintf(`.subckt %s pos neg PARAMS: alpha=%.6e beta=%.6e gamma=%.6e rho=%.6e thick=%.6e area=%.6e eps0=%.12e
+* Landau-Khalatnikov ferroelectric capacitor
+* Reference: Sivasubramanian & Widom, IEEE (2003)
+* Materlik defaults used for beta/gamma (J. Appl. Phys. 117, 134109, 2015).
+* Limitation: full nonlinear LK production models generally require Verilog-A.
+* This ngspice B-source form is suitable for small-signal and transient studies.
+Cfe pos n1 {eps0*%.6g*area/thick}
+Rvisc n1 neg {rho*thick/area}
+* Nonlinear Landau voltage via ngspice B-source
+B_landau n1 neg V = -(2*alpha*v(n1)*thick + 4*beta*v(n1)**3*thick + 6*gamma*v(n1)**5*thick)
 .ends %s
-`, name, cFe, rVisc, vLandauExpr, name)
+`, params.Name, params.Alpha, params.Beta, params.Gamma, params.Rho, params.Thick_m, params.Area_m2, vacuumPermittivity, params.EpsR, params.Name)
 }
 
 // Generate1T1RSubcircuit returns an ngspice 1T1R wrapper with one NMOS selector and one FeCap.
