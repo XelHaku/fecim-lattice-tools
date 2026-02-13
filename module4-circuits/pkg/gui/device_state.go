@@ -1950,9 +1950,9 @@ const (
 func (e ISPPEngine) String() string {
 	switch e {
 	case ISPPEngineLevel:
-		return "Fast (Level)"
+		return "Preisach (Level-based)"
 	case ISPPEngineLK:
-		return "L-K (Physics)"
+		return "Landau-Khalatnikov (Physics ODE)"
 	default:
 		return "Unknown"
 	}

@@ -25,8 +25,8 @@ func TestISPPEngine_StringLabels(t *testing.T) {
 		engine ISPPEngine
 		label  string
 	}{
-		{ISPPEngineLevel, "Fast (Level)"},
-		{ISPPEngineLK, "L-K (Physics)"},
+		{ISPPEngineLevel, "Preisach (Level-based)"},
+		{ISPPEngineLK, "Landau-Khalatnikov (Physics ODE)"},
 		{ISPPEngine(99), "Unknown"},
 	}
 
