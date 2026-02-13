@@ -134,9 +134,15 @@ func TestGenerateSPICE(t *testing.T) {
 		t.Error("SPICE should end with .end")
 	}
 
-	// Count resistor elements (should be 6 for 2x3 matrix)
-	resistorCount := strings.Count(spice, "R_")
-	if resistorCount != 6 {
-		t.Errorf("Expected 6 resistors, got %d", resistorCount)
+	// Count FeFET instances (should be 6 for 2x3 matrix)
+	instanceCount := 0
+	for _, line := range strings.Split(spice, "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "X_") {
+			instanceCount++
+		}
+	}
+	if instanceCount != 6 {
+		t.Errorf("Expected 6 FeFET instances, got %d", instanceCount)
 	}
 }

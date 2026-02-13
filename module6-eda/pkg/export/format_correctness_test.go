@@ -85,7 +85,7 @@ func TestExportFormats_JSONCSVSPICEVerilogDEF(t *testing.T) {
 	// SPICE correctness
 	sp, _ := os.ReadFile(spPath)
 	spice := string(sp)
-	for _, token := range []string{".param VDD", "R_0_0", "R_1_2", ".end"} {
+	for _, token := range []string{".param VDD", "X_0_0", "X_1_2", ".end"} {
 		if !strings.Contains(spice, token) {
 			t.Fatalf("spice missing token: %s", token)
 		}
