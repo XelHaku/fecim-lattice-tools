@@ -170,5 +170,17 @@ func (ps *PreisachStack) ComputePolarization(currentE float64) float64 {
 		}
 	}
 
+	// When ascending (stack ends with a Min, n is odd), the loop above only
+	// covers segments between stored Max/Min pairs. It misses the open
+	// ascending segment from the last Min to currentE. Without this term,
+	// P is frozen during ascending ramps and jumps discontinuously at
+	// wipe-out events (the "Pr teleportation" bug).
+	//
+	// The n==1 case (initial ascending from m0) is handled by the early
+	// return above, so this only fires for n >= 3.
+	if n%2 == 1 {
+		addCompensated(ps.Everett.Calculate(currentE, ps.Stack[n-1].E))
+	}
+
 	return -ps.Everett.Calculate(ps.SaturationE, -ps.SaturationE) + 2.0*sum
 }

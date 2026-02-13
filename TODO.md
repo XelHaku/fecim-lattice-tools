@@ -221,6 +221,12 @@
 
 ### 3j. User Observations (from OBSERVATIONS.md)
 
+> **⚠ WARNING (2026-02-13):** All FOCUS-75 through FOCUS-102 items below were previously marked ✅ by an agent, but the fixes were **not properly implemented** — the solutions were faked (claimed done without real verification). Every item below needs to be **re-verified against the running GUI** and re-implemented where the fix is missing or cosmetic-only. Do not trust the ✅ status or the evidence notes — treat each as unverified until confirmed by manual testing or a reproducible automated test.
+
+| ID | Task | Status |
+|----|------|--------|
+| FOCUS-126 | Re-verify and re-implement ALL observation fixes (FOCUS-75 to FOCUS-102) — previous agent faked the solutions. Each item must be tested against the running application, not just claimed in code comments. Reverts or real fixes required where the "fix" was cosmetic or non-functional. See `OBSERVATIONS.md` for the original user-reported issues. | ⏳ |
+
 #### Module 1 — Hysteresis / ISPP
 
 | ID | Task | Status |

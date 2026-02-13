@@ -1084,12 +1084,10 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 					a.wrdPhaseTimer = 0
 					break
 				}
-				// Pre-bias toward the opposite polarity of the target.
-				// Use stronger fields only for near-saturation targets.
-				prepMag := Ec
-				if forcePrep {
-					prepMag = Ec * 2.0
-				}
+				// Pre-bias to full saturation field to match calibration procedure.
+				// Calibration tests each level from Reset → ±Emax → 0 → testE → 0,
+				// so PREP must reach ±Emax to produce matching Preisach states.
+				prepMag := Emax
 				prepE := prepMag
 				if targetLevel > midLevel {
 					prepE = -prepMag // Upper targets: bias NEGATIVE first
@@ -1098,6 +1096,15 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 
 				// Capture start-of-PREP state for logging
 				if a.wrdPhaseTimer <= dt {
+					// Reset Preisach stack to clear residual turning points from
+					// previous ISPP cycle. Without this, the stack retains history
+					// at up to ±2.5*Ec that PREP cannot wipe out, causing subsequent
+					// cycles to converge to wrong levels. This matches the calibration
+					// procedure which starts each measurement from a Reset() state.
+					if a.preisach != nil {
+						a.preisach.Reset()
+					}
+
 					a.wrdResetStartP = a.polarization * 100
 					a.wrdStartLevel = a.discreteLevel + 1
 					a.wrdWriteStartP = a.polarization * 100
