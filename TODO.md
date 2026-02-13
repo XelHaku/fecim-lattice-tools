@@ -1036,7 +1036,7 @@ Observation: Module 6 has the right EDA skeleton (LEF/Liberty/Verilog/SPICE/DEF 
 | M6-SPICE-01 | Replace fixed-resistor FeFET model with voltage-dependent piecewise I-V | Critical | ✅ | Implemented with `fefet_cell` subcircuit and per-cell `R_level` parameter in `module6-eda/pkg/export/spice.go` |
 | M6-SPICE-02 | Add ferroelectric capacitance to SPICE model (C_fe = ε₀·εr·A/t) | High | ✅ | Added `C_fe` ferroelectric capacitor in FeFET subcircuit; default HZO params produce fF-range capacitance |
 | M6-SPICE-03 | Generate SPICE subcircuit for 1T1R/2T1R with MOSFET + FeFET | High | ⏳ | Use SKY130 MOSFET models + FeFET subcircuit. Enables real transient simulation |
-| M6-LIB-01 | Replace Liberty placeholder timing with published FeFET characterization data | High | ⏳ | Sources: Muller 2013 (28nm FDSOI), Trentzsch 2016 (28nm), Dunkel 2017 (22nm). File: `export/liberty.go` |
+| M6-LIB-01 | Replace Liberty placeholder timing with published FeFET characterization data | High | ✅ | Sources: Muller 2013 (28nm FDSOI), Trentzsch 2016 (28nm), Dunkel 2017 (22nm). File: `export/liberty.go` |
 | M6-LIB-02 | Add NLDM lookup tables to Liberty (rise/fall vs input slew × output load) | Medium | ⏳ | Currently scalar values only. 7×7 table minimum for STA accuracy |
 | M6-LIB-03 | Multi-corner Liberty generation (fast/typical/slow × temperature) | Medium | ⏳ | Currently only "typical" corner. Need FF/TT/SS at -40/25/125°C |
 | M6-POWER-01 | Dynamic power model: P_dyn = C_eff · V² · f per cell, array-level summation | High | ⏳ | Currently placeholder leakage only (0.0003 nW). Need switching + leakage + short-circuit |

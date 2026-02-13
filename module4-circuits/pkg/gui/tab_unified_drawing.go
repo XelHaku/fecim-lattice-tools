@@ -690,7 +690,7 @@ func (ca *CircuitsApp) drawUnifiedArray(w, h int) image.Image {
 			// Draw current annotation centered on the selected cell.
 			cellCX := offsetX + selectedCol*cellSize + cellSize/2
 			cellCY := offsetY + selectedRow*cellSize + cellSize/2
-			infoText := fmt.Sprintf("%.1fuA", expectedCurrent)
+			infoText := fmt.Sprintf("%.2f µA", expectedCurrent)
 			textX := cellCX - len(infoText)*3
 			textY := cellCY - 3
 			drawSimpleText(img, infoText, textX, textY, color.RGBA{255, 255, 100, 220})
