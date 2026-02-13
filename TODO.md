@@ -998,7 +998,7 @@ Direct observations from Juan's live interaction with Module 4 Operations view.
 | M4-OBS-03 | Program Cell button not disabled during active ISPP write | High | ✅ | `01df869` Controls locked during programming |
 | M4-OBS-04 | VC legend lacks units, sign convention, and color mapping explanation | High | ✅ | `c17e89e` Signed legend with BL/WL semantics |
 | M4-OBS-05 | 0T1R passive mode appears too localized (missing row/col half-select effects) | High | ✅ | `6d5da99` V/2 disturb disclosure on row+col |
-| M4-OBS-06 | ISPP engine label uses speed marketing ("Fast") instead of model provenance | Medium | ✅ | `774b4fc` "Preisach (Level-based)" / "L-K (Physics ODE)" |
+| M4-OBS-06 | ISPP engine label uses speed marketing ("Fast") instead of model provenance | Medium | ✅ | `774b4fc` "Preisach (Level-based)" / "Landau-Khalatnikov (Physics ODE)" |
 | M4-OBS-07 | Per-cell dual numbers confusing (two similar values without clear distinction) | High | ✅ | `7a80866` Top="L: XX", Bottom="V: ±X.XX V" |
 | M4-OBS-08 | Read-mode UI precision: displayed values need consistent decimal places and ranges | Medium | ✅ | `530b9a9` %.2f I/V, integer ADC codes |
 
