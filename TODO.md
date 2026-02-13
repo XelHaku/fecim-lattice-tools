@@ -1047,5 +1047,5 @@ Observation: Module 6 has the right EDA skeleton (LEF/Liberty/Verilog/SPICE/DEF 
 | M6-GUI-02 | Add Layout Visualizer tab with metal layer overlay | Low | ⏳ | SVG already exists; render it interactive with layer toggles |
 | M6-TECH-01 | Shared TechnologyNode type between Module 4 and Module 6 | High | ⏳ | Unify cell dimensions, wire params, transistor models. Put in `shared/physics/technology.go` |
 | M6-TECH-02 | Wire Module 4 simulation results back to Module 6 characterization | Medium | ⏳ | Timing from M4 transient sim → M6 Liberty. Power from M4 energy model → M6 Liberty |
-| M6-VALID-01 | Round-trip test: generate all EDA files, parse back, verify consistency | High | ⏳ | LEF→parse→check dimensions. Verilog→parse→check ports. SPICE→parse→check nodes |
+| M6-VALID-01 | Round-trip test: generate all EDA files, parse back, verify consistency | High | ✅ | LEF→parse→check dimensions. Verilog→parse→check ports. SPICE→parse→check nodes |
 | M6-VALID-02 | Validate generated files against PDK constraints (SKY130 metal rules) | Medium | ⏳ | Pin placement within cell bounds, metal width ≥ min, spacing ≥ min |

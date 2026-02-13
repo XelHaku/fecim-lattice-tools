@@ -28,7 +28,7 @@ func DefaultHzoFeFETMaterial() FeFETMaterial {
 	return FeFETMaterial{
 		RelativePermittivity: 25.0,
 		ThicknessM:           10e-9,
-		AreaM2:               1e-14,
+		AreaM2:               1e-13,
 		CoerciveFieldVM:      1e8,
 	}
 }
@@ -42,7 +42,7 @@ func GenerateFeFETSubcircuit(mat FeFETMaterial) string {
 		mat.ThicknessM = 10e-9
 	}
 	if mat.AreaM2 <= 0 {
-		mat.AreaM2 = 1e-14
+		mat.AreaM2 = 1e-13
 	}
 	if mat.CoerciveFieldVM <= 0 {
 		mat.CoerciveFieldVM = 1e8

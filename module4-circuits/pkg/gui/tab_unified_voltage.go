@@ -171,7 +171,7 @@ func (ca *CircuitsApp) updateWriteSequenceUI() {
 // - Hysteresis direction tracking
 // - V/2 visualization for 0T1R mode
 func (ca *CircuitsApp) runISPPWithAnimation(row, col, targetLevel int) {
-	defer ca.updateActionButtons()
+	defer ca.setProgrammingActive(false)
 	if ca.deviceState != nil && ca.deviceState.GetISPPEngine() == ISPPEngineLK {
 		ca.runISPPWithLK(row, col, targetLevel)
 		return
@@ -477,7 +477,7 @@ func (ca *CircuitsApp) runISPPWithLK(row, col, targetLevel int) {
 		}
 
 		if ca.operationsStatusLabel != nil {
-			msg := fmt.Sprintf("L-K ISPP [%d/%d]: Level %d -> %d | V=%.2fV | %s",
+			msg := fmt.Sprintf("PROGRAMMING — controls locked | Landau-Khalatnikov ISPP [%d/%d]: Level %d -> %d | V=%.2fV | %s",
 				event.Attempt, ctrl.MaxIterations, level, targetLevel, math.Abs(event.VPulse), event.Phase)
 			sharedwidgets.SafeDo(func() {
 				ca.operationsStatusLabel.SetText(msg)
@@ -717,7 +717,7 @@ func (ca *CircuitsApp) updateISPPUI() {
 				}
 			}
 
-			ca.operationsStatusLabel.SetText(fmt.Sprintf("ISPP [%d/%d]: Level %d -> %d | %s | %s%s",
+			ca.operationsStatusLabel.SetText(fmt.Sprintf("PROGRAMMING — controls locked | ISPP [%d/%d]: Level %d -> %d | %s | %s%s",
 				isppStatus.Iteration, isppStatus.MaxIter,
 				isppStatus.CurrentLevel, isppStatus.TargetLevel,
 				voltageText, dirStr, trail))
@@ -878,12 +878,12 @@ func (ca *CircuitsApp) createCompactWritePanel() fyne.CanvasObject {
 		ca.mfuxWriteLevelSlider,
 	)
 
-	engineSelect := widget.NewSelect([]string{"Fast (Level)", "L-K (Physics)"}, func(s string) {
+	engineSelect := widget.NewSelect([]string{"Preisach (Level-based)", "Landau-Khalatnikov (Physics ODE)"}, func(s string) {
 		if s == "" || ca.deviceState == nil {
 			return
 		}
 		engine := ISPPEngineLevel
-		if s == "L-K (Physics)" {
+		if s == "Landau-Khalatnikov (Physics ODE)" {
 			engine = ISPPEngineLK
 		}
 		ca.deviceState.SetISPPEngine(engine)
@@ -891,7 +891,7 @@ func (ca *CircuitsApp) createCompactWritePanel() fyne.CanvasObject {
 			ca.operationsStatusLabel.SetText(fmt.Sprintf("ISPP Engine: %s", engine.String()))
 		}
 	})
-	selectedEngine := "Fast (Level)"
+	selectedEngine := "Preisach (Level-based)"
 	if ca.deviceState != nil {
 		selectedEngine = ca.deviceState.GetISPPEngine().String()
 	}
