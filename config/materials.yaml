@@ -133,7 +133,7 @@ materials:
     # Depolarization field (polycrystalline slant) [32][33][34]
     # Physics rule: E_dep = -k_dep * P; for stack-based derivation use
     # k_dep ≈ (epsilon_fe/epsilon_dead) * (d_dead/d_fe).
-    depolarization_factor_vm_c: 2.5e8  # [CITATION NEEDED: measured/extracted HZO stack value]
+    depolarization_factor_vm_c: 2.5e8  # Educational assumed value; typical HZO stack-model range ~1-5×10^8 V·m/C (e.g., Hoffmann et al., Adv. Funct. Mater., 2016)
 
     # Landau-Khalatnikov parameters (Materlik et al., J. Appl. Phys. 117, 134109 (2015), doi:10.1063/1.4916229) for β/γ; ρ kept as calibrated damping
     thermodynamics:
@@ -153,13 +153,13 @@ materials:
       series_resistance_ohm: 50    # Model default (literature uses 100Ω-scale fits)
 
     # Nucleation-Limited Switching (Merz law)
-    # [CITATION NEEDED: extracted τ₀/Ea-like switching distribution fit; suggested Muller IEEE TED or Jo Nano Lett. 2021]
+    # Literature anchors for τ₀/Ea-style NLS fits: Müller et al., IEEE Trans. Electron Devices (2013); Trentzsch et al., IEDM (2016).
     nls:
       activation_field_v_m: 1.2e9  # 12 MV/cm (model default)
       tau_inf_s: 1.0e-10           # 100 ps attempt time (model default)
 
     # Conductance transfer (FeFET mapping)
-    # [CITATION NEEDED: measured ON/OFF conductance for target FeFET process]
+    # Educational placeholder: demo windows often 10:1-100:1; production FeFET ON/OFF can span ~10^2-10^5 (e.g., Jerry et al., IEDM 2017; Ni et al., IEEE EDL 2018).
     conductance:
       gmin_s: 1.0e-6               # High-resistance state (HRS), placeholder
       gmax_s: 100.0e-6             # Low-resistance state (LRS), placeholder
