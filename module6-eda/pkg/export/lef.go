@@ -45,7 +45,7 @@ func GenerateLEF(cfg config.CellConfig) string {
 		metalWidth = 0.14 // SKY130 met1 minimum width
 	}
 
-	result := fmt.Sprintf(`VERSION 5.8 ;
+	result := fmt.Sprintf(characterizationProvenanceBlockHash+`VERSION 5.8 ;
 BUSBITCHARS "[]" ;
 DIVIDERCHAR "/" ;
 
@@ -152,7 +152,7 @@ func Generate1T1RLEF(cfg config.CellConfig) string {
 		metalWidth = 0.14 // SKY130 met1 minimum width
 	}
 
-	return fmt.Sprintf(`VERSION 5.8 ;
+	return fmt.Sprintf(characterizationProvenanceBlockHash+`VERSION 5.8 ;
 BUSBITCHARS "[]" ;
 DIVIDERCHAR "/" ;
 
@@ -262,7 +262,7 @@ func Generate2T1RLEF(cfg config.CellConfig) string {
 		metalWidth = 0.14 // SKY130 met1 minimum width
 	}
 
-	return fmt.Sprintf(`VERSION 5.8 ;
+	return fmt.Sprintf(characterizationProvenanceBlockHash+`VERSION 5.8 ;
 BUSBITCHARS "[]" ;
 DIVIDERCHAR "/" ;
 

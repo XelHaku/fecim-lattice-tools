@@ -46,6 +46,7 @@ func GenerateArrayVerilog(cfg config.ArrayConfig) string {
 	}
 
 	// Header with metadata
+	sb.WriteString(characterizationProvenanceBlockSlash)
 	sb.WriteString(fmt.Sprintf(`// FeCIM Crossbar Array - Auto-generated
 // Date: %s
 // Rows: %d, Cols: %d

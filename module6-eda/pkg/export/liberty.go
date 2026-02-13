@@ -156,7 +156,7 @@ func generateCornerLiberty(cfg config.CellConfig, corner libertyCorner) string {
 	libraryName := libraryNameForCellType(cfg.CellType, corner.Name)
 	cellName, area, blFunction, inputPins := cellMetadata(cfg)
 
-	return fmt.Sprintf(`library(%s) {
+	return fmt.Sprintf(characterizationProvenanceBlockC+`library(%s) {
   technology (cmos) ;
   delay_model : table_lookup ;
 
