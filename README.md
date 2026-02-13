@@ -111,6 +111,14 @@ Run tests:
 go test -race ./...
 ```
 
+Run the one-command reproducibility validation pack:
+
+```bash
+bash scripts/reproduce_validation.sh
+# optional report capture:
+# bash scripts/reproduce_validation.sh > artifacts/repro-report.txt 2>&1
+```
+
 ---
 
 ## Screenshot Placeholders
