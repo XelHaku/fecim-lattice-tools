@@ -2,6 +2,25 @@
 
 Educational Electronic Design Automation (EDA) toolchain for FeCIM array design. Generates **illustrative** artifacts for learning and early exploration. **Simulation-only; not tape-out ready.**
 
+## Trust Boundary (Read First)
+
+**Module 6 exports are educational/research prototypes and are NOT suitable for signoff, tapeout, or production characterization.**
+
+Missing for production:
+- Measured NLDM timing tables
+- Multi-corner silicon-backed characterization
+- DRC/LVS closure versus real foundry PDK decks
+- CCS timing/noise models for signoff STA
+
+What is provided:
+- Analytical models with literature-calibrated parameters
+- Structurally valid export files (syntax/format correctness)
+- Research-grade approximations for exploration
+
+If you need production quality, use Module 6 outputs only as scaffolding and re-run full foundry signoff characterization/verification flows.
+
+See: `docs/validation/eda-trust-boundary.md`
+
 ---
 
 ## Overview
