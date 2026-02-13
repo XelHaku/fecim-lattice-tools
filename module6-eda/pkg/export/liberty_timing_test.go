@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"fecim-lattice-tools/module6-eda/pkg/config"
+	sharedphysics "fecim-lattice-tools/shared/physics"
 )
 
 func extractScalarValue(t *testing.T, lib, key string) float64 {
@@ -60,5 +61,23 @@ func TestGenerateLiberty_TimingAndPins(t *testing.T) {
 		if !strings.Contains(lib, pin) {
 			t.Fatalf("missing required pin %s", pin)
 		}
+	}
+}
+
+func TestGenerateLibertyFromCharacterization_UsesCharacterizedTiming(t *testing.T) {
+	cfg := config.DefaultCellConfig()
+	char := &sharedphysics.CharacterizationResult{WriteTimeNs: 12.5, ReadTimeNs: 3.25}
+
+	lib := GenerateLibertyFromCharacterization(cfg, char)
+	rise := extractScalarValue(t, lib, "cell_rise")
+	fall := extractScalarValue(t, lib, "cell_fall")
+	if rise != 12.5 {
+		t.Fatalf("cell_rise mismatch: got %.3f ns, want 12.5 ns", rise)
+	}
+	if fall != 3.25 {
+		t.Fatalf("cell_fall mismatch: got %.3f ns, want 3.25 ns", fall)
+	}
+	if rise == publishedWriteRiseNS || fall == publishedReadFallNS {
+		t.Fatalf("expected characterized timing to override published defaults, got rise=%.3f fall=%.3f", rise, fall)
 	}
 }

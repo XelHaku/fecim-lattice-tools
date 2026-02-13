@@ -18,6 +18,7 @@ import (
 
 	"fecim-lattice-tools/module6-eda/pkg/config"
 	"fecim-lattice-tools/shared/logging"
+	sharedphysics "fecim-lattice-tools/shared/physics"
 )
 
 var logLiberty = logging.NewLogger("eda-export-liberty")
@@ -29,6 +30,25 @@ const (
 	publishedLeakagePowerNW   = 0.0003 // Muller et al., IEEE TED 2013 NC-FinFET low-leakage envelope
 	publishedTransitionFactor = 0.30   // Slew approximated as 30% of propagation delay
 )
+
+// CharacterizationResult aliases module-shared transient characterization output.
+type CharacterizationResult = sharedphysics.CharacterizationResult
+
+// GenerateLibertyFromCharacterization applies transient-characterized timing when provided.
+// If char is nil, existing default behavior is preserved.
+func GenerateLibertyFromCharacterization(cfg config.CellConfig, char *CharacterizationResult) string {
+	if char == nil {
+		return GenerateLiberty(cfg)
+	}
+	cfgWithChar := cfg
+	if char.WriteTimeNs > 0 {
+		cfgWithChar.RiseTime = char.WriteTimeNs
+	}
+	if char.ReadTimeNs > 0 {
+		cfgWithChar.FallTime = char.ReadTimeNs
+	}
+	return GenerateLiberty(cfgWithChar)
+}
 
 // GenerateLiberty generates a Liberty (.lib) timing file for the FeCIM bitcell
 // This is required by synthesis and STA tools (OpenROAD, OpenLane)
