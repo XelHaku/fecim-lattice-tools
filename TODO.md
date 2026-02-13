@@ -1068,6 +1068,68 @@ From deep source-code review of M1/M4/M6 shared physics.
 | WEAK-06 | Conductance window (Gmin=10µS, Gmax=100µS) has CITATION NEEDED — cite FeFET I-V data or derive from device physics | `shared/physics/material.go` | Medium | ✅ | `a6d394c` subthreshold exponential conductance model added |
 | WEAK-07 | SPICE FeFET subcircuit uses simplified resistor+cap model with no switching dynamics — add voltage-dependent state transition | `module6-eda/export/spice.go` | High | ✅ | `c874326` L-K equivalent circuit with switching dynamics |
 
+## Module 5 Deep Upgrade Roadmap (2026-02-13)
+
+Reference: `MODULE5_DEEP_CRITIQUE_2026-02-13.md`
+
+| ID | Task | Status |
+|----|------|--------|
+| M5-UX-01 | Add dual-mode UI (`Technical Review` default, `Presentation` optional) to reduce narrative bias in technical usage | ⏳ |
+| M5-UX-02 | Replace headline-only cards with evidence-first layout: assumptions table + output panel + caveat panel | ⏳ |
+| M5-UX-03 | Add plain-text evidence panel (screen-reader-first) for every major visualization | ⏳ |
+| M5-UX-04 | Module5 layout CI at 1024x768 / 1200x800 / 1366x768 with no-overlap/out-of-bounds assertions | ⏳ |
+| M5-DATA-01 | Introduce scenario profiles (`conservative`, `baseline`, `optimistic`) for CPU/GPU/FeCIM assumptions | ⏳ |
+| M5-DATA-02 | Add provenance tags (`measured`, `calibrated`, `estimated`, `placeholder`) to all model inputs and outputs | ⏳ |
+| M5-DATA-03 | Add confidence intervals for key outputs (energy, latency, TCO, CO2, reductions) instead of scalar-only values | ⏳ |
+| M5-DATA-04 | Add sensitivity analysis panel ranking top assumptions by output impact | ⏳ |
+| M5-DATA-05 | Add scenario diff report (Run A vs Run B) with changed assumptions and delta attribution | ⏳ |
+| M5-PERF-01 | Optimize animation loop with dirty-widget refresh and visibility-aware updates (no hidden-tab redraws) | ⏳ |
+| M5-PERF-02 | Debounce slider/control-driven recompute and implement fast-preview vs commit-on-release behavior | ⏳ |
+| M5-PERF-03 | Add module5 performance benchmarks (tab-switch, resize, calculate-to-render p50/p95/p99) | ⏳ |
+| M5-PERF-04 | Add module5 stress test (rapid control changes + tab switching) with responsiveness and memory budgets | ⏳ |
+| M5-TECH-01 | Rework competitive matrix to confidence-aware scoring (remove binary checkmark overstatement) | ⏳ |
+| M5-TECH-02 | Add reproducibility pack export (assumptions, version, commit, outputs, timestamp) for auditability | ⏳ |
+
+## Fyne + Go Application Performance Roadmap (2026-02-13)
+
+Application-level responsiveness/layout/performance roadmap (not physics calculations).
+Reference: `FYNE_GO_GUI_PERFORMANCE_RESEARCH.md`
+
+| ID | Task | Status |
+|----|------|--------|
+| GUI-PERF-01 | Add refresh profiler: count `Refresh()` calls by component/tab and emit hotspot report | ⏳ |
+| GUI-PERF-02 | Implement UI update coalescing bus (30-50ms debounce windows for burst status updates) | ⏳ |
+| GUI-PERF-03 | Canonical-size layout CI (1024x768, 1200x800, 1366x768) with no overlap/out-of-bounds assertions | ⏳ |
+| GUI-PERF-04 | Add interaction throttle for slider-drag paths (fast preview while drag, full recompute on release) | ⏳ |
+| GUI-PERF-05 | Add tab-switch/resize latency benchmarks (p50/p95/p99) and fail gates on regression | ⏳ |
+| GUI-PERF-06 | Refactor Module 4 rendering into static-layer cache + dynamic overlay redraw path | ✅ |
+| GUI-PERF-07 | Lazy initialize heavy tabs/dialogs to improve startup and first-interaction latency | ✅ |
+| GUI-PERF-08 | Add 5-minute scripted interaction stress test (1000 tab switches + rapid control changes) with memory growth budget | ✅ |
+| GUI-PERF-09 | Add frame-time watchdog in interactive tabs (warn >16ms, critical >33ms) | ✅ |
+| GUI-PERF-10 | Build unified GUI regression bundle: screenshot diff + layout assertions + perf metrics in one report | ✅ |
+
+## Beyond World-Class Roadmap (2026-02-13)
+
+Stretch roadmap to push FeCIM Lattice Tools beyond current world-class targets.
+
+| ID | Task | Status |
+|----|------|--------|
+| BW-01 | Add Model Confidence Ledger: every physics output tagged with provenance (`measured`, `calibrated`, `estimated`, `placeholder`) and confidence score (0-1) | ✅ |
+| BW-02 | Build Calibration Studio: GUI workflow to import literature/measurement CSVs, fit parameters, and export signed calibration bundles with RMSE reports | ✅ |
+| BW-03 | Implement Reproducibility Pack export: one-click bundle with config, seed, commit hash, tests run, and generated artifacts for paper appendix | ✅ |
+| BW-04 | Add Cross-Model Comparator Hub: run same sweep across Preisach/LK/Heracles-reference and generate mismatch diagnostics + recommendation | ✅ |
+| BW-05 | Add Device Aging Engine: coupled wake-up/fatigue/retention degradation model with cycle-history memory and recovery effects | ✅ |
+| BW-06 | Implement Array Program Scheduler: optimize programming order (checkerboard/serpentine/adaptive) to minimize cumulative disturb on large arrays | ✅ |
+| BW-07 | Add Research Trace Mode: full signal-path trace (`DAC→array→TIA→ADC→classifier`) with units and uncertainty propagation at each stage | ✅ |
+| BW-08 | Build Statistical Verification Dashboard: Monte Carlo distributions, worst-corner alerts, pass-rate trends, and auto-regression gating | ✅ |
+| BW-09 | Add Publications Mode: auto-generate methods/results tables and figure-ready CSV outputs for manuscripts | ✅ |
+| BW-10 | Create Internal Benchmark Suite: standardized benchmark packs (MNIST now, CIFAR-lite synthetic next) with locked seeds and acceptance thresholds | ✅ |
+| BW-11 | Add Mixed-Precision CIM planner: optimize level count + ADC bits + array tiling for target accuracy/energy/latency constraints | ✅ |
+| BW-12 | Implement PDK Reality Bridge: attach explicit process-corner envelopes and DRC/LVS readiness scoring to Module 6 exports | ✅ |
+| BW-13 | Add Uncertainty-Aware UI overlays: show error bars/confidence intervals directly on critical readouts and charts | ✅ |
+| BW-14 | Add Scenario Replay Engine: save/load full experiment sessions and replay deterministic step-by-step for audits and demos | ✅ |
+| BW-15 | Build Executive Readiness Report: auto-score education/research/design readiness with blockers and recommended next 5 tasks | ✅ |
+
 ## World-Class Roadmap Additions (2026-02-13)
 
 | ID | Task | Status |
