@@ -698,6 +698,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			withInfo(container.NewVBox(timeScaleLabel, timeScaleSlider, displayFreqLabel), tips.TimeScale),
 		)),
 		widget.NewCard("Run", "", actionRow),
+		a.createFORCPanel(),
 	)
 
 	advanced := widget.NewAccordion(
