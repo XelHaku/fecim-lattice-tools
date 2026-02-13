@@ -9,6 +9,7 @@ import (
 	"fecim-lattice-tools/module6-eda/pkg/compiler"
 	sharedexport "fecim-lattice-tools/shared/export"
 	"fecim-lattice-tools/shared/logging"
+	sharedphysics "fecim-lattice-tools/shared/physics"
 )
 
 var logSPICE = logging.NewLogger("eda-export-spice")
@@ -29,6 +30,12 @@ func DefaultHzoFeFETMaterial() FeFETMaterial {
 		AreaM2:               2.025e-15,
 		CoerciveFieldVM:      1e8,
 	}
+}
+
+func generateSky130NMOSModelCard() string {
+	sel := sharedphysics.SKY130NMOS()
+	return fmt.Sprintf(".model SKY130NMOS NMOS (LEVEL=1 VTO=%.6g KP=120e-6 LAMBDA=0.03)\n* SKY130 selector preset from shared/physics/selector.go: W=%.12e L=%.12e Ion=%.6e Ioff=%.6e Cgate=%.6e\n\n",
+		sel.Vth, sel.W, sel.L, sel.Ion, sel.Ioff, sel.Cgate)
 }
 
 // GenerateFeFETSubcircuit creates the FeFET primitive using shared LK FeCap export.
@@ -62,12 +69,26 @@ func GenerateFeFETSubcircuit(mat FeFETMaterial) string {
 
 // Generate1T1RSubcircuit creates selector-transistor + FeFET (1T1R) bitcell.
 func Generate1T1RSubcircuit() string {
+	sel := sharedphysics.SKY130NMOS()
 	var sb strings.Builder
-	sb.WriteString(".subckt fefet_1t1r WL BL SL R_level=1e4\n")
-	sb.WriteString("* 1T1R bitcell: access NMOS + FeFET\n")
-	sb.WriteString("MSEL n1 WL SL SL NMOS W=1u L=0.15u\n")
+	sb.WriteString(".subckt fefet_1t1r WL BL SL PARAMS: R_level=1e4\n")
+	sb.WriteString("* 1T1R bitcell: SKY130 NMOS selector + FeFET\n")
+	sb.WriteString(fmt.Sprintf("MSEL n1 WL SL SL SKY130NMOS W=%.12e L=%.12e\n", sel.W, sel.L))
 	sb.WriteString("XFE n1 BL fefet_cell R_level={R_level}\n")
 	sb.WriteString(".ends fefet_1t1r\n\n")
+	return sb.String()
+}
+
+// Generate2T1RSubcircuit creates dual-selector-transistor + FeFET (2T1R) bitcell.
+func Generate2T1RSubcircuit() string {
+	sel := sharedphysics.SKY130NMOS()
+	var sb strings.Builder
+	sb.WriteString(".subckt fefet_2t1r WL CSL BL SL PARAMS: R_level=1e4\n")
+	sb.WriteString("* 2T1R bitcell: row/column SKY130 NMOS selectors in series + FeFET\n")
+	sb.WriteString(fmt.Sprintf("MROW n1 WL n2 n2 SKY130NMOS W=%.12e L=%.12e\n", sel.W, sel.L))
+	sb.WriteString(fmt.Sprintf("MCOL n2 CSL SL SL SKY130NMOS W=%.12e L=%.12e\n", sel.W, sel.L))
+	sb.WriteString("XFE n1 BL fefet_cell R_level={R_level}\n")
+	sb.WriteString(".ends fefet_2t1r\n\n")
 	return sb.String()
 }
 
@@ -93,13 +114,18 @@ func GenerateSPICE(design *compiler.ArrayDesign, vdd float64) string {
 
 	// Device subcircuits
 	sb.WriteString(GenerateFeFETSubcircuit(DefaultHzoFeFETMaterial()))
-	if design.Config.Architecture == compiler.Arch1T1R {
-		sb.WriteString(".model NMOS NMOS LEVEL=1\n\n")
+	arch := strings.ToLower(design.Config.Architecture)
+	if arch == compiler.Arch1T1R || arch == compiler.Arch2T1R {
+		sb.WriteString(generateSky130NMOSModelCard())
+	}
+	if arch == compiler.Arch1T1R {
 		sb.WriteString(Generate1T1RSubcircuit())
+	}
+	if arch == compiler.Arch2T1R {
+		sb.WriteString(Generate2T1RSubcircuit())
 	}
 
 	// Architecture-specific pin model for cross-format checks
-	arch := strings.ToLower(design.Config.Architecture)
 	spicePins := []string{"WL", "BL", "VPWR", "VGND"}
 	if arch == compiler.Arch1T1R || arch == compiler.Arch2T1R {
 		spicePins = append(spicePins, "SL")
@@ -125,19 +151,10 @@ func GenerateSPICE(design *compiler.ArrayDesign, vdd float64) string {
 	}
 	sb.WriteString("\n")
 
-	// Source lines for 1T1R
-	if design.Config.Architecture == compiler.Arch1T1R {
-		sb.WriteString("* Source Line Bias\n")
-		for row := 0; row <= maxRow; row++ {
-			sb.WriteString(fmt.Sprintf("VSL%d sl%d 0 DC 0\n", row, row))
-		}
-		sb.WriteString("\n")
-	}
-
 	if arch == compiler.Arch1T1R || arch == compiler.Arch2T1R {
 		sb.WriteString("* Source Line Drivers\n")
-		for col := 0; col <= maxCol; col++ {
-			sb.WriteString(fmt.Sprintf("VSL%d sl%d 0 DC 0\n", col, col))
+		for row := 0; row <= maxRow; row++ {
+			sb.WriteString(fmt.Sprintf("VSL%d sl%d 0 DC 0\n", row, row))
 		}
 		sb.WriteString("\n")
 	}
@@ -168,9 +185,12 @@ func GenerateSPICE(design *compiler.ArrayDesign, vdd float64) string {
 			resistance = 1e9
 		}
 
-		if design.Config.Architecture == compiler.Arch1T1R {
+		if arch == compiler.Arch1T1R {
 			sb.WriteString(fmt.Sprintf("X_%d_%d wl%d bl%d sl%d fefet_1t1r R_level=%.2f\n",
 				cell.Row, cell.Col, cell.Row, cell.Col, cell.Row, resistance))
+		} else if arch == compiler.Arch2T1R {
+			sb.WriteString(fmt.Sprintf("X_%d_%d wl%d csl%d bl%d sl%d fefet_2t1r R_level=%.2f\n",
+				cell.Row, cell.Col, cell.Row, cell.Col, cell.Col, cell.Row, resistance))
 		} else {
 			sb.WriteString(fmt.Sprintf("X_%d_%d wl%d bl%d fefet_cell R_level=%.2f LEVEL=%d\n",
 				cell.Row, cell.Col, cell.Row, cell.Col, resistance, cell.Level))

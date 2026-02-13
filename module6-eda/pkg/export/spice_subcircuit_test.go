@@ -38,11 +38,27 @@ func TestGenerateFeFETSubcircuit_UsesMaterlikDefaults(t *testing.T) {
 
 func TestGenerate1T1RSubcircuit_ContainsMOSAndFeFET(t *testing.T) {
 	s := Generate1T1RSubcircuit()
-	if !strings.Contains(s, "MSEL") {
-		t.Fatal("1T1R subcircuit missing MOSFET instance")
+	if !strings.Contains(s, ".subckt fefet_1t1r WL BL SL PARAMS: R_level=1e4") {
+		t.Fatal("1T1R subcircuit missing ngspice PARAMS header")
+	}
+	if !strings.Contains(s, "MSEL") || !strings.Contains(s, "SKY130NMOS") {
+		t.Fatal("1T1R subcircuit missing SKY130 MOSFET selector")
 	}
 	if !strings.Contains(s, "XFE") || !strings.Contains(s, "fefet_cell") {
 		t.Fatal("1T1R subcircuit missing FeFET instance")
+	}
+}
+
+func TestGenerate2T1RSubcircuit_ContainsDualMOSAndFeFET(t *testing.T) {
+	s := Generate2T1RSubcircuit()
+	if !strings.Contains(s, ".subckt fefet_2t1r WL CSL BL SL PARAMS: R_level=1e4") {
+		t.Fatal("2T1R subcircuit missing ngspice PARAMS header")
+	}
+	if !strings.Contains(s, "MROW") || !strings.Contains(s, "MCOL") {
+		t.Fatal("2T1R subcircuit missing dual NMOS selectors")
+	}
+	if !strings.Contains(s, "XFE n1 BL fefet_cell") {
+		t.Fatal("2T1R subcircuit missing FeFET instance/node mapping")
 	}
 }
 
@@ -67,5 +83,23 @@ func TestGenerateSPICE_PassiveArrayInstanceCount(t *testing.T) {
 	}
 	if !strings.Contains(netlist, ".subckt fefet_cell") || !strings.Contains(netlist, ".ends fefet_cell") {
 		t.Fatal("netlist missing FeFET subcircuit definition")
+	}
+}
+
+func TestGenerateSPICE_2T1RIncludesSelectorsAndPins(t *testing.T) {
+	design := &compiler.ArrayDesign{
+		Config: &compiler.ArrayConfig{Mode: compiler.ModeCompute, Architecture: compiler.Arch2T1R},
+		Cells:  []compiler.CellAssignment{{Row: 0, Col: 1, Conductance: 50.0, Resistance: 20000.0, Level: 7}},
+		Stats:  compiler.DesignStats{TotalCells: 1, ActiveCells: 1},
+	}
+	netlist := GenerateSPICE(design, 1.8)
+	if !strings.Contains(netlist, ".model SKY130NMOS NMOS") {
+		t.Fatal("missing SKY130 model card")
+	}
+	if !strings.Contains(netlist, ".subckt fefet_2t1r") {
+		t.Fatal("missing 2T1R subcircuit")
+	}
+	if !strings.Contains(netlist, "X_0_1 wl0 csl1 bl1 sl0 fefet_2t1r") {
+		t.Fatal("2T1R instance connection does not match expected node map WL/CSL/BL/SL")
 	}
 }
