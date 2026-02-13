@@ -900,10 +900,12 @@ func (ca *CircuitsApp) createCompactWritePanel() fyne.CanvasObject {
 	ca.isppEngineSelect = engineSelect
 
 	engineRow := container.NewHBox(widget.NewLabel("ISPP Engine:"), engineSelect)
+	isppConfidence := container.NewHBox(widget.NewLabel("ISPP confidence:"), sharedwidgets.NewConfidenceBadge(sharedwidgets.Estimated))
 
 	return container.NewVBox(
 		writeRow,
 		engineRow,
+		isppConfidence,
 	)
 }
 

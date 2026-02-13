@@ -8,6 +8,8 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // ============================================================================
@@ -238,5 +240,9 @@ func (ca *CircuitsApp) createVoltageSafetyRules() fyne.CanvasObject {
 | >256x256 | 2T1R | Ultra-precision, dual-path isolation |
 `, mat.Name, Vc, readMax, writeMin, writeMax, readMax, 0.7*Vc, writeMin, writeMax, Vc))
 
-	return container.NewPadded(content)
+	readMarginBadge := container.NewHBox(
+		widget.NewLabel("Read margin confidence:"),
+		sharedwidgets.NewConfidenceBadge(sharedwidgets.Estimated),
+	)
+	return container.NewPadded(container.NewVBox(readMarginBadge, content))
 }

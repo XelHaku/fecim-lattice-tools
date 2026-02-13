@@ -4,6 +4,7 @@ package gui
 import (
 	"fmt"
 	"math"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -13,6 +14,7 @@ import (
 
 	"fecim-lattice-tools/module1-hysteresis/pkg/controller"
 	"fecim-lattice-tools/module1-hysteresis/pkg/gui/widgets"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // createInfoPanel creates the state and material information panel
@@ -60,6 +62,11 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 	// Compact material line (validated units)
 	matLine := widget.NewLabel(fmt.Sprintf("Pr=%.1f µC/cm²  Ec=%.2f MV/cm  End=%.0e cycles",
 		a.material.Pr*100, a.material.Ec/1e8, a.material.EnduranceCycles))
+	confidence := sharedwidgets.Estimated
+	if strings.Contains(strings.ToLower(a.material.Name), "materlik") || strings.Contains(strings.ToLower(a.material.Name), "fecim hzo") {
+		confidence = sharedwidgets.Calibrated
+	}
+	materialConfidenceBadge := sharedwidgets.NewConfidenceBadge(confidence)
 
 	// Wake-up/Fatigue - single compact line
 	a.cyclesLabel = widget.NewLabel("0")
@@ -101,6 +108,7 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 		a.stabilityIndicator, // M12: State stability warning
 		a.phaseIndicator,
 		container.NewGridWithColumns(2, matLine, matInfoBtn),
+		container.NewHBox(widget.NewLabel("Material confidence:"), materialConfidenceBadge),
 		statsRow,
 		metricsGrid,
 	)

@@ -1296,6 +1296,10 @@ Date: %s
 	)
 
 	// Status bar - compact inline with actions
+	exportConfidence := container.NewHBox(
+		widget.NewLabel("Export confidence:"),
+		sharedwidgets.NewConfidenceBadge(sharedwidgets.Estimated),
+	)
 	statusBar := container.NewHBox(
 		widget.NewLabel("Status:"),
 		statusLabel,
@@ -1305,7 +1309,7 @@ Date: %s
 	topSection := container.NewVBox(
 		configAccordion,
 		widget.NewSeparator(),
-		container.NewHBox(actionButtons, widget.NewSeparator(), statusBar),
+		container.NewHBox(actionButtons, widget.NewSeparator(), statusBar, widget.NewSeparator(), exportConfidence),
 	)
 
 	// Use VSplit for resizable preview/validation areas
