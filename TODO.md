@@ -15,6 +15,12 @@
 - ✅ OST-06 ngspice Round-Trip — commit `3c991a3`
 - ✅ OST-08 Compatibility Matrix — commit `318a3db`
 
+**Module 4 Kirchhoff / current hardening (2026-02-13):**
+- ✅ M4-KCH-01 Flow audit and file:function map — commit `3efd598`
+- ✅ M4-KCH-02 Shared-physics write path proof — commit `7c5a4fc`
+- ✅ M4-KCH-03 Kirchhoff + headless current validation tests — commits `dedccc7`, `b8ed9df`
+- ✅ M4-KCH-04 External ngspice crossbar validation harness — commit `978e532`
+
 ---
 
 ## SHARE Backlog (Shared Code Consolidation)
