@@ -29,3 +29,9 @@ func TestGenerateProgramScheduleLengths(t *testing.T) {
 		}
 	}
 }
+
+func TestGenerateProgramScheduleUnknownMode(t *testing.T) {
+	if _, err := GenerateProgramSchedule(2, 2, ProgramOrderMode("unknown"), 1); err == nil {
+		t.Fatalf("expected error for unknown mode")
+	}
+}
