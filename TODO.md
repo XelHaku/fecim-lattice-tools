@@ -1041,8 +1041,8 @@ Observation: Module 6 has the right EDA skeleton (LEF/Liberty/Verilog/SPICE/DEF 
 | M6-LIB-01 | Replace Liberty placeholder timing with published FeFET characterization data | High | ✅ | Sources: Muller 2013 (28nm FDSOI), Trentzsch 2016 (28nm), Dunkel 2017 (22nm). File: `export/liberty.go` |
 | M6-LIB-02 | Add NLDM lookup tables to Liberty (rise/fall vs input slew × output load) | Medium | ⏳ | Currently scalar values only. 7×7 table minimum for STA accuracy |
 | M6-LIB-03 | Multi-corner Liberty generation (fast/typical/slow × temperature) | Medium | ⏳ | Currently only "typical" corner. Need FF/TT/SS at -40/25/125°C |
-| M6-POWER-01 | Dynamic power model: P_dyn = C_eff · V² · f per cell, array-level summation | High | ⏳ | Currently placeholder leakage only (0.0003 nW). Need switching + leakage + short-circuit |
-| M6-POWER-02 | Back-annotate Module 4 energy model into Liberty power tables | Medium | ⏳ | Module 4 has DAC/MVM/TIA energy. Should feed M6 Liberty internal_power groups |
+| M6-POWER-01 | Dynamic power model: P_dyn = C_eff · V² · f per cell, array-level summation | High | ✅ | Extended `shared/physics/power.go` with switching, leakage, and short-circuit components plus array-level aggregation and known-value tests. Commit: `6c25605` |
+| M6-POWER-02 | Back-annotate Module 4 energy model into Liberty power tables | Medium | ✅ | Added Module 4 energy back-annotation API in `liberty.go` and emitted Liberty `internal_power` groups for DAC/MVM/TIA with tests. Commit: `0afad18` |
 | M6-DRC-01 | Basic DRC rule checking against PDK design rules | Medium | ✅ | Added `pkg/validate/drc.go` with SKY130 default rules and checks for min metal width, min spacing, via enclosure; tests for pass/fail LEF. Commit: `99d0958` |
 | M6-DRC-02 | LVS consistency check: LEF pins match Verilog ports match SPICE netlist | Medium | ✅ | Added `pkg/validate/lvs.go` cross-format check (LEF/Verilog/SPICE names + pins) with pass/fail tests. Commit: `cd2622a` |
 | M6-GUI-01 | Add Export Viewer tab to Module 6 GUI (preview LEF/Liberty/Verilog/SPICE) | Medium | ⏳ | Currently only Builder + Learn tabs. Users can't preview generated files in-app |
