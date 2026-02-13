@@ -33,6 +33,12 @@ func estimateLandauEc(alpha, beta, gamma, pr float64) float64 {
 // Package-level logger for Landau-Khalatnikov solver diagnostics.
 var lkLog *logging.Logger
 
+// NLSState tracks cumulative nucleation-limited switching progress under field.
+type NLSState struct {
+	SwitchedFraction float64
+	CumulativeTime   float64
+}
+
 // LKSolver integrates Landau-Khalatnikov (LK) polarization dynamics for a
 // ferroelectric capacitor/device.
 //
@@ -71,6 +77,7 @@ type LKSolver struct {
 	UseNLS          bool
 	ActivationField float64 // Activation field (V/m) for Merz's Law
 	TauInf          float64 // Infinite field switching time (s)
+	NLSSigma        float64 // Log-normal switching-time sigma (dimensionless), default 1.5 for HfO2 (Guo et al., APL 112, 262903, 2018)
 	IncubationEnd   float64 // Time when switching can start (s),
 
 	// Thermodynamic constants
@@ -92,6 +99,7 @@ type LKSolver struct {
 	PMax        float64 // Saturation polarization clamp for numerical stability (C/m^2)
 	Temperature float64 // Current Temperature (K)
 	Time        float64 // Simulation time
+	nlsState    NLSState
 
 	// Internal logging controls
 	logCount int
@@ -136,6 +144,7 @@ func NewLKSolver() *LKSolver {
 		UseNLS:          true,
 		ActivationField: 1.9e9, // 19 MV/cm (Merz activation field)
 		TauInf:          1.0e-13,
+		NLSSigma:        1.5, // HfO2 default (Guo et al., APL 112, 262903, 2018)
 
 		CurieTemp:  723.0,
 		CurieConst: 1.5e5,
@@ -235,6 +244,9 @@ func (s *LKSolver) ConfigureFromMaterial(mat *HZOMaterial) {
 	if mat.EaNLS > 0 {
 		s.ActivationField = mat.EaNLS
 	}
+	if mat.NLSSigma > 0 {
+		s.NLSSigma = mat.NLSSigma
+	}
 
 	// Initialize P to negative remanent polarization if provided
 	if mat.Pr != 0 {
@@ -299,6 +311,7 @@ func (s *LKSolver) ConfigureFromMaterial(mat *HZOMaterial) {
 		"SeriesResistance": s.SeriesResistance,
 		"ActivationField":  s.ActivationField,
 		"TauInf":           s.TauInf,
+		"NLSSigma":         s.NLSSigma,
 		"UseMaterialAlpha": s.UseMaterialAlpha,
 		"Alpha":            s.Alpha,
 		"InitPolarization": s.P,
@@ -324,7 +337,11 @@ func (s *LKSolver) dPdT(t, P, E_applied, noise, rhoEff float64) float64 {
 	P5 := P3 * P2
 	dG_dP := (2 * s.Alpha * P) + (4 * s.Beta * P3) + (6 * s.Gamma * P5)
 
-	return (E_eff + noise - dG_dP) / rhoEff
+	rate := (E_eff + noise - dG_dP) / rhoEff
+	if s.UseNLS {
+		rate *= s.nlsState.SwitchedFraction
+	}
+	return rate
 }
 
 func (s *LKSolver) dFdP(P, rhoEff float64) float64 {
@@ -411,14 +428,12 @@ func (s *LKSolver) Step(E, dt float64) float64 {
 		s.P = s.clampP(s.P)
 	}
 
-	// Nucleation-Limited Switching (NLS) Check
+	// Nucleation-Limited Switching (NLS): track cumulative time and deterministic
+	// switched fraction from log-normal switching-time statistics.
 	if s.UseNLS {
-		if !s.checkIncubation(E, dt) {
-			// If still incubating, P does not change significantly (only dielectric response)
-			// For simplicity, we define dP/dt = E / Rho (linear response) or just 0
-			// A better approx is P = P_prev + epsilon * E
-			return s.P
-		}
+		s.updateNLSState(E, dt)
+	} else {
+		s.nlsState = NLSState{SwitchedFraction: 1.0}
 	}
 
 	// RK4 Integration with stability guards.
@@ -504,41 +519,62 @@ func (s *LKSolver) Step(E, dt float64) float64 {
 	return s.P
 }
 
-// checkIncubation determines if the domain has finished incubating based on Merz's Law.
-// Returns true if switching can proceed.
-func (s *LKSolver) checkIncubation(E, dt float64) bool {
-	// Simplified NLS:
-	// Calculate Incubation Time t_inc = tau_inf * exp(Ea / E)
-	// If cumulative time under field E > t_inc, then switch.
-
-	E_mag := math.Abs(E)
-	const MinField = 1.0e6 // 0.01 MV/cm threshold
-
-	if E_mag < MinField {
-		return false // Field too small to drive nucleation
+func (s *LKSolver) updateNLSState(E, dt float64) {
+	const minField = 1.0e6 // 0.01 MV/cm threshold
+	if dt <= 0 {
+		return
 	}
+	if math.Abs(E) < minField {
+		s.nlsState.CumulativeTime = 0
+		s.nlsState.SwitchedFraction = 0
+		return
+	}
+	s.nlsState.CumulativeTime += dt
+	s.nlsState.SwitchedFraction = s.nlsSwitchedFraction(E, s.nlsState.CumulativeTime)
+}
 
-	// Merz's Law for Incubation Time
-	// E should be in V/m. ActivationField is in V/m.
+// nlsSwitchedFraction returns deterministic cumulative switched fraction under
+// field E and total stress time, using a log-normal distribution of switching
+// times (Guo et al., APL 112, 262903, 2018).
+func (s *LKSolver) nlsSwitchedFraction(E, totalTime float64) float64 {
+	E_mag := math.Abs(E)
+	if E_mag < 1e6 || totalTime <= 0 {
+		return 0
+	}
+	tauInf := s.TauInf
+	if tauInf <= 0 {
+		tauInf = 1e-13
+	}
 	activationField := s.ActivationField
 	if activationField <= 0 {
 		activationField = 1.9e9
 	}
-
-	tNum := s.TauInf * math.Exp(activationField/E_mag)
-
-	// Add to incubation time tracker (simplified for now)
-	// Real NLS requires tracking state for each domain.
-	// For a single solver instance (mean field), we can just use a delay counter.
-
-	// For this Phase 1 implementation, we will perform a probabilistic check
-	// Probability of nucleation in dt: P_nuc = 1 - exp(-dt / t_inc)
-
-	prob := 1.0 - math.Exp(-dt/tNum)
-	if s.rng != nil {
-		return s.rng.Float64() < prob
+	sigma := s.NLSSigma
+	if sigma <= 0 {
+		sigma = 1.5
 	}
-	return rand.Float64() < prob
+
+	lnTauMean := math.Log(tauInf) + activationField/E_mag
+	f := 0.0
+	norm := 0.0
+	N := 20
+	for i := 0; i < N; i++ {
+		x := lnTauMean + sigma*(float64(i)-float64(N-1)/2.0)*6.0/float64(N)
+		tau := math.Exp(x)
+		weight := math.Exp(-0.5 * math.Pow((x-lnTauMean)/sigma, 2))
+		f += weight * (1.0 - math.Exp(-totalTime/tau))
+		norm += weight
+	}
+	if norm > 0 {
+		f /= norm
+	}
+	if f < 0 {
+		return 0
+	}
+	if f > 1 {
+		return 1
+	}
+	return f
 }
 
 func (s *LKSolver) effectiveRho() float64 {

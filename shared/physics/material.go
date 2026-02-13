@@ -105,8 +105,9 @@ type HZOMaterial struct {
 	// Literature anchors for NLS-style switching-time parameters in HfO2/HZO ferroelectrics:
 	//   - Müller et al., IEEE Trans. Electron Devices, 60(12), 2013 (switching-time statistics/kinetics)
 	//   - Trentzsch et al., IEDM 2016 (HfO2-based FeFET switching dynamics and compact-model fitting)
-	Tau0NLS float64 // Attempt time for NLS (s), typically 1e-10 to 1e-12 for HfO2
-	EaNLS   float64 // Activation field for NLS (V/m), typically 10-15 MV/cm for HfO2
+	Tau0NLS  float64 // Attempt time for NLS (s), typically 1e-10 to 1e-12 for HfO2
+	EaNLS    float64 // Activation field for NLS (V/m), typically 10-15 MV/cm for HfO2
+	NLSSigma float64 // Log-normal switching-time sigma (dimensionless), default 1.5 for HfO2 per Guo et al., APL 112, 262903 (2018)
 
 	// FeFET conductance parameters (for CIM applications)
 	// G = Gmin + (Gmax-Gmin) * (P/Ps + 1) / 2
@@ -116,6 +117,11 @@ type HZOMaterial struct {
 	// Literature examples: Jerry et al., IEDM 2017; Ni et al., IEEE Electron Device Lett. 2018.
 	Gmin float64 // Minimum conductance (S) at P = -Ps (HRS state)
 	Gmax float64 // Maximum conductance (S) at P = +Ps (LRS state)
+	// Conductance transfer model: linear (default), subthreshold, saturation.
+	ConductanceModel string
+	KvT              float64 // ΔVt scale (V): ΔVt = KvT*(P/Ps)
+	VGSReadV         float64 // Read-bias gate voltage (V), used by saturation model
+	VT0V             float64 // Zero-polarization threshold voltage (V), used by saturation model
 
 	// Electrostrictive coefficients (m⁴/C²) for strain-polarization coupling
 	// Used to calculate Ec shift under substrate strain:
@@ -158,6 +164,7 @@ func DefaultHZO() *HZOMaterial {
 		TargetRangeFrac: 0.90,    // Map outer levels to ±0.90×Ps for reachability
 		Tau0NLS:         1e-10,   // 100 ps attempt time (HfO2 typical)
 		EaNLS:           12e8,    // 12 MV/cm activation field
+		NLSSigma:        1.5,     // HfO2 log-normal spread (Guo et al., APL 2018)
 		Gmin:            1e-6,    // 1 µS at HRS (P = -Ps)
 		Gmax:            100e-6,  // 100 µS at LRS (P = +Ps), ~100x on/off ratio
 		// Landau-Khalatnikov parameters (Materlik 2015 LGD baseline for HfO2: β=-6.72e8, γ=1.95e10)
@@ -206,6 +213,7 @@ func MaterlikHfO2() *HZOMaterial {
 		TargetRangeFrac: 0.90,
 		Tau0NLS:         1e-10,
 		EaNLS:           12e8,
+		NLSSigma:        1.5,
 		Gmin:            1e-6,
 		Gmax:            100e-6,
 		BetaLandau:      -6.720e8,
@@ -252,8 +260,9 @@ func LiteratureSuperlattice() *HZOMaterial {
 		TargetRangeFrac: 0.90,    // Map outer levels to ±0.90×Ps (≈Pr) for reachability under depolarization/relaxation
 		Tau0NLS:         0.5e-10, // 50 ps (faster switching)
 		EaNLS:           10e8,    // 10 MV/cm (lower barrier)
-		Gmin:            0.5e-6,  // 0.5 µS at HRS (lower due to better control)
-		Gmax:            150e-6,  // 150 µS at LRS (higher Pr → better modulation)
+		NLSSigma:        1.5,
+		Gmin:            0.5e-6, // 0.5 µS at HRS (lower due to better control)
+		Gmax:            150e-6, // 150 µS at LRS (higher Pr → better modulation)
 		// Landau-Khalatnikov parameters (superlattice-enhanced)
 		BetaLandau:          -3.8e8,
 		GammaLandau:         2.1e10,
@@ -311,10 +320,11 @@ func FeCIMMaterial() *HZOMaterial {
 		EnduranceCycles: 1e9, // 10^9 DEMONSTRATED (10^12 is TARGET)
 		RetentionTime:   1e7, // 10^7 sec (~116 days) DEMONSTRATED
 		ImrintField:     1e6,
-		NumLevels:       30,     // 30-level baseline (conference claim; pending peer review)
-		TargetRangeFrac: 0.90,   // Map outer levels to ±0.90×Ps for reachability
-		Tau0NLS:         1e-10,  // 100 ps attempt time
-		EaNLS:           12e8,   // 12 MV/cm activation field
+		NumLevels:       30,    // 30-level baseline (conference claim; pending peer review)
+		TargetRangeFrac: 0.90,  // Map outer levels to ±0.90×Ps for reachability
+		Tau0NLS:         1e-10, // 100 ps attempt time
+		EaNLS:           12e8,  // 12 MV/cm activation field
+		NLSSigma:        1.5,
 		Gmin:            1e-6,   // 1 µS at HRS
 		Gmax:            100e-6, // 100 µS at LRS, on/off ~100x
 		// Landau-Khalatnikov parameters (Materlik 2015 LGD baseline for HfO2: β=-6.72e8, γ=1.95e10)
@@ -374,8 +384,9 @@ func CryogenicHZO() *HZOMaterial {
 		TargetRangeFrac: 0.90,    // Map outer levels to ±0.90×Ps for reachability
 		Tau0NLS:         2e-10,   // 200 ps (slower at cryo)
 		EaNLS:           15e8,    // 15 MV/cm (higher barrier at cryo)
-		Gmin:            0.5e-6,  // 0.5 µS at HRS (lower leakage at cryo)
-		Gmax:            200e-6,  // 200 µS at LRS (higher Pr → better modulation)
+		NLSSigma:        1.5,
+		Gmin:            0.5e-6, // 0.5 µS at HRS (lower leakage at cryo)
+		Gmax:            200e-6, // 200 µS at LRS (higher Pr → better modulation)
 		// Landau-Khalatnikov parameters (Materlik 2015 LGD baseline; cryo-specific LGD not widely published)
 		BetaLandau:          -6.720e8,
 		GammaLandau:         1.950e10,
@@ -418,6 +429,7 @@ func HZOStandard32() *HZOMaterial {
 		TargetRangeFrac: 0.90,  // Map outer levels to ±0.90×Ps for reachability
 		Tau0NLS:         1e-10, // 100 ps attempt time
 		EaNLS:           12e8,  // 12 MV/cm activation field
+		NLSSigma:        1.5,
 		Gmin:            2e-6,  // 2 µS at HRS (2017 era device)
 		Gmax:            80e-6, // 80 µS at LRS, ~40x on/off ratio
 		// Landau-Khalatnikov parameters (Materlik 2015 LGD baseline for HfO2: β=-6.72e8, γ=1.95e10)
@@ -459,10 +471,11 @@ func HZOFJT140() *HZOMaterial {
 		EnduranceCycles: 1e7,    // 10^7 cycles demonstrated
 		RetentionTime:   3.15e8, // 10 years extrapolated
 		ImrintField:     1e6,
-		NumLevels:       140,    // 140 states - VERIFIED (Song et al. 2024)
-		TargetRangeFrac: 0.90,   // Map outer levels to ±0.90×Ps for reachability
-		Tau0NLS:         2e-10,  // 200 ps (FTJ tunneling)
-		EaNLS:           10e8,   // 10 MV/cm
+		NumLevels:       140,   // 140 states - VERIFIED (Song et al. 2024)
+		TargetRangeFrac: 0.90,  // Map outer levels to ±0.90×Ps for reachability
+		Tau0NLS:         2e-10, // 200 ps (FTJ tunneling)
+		EaNLS:           10e8,  // 10 MV/cm
+		NLSSigma:        1.5,
 		Gmin:            0.1e-6, // 0.1 µS at HRS (FTJ: tunneling → lower current)
 		Gmax:            10e-6,  // 10 µS at LRS (FTJ: ~100x on/off but lower absolute)
 		// Landau-Khalatnikov parameters (Materlik 2015 LGD baseline for HfO2: β=-6.72e8, γ=1.95e10)
@@ -506,6 +519,7 @@ func HZOCustom14() *HZOMaterial {
 		TargetRangeFrac: 0.90,
 		Tau0NLS:         1e-10,
 		EaNLS:           12e8,
+		NLSSigma:        1.5,
 		Gmin:            1e-6,
 		Gmax:            100e-6,
 		// Landau-Khalatnikov parameters (Materlik 2015 LGD baseline for HfO2: β=-6.72e8, γ=1.95e10)
@@ -548,6 +562,7 @@ func PZT() *HZOMaterial {
 		TargetRangeFrac:     0.90,
 		Tau0NLS:             1e-10,
 		EaNLS:               6e7,
+		NLSSigma:            1.5,
 		Gmin:                1e-6,
 		Gmax:                120e-6,
 		BetaLandau:          -2.0e8,
@@ -713,8 +728,13 @@ func MaterialFromConfig(m *physics.Material, cfg *physics.Config) *HZOMaterial {
 		SeriesResistanceOhm: m.Circuit.SeriesResistanceOhm,
 		Tau0NLS:             m.NLS.TauInfS,
 		EaNLS:               m.NLS.ActivationFieldVM,
+		NLSSigma:            m.NLS.Sigma,
 		Gmin:                m.Conductance.GminS,
 		Gmax:                m.Conductance.GmaxS,
+		ConductanceModel:    m.Conductance.Model,
+		KvT:                 m.Conductance.KvT,
+		VGSReadV:            m.Conductance.VGSReadV,
+		VT0V:                m.Conductance.VT0V,
 	}
 }
 
@@ -853,8 +873,18 @@ func (m *HZOMaterial) DiscreteLevel(level int, totalLevels int) float64 {
 		Gmax = 100e-6 // 100 µS (low resistance state, P = +Ps)
 	}
 
-	// FeFET conductance model: G = Gmin + (Gmax-Gmin) * (normalizedP + 1) / 2
-	// At P = -Ps (normalizedP = -1): G = Gmin
-	// At P = +Ps (normalizedP = +1): G = Gmax
-	return Gmin + (Gmax-Gmin)*(normalizedP+1)/2
+	// FeFET conductance model with selectable transfer behavior.
+	model := ParseConductanceModel(m.ConductanceModel)
+	// Use normalized polarization directly so DiscreteLevel remains well-defined
+	// even when Ps is unset/zero in lightweight test fixtures.
+	return PolarizationToConductanceWithParams(
+		normalizedP,
+		1.0,
+		Gmin,
+		Gmax,
+		model,
+		m.KvT,
+		m.VGSReadV,
+		m.VT0V,
+	)
 }

@@ -56,6 +56,9 @@ func TestNewLKSolver_Defaults(t *testing.T) {
 	if s.TauInf != 1.0e-13 {
 		t.Errorf("TauInf = %e, want 1.0e-13", s.TauInf)
 	}
+	if s.NLSSigma != 1.5 {
+		t.Errorf("NLSSigma = %f, want 1.5", s.NLSSigma)
+	}
 
 	// Verify thermodynamic constants
 	if s.CurieTemp != 723.0 {
@@ -192,6 +195,9 @@ func TestLKSolver_ConfigureFromMaterial(t *testing.T) {
 	}
 	if s.ActivationField != mat.EaNLS {
 		t.Errorf("ActivationField = %e, want %e", s.ActivationField, mat.EaNLS)
+	}
+	if mat.NLSSigma > 0 && s.NLSSigma != mat.NLSSigma {
+		t.Errorf("NLSSigma = %f, want %f", s.NLSSigma, mat.NLSSigma)
 	}
 
 	// Verify P initialized to -Pr

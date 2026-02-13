@@ -179,6 +179,7 @@ type MaterialCircuit struct {
 type MaterialNLS struct {
 	ActivationFieldVM float64 `yaml:"activation_field_v_m"`
 	TauInfS           float64 `yaml:"tau_inf_s"`
+	Sigma             float64 `yaml:"sigma,omitempty"`
 }
 
 // MaterialConductance holds conductance mapping parameters.
@@ -186,6 +187,10 @@ type MaterialConductance struct {
 	GminS      float64 `yaml:"gmin_s"`
 	GmaxS      float64 `yaml:"gmax_s"`
 	OnOffRatio float64 `yaml:"on_off_ratio,omitempty"` // Gmax/Gmin ratio
+	Model      string  `yaml:"model,omitempty"`        // linear (default), subthreshold, saturation
+	KvT        float64 `yaml:"k_vt,omitempty"`         // ΔVt scale (V) for polarization→threshold coupling
+	VGSReadV   float64 `yaml:"vgs_read_v,omitempty"`   // Effective read gate voltage (V) for saturation model
+	VT0V       float64 `yaml:"vt0_v,omitempty"`        // Zero-polarization threshold voltage (V)
 }
 
 // MaterialSynaptic holds synaptic device parameters for neuromorphic computing.
