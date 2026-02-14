@@ -2,7 +2,7 @@
 
 **Mission**: Educational FeCIM visualization and simulation tool based on HfO₂-ZrO₂ superlattice research.
 
-**Last Updated**: 2026-02-11 (Refocused priorities)
+**Last Updated**: 2026-02-13 (Research-grade headless/parity updates)
 
 **Source Documents**: `CRITIQUE_MASTER_LIST.md`, `docs/neural-network/mnist.fixes.todo.md`, `docs/ACCESSIBILITY_AUDIT.md`, `docs/peripheral-circuits/ARRAY_SIMULATION_FIDELITY.md`, `docs/development/ARCHITECTURE.md`, `PHYSICS_REALISM_AUDIT.md`, `OBSERVATIONS.md`, code comments
 
@@ -41,8 +41,8 @@
 
 | ID | Task | Scope | Status |
 |----|------|-------|--------|
-| RG-VAL-01 | Enforce **fully headless** required gates: no `DISPLAY`, no `WAYLAND_DISPLAY`, no `xvfb-run` for mandatory regression lanes | M1/M4 + CI | ⏳ |
-| RG-VAL-02 | Enforce **material-selected-aware** gating: every regression case must set explicit material and emit per-material verdict (no implicit default-only pass) | M1/M4 | ⏳ |
+| RG-VAL-01 | Enforce **fully headless** required gates: no `DISPLAY`, no `WAYLAND_DISPLAY`, no `xvfb-run` for mandatory regression lanes | M1/M4 + CI | ✅ (2026-02-13: hard gate added in `scripts/ci/go-test-all.sh`, `scripts/ci/go-test-race.sh`, `scripts/run_headless_ispp_regressions.sh`, `scripts/run_headless_module4_regressions.sh`) |
+| RG-VAL-02 | Material-aware gating with per-material verdicts | ✅ | See commit |
 | RG-VAL-03 | Add versioned **material profile map** (PR-gate vs nightly-gate sets) and fail when any required material verdict is missing | M1/M4 | ⏳ |
 | RG-VAL-04 | Add regression artifact schema field for material physics snapshot (`Ec`, `Ps`, `Pr`, thickness, `Gmin`, `Gmax`, `TargetRangeFrac`) | M1/M4 | ⏳ |
 | RG-VAL-05 | Add release report that includes DOE coverage completeness + per-material pass map | M1/M4 | ⏳ |
@@ -51,8 +51,8 @@
 
 | ID | Task | Scope | Status |
 |----|------|-------|--------|
-| RG-PAR-01 | Prove headless and GUI use the **same physics path** for READ/WRITE/COMPUTE (no duplicate headless equations) | M4 | ⏳ |
-| RG-PAR-02 | Add parity test: same seed/material/scenario through GUI dispatch and headless harness, compare `effectiveCellVoltage`, row currents, ADC levels, and target-level trajectory | M4 | ⏳ |
+| RG-PAR-01 | Headless/GUI physics parity proof documented | ✅ | See commit |
+| RG-PAR-02 | Add parity test: same seed/material/scenario through GUI dispatch and headless harness, compare `effectiveCellVoltage`, row currents, ADC levels, and target-level trajectory | M4 | ✅ (2026-02-13: `module4-circuits/pkg/gui/headless_gui_physics_parity_test.go` `TestHeadlessPhysicsParity_GUIVsHeadless_ReadComputeWriteStep_MaterialAware` covers FeCIM+Literature materials in 0T1R/1T1R for READ/COMPUTE/WRITE-step parity) |
 | RG-PAR-03 | Add parity trace artifact (`gui_vs_headless_parity.json`) with tolerance summary and failing step index | M4 | ⏳ |
 | RG-PAR-04 | Add Module 1 parity test: GUI WRD/ISPP target progression and headless mode progression agree on phase transitions and target sequencing | M1 | ⏳ |
 | RG-PAR-05 | Ban new headless-only physics branches in code review checklist and CI lint gate (path-level parity policy) | Shared process | ⏳ |

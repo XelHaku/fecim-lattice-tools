@@ -315,3 +315,45 @@ func TestPhysicsRegressionCurves(t *testing.T) {
 		})
 	}
 }
+
+func TestPhysicsRegressionCurves_MaterialSmoke(t *testing.T) {
+	// This is NOT a golden-file test. It exists to ensure our physics regression
+	// lane exercises multiple material presets and emits per-material verdicts
+	// for gating/CI logs.
+	materials := []struct {
+		id  string
+		mat *ferroelectric.HZOMaterial
+	}{
+		{id: "fecim_hzo", mat: ferroelectric.FeCIMMaterial()},
+		{id: "literature_superlattice", mat: ferroelectric.LiteratureSuperlattice()},
+		{id: "default_hzo", mat: ferroelectric.DefaultHZO()},
+	}
+
+	for _, mc := range materials {
+		mc := mc
+		t.Run(mc.id, func(t *testing.T) {
+			defer func() {
+				if t.Failed() {
+					t.Logf("VERDICT material=%s result=FAIL", mc.id)
+					return
+				}
+				t.Logf("VERDICT material=%s result=PASS", mc.id)
+			}()
+
+			model := ferroelectric.NewPreisachModel(mc.mat)
+			Emax := 2.0 * mc.mat.Ec
+			points := 201
+			xE, yP := model.GetHysteresisLoop(Emax, points)
+			expected := points*4 + 1
+			if len(xE) != expected || len(yP) != expected {
+				t.Fatalf("unexpected point count: len(x)=%d len(y)=%d expected=%d", len(xE), len(yP), expected)
+			}
+			for i := range xE {
+				if math.IsNaN(xE[i]) || math.IsInf(xE[i], 0) || math.IsNaN(yP[i]) || math.IsInf(yP[i], 0) {
+					t.Fatalf("non-finite curve value at i=%d: E=%v P=%v", i, xE[i], yP[i])
+				}
+			}
+			t.Logf("preisach-loop smoke OK: material=%s Emax=%.3e points=%d", mc.id, Emax, points)
+		})
+	}
+}

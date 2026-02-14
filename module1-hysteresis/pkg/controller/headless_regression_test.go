@@ -75,40 +75,62 @@ func TestHeadlessRegression_WRD_ISPP_Preisach(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping headless regression (Preisach) in -short")
 	}
-	mat := ferroelectric.LiteratureSuperlattice()
+
+	materials := []struct {
+		id  string
+		mat *sharedphysics.HZOMaterial
+	}{
+		{id: "fecim_hzo", mat: ferroelectric.FeCIMMaterial()},
+		{id: "literature_superlattice", mat: ferroelectric.LiteratureSuperlattice()},
+		{id: "default_hzo", mat: ferroelectric.DefaultHZO()},
+	}
 	targets := defaultRegressionTargets()
 
-	summary := regressionSummary{
-		Suite:     "headless-wrd-ispp-regression",
-		Material:  mat.Name,
-		Model:     "preisach",
-		Timestamp: time.Now().Format(time.RFC3339),
-		TargetSet: targets,
-		OutputNotes: "Set FECIM_REGRESSION_JSON_DIR to control output location. " +
-			"Default is $TMPDIR/fecim-regression.",
-	}
+	for _, tc := range materials {
+		tc := tc
+		t.Run(tc.id, func(t *testing.T) {
+			defer func() {
+				if t.Failed() {
+					t.Logf("VERDICT material=%s result=FAIL", tc.id)
+					return
+				}
+				t.Logf("VERDICT material=%s result=PASS", tc.id)
+			}()
 
-	allPass := true
-	for _, target := range targets {
-		res := runHeadlessPreisachRegressionCase(t, mat, target)
-		summary.Cases = append(summary.Cases, res)
+			mat := tc.mat
+			summary := regressionSummary{
+				Suite:     "headless-wrd-ispp-regression",
+				Material:  fmt.Sprintf("%s (%s)", mat.Name, tc.id),
+				Model:     "preisach",
+				Timestamp: time.Now().Format(time.RFC3339),
+				TargetSet: targets,
+				OutputNotes: "Set FECIM_REGRESSION_JSON_DIR to control output location. " +
+					"Default is $TMPDIR/fecim-regression.",
+			}
 
-		if !res.Converged {
-			allPass = false
-			t.Errorf("preisach %s: did not converge (target=%d final=%d pulses=%d overshoots=%d)",
-				target.Name, res.TargetLevel, res.FinalLevel, res.Pulses, res.Overshoots)
-		}
-		if res.LevelError != 0 {
-			allPass = false
-			t.Errorf("preisach %s: wrong final level target=%d final=%d", target.Name, res.TargetLevel, res.FinalLevel)
-		}
-		if res.Pulses > 30 {
-			allPass = false
-			t.Errorf("preisach %s: pulse budget exceeded pulses=%d (limit 30)", target.Name, res.Pulses)
-		}
+			allPass := true
+			for _, target := range targets {
+				res := runHeadlessPreisachRegressionCase(t, mat, target)
+				summary.Cases = append(summary.Cases, res)
+
+				if !res.Converged {
+					allPass = false
+					t.Errorf("preisach %s: did not converge (target=%d final=%d pulses=%d overshoots=%d)",
+						target.Name, res.TargetLevel, res.FinalLevel, res.Pulses, res.Overshoots)
+				}
+				if res.LevelError != 0 {
+					allPass = false
+					t.Errorf("preisach %s: wrong final level target=%d final=%d", target.Name, res.TargetLevel, res.FinalLevel)
+				}
+				if res.Pulses > 30 {
+					allPass = false
+					t.Errorf("preisach %s: pulse budget exceeded pulses=%d (limit 30)", target.Name, res.Pulses)
+				}
+			}
+			summary.AllPass = allPass
+			writeRegressionSummary(t, fmt.Sprintf("preisach_wrd_ispp_regression_%s.json", tc.id), summary)
+		})
 	}
-	summary.AllPass = allPass
-	writeRegressionSummary(t, "preisach_wrd_ispp_regression.json", summary)
 }
 
 func runHeadlessPreisachRegressionCase(t *testing.T, mat *sharedphysics.HZOMaterial, target regressionTarget) regressionCaseSummary {
@@ -175,39 +197,61 @@ func TestHeadlessRegression_WRD_ISPP_LK(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping headless regression (LK) in -short")
 	}
-	mat := ferroelectric.LiteratureSuperlattice()
+
+	materials := []struct {
+		id  string
+		mat *sharedphysics.HZOMaterial
+	}{
+		{id: "fecim_hzo", mat: ferroelectric.FeCIMMaterial()},
+		{id: "literature_superlattice", mat: ferroelectric.LiteratureSuperlattice()},
+		{id: "default_hzo", mat: ferroelectric.DefaultHZO()},
+	}
 	targets := defaultRegressionTargets()
 
-	summary := regressionSummary{
-		Suite:     "headless-wrd-ispp-regression",
-		Material:  mat.Name,
-		Model:     "landau-khalatnikov",
-		Timestamp: time.Now().Format(time.RFC3339),
-		TargetSet: targets,
-		OutputNotes: "LK single-domain is expected to miss some intermediate targets; " +
-			"suite enforces bounded pulses/overshoots and deterministic completion.",
-	}
+	for _, tc := range materials {
+		tc := tc
+		t.Run(tc.id, func(t *testing.T) {
+			defer func() {
+				if t.Failed() {
+					t.Logf("VERDICT material=%s result=FAIL", tc.id)
+					return
+				}
+				t.Logf("VERDICT material=%s result=PASS", tc.id)
+			}()
 
-	allPass := true
-	for _, target := range targets {
-		res := runHeadlessLKRegressionCase(t, mat, target)
-		summary.Cases = append(summary.Cases, res)
+			mat := tc.mat
+			summary := regressionSummary{
+				Suite:     "headless-wrd-ispp-regression",
+				Material:  fmt.Sprintf("%s (%s)", mat.Name, tc.id),
+				Model:     "landau-khalatnikov",
+				Timestamp: time.Now().Format(time.RFC3339),
+				TargetSet: targets,
+				OutputNotes: "LK single-domain is expected to miss some intermediate targets; " +
+					"suite enforces bounded pulses/overshoots and deterministic completion.",
+			}
 
-		if !res.ReachedDone {
-			allPass = false
-			t.Errorf("lk %s: did not reach done state (target=%d final=%d)", target.Name, res.TargetLevel, res.FinalLevel)
-		}
-		if res.Pulses > 80 {
-			allPass = false
-			t.Errorf("lk %s: pulse budget exceeded pulses=%d (limit 80)", target.Name, res.Pulses)
-		}
-		if res.Overshoots > 20 {
-			allPass = false
-			t.Errorf("lk %s: overshoot budget exceeded overshoots=%d (limit 20)", target.Name, res.Overshoots)
-		}
+			allPass := true
+			for _, target := range targets {
+				res := runHeadlessLKRegressionCase(t, mat, target)
+				summary.Cases = append(summary.Cases, res)
+
+				if !res.ReachedDone {
+					allPass = false
+					t.Errorf("lk %s: did not reach done state (target=%d final=%d)", target.Name, res.TargetLevel, res.FinalLevel)
+				}
+				if res.Pulses > 80 {
+					allPass = false
+					t.Errorf("lk %s: pulse budget exceeded pulses=%d (limit 80)", target.Name, res.Pulses)
+				}
+				if res.Overshoots > 20 {
+					allPass = false
+					t.Errorf("lk %s: overshoot budget exceeded overshoots=%d (limit 20)", target.Name, res.Overshoots)
+				}
+			}
+			summary.AllPass = allPass
+			writeRegressionSummary(t, fmt.Sprintf("lk_wrd_ispp_regression_%s.json", tc.id), summary)
+		})
 	}
-	summary.AllPass = allPass
-	writeRegressionSummary(t, "lk_wrd_ispp_regression.json", summary)
 }
 
 func runHeadlessLKRegressionCase(t *testing.T, mat *sharedphysics.HZOMaterial, target regressionTarget) regressionCaseSummary {
