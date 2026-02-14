@@ -267,10 +267,10 @@ func (a *App) createFORCPanel() fyne.CanvasObject {
 	resolutionEntry := widget.NewEntry()
 	resolutionEntry.SetText("21")
 
-	resultView := widget.NewMultiLineEntry()
-	resultView.Wrapping = fyne.TextWrapOff
-	resultView.SetMinRowsVisible(10)
-	resultView.Disable()
+	resultLabel := widget.NewLabel("Ready")
+	resultLabel.Wrapping = fyne.TextWrapOff
+	resultScroll := container.NewHScroll(resultLabel)
+	resultScroll.SetMinSize(fyne.NewSize(0, 200))
 
 	var last FORCWorkflowResult
 	runFORC := func() {
@@ -285,16 +285,16 @@ func (a *App) createFORCPanel() fyne.CanvasObject {
 		nrev, nErr := parseIntOrDefault(reversalEntry.Text, 21)
 		res, rErr := parseIntOrDefault(resolutionEntry.Text, 21)
 		if eErr != nil || nErr != nil || rErr != nil {
-			resultView.SetText("invalid parameters")
+			fyne.Do(func() { resultLabel.SetText("invalid parameters") })
 			return
 		}
 		out, err := runFORCWorkflow(ps, emax, nrev, res)
 		if err != nil {
-			resultView.SetText(fmt.Sprintf("FORC error: %v", err))
+			fyne.Do(func() { resultLabel.SetText(fmt.Sprintf("FORC error: %v", err)) })
 			return
 		}
 		last = out
-		resultView.SetText(out.Stats + "\n\n" + out.HeatmapText)
+		fyne.Do(func() { resultLabel.SetText(out.Stats + "\n\n" + out.HeatmapText) })
 	}
 
 	exportSweepBtn := widget.NewButton("Export sweep CSV", func() {
@@ -367,7 +367,7 @@ func (a *App) createFORCPanel() fyne.CanvasObject {
 		controls,
 		runBtn,
 		container.NewGridWithColumns(3, exportSweepBtn, exportMatrixBtn, exportMetaBtn),
-		resultView,
+		resultScroll,
 	))
 }
 
