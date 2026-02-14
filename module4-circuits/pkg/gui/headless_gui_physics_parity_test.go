@@ -32,21 +32,21 @@ type parityWriteTrace struct {
 
 type parityStepArtifact struct {
 	Material           string  `json:"material"`
-	Scenario           string  `json:"scenario"` // 0T1R / 1T1R
+	Scenario           string  `json:"scenario"`  // 0T1R / 1T1R
 	StepType           string  `json:"step_type"` // READ / COMPUTE / WRITE_STEP
 	Tolerance          float64 `json:"tolerance"`
 	MaxObservedDelta   float64 `json:"max_observed_delta"`
-	Pass              bool    `json:"pass"`
+	Pass               bool    `json:"pass"`
 	FailingIndex       int     `json:"failing_index,omitempty"`
 	DeltaKind          string  `json:"delta_kind"` // voltage|current_ua|level|write
 	AdditionalMetadata any     `json:"additional_metadata,omitempty"`
 }
 
 type parityArtifact struct {
-	Version        string             `json:"version"`
-	Profile        string             `json:"profile"`
-	GeneratedUnix  int64              `json:"generated_unix"`
-	Records        []parityStepArtifact `json:"records"`
+	Version       string               `json:"version"`
+	Profile       string               `json:"profile"`
+	GeneratedUnix int64                `json:"generated_unix"`
+	Records       []parityStepArtifact `json:"records"`
 }
 
 func TestHeadlessPhysicsParity_GUIVsHeadless_ReadComputeWriteStep_MaterialAware(t *testing.T) {

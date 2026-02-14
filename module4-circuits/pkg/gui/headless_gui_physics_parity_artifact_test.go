@@ -57,7 +57,7 @@ func writeParityArtifact(t interface{ Logf(string, ...any) }, art *parityArtifac
 	t.Logf("parity artifact written: %s (%d bytes)", path, len(b))
 }
 
-func compareSnapshotAndRecord(t interface{
+func compareSnapshotAndRecord(t interface {
 	Errorf(string, ...any)
 }, art *parityArtifact, material, scenario, step string, gui, headless paritySnapshot, tolV, tolI float64) []parityStepArtifact {
 	records := make([]parityStepArtifact, 0, 3)
@@ -123,21 +123,26 @@ func compareSnapshotAndRecord(t interface{
 		t.Errorf("parity(%s/%s/%s): row level mismatch at row=%d (gui=%d headless=%d)", material, scenario, step, idxL, gui.RowLevels[idxL], headless.RowLevels[idxL])
 	}
 	records = append(records, parityStepArtifact{
-		Material:         material,
-		Scenario:         scenario,
-		StepType:         step,
-		Tolerance:        0,
-		MaxObservedDelta: func() float64 { if passL { return 0 }; return 1 }(),
-		Pass:             passL,
-		FailingIndex:     idxL,
-		DeltaKind:        "level",
+		Material:  material,
+		Scenario:  scenario,
+		StepType:  step,
+		Tolerance: 0,
+		MaxObservedDelta: func() float64 {
+			if passL {
+				return 0
+			}
+			return 1
+		}(),
+		Pass:         passL,
+		FailingIndex: idxL,
+		DeltaKind:    "level",
 	})
 
 	_ = art // art kept for signature stability
 	return records
 }
 
-func compareWriteAndRecord(t interface{
+func compareWriteAndRecord(t interface {
 	Errorf(string, ...any)
 }, material, scenario string, gui, headless parityWriteTrace, tol float64) parityStepArtifact {
 	// For write-step we fold multiple comparisons into one record.
@@ -165,14 +170,14 @@ func compareWriteAndRecord(t interface{
 	}
 
 	return parityStepArtifact{
-		Material:         material,
-		Scenario:         scenario,
-		StepType:         "WRITE_STEP",
-		Tolerance:        tol,
-		MaxObservedDelta: maxD,
-		Pass:             pass,
-		FailingIndex:     -1,
-		DeltaKind:        "write",
+		Material:           material,
+		Scenario:           scenario,
+		StepType:           "WRITE_STEP",
+		Tolerance:          tol,
+		MaxObservedDelta:   maxD,
+		Pass:               pass,
+		FailingIndex:       -1,
+		DeltaKind:          "write",
 		AdditionalMetadata: fmt.Sprintf("dacCode=%d", gui.DACCode),
 	}
 }
