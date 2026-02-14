@@ -55,8 +55,8 @@
 | RG-PAR-01 | Headless/GUI physics parity proof documented | ✅ | See commit |
 | RG-PAR-02 | Add parity test: same seed/material/scenario through GUI dispatch and headless harness, compare `effectiveCellVoltage`, row currents, ADC levels, and target-level trajectory | M4 | ✅ (2026-02-13: `module4-circuits/pkg/gui/headless_gui_physics_parity_test.go` `TestHeadlessPhysicsParity_GUIVsHeadless_ReadComputeWriteStep_MaterialAware` covers FeCIM+Literature materials in 0T1R/1T1R for READ/COMPUTE/WRITE-step parity) |
 | RG-PAR-03 | Add parity trace artifact (`gui_vs_headless_parity.json`) with tolerance summary and failing step index | M4 | ✅ (parity JSON artifact written by parity test; see commit TBD) |
-| RG-PAR-04 | Add Module 1 parity test: GUI WRD/ISPP target progression and headless mode progression agree on phase transitions and target sequencing | M1 | ⏳ |
-| RG-PAR-05 | Ban new headless-only physics branches in code review checklist and CI lint gate (path-level parity policy) | Shared process | ⏳ |
+| RG-PAR-04 | Add Module 1 parity test: GUI WRD/ISPP target progression and headless mode progression agree on phase transitions and target sequencing | M1 | ✅ |
+| RG-PAR-05 | Ban new headless-only physics branches in code review checklist and CI lint gate (path-level parity policy) | Shared process | ✅ |
 
 ### 0c. Plan Docs Integration (NEW)
 

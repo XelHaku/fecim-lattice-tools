@@ -18,6 +18,9 @@ unset WAYLAND_DISPLAY
 # CI-friendly defaults (override via env vars)
 GO_TEST_TIMEOUT="${GO_TEST_TIMEOUT:-10m}"
 
+# Parity policy lint (RG-PAR-05) — fail fast before running tests.
+./scripts/ci/lint-parity-policy.sh
+
 # -count=1 avoids cached test results hiding flakes.
 # -shuffle=off keeps execution order stable by default.
 exec go test \
