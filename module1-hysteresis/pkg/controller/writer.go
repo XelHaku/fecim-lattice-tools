@@ -123,6 +123,17 @@ type WriteController struct {
 	// - WaitSettleScale extends WAIT/VERIFY windows for remanent settling.
 	EnableLKMidOptimizations bool
 	WaitSettleScale          float64
+
+	// Step mode: "linear" (default) or "logarithmic" (L-ISPP).
+	// Logarithmic mode uses V_next = V_prev + ΔV₀·Ec·ln(1+pulseCount),
+	// giving large initial steps that naturally decay.
+	StepMode string
+
+	// Logarithmic ISPP base step (ΔV₀) as fraction of Ec. Default 0.05 (5%).
+	LogBaseStep float64
+
+	// Efficiency metric: sum of |V| across all pulses (energy proxy).
+	CumulativeAbsVoltage float64
 }
 
 func NewWriteController(numLevels int, ec, emax float64, calib *algo.CalibrationManager) *WriteController {
@@ -143,6 +154,8 @@ func NewWriteController(numLevels int, ec, emax float64, calib *algo.Calibration
 		State:                    StateIdle,
 		EnableLKMidOptimizations: false,
 		WaitSettleScale:          1.0,
+		StepMode:                 "linear",
+		LogBaseStep:              0.05,
 	}
 }
 
@@ -168,6 +181,7 @@ func (wc *WriteController) Start(targetLevel int, fromSaturation bool) {
 	wc.StuckCount = 0
 	wc.stepFloor = 0
 	wc.GuardPulseCount = 0
+	wc.CumulativeAbsVoltage = 0
 
 	// Initialize Binary Search Bounds
 	wc.VMin = 0
@@ -279,6 +293,7 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 
 		// If we reached the target field (approx), switch to WAIT
 		if wc.PhaseTimer > pulseDur*0.4 && math.Abs(currentField-wc.CurrentField) < 0.01*wc.MaxField {
+			wc.CumulativeAbsVoltage += math.Abs(wc.CurrentField)
 			wc.State = StateWait
 			wc.PhaseTimer = 0
 		}
@@ -708,17 +723,32 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 	// Dynamic step size based on distance to target
 	// Larger steps when far, smaller steps when close
 	var stepSize float64
-	switch {
-	case levelError > 10:
-		stepSize = 0.15 * wc.EcField // Large step when very far
-	case levelError > 5:
-		stepSize = 0.08 * wc.EcField // Medium-large step
-	case levelError > 2:
-		stepSize = 0.04 * wc.EcField // Medium step
-	case levelError > 0:
-		stepSize = 0.02 * wc.EcField // Small step when close
-	default:
-		stepSize = 0.01 * wc.EcField // Tiny step (shouldn't reach here)
+	if wc.StepMode == "logarithmic" {
+		// Logarithmic ISPP: step decays naturally with pulse count.
+		// V_next = V_prev + ΔV₀ × Ec × ln(1 + pulseCount)
+		// pulse 1: +ΔV₀×Ec×ln(2) ≈ 0.69×ΔV₀×Ec  (large)
+		// pulse 5: +ΔV₀×Ec×ln(6) ≈ 1.79×ΔV₀×Ec  (still growing but decelerating)
+		// The ln() growth is sublinear — each subsequent pulse adds less ΔV
+		baseStep := wc.LogBaseStep * wc.EcField
+		stepSize = baseStep * math.Log(1+float64(wc.PulseCount))
+		// Floor: at least half the base step to avoid near-zero increments at pulse 0
+		if stepSize < baseStep*0.5 {
+			stepSize = baseStep * 0.5
+		}
+	} else {
+		// Linear ISPP: distance-based step table (original behavior)
+		switch {
+		case levelError > 10:
+			stepSize = 0.15 * wc.EcField // Large step when very far
+		case levelError > 5:
+			stepSize = 0.08 * wc.EcField // Medium-large step
+		case levelError > 2:
+			stepSize = 0.04 * wc.EcField // Medium step
+		case levelError > 0:
+			stepSize = 0.02 * wc.EcField // Small step when close
+		default:
+			stepSize = 0.01 * wc.EcField // Tiny step (shouldn't reach here)
+		}
 	}
 
 	// Near saturation levels (1-3 or 28-30), use larger steps due to K_dep feedback
