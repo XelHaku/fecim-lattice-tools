@@ -8,6 +8,10 @@
 cd fecim-lattice-tools
 bash scripts/reproduce_validation.sh
 
+## Module 1 (Hysteresis) — 2 minutes
+bash scripts/module1_automation.sh --fast
+# Expected: 4 groups pass, Preisach + LK regression within tolerance, ISPP converges
+
 ## Expected Output
 - BUILD: PASS
 - VET: PASS

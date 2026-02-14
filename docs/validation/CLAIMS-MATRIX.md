@@ -4,8 +4,8 @@ This matrix maps each reported scientific claim to executable verification artif
 
 | Claim | Test/Script | Evidence Path | Tolerance/Criterion |
 |-------|-------------|---------------|---------------------|
-| Pr=19.17 µC/cm² (HZO, Materlik 2015) | TestPhysicsRegression_Preisach | validation/testdata/ | ±5% |
-| Ec=1.16 MV/cm | TestPhysicsRegression_LK | validation/testdata/ | ±5% |
+| Pr=19.17 µC/cm² (HZO, Materlik 2015) | `TestPhysicsRegressionCurves`, `scripts/module1_automation.sh --fast` | validation/testdata/ | ±5% |
+| Ec=1.16 MV/cm | `TestPhysicsRegressionCurves`, `scripts/module1_automation.sh --fast` | validation/testdata/ | ±5% |
 | MNIST 80% accuracy | TestFullStackMNIST | validation/ | ≥80% |
 | Energy 44.94 fJ/cell | TestTransientPulse | shared/physics/ | 10-100 fJ range |
 | **(M4)** Power conservation < 1% | `scripts/module4_automation.sh --fast` (TestThermodynamics*) | module4-circuits/pkg/arraysim/ | < 1% |
@@ -16,8 +16,9 @@ This matrix maps each reported scientific claim to executable verification artif
 | **(M4)** DAC INL < 1 LSB | `scripts/module4_automation.sh --full` (TestPeripheralsINLDNL*) | shared/peripherals/ | < 1 LSB |
 | **(M4)** Retention ΔG/G < 1% | `scripts/module4_automation.sh --full` (TestRetention*) | module4-circuits/pkg/gui/ | < 1% |
 | **(M4)** Write disturb bounded | `scripts/module4_automation.sh --full` (TestWriteDisturb*) | module4-circuits/pkg/gui/ | bounded |
-| Preisach discontinuities physical | TestHeadlessISPPContinuityValidation | cmd/fecim-lattice-tools/ | 0 spurious |
-| ISPP converges all targets | TestISPPConverges_Preisach | module1-hysteresis/pkg/controller/ | all levels hit |
+| Discontinuities all physical (0 spurious) | `TestHeadlessISPPContinuityValidation_PreisachVsLK` | cmd/fecim-lattice-tools/ | 0 spurious |
+| ISPP convergence (all target levels reached) | `TestISPPConverges_*`, `scripts/module1_automation.sh --fast` | module1-hysteresis/pkg/controller/ | all levels hit within pulse budget |
+| Literature anchoring (RMSE vs experimental datasets) | `TestExperimentalDataValidation` | validation/ | RMSE within thresholds |
 | Array ISPP with disturb tracking | TestArrayISPP | shared/physics/ | MaxDisturb < 0.3 |
 
 ## Known Limits
