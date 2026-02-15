@@ -82,3 +82,6 @@ shared/widgets/output/
 output/regression/
 module1-hysteresis/pkg/controller/output/
 web/fecim.wasm
+cmd/calibrate-preisach/
+cmd/gen-literature-loops/
+validation/literature/output/
