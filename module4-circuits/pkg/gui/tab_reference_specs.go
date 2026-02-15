@@ -358,7 +358,7 @@ func (ca *CircuitsApp) createSpecFeFETSection() fyne.CanvasObject {
 
 		widget.NewLabel("Read Voltage"),
 		widget.NewLabel("0.5 V"),
-		widget.NewLabel("non-destructive, below threshold"),
+		widget.NewLabel("empirical example; safe read is assumed V_read << Vc≈Ec×t"),
 
 		widget.NewLabel("Write Voltage"),
 		widget.NewLabel("2.0 V to 5.0 V"),
@@ -374,7 +374,7 @@ func (ca *CircuitsApp) createSpecFeFETSection() fyne.CanvasObject {
 
 		widget.NewLabel("Retention"),
 		widget.NewLabel("10 years"),
-		widget.NewLabel("data persistence without power"),
+		widget.NewLabel("assumed headline value unless calibrated to a specific dataset"),
 
 		widget.NewLabel("Cell Footprint"),
 		ca.refCellFootprintLbl,

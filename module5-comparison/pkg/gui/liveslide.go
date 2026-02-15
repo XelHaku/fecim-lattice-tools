@@ -397,6 +397,9 @@ func (e *ComparisonEducationalPanel) updateForPhase() {
 				"CPU + DRAM: 1000 pJ (model input)\n" +
 				"GPU + HBM: 100 pJ (model input)\n" +
 				"FeCIM: ~1 pJ (model input)*\n\n" +
+				"GPU NUANCE:\n" +
+				"  • GPU advantage applies to large, batched GEMM/MVM workloads\n" +
+				"  • Single-cell / per-device physics simulation is not GPU-favorable\n\n" +
 				"* TRL 4 = Laboratory Validation\n" +
 				"  (not production ready)\n" +
 				"(1 pJ = 1000 fJ)\n\n" +
@@ -463,6 +466,9 @@ func (e *ComparisonEducationalPanel) SetComparison(cpuRatio, gpuRatio float64) {
 		"MODEL INPUT ADVANTAGES:\n" +
 		fmt.Sprintf("  • %.0f× less power vs CPU*\n", cpuRatio) +
 		fmt.Sprintf("  • %.0f× less power vs GPU*\n", gpuRatio) +
+		"\nGPU NUANCE:\n" +
+		"  • GPU wins on large batched array ops (GEMM/MVM)\n" +
+		"  • Not applicable to single-cell simulation throughput\n" +
 		"\n* TRL 4 = Laboratory Validation\n" +
 		"  (not production ready)\n" +
 		"  Model inputs only; not validated\n"

@@ -62,6 +62,10 @@ func (ca *CircuitsApp) createPassiveVoltageRules() fyne.CanvasObject {
 
 **Why?** The 70%% of Vc read limit is an empirical simulator guard band (assumed for now) to reduce disturb risk; treat as architecture guidance, not a universally validated device limit.
 
+**Thickness dependence:** Vc ≈ Ec×t. Both Ec and thickness (t) depend on the film stack. Example calibrated references used elsewhere in this repo:
+- Park et al. 2015 (10 nm HZO), doi:10.1002/adma.201404531
+- Cheema et al. 2020 (5 nm HZO superlattice), doi:10.1038/s41586-020-2208-x
+
 ### WRITE Mode (V/2 Half-Select Scheme)
 | Parameter | Value | Purpose |
 |-----------|-------|---------|

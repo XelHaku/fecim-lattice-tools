@@ -68,8 +68,8 @@
 |----|------|--------|--------|-----------|
 | H01 | Home screen module descriptions - add simulation caveats | drtour_todo_fixes | ✅ | Done |
 | H02 | MAC count parallelism explanation | drtour_todo_fixes | ✅ | Done |
-| H03 | Voltage range citations (thickness-dependent) | drtour_todo_fixes | ⏳ | 1hr |
-| H04 | Read parameter sources - mark as empirical | drtour_todo_fixes | ⏳ | 1hr |
+| H03 | Voltage range citations (thickness-dependent) | drtour_todo_fixes | ✅ | Done |
+| H04 | Read parameter sources - mark as empirical | drtour_todo_fixes | ✅ | Done |
 | H05 | Market chart disclaimers - simulation-only and projection warnings | drtour_todo_fixes | ✅ | Done |
 | H06 | Cite strain coefficients (replace magic -0.15) | academic review (archived) | ✅ | Done |
 | H07 | Add Preisach grid size convergence study reference | academic review (archived) | ✅ | Done |
@@ -83,7 +83,7 @@
 | H10 | Module 2 - Add write disturb (half-select stress) model | academic review (archived) | ✅ | Done |
 | H11 | Module 2 - Add parasitic capacitance for RC delay | academic review (archived) | ✅ | Done |
 | H12 | Weight error context - add % of range explanation | drtour_todo_fixes | ✅ | Done |
-| H13 | GPU comparison nuance - add batched operation context | drtour_todo_fixes | ⏳ | 1hr |
+| H13 | GPU comparison nuance - add batched operation context | drtour_todo_fixes | ✅ | Done |
 
 ### P2-D3: Hard High-Priority Fixes
 

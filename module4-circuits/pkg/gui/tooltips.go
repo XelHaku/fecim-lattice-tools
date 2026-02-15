@@ -179,14 +179,14 @@ var CircuitsTooltips = struct {
 		},
 	},
 	ReadVoltage: circuitsTooltip{
-		Title:       "Read Voltage",
-		Description: "Voltage applied to word lines during read operations. Must be low enough to avoid disturbing stored state.",
-		Range:       "0.05V to 0.5V (typically ~Ec/5)",
-		Physics:     "V_read << V_coercive to prevent domain switching. Higher voltage = more current = better SNR, but risk of disturb increases.",
+		Title:       "Read Voltage (thickness-dependent)",
+		Description: "Voltage applied during read operations. Must be low enough to avoid disturbing polarization.",
+		Range:       "Empirical guard band: V_read ≲ (0.2–0.7)×Vc; typical 0.05–0.5 V depending on film thickness",
+		Physics:     "The physically relevant quantity is electric field E (V/m). Coercive voltage scales with thickness: Vc ≈ Ec×t, and Ec itself is thickness/stack dependent. This UI derives safe ranges from the selected material's Ec and thickness (t).",
 		Tips: []string{
-			"Start with 0.1V for safe non-disturb reads",
-			"Increase for higher SNR if disturb is acceptable",
-			"Monitor cell state after repeated reads",
+			"Thickness scaling: Vc≈Ec×t (so 5 nm and 10 nm films have different safe voltages)",
+			"Citations for calibrated Ec/t examples: Park 2015 (10 nm HZO, doi:10.1002/adma.201404531); Cheema 2020 (5 nm HZO superlattice, doi:10.1038/s41586-020-2208-x)",
+			"If your device data differs, treat these ranges as assumed simulator guardrails, not universal limits",
 		},
 	},
 	SamplePeriod: circuitsTooltip{
@@ -203,14 +203,14 @@ var CircuitsTooltips = struct {
 
 	// Write tooltips
 	WriteVoltage: circuitsTooltip{
-		Title:       "Write Voltage",
-		Description: "Amplitude of voltage pulse for programming cells. Must exceed coercive field.",
-		Range:       "1.0V to 3.5V (2-3× Ec typical)",
-		Physics:     "V_write > V_coercive causes domain nucleation and growth. Higher voltage = faster switching but more power. Pulse shape affects switching dynamics.",
+		Title:       "Write Voltage (thickness-dependent)",
+		Description: "Amplitude of program pulse. Must exceed coercive voltage for switching.",
+		Range:       "Typical: V_write ≳ (1–3)×Vc, where Vc≈Ec×t (device- and thickness-dependent)",
+		Physics:     "Switching is driven by electric field E; coercive field Ec depends on stack and thickness. Coercive voltage is approximately Vc≈Ec×t. This simulator derives write ranges from the selected material (Ec,t) and applies architecture rules (e.g., V/2 half-select).",
 		Tips: []string{
-			"Start at 2× Ec for reliable switching",
-			"ISPP automatically adjusts amplitude",
-			"Too high voltage may cause breakdown",
+			"Citations for calibrated Ec/t examples: Park 2015 (10 nm HZO, doi:10.1002/adma.201404531); Cheema 2020 (5 nm HZO superlattice, doi:10.1038/s41586-020-2208-x)",
+			"Treat write-voltage limits as model guidance unless you have measured breakdown/selector limits",
+			"ISPP adjusts voltage to hit target level with verify reads",
 		},
 	},
 	PulseWidth: circuitsTooltip{
