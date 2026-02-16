@@ -1,4 +1,6 @@
 #!/bin/bash
+# scripts/module1_automation.sh - Module 1 automated testing and validation.
+# Usage: ./scripts/module1_automation.sh [--fast|--full] [--json]
 set -euo pipefail
 
 MODE="full"

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# scripts/run_full_validation.sh - Runs all validation lanes (Module 1 + Module 4 + literature).
+# Usage: ./scripts/run_full_validation.sh
 set -u -o pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

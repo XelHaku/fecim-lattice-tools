@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# scripts/qa_a0.sh - Quick QA check: runs all tests and reports summary.
+# Usage: ./scripts/qa_a0.sh [output.json]
 set -euo pipefail
 
 cd "$(dirname "$0")/.."

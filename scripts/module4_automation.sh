@@ -1,4 +1,6 @@
 #!/bin/bash
+# scripts/module4_automation.sh - Module 4 automated testing and validation.
+# Usage: ./scripts/module4_automation.sh [--fast|--full] [--json]
 set -euo pipefail
 
 MODE="full"

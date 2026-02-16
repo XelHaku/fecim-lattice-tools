@@ -1,4 +1,6 @@
 #!/bin/bash
+# scripts/reproduce_validation.sh - Full reproducibility validation suite.
+# Usage: ./scripts/reproduce_validation.sh
 set -euo pipefail
 echo "=== FeCIM Reproducibility Validation ==="
 echo "Commit: $(git rev-parse HEAD)"

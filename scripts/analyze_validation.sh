@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# scripts/analyze_validation.sh - Analyzes validation history and prints summary statistics.
+# Usage: ./scripts/analyze_validation.sh
 set -u -o pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
