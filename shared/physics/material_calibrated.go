@@ -44,3 +44,16 @@ func MDPI2020Fig3aHZO10nmWakeup() *HZOMaterial {
 	m.Thickness = 10e-9
 	return m
 }
+
+// Micromachines2022Fig6aAlScNPt200nm returns a preset calibrated to:
+// Characterization of Ferroelectric Al0.7Sc0.3N Thin Film on Pt and Mo Electrodes
+// (Micromachines 2022), doi:10.3390/mi13101629, Fig. 6a (Pt bottom electrode, 200 nm film).
+func Micromachines2022Fig6aAlScNPt200nm() *HZOMaterial {
+	m := AlScN()
+	m.Name = "AlScN (Micromachines 2022 Fig 6a Pt, calibrated)"
+	m.Pr = 100e-2    // 100 uC/cm2 (paper-reported remanent magnitude, Pt)
+	m.Ps = 110e-2    // 110 uC/cm2 (calibrated saturation for loop-shape fit)
+	m.Ec = 3.0e8     // 3.0 MV/cm
+	m.Thickness = 200e-9 // 200 nm film in the paper
+	return m
+}

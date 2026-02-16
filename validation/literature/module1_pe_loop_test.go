@@ -98,11 +98,26 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 			PolarUnit:  "uC/cm2",
 			Notes:      "Representative loop from Kim et al. Materials 2020 Fig 3a (10nm HZO after wake-up). Used as Tier-1 literature validation dataset.",
 		},
+		{
+			Name:       "Micromachines2022_Fig6a_AlScN_Pt_200nm",
+			DOI:        "10.3390/mi13101629",
+			SourceCSV:  filepath.Join("data", "alscn2022_pmc9607415_fig6a_pt_200nm.csv"),
+			MaterialID: "alscn2022_pmc9607415_fig6a_pt_200nm",
+			Material:   sharedphysics.Micromachines2022Fig6aAlScNPt200nm(),
+			Engine:     "preisach",
+			FieldUnit:  "MV/cm",
+			PolarUnit:  "uC/cm2",
+			Notes:      "Al0.7Sc0.3N 200nm on Pt bottom electrode (PMC9607415 Fig 6a). Current CSV is provisional and should be replaced by direct digitization for final Tier-1 acceptance.",
+		},
 	}
 
 	outDir := os.Getenv("FECIM_LITERATURE_JSON_DIR")
 	if outDir == "" {
-		outDir = filepath.Join("output", "validation", "literature")
+		repoRoot, err := findRepoRoot()
+		if err != nil {
+			t.Fatalf("resolve repo root: %v", err)
+		}
+		outDir = filepath.Join(repoRoot, "output", "validation", "literature")
 	}
 	if err := os.MkdirAll(outDir, 0o755); err != nil {
 		t.Fatalf("mkdir %s: %v", outDir, err)
@@ -338,6 +353,24 @@ func writeJSON(path string, v any) error {
 		return err
 	}
 	return os.WriteFile(path, b, 0o644)
+}
+
+func findRepoRoot() (string, error) {
+	wd, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	cur := wd
+	for {
+		if _, err := os.Stat(filepath.Join(cur, "go.mod")); err == nil {
+			return cur, nil
+		}
+		parent := filepath.Dir(cur)
+		if parent == cur {
+			return "", fmt.Errorf("go.mod not found from %s upward", wd)
+		}
+		cur = parent
+	}
 }
 
 // park2015HZO10nmPreset removed: use sharedphysics.Park2015Fig2aHZO10nm()

@@ -1,0 +1,63 @@
+{
+  "dataset_id": "alscn2022_pmc9607415_fig6a_pt_200nm",
+  "status": "calibrated_reference_curve",
+  "tier": "candidate_tier1" ,
+  "paper": {
+    "title": "Characterization of Ferroelectric Al0.7Sc0.3N Thin Film on Pt and Mo Electrodes",
+    "journal": "Micromachines",
+    "year": 2022,
+    "doi": "10.3390/mi13101629",
+    "pmc_id": "PMC9607415",
+    "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9607415/"
+  },
+  "figure": {
+    "figure_id": "6a",
+    "panel": "a",
+    "description": "P-E loops for Al0.7Sc0.3N on Pt bottom electrode",
+    "source_image": "validation/literature/_incoming/alscn_fig6.jpg",
+    "source_image_origin": "https://cdn.ncbi.nlm.nih.gov/pmc/blobs/9599/9607415/68822292cebc/micromachines-13-01629-g006.jpg",
+    "curve_selected": "outermost/high-voltage loop (approx. 74V trace)",
+    "electrode_condition": "Pt bottom electrode"
+  },
+  "material": {
+    "name": "Al0.7Sc0.3N",
+    "composition": "Al0.7Sc0.3N",
+    "thickness_nm": 200,
+    "bottom_electrode": "Pt",
+    "top_electrode": "Al"
+  },
+  "units": {
+    "field_raw_axis": "Voltage (V)",
+    "polarization_raw_axis": "Polarization (uC/cm2)",
+    "field_dataset_unit": "MV/cm",
+    "polarization_dataset_unit": "uC/cm2",
+    "field_conversion": "E_MV_cm = V / thickness_cm / 1e6, thickness_cm = 200e-7",
+    "field_equivalence_used": "~60 V <-> ~3 MV/cm (paper abstract)"
+  },
+  "digitization": {
+    "method": "calibrated reference curve generated from Preisach model using DOI-reported Pr/Ec targets",
+    "tool": "go generator (module1 Preisach model)",
+    "date_utc": "2026-02-16T10:40:00Z",
+    "operator": "Riju",
+    "point_count": 61,
+    "is_placeholder_for_refinement": true,
+    "notes": [
+      "This CSV is model-generated for regression plumbing and threshold-gate integration.",
+      "It is NOT a direct pixel-digitized extraction of Figure 6a and must be replaced for strict reproducibility claims.",
+      "Direct figure digitization with uncertainty bounds remains required for final Tier-1 closure."
+    ]
+  },
+  "physics_priors_from_paper": {
+    "pr_uC_cm2": 100.0,
+    "ec_MV_cm": 3.0,
+    "source": "abstract text"
+  },
+  "quality_gates": {
+    "required_before_tier1": [
+      "Replace provisional points with direct digitization from Figure 6a",
+      "Document pixel-to-axis mapping and uncertainty",
+      "Run TestModule1_PELoop_LiteratureBacked with this dataset",
+      "Emit JSON artifact under output/validation/literature/"
+    ]
+  }
+}
