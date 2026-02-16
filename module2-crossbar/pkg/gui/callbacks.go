@@ -58,7 +58,27 @@ func (ca *CrossbarApp) onCellTapped(row, col int) {
 // onCellHover handles mouse hover over heatmap cells.
 // M3 UX fix: Compact format with most important info first to avoid truncation
 func (ca *CrossbarApp) onCellHover(row, col int, value float64) {
+	// If mouse is out of bounds (row/col < 0), check if we have a pinned selection
 	if row < 0 || col < 0 {
+		ca.stateMu.RLock()
+		selRow, selCol := ca.selectedRow, ca.selectedCol
+		ca.stateMu.RUnlock()
+
+		// UI-015: If a cell is selected, show its info instead of "Hover over..."
+		if selRow >= 0 && selCol >= 0 {
+			// Fetch the value from the matrix safely
+			matrix := ca.array.GetConductanceMatrix()
+			if selRow < len(matrix) && selCol < len(matrix[0]) {
+				val := matrix[selRow][selCol]
+				level := crossbar.GetLevel(val)
+				conductanceUS := val*99 + 1
+				ca.hoverInfoLabel.SetText(fmt.Sprintf(
+					"Selected: [%d,%d] L%d │ %.1f µS",
+					selRow, selCol, level, conductanceUS))
+				return
+			}
+		}
+
 		ca.hoverInfoLabel.SetText("Hover over cells for details")
 		return
 	}
@@ -121,7 +141,25 @@ func (ca *CrossbarApp) onIRDropCellTapped(row, col int) {
 // onIRDropCellHover handles hover on IR Drop heatmap.
 // M3 UX fix: Compact format with most important info first
 func (ca *CrossbarApp) onIRDropCellHover(row, col int, value float64) {
+	// If mouse is out of bounds, check for pinned selection
 	if row < 0 || col < 0 {
+		ca.stateMu.RLock()
+		selRow, selCol := ca.selectedRow, ca.selectedCol
+		analysis := ca.lastIRDropAnalysis
+		ca.stateMu.RUnlock()
+
+		if selRow >= 0 && selCol >= 0 && analysis != nil &&
+			selRow < len(analysis.EffectiveVoltage) &&
+			selCol < len(analysis.EffectiveVoltage[0]) {
+
+			effectiveV := analysis.EffectiveVoltage[selRow][selCol]
+			dropPercent := (1.0 - effectiveV) * 100
+			ca.hoverInfoLabel.SetText(fmt.Sprintf(
+				"Selected: [%d,%d] %.1f%% drop │ %.3fV",
+				selRow, selCol, dropPercent, effectiveV))
+			return
+		}
+
 		ca.hoverInfoLabel.SetText("Hover over cells for IR drop")
 		return
 	}
@@ -222,7 +260,47 @@ func (ca *CrossbarApp) onSneakCellTapped(row, col int) {
 // onSneakCellHover handles hover on Sneak Path heatmap.
 // M3 UX fix: Compact format with most important info first
 func (ca *CrossbarApp) onSneakCellHover(row, col int, value float64) {
+	// If mouse is out of bounds, check for pinned selection
 	if row < 0 || col < 0 {
+		ca.stateMu.RLock()
+		selRow, selCol := ca.selectedRow, ca.selectedCol
+		analysis := ca.lastSneakAnalysis
+		ca.stateMu.RUnlock()
+
+		if selRow >= 0 && selCol >= 0 && analysis != nil &&
+			selRow < len(analysis.SneakCurrents) &&
+			selCol < len(analysis.SneakCurrents[0]) {
+
+			// Re-calculate sneak ratio for the pinned cell
+			sneakRatio := 0.0
+			if analysis.TotalSignal > 0 {
+				sneakRatio = analysis.SneakCurrents[selRow][selCol] / analysis.TotalSignal * 100
+			}
+			sneakDisplay := sneakRatio
+			overflowMark := ""
+			if sneakRatio > 100.0 {
+				sneakDisplay = 100.0
+				overflowMark = "+"
+			}
+
+			// Recalculate context for pinned cell
+			selectedRow := ca.config.Rows / 2
+			selectedCol := ca.config.Cols / 2
+			pathType := "diag"
+			if selRow == selectedRow && selCol == selectedCol {
+				pathType = "target"
+			} else if selRow == selectedRow {
+				pathType = "row"
+			} else if selCol == selectedCol {
+				pathType = "col"
+			}
+
+			ca.hoverInfoLabel.SetText(fmt.Sprintf(
+				"Selected: [%d,%d] %.1f%%%s sneak │ %s",
+				selRow, selCol, sneakDisplay, overflowMark, pathType))
+			return
+		}
+
 		ca.hoverInfoLabel.SetText("Hover over cells for sneak path")
 		return
 	}

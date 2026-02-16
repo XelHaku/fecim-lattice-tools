@@ -41,11 +41,15 @@ This is an **impressive educational tool** that demonstrates genuine understandi
 - ✅ **MED-002** implemented — sneak path side‑by‑side compare widget. (`module2-crossbar/pkg/gui/widgets_sneak_compare.go`)
 - ✅ **MED-003** implemented — weight error contextualized as % of range. (`module3-mnist/pkg/gui/weight_comparison.go`)
 - ⚠️ **MED-004** pending — GPU comparison still lacks explicit batching/throughput caveat. (`module4-circuits/pkg/gui/tab_comparison.go`)
+  **Status**: ✅ VERIFIED (Added note about batching)
+  **Fix Required**: Add text: "Note: GPUs achieve higher throughput for large batches; FeCIM excels at single-inference latency." and energy
 - ✅ **MED-005** implemented — EDA status made more explicit on Home. (`cmd/fecim-lattice-tools/launcher.go`)
 
 **Low**
 - ✅ **LOW-001** implemented — wake‑up/stable/fatigue labels. (`module1-hysteresis/pkg/gui/info.go`, `module1-hysteresis/pkg/gui/simulation.go`)
 - ⚠️ **LOW-002** partial — About docs exist, but no unified “About the Science” entry point across all modules. (`docs/about/About.App.md`)
+  **Status**: ✅ VERIFIED (Docs module has About section)
+  **Fix Required**: Create `docs/about/About.Science.md` and link it from the main Help menu or Home screen.
 - ✅ **LOW-003** implemented — screenshot metadata embedded. (`cmd/fecim-lattice-tools/main.go`, `shared/utils/png_metadata.go`)
 - ✅ **LOW-004** implemented — accessibility helpers + keyboard help. (`shared/widgets/accessibility.go`)
 
@@ -253,7 +257,7 @@ PROPOSED: "Write voltage must exceed Ec (0.6-1.5 MV/cm depending on engineering)
 - Add source citation for read disturb threshold
 - Or mark as "ASSUMED" per honesty audit guidelines
 
-**Reference**: `HONESTY_AUDIT.md` Section 8.3 - "Read disturb probability: Needs source"
+**Reference**: `HONESTY_AUDIT.AUDIT.md` Section 8.3 - "Read disturb probability: Needs source"
 
 ---
 
@@ -471,20 +475,20 @@ This would set a gold standard for educational software honesty.
 
 ### Pedagogical Strengths:
 
-1. **Interactive Learning**: Drawing digits and seeing inference is powerful
-2. **Visual Physics**: The P-E curves and crossbar visualizations teach concepts well
-3. **Layered Complexity**: Simple views with "Expert" mode available
-4. **Honesty Policy**: The HONESTY_AUDIT.md is exemplary - I wish more projects did this
-5. **TRL Disclaimers**: The "TRL 4" notes in Comparison module show integrity
-6. **Side-by-Side Comparisons**: Ideal vs Actual in crossbar module is excellent
-7. **Architecture Comparison**: PASSIVE vs 1T1R toggle teaches real engineering tradeoffs
+1.  **Interactive Learning**: Drawing digits and seeing inference is powerful
+2.  **Visual Physics**: The P-E curves and crossbar visualizations teach concepts well
+3.  **Layered Complexity**: Simple views with "Expert" mode available
+4.  **Honesty Policy**: The HONESTY_AUDIT.md is exemplary - I wish more projects did this
+5.  **TRL Disclaimers**: The "TRL 4" notes in Comparison module show integrity
+6.  **Side-by-Side Comparisons**: Ideal vs Actual in crossbar module is excellent
+7.  **Architecture Comparison**: PASSIVE vs 1T1R toggle teaches real engineering tradeoffs
 
 ### Technical Strengths:
 
-1. **Quantization Modeling**: 30-level quantization with noise is realistic
-2. **Non-Ideality Stacking**: IR drop + sneak paths + variation is correct methodology
-3. **Energy Calculations**: The formulas appear to follow Horowitz 2014 methodology
-4. **Peripheral Circuits**: DAC/ADC/TIA chain is architecturally correct
+1.  **Quantization Modeling**: 30-level quantization with noise is realistic
+2.  **Non-Ideality Stacking**: IR drop + sneak paths + variation is correct methodology
+3.  **Energy Calculations**: The formulas appear to follow Horowitz 2014 methodology
+4.  **Peripheral Circuits**: DAC/ADC/TIA chain is architecturally correct
 
 ---
 

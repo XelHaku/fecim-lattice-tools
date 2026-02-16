@@ -697,7 +697,7 @@ Evidence note (2026-02-11, EDA validation): added `module6-eda/pkg/compiler/mode
 |----|------|--------|--------|------|
 | PERIPH-1 | Export functionality (diagrams/data) | `docs/peripheral-circuits/circuits.operations.md` | ✅ | 2-4hr |
 | PERIPH-2 | Temperature-dependent INL/DNL model | `docs/peripheral-circuits/circuits.operations.md` | ✅ | 2-4hr |
-| PERIPH-3 | Fast/slow/typical process corner analysis | `docs/peripheral-circuits/circuits.operations.md` | ✅ | 4-8hr |
+| PERIPH-3 | Fast/slow/typical process corner analysis | `docs/peripheral-circuits/circuits.operations.md` | ✅ | 2-4hr |
 | PERIPH-4 | Write-verify animation (iterative cycle) | `docs/peripheral-circuits/circuits.operations.md` | ✅ | 2-4hr |
 | PERIPH-5 | Sneak path quantification display | `docs/peripheral-circuits/circuits.operations.md` | ✅ | 1-2hr |
 
@@ -752,7 +752,7 @@ Evidence note (2026-02-11, EDA validation): added `module6-eda/pkg/compiler/mode
 | L09 | Vulkan rendering implementation for large arrays | TODO.md | ⏳ | 20hr |
 | L10 | 3D multi-layer visualization (512-layer roadmap) | TODO.md | ⏳ | 24hr |
 | L11 | Add [LK] indicators to material_picker.go | `module1-hysteresis` | ✅ (2026-02-11: LK-compatible materials now tagged `[LK]` in name column; legend text updated) | 1hr |
-| L05 | "About the Science" unified Learn More section | `drtour_todo_fixes.md` | ✅ (2026-02-11: added shared `ShowAboutScience` science primer covering FeCIM/HZO/hysteresis/crossbar/neuromorphic topics; linked from module UIs) | 2hr |
+| L05 | "About the Science" unified Learn More section | `drtour_todo_fixes.md` | ✅ | Done (2026-02-11: added shared `ShowAboutScience` science primer covering FeCIM/HZO/hysteresis/crossbar/neuromorphic topics; linked from module UIs) | 2hr |
 
 ### Architecture Improvements (from ARCHITECTURE.md)
 
@@ -925,13 +925,13 @@ git update-index --assume-unchanged cmd/fecim-lattice-tools/data/calibrations/li
 
 Any agent tackling a task from this TODO **must**:
 
-1. **Read TODO.md first** — align with current priorities before starting work.
-2. **Work fully autonomously** — complete the task end-to-end without stopping for manual intervention. If ambiguity remains, choose the most reasonable default and document the choice.
-3. **Validate progress continuously** — run `go test ./...` (headless) or launch the GUI to verify changes work. Never claim "done" without fresh test/build evidence.
-4. **Headless-first** — use CLI + tests as primary validation. GUI runs only when explicitly needed.
-5. **Minimal changes** — prefer targeted fixes over refactors unless required for correctness. Keep code changes within the smallest possible surface area.
-6. **Update this TODO.md** — mark completed items as ✅, add any new tasks discovered during implementation, and update the progress summary.
-7. **Never skip validation** — if blocked, report exact error output and last command run.
+1.  **Read TODO.md first** — align with current priorities before starting work.
+2.  **Work fully autonomously** — complete the task end-to-end without stopping for manual intervention. If ambiguity remains, choose the most reasonable default and document the choice.
+3.  **Validate progress continuously** — run `go test ./...` (headless) or launch the GUI to verify changes work. Never claim "done" without fresh test/build evidence.
+4.  **Headless-first** — use CLI + tests as primary validation. GUI runs only when explicitly needed.
+5.  **Minimal changes** — prefer targeted fixes over refactors unless required for correctness. Keep code changes within the smallest possible surface area.
+6.  **Update this TODO.md** — mark completed items as ✅, add any new tasks discovered during implementation, and update the progress summary.
+7.  **Never skip validation** — if blocked, report exact error output and last command run.
 
 ---
 
@@ -968,7 +968,8 @@ See `CONTRIBUTING.md` and `CLAUDE.md` for development guidelines.
 | ID | File:Line | Comment | Category | Status | Notes |
 |----|-----------|---------|----------|--------|-------|
 | CODE-01 | `module2-crossbar/pkg/crossbar/temperature_profile.go:14` | `TODO M2-P2: This struct enables temperature scalings beyond wire resistance.` | physics-fix | ✅ | TODO marker removed; comment updated to completion note and legacy-behavior rationale retained. |
-| CODE-02 | `module1-hysteresis/pkg/render/render.go:303` | `TODO: Implement with actual Vulkan calls using go-vk or vgpu.` | ui-fix | ✅ | Replaced placeholder-only contract with headless deterministic renderer loop API, config validation, and explicit lifecycle errors. |
+| HIGH-003 | [Modules] | Physics | Voltages must span critical range | ✅ | Voltage rules tab shows thickness-dependent limits specifically for HZO/HSO |
+| HIGH-004 | [Modules] | Physics | Read parameters should be sourced | ✅ | Read voltage and pulse width parameters are now maintained in config/physics.yaml with appropriate comments |
 | CODE-03 | `module1-hysteresis/pkg/render/render.go:351` | `TODO: Implement actual Vulkan initialization.` | cleanup | ✅ | `Initialize()` now validates config, sets renderer state consistently, and returns concrete errors. |
 | CODE-04 | `module1-hysteresis/pkg/render/render.go:365` | `TODO: Implement actual render loop.` | perf | ✅ | `Run()` now executes FPS-driven ticker loop with callback, safe stop, init guard, and re-entrancy guard. |
 
