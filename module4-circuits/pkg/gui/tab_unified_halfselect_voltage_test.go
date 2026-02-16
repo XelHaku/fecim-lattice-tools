@@ -32,9 +32,9 @@ func TestUnifiedHalfSelectVisualization_ShowsVoltageAndCellColors(t *testing.T) 
 	})
 
 	waitFor(t, 500*time.Millisecond, "half-select active text", func() bool {
-		return strings.Contains(ca.halfSelectIndicator.Text, "V/2 Bias Active") &&
-			strings.Contains(ca.halfSelectIndicator.Text, "Full: 1.40V") &&
-			strings.Contains(ca.halfSelectIndicator.Text, "Half: 0.70V")
+		return strings.Contains(ca.halfSelectIndicator.Text, "Column Write Active") &&
+			strings.Contains(ca.halfSelectIndicator.Text, "Target: 1.40V") &&
+			strings.Contains(ca.halfSelectIndicator.Text, "Col Disturb: 1.40V")
 	})
 
 	targetColor, ok := ca.getHalfSelectCellColor(2, 3)
@@ -45,9 +45,16 @@ func TestUnifiedHalfSelectVisualization_ShowsVoltageAndCellColors(t *testing.T) 
 		t.Fatalf("target color: got %#v, want %#v", got, want)
 	}
 
-	halfColor, ok := ca.getHalfSelectCellColor(2, 4)
+	// Same Row (col 4): Should be safe (0V) -> No highlight
+	_, ok = ca.getHalfSelectCellColor(2, 4)
+	if ok {
+		t.Fatal("expected same-row neighbor (safe) to NOT be highlighted")
+	}
+
+	// Same Column (row 1): Should be disturbed (Full V) -> Highlighted
+	halfColor, ok := ca.getHalfSelectCellColor(1, 3)
 	if !ok {
-		t.Fatal("expected half-selected neighbor to be highlighted")
+		t.Fatal("expected same-column neighbor (disturbed) to be highlighted")
 	}
 	if got, want := color.RGBAModel.Convert(halfColor).(color.RGBA), colorHalfSelect; got != want {
 		t.Fatalf("half-select color: got %#v, want %#v", got, want)
@@ -69,7 +76,7 @@ func TestPassiveDisclosureText_RowAndColumnHalfSelect(t *testing.T) {
 	if ca == nil || ca.halfSelectIndicator == nil {
 		t.Fatal("expected half-select indicator")
 	}
-	if got, want := ca.halfSelectIndicator.Text, "0T1R: V/2 on row+col"; got != want {
+	if got, want := ca.halfSelectIndicator.Text, "0T1R: Column Write (Full Disturb)"; got != want {
 		t.Fatalf("passive disclosure mismatch: got %q, want %q", got, want)
 	}
 }

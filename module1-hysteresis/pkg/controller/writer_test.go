@@ -179,7 +179,7 @@ func TestLogISPP_FewerPulsesThanLinear(t *testing.T) {
 		if wc.State != StateSuccess {
 			t.Fatalf("%s mode did not converge for target %d", mode, target)
 		}
-		return wc.TotalPulses + wc.PulseCount, wc.CumulativeAbsVoltage
+		return wc.TotalPulses + wc.PulseCount, wc.CumulativeFluence
 	}
 
 	for _, target := range []int{5, 10, 15, 20, 25} {
@@ -199,9 +199,9 @@ func TestLogISPP_FewerPulsesThanLinear(t *testing.T) {
 	}
 }
 
-// TestLogISPP_CumulativeVoltageTracked verifies CumulativeAbsVoltage > 0
+// TestLogISPP_CumulativeFluenceTracked verifies CumulativeFluence > 0
 // after a successful write.
-func TestLogISPP_CumulativeVoltageTracked(t *testing.T) {
+func TestLogISPP_CumulativeFluenceTracked(t *testing.T) {
 	mat := ferroelectric.LiteratureSuperlattice()
 	model := ferroelectric.NewPreisachModel(mat)
 	model.Reset()
@@ -213,8 +213,8 @@ func TestLogISPP_CumulativeVoltageTracked(t *testing.T) {
 	wc.PulseDuration = 5e-4
 	wc.Start(target, true)
 
-	if wc.CumulativeAbsVoltage != 0 {
-		t.Fatalf("CumulativeAbsVoltage should be 0 after Start(), got %v", wc.CumulativeAbsVoltage)
+	if wc.CumulativeFluence != 0 {
+		t.Errorf("expected CumulativeFluence 0, got %f", wc.CumulativeFluence)
 	}
 
 	p := -mat.Ps
@@ -236,10 +236,10 @@ func TestLogISPP_CumulativeVoltageTracked(t *testing.T) {
 	if wc.State != StateSuccess {
 		t.Fatalf("did not converge: state=%s", wc.State)
 	}
-	if wc.CumulativeAbsVoltage <= 0 {
-		t.Fatalf("CumulativeAbsVoltage should be > 0 after write, got %v", wc.CumulativeAbsVoltage)
+	if wc.CumulativeFluence == 0 {
+		t.Error("CumulativeFluence should be > 0 after pulses")
 	}
-	t.Logf("CumulativeAbsVoltage = %.4f (pulses=%d)", wc.CumulativeAbsVoltage, wc.TotalPulses+wc.PulseCount)
+	t.Logf("CumulativeFluence = %.4f (pulses=%d)", wc.CumulativeFluence, wc.TotalPulses+wc.PulseCount)
 }
 
 // TestLogISPP_BisectionStillWorks verifies that once VMin/VMax bounds are

@@ -1080,37 +1080,42 @@ func (ds *DeviceState) setAllDACVoltagesLocked(voltage float64) {
 // For 1T1R/2T1R modes, transistor isolation eliminates need for V/2.
 // ============================================================================
 
-// ApplyHalfSelectWrite applies V/2 biasing for passive (0T1R) write operation
-// writeVoltage is the full write voltage (derived from material's Vc)
-// For SET: WL = +V/2, BL = -V/2, giving target cell ΔV = +V_write
-// For ERASE: WL = -V/2, BL = +V/2, giving target cell ΔV = -V_write
+// ApplyHalfSelectWrite applies voltage biasing for passive (0T1R) write operation.
+// CHANGE (2026-02-16): Removed V/2 scheme. Now implements DAC-Only Column Drive.
+// Since rows cannot be driven (must be 0V), the full V_write is applied to the column.
+//
+// Target cell (SET/ERASE):
+//   - All WLs: 0V (Grounded / TIA Virtual Ground)
+//   - Selected BL (DAC): -V_write (for SET +V across cell) or +V_write (for ERASE -V across cell)
+//   - Effective ΔV = WL - BL = 0 - (-V_write) = +V_write
+//
+// Consequence: unique to this architecture, this performs a COLUMN WRITE.
+// All cells in the selected column will see the full V_write and switch.
 func (ds *DeviceState) ApplyHalfSelectWrite(targetRow, targetCol int, writeVoltage float64) {
 	ds.mu.Lock()
 	defer ds.mu.Unlock()
 
 	if !ds.isPassive {
-		// Non-passive modes use transistor isolation, not V/2
+		// Non-passive modes use transistor isolation
 		// Apply full voltage to selected BL only, WL controls transistor gate
 		ds.setDACVoltageLocked(targetCol, writeVoltage)
 		return
 	}
 
-	// V/2 half-select for passive mode
-	halfV := writeVoltage / 2.0
-
-	// Set WL voltages: selected row gets +V/2 (for SET), others get 0
+	// DAC-Only Drive Scheme:
+	// Rows = 0V (Always)
 	for i := range ds.wlVoltages {
-		if i == targetRow {
-			ds.wlVoltages[i] = halfV // +V/2 for selected WL
-		} else {
-			ds.wlVoltages[i] = 0 // Unselected WLs grounded
-		}
+		ds.wlVoltages[i] = 0
 	}
 
-	// Set BL (DAC) voltages: selected column gets -V/2 (for SET), others get 0
+	// Columns = Driven by DAC
+	// To achieve V_cell = writeVoltage (where V_cell = WL - BL = 0 - BL),
+	// we must set BL = -writeVoltage.
+	dacV := -writeVoltage
+
 	for i := range ds.dacVoltages {
 		if i == targetCol {
-			ds.dacVoltages[i] = -halfV // -V/2 for selected BL
+			ds.dacVoltages[i] = dacV
 		} else {
 			ds.dacVoltages[i] = 0 // Unselected BLs grounded
 		}
@@ -2312,19 +2317,25 @@ type HalfSelectVisualization struct {
 	HalfSelectCols []int // Cols with V/2 (same row, different columns)
 }
 
-// EnableHalfSelectVisualization enables V/2 overlay for a write operation
-// Only meaningful for 0T1R (passive) architecture
+// EnableHalfSelectVisualization enables overlay for a write operation.
+// CHANGE (2026-02-16): Updated for DAC-Only Column Drive.
+// - "HalfVoltage" now represents the disturbed cell voltage (which is FULL voltage).
+// - "HalfSelectRows" (same column) see FULL voltage (Column Write).
+// - "HalfSelectCols" (same row) see 0V (Safe).
 func (ds *DeviceState) EnableHalfSelectVisualization(row, col int, fullVoltage float64) {
 	ds.mu.Lock()
 	defer ds.mu.Unlock()
 
 	ds.halfSelectState.Enabled = true
 	ds.halfSelectState.FullVoltage = fullVoltage
-	ds.halfSelectState.HalfVoltage = fullVoltage * HalfSelectVoltageRatio
+	// In DAC-only drive, the entire column sees the full write voltage.
+	// There is no "V/2", there is full disturb.
+	ds.halfSelectState.HalfVoltage = fullVoltage
+
 	ds.halfSelectState.SelectedRow = row
 	ds.halfSelectState.SelectedCol = col
 
-	// All other rows in the same column get V/2
+	// All other rows in the same column get Full Voltage (Disturbed)
 	ds.halfSelectState.HalfSelectRows = make([]int, 0)
 	for r := 0; r < ds.rows; r++ {
 		if r != row {
@@ -2332,13 +2343,10 @@ func (ds *DeviceState) EnableHalfSelectVisualization(row, col int, fullVoltage f
 		}
 	}
 
-	// All other columns in the same row get V/2
+	// All other columns in the same row get 0V (Safe)
+	// Because row is grounded (0V) and unselected columns are grounded (0V).
+	// So we leave HalfSelectCols empty.
 	ds.halfSelectState.HalfSelectCols = make([]int, 0)
-	for c := 0; c < ds.cols; c++ {
-		if c != col {
-			ds.halfSelectState.HalfSelectCols = append(ds.halfSelectState.HalfSelectCols, c)
-		}
-	}
 }
 
 // DisableHalfSelectVisualization disables the V/2 overlay

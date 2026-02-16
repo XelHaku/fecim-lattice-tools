@@ -132,8 +132,8 @@ type WriteController struct {
 	// Logarithmic ISPP base step (ΔV₀) as fraction of Ec. Default 0.05 (5%).
 	LogBaseStep float64
 
-	// Efficiency metric: sum of |V| across all pulses (energy proxy).
-	CumulativeAbsVoltage float64
+	// Efficiency metric: sum of |E|*dt (Fluence proxy).
+	CumulativeFluence float64
 }
 
 func NewWriteController(numLevels int, ec, emax float64, calib *algo.CalibrationManager) *WriteController {
@@ -181,7 +181,7 @@ func (wc *WriteController) Start(targetLevel int, fromSaturation bool) {
 	wc.StuckCount = 0
 	wc.stepFloor = 0
 	wc.GuardPulseCount = 0
-	wc.CumulativeAbsVoltage = 0
+	wc.CumulativeFluence = 0
 
 	// Initialize Binary Search Bounds
 	wc.VMin = 0
@@ -193,8 +193,8 @@ func (wc *WriteController) Start(targetLevel int, fromSaturation bool) {
 	wc.InitialLevelSet = false
 	// CurrentField will be set when calculateNextField is called during first Update
 
-	log.Printf("ISPP START: target=%d fromSaturation=%v Ec=%.3g MaxField=%.3g bounds=[%.3f, %.3f]×Ec",
-		wc.TargetLevel, wc.FromSaturation, wc.EcField, wc.MaxField, wc.VMin/wc.EcField, wc.VMax/wc.EcField)
+	log.Printf("ISPP START: target=%d fromSaturation=%v Ec=%.3e V/m MaxField=%.3e V/m",
+		wc.TargetLevel, wc.FromSaturation, wc.EcField, wc.MaxField)
 }
 
 // Reset clears the controller state for a completely new operation
@@ -286,14 +286,16 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 		// Target is the pulse field
 		targetField = wc.CurrentField
 		if wc.PhaseTimer <= dt {
-			log.Printf("ISPP APPLY: pulse=%d currentLevel=%d targetLevel=%d pulseDir=%d E=%.3f×Ec bounds=[%.3f, %.3f]×Ec",
-				wc.PulseCount+1, currentLevel, wc.TargetLevel, pulseDirection(wc.CurrentField),
-				wc.CurrentField/wc.EcField, wc.VMin/wc.EcField, wc.VMax/wc.EcField)
+			// Clean log: Pulse #, Target Level, Applied Field (normalized to Ec for readability)
+			log.Printf("ISPP APPLY: Pulse %d | Target L%d | E = %.3f Ec (%.3e V/m)",
+				wc.PulseCount+1, wc.TargetLevel, wc.CurrentField/wc.EcField, wc.CurrentField)
 		}
 
 		// If we reached the target field (approx), switch to WAIT
 		if wc.PhaseTimer > pulseDur*0.4 && math.Abs(currentField-wc.CurrentField) < 0.01*wc.MaxField {
-			wc.CumulativeAbsVoltage += math.Abs(wc.CurrentField)
+			wc.stepFloor = 0
+			wc.GuardPulseCount = 0
+			wc.CumulativeFluence += math.Abs(wc.CurrentField) * pulseDur
 			wc.State = StateWait
 			wc.PhaseTimer = 0
 		}
@@ -343,7 +345,8 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 		}
 
 		if wc.PhaseTimer <= dt {
-			log.Printf("ISPP REVERSE: overshoot recovery, applying E=%.3f×Ec (opposite direction)", targetField/wc.EcField)
+			log.Printf("ISPP RESET: Recovering from overshoot. Applying %.3f Ec (%.3e V/m)",
+				targetField/wc.EcField, targetField)
 		}
 
 		// Wait for correction pulse to complete
@@ -375,8 +378,7 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 
 			// Don't reset InitialLevel - keep tracking original direction
 			wc.resetDirection = 0
-			log.Printf("ISPP RESET DONE: level=%d, next E=%.3f×Ec toward target=%d",
-				currentLevel, wc.CurrentField/wc.EcField, wc.TargetLevel)
+			log.Printf("ISPP RESET DONE: Resuming search towards L%d", wc.TargetLevel)
 		}
 		return targetField, false
 
@@ -392,8 +394,9 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			if prevLevel == 0 {
 				prevLevel = currentLevel
 			}
-			log.Printf("ISPP READ: currentLevel=%d targetLevel=%d prevLevel=%d currentField=%.3f×Ec",
-				currentLevel, wc.TargetLevel, prevLevel, currentField/wc.EcField)
+			// Only log verify status, not full debug lines
+			// log.Printf("ISPP READ: currentLevel=%d targetLevel=%d prevLevel=%d currentField=%.3f×Ec",
+			// 	currentLevel, wc.TargetLevel, prevLevel, currentField/wc.EcField)
 			prevError := wc.LastError
 			wc.LastError = currentLevel - wc.TargetLevel
 			absErr := int(math.Abs(float64(wc.LastError)))
@@ -745,15 +748,15 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 		// Linear ISPP: distance-based step table (original behavior)
 		switch {
 		case levelError > 10:
-			stepSize = 0.15 * wc.EcField // Large step when very far
+			stepSize = 0.15 * wc.EcField // Coarse approach
 		case levelError > 5:
-			stepSize = 0.08 * wc.EcField // Medium-large step
+			stepSize = 0.08 * wc.EcField // Medium approach
 		case levelError > 2:
-			stepSize = 0.04 * wc.EcField // Medium step
+			stepSize = 0.04 * wc.EcField // Fine approach
 		case levelError > 0:
-			stepSize = 0.02 * wc.EcField // Small step when close
+			stepSize = 0.02 * wc.EcField // Precision approach
 		default:
-			stepSize = 0.01 * wc.EcField // Tiny step (shouldn't reach here)
+			stepSize = 0.01 * wc.EcField // Micro-step
 		}
 	}
 

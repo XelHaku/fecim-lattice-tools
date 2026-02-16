@@ -721,7 +721,7 @@ func (ca *CircuitsApp) updateHalfSelectVisualization() {
 	sharedwidgets.SafeDo(func() {
 		if ca.halfSelectIndicator != nil {
 			if hsState.Enabled {
-				ca.halfSelectIndicator.SetText(fmt.Sprintf("V/2 Bias Active | Full: %.2fV | Half: %.2fV",
+				ca.halfSelectIndicator.SetText(fmt.Sprintf("Column Write Active | Target: %.2fV | Col Disturb: %.2fV",
 					hsState.FullVoltage, hsState.HalfVoltage))
 				ca.halfSelectIndicator.Show()
 			} else {
@@ -757,18 +757,17 @@ func (ca *CircuitsApp) getHalfSelectCellColor(row, col int) (color.Color, bool) 
 func (ca *CircuitsApp) createPassiveVoltagePanel() fyne.CanvasObject {
 	titleLabel := widget.NewLabelWithStyle("Passive Crossbar (0T1R)", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 
-	infoText := `In passive crossbar mode, V/2 biasing is required:
-- Target cell receives full write voltage
-- Same-row and same-column cells receive V/2
-- This prevents unintended state changes
-
-Watch for disturb effects on half-selected cells.`
+	infoText := `In passive crossbar mode (DAC-Only Drive):
+- Rows are grounded (0V)
+- Selected Column is driven to write voltage
+- CONSEQUENCE: The entire column is written!
+- Unselected columns are 0V (Safe)`
 
 	infoLabel := widget.NewLabel(infoText)
 	infoLabel.Wrapping = fyne.TextWrapWord
 
 	// V/2 indicator (updated during write operations)
-	ca.halfSelectIndicator = widget.NewLabel("V/2 Bias: Inactive")
+	ca.halfSelectIndicator = widget.NewLabel("Column Write: Inactive")
 	ca.halfSelectIndicator.TextStyle = fyne.TextStyle{Italic: true}
 
 	return container.NewVBox(
@@ -801,8 +800,8 @@ func (ca *CircuitsApp) createActiveVoltagePanel() fyne.CanvasObject {
 
 // createCompactPassivePanel creates a single-line info for passive mode
 func (ca *CircuitsApp) createCompactPassivePanel() fyne.CanvasObject {
-	// V/2 indicator (updated during write operations)
-	ca.halfSelectIndicator = widget.NewLabel("0T1R: V/2 on row+col")
+	// Passive mode indicator: warns about column write consequence
+	ca.halfSelectIndicator = widget.NewLabel("0T1R: Column Write (Full Disturb)")
 	ca.halfSelectIndicator.TextStyle = fyne.TextStyle{Italic: true}
 	return ca.halfSelectIndicator
 }

@@ -125,6 +125,9 @@ type PreisachModel struct {
 	reversiblePSat float64 // Saturating reversible polarization (C/m^2)
 
 	effectivePs float64 // Temperature/stress-adjusted total Ps
+
+	// Kinetics
+	nls *physics.NLSKinetics
 }
 
 // NewPreisachModel creates a new Preisach model with the given material.
@@ -152,8 +155,18 @@ func NewPreisachModel(material *HZOMaterial) *PreisachModel {
 		Temperature: 300.0,
 		Stress:      1.0, // Default 1 GPa
 		effectivePs: material.Ps,
+		nls:         physics.NewNLSKinetics(),
 	}
 	model.updateReversibleParams()
+
+	// Scale Ea based on Ec (empirical heuristic: Ea approx 10-20 * Ec)
+	// We'll trust the material Ec to be a proxy for the energy barrier.
+	// But NLSKinetics has a default Ea=8e8 (8 MV/cm).
+	// Let's adjust it if Ec is significantly different from typical 1 MV/cm.
+	if material.Ec > 0 {
+		model.nls.Ea = material.Ec * 10.0
+	}
+
 	return model
 }
 
@@ -195,18 +208,59 @@ func (p *PreisachModel) Reset() {
 }
 
 // Update applies a new electric field and returns the resulting polarization.
+// This assumes quasi-static conditions (infinite time/instant switching).
 func (p *PreisachModel) Update(E float64) float64 {
-	if logging.IsVerbose(logging.VerbosityTrace) {
-		log.Input("Update", map[string]interface{}{"E": E})
-	}
+	return p.TimeStep(E, 1.0) // 1 second is effectively infinite for typical NLS
+}
 
-	Pirrev := p.stack.Update(E)
-	P := Pirrev + p.reversiblePolarization(E)
+// TimeStep applies a constant electric field E for duration dt (seconds).
+// Returns the resulting polarization after relaxation.
+func (p *PreisachModel) TimeStep(E, dt float64) float64 {
+	// 1. Calculate Static Equilibrium (Infinite Retention target)
+	// This updates the Preisach stack history to the new field level immediately,
+	// effectively determining WHERE the system would go if given infinite time.
+	// This handles the "wipe-out" logic and minor loop nesting for the target state.
+
+	// We need the *previous* state P_old before moving the stack?
+	// Actually, the stack represents the Magnetic/Electric field history.
+	// We need to track the "dynamic" polarization separately if it lags the stack.
+	// For now, to keep it simple and stateless (w.r.t dynamic lag vars),
+	// we will calculate the static target, then assume we started from
+	// the *current* P value (calculated from previous history + previous lag?).
+	//
+	// Problem: The standard Preisach implementation here is stateful only in turning points.
+	// It doesn't store a "current P" that might be lagging behind the turning points.
+	// If we update the stack, we change the "static" P immediately.
+
+	// Approximaton:
+	// The stack represents the "Driving Force" history.
+	// P_eq is the result of `ps.stack.Update(E)`.
+	// Use NLS to relax towards P_eq.
+
+	// 1. Get current static state (before update)
+	// P_old_static := p.Polarization()
+
+	// Ideally we would carry a p.currentP_dynamic state.
+	// But for ISPP (step-and-hold), we usually start from a relaxed state.
+	// Let's assume P_start is the *previous* stack state (at LastE).
+	P_start := p.Polarization()
+
+	// 2. Update Stack to new Field E -> P_target
+	Pirrev_target := p.stack.Update(E)
+	P_target := Pirrev_target + p.reversiblePolarization(E)
+
+	// 3. Relax P_start -> P_target
+	if p.nls == nil {
+		p.nls = physics.NewNLSKinetics()
+	}
+	P_final := p.nls.Relax(P_start, P_target, E, dt)
 
 	if logging.IsVerbose(logging.VerbosityTrace) {
-		log.Calculation("Update", map[string]interface{}{"E": E}, P)
+		log.Calculation("TimeStep", map[string]interface{}{
+			"E": E, "dt": dt, "P_start": P_start, "P_target": P_target, "P_final": P_final,
+		}, P_final)
 	}
-	return P
+	return P_final
 }
 
 // Polarization returns the current polarization state.
