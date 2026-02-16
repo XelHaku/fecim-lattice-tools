@@ -1,8 +1,51 @@
 # FeCIM Lattice Tools - Physics Configuration
-# =============================================
+# =============================================================================
 #
 # This file contains all physical parameters for ferroelectric CIM simulation.
 # Edit this file to experiment with different materials and hardware configurations.
+#
+# FIELD REFERENCE (all materials):
+# ---------------------------------------------------------------------
+# Polarization:
+#   ec_v_m          Coercive field (V/m). Field required to switch polarization.
+#   ps_uC_cm2       Saturation polarization (µC/cm²). Max P at high field.
+#   pr_uC_cm2       Remanent polarization (µC/cm²). Residual P at zero field.
+#
+# Geometry & Dielectrics:
+#   thickness_m      Film thickness (meters). Affects field scaling E = V/d.
+#   epsilon_hf      High-frequency permittivity (dimensionless).
+#   epsilon_lf      Low-frequency permittivity (dimensionless).
+#   loss_tangent    Dielectric loss tanδ (dimensionless).
+#
+# Temperature:
+#   curie_temp_k    Curie temperature (K). Phase transition point.
+#   temp_coeff_ec   dEc/dT (V/m/K). Coercive field temperature dependence.
+#   temp_coeff_pr   dPr/dT (C/m²/K). Remanence temperature dependence.
+#
+# Switching Dynamics:
+#   tau_s           Characteristic switching time (seconds). KAI model.
+#   activation_energy_ev  Activation energy (eV). Thermal barrier.
+#   kai_exponent    KAI exponent (dimensionless). Domain growth dimensionality.
+#
+# Reliability:
+#   endurance_cycles Max cycling before degradation (cycles).
+#   retention_time_s Data retention time at operating temp (seconds).
+#   imprint_field_v_m DC-bias-induced asymmetry (V/m).
+#   depolarization_factor_vm_c  Depolarization field coefficient (V·m/C).
+#
+# Landau Coefficients (thermodynamics):
+#   alpha_landau    α coefficient (J·m/C²). Curvature at origin.
+#   beta_landau     β coefficient (J·m⁵/C⁴). Double-well depth.
+#   gamma_landau    γ coefficient (J·m⁹/C⁶). High-P stability.
+#   rho_viscosity   Viscosity ρ (Ω·m). Damping coefficient.
+#
+# Conductance Mapping:
+#   gmin_s          Minimum conductance (S). High-resistance state.
+#   gmax_s          Maximum conductance (S). Low-resistance state.
+#
+# Circuit:
+#   series_resistance_ohm  Series resistance (Ω). IR drop modeling.
+# ---------------------------------------------------------------------
 #
 # =============================================================================
 # REFERENCES (Updated 2026-02-02)
