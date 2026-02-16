@@ -36,25 +36,30 @@ func TestEducationalPanelModeAndPhaseContent(t *testing.T) {
 
 	p := NewComparisonEducationalPanel()
 	p.SetPresentationMode(PresentationModeInvestor)
-	if !strings.Contains(p.title, "Investment") {
-		t.Fatalf("expected investor title, got %q", p.title)
+	title, _ := p.GetContent()
+	if !strings.Contains(title, "Investment") {
+		t.Fatalf("expected investor title, got %q", title)
 	}
 	p.SetPresentationMode(PresentationModeEngineer)
-	if !strings.Contains(p.title, "Technical") {
-		t.Fatalf("expected engineer title, got %q", p.title)
+	title, _ = p.GetContent()
+	if !strings.Contains(title, "Technical") {
+		t.Fatalf("expected engineer title, got %q", title)
 	}
 
 	p.SetPhase(AutoDemoPhaseEnergyRace)
-	if !strings.Contains(p.title, "Energy") {
-		t.Fatalf("expected energy phase title, got %q", p.title)
+	title, _ = p.GetContent()
+	if !strings.Contains(title, "Energy") {
+		t.Fatalf("expected energy phase title, got %q", title)
 	}
 	p.SetPhase(AutoDemoPhaseMarket)
-	if !strings.Contains(p.content, "721B") {
-		t.Fatalf("expected market phase content, got %q", p.content)
+	_, content := p.GetContent()
+	if !strings.Contains(content, "721B") {
+		t.Fatalf("expected market phase content, got %q", content)
 	}
 	p.SetPhase(AutoDemoPhaseCalculator)
-	if !strings.Contains(p.content, "Try the calculator") {
-		t.Fatalf("expected calculator phase content, got %q", p.content)
+	_, content = p.GetContent()
+	if !strings.Contains(content, "Try the calculator") {
+		t.Fatalf("expected calculator phase content, got %q", content)
 	}
 }
 
@@ -66,13 +71,16 @@ func TestOperationLogAndComparisonText(t *testing.T) {
 	for i := 0; i < 12; i++ {
 		log.Add("step")
 	}
-	if len(log.entries) != log.maxEntries {
-		t.Fatalf("expected capped entries=%d, got %d", log.maxEntries, len(log.entries))
+	entries := log.GetEntries()
+	maxEntries := log.GetMaxEntries()
+	if len(entries) != maxEntries {
+		t.Fatalf("expected capped entries=%d, got %d", maxEntries, len(entries))
 	}
 
 	p := NewComparisonEducationalPanel()
 	p.SetComparison(1000, 100)
-	if !strings.Contains(p.content, "1000×") || !strings.Contains(p.content, "100×") {
-		t.Fatalf("expected ratio text injected, got %q", p.content)
+	_, content := p.GetContent()
+	if !strings.Contains(content, "1000×") || !strings.Contains(content, "100×") {
+		t.Fatalf("expected ratio text injected, got %q", content)
 	}
 }

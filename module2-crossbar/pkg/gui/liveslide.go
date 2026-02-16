@@ -9,10 +9,8 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"time"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
@@ -54,205 +52,78 @@ func (m DemoMode) String() string {
 
 // ModeIndicatorBox shows the current mode with a colored background.
 type ModeIndicatorBox struct {
-	widget.BaseWidget
-
-	mu      sync.RWMutex
-	mode    DemoMode
-	minSize fyne.Size
+	*sharedwidgets.ModeIndicator
 }
 
 // NewModeIndicatorBox creates a new mode indicator.
 func NewModeIndicatorBox() *ModeIndicatorBox {
 	m := &ModeIndicatorBox{
-		mode:    DemoModeIdle,
-		minSize: fyne.NewSize(100, 30),
+		ModeIndicator: sharedwidgets.NewModeIndicator(sharedwidgets.ModeIndicatorConfig{
+			MinSize: fyne.NewSize(100, 30),
+			Styles: map[int]sharedwidgets.ModeStyle{
+				int(DemoModeIdle): {
+					Text:            "○ IDLE",
+					BackgroundColor: color.RGBA{60, 60, 80, 255},
+					BorderColor:     color.RGBA{100, 100, 130, 255},
+				},
+				int(DemoModeCompute): {
+					Text:            "▶ COMPUTE",
+					BackgroundColor: color.RGBA{50, 120, 180, 255},
+					BorderColor:     color.RGBA{100, 180, 255, 255},
+				},
+				int(DemoModeWrite): {
+					Text:            "↓ WRITE",
+					BackgroundColor: color.RGBA{180, 50, 50, 255},
+					BorderColor:     color.RGBA{255, 100, 100, 255},
+				},
+				int(DemoModeRead): {
+					Text:            "↑ READ",
+					BackgroundColor: color.RGBA{50, 150, 80, 255},
+					BorderColor:     color.RGBA{100, 220, 130, 255},
+				},
+				int(DemoModeIRDrop): {
+					Text:            "~ IR DROP",
+					BackgroundColor: color.RGBA{180, 120, 50, 255},
+					BorderColor:     color.RGBA{255, 180, 100, 255},
+				},
+				int(DemoModeSneakPath): {
+					Text:            "⌇ SNEAK",
+					BackgroundColor: color.RGBA{150, 50, 150, 255},
+					BorderColor:     color.RGBA{220, 100, 220, 255},
+				},
+			},
+		}),
 	}
-	m.ExtendBaseWidget(m)
 	return m
 }
 
 // SetMode updates the current mode.
 func (m *ModeIndicatorBox) SetMode(mode DemoMode) {
-	lsDebug.Printf("ModeIndicator: SetMode(%s)", mode.String())
-	m.mu.Lock()
-	m.mode = mode
-	m.mu.Unlock()
-	if sharedwidgets.IsStartupStabilizing() {
-		return
-	}
-	lsDebug.Println("ModeIndicator: Calling Refresh")
-	fyne.Do(func() {
-		m.Refresh()
-	})
-	lsDebug.Println("ModeIndicator: Refresh done")
+	m.ModeIndicator.SetMode(int(mode))
 }
 
 // GetMode returns the current mode.
 func (m *ModeIndicatorBox) GetMode() DemoMode {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	return m.mode
+	return DemoMode(m.ModeIndicator.GetMode())
 }
-
-// MinSize returns the minimum size.
-func (m *ModeIndicatorBox) MinSize() fyne.Size {
-	return m.minSize
-}
-
-// CreateRenderer implements fyne.Widget.
-func (m *ModeIndicatorBox) CreateRenderer() fyne.WidgetRenderer {
-	return &modeIndicatorBoxRenderer{indicator: m}
-}
-
-type modeIndicatorBoxRenderer struct {
-	indicator *ModeIndicatorBox
-	objects   []fyne.CanvasObject
-	cache     sharedwidgets.LayoutCache // Shared utility for safe layout
-}
-
-func (r *modeIndicatorBoxRenderer) MinSize() fyne.Size {
-	return r.indicator.minSize
-}
-
-func (r *modeIndicatorBoxRenderer) Layout(size fyne.Size) {
-	sharedwidgets.DebugLayoutCall("modeIndicatorBoxRenderer", size)
-	if !r.cache.ShouldLayout(size) {
-		return
-	}
-	r.layoutWithSize(size)
-	r.cache.MarkLayout(size)
-}
-
-func (r *modeIndicatorBoxRenderer) Refresh() {
-	sharedwidgets.DebugRefreshCall("modeIndicatorBoxRenderer", r.indicator.Size())
-	size := r.indicator.Size()
-	if !r.cache.ShouldLayout(size) {
-		return
-	}
-	r.layoutWithSize(size)
-	r.cache.MarkLayout(size)
-}
-
-func (r *modeIndicatorBoxRenderer) layoutWithSize(size fyne.Size) {
-	// Skip layout with invalid sizes
-	if size.Width <= 0 || size.Height <= 0 {
-		return
-	}
-
-	r.indicator.mu.RLock()
-	mode := r.indicator.mode
-	r.indicator.mu.RUnlock()
-
-	r.objects = r.objects[:0]
-
-	// Constrain to minimum size to prevent growing
-	minSize := r.indicator.minSize
-	if size.Width > minSize.Width {
-		size.Width = minSize.Width
-	}
-	if size.Height > minSize.Height {
-		size.Height = minSize.Height
-	}
-
-	// Colors based on mode
-	// Accessibility: Each mode has a distinct text label with unique shape prefix
-	// Shape meanings: ○=inactive, ▶=running, ↓=writing, ↑=reading, ~=resistance, ⌇=leakage
-	var bgColor, borderColor color.RGBA
-	var modeText string
-
-	switch mode {
-	case DemoModeIdle:
-		bgColor = color.RGBA{60, 60, 80, 255}
-		borderColor = color.RGBA{100, 100, 130, 255}
-		modeText = "○ IDLE"
-	case DemoModeCompute:
-		bgColor = color.RGBA{50, 120, 180, 255}
-		borderColor = color.RGBA{100, 180, 255, 255}
-		modeText = "▶ COMPUTE"
-	case DemoModeWrite:
-		bgColor = color.RGBA{180, 50, 50, 255}
-		borderColor = color.RGBA{255, 100, 100, 255}
-		modeText = "↓ WRITE"
-	case DemoModeRead:
-		bgColor = color.RGBA{50, 150, 80, 255}
-		borderColor = color.RGBA{100, 220, 130, 255}
-		modeText = "↑ READ"
-	case DemoModeIRDrop:
-		bgColor = color.RGBA{180, 120, 50, 255}
-		borderColor = color.RGBA{255, 180, 100, 255}
-		modeText = "~ IR DROP"
-	case DemoModeSneakPath:
-		bgColor = color.RGBA{150, 50, 150, 255}
-		borderColor = color.RGBA{220, 100, 220, 255}
-		modeText = "⌇ SNEAK"
-	}
-
-	// Border
-	border := canvas.NewRectangle(borderColor)
-	border.Resize(size)
-	r.objects = append(r.objects, border)
-
-	// Background
-	padding := float32(3)
-	bg := canvas.NewRectangle(bgColor)
-	bg.Resize(fyne.NewSize(size.Width-padding*2, size.Height-padding*2))
-	bg.Move(fyne.NewPos(padding, padding))
-	r.objects = append(r.objects, bg)
-
-	// Mode text
-	text := canvas.NewText(modeText, color.White)
-	text.TextSize = 14
-	text.TextStyle = fyne.TextStyle{Bold: true}
-	textWidth := float32(len(modeText) * 8)
-	text.Move(fyne.NewPos((size.Width-textWidth)/2, (size.Height-20)/2))
-	r.objects = append(r.objects, text)
-}
-
-func (r *modeIndicatorBoxRenderer) Objects() []fyne.CanvasObject {
-	return r.objects
-}
-
-func (r *modeIndicatorBoxRenderer) Destroy() {}
 
 // EducationalPanel shows context-sensitive explanations of what's happening.
 type EducationalPanel struct {
-	widget.BaseWidget
-
-	mu           sync.RWMutex
-	title        string
-	content      string
-	phase        int
-	minSize      fyne.Size
-	titleLabel   *widget.Label
-	contentLabel *widget.Label
+	*sharedwidgets.EducationalPanel
+	mu    sync.RWMutex
+	phase int
 }
 
 // NewEducationalPanel creates a new educational panel.
 func NewEducationalPanel() *EducationalPanel {
 	e := &EducationalPanel{
-		title:   "What You're Seeing",
-		content: "Select an operation to see\nwhat's happening.",
-		minSize: fyne.NewSize(220, 280), // Larger size to fit content
+		EducationalPanel: sharedwidgets.NewEducationalPanel(sharedwidgets.EducationalPanelConfig{
+			Title:   "What You're Seeing",
+			Content: "Select an operation to see\nwhat's happening.",
+			MinSize: fyne.NewSize(220, 280),
+		}),
 	}
-	e.titleLabel = widget.NewLabelWithStyle(e.title, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	e.contentLabel = widget.NewLabel(e.content)
-	e.contentLabel.Wrapping = fyne.TextWrapOff
-	e.ExtendBaseWidget(e)
 	return e
-}
-
-// SetContent updates the educational content.
-func (e *EducationalPanel) SetContent(title, content string) {
-	lsDebug.Printf("EducationalPanel: SetContent(%s)", title)
-	e.mu.Lock()
-	e.title = title
-	e.content = content
-	e.mu.Unlock()
-	fyne.Do(func() {
-		e.titleLabel.SetText(title)
-		e.contentLabel.SetText(content)
-	})
-	lsDebug.Println("EducationalPanel: SetContent done")
 }
 
 // SetPhase updates the current phase for phase-aware content.
@@ -370,68 +241,22 @@ func (e *EducationalPanel) SetIdleExplanation() {
 	e.SetContent("What You're Seeing", content)
 }
 
-// MinSize returns the minimum size.
-func (e *EducationalPanel) MinSize() fyne.Size {
-	return e.minSize
-}
-
-// CreateRenderer implements fyne.Widget.
-func (e *EducationalPanel) CreateRenderer() fyne.WidgetRenderer {
-	box := container.NewVBox(
-		e.titleLabel,
-		widget.NewSeparator(),
-		e.contentLabel,
-	)
-
-	// Use padded container with border
-	padded := container.NewPadded(box)
-	return widget.NewSimpleRenderer(container.NewBorder(nil, nil, nil, nil, padded))
-}
-
 // OperationLog shows timestamped operation history.
 type OperationLog struct {
-	widget.BaseWidget
-
-	mu         sync.RWMutex
-	entries    []string
-	maxEntries int
-	startTime  time.Time
-	minSize    fyne.Size
-
-	// UI components
-	titleLabel   *widget.Label
-	contentLabel *widget.Label
+	*sharedwidgets.OperationLog
 }
 
 // NewOperationLog creates a new operation log.
 func NewOperationLog() *OperationLog {
 	o := &OperationLog{
-		maxEntries: 6,
-		startTime:  time.Now(),
-		minSize:    fyne.NewSize(150, 60),
-		entries:    make([]string, 0, 6),
+		OperationLog: sharedwidgets.NewOperationLog(sharedwidgets.OperationLogConfig{
+			Title:        "Operation Log",
+			MaxEntries:   6,
+			MinSize:      fyne.NewSize(150, 60),
+			UseMonospace: false,
+		}),
 	}
-	o.titleLabel = widget.NewLabelWithStyle("Operation Log", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	o.contentLabel = widget.NewLabel("Waiting for operations...")
-	o.contentLabel.Wrapping = fyne.TextWrapWord
-	o.ExtendBaseWidget(o)
 	return o
-}
-
-// Add adds a new log entry with timestamp.
-func (o *OperationLog) Add(entry string) {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-
-	elapsed := time.Since(o.startTime).Seconds()
-	timestamped := fmt.Sprintf("t=%.1fs >> %s", elapsed, entry)
-	o.entries = append(o.entries, timestamped)
-
-	if len(o.entries) > o.maxEntries {
-		o.entries = o.entries[1:]
-	}
-
-	o.updateContent()
 }
 
 // AddWithResult adds an entry with a result indicator.
@@ -441,44 +266,6 @@ func (o *OperationLog) AddWithResult(action string, result string, success bool)
 		indicator = "✗"
 	}
 	o.Add(fmt.Sprintf("%s → %s %s", action, result, indicator))
-}
-
-// Clear clears all log entries.
-func (o *OperationLog) Clear() {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-	o.entries = o.entries[:0]
-	o.startTime = time.Now()
-	o.updateContent()
-}
-
-func (o *OperationLog) updateContent() {
-	text := "Waiting for operations..."
-	if len(o.entries) > 0 {
-		text = strings.Join(o.entries, "\n")
-	}
-	fyne.Do(func() {
-		o.contentLabel.SetText(text)
-	})
-}
-
-// MinSize returns the minimum size.
-func (o *OperationLog) MinSize() fyne.Size {
-	return o.minSize
-}
-
-// CreateRenderer implements fyne.Widget.
-func (o *OperationLog) CreateRenderer() fyne.WidgetRenderer {
-	// Wrap contentLabel in scroll container to prevent resize loops from text wrapping
-	contentScroll := container.NewScroll(o.contentLabel)
-	contentScroll.SetMinSize(fyne.NewSize(140, 40))
-
-	box := container.NewVBox(
-		o.titleLabel,
-		widget.NewSeparator(),
-		contentScroll,
-	)
-	return widget.NewSimpleRenderer(box)
 }
 
 // InputOutputDisplay shows the input and output vectors.
@@ -633,48 +420,17 @@ func (q *QuoteBox) CreateRenderer() fyne.WidgetRenderer {
 
 // KeyStatBox displays a key statistic prominently.
 type KeyStatBox struct {
-	widget.BaseWidget
-
-	mu          sync.RWMutex
-	label       string
-	value       string
-	minSize     fyne.Size
-	labelWidget *widget.Label
-	valueWidget *widget.Label
+	*sharedwidgets.KeyStat
 }
 
 // NewKeyStatBox creates a new key stat box.
 func NewKeyStatBox(label, value string) *KeyStatBox {
 	k := &KeyStatBox{
-		label:   label,
-		value:   value,
-		minSize: fyne.NewSize(220, 60),
+		KeyStat: sharedwidgets.NewKeyStat(sharedwidgets.KeyStatConfig{
+			Label:   label,
+			Value:   value,
+			MinSize: fyne.NewSize(220, 60),
+		}),
 	}
-	k.labelWidget = widget.NewLabel(label)
-	k.labelWidget.Alignment = fyne.TextAlignCenter
-	k.valueWidget = widget.NewLabelWithStyle(value, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	k.ExtendBaseWidget(k)
 	return k
-}
-
-// SetValue updates the statistic value.
-func (k *KeyStatBox) SetValue(value string) {
-	k.mu.Lock()
-	k.value = value
-	k.mu.Unlock()
-	fyne.Do(func() {
-		k.valueWidget.SetText(value)
-	})
-}
-
-// MinSize returns the minimum size.
-func (k *KeyStatBox) MinSize() fyne.Size {
-	return k.minSize
-}
-
-// CreateRenderer implements fyne.Widget.
-func (k *KeyStatBox) CreateRenderer() fyne.WidgetRenderer {
-	box := container.NewVBox(k.labelWidget, k.valueWidget)
-	padded := container.NewPadded(box)
-	return widget.NewSimpleRenderer(container.NewBorder(nil, nil, nil, nil, padded))
 }

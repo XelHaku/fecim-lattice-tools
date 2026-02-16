@@ -131,6 +131,13 @@ func (o *OperationLog) SetTitle(title string) {
 	}
 }
 
+// GetMaxEntries returns the maximum number of entries allowed.
+func (o *OperationLog) GetMaxEntries() int {
+	o.mu.RLock()
+	defer o.mu.RUnlock()
+	return o.maxEntries
+}
+
 func (o *OperationLog) updateContent() {
 	if o.contentLabel == nil {
 		return

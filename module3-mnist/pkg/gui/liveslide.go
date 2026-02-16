@@ -5,13 +5,10 @@ package gui
 import (
 	"fmt"
 	"image/color"
-	"strings"
 	"sync"
-	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
@@ -47,193 +44,71 @@ func (m MNISTMode) String() string {
 
 // MNISTModeIndicator shows the current mode with a colored background.
 type MNISTModeIndicator struct {
-	widget.BaseWidget
-
-	mu      sync.RWMutex
-	mode    MNISTMode
-	minSize fyne.Size
+	*sharedwidgets.ModeIndicator
 }
 
 // NewMNISTModeIndicator creates a new mode indicator.
 func NewMNISTModeIndicator() *MNISTModeIndicator {
 	m := &MNISTModeIndicator{
-		mode:    MNISTModeIdle,
-		minSize: fyne.NewSize(100, 40),
+		ModeIndicator: sharedwidgets.NewModeIndicator(sharedwidgets.ModeIndicatorConfig{
+			MinSize: fyne.NewSize(100, 40),
+			Styles: map[int]sharedwidgets.ModeStyle{
+				int(MNISTModeIdle): {
+					Text:            "IDLE",
+					BackgroundColor: color.RGBA{60, 60, 80, 255},
+					BorderColor:     color.RGBA{100, 100, 130, 255},
+				},
+				int(MNISTModeDrawing): {
+					Text:            "DRAWING",
+					BackgroundColor: color.RGBA{80, 50, 150, 255},
+					BorderColor:     color.RGBA{140, 100, 220, 255},
+				},
+				int(MNISTModeInference): {
+					Text:            "INFERENCE",
+					BackgroundColor: color.RGBA{50, 120, 180, 255},
+					BorderColor:     color.RGBA{100, 180, 255, 255},
+				},
+				int(MNISTModeEvaluating): {
+					Text:            "EVALUATING",
+					BackgroundColor: color.RGBA{180, 120, 50, 255},
+					BorderColor:     color.RGBA{255, 180, 100, 255},
+				},
+				int(MNISTModeLoading): {
+					Text:            "LOADING",
+					BackgroundColor: color.RGBA{50, 150, 80, 255},
+					BorderColor:     color.RGBA{100, 220, 130, 255},
+				},
+			},
+		}),
 	}
-	m.ExtendBaseWidget(m)
 	return m
 }
 
 // SetMode updates the current mode.
 func (m *MNISTModeIndicator) SetMode(mode MNISTMode) {
-	m.mu.Lock()
-	m.mode = mode
-	m.mu.Unlock()
-	fyne.Do(func() {
-		m.Refresh()
-	})
+	m.ModeIndicator.SetMode(int(mode))
 }
 
 // GetMode returns the current mode.
 func (m *MNISTModeIndicator) GetMode() MNISTMode {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-	return m.mode
+	return MNISTMode(m.ModeIndicator.GetMode())
 }
-
-// MinSize returns the minimum size.
-func (m *MNISTModeIndicator) MinSize() fyne.Size {
-	return m.minSize
-}
-
-// CreateRenderer implements fyne.Widget.
-func (m *MNISTModeIndicator) CreateRenderer() fyne.WidgetRenderer {
-	return &mnistModeRenderer{indicator: m}
-}
-
-type mnistModeRenderer struct {
-	indicator *MNISTModeIndicator
-	objects   []fyne.CanvasObject
-	cache     sharedwidgets.LayoutCache // Shared utility for safe layout
-}
-
-func (r *mnistModeRenderer) MinSize() fyne.Size {
-	return r.indicator.minSize
-}
-
-func (r *mnistModeRenderer) Layout(size fyne.Size) {
-	sharedwidgets.DebugLayoutCall("mnistModeRenderer", size)
-	if !r.cache.ShouldLayout(size) {
-		return
-	}
-	r.layoutWithSize(size)
-}
-
-func (r *mnistModeRenderer) Refresh() {
-	sharedwidgets.DebugRefreshCall("mnistModeRenderer", r.indicator.Size())
-	size := r.indicator.Size()
-	// Always re-layout on Refresh for this dynamic widget (mode changes)
-	r.layoutWithSize(size)
-}
-
-func (r *mnistModeRenderer) layoutWithSize(size fyne.Size) {
-	// Use minSize if provided size is invalid (for initial render)
-	if size.Width <= 0 || size.Height <= 0 {
-		size = r.indicator.minSize
-		if size.Width <= 0 || size.Height <= 0 {
-			return
-		}
-	}
-
-	r.indicator.mu.RLock()
-	mode := r.indicator.mode
-	r.indicator.mu.RUnlock()
-
-	r.objects = r.objects[:0]
-
-	// Constrain to minimum size to prevent growing
-	minSize := r.indicator.minSize
-	if size.Width > minSize.Width {
-		size.Width = minSize.Width
-	}
-	if size.Height > minSize.Height {
-		size.Height = minSize.Height
-	}
-
-	// Colors based on mode
-	var bgColor, borderColor color.RGBA
-	var modeText string
-
-	switch mode {
-	case MNISTModeIdle:
-		bgColor = color.RGBA{60, 60, 80, 255}
-		borderColor = color.RGBA{100, 100, 130, 255}
-		modeText = "IDLE"
-	case MNISTModeDrawing:
-		bgColor = color.RGBA{80, 50, 150, 255}
-		borderColor = color.RGBA{140, 100, 220, 255}
-		modeText = "DRAWING"
-	case MNISTModeInference:
-		bgColor = color.RGBA{50, 120, 180, 255}
-		borderColor = color.RGBA{100, 180, 255, 255}
-		modeText = "INFERENCE"
-	case MNISTModeEvaluating:
-		bgColor = color.RGBA{180, 120, 50, 255}
-		borderColor = color.RGBA{255, 180, 100, 255}
-		modeText = "EVALUATING"
-	case MNISTModeLoading:
-		bgColor = color.RGBA{50, 150, 80, 255}
-		borderColor = color.RGBA{100, 220, 130, 255}
-		modeText = "LOADING"
-	}
-
-	// Border
-	border := canvas.NewRectangle(borderColor)
-	border.Resize(size)
-	r.objects = append(r.objects, border)
-
-	// Background
-	padding := float32(2)
-	bg := canvas.NewRectangle(bgColor)
-	bg.Resize(fyne.NewSize(size.Width-padding*2, size.Height-padding*2))
-	bg.Move(fyne.NewPos(padding, padding))
-	r.objects = append(r.objects, bg)
-
-	// Mode text - scale with widget size
-	text := canvas.NewText(modeText, color.White)
-	fontSize := size.Height * 0.35
-	if fontSize > 14 {
-		fontSize = 14
-	}
-	if fontSize < 14 {
-		fontSize = 10
-	}
-	text.TextSize = fontSize
-	text.TextStyle = fyne.TextStyle{Bold: true}
-	textWidth := float32(len(modeText)) * fontSize * 0.6
-	text.Move(fyne.NewPos((size.Width-textWidth)/2, (size.Height-fontSize)/2))
-	r.objects = append(r.objects, text)
-
-	// Mark cache with the effective size used
-	r.cache.MarkLayout(size)
-}
-
-func (r *mnistModeRenderer) Objects() []fyne.CanvasObject {
-	return r.objects
-}
-
-func (r *mnistModeRenderer) Destroy() {}
 
 // MNISTEducationalPanel shows context-sensitive explanations.
 type MNISTEducationalPanel struct {
-	widget.BaseWidget
-
-	mu      sync.RWMutex
-	title   string
-	content string
-	minSize fyne.Size
+	*sharedwidgets.EducationalPanel
 }
 
 // NewMNISTEducationalPanel creates a new educational panel.
 func NewMNISTEducationalPanel() *MNISTEducationalPanel {
 	e := &MNISTEducationalPanel{
-		title:   "What You're Seeing",
-		content: "Draw a digit to see\nneural network inference.",
-		minSize: fyne.NewSize(150, 150),
+		EducationalPanel: sharedwidgets.NewEducationalPanel(sharedwidgets.EducationalPanelConfig{
+			Title:   "What You're Seeing",
+			Content: "Draw a digit to see\nneural network inference.",
+			MinSize: fyne.NewSize(150, 150),
+		}),
 	}
-	e.ExtendBaseWidget(e)
 	return e
-}
-
-// SetContent updates the educational content.
-func (e *MNISTEducationalPanel) SetContent(title, content string) {
-	e.mu.Lock()
-	e.title = title
-	e.content = content
-	e.mu.Unlock()
-	fyne.Do(func() {
-		e.Refresh()
-	})
 }
 
 // SetInferenceExplanation sets content for inference phases.
@@ -307,121 +182,27 @@ func (e *MNISTEducationalPanel) SetIdleExplanation() {
 	e.SetContent("MNIST Recognition", content)
 }
 
-// MinSize returns the minimum size.
-func (e *MNISTEducationalPanel) MinSize() fyne.Size {
-	return e.minSize
-}
-
-// CreateRenderer implements fyne.Widget.
-func (e *MNISTEducationalPanel) CreateRenderer() fyne.WidgetRenderer {
-	e.mu.RLock()
-	title := e.title
-	content := e.content
-	e.mu.RUnlock()
-
-	titleLabel := widget.NewLabelWithStyle(title, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	contentLabel := widget.NewLabel(content)
-	contentLabel.Wrapping = fyne.TextWrapWord
-
-	// Wrap contentLabel in scroll container to prevent resize loops from text wrapping
-	contentScroll := container.NewScroll(contentLabel)
-	contentScroll.SetMinSize(fyne.NewSize(190, 140))
-
-	box := container.NewVBox(
-		titleLabel,
-		widget.NewSeparator(),
-		contentScroll,
-	)
-
-	return widget.NewSimpleRenderer(box)
-}
-
 // MNISTOperationLog shows timestamped operation history.
 type MNISTOperationLog struct {
-	widget.BaseWidget
-
-	mu         sync.RWMutex
-	entries    []string
-	maxEntries int
-	startTime  time.Time
-	minSize    fyne.Size
-
-	titleLabel   *widget.Label
-	contentLabel *widget.Label
+	*sharedwidgets.OperationLog
 }
 
 // NewMNISTOperationLog creates a new operation log.
 func NewMNISTOperationLog() *MNISTOperationLog {
 	o := &MNISTOperationLog{
-		maxEntries: 10,
-		startTime:  time.Now(),
-		minSize:    fyne.NewSize(150, 120),
-		entries:    make([]string, 0, 10),
+		OperationLog: sharedwidgets.NewOperationLog(sharedwidgets.OperationLogConfig{
+			Title:        "Operation Log",
+			MaxEntries:   10,
+			MinSize:      fyne.NewSize(150, 120),
+			UseMonospace: false,
+		}),
 	}
-	o.titleLabel = widget.NewLabelWithStyle("Operation Log", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	o.contentLabel = widget.NewLabel("Waiting for operations...")
-	o.contentLabel.Wrapping = fyne.TextWrapWord
-	o.ExtendBaseWidget(o)
 	return o
-}
-
-// Add adds a new log entry with timestamp.
-func (o *MNISTOperationLog) Add(entry string) {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-
-	elapsed := time.Since(o.startTime).Seconds()
-	timestamped := fmt.Sprintf("t=%.1fs >> %s", elapsed, entry)
-	o.entries = append(o.entries, timestamped)
-
-	if len(o.entries) > o.maxEntries {
-		o.entries = o.entries[1:]
-	}
-
-	o.updateContent()
 }
 
 // AddPrediction adds a prediction result entry.
 func (o *MNISTOperationLog) AddPrediction(predicted int, confidence float64) {
 	o.Add(fmt.Sprintf("Predict → %d (%.1f%%)", predicted, confidence*100))
-}
-
-// Clear clears all log entries.
-func (o *MNISTOperationLog) Clear() {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-	o.entries = o.entries[:0]
-	o.startTime = time.Now()
-	o.updateContent()
-}
-
-func (o *MNISTOperationLog) updateContent() {
-	text := "Waiting for operations..."
-	if len(o.entries) > 0 {
-		text = strings.Join(o.entries, "\n")
-	}
-	fyne.Do(func() {
-		o.contentLabel.SetText(text)
-	})
-}
-
-// MinSize returns the minimum size.
-func (o *MNISTOperationLog) MinSize() fyne.Size {
-	return o.minSize
-}
-
-// CreateRenderer implements fyne.Widget.
-func (o *MNISTOperationLog) CreateRenderer() fyne.WidgetRenderer {
-	// Wrap contentLabel in scroll container to prevent resize loops from text wrapping
-	contentScroll := container.NewScroll(o.contentLabel)
-	contentScroll.SetMinSize(fyne.NewSize(140, 90))
-
-	box := container.NewVBox(
-		o.titleLabel,
-		widget.NewSeparator(),
-		contentScroll,
-	)
-	return widget.NewSimpleRenderer(box)
 }
 
 // PredictionDisplay shows the big prediction number prominently.
@@ -612,52 +393,17 @@ func (r *predictionRenderer) Destroy() {}
 
 // MNISTKeyStat displays a key statistic prominently.
 type MNISTKeyStat struct {
-	widget.BaseWidget
-
-	mu      sync.RWMutex
-	label   string
-	value   string
-	minSize fyne.Size
+	*sharedwidgets.KeyStat
 }
 
 // NewMNISTKeyStat creates a new key stat box.
 func NewMNISTKeyStat(label, value string) *MNISTKeyStat {
 	k := &MNISTKeyStat{
-		label:   label,
-		value:   value,
-		minSize: fyne.NewSize(100, 50),
+		KeyStat: sharedwidgets.NewKeyStat(sharedwidgets.KeyStatConfig{
+			Label:   label,
+			Value:   value,
+			MinSize: fyne.NewSize(100, 50),
+		}),
 	}
-	k.ExtendBaseWidget(k)
 	return k
-}
-
-// SetValue updates the statistic value.
-func (k *MNISTKeyStat) SetValue(value string) {
-	k.mu.Lock()
-	k.value = value
-	k.mu.Unlock()
-	fyne.Do(func() {
-		k.Refresh()
-	})
-}
-
-// MinSize returns the minimum size.
-func (k *MNISTKeyStat) MinSize() fyne.Size {
-	return k.minSize
-}
-
-// CreateRenderer implements fyne.Widget.
-func (k *MNISTKeyStat) CreateRenderer() fyne.WidgetRenderer {
-	k.mu.RLock()
-	label := k.label
-	value := k.value
-	k.mu.RUnlock()
-
-	labelWidget := widget.NewLabel(label)
-	labelWidget.Alignment = fyne.TextAlignCenter
-
-	valueWidget := widget.NewLabelWithStyle(value, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-
-	box := container.NewVBox(labelWidget, valueWidget)
-	return widget.NewSimpleRenderer(box)
 }
