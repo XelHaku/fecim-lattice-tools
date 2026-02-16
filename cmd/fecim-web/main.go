@@ -1,3 +1,6 @@
+// Command fecim-web provides a web-based FeCIM interface.
+//
+// Usage: fecim-web -port 8080
 package main
 
 import (

@@ -1,3 +1,6 @@
+// Command gen_golden_loops generates golden regression data for hysteresis.
+//
+// Usage: gen_golden_loops -material fecim_hzo -output golden/
 package main
 
 import (

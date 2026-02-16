@@ -1,3 +1,6 @@
+// Command release-report generates release notes from git history.
+//
+// Usage: release-report -from v1.0.0 -to HEAD -output RELEASE_NOTES.md
 package main
 
 import (

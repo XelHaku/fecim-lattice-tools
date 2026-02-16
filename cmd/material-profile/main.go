@@ -1,3 +1,6 @@
+// Command material-profile exports material physics parameters as JSON.
+//
+// Usage: material-profile -material fecim_hzo -output profile.json
 package main
 
 import (
