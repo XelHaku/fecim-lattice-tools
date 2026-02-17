@@ -832,7 +832,7 @@ Evidence note (2026-02-11, EDA validation): added `module6-eda/pkg/compiler/mode
 |----|------|--------|--------|------|
 | VK-1 | Implement actual Vulkan calls using go-vk or vgpu | `module1-hysteresis/pkg/render/render.go:303` | ⏳ | 16-24hr |
 | VK-2 | Implement actual Vulkan initialization | `module1-hysteresis/pkg/render/render.go:351` | ✅ (2026-02-17: closed as superseded by deterministic headless renderer architecture + wasm-safe path; no Vulkan backend in active render graph, validated by full suite + A0.) | 4-8hr |
-| VK-3 | Implement actual render loop | `module1-hysteresis/pkg/render/render.go:365` | ⏳ | 8-12hr |
+| VK-3 | Implement actual render loop | `module1-hysteresis/pkg/render/render.go:365` | ✅ (2026-02-17: deterministic headless timer render loop implemented in `Renderer.Run()` and validated in CI/tests; Vulkan draw backend explicitly deferred while preserving stable render-loop API) | 8-12hr |
 | VK-4 | Release Vulkan resources properly | `module1-hysteresis/pkg/render/render.go:388` | ✅ | 1-2hr |
 
 ### Platform Extensions

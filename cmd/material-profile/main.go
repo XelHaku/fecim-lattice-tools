@@ -6,11 +6,31 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
 	"fecim-lattice-tools/shared/physics"
 )
+
+func run(out, errOut io.Writer, profile, mode, sep string) int {
+	switch mode {
+	case "version":
+		fmt.Fprintln(out, physics.MaterialProfileVersion)
+		return 0
+	case "list":
+		mats, err := physics.RequiredMaterialsForProfile(physics.MaterialProfileName(profile))
+		if err != nil {
+			fmt.Fprintln(errOut, err)
+			return 2
+		}
+		fmt.Fprint(out, strings.Join(mats, sep))
+		return 0
+	default:
+		fmt.Fprintf(errOut, "unknown mode %q\n", mode)
+		return 2
+	}
+}
 
 func main() {
 	profile := flag.String("profile", "pr", "material profile: pr|nightly")
@@ -18,20 +38,5 @@ func main() {
 	sep := flag.String("sep", "\n", "separator for list output")
 	flag.Parse()
 
-	switch *mode {
-	case "version":
-		fmt.Println(physics.MaterialProfileVersion)
-		return
-	case "list":
-		mats, err := physics.RequiredMaterialsForProfile(physics.MaterialProfileName(*profile))
-		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(2)
-		}
-		fmt.Print(strings.Join(mats, *sep))
-		return
-	default:
-		fmt.Fprintf(os.Stderr, "unknown mode %q\n", *mode)
-		os.Exit(2)
-	}
+	os.Exit(run(os.Stdout, os.Stderr, *profile, *mode, *sep))
 }
