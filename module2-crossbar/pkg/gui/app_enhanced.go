@@ -116,7 +116,7 @@ func (ca *CrossbarApp) runEnhancedMVMAnimated(input []float64) {
 
 	// Phase 1: Input voltages applied (300ms)
 	fyne.Do(func() {
-		ca.modeIndicator.SetMode(DemoModeCompute)
+		ca.modeIndicator.SetMode(int(DemoModeCompute))
 		ca.updateStatus("COMPUTE | Phase 1/3: Applying input voltages...")
 
 		cols := make([]int, ca.config.Cols)
@@ -158,7 +158,7 @@ func (ca *CrossbarApp) runEnhancedMVMAnimated(input []float64) {
 	if err != nil {
 		fyne.Do(func() {
 			ca.updateStatus(fmt.Sprintf("COMPUTE | Error: %v", err))
-			ca.modeIndicator.SetMode(DemoModeIdle)
+			ca.modeIndicator.SetMode(int(DemoModeIdle))
 			ca.conductanceHeatmap.ClearAnimation()
 		})
 		return
@@ -189,7 +189,7 @@ func (ca *CrossbarApp) runEnhancedMVMAnimated(input []float64) {
 		ca.updateEnhancedWidgets(mvmResult)
 		ca.updateStatus(fmt.Sprintf("COMPUTE | Complete: %d MACs, %.2f pJ, %.0f× better than GPU",
 			mvmResult.MACOperations, mvmResult.TotalEnergy, mvmResult.EnergyEfficiency))
-		ca.modeIndicator.SetMode(DemoModeIdle)
+		ca.modeIndicator.SetMode(int(DemoModeIdle))
 	})
 
 	getDebug().Println("runEnhancedMVM: Complete")

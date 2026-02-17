@@ -77,7 +77,7 @@ func (ca *CrossbarApp) analyzeIRDrop() {
 
 	fyne.Do(func() {
 		// Update mode and educational panel
-		ca.modeIndicator.SetMode(DemoModeIRDrop)
+		ca.modeIndicator.SetMode(int(DemoModeIRDrop))
 		ca.setEducationalContent("Non-Ideality: IR Drop", "IR DROP ANALYSIS\n\nWire resistance causes\nvoltage drop along lines.\n\nCells far from drivers\nsee reduced voltage.\n\nThis affects accuracy:\n• Worst at corners\n• Mitigate with drivers")
 		ca.updateStatus("IR DROP | Computing voltage distribution across array (wire resistance model)...")
 		ca.setControlsEnabled(false)
@@ -86,7 +86,7 @@ func (ca *CrossbarApp) analyzeIRDrop() {
 	go func() {
 		defer fyne.Do(func() {
 			ca.setControlsEnabled(true)
-			ca.modeIndicator.SetMode(DemoModeIdle)
+			ca.modeIndicator.SetMode(int(DemoModeIdle))
 		})
 
 		// Protected read of lastInput
@@ -158,7 +158,7 @@ func (ca *CrossbarApp) analyzeSneakPaths() {
 
 	fyne.Do(func() {
 		// Update mode and educational panel
-		ca.modeIndicator.SetMode(DemoModeSneakPath)
+		ca.modeIndicator.SetMode(int(DemoModeSneakPath))
 		ca.setEducationalContent("Non-Ideality: Sneak Paths", "SNEAK PATH ANALYSIS\n\nCurrent can flow through\nunintended paths in passive\ncrossbar arrays.\n\nMitigation strategies:\n• Selector devices\n• 1T1R architecture\n• Threshold switching")
 		ca.updateStatus("SNEAK | Computing parasitic current paths for center cell...")
 		ca.setControlsEnabled(false)
@@ -167,7 +167,7 @@ func (ca *CrossbarApp) analyzeSneakPaths() {
 	go func() {
 		defer fyne.Do(func() {
 			ca.setControlsEnabled(true)
-			ca.modeIndicator.SetMode(DemoModeIdle)
+			ca.modeIndicator.SetMode(int(DemoModeIdle))
 		})
 
 		// Select center cell
@@ -238,7 +238,7 @@ func (ca *CrossbarApp) resetArray() {
 	}
 
 	fyne.Do(func() {
-		ca.modeIndicator.SetMode(DemoModeWrite)
+		ca.modeIndicator.SetMode(int(DemoModeWrite))
 		ca.updateStatus("WRITE | Resetting all cells to mid-level (15/29)...")
 		ca.setControlsEnabled(false)
 	})
@@ -246,7 +246,7 @@ func (ca *CrossbarApp) resetArray() {
 	go func() {
 		defer fyne.Do(func() {
 			ca.setControlsEnabled(true)
-			ca.modeIndicator.SetMode(DemoModeIdle)
+			ca.modeIndicator.SetMode(int(DemoModeIdle))
 		})
 
 		// Reset all cells to mid-level (level 15 out of 0-29)

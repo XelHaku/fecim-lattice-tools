@@ -11,35 +11,35 @@ func TestEducationalPanelAndLogLogic(t *testing.T) {
 	a := fyneTest.NewApp()
 	defer a.Quit()
 
-	ep := NewEducationalPanel()
-	ep.SetMVMExplanation(0)
+	ep := newEducationalPanel()
+	setMVMExplanation(ep, 0)
 	title, content := ep.GetContent()
 	if title != "Compute-in-Memory" || !strings.Contains(content, "Matrix-Vector") {
 		t.Fatalf("unexpected MVM content: title=%q content=%q", title, content)
 	}
-	ep.SetMVMExplanation(1)
-	ep.SetMVMExplanation(2)
-	ep.SetIRDropExplanation()
+	setMVMExplanation(ep, 1)
+	setMVMExplanation(ep, 2)
+	setIRDropExplanation(ep)
 	title, _ = ep.GetContent()
 	if !strings.Contains(title, "IR Drop") {
 		t.Fatalf("unexpected IR drop title: %q", title)
 	}
-	ep.SetSneakPathExplanation()
-	ep.SetIdleExplanation()
+	setSneakPathExplanation(ep)
+	setIdleExplanation(ep)
 	_, content = ep.GetContent()
 	if !strings.Contains(content, "CROSSBAR") {
 		t.Fatalf("unexpected idle content: %q", content)
 	}
 
-	log := NewOperationLog()
+	log := newOperationLog()
 	for i := 0; i < 10; i++ {
 		log.Add("op")
 	}
 	if len(log.GetEntries()) != log.GetMaxEntries() {
 		t.Fatalf("expected entries capped to %d, got %d", log.GetMaxEntries(), len(log.GetEntries()))
 	}
-	log.AddWithResult("mvm", "ok", true)
-	log.AddWithResult("mvm", "err", false)
+	addOperationWithResult(log, "mvm", "ok", true)
+	addOperationWithResult(log, "mvm", "err", false)
 	log.Clear()
 	if len(log.GetEntries()) != 0 {
 		t.Fatal("expected clear to remove entries")
@@ -85,9 +85,9 @@ func TestDemoModeStringsAndModeIndicator(t *testing.T) {
 		t.Fatalf("unexpected unknown mode string: %q", got)
 	}
 
-	mi := NewModeIndicatorBox()
-	mi.SetMode(DemoModeRead)
-	if mi.GetMode() != DemoModeRead {
+	mi := newModeIndicator()
+	mi.SetMode(int(DemoModeRead))
+	if mi.GetMode() != int(DemoModeRead) {
 		t.Fatalf("expected mode indicator to store mode, got %v", mi.GetMode())
 	}
 }

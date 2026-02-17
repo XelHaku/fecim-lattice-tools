@@ -50,94 +50,56 @@ func (m DemoMode) String() string {
 	}
 }
 
-// ModeIndicatorBox shows the current mode with a colored background.
-type ModeIndicatorBox struct {
-	*sharedwidgets.ModeIndicator
-}
-
-// NewModeIndicatorBox creates a new mode indicator.
-func NewModeIndicatorBox() *ModeIndicatorBox {
-	m := &ModeIndicatorBox{
-		ModeIndicator: sharedwidgets.NewModeIndicator(sharedwidgets.ModeIndicatorConfig{
-			MinSize: fyne.NewSize(100, 30),
-			Styles: map[int]sharedwidgets.ModeStyle{
-				int(DemoModeIdle): {
-					Text:            "○ IDLE",
-					BackgroundColor: color.RGBA{60, 60, 80, 255},
-					BorderColor:     color.RGBA{100, 100, 130, 255},
-				},
-				int(DemoModeCompute): {
-					Text:            "▶ COMPUTE",
-					BackgroundColor: color.RGBA{50, 120, 180, 255},
-					BorderColor:     color.RGBA{100, 180, 255, 255},
-				},
-				int(DemoModeWrite): {
-					Text:            "↓ WRITE",
-					BackgroundColor: color.RGBA{180, 50, 50, 255},
-					BorderColor:     color.RGBA{255, 100, 100, 255},
-				},
-				int(DemoModeRead): {
-					Text:            "↑ READ",
-					BackgroundColor: color.RGBA{50, 150, 80, 255},
-					BorderColor:     color.RGBA{100, 220, 130, 255},
-				},
-				int(DemoModeIRDrop): {
-					Text:            "~ IR DROP",
-					BackgroundColor: color.RGBA{180, 120, 50, 255},
-					BorderColor:     color.RGBA{255, 180, 100, 255},
-				},
-				int(DemoModeSneakPath): {
-					Text:            "⌇ SNEAK",
-					BackgroundColor: color.RGBA{150, 50, 150, 255},
-					BorderColor:     color.RGBA{220, 100, 220, 255},
-				},
+// newModeIndicator creates a shared ModeIndicator configured for crossbar demo modes.
+func newModeIndicator() *sharedwidgets.ModeIndicator {
+	return sharedwidgets.NewModeIndicator(sharedwidgets.ModeIndicatorConfig{
+		MinSize: fyne.NewSize(100, 30),
+		Styles: map[int]sharedwidgets.ModeStyle{
+			int(DemoModeIdle): {
+				Text:            "○ IDLE",
+				BackgroundColor: color.RGBA{60, 60, 80, 255},
+				BorderColor:     color.RGBA{100, 100, 130, 255},
 			},
-		}),
-	}
-	return m
-}
-
-// SetMode updates the current mode.
-func (m *ModeIndicatorBox) SetMode(mode DemoMode) {
-	m.ModeIndicator.SetMode(int(mode))
-}
-
-// GetMode returns the current mode.
-func (m *ModeIndicatorBox) GetMode() DemoMode {
-	return DemoMode(m.ModeIndicator.GetMode())
-}
-
-// EducationalPanel shows context-sensitive explanations of what's happening.
-type EducationalPanel struct {
-	*sharedwidgets.EducationalPanel
-	mu    sync.RWMutex
-	phase int
-}
-
-// NewEducationalPanel creates a new educational panel.
-func NewEducationalPanel() *EducationalPanel {
-	e := &EducationalPanel{
-		EducationalPanel: sharedwidgets.NewEducationalPanel(sharedwidgets.EducationalPanelConfig{
-			Title:   "What You're Seeing",
-			Content: "Select an operation to see\nwhat's happening.",
-			MinSize: fyne.NewSize(220, 280),
-		}),
-	}
-	return e
-}
-
-// SetPhase updates the current phase for phase-aware content.
-func (e *EducationalPanel) SetPhase(phase int) {
-	e.mu.Lock()
-	e.phase = phase
-	e.mu.Unlock()
-	fyne.Do(func() {
-		e.Refresh()
+			int(DemoModeCompute): {
+				Text:            "▶ COMPUTE",
+				BackgroundColor: color.RGBA{50, 120, 180, 255},
+				BorderColor:     color.RGBA{100, 180, 255, 255},
+			},
+			int(DemoModeWrite): {
+				Text:            "↓ WRITE",
+				BackgroundColor: color.RGBA{180, 50, 50, 255},
+				BorderColor:     color.RGBA{255, 100, 100, 255},
+			},
+			int(DemoModeRead): {
+				Text:            "↑ READ",
+				BackgroundColor: color.RGBA{50, 150, 80, 255},
+				BorderColor:     color.RGBA{100, 220, 130, 255},
+			},
+			int(DemoModeIRDrop): {
+				Text:            "~ IR DROP",
+				BackgroundColor: color.RGBA{180, 120, 50, 255},
+				BorderColor:     color.RGBA{255, 180, 100, 255},
+			},
+			int(DemoModeSneakPath): {
+				Text:            "⌇ SNEAK",
+				BackgroundColor: color.RGBA{150, 50, 150, 255},
+				BorderColor:     color.RGBA{220, 100, 220, 255},
+			},
+		},
 	})
 }
 
-// SetMVMExplanation sets content for MVM operation.
-func (e *EducationalPanel) SetMVMExplanation(phase int) {
+// newEducationalPanel creates a shared EducationalPanel for crossbar demo explanations.
+func newEducationalPanel() *sharedwidgets.EducationalPanel {
+	return sharedwidgets.NewEducationalPanel(sharedwidgets.EducationalPanelConfig{
+		Title:   "What You're Seeing",
+		Content: "Select an operation to see\nwhat's happening.",
+		MinSize: fyne.NewSize(220, 280),
+	})
+}
+
+// setMVMExplanation sets MVM operation content on the given panel.
+func setMVMExplanation(ep *sharedwidgets.EducationalPanel, phase int) {
 	var content string
 	switch phase {
 	case 1:
@@ -180,11 +142,11 @@ func (e *EducationalPanel) SetMVMExplanation(phase int) {
 			"Speed: ~1ns (vs. µs in CPU)\n" +
 			"Energy: ~10pJ (vs. nJ in GPU)"
 	}
-	e.SetContent("Compute-in-Memory", content)
+	ep.SetContent("Compute-in-Memory", content)
 }
 
-// SetIRDropExplanation sets content for IR drop analysis.
-func (e *EducationalPanel) SetIRDropExplanation() {
+// setIRDropExplanation sets IR drop content on the given panel.
+func setIRDropExplanation(ep *sharedwidgets.EducationalPanel) {
 	content := "IR DROP ANALYSIS\n\n" +
 		"Problem: Metal wires have\n" +
 		"finite resistance (~1-10Ω/cell).\n\n" +
@@ -200,11 +162,11 @@ func (e *EducationalPanel) SetIRDropExplanation() {
 		"• Multiple voltage drivers\n" +
 		"• Lower wire resistance (Cu)\n" +
 		"• Smaller tile sizes"
-	e.SetContent("Non-Ideality: IR Drop", content)
+	ep.SetContent("Non-Ideality: IR Drop", content)
 }
 
-// SetSneakPathExplanation sets content for sneak path analysis.
-func (e *EducationalPanel) SetSneakPathExplanation() {
+// setSneakPathExplanation sets sneak path content on the given panel.
+func setSneakPathExplanation(ep *sharedwidgets.EducationalPanel) {
 	content := "SNEAK PATH ANALYSIS\n\n" +
 		"Problem: In passive (0T1R)\n" +
 		"crossbars, current can flow\n" +
@@ -221,11 +183,11 @@ func (e *EducationalPanel) SetSneakPathExplanation() {
 		"• 1T1R (transistor switch)\n" +
 		"• Selector device (diode)\n" +
 		"• Self-rectifying FeFET"
-	e.SetContent("Non-Ideality: Sneak Paths", content)
+	ep.SetContent("Non-Ideality: Sneak Paths", content)
 }
 
-// SetIdleExplanation sets content for idle state.
-func (e *EducationalPanel) SetIdleExplanation() {
+// setIdleExplanation sets idle content on the given panel.
+func setIdleExplanation(ep *sharedwidgets.EducationalPanel) {
 	content := "FeFET CROSSBAR ARRAY\n\n" +
 		"Compute-in-Memory (CIM)\n" +
 		"where the same physical\n" +
@@ -238,34 +200,26 @@ func (e *EducationalPanel) SetIdleExplanation() {
 		"FeCIM: Compute WHERE stored\n\n" +
 		"Click 'Run MVM' to see\n" +
 		"analog computation in action!"
-	e.SetContent("What You're Seeing", content)
+	ep.SetContent("What You're Seeing", content)
 }
 
-// OperationLog shows timestamped operation history.
-type OperationLog struct {
-	*sharedwidgets.OperationLog
+// newOperationLog creates a shared OperationLog for crossbar demo operations.
+func newOperationLog() *sharedwidgets.OperationLog {
+	return sharedwidgets.NewOperationLog(sharedwidgets.OperationLogConfig{
+		Title:        "Operation Log",
+		MaxEntries:   6,
+		MinSize:      fyne.NewSize(150, 60),
+		UseMonospace: false,
+	})
 }
 
-// NewOperationLog creates a new operation log.
-func NewOperationLog() *OperationLog {
-	o := &OperationLog{
-		OperationLog: sharedwidgets.NewOperationLog(sharedwidgets.OperationLogConfig{
-			Title:        "Operation Log",
-			MaxEntries:   6,
-			MinSize:      fyne.NewSize(150, 60),
-			UseMonospace: false,
-		}),
-	}
-	return o
-}
-
-// AddWithResult adds an entry with a result indicator.
-func (o *OperationLog) AddWithResult(action string, result string, success bool) {
+// addOperationWithResult adds an operation entry with a success/failure indicator.
+func addOperationWithResult(log *sharedwidgets.OperationLog, action, result string, success bool) {
 	indicator := "✓"
 	if !success {
 		indicator = "✗"
 	}
-	o.Add(fmt.Sprintf("%s → %s %s", action, result, indicator))
+	log.Add(fmt.Sprintf("%s → %s %s", action, result, indicator))
 }
 
 // InputOutputDisplay shows the input and output vectors.
@@ -418,19 +372,11 @@ func (q *QuoteBox) CreateRenderer() fyne.WidgetRenderer {
 	return widget.NewSimpleRenderer(label)
 }
 
-// KeyStatBox displays a key statistic prominently.
-type KeyStatBox struct {
-	*sharedwidgets.KeyStat
-}
-
-// NewKeyStatBox creates a new key stat box.
-func NewKeyStatBox(label, value string) *KeyStatBox {
-	k := &KeyStatBox{
-		KeyStat: sharedwidgets.NewKeyStat(sharedwidgets.KeyStatConfig{
-			Label:   label,
-			Value:   value,
-			MinSize: fyne.NewSize(220, 60),
-		}),
-	}
-	return k
+// newKeyStatBox creates a shared KeyStat with crossbar demo styling.
+func newKeyStatBox(label, value string) *sharedwidgets.KeyStat {
+	return sharedwidgets.NewKeyStat(sharedwidgets.KeyStatConfig{
+		Label:   label,
+		Value:   value,
+		MinSize: fyne.NewSize(220, 60),
+	})
 }

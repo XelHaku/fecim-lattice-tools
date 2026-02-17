@@ -42,77 +42,51 @@ func (m MNISTMode) String() string {
 	}
 }
 
-// MNISTModeIndicator shows the current mode with a colored background.
-type MNISTModeIndicator struct {
-	*sharedwidgets.ModeIndicator
-}
-
-// NewMNISTModeIndicator creates a new mode indicator.
-func NewMNISTModeIndicator() *MNISTModeIndicator {
-	m := &MNISTModeIndicator{
-		ModeIndicator: sharedwidgets.NewModeIndicator(sharedwidgets.ModeIndicatorConfig{
-			MinSize: fyne.NewSize(100, 40),
-			Styles: map[int]sharedwidgets.ModeStyle{
-				int(MNISTModeIdle): {
-					Text:            "IDLE",
-					BackgroundColor: color.RGBA{60, 60, 80, 255},
-					BorderColor:     color.RGBA{100, 100, 130, 255},
-				},
-				int(MNISTModeDrawing): {
-					Text:            "DRAWING",
-					BackgroundColor: color.RGBA{80, 50, 150, 255},
-					BorderColor:     color.RGBA{140, 100, 220, 255},
-				},
-				int(MNISTModeInference): {
-					Text:            "INFERENCE",
-					BackgroundColor: color.RGBA{50, 120, 180, 255},
-					BorderColor:     color.RGBA{100, 180, 255, 255},
-				},
-				int(MNISTModeEvaluating): {
-					Text:            "EVALUATING",
-					BackgroundColor: color.RGBA{180, 120, 50, 255},
-					BorderColor:     color.RGBA{255, 180, 100, 255},
-				},
-				int(MNISTModeLoading): {
-					Text:            "LOADING",
-					BackgroundColor: color.RGBA{50, 150, 80, 255},
-					BorderColor:     color.RGBA{100, 220, 130, 255},
-				},
+// newMNISTModeIndicator creates a shared ModeIndicator configured for MNIST demo modes.
+func newMNISTModeIndicator() *sharedwidgets.ModeIndicator {
+	return sharedwidgets.NewModeIndicator(sharedwidgets.ModeIndicatorConfig{
+		MinSize: fyne.NewSize(100, 40),
+		Styles: map[int]sharedwidgets.ModeStyle{
+			int(MNISTModeIdle): {
+				Text:            "IDLE",
+				BackgroundColor: color.RGBA{60, 60, 80, 255},
+				BorderColor:     color.RGBA{100, 100, 130, 255},
 			},
-		}),
-	}
-	return m
+			int(MNISTModeDrawing): {
+				Text:            "DRAWING",
+				BackgroundColor: color.RGBA{80, 50, 150, 255},
+				BorderColor:     color.RGBA{140, 100, 220, 255},
+			},
+			int(MNISTModeInference): {
+				Text:            "INFERENCE",
+				BackgroundColor: color.RGBA{50, 120, 180, 255},
+				BorderColor:     color.RGBA{100, 180, 255, 255},
+			},
+			int(MNISTModeEvaluating): {
+				Text:            "EVALUATING",
+				BackgroundColor: color.RGBA{180, 120, 50, 255},
+				BorderColor:     color.RGBA{255, 180, 100, 255},
+			},
+			int(MNISTModeLoading): {
+				Text:            "LOADING",
+				BackgroundColor: color.RGBA{50, 150, 80, 255},
+				BorderColor:     color.RGBA{100, 220, 130, 255},
+			},
+		},
+	})
 }
 
-// SetMode updates the current mode.
-func (m *MNISTModeIndicator) SetMode(mode MNISTMode) {
-	m.ModeIndicator.SetMode(int(mode))
+// newMNISTEducationalPanel creates a shared EducationalPanel for MNIST demo explanations.
+func newMNISTEducationalPanel() *sharedwidgets.EducationalPanel {
+	return sharedwidgets.NewEducationalPanel(sharedwidgets.EducationalPanelConfig{
+		Title:   "What You're Seeing",
+		Content: "Draw a digit to see\nneural network inference.",
+		MinSize: fyne.NewSize(150, 150),
+	})
 }
 
-// GetMode returns the current mode.
-func (m *MNISTModeIndicator) GetMode() MNISTMode {
-	return MNISTMode(m.ModeIndicator.GetMode())
-}
-
-// MNISTEducationalPanel shows context-sensitive explanations.
-type MNISTEducationalPanel struct {
-	*sharedwidgets.EducationalPanel
-}
-
-// NewMNISTEducationalPanel creates a new educational panel.
-func NewMNISTEducationalPanel() *MNISTEducationalPanel {
-	e := &MNISTEducationalPanel{
-		EducationalPanel: sharedwidgets.NewEducationalPanel(sharedwidgets.EducationalPanelConfig{
-			Title:   "What You're Seeing",
-			Content: "Draw a digit to see\nneural network inference.",
-			MinSize: fyne.NewSize(150, 150),
-		}),
-	}
-	return e
-}
-
-// SetInferenceExplanation sets content for inference phases.
-func (e *MNISTEducationalPanel) SetInferenceExplanation(phase int) {
+// setInferenceExplanation sets inference phase content on the given panel.
+func setInferenceExplanation(ep *sharedwidgets.EducationalPanel, phase int) {
 	var title, content string
 	switch phase {
 	case 1:
@@ -144,11 +118,11 @@ func (e *MNISTEducationalPanel) SetInferenceExplanation(phase int) {
 			"Near-zero energy\n\n" +
 			"Draw another digit!"
 	}
-	e.SetContent(title, content)
+	ep.SetContent(title, content)
 }
 
-// SetDrawingExplanation sets content for drawing mode.
-func (e *MNISTEducationalPanel) SetDrawingExplanation() {
+// setDrawingExplanation sets drawing mode content on the given panel.
+func setDrawingExplanation(ep *sharedwidgets.EducationalPanel) {
 	content := "Click and drag to draw.\n" +
 		"Right-click to clear.\n\n" +
 		"As you draw, the network\n" +
@@ -156,21 +130,21 @@ func (e *MNISTEducationalPanel) SetDrawingExplanation() {
 		"28×28 = 784 inputs\n" +
 		"Normalized 0.0 to 1.0\n\n" +
 		"Watch the layers light up!"
-	e.SetContent("Draw a Digit", content)
+	ep.SetContent("Draw a Digit", content)
 }
 
-// SetEvaluationExplanation sets content for evaluation.
-func (e *MNISTEducationalPanel) SetEvaluationExplanation() {
+// setEvaluationExplanation sets evaluation content on the given panel.
+func setEvaluationExplanation(ep *sharedwidgets.EducationalPanel) {
 	content := "Testing on 1000 digits...\n\n" +
 		"Each digit runs through\n" +
 		"the full network.\n\n" +
 		"Peer-reviewed: 96-98%\n" +
 		"(varies with configuration)"
-	e.SetContent("Evaluating Network", content)
+	ep.SetContent("Evaluating Network", content)
 }
 
-// SetIdleExplanation sets content for idle state.
-func (e *MNISTEducationalPanel) SetIdleExplanation() {
+// setMNISTIdleExplanation sets idle state content on the given panel.
+func setMNISTIdleExplanation(ep *sharedwidgets.EducationalPanel) {
 	content := "Draw a digit (0-9) or\n" +
 		"click Random Test.\n\n" +
 		"FeCIM recognizes digits\n" +
@@ -179,30 +153,22 @@ func (e *MNISTEducationalPanel) SetIdleExplanation() {
 		"784 → 128 → 10 neurons\n" +
 		"30-level baseline per cell (claim)\n" +
 		"2 clock cycles total"
-	e.SetContent("MNIST Recognition", content)
+	ep.SetContent("MNIST Recognition", content)
 }
 
-// MNISTOperationLog shows timestamped operation history.
-type MNISTOperationLog struct {
-	*sharedwidgets.OperationLog
+// newMNISTOperationLog creates a shared OperationLog for MNIST demo operations.
+func newMNISTOperationLog() *sharedwidgets.OperationLog {
+	return sharedwidgets.NewOperationLog(sharedwidgets.OperationLogConfig{
+		Title:        "Operation Log",
+		MaxEntries:   10,
+		MinSize:      fyne.NewSize(150, 120),
+		UseMonospace: false,
+	})
 }
 
-// NewMNISTOperationLog creates a new operation log.
-func NewMNISTOperationLog() *MNISTOperationLog {
-	o := &MNISTOperationLog{
-		OperationLog: sharedwidgets.NewOperationLog(sharedwidgets.OperationLogConfig{
-			Title:        "Operation Log",
-			MaxEntries:   10,
-			MinSize:      fyne.NewSize(150, 120),
-			UseMonospace: false,
-		}),
-	}
-	return o
-}
-
-// AddPrediction adds a prediction result entry.
-func (o *MNISTOperationLog) AddPrediction(predicted int, confidence float64) {
-	o.Add(fmt.Sprintf("Predict → %d (%.1f%%)", predicted, confidence*100))
+// addMNISTPrediction adds a prediction result entry to the operation log.
+func addMNISTPrediction(log *sharedwidgets.OperationLog, predicted int, confidence float64) {
+	log.Add(fmt.Sprintf("Predict → %d (%.1f%%)", predicted, confidence*100))
 }
 
 // PredictionDisplay shows the big prediction number prominently.
@@ -391,19 +357,11 @@ func (r *predictionRenderer) Objects() []fyne.CanvasObject {
 
 func (r *predictionRenderer) Destroy() {}
 
-// MNISTKeyStat displays a key statistic prominently.
-type MNISTKeyStat struct {
-	*sharedwidgets.KeyStat
-}
-
-// NewMNISTKeyStat creates a new key stat box.
-func NewMNISTKeyStat(label, value string) *MNISTKeyStat {
-	k := &MNISTKeyStat{
-		KeyStat: sharedwidgets.NewKeyStat(sharedwidgets.KeyStatConfig{
-			Label:   label,
-			Value:   value,
-			MinSize: fyne.NewSize(100, 50),
-		}),
-	}
-	return k
+// newMNISTKeyStat creates a shared KeyStat with MNIST demo styling.
+func newMNISTKeyStat(label, value string) *sharedwidgets.KeyStat {
+	return sharedwidgets.NewKeyStat(sharedwidgets.KeyStatConfig{
+		Label:   label,
+		Value:   value,
+		MinSize: fyne.NewSize(100, 50),
+	})
 }

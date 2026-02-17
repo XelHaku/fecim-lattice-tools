@@ -63,7 +63,7 @@ func (ca *CrossbarApp) runMVMAnimated(input []float64) {
 
 	// Phase 1: Input voltages applied (300ms)
 	fyne.Do(func() {
-		ca.modeIndicator.SetMode(DemoModeCompute)
+		ca.modeIndicator.SetMode(int(DemoModeCompute))
 		ca.updateStatus("COMPUTE | Phase 1/3: Applying input voltages (DAC)")
 
 		// Highlight all columns to show input voltages
@@ -96,7 +96,7 @@ func (ca *CrossbarApp) runMVMAnimated(input []float64) {
 	if err != nil {
 		fyne.Do(func() {
 			ca.updateStatus("COMPUTE | Error during MVM")
-			ca.modeIndicator.SetMode(DemoModeIdle)
+			ca.modeIndicator.SetMode(int(DemoModeIdle))
 			ca.conductanceHeatmap.ClearAnimation()
 			if ca.window != nil {
 				dialog.ShowError(fmt.Errorf("MVM computation failed: %w", err), ca.window)
@@ -157,7 +157,7 @@ func (ca *CrossbarApp) runMVMAnimated(input []float64) {
 		))
 
 		ca.updateStatus(fmt.Sprintf("COMPUTE | Complete: %d parallel MACs in ~1ns", macOps))
-		ca.modeIndicator.SetMode(DemoModeIdle)
+		ca.modeIndicator.SetMode(int(DemoModeIdle))
 
 		// Auto-run IR Drop and Sneak Path analysis
 		ca.runIRDropAnalysis()

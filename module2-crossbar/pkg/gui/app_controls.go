@@ -350,7 +350,7 @@ func (ca *CrossbarApp) createStatusFooter() *fyne.Container {
 	ca.hoverInfoLabel.Wrapping = fyne.TextWrapOff
 	ca.hoverInfoLabel.Truncation = fyne.TextTruncateEllipsis
 
-	ca.modeIndicator = NewModeIndicatorBox()
+	ca.modeIndicator = newModeIndicator()
 	ca.levelIndicator = NewLevelIndicator()
 
 	// Use direct label for flexibility at narrow widths

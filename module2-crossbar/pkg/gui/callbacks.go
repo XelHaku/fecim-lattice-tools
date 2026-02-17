@@ -33,7 +33,7 @@ func (ca *CrossbarApp) syncSelection(row, col int) {
 
 // onCellTapped handles clicks on heatmap cells.
 func (ca *CrossbarApp) onCellTapped(row, col int) {
-	ca.modeIndicator.SetMode(DemoModeRead)
+	ca.modeIndicator.SetMode(int(DemoModeRead))
 
 	// Sync selection across all heatmaps
 	ca.syncSelection(row, col)
@@ -52,7 +52,7 @@ func (ca *CrossbarApp) onCellTapped(row, col int) {
 
 	ca.updateStatus(fmt.Sprintf("READ | Cell [%d,%d] = Level %d/30 (%.2f µS)",
 		row, col, level, value*99+1))
-	ca.modeIndicator.SetMode(DemoModeIdle)
+	ca.modeIndicator.SetMode(int(DemoModeIdle))
 }
 
 // onCellHover handles mouse hover over heatmap cells.

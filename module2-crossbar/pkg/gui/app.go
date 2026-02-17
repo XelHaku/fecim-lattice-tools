@@ -63,11 +63,8 @@ type CrossbarApp struct {
 	beforeAfterToggle *BeforeAfterToggle
 
 	// Live Slide components
-	modeIndicator    *ModeIndicatorBox
-	educationalPanel *EducationalPanel
-	operationLog     *OperationLog
-	ioDisplay        *InputOutputDisplay
-	keyStat          *KeyStatBox
+	modeIndicator *sharedwidgets.ModeIndicator
+	ioDisplay     *InputOutputDisplay
 
 	// Simple left panel labels (replacing custom widgets)
 	eduTitleLabel   *widget.Label
@@ -287,7 +284,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 
 	// Create level indicator and mode indicator
 	ca.levelIndicator = NewLevelIndicator()
-	ca.modeIndicator = NewModeIndicatorBox()
+	ca.modeIndicator = newModeIndicator()
 
 	// Create simple LEFT panel labels
 	ca.eduTitleLabel = widget.NewLabelWithStyle("What You're Seeing", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})

@@ -55,11 +55,11 @@ type MNISTApp struct {
 	outputChart     *OutputBarChart
 
 	// Live Slide components
-	modeIndicator     *MNISTModeIndicator
-	educationalPanel  *MNISTEducationalPanel
-	operationLog      *MNISTOperationLog
+	modeIndicator     *sharedwidgets.ModeIndicator
+	educationalPanel  *sharedwidgets.EducationalPanel
+	operationLog      *sharedwidgets.OperationLog
 	predictionDisplay *PredictionDisplay
-	keyStat           *MNISTKeyStat
+	keyStat           *sharedwidgets.KeyStat
 	demoModeSelect    *widget.Select
 
 	// Labels
@@ -190,12 +190,12 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 	ma.classStatsPanel = NewClassStatsPanel()
 
 	// Create Live Slide components
-	ma.modeIndicator = NewMNISTModeIndicator()
-	ma.educationalPanel = NewMNISTEducationalPanel()
-	ma.educationalPanel.SetIdleExplanation()
-	ma.operationLog = NewMNISTOperationLog()
+	ma.modeIndicator = newMNISTModeIndicator()
+	ma.educationalPanel = newMNISTEducationalPanel()
+	setMNISTIdleExplanation(ma.educationalPanel)
+	ma.operationLog = newMNISTOperationLog()
 	ma.predictionDisplay = NewPredictionDisplay()
-	ma.keyStat = NewMNISTKeyStat("Literature", "96-98% (lit.)")
+	ma.keyStat = newMNISTKeyStat("Literature", "96-98% (lit.)")
 
 	// Demo mode selector
 	ma.demoModeSelect = widget.NewSelect(
@@ -465,9 +465,9 @@ func (ma *MNISTApp) onDigitChanged(pixels []float64) {
 func (ma *MNISTApp) runInferenceAnimated(pixels []float64) {
 	// Phase 1: Input processing (200ms)
 	fyne.Do(func() {
-		ma.modeIndicator.SetMode(MNISTModeInference)
+		ma.modeIndicator.SetMode(int(MNISTModeInference))
 		ma.updateStatus("INFERENCE | Phase 1: Processing input pixels...")
-		ma.educationalPanel.SetInferenceExplanation(1)
+		setInferenceExplanation(ma.educationalPanel, 1)
 		ma.hoverInfoLabel.SetText("Phase 1: Input → 784 neurons")
 	})
 	time.Sleep(200 * time.Millisecond)
@@ -475,7 +475,7 @@ func (ma *MNISTApp) runInferenceAnimated(pixels []float64) {
 	// Phase 2: Hidden layer computation (300ms)
 	fyne.Do(func() {
 		ma.updateStatus("INFERENCE | Phase 2: Hidden layer MVM (784→128)...")
-		ma.educationalPanel.SetInferenceExplanation(2)
+		setInferenceExplanation(ma.educationalPanel, 2)
 		ma.hoverInfoLabel.SetText("Phase 2: MVM 100,352 MACs")
 	})
 
@@ -495,7 +495,7 @@ func (ma *MNISTApp) runInferenceAnimated(pixels []float64) {
 
 	// Phase 4: Final prediction (display results)
 	fyne.Do(func() {
-		ma.educationalPanel.SetInferenceExplanation(3)
+		setInferenceExplanation(ma.educationalPanel, 3)
 		ma.outputChart.SetValues(probs)
 
 		// Get final prediction
@@ -507,11 +507,11 @@ func (ma *MNISTApp) runInferenceAnimated(pixels []float64) {
 		ma.predictionDisplay.SetPrediction(pred, conf)
 
 		// Log and update status
-		ma.operationLog.AddPrediction(pred, conf)
+		addMNISTPrediction(ma.operationLog, pred, conf)
 		totalMACs := 784*128 + 128*10
 		ma.updateStatus(fmt.Sprintf("INFERENCE | Prediction: %d (%.1f%% confidence) | %d MACs", pred, conf*100, totalMACs))
 		ma.hoverInfoLabel.SetText(fmt.Sprintf("Complete: %d parallel MACs", totalMACs))
-		ma.modeIndicator.SetMode(MNISTModeIdle)
+		ma.modeIndicator.SetMode(int(MNISTModeIdle))
 	})
 	debug.Println("onDigitChanged: Complete")
 }
@@ -519,7 +519,7 @@ func (ma *MNISTApp) runInferenceAnimated(pixels []float64) {
 // loadRandomTestDigit loads a random digit from test data.
 func (ma *MNISTApp) loadRandomTestDigit() {
 	debug.Println("loadRandomTestDigit: Starting")
-	ma.modeIndicator.SetMode(MNISTModeLoading)
+	ma.modeIndicator.SetMode(int(MNISTModeLoading))
 	ma.operationLog.Add("Loading random test digit")
 
 	if len(ma.testImages) == 0 {
@@ -528,7 +528,7 @@ func (ma *MNISTApp) loadRandomTestDigit() {
 		if len(ma.testImages) == 0 {
 			debug.Println("loadRandomTestDigit: Failed to load test data")
 			ma.updateStatus("● IDLE | No test data available")
-			ma.modeIndicator.SetMode(MNISTModeIdle)
+			ma.modeIndicator.SetMode(int(MNISTModeIdle))
 			return
 		}
 	}
@@ -548,7 +548,7 @@ func (ma *MNISTApp) loadRandomTestDigit() {
 // loadTestData loads MNIST test data.
 func (ma *MNISTApp) loadTestData() {
 	debug.Println("loadTestData: Starting")
-	ma.modeIndicator.SetMode(MNISTModeLoading)
+	ma.modeIndicator.SetMode(int(MNISTModeLoading))
 	ma.updateStatus("LOADING | Loading test data...")
 	ma.operationLog.Add("Loading MNIST test data")
 
@@ -560,7 +560,7 @@ func (ma *MNISTApp) loadTestData() {
 		ma.operationLog.Add("Using synthetic data (MNIST not found)")
 		ma.updateStatus("LOADING | Using synthetic test data")
 		ma.testImages, ma.testLabels = generateSyntheticData(100)
-		ma.modeIndicator.SetMode(MNISTModeIdle)
+		ma.modeIndicator.SetMode(int(MNISTModeIdle))
 		return
 	}
 
@@ -576,14 +576,14 @@ func (ma *MNISTApp) loadTestData() {
 	debug.Printf("loadTestData: Loaded %d samples", len(ma.testImages))
 	ma.operationLog.Add(fmt.Sprintf("Loaded %d samples", len(ma.testImages)))
 	ma.updateStatus(fmt.Sprintf("● IDLE | Loaded %d test samples", len(ma.testImages)))
-	ma.modeIndicator.SetMode(MNISTModeIdle)
+	ma.modeIndicator.SetMode(int(MNISTModeIdle))
 }
 
 // evaluateNetwork runs evaluation on test data.
 func (ma *MNISTApp) evaluateNetwork() {
 	debug.Println("evaluateNetwork: Starting")
-	ma.modeIndicator.SetMode(MNISTModeEvaluating)
-	ma.educationalPanel.SetEvaluationExplanation()
+	ma.modeIndicator.SetMode(int(MNISTModeEvaluating))
+	setEvaluationExplanation(ma.educationalPanel)
 	ma.operationLog.Add("Starting full evaluation")
 
 	if len(ma.testImages) == 0 {
@@ -592,7 +592,7 @@ func (ma *MNISTApp) evaluateNetwork() {
 		if len(ma.testImages) == 0 {
 			debug.Println("evaluateNetwork: Failed to load test data")
 			ma.updateStatus("● IDLE | No test data for evaluation")
-			ma.modeIndicator.SetMode(MNISTModeIdle)
+			ma.modeIndicator.SetMode(int(MNISTModeIdle))
 			return
 		}
 	}
@@ -639,7 +639,7 @@ func (ma *MNISTApp) evaluateNetwork() {
 	// Log result
 	ma.operationLog.Add(fmt.Sprintf("Accuracy: %.1f%% on %d samples", accuracy*100, len(ma.testImages)))
 	ma.updateStatus(fmt.Sprintf("● IDLE | Evaluation complete: %.1f%% accuracy", accuracy*100))
-	ma.modeIndicator.SetMode(MNISTModeIdle)
+	ma.modeIndicator.SetMode(int(MNISTModeIdle))
 	debug.Println("evaluateNetwork: Complete")
 }
 
@@ -752,7 +752,7 @@ func (ma *MNISTApp) onDemoModeChanged(mode string) {
 				"   for full accuracy test")
 	case "Manual":
 		ma.operationLog.Add("Mode: Manual")
-		ma.educationalPanel.SetIdleExplanation()
+		setMNISTIdleExplanation(ma.educationalPanel)
 	}
 }
 
