@@ -128,6 +128,16 @@ type PreisachModel struct {
 
 	// Kinetics
 	nls *physics.NLSKinetics
+
+	// dynamicP tracks the actual physical polarization across Reset() calls.
+	// TimeStep() uses this as P_start to avoid plot teleportation: Reset()
+	// reinitializes the stack to LastE=-saturationE (so Polarization() returns
+	// ~-Ps), but the device is still physically at its pre-reset P. By keeping
+	// dynamicP alive across Reset(), the first PREP-phase TimeStep starts from
+	// the real P and drives smoothly to saturation instead of jumping.
+	// Reset() intentionally does NOT clear these fields.
+	dynamicP    float64 // last P_final from TimeStep (C/m²)
+	hasDynamicP bool    // true once TimeStep has been called at least once
 }
 
 // NewPreisachModel creates a new Preisach model with the given material.
@@ -243,7 +253,15 @@ func (p *PreisachModel) TimeStep(E, dt float64) float64 {
 	// Ideally we would carry a p.currentP_dynamic state.
 	// But for ISPP (step-and-hold), we usually start from a relaxed state.
 	// Let's assume P_start is the *previous* stack state (at LastE).
-	P_start := p.Polarization()
+	// Use dynamicP when available: it survives Reset() and holds the actual
+	// physical polarization, preventing the plot-dot teleportation that would
+	// otherwise occur because Reset() sets LastE=-saturationE (~-Ps).
+	var P_start float64
+	if p.hasDynamicP {
+		P_start = p.dynamicP
+	} else {
+		P_start = p.Polarization()
+	}
 
 	// 2. Update Stack to new Field E -> P_target
 	Pirrev_target := p.stack.Update(E)
@@ -260,6 +278,8 @@ func (p *PreisachModel) TimeStep(E, dt float64) float64 {
 			"E": E, "dt": dt, "P_start": P_start, "P_target": P_target, "P_final": P_final,
 		}, P_final)
 	}
+	p.dynamicP = P_final
+	p.hasDynamicP = true
 	return P_final
 }
 
@@ -278,6 +298,9 @@ func (p *PreisachModel) NormalizedPolarization() float64 {
 	}
 	if denom == 0 {
 		return 0
+	}
+	if p.hasDynamicP {
+		return p.dynamicP / denom
 	}
 	return p.Polarization() / denom
 }

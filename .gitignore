@@ -89,3 +89,4 @@ cmd/gen-literature-loops/
 !cmd/calibrate-preisach/main_test.go
 !cmd/gen-literature-loops/main_test.go
 validation/literature/output/
+opensource/
