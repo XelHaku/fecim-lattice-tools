@@ -1,6 +1,6 @@
 # Compute-in-Memory Physics: Why Analog Computing Matters
 
-> **Note:** This document contains reported values and illustrative calculations. It is not a verification source. See `docs/comparison/HONESTY_AUDIT.md`.
+> **Note:** This document contains reported values and illustrative calculations. It is not a verification source. See `docs/4-research/honesty-audit.md`.
 
 
 **Document Purpose**: Explain the physical and mathematical foundations of Compute-in-Memory (CIM) architectures, with focus on memristor/FeFET crossbar arrays.

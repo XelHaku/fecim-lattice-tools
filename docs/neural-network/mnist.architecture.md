@@ -328,7 +328,7 @@ Located in `module3-mnist/data/`:
 
 ## References
 
-- [FeCIM Honesty Audit](../../docs/comparison/HONESTY_AUDIT.md) - Verified claims and sources
+- [FeCIM Honesty Audit](../../docs/4-research/honesty-audit.md) - Verified claims and sources
 - [MNIST Fixes TODO](mnist.fixes.todo.md) - Issue tracking
 - [Development Reference](../development/SCRIPT_REFERENCE.md) - Code patterns
 

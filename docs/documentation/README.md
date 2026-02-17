@@ -46,7 +46,7 @@ assumptions.
 - Demonstrated: use the Sources sections to trace claims to internal docs.
 - Modeled: simulator parameters are modeling choices unless explicitly cited.
 - Aspirational: architectural comparisons are directional, not guarantees.
-- Source of truth for external claim verification: `docs/comparison/HONESTY_AUDIT.md`.
+- Source of truth for external claim verification: `docs/4-research/honesty-audit.md`.
 - Cross-module physics acceptance criteria: `docs/development/PHYSICS_ACCEPTANCE_CRITERIA.md`.
 
 ## How To Use This Curriculum

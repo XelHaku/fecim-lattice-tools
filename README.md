@@ -171,7 +171,7 @@ Markdown template:
 
 See also:
 - [`go.mod`](./go.mod)
-- [`INSTALLATION.md`](./INSTALLATION.md)
+- [`INSTALLATION.md`](./docs/1-getting-started/installation.md)
 
 ---
 

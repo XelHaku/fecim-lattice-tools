@@ -1454,7 +1454,7 @@ Sneak Path Suppression:
 | CLAUDE.md | /CLAUDE.md | Verified claims table, physics constants |
 | ARCHITECTURES.md | docs/crossbar/ARCHITECTURES.md | 0T1R, 1T1R, 2T1R voltage configurations, sneak path analysis |
 | PHYSICS.md | docs/crossbar/PHYSICS.md | Conductance models, MVM operation, non-idealities |
-| HONESTY_AUDIT.md | docs/comparison/HONESTY_AUDIT.md | Complete verification of all claims with DOIs |
+| HONESTY_AUDIT.md | docs/4-research/honesty-audit.md | Complete verification of all claims with DOIs |
 | circuits.operations.md | docs/peripheral-circuits/circuits.operations.md | V/2 scheme, half-select disturb, write sequences |
 | circuits.peripherals.md | docs/peripheral-circuits/circuits.peripherals.md | DAC, ADC, TIA, charge pump specifications |
 | ELI5.md | docs/ELI5.md | Simplified explanations with key paper links |

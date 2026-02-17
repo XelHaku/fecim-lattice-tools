@@ -2,7 +2,7 @@
 
 End-to-end educational toolchain for Ferroelectric Compute-in-Memory (FeCIM).
 
-**Core Concept:** Discrete analog states per cell (demo baseline: 30; higher-state presets are illustrative and unverified). See `docs/comparison/HONESTY_AUDIT.md` (DOI: (add)).
+**Core Concept:** Discrete analog states per cell (demo baseline: 30; higher-state presets are illustrative and unverified). See `docs/4-research/honesty-audit.md` (DOI: (add)).
 
 ---
 

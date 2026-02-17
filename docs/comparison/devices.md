@@ -1,6 +1,6 @@
 # Compute-in-Memory (CIM) Device Technologies
 
-> **Note:** This document summarizes reported values from literature. These values are **not verified** by this project. See `docs/comparison/HONESTY_AUDIT.md` for the current verification scope.
+> **Note:** This document summarizes reported values from literature. These values are **not verified** by this project. See `docs/4-research/honesty-audit.md` for the current verification scope.
 
 Comprehensive comparison of analog memory technologies for compute-in-memory applications, with deep dive into FeFET devices.
 
@@ -670,7 +670,7 @@ AP (Antiparallel): ↓↓↓ | ↑↑↑ → High R (TMR > 200%)
 **Document Status**: ✅ Complete
 **Last Updated**: 2026-01-28
 **Maintainer**: FeCIM Lattice Tools Project
-**Verification**: See `HONESTY_AUDIT.md` for full claim verification details
+**Verification**: See `docs/4-research/honesty-audit.md` for full claim verification details
 **Related Docs**:
 - `CLAUDE.md` (physics constants)
 - `docs/development/SCRIPT_REFERENCE.md` (implementation)

@@ -1,6 +1,6 @@
 # 🍪 Baking in the Pantry: A Simple Guide to FeCIM
 
-> **Note:** This document contains reported values and illustrative calculations. It is not a verification source. See `docs/comparison/HONESTY_AUDIT.md`.
+> **Note:** This document contains reported values and illustrative calculations. It is not a verification source. See `docs/4-research/honesty-audit.md`.
 
 
 Welcome! If you've ever wondered how we can make computers faster and save the planet at the same time, you're in the right place. Let's talk about **FeCIM** (pronounced *fee-sim*).

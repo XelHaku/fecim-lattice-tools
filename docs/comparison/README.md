@@ -2,7 +2,7 @@
 
 Comprehensive catalog of research sources for Compute-in-Memory (CIM) technology, covering ferroelectric devices, crossbar arrays, neural network inference, and the complete FeCIM design suite.
 
-> **Note:** This is a literature catalog. Values and claims are reported from sources and are **not verified** by this project. See `docs/comparison/HONESTY_AUDIT.md` for the current verification scope.
+> **Note:** This is a literature catalog. Values and claims are reported from sources and are **not verified** by this project. See `docs/4-research/honesty-audit.md` for the current verification scope.
 
 ## Overview
 

@@ -178,7 +178,7 @@ go run ./cmd/fecim-lattice-tools eda cli -mode compute -rows 256 -cols 256 -outp
 
 ## 4. Scientific Context (Scope Note)
 
-This guide focuses on workflow and tooling. It does **not** assert device performance or scientific claims. External claims (if any) are tracked in `docs/comparison/HONESTY_AUDIT.md`.
+This guide focuses on workflow and tooling. It does **not** assert device performance or scientific claims. External claims (if any) are tracked in `docs/4-research/honesty-audit.md`.
 
 ---
 

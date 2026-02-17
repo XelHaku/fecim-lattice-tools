@@ -1,0 +1,46 @@
+# Module 7: Docs - Features
+
+## Evidence Status (Demonstrated vs Modeled vs Aspirational)
+
+- **Demonstrated:** Repository structure, navigation behavior, and code paths referenced in this page are implemented in this repo and verifiable from source/tests.
+- **Modeled:** Equations, defaults, and performance/quality estimates are simulator or documentation models unless explicitly tied to cited measured data.
+- **Aspirational:** Any production-scale, silicon-parity, or ecosystem-wide claims are roadmap intent and must not be reported as demonstrated results.
+
+## What This Module Does
+
+- Provides a curriculum-first documentation viewer.
+- Offers search, breadcrumbs, ToC, and glossary integration.
+- Adds module shortcuts for ELI5, PHYSICS, FEATURES, and TOOLS.
+
+## Primary Components
+
+- `module7-docs/pkg/gui/embedded.go`
+- `module7-docs/pkg/gui/search.go`
+- `module7-docs/pkg/gui/navigation.go`
+- `module7-docs/pkg/gui/glossary_integration.go`
+
+## Key Workflows
+
+- Select a document from the curriculum tree (root order: module folders → `research-papers` → `README.md` → `MODULES.md`; inside modules: ELI5 → PHYSICS → FEATURES → OPENSOURCE-TOOLS).
+- Use module shortcuts to jump between learning layers (ELI5 → PHYSICS → FEATURES → OPENSOURCE-TOOLS).
+- Use search and glossary pills for cross-topic navigation.
+
+## Extension Points
+
+- Add new category rules in `search.go`.
+- Extend the module shortcuts panel for new curriculum layers.
+- Customize layout breakpoints in `layout.go`.
+
+## Layout + Interaction Notes (Validated)
+
+- Breakpoints: Mobile `<600`, Tablet `600-899`, Desktop `900-1200`, Wide `>1200` (see `layout.go`).
+- Tree row click target behavior:
+  - Clicking a folder row toggles branch open/close.
+  - Clicking a file row loads markdown into the content pane.
+- Star/favorite button consumes the row-selection event once (`suppressSelect`) to prevent accidental document loads.
+
+## Known Limitations
+
+- Markdown rendering is limited to supported Fyne widgets.
+- Search is in-memory and optimized for repo scale.
+- No external URLs are fetched or embedded.

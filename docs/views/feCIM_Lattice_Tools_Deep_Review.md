@@ -124,7 +124,7 @@ Hysteresis (P-E loop) → Crossbar (MVM) → MNIST (Inference)
 
 1. **Transparent Claim Classification**:
    - All claims categorized by verification status: [VERIFIED], [PLAUSIBLE], [UNVERIFIED], [REMOVED]
-   - Clear documentation in `docs/comparison/HONESTY_AUDIT.md`
+   - Clear documentation in `docs/4-research/honesty-audit.md`
    - 124 total claims audited against reported in literature literature
    - Each claim tagged with DOI or source reference
 

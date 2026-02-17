@@ -10,7 +10,7 @@
 
 **If you only have 60 seconds, read this.**
 
-> **Note:** This guide is a conceptual explanation. It does **not** assert device performance. The simulator defaults to 30 discrete levels (configurable). External scientific claims are tracked in `docs/comparison/HONESTY_AUDIT.md`.
+> **Note:** This guide is a conceptual explanation. It does **not** assert device performance. The simulator defaults to 30 discrete levels (configurable). External scientific claims are tracked in `docs/4-research/honesty-audit.md`.
 >
 > **Citations needed:** Numeric/performance claims in this guide are illustrative unless a DOI is provided. Add citations before external use ([CITATION NEEDED - placeholder value]). Examples include data-center energy projections, "% energy moving data" statements, HZO property tables, and energy-per-MAC comparisons.
 

@@ -1,7 +1,7 @@
 # Physics Accuracy Acceptance Criteria (Cross-Module)
 
 Status: Active baseline for CM-P1.
-Source-of-truth policy for external claims: `docs/comparison/HONESTY_AUDIT.md`.
+Source-of-truth policy for external claims: `docs/4-research/honesty-audit.md`.
 
 ## Rule format
 
@@ -33,7 +33,7 @@ Each module must define pass/fail in numeric terms:
 - **Coupling behavior**: default read path must use array-level coupling (Tier A+) and remain covered by regression tests.
 
 ### Module 5 - Comparison
-- **Honesty-first gate**: outputs are model comparisons; no external performance numbers shown as facts unless verified in `HONESTY_AUDIT.md`.
+- **Honesty-first gate**: outputs are model comparisons; no external performance numbers shown as facts unless verified in `docs/4-research/honesty-audit.md`.
 - **Labeling requirement**: all comparative metrics must be labeled modeled/reported/verified explicitly.
 
 ### Module 6 - EDA
@@ -43,7 +43,7 @@ Each module must define pass/fail in numeric terms:
 
 ### Module 7 - Docs
 - **Physics truthfulness**: documentation cannot upgrade unverified claims to facts.
-- **Traceability**: claims must either link to testable code behavior or `HONESTY_AUDIT.md`.
+- **Traceability**: claims must either link to testable code behavior or `docs/4-research/honesty-audit.md`.
 
 ## Reporting template
 

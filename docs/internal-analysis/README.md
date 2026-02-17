@@ -43,7 +43,7 @@ docs/internal-analysis/        ← Synthesized analysis (this folder)
 
 ## Accuracy & Honesty
 
-All claims in these documents are **reported** or **illustrative** and should not be treated as verified by this project. For current policy, see `docs/comparison/HONESTY_AUDIT.md`.
+All claims in these documents are **reported** or **illustrative** and should not be treated as verified by this project. For current policy, see `docs/4-research/honesty-audit.md`.
 
 ## Contributing
 
