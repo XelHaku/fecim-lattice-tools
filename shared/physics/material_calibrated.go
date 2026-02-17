@@ -51,9 +51,33 @@ func MDPI2020Fig3aHZO10nmWakeup() *HZOMaterial {
 func Micromachines2022Fig6aAlScNPt200nm() *HZOMaterial {
 	m := AlScN()
 	m.Name = "AlScN (Micromachines 2022 Fig 6a Pt, calibrated)"
-	m.Pr = 100e-2    // 100 uC/cm2 (paper-reported remanent magnitude, Pt)
-	m.Ps = 110e-2    // 110 uC/cm2 (calibrated saturation for loop-shape fit)
-	m.Ec = 3.0e8     // 3.0 MV/cm
+	m.Pr = 100e-2        // 100 uC/cm2 (paper-reported remanent magnitude, Pt)
+	m.Ps = 110e-2        // 110 uC/cm2 (calibrated saturation for loop-shape fit)
+	m.Ec = 3.0e8         // 3.0 MV/cm
 	m.Thickness = 200e-9 // 200 nm film in the paper
+	return m
+}
+
+// Nanomaterials2024Fig2PZTThinFilm returns a preset calibrated to:
+// Bi et al., Nanomaterials (2024), doi:10.3390/nano14050432, Fig. 2 (PZT thin-film P-E loop).
+func Nanomaterials2024Fig2PZTThinFilm() *HZOMaterial {
+	m := PZT()
+	m.Name = "PZT (Nanomaterials 2024 Fig 2, calibrated)"
+	m.Pr = 69.0e-2       // 69 uC/cm2 (paper-reported)
+	m.Ps = 78.0e-2       // 78 uC/cm2 (calibrated saturation for loop fit)
+	m.Ec = 1.148e8       // 1.148 MV/cm (11.48 kV/mm in paper)
+	m.Thickness = 100e-9 // ~100 nm class film
+	return m
+}
+
+// Crystals2021FigFerroelectricBTOTrilayer returns a provisional BTO preset calibrated to:
+// Jaiswal et al., Crystals (2021), doi:10.3390/cryst11101192 (BTO/NFO/BTO ferroelectric hysteresis figure).
+func Crystals2021FigFerroelectricBTOTrilayer() *HZOMaterial {
+	m := BTO()
+	m.Name = "BTO (Crystals 2021 hysteresis fig, calibrated)"
+	m.Pr = 15.0e-2       // 15 uC/cm2 (provisional target)
+	m.Ps = 20.0e-2       // 20 uC/cm2 (provisional saturation)
+	m.Ec = 0.60e8        // 0.60 MV/cm (provisional target)
+	m.Thickness = 100e-9 // nominal thin-film class for conversion consistency
 	return m
 }

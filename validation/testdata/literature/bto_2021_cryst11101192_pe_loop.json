@@ -1,0 +1,7 @@
+{
+  "doi": "10.3390/cryst11101192",
+  "figure": "hysteresis",
+  "dataset_id": "bto2021_cryst11101192_hysteresis",
+  "source_csv": "validation/literature/data/bto2021_cryst11101192_hysteresis.csv",
+  "method": "calibrated_reference_curve"
+}

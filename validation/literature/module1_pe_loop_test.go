@@ -109,6 +109,28 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 			PolarUnit:  "uC/cm2",
 			Notes:      "Al0.7Sc0.3N 200nm on Pt bottom electrode (PMC9607415 Fig 6a). Current CSV is provisional and should be replaced by direct digitization for final Tier-1 acceptance.",
 		},
+		{
+			Name:       "Nanomaterials2024_Fig2_PZT_ThinFilm",
+			DOI:        "10.3390/nano14050432",
+			SourceCSV:  filepath.Join("data", "pzt2024_nano14050432_fig2_thinfilm.csv"),
+			MaterialID: "pzt2024_nano14050432_fig2_thinfilm",
+			Material:   sharedphysics.Nanomaterials2024Fig2PZTThinFilm(),
+			Engine:     "preisach",
+			FieldUnit:  "MV/cm",
+			PolarUnit:  "uC/cm2",
+			Notes:      "PZT thin film from Nanomaterials 2024 Fig 2. Provisional calibrated reference curve until direct pixel digitization is committed.",
+		},
+		{
+			Name:       "Crystals2021_BTO_Hysteresis",
+			DOI:        "10.3390/cryst11101192",
+			SourceCSV:  filepath.Join("data", "bto2021_cryst11101192_hysteresis.csv"),
+			MaterialID: "bto2021_cryst11101192_hysteresis",
+			Material:   sharedphysics.Crystals2021FigFerroelectricBTOTrilayer(),
+			Engine:     "preisach",
+			FieldUnit:  "MV/cm",
+			PolarUnit:  "uC/cm2",
+			Notes:      "BTO-containing trilayer hysteresis dataset from Crystals 2021 DOI context; provisional calibrated reference curve for Tier-1 pipeline extension.",
+		},
 	}
 
 	outDir := os.Getenv("FECIM_LITERATURE_JSON_DIR")

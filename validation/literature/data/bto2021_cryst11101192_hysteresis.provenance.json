@@ -1,0 +1,41 @@
+{
+  "dataset_id": "bto2021_cryst11101192_hysteresis",
+  "status": "calibrated_reference_curve",
+  "tier": "candidate_tier1",
+  "paper": {
+    "title": "Magnetoelectric and Multiferroic Properties of BaTiO3/NiFe2O4/BaTiO3 Heterostructured Thin Films Grown by Pulsed Laser Deposition Technique",
+    "journal": "Crystals",
+    "year": 2021,
+    "doi": "10.3390/cryst11101192",
+    "url": "https://www.mdpi.com/2073-4352/11/10/1192"
+  },
+  "figure": {
+    "figure_id": "ferroelectric hysteresis figure",
+    "description": "BTO-containing tri-layer ferroelectric hysteresis loop"
+  },
+  "material": {
+    "name": "BaTiO3 (BTO) tri-layer context",
+    "thickness_nm": 100
+  },
+  "units": {
+    "field_dataset_unit": "MV/cm",
+    "polarization_dataset_unit": "uC/cm2"
+  },
+  "digitization": {
+    "method": "calibrated reference curve generated from Preisach model using literature-scale Pr/Ec targets",
+    "tool": "go generator (module1 Preisach model)",
+    "date_utc": "2026-02-17T04:00:00Z",
+    "operator": "Riju",
+    "point_count": 61,
+    "is_placeholder_for_refinement": true,
+    "notes": [
+      "Provisional BTO dataset for Tier-1 pipeline plumbing.",
+      "Direct pixel-digitized BTO loop with explicit uncertainty still required for final falsification-grade closure."
+    ]
+  },
+  "physics_priors_from_paper": {
+    "pr_uC_cm2": 15.0,
+    "ec_MV_cm": 0.60,
+    "source": "provisional calibration target"
+  }
+}

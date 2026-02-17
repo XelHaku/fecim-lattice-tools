@@ -1,0 +1,7 @@
+{
+  "doi": "10.3390/nano14050432",
+  "figure": "2",
+  "dataset_id": "pzt2024_nano14050432_fig2_thinfilm",
+  "source_csv": "validation/literature/data/pzt2024_nano14050432_fig2_thinfilm.csv",
+  "method": "calibrated_reference_curve"
+}
