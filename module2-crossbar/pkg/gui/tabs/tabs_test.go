@@ -6,7 +6,7 @@ import (
 
 	"fyne.io/fyne/v2/test"
 
-	"fecim-lattice-tools/shared/crossbar"
+	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 )
 
 // TestNewIdealTab tests creation of ideal MVM tab.

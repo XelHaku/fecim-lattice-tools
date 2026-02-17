@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"fecim-lattice-tools/shared/crossbar"
+	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 )
 
 // Helper function to create a test array

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"fecim-lattice-tools/shared/crossbar"
+	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 )
 
 func TestImpactHelpers(t *testing.T) {

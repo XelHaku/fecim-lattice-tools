@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"math"
 
-	"fecim-lattice-tools/shared/crossbar"
+	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 )
 
 // ConductanceTooltip generates tooltip for conductance cell with progressive disclosure

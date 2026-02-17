@@ -5,7 +5,7 @@ package gui
 import (
 	"fmt"
 
-	"fecim-lattice-tools/shared/crossbar"
+	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 )
 
 // syncSelection updates the app-level selection and syncs it to all heatmaps.

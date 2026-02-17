@@ -106,7 +106,6 @@ func (ir *IRDropSimulator) SetAllInputs(voltages []float64) {
 }
 
 // Simulate runs the IR drop simulation using Gauss-Seidel relaxation on KCL.
-// Now supports bidirectional currents (sneak paths) by removing voltage clamping.
 func (ir *IRDropSimulator) Simulate(iterations int) {
 	getLog().Input("IRDropSimulator.Simulate", map[string]interface{}{
 		"iterations": iterations,
@@ -144,9 +143,6 @@ func (ir *IRDropSimulator) Simulate(iterations int) {
 		gCol = 1.0 / ir.ColResist
 	}
 
-	// Damping factor to prevent oscillation in bidirectional mesh
-	const damping = 0.5
-
 	for iter := 0; iter < iterations; iter++ {
 		// Update row-wire nodes
 		for i := 0; i < ir.Rows; i++ {
@@ -171,8 +167,7 @@ func (ir *IRDropSimulator) Simulate(iterations int) {
 				}
 
 				if den > 0 {
-					newVal := num / den
-					ir.RowVoltages[i][j] = damping*newVal + (1-damping)*ir.RowVoltages[i][j]
+					ir.RowVoltages[i][j] = num / den
 				}
 			}
 		}
@@ -200,8 +195,7 @@ func (ir *IRDropSimulator) Simulate(iterations int) {
 				}
 
 				if den > 0 {
-					newVal := num / den
-					ir.ColVoltages[i][j] = damping*newVal + (1-damping)*ir.ColVoltages[i][j]
+					ir.ColVoltages[i][j] = num / den
 				}
 			}
 		}
@@ -211,13 +205,9 @@ func (ir *IRDropSimulator) Simulate(iterations int) {
 	var maxDrop float64
 	for i := 0; i < ir.Rows; i++ {
 		for j := 0; j < ir.Cols; j++ {
-			// Calculate effective voltage (can be negative now)
 			vActual := ir.RowVoltages[i][j] - ir.ColVoltages[i][j]
-
-			// Compute true device current (bidirectional)
 			ir.CellCurrents[i][j] = vActual * ir.Conductances[i][j]
 
-			// IR Drop is the deviation from idea voltage difference
 			vIdeal := ir.VoltageIn[i] - ir.VoltageOut[j]
 			ir.IRDropMap[i][j] = math.Abs(vIdeal - vActual)
 			if ir.IRDropMap[i][j] > maxDrop {

@@ -6,7 +6,7 @@ import (
 	"math"
 	"math/rand"
 
-	"fecim-lattice-tools/shared/crossbar"
+	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
 )
 
 // Config contains neural network configuration.
