@@ -6,7 +6,7 @@ import (
 
 	"fyne.io/fyne/v2/widget"
 
-	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/shared/crossbar"
 )
 
 func TestSneakCompareWidget_HelperLogic(t *testing.T) {

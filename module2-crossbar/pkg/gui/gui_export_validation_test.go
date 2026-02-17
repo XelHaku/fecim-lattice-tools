@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"testing"
 
-	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/shared/crossbar"
 )
 
 // M2-GUI-03: If export exists, verify CSV output contains correct dimensions.

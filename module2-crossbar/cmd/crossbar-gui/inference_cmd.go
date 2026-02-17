@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/shared/crossbar"
 	"fecim-lattice-tools/module2-crossbar/pkg/network"
 	"fecim-lattice-tools/module2-crossbar/pkg/visualization"
 	"fecim-lattice-tools/shared/cli"

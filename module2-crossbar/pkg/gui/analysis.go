@@ -8,7 +8,7 @@ import (
 
 	"fyne.io/fyne/v2"
 
-	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/shared/crossbar"
 )
 
 // runIRDropAnalysis updates IR drop heatmap silently (no tab switch).

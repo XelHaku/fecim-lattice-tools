@@ -6,7 +6,7 @@ import (
 	"math"
 	"strings"
 
-	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/shared/crossbar"
 )
 
 // TerminalVisualizer provides ASCII/Unicode visualization of crossbar operations.

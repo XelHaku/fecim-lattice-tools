@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"testing"
 
-	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/shared/crossbar"
 )
 
 func TestInferenceDeterministicMVM_SmallArray(t *testing.T) {

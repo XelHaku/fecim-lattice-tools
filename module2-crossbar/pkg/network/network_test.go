@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"fecim-lattice-tools/module2-crossbar/pkg/crossbar"
+	"fecim-lattice-tools/shared/crossbar"
 )
 
 func TestNewNetwork_ValidConfig(t *testing.T) {
