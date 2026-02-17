@@ -30,7 +30,22 @@ type SimVsExpComparison struct {
 	expSquareMax float64
 	litSource    string
 
-	// UI elements
+	// Mutable UI elements — stored as struct fields so Refresh() can update
+	// them in-place without recreating the entire content tree.
+	// NewSimpleRenderer captures a single content reference at CreateRenderer()
+	// time; rebuilding s.content in Refresh() would leave the renderer pointing
+	// at the original (stale) object. Instead we mutate individual labels.
+	prSimLabel   *widget.Label
+	prRangeLabel *widget.Label
+	prStatusText *canvas.Text
+	ecSimLabel   *widget.Label
+	ecRangeLabel *widget.Label
+	ecStatusText *canvas.Text
+	sqSimLabel   *widget.Label
+	sqRangeLabel *widget.Label
+	sqStatusText *canvas.Text
+	sourceLabel  *widget.Label
+
 	content fyne.CanvasObject
 }
 
@@ -93,7 +108,8 @@ func checkInRange(value, min, max float64) (string, color.Color) {
 	return "✗", color.RGBA{255, 80, 80, 255} // Red X (>20% out of range)
 }
 
-// CreateRenderer implements fyne.Widget.
+// CreateRenderer implements fyne.Widget. Called once by Fyne when the widget
+// is first laid out. Subsequent data changes go through Refresh().
 func (s *SimVsExpComparison) CreateRenderer() fyne.WidgetRenderer {
 	s.content = s.createContent()
 	return widget.NewSimpleRenderer(s.content)
@@ -130,55 +146,64 @@ func (s *SimVsExpComparison) createContent() fyne.CanvasObject {
 
 	headerRow := container.NewGridWithColumns(4, colParam, colSim, colExp, colStatus)
 
-	// Data rows
+	// Data rows — create mutable widgets and store refs for Refresh()
 	rows := container.NewVBox()
 
 	// Pr row
 	prStatus, prColor := checkInRange(s.simPr, s.expPrMin, s.expPrMax)
-	prStatusText := canvas.NewText(prStatus, prColor)
-	prStatusText.TextStyle = fyne.TextStyle{Bold: true}
-	prStatusText.Alignment = fyne.TextAlignCenter
+	s.prStatusText = canvas.NewText(prStatus, prColor)
+	s.prStatusText.TextStyle = fyne.TextStyle{Bold: true}
+	s.prStatusText.Alignment = fyne.TextAlignCenter
+
+	s.prSimLabel = widget.NewLabel(fmt.Sprintf("%.1f", s.simPr*100))
+	s.prRangeLabel = widget.NewLabel(fmt.Sprintf("%.1f - %.1f", s.expPrMin*100, s.expPrMax*100))
 
 	prRow := container.NewGridWithColumns(4,
 		widget.NewLabel("Pr (µC/cm²)"),
-		widget.NewLabel(fmt.Sprintf("%.1f", s.simPr*100)),   // C/m² → µC/cm²
-		widget.NewLabel(fmt.Sprintf("%.1f - %.1f", s.expPrMin*100, s.expPrMax*100)),
-		container.NewCenter(prStatusText),
+		s.prSimLabel,
+		s.prRangeLabel,
+		container.NewCenter(s.prStatusText),
 	)
 	rows.Add(prRow)
 
 	// Ec row
 	ecStatus, ecColor := checkInRange(s.simEc, s.expEcMin, s.expEcMax)
-	ecStatusText := canvas.NewText(ecStatus, ecColor)
-	ecStatusText.TextStyle = fyne.TextStyle{Bold: true}
-	ecStatusText.Alignment = fyne.TextAlignCenter
+	s.ecStatusText = canvas.NewText(ecStatus, ecColor)
+	s.ecStatusText.TextStyle = fyne.TextStyle{Bold: true}
+	s.ecStatusText.Alignment = fyne.TextAlignCenter
+
+	s.ecSimLabel = widget.NewLabel(fmt.Sprintf("%.2f", s.simEc/1e8))
+	s.ecRangeLabel = widget.NewLabel(fmt.Sprintf("%.1f - %.1f", s.expEcMin/1e8, s.expEcMax/1e8))
 
 	ecRow := container.NewGridWithColumns(4,
 		widget.NewLabel("Ec (MV/cm)"),
-		widget.NewLabel(fmt.Sprintf("%.2f", s.simEc/1e8)),
-		widget.NewLabel(fmt.Sprintf("%.1f - %.1f", s.expEcMin/1e8, s.expEcMax/1e8)),
-		container.NewCenter(ecStatusText),
+		s.ecSimLabel,
+		s.ecRangeLabel,
+		container.NewCenter(s.ecStatusText),
 	)
 	rows.Add(ecRow)
 
 	// Squareness row
 	sqStatus, sqColor := checkInRange(s.simSquareness, s.expSquareMin, s.expSquareMax)
-	sqStatusText := canvas.NewText(sqStatus, sqColor)
-	sqStatusText.TextStyle = fyne.TextStyle{Bold: true}
-	sqStatusText.Alignment = fyne.TextAlignCenter
+	s.sqStatusText = canvas.NewText(sqStatus, sqColor)
+	s.sqStatusText.TextStyle = fyne.TextStyle{Bold: true}
+	s.sqStatusText.Alignment = fyne.TextAlignCenter
+
+	s.sqSimLabel = widget.NewLabel(fmt.Sprintf("%.2f", s.simSquareness))
+	s.sqRangeLabel = widget.NewLabel(fmt.Sprintf("%.2f - %.2f", s.expSquareMin, s.expSquareMax))
 
 	sqRow := container.NewGridWithColumns(4,
 		widget.NewLabel("Squareness"),
-		widget.NewLabel(fmt.Sprintf("%.2f", s.simSquareness)),
-		widget.NewLabel(fmt.Sprintf("%.2f - %.2f", s.expSquareMin, s.expSquareMax)),
-		container.NewCenter(sqStatusText),
+		s.sqSimLabel,
+		s.sqRangeLabel,
+		container.NewCenter(s.sqStatusText),
 	)
 	rows.Add(sqRow)
 
 	// Source citation
-	sourceLabel := widget.NewLabel("Source: " + s.litSource)
-	sourceLabel.TextStyle = fyne.TextStyle{Italic: true}
-	sourceLabel.Wrapping = fyne.TextWrapWord
+	s.sourceLabel = widget.NewLabel("Source: " + s.litSource)
+	s.sourceLabel.TextStyle = fyne.TextStyle{Italic: true}
+	s.sourceLabel.Wrapping = fyne.TextWrapWord
 
 	// Legend
 	legendGreen := canvas.NewText("✓ Within range", color.RGBA{0, 200, 0, 255})
@@ -203,16 +228,45 @@ func (s *SimVsExpComparison) createContent() fyne.CanvasObject {
 		widget.NewSeparator(),
 		rows,
 		widget.NewSeparator(),
-		sourceLabel,
+		s.sourceLabel,
 		legend,
 		widget.NewSeparator(),
 		uploadPlaceholder,
 	)
 }
 
-// Refresh updates the widget display.
+// Refresh updates the widget display. Updates mutable labels in-place so the
+// renderer's content reference stays valid (avoids the NewSimpleRenderer stale
+// reference problem).
 func (s *SimVsExpComparison) Refresh() {
-	s.content = s.createContent()
+	if s.prSimLabel != nil {
+		// Pr row
+		s.prSimLabel.SetText(fmt.Sprintf("%.1f", s.simPr*100))
+		s.prRangeLabel.SetText(fmt.Sprintf("%.1f - %.1f", s.expPrMin*100, s.expPrMax*100))
+		prStatus, prColor := checkInRange(s.simPr, s.expPrMin, s.expPrMax)
+		s.prStatusText.Text = prStatus
+		s.prStatusText.Color = prColor
+		s.prStatusText.Refresh()
+
+		// Ec row
+		s.ecSimLabel.SetText(fmt.Sprintf("%.2f", s.simEc/1e8))
+		s.ecRangeLabel.SetText(fmt.Sprintf("%.1f - %.1f", s.expEcMin/1e8, s.expEcMax/1e8))
+		ecStatus, ecColor := checkInRange(s.simEc, s.expEcMin, s.expEcMax)
+		s.ecStatusText.Text = ecStatus
+		s.ecStatusText.Color = ecColor
+		s.ecStatusText.Refresh()
+
+		// Squareness row
+		s.sqSimLabel.SetText(fmt.Sprintf("%.2f", s.simSquareness))
+		s.sqRangeLabel.SetText(fmt.Sprintf("%.2f - %.2f", s.expSquareMin, s.expSquareMax))
+		sqStatus, sqColor := checkInRange(s.simSquareness, s.expSquareMin, s.expSquareMax)
+		s.sqStatusText.Text = sqStatus
+		s.sqStatusText.Color = sqColor
+		s.sqStatusText.Refresh()
+
+		// Source
+		s.sourceLabel.SetText("Source: " + s.litSource)
+	}
 	s.BaseWidget.Refresh()
 }
 
