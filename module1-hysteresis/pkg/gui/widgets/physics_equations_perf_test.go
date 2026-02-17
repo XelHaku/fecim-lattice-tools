@@ -37,9 +37,11 @@ func TestEquationWidgetPerf_OpenBudgets(t *testing.T) {
 	w := test.NewWindow(widget.NewLabel("host"))
 	defer w.Close()
 
-	// CI hosts can be heavily oversubscribed; allow a little extra headroom
-	// to avoid flaky failures from scheduler jitter.
-	const openBudget = 1500 * time.Millisecond
+	// Race mode adds ~2× overhead; use a generous budget to avoid false flakes.
+	openBudget := 1500 * time.Millisecond
+	if isRaceEnabled() {
+		openBudget = 5000 * time.Millisecond
+	}
 
 	resetEquationCachesForPerfTest()
 	cold := measureEquationOpen(t, openBudget)
