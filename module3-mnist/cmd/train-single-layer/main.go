@@ -10,7 +10,7 @@ import (
 
 	"fecim-lattice-tools/module3-mnist/pkg/mnist"
 	"fecim-lattice-tools/module3-mnist/pkg/training"
-	"fecim-lattice-tools/shared/utils"
+	"fecim-lattice-tools/shared/canvas"
 )
 
 func Run(args []string) error {

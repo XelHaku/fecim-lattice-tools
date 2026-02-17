@@ -14,7 +14,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/shared/physics"
-	sharedutils "fecim-lattice-tools/shared/utils"
+	sharedutils "fecim-lattice-tools/shared/canvas"
 )
 
 // Re-export shared physics formatters for package-level use

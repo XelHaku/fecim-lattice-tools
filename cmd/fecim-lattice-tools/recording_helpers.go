@@ -15,7 +15,7 @@ import (
 
 	"fecim-lattice-tools/shared/logging"
 	"fecim-lattice-tools/shared/recording"
-	"fecim-lattice-tools/shared/utils"
+	"fecim-lattice-tools/shared/canvas"
 
 	demo1gui "fecim-lattice-tools/module1-hysteresis/pkg/gui"
 	demo2gui "fecim-lattice-tools/module2-crossbar/pkg/gui"

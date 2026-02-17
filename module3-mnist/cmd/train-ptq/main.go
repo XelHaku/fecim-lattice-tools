@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"fecim-lattice-tools/module3-mnist/pkg/mnist"
-	"fecim-lattice-tools/shared/utils"
+	"fecim-lattice-tools/shared/canvas"
 )
 
 // Network is a simple 2-layer network with per-layer quantization support

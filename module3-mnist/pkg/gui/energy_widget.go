@@ -15,7 +15,7 @@ import (
 
 	"fecim-lattice-tools/module3-mnist/pkg/core"
 	"fecim-lattice-tools/shared/physics"
-	"fecim-lattice-tools/shared/utils"
+	"fecim-lattice-tools/shared/canvas"
 )
 
 // EnergyConfig defines energy parameters for calculations.

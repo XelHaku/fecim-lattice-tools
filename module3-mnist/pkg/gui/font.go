@@ -6,7 +6,7 @@ import (
 	"image"
 	"image/color"
 
-	"fecim-lattice-tools/shared/utils"
+	"fecim-lattice-tools/shared/canvas"
 )
 
 // drawSimpleText draws text using a simple bitmap font.

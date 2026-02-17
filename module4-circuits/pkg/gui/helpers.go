@@ -8,7 +8,7 @@ import (
 	"math"
 	"time"
 
-	"fecim-lattice-tools/shared/utils"
+	"fecim-lattice-tools/shared/canvas"
 )
 
 // drawRect fills a rectangular region in an RGBA image with the specified color.

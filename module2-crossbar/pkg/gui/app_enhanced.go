@@ -9,7 +9,7 @@ import (
 	"fyne.io/fyne/v2"
 
 	"fecim-lattice-tools/shared/crossbar"
-	"fecim-lattice-tools/shared/utils"
+	"fecim-lattice-tools/shared/canvas"
 )
 
 // runEnhancedMVM performs MVM with full non-ideality analysis and updates all widgets.

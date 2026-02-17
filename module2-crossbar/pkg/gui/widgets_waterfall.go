@@ -10,7 +10,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/widget"
 
-	sharedutils "fecim-lattice-tools/shared/utils"
+	sharedutils "fecim-lattice-tools/shared/canvas"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 

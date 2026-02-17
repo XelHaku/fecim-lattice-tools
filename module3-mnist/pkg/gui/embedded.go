@@ -11,7 +11,7 @@ import (
 
 	"fecim-lattice-tools/shared/crossbar"
 	"fecim-lattice-tools/module3-mnist/pkg/training"
-	"fecim-lattice-tools/shared/utils"
+	"fecim-lattice-tools/shared/canvas"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 

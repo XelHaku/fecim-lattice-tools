@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"fecim-lattice-tools/module3-mnist/pkg/mnist"
-	"fecim-lattice-tools/shared/utils"
+	"fecim-lattice-tools/shared/canvas"
 )
 
 const (

@@ -45,7 +45,7 @@ import (
 	"fecim-lattice-tools/shared/recording"
 	"fecim-lattice-tools/shared/themes"
 	"fecim-lattice-tools/shared/undo"
-	"fecim-lattice-tools/shared/utils"
+	"fecim-lattice-tools/shared/canvas"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 

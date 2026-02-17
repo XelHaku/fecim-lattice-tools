@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"fecim-lattice-tools/module3-mnist/pkg/mnist"
-	"fecim-lattice-tools/shared/utils"
+	"fecim-lattice-tools/shared/canvas"
 )
 
 // Simple 2-layer network with quantization-aware training

@@ -10,7 +10,7 @@ import (
 
 	"fecim-lattice-tools/module3-mnist/pkg/core"
 	"fecim-lattice-tools/module3-mnist/pkg/mnist"
-	"fecim-lattice-tools/shared/utils"
+	"fecim-lattice-tools/shared/canvas"
 )
 
 // NetworkController manages the neural network state and operations.
