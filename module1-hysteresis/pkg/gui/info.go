@@ -47,9 +47,9 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 		resume := a.pauseSimulationForModal()
 		d := dialog.NewInformation("Material Properties",
 			fmt.Sprintf("Material: %s\n\n"+
-				"Pr (Remanent): %.0f µC/cm² [literature: 15-34]\n"+
+				"Pr (Remanent): %.0f µC/cm² [literature: %.0f–%.0f]\n"+
 				"Ps (Saturation): %.0f µC/cm² [±10%%]\n"+
-				"Ec (Coercive): %.2f MV/cm [literature: 0.6-1.5]\n"+
+				"Ec (Coercive): %.2f MV/cm [literature: %.2f–%.2f]\n"+
 				"Endurance: %.0e cycles [demonstrated: 10⁹-10¹²]\n\n"+
 				"Pr = polarization at E=0 (memory!)\n"+
 				"Ec = field needed to switch\n\n"+

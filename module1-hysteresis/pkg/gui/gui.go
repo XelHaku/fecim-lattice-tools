@@ -214,7 +214,7 @@ type App struct {
 	wrdTotalEnergyfJ float64 // Total energy consumed in femtojoules
 	wrdDemoMode      int     // 0=multilevel, 1=retention, 2=endurance
 	wrdRetentionTime float64 // Time at E=0 during retention demo
-	wrdBitsStored    float64 // log2(30) = 4.91 bits per cell
+	wrdBitsStored    float64 // log2(numLevels) bits per cell
 
 	// Autonomous calibration (runtime)
 	autoRecalibrate         bool
