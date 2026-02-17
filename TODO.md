@@ -965,6 +965,14 @@ git update-index --assume-unchanged cmd/fecim-lattice-tools/data/calibrations/li
 | Item | Reason |
 |------|--------|
 | Module 5 (Comparison) | Deferred to reduce complexity; focus on Module 4 + integration path |
+| M1-WC-05 (I-V leakage panel) | Needs device-level I-V data from published FeFET characterization |
+| M1-WC-06 (small-signal capacitance) | Needs small-signal AC model implementation in physics engine |
+| M1-WC-07 (batch/recipe engine) | Needs design doc + API spec for recipe file format |
+| M4-WC-01 (algorithm-level loop) | Needs M2-M3 integration work beyond current scope |
+| M4-WC-06 (SPICE calibration) | Needs external SPICE tool integration |
+| M4-WC-07 (MLC programming panel) | Needs design doc + peripheral model extensions |
+| M4-WC-08 (tiled architecture) | Needs architecture spec for multi-array coordination |
+| M4-WC-10 (device comparison) | Needs M5 module expansion beyond current scope |
 
 ## Out of Scope
 
