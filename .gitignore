@@ -17,6 +17,7 @@ recordings/
 screenshots/
 train-network
 train-single-layer
+!module3-mnist/cmd/train-network/main_test.go
 cmd/fecim-lattice-tools/logs/OpenLane/
 /OpenLane
 
@@ -84,4 +85,6 @@ module1-hysteresis/pkg/controller/output/
 web/fecim.wasm
 cmd/calibrate-preisach/
 cmd/gen-literature-loops/
+!cmd/calibrate-preisach/main_test.go
+!cmd/gen-literature-loops/main_test.go
 validation/literature/output/
