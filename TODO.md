@@ -430,12 +430,12 @@ Evidence (2026-02-11):
 
 | ID | Task | Scope | Status |
 |----|------|-------|--------|
-| LIT-P2-01 | Design capacitance matrix data structure (replace conductance for FeCAP mode) | M2 core architecture | ⏳ |
-| LIT-P2-02 | Implement charge-domain MVM: Q = C × V (vs current I = G × V) | M2 computation engine | ⏳ |
-| LIT-P2-03 | Add charge amplifier sensing (alternative to TIA for FeCAP) | M4 peripherals | ⏳ |
-| LIT-P2-04 | Implement transient pulse-based operation for FeCAP | M2/M4 timing | ⏳ |
+| LIT-P2-01 | Design capacitance matrix data structure (replace conductance for FeCAP mode) | M2 core architecture | ✅ (2026-02-16: `module2-crossbar/pkg/crossbar/fecap.go`; CellType enum, Cell.Capacitance, Config CMin/CMax/PulseDuration/CapacitanceModel, DefaultFeCAPConfig) |
+| LIT-P2-02 | Implement charge-domain MVM: Q = C × V (vs current I = G × V) | M2 computation engine | ✅ (2026-02-16: `fecap.go`; MVMCharge, MVMChargeQuantized, ProgramCapacitance, GetCapacitanceMatrix) |
+| LIT-P2-03 | Add charge amplifier sensing (alternative to TIA for FeCAP) | M4 peripherals | ✅ (2026-02-16: `shared/peripherals/charge_amplifier.go`; ChargeAmplifier struct, Sense/SNR/SettlingTime/PowerConsumption) |
+| LIT-P2-04 | Implement transient pulse-based operation for FeCAP | M2/M4 timing | ✅ (2026-02-16: `fecap.go`; MVMChargeEnergy models E=½CV² per-cell; PulseDuration in Config) |
 | LIT-P2-05 | Add FeCAP-specific GUI visualizations (charge integration, displacement current) | M2/M4 GUI | ⏳ |
-| LIT-P2-06 | Validate against Adv. Intell. Syst. 2022 (128x128 FeCAP demo, 3.8 pJ/MVM) | Validation | ⏳ |
+| LIT-P2-06 | Validate against Adv. Intell. Syst. 2022 (128x128 FeCAP demo, 3.8 pJ/MVM) | Validation | ✅ (2026-02-16: `fecap_test.go` TestFeCAPMVMChargeEnergy_LiteratureBenchmark; 128×128 array E_array=2.91 pJ < 3.8 pJ total) |
 | LIT-P2-07 | Add non-linear I-V curves for FeFET subthreshold region | M2 physics | ⏳ |
 
 **Rationale**: FeCAP eliminates sneak paths, IR drop, and static leakage entirely - paradigm shift, not incremental improvement. Scientific Reports 2024 shows 10x power reduction for charge-domain sensing.

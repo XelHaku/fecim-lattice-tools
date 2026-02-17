@@ -64,11 +64,21 @@ type Config struct {
 
 	// Half-select disturb configuration
 	HalfSelect *HalfSelectConfig
+
+	// FeCAP (capacitive) mode configuration.
+	// When CellType == CellTypeFeCAP, MVM uses charge-domain computation
+	// (Q = C × V) instead of current-domain (I = G × V).
+	CellType         CellType         // FeFET (default) or FeCAP
+	CMin             float64          // Minimum cell capacitance at cNorm=0 (F)
+	CMax             float64          // Maximum cell capacitance at cNorm=1 (F)
+	PulseDuration    float64          // Word-line pulse duration for FeCAP reads (s)
+	CapacitanceModel CapacitanceModel // How C scales with normalized state
 }
 
 // Cell represents a single ferroelectric memory cell.
 type Cell struct {
-	Conductance     float64 // Programmed conductance (normalized 0-1)
+	Conductance     float64 // Programmed conductance (normalized 0-1); FeFET mode
+	Capacitance     float64 // Programmed capacitance (normalized 0-1); FeCAP mode
 	NoiseFactor     float64 // Per-cell noise factor
 	SwitchingCount  int64   // Number of write cycles
 	HalfSelectCount int64   // Number of half-select (V/2) exposures
