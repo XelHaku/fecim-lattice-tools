@@ -436,7 +436,7 @@ Evidence (2026-02-11):
 | LIT-P2-04 | Implement transient pulse-based operation for FeCAP | M2/M4 timing | ✅ (2026-02-16: `fecap.go`; MVMChargeEnergy models E=½CV² per-cell; PulseDuration in Config) |
 | LIT-P2-05 | Add FeCAP-specific GUI visualizations (charge integration, displacement current) | M2/M4 GUI | ⏳ |
 | LIT-P2-06 | Validate against Adv. Intell. Syst. 2022 (128x128 FeCAP demo, 3.8 pJ/MVM) | Validation | ✅ (2026-02-16: `fecap_test.go` TestFeCAPMVMChargeEnergy_LiteratureBenchmark; 128×128 array E_array=2.91 pJ < 3.8 pJ total) |
-| LIT-P2-07 | Add non-linear I-V curves for FeFET subthreshold region | M2 physics | ⏳ |
+| LIT-P2-07 | Add non-linear I-V curves for FeFET subthreshold region | M2 physics | ✅ (2026-02-16: `nonlinear_iv.go` FeFETIVParams + MVMNonLinear; I=G×Vsat×(1-exp(-V/Vsat)), Vsat≈31mV at 300K) |
 
 **Rationale**: FeCAP eliminates sneak paths, IR drop, and static leakage entirely - paradigm shift, not incremental improvement. Scientific Reports 2024 shows 10x power reduction for charge-domain sensing.
 
