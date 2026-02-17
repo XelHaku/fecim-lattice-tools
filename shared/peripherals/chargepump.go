@@ -4,6 +4,88 @@ import (
 	"math"
 )
 
+// StagesRequired returns the minimum number of Dickson pump stages needed to
+// reach targetV from inputV with the given per-stage diode drop.
+//
+//	Dickson: V_out = (N+1)×V_in - N×V_diode  →  N = ceil((V_out-V_in)/(V_in-V_diode))
+func StagesRequired(targetV, inputV, diodeDrop float64) int {
+	if inputV <= diodeDrop {
+		return 0
+	}
+	n := math.Ceil((math.Abs(targetV) - inputV) / (inputV - diodeDrop))
+	if n < 1 {
+		n = 1
+	}
+	return int(n)
+}
+
+// FeCAPChargePump returns a 2-stage charge pump for FeCAP read/write at 1.5 V.
+// FeCAP cells require lower write voltage than FeFET (1.5 V vs 3-5 V) because
+// the ferroelectric switching voltage is set by the HZO coercive field ×thickness.
+func FeCAPChargePump(inputV float64) *ChargePump {
+	if inputV <= 0 {
+		inputV = 1.0
+	}
+	cp := &ChargePump{
+		InputVoltage:   inputV,
+		OutputVoltage:  1.5,
+		Stages:         2, // 2-stage Dickson: V_out ≈ 3×1V − 2×0.3V = 2.4V, regulated to 1.5V
+		DiodeDrop:      0.3,
+		ClockFrequency: 100e6,  // 100 MHz (FeCAP needs faster settling for 10 ns pulses)
+		LoadCurrent:    1e-6,   // 1 µA (FeCAP is capacitive — very low DC load)
+		FlyCapacitance: 50e-12, // 50 pF (smaller cap, less area for FeCAP)
+		Efficiency:     0.75,
+	}
+	log.Calculation("FeCAPChargePump", map[string]interface{}{
+		"input_voltage":  cp.InputVoltage,
+		"output_voltage": cp.OutputVoltage,
+		"stages":         cp.Stages,
+	}, cp)
+	return cp
+}
+
+// FeFETChargePump returns a configurable charge pump for FeFET write operations.
+// The number of stages is auto-selected to reach targetV from inputV.
+//
+// Typical targets:
+//   - 3 V (retention-safe write): 2-3 stages at 1 V supply
+//   - 5 V (full switching): 3-4 stages at 1 V supply
+func FeFETChargePump(inputV, targetV float64) *ChargePump {
+	if inputV <= 0 {
+		inputV = 1.0
+	}
+	const diodeDrop = 0.3
+	stages := StagesRequired(targetV, inputV, diodeDrop)
+	if stages < 1 {
+		stages = 1
+	}
+	cp := &ChargePump{
+		InputVoltage:   inputV,
+		OutputVoltage:  targetV,
+		Stages:         stages,
+		DiodeDrop:      diodeDrop,
+		ClockFrequency: 50e6,
+		LoadCurrent:    10e-6,
+		FlyCapacitance: 100e-12,
+		Efficiency:     0.70,
+	}
+	log.Calculation("FeFETChargePump", map[string]interface{}{
+		"input_voltage":  cp.InputVoltage,
+		"output_voltage": cp.OutputVoltage,
+		"stages":         cp.Stages,
+	}, cp)
+	return cp
+}
+
+// EnergyPerCycle returns the energy drawn from the supply per pump clock cycle.
+//
+// Each cycle, N flying capacitors are charged from input voltage, then
+// discharged to the next stage. Per-stage energy: E_stage = Cfb × Vin².
+// Total: E_cycle = N × Cfb × Vin².
+func (c *ChargePump) EnergyPerCycle() float64 {
+	return float64(c.Stages) * c.FlyCapacitance * c.InputVoltage * c.InputVoltage
+}
+
 // ChargePump represents a charge pump circuit for voltage boosting.
 // Used to generate write voltages (±1.5V) from standard CMOS supply (1V).
 type ChargePump struct {
