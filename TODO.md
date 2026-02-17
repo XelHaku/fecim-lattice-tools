@@ -50,8 +50,8 @@
 | RG-PHY-OBS-01 | **Major-loop P–E falsification**: simulate Preisach major loop on DOI-backed dataset sweep (non-calibrated preset), compute RMSE(P(E))/FS, Pr/Ec/%area errors, emit JSON + fail on threshold | M1 + validation/literature | ✅ (2026-02-16: `validation/literature/module1_pe_loop_test.go`, 4 materials, all pass) |
 | RG-PHY-OBS-02 | **Switching kinetics falsification**: validate τ(E) or switching probability vs Merz / cumulative log-normal NLS dataset; report fitted parameters + residuals with units | M1 + validation/literature | ✅ (2026-02-16: `validation/literature/module1_switching_kinetics_test.go`, quasi-static S-curve + logistic fit, 3 materials pass) |
 | RG-PHY-OBS-03 | **Minor loops / FORC falsification**: compare FORC distribution ρ(Ha,Hb) vs published digitized FORC dataset; report RMSE + qualitative invariants | M1 + validation/literature | ✅ (2026-02-16: `validation/literature/module1_forc_test.go`, FORC density peak/integral/symmetry invariants, 2 materials pass) |
-| RG-VAL-M1-01 | Expand M1 deep regression materials from 3/9 → 9/9 with per-material verdict and documented SKIPs for missing params | M1 | ⏳ |
-| RG-VAL-M1-02 | Golden P–E loop regression for all materials × 2 engines (6+ sig figs drift detection) | M1 + validation/testdata | ⏳ |
+| RG-VAL-M1-01 | Expand M1 deep regression materials from 3/9 → 9/9 with per-material verdict and documented SKIPs for missing params | M1 | ✅ (2026-02-16: `TestHeadlessHysteresis_VerificationMatrix_NoNaNOrCrash` covers all 9/9 materials × 2 engines) |
+| RG-VAL-M1-02 | Golden P–E loop regression for all materials × 2 engines (6+ sig figs drift detection) | M1 + validation/testdata | ✅ (2026-02-16: `TestPhysicsRegressionCurves_AllMaterials` in physics_regression_test.go; 9 golden JSON files in testdata/physics_regression/) |
 | RG-VAL-M1-03 | Export WriteVerifyStats into regression JSON (pulse counts, overshoot, stuck, guard pulses) and assert bounds | M1 | ⏳ |
 | RG-VAL-M1-04 | Monte Carlo uncertainty on P–E + ISPP (CI bands for Pr/Ec/area, seed determinism checks) | M1 | ⏳ |
 

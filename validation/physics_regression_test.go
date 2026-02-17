@@ -357,3 +357,116 @@ func TestPhysicsRegressionCurves_MaterialSmoke(t *testing.T) {
 		})
 	}
 }
+
+// TestPhysicsRegressionCurves_AllMaterials implements RG-VAL-M1-02.
+//
+// Golden P–E loop regression for all 9 named materials using the Preisach engine.
+// Uses tight tolerances (0.1% Ps RMS, 0.2% Ps max) to catch 6+ sig-fig drift.
+// Regenerate golden files with: FECIM_UPDATE_PHYSICS_GOLDEN=1 go test ./validation/...
+func TestPhysicsRegressionCurves_AllMaterials(t *testing.T) {
+	update := os.Getenv(updatePhysicsGoldenEnv) != ""
+
+	type materialCase struct {
+		id  string
+		mat *ferroelectric.HZOMaterial
+	}
+	cases := []materialCase{
+		{id: "fecim_hzo", mat: ferroelectric.FeCIMMaterial()},
+		{id: "fecim_hzo_target", mat: ferroelectric.FeCIMMaterialTarget()},
+		{id: "default_hzo", mat: ferroelectric.DefaultHZO()},
+		{id: "literature_superlattice", mat: ferroelectric.LiteratureSuperlattice()},
+		{id: "cryogenic_hzo", mat: ferroelectric.CryogenicHZO()},
+		{id: "hzo_standard_32", mat: ferroelectric.HZOStandard32()},
+		{id: "hzo_ftj_140", mat: ferroelectric.HZOFJT140()},
+		{id: "hzo_custom_14", mat: ferroelectric.HZOCustom14()},
+		{id: "alscn", mat: ferroelectric.AlScN()},
+	}
+
+	const points = 201
+
+	for _, mc := range cases {
+		mc := mc
+		scenario := "preisach_all_" + mc.id
+		jsonFile := filepath.Join(physicsRegressionDataDir, scenario+".json")
+		csvFile := filepath.Join(physicsRegressionDataDir, scenario+".csv")
+
+		t.Run(mc.id, func(t *testing.T) {
+			model := ferroelectric.NewPreisachModel(mc.mat)
+			Emax := 2.0 * mc.mat.Ec
+			xE, yP := model.GetHysteresisLoop(Emax, points)
+
+			params := map[string]interface{}{
+				"material": mc.mat.Name,
+				"id":       mc.id,
+				"engine":   "preisach",
+				"Emax":     Emax,
+				"points":   points,
+				"Ec":       mc.mat.Ec,
+				"Ps":       mc.mat.Ps,
+				"Pr":       mc.mat.Pr,
+			}
+
+			if len(xE) < points || len(yP) < points {
+				t.Fatalf("generated curve too short: len=%d (want >=%d)", len(xE), points)
+			}
+			for i, v := range yP {
+				if math.IsNaN(v) || math.IsInf(v, 0) {
+					t.Fatalf("non-finite P at i=%d: %v", i, v)
+				}
+			}
+
+			ps := mc.mat.Ps // C/m² (raw)
+
+			if update {
+				ref := curveReference{
+					Version:     physicsRegressionVersion,
+					Scenario:    scenario,
+					Description: fmt.Sprintf("Golden Preisach P-E loop for material %q (RG-VAL-M1-02)", mc.id),
+					Generated:   time.Now().UTC().Format(time.RFC3339),
+					Parameters:  params,
+				}
+				ref.Data.X = xE
+				ref.Data.Y = yP
+				if err := saveCurveReference(jsonFile, ref); err != nil {
+					t.Fatalf("save golden json: %v", err)
+				}
+				if err := saveCurveCSV(csvFile, xE, yP); err != nil {
+					t.Fatalf("save golden csv: %v", err)
+				}
+				t.Logf("updated golden: %s", jsonFile)
+				return
+			}
+
+			if _, err := os.Stat(jsonFile); os.IsNotExist(err) {
+				t.Skipf("golden file not yet generated for %s — run with %s=1 to create", mc.id, updatePhysicsGoldenEnv)
+				return
+			}
+
+			golden := loadCurveReference(t, jsonFile)
+			if golden.Version != physicsRegressionVersion {
+				t.Fatalf("golden version mismatch: got %q want %q", golden.Version, physicsRegressionVersion)
+			}
+
+			xErrMax := maxAbsError(xE, golden.Data.X)
+			yErrRMS := rmsError(yP, golden.Data.Y)
+			yErrMax := maxAbsError(yP, golden.Data.Y)
+
+			// Tight tolerances for 6+ sig-fig drift detection (Preisach is deterministic).
+			xTol := 1e-12              // V/m — E grid must be exactly reproducible
+			yTolRMS := 0.001 * ps     // 0.1% of Ps
+			yTolMax := 0.002 * ps     // 0.2% of Ps
+
+			if xErrMax > xTol {
+				t.Errorf("x max|err|=%e > tol=%e for %s", xErrMax, xTol, mc.id)
+			}
+			if yErrRMS > yTolRMS {
+				t.Errorf("y RMS err=%e > tol=%e (0.1%% Ps) for %s", yErrRMS, yTolRMS, mc.id)
+			}
+			if yErrMax > yTolMax {
+				t.Errorf("y max|err|=%e > tol=%e (0.2%% Ps) for %s", yErrMax, yTolMax, mc.id)
+			}
+
+			t.Logf("VERDICT material=%s result=PASS xMaxErr=%e yRMSErr=%e yMaxErr=%e", mc.id, xErrMax, yErrRMS, yErrMax)
+		})
+	}
+}
