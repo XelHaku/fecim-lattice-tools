@@ -1,4 +1,4 @@
-// Command lattice-gen generates lattice netlists for open-source EDA tools.
+// Package edalattice provides CLI functionality for generating FeCIM lattice netlists.
 //
-// Usage: lattice-gen -rows 64 -cols 64 -output netlist.sp
-package main
+// This package is imported by cmd/fecim-lattice-tools for the "eda lattice-gen" subcommand.
+package edalattice

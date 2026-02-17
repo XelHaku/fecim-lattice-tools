@@ -1,4 +1,4 @@
-// Command comparison runs standalone Module 5 architecture comparison GUI.
+// Package comparisoncli provides CLI functionality for Module 5 architecture comparison.
 //
-// Usage: comparison
-package main
+// This package is imported by cmd/fecim-lattice-tools for the "comparison cli" subcommand.
+package comparisoncli
