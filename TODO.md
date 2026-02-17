@@ -37,7 +37,12 @@
 
 ## Current Focus & Direction
 
-### 0. Research-Grade Validation Hardening (NEW, HIGH PRIORITY)
+### 0. Feature Catalog (NEW)
+
+- ✅ **PRD created:** `docs/FEATURE_CATALOG.md` — consolidated feature list validated against code
+- ✅ **Module FEATURES.md:** All 7 modules have FEATURES.md with code paths
+
+### 0a. Research-Grade Validation Hardening (NEW, HIGH PRIORITY)
 
 | ID | Task | Scope | Status |
 |----|------|-------|--------|
