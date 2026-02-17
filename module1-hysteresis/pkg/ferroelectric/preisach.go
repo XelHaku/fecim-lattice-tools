@@ -130,14 +130,18 @@ type PreisachModel struct {
 	nls *physics.NLSKinetics
 
 	// dynamicP tracks the actual physical polarization across Reset() calls.
-	// TimeStep() uses this as P_start to avoid plot teleportation: Reset()
-	// reinitializes the stack to LastE=-saturationE (so Polarization() returns
-	// ~-Ps), but the device is still physically at its pre-reset P. By keeping
-	// dynamicP alive across Reset(), the first PREP-phase TimeStep starts from
-	// the real P and drives smoothly to saturation instead of jumping.
+	// Both Update() and TimeStep() use this as P_start to avoid plot
+	// teleportation: Reset() reinitializes the stack to LastE=-saturationE (so
+	// Polarization() returns ~-Ps), but the device is still physically at its
+	// pre-reset P. By keeping dynamicP alive, the first PREP-phase step starts
+	// from the real P and drives smoothly to saturation instead of jumping.
 	// Reset() intentionally does NOT clear these fields.
-	dynamicP    float64 // last P_final from TimeStep (C/m²)
-	hasDynamicP bool    // true once TimeStep has been called at least once
+	// lockDynamic prevents Update()/TimeStep() from writing dynamicP during
+	// quasi-static loop generation (GetHysteresisLoop) so the active simulation
+	// state is unaffected. When locked, P_start falls back to Polarization().
+	dynamicP    float64 // last P_final from Update/TimeStep (C/m²)
+	hasDynamicP bool    // true once Update/TimeStep has been called at least once
+	lockDynamic bool    // when true, skip dynamicP read/write (loop generation)
 }
 
 // NewPreisachModel creates a new Preisach model with the given material.
@@ -219,8 +223,30 @@ func (p *PreisachModel) Reset() {
 
 // Update applies a new electric field and returns the resulting polarization.
 // This assumes quasi-static conditions (infinite time/instant switching).
+// Uses dynamicP as P_start (same as TimeStep) so that PREP-phase Reset() does
+// not cause a discontinuous jump in the plot dot. When lockDynamic is set
+// (GetHysteresisLoop), falls back to stack-based P_start and does not write
+// dynamicP, preserving the active simulation state across loop generation.
 func (p *PreisachModel) Update(E float64) float64 {
-	return p.TimeStep(E, 1.0) // 1 second is effectively infinite for typical NLS
+	var P_start float64
+	if p.hasDynamicP && !p.lockDynamic {
+		P_start = p.dynamicP
+	} else {
+		P_start = p.Polarization()
+	}
+
+	Pirrev_target := p.stack.Update(E)
+	P_target := Pirrev_target + p.reversiblePolarization(E)
+
+	if p.nls == nil {
+		p.nls = physics.NewNLSKinetics()
+	}
+	P_final := p.nls.Relax(P_start, P_target, E, 1.0)
+	if !p.lockDynamic {
+		p.dynamicP = P_final
+		p.hasDynamicP = true
+	}
+	return P_final
 }
 
 // TimeStep applies a constant electric field E for duration dt (seconds).
@@ -253,11 +279,12 @@ func (p *PreisachModel) TimeStep(E, dt float64) float64 {
 	// Ideally we would carry a p.currentP_dynamic state.
 	// But for ISPP (step-and-hold), we usually start from a relaxed state.
 	// Let's assume P_start is the *previous* stack state (at LastE).
-	// Use dynamicP when available: it survives Reset() and holds the actual
-	// physical polarization, preventing the plot-dot teleportation that would
-	// otherwise occur because Reset() sets LastE=-saturationE (~-Ps).
+	// Use dynamicP when available and not locked: it survives Reset() and holds
+	// the actual physical polarization, preventing the plot-dot teleportation
+	// that would otherwise occur because Reset() sets LastE=-saturationE (~-Ps).
+	// When lockDynamic is set (GetHysteresisLoop), fall back to stack P_start.
 	var P_start float64
-	if p.hasDynamicP {
+	if p.hasDynamicP && !p.lockDynamic {
 		P_start = p.dynamicP
 	} else {
 		P_start = p.Polarization()
@@ -278,8 +305,10 @@ func (p *PreisachModel) TimeStep(E, dt float64) float64 {
 			"E": E, "dt": dt, "P_start": P_start, "P_target": P_target, "P_final": P_final,
 		}, P_final)
 	}
-	p.dynamicP = P_final
-	p.hasDynamicP = true
+	if !p.lockDynamic {
+		p.dynamicP = P_final
+		p.hasDynamicP = true
+	}
 	return P_final
 }
 
@@ -357,8 +386,21 @@ func (p *PreisachModel) updateReversibleParams() {
 
 // GetHysteresisLoop generates a full P-E hysteresis loop.
 func (p *PreisachModel) GetHysteresisLoop(Emax float64, points int) ([]float64, []float64) {
-	// Temporarily reset stack to generate loop
-	// Ideally we clone, but for GUI generation we typically want a fresh loop
+	// Temporarily reset stack to generate loop.
+	// Ideally we clone, but for GUI generation we typically want a fresh loop.
+	// Lock dynamicP and force stack-based P_start so the loop uses pure
+	// quasi-static Preisach behavior (matches golden reference, avoids NLS
+	// kinetic drift). The active simulation's physical polarization state is
+	// fully restored via defer before returning.
+	savedDynamicP := p.dynamicP
+	savedHasDynamicP := p.hasDynamicP
+	p.lockDynamic = true
+	p.hasDynamicP = false // force Polarization() fallback for loop steps
+	defer func() {
+		p.dynamicP = savedDynamicP
+		p.hasDynamicP = savedHasDynamicP
+		p.lockDynamic = false
+	}()
 	p.Reset()
 
 	E := make([]float64, 0, points*4)
