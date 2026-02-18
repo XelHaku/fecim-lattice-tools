@@ -12,8 +12,12 @@ LIST_TOTAL=$(go list ./... | wc -l | tr -d ' ')
 
 JSON_PATH="${1:-/tmp/fecim_gotest.json}"
 
+# Capture test exit code without aborting early so we can always emit PKG_SUM
+# and diagnostics for flaky/runner-side failures.
+set +e
 go test -json ./... > "$JSON_PATH"
 TEST_EC=$?
+set -e
 
 # Aggregate package status deterministically (no jq dependency).
 # NOTE: gotest_pkgsum exits 1 if fail>0, so we capture output first.
@@ -26,6 +30,13 @@ JSON_TOTAL=$(echo "$PKG_SUM_LINE" | sed -n 's/.*total=\([0-9]\+\).*/\1/p')
 
 echo "LIST_TOTAL=${LIST_TOTAL} JSON_TOTAL=${JSON_TOTAL}"
 echo "$PKG_SUM_LINE"
+
+if [[ $TEST_EC -ne 0 ]]; then
+  echo "WARN: go test -json exited non-zero (${TEST_EC})" >&2
+  echo "DIAG: go=$(command -v go || echo '<missing>')" >&2
+  echo "DIAG: go_version=$(go version 2>/dev/null || echo '<unavailable>')" >&2
+  echo "DIAG: head_commit=$(git rev-parse --short HEAD 2>/dev/null || echo '<unavailable>')" >&2
+fi
 
 if [[ -z "${JSON_TOTAL}" ]]; then
   echo "ERROR: could not parse JSON_TOTAL from PKG_SUM output" >&2
