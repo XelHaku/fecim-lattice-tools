@@ -313,8 +313,10 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 		case "Logarithmic (A-ISPP)":
 			a.writeController.StepMode = "logarithmic"
 		case "DCC (Future)":
-			// TODO: Implement DCC method (Displacement Current Control)
-			log.Printf("DCC method not yet implemented - staying with current mode")
+			log.Printf("DCC method not yet available - keeping current ISPP mode")
+			if a.statusLabel != nil {
+				a.statusLabel.SetText("DCC method is not yet available in this build; using current ISPP mode")
+			}
 			// Revert selection to current mode
 			go func() {
 				time.Sleep(100 * time.Millisecond)
