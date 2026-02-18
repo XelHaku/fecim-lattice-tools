@@ -3,6 +3,9 @@
 # Usage: ./scripts/qa_a0.sh [output.json]
 set -euo pipefail
 
+# Ensure Go is discoverable in cron/non-interactive shells.
+export PATH="/usr/local/go/bin:${PATH}"
+
 cd "$(dirname "$0")/.."
 
 LIST_TOTAL=$(go list ./... | wc -l | tr -d ' ')
