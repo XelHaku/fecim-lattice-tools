@@ -1,0 +1,50 @@
+{
+  "dataset_id": "bto2021_cryst11101192_hysteresis_digitized",
+  "status": "pixel_digitized_curve",
+  "tier": "candidate_tier1",
+  "reference": {
+    "doi": "10.3390/cryst11101192"
+  },
+  "paper": {
+    "title": "Magnetoelectric and Multiferroic Properties of BaTiO3/NiFe2O4/BaTiO3 Heterostructured Thin Films Grown by Pulsed Laser Deposition Technique",
+    "journal": "Crystals",
+    "year": 2021,
+    "doi": "10.3390/cryst11101192",
+    "url": "https://www.mdpi.com/2073-4352/11/10/1192"
+  },
+  "figure": {
+    "figure_id": "7",
+    "description": "Polarization-Electric Field Hysteresis loop of (BTO/NFO/BTO) tri-layered thin film",
+    "source_image": "validation/literature/_incoming/bto_crystals2021_fig7.png",
+    "source_image_origin": "https://pub.mdpi-res.com/crystals/crystals-11-01192/article_deploy/html/images/crystals-11-01192-g007.png?1632998359"
+  },
+  "material": {
+    "name": "BaTiO3/NiFe2O4/BaTiO3 tri-layer thin film",
+    "thickness_nm": 360
+  },
+  "units": {
+    "field_raw_axis": "Electric field (MV/cm)",
+    "polarization_raw_axis": "Polarization (uC/cm2)",
+    "field_dataset_unit": "MV/cm",
+    "polarization_dataset_unit": "uC/cm2"
+  },
+  "digitization": {
+    "method": "direct pixel digitization from Figure 7 with axis-center detection and calibrated scale fit",
+    "tool": "python (Pillow + numpy), custom extraction script",
+    "date_utc": "2026-02-18T16:15:00Z",
+    "operator": "Riju",
+    "point_count": 121,
+    "is_placeholder_for_refinement": false,
+    "notes": [
+      "Blue hysteresis trace extracted from raster image, branch envelopes sampled and merged into a major-loop path.",
+      "Scale factors calibrated from extracted loop crossings with explicit uncertainty bounds retained below."
+    ]
+  },
+  "uncertainty": {
+    "pixel_quantization_uC_cm2": 0.35,
+    "axis_center_detection_px": 3,
+    "field_scale_uncertainty_MV_cm": 0.03,
+    "polarization_scale_uncertainty_uC_cm2": 0.4,
+    "notes": "Estimated from raster resolution, line thickness, and axis-center calibration sensitivity."
+  }
+}
