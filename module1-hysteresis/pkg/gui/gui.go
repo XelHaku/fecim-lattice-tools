@@ -334,6 +334,11 @@ type App struct {
 	squarenessLabel *widget.Label
 	switchedLabel   *widget.Label
 
+	// Info panel material fields (updated on material change via onMaterialPickerSelected)
+	materialNameLabel  *widget.Label     // prominent material name display
+	materialPropsLabel *widget.Label     // Pr/Ec summary line
+	materialBadgeBox   *fyne.Container   // holds confidence badge (swappable on material change)
+
 	// Levels selector
 	levelsEntry    *widget.Entry
 	levelsLabel    *widget.Label
@@ -851,7 +856,7 @@ func (a *App) createUI() fyne.CanvasObject {
 		container.NewCenter(a.cellViz),
 	)
 
-	infoCard := widget.NewCard("State & Material", "", info)
+	infoCard := widget.NewCard("Device Status", "", info)
 	literatureCard := a.createLiteratureOverlayPanel()
 	infoStack := container.NewVBox(
 		infoCard,

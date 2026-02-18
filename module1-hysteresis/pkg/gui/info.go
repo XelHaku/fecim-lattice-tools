@@ -17,33 +17,34 @@ import (
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
-// createInfoPanel creates the state and material information panel
+// createInfoPanel creates the device status panel with state, material, metrics and cycle health.
 func (a *App) createInfoPanel() fyne.CanvasObject {
-	a.pLabel = widget.NewLabel("0.00")
+	a.pLabel = widget.NewLabel("0.00 µC/cm²")
 	a.levelLabel = widget.NewLabel(fmt.Sprintf("%d/%d", a.numLevels/2, a.numLevels))
-	a.stateLabel = widget.NewLabel("Intermediate")
+	// Bold state label — most prominent element in the panel
+	a.stateLabel = widget.NewLabelWithStyle("Intermediate", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
-	// Phase indicator for state machine visualization
-	// Shows operation sequence: PROGRAM | VERIFY | RESULT
+	// Phase indicator: PROGRAM | VERIFY | RESULT
 	a.phaseIndicator = widgets.NewPhaseIndicator()
 	a.phaseIndicator.SetMinSize(fyne.NewSize(140, 50))
 
-	// State stability indicator (M12)
-	// Shows color-coded stability warnings: green=stable, yellow=moderate, red=edge
+	// State stability indicator (M12): green=stable, yellow=moderate, red=edge
 	a.stabilityIndicator = widgets.NewStabilityIndicator()
 	a.stabilityIndicator.SetLevel(15, a.numLevels)
 
-	// Combined level + polarization row
+	// Level + polarization row
 	levelRow := container.NewHBox(
 		widget.NewLabelWithStyle("L:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		a.levelLabel,
-		widget.NewLabel(" "),
+		widget.NewLabel("  "),
 		widget.NewLabelWithStyle("P:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		a.pLabel,
 	)
 
-	// Material info button (shows details in dialog with uncertainty ranges)
-	matInfoBtn := widget.NewButtonWithIcon("Material Info", theme.InfoIcon(), func() {
+	// ── MATERIAL section ─────────────────────────────────────────────────────
+
+	// Icon-only info button — opens material details dialog
+	matInfoBtn := widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
 		resume := a.pauseSimulationForModal()
 		d := dialog.NewInformation("Material Properties",
 			fmt.Sprintf("Material: %s\n\n"+
@@ -64,31 +65,31 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 	})
 	matInfoBtn.Importance = widget.LowImportance
 
-	// Compact material line (validated units)
-	matLine := widget.NewLabel(fmt.Sprintf("Pr=%.1f µC/cm²  Ec=%.2f MV/cm  End=%.0e cycles",
-		a.material.Pr*100, a.material.Ec/1e8, a.material.EnduranceCycles))
+	// "MATERIAL" label left, info button right
+	materialHeader := container.NewBorder(
+		nil, nil,
+		widget.NewLabelWithStyle("MATERIAL", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		matInfoBtn,
+		nil,
+	)
+
+	// Material name — prominent, updated on material change
+	a.materialNameLabel = widget.NewLabelWithStyle(a.material.Name, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	a.materialNameLabel.Wrapping = fyne.TextWrapWord
+
+	// Confidence badge in a swappable container (replaced on material change)
 	confidence := sharedwidgets.Estimated
 	if strings.Contains(strings.ToLower(a.material.Name), "materlik") || strings.Contains(strings.ToLower(a.material.Name), "fecim hzo") {
 		confidence = sharedwidgets.Calibrated
 	}
-	materialConfidenceBadge := sharedwidgets.NewConfidenceBadge(confidence)
+	a.materialBadgeBox = container.NewHBox(sharedwidgets.NewConfidenceBadge(confidence))
 
-	// Wake-up/Fatigue - single compact line
-	a.cyclesLabel = widget.NewLabel("0")
-	a.wakeupLabel = widget.NewLabel("100%")
-	a.fatigueLabel = widget.NewLabel("0%")
-	// L01: Cycle phase indicator (WAKE-UP, STABLE, FATIGUE)
-	a.cyclePhaseLabel = widget.NewLabel("WAKE-UP")
-	a.cyclePhaseLabel.TextStyle = fyne.TextStyle{Bold: true}
+	// Pr / Ec summary — updated on material change
+	a.materialPropsLabel = widget.NewLabel(fmt.Sprintf("Pr %.1f µC/cm²   Ec %.2f MV/cm",
+		a.material.Pr*100, a.material.Ec/1e8))
 
-	statsRow := container.NewHBox(
-		widget.NewLabel("Cyc:"), a.cyclesLabel,
-		widget.NewLabel("W:"), a.wakeupLabel,
-		widget.NewLabel("F:"), a.fatigueLabel,
-		widget.NewLabel("|"), a.cyclePhaseLabel,
-	)
+	// ── METRICS section ──────────────────────────────────────────────────────
 
-	// Temperature-dependent metrics (initialized from active material)
 	ecVal := a.material.Ec / 1e8
 	prVal := a.material.Pr * 100
 	sqVal := 0.0
@@ -107,15 +108,44 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 		a.switchedLabel,
 	)
 
+	// ── CYCLE HEALTH section ─────────────────────────────────────────────────
+
+	a.cyclesLabel = widget.NewLabel("0")
+	a.wakeupLabel = widget.NewLabel("100%")
+	a.fatigueLabel = widget.NewLabel("0%")
+	// L01: Cycle phase indicator (WAKE-UP, STABLE, FATIGUE)
+	a.cyclePhaseLabel = widget.NewLabel("WAKE-UP")
+	a.cyclePhaseLabel.TextStyle = fyne.TextStyle{Bold: true}
+
+	cycleRow1 := container.NewHBox(
+		widget.NewLabel("Cyc:"), a.cyclesLabel,
+		widget.NewLabel("  "),
+		a.cyclePhaseLabel,
+	)
+	cycleRow2 := container.NewHBox(
+		widget.NewLabel("W:"), a.wakeupLabel,
+		widget.NewLabel("  F:"), a.fatigueLabel,
+	)
+
 	return container.NewVBox(
+		// — STATE —
+		a.stateLabel,
 		levelRow,
-		container.NewCenter(a.stateLabel),
-		a.stabilityIndicator, // M12: State stability warning
+		a.stabilityIndicator,
 		a.phaseIndicator,
-		container.NewGridWithColumns(2, matLine, matInfoBtn),
-		container.NewHBox(widget.NewLabel("Material confidence:"), materialConfidenceBadge),
-		statsRow,
+		widget.NewSeparator(),
+		// — MATERIAL —
+		materialHeader,
+		a.materialNameLabel,
+		a.materialBadgeBox,
+		a.materialPropsLabel,
+		widget.NewSeparator(),
+		// — METRICS —
 		metricsGrid,
+		widget.NewSeparator(),
+		// — CYCLE HEALTH —
+		cycleRow1,
+		cycleRow2,
 	)
 }
 

@@ -1106,6 +1106,23 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 		a.materialBtn.SetText(hzoMat.Name)
 	}
 
+	// Update info panel material fields
+	if a.materialNameLabel != nil {
+		a.materialNameLabel.SetText(hzoMat.Name)
+	}
+	if a.materialPropsLabel != nil {
+		a.materialPropsLabel.SetText(fmt.Sprintf("Pr %.1f µC/cm²   Ec %.2f MV/cm",
+			hzoMat.Pr*100, hzoMat.Ec/1e8))
+	}
+	if a.materialBadgeBox != nil {
+		confidence := sharedwidgets.Estimated
+		if strings.Contains(strings.ToLower(hzoMat.Name), "materlik") || strings.Contains(strings.ToLower(hzoMat.Name), "fecim hzo") {
+			confidence = sharedwidgets.Calibrated
+		}
+		a.materialBadgeBox.Objects = []fyne.CanvasObject{sharedwidgets.NewConfidenceBadge(confidence)}
+		a.materialBadgeBox.Refresh()
+	}
+
 	// Update levels entry and label
 	if a.levelsEntry != nil {
 		a.levelsEntry.SetText(fmt.Sprintf("%d", newLevels))
