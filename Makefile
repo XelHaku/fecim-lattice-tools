@@ -1,3 +1,5 @@
+export PATH := /usr/local/go/bin:$(PATH)
+
 .PHONY: build test test-race test-short bench vet fmt lint coverage clean ci qa-a0 help test-hys test-xbar test-mnist test-circuits test-shared
 # Help target - self-documenting Makefile
 help:
