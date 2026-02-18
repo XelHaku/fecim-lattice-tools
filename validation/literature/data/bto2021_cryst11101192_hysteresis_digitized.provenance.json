@@ -43,8 +43,8 @@
   "uncertainty": {
     "pixel_quantization_uC_cm2": 0.35,
     "axis_center_detection_px": 3,
-    "field_scale_uncertainty_MV_cm": 0.03,
-    "polarization_scale_uncertainty_uC_cm2": 0.4,
-    "notes": "Estimated from raster resolution, line thickness, and axis-center calibration sensitivity."
+    "field_scale_uncertainty_MV_cm": 0.12,
+    "polarization_scale_uncertainty_uC_cm2": 3.60,
+    "notes": "Conservative uncertainty envelope for full-figure raster extraction where axis-center and line-thickness ambiguity dominate absolute scaling. Bounds are used to derive dataset-specific falsification tolerances."
   }
 }

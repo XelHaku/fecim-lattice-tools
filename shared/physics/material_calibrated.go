@@ -58,6 +58,18 @@ func Micromachines2022Fig6aAlScNPt200nm() *HZOMaterial {
 	return m
 }
 
+// Micromachines2022Fig6bAlScNMo200nm returns a calibrated AlScN preset for
+// the Mo-bottom-electrode condition in Fig. 6b (same DOI as Fig. 6a).
+func Micromachines2022Fig6bAlScNMo200nm() *HZOMaterial {
+	m := AlScN()
+	m.Name = "AlScN (Micromachines 2022 Fig 6b Mo, calibrated)"
+	m.Pr = 300e-2        // 300 uC/cm2 (high apparent remanence in Mo condition)
+	m.Ps = 360e-2        // 360 uC/cm2 (calibrated saturation for loop-shape fit)
+	m.Ec = 3.0e8         // 3.0 MV/cm (paper reports approx. 3 MV/cm)
+	m.Thickness = 200e-9 // 200 nm film in the paper
+	return m
+}
+
 // Nanomaterials2024Fig2PZTThinFilm returns a preset calibrated to:
 // Bi et al., Nanomaterials (2024), doi:10.3390/nano14050432, Fig. 2 (PZT thin-film P-E loop).
 func Nanomaterials2024Fig2PZTThinFilm() *HZOMaterial {
@@ -81,5 +93,17 @@ func Crystals2021FigFerroelectricBTOTrilayer() *HZOMaterial {
 	m.Ps = 10.0e-2       // 10.0 uC/cm2
 	m.Ec = 0.40e8        // 0.40 MV/cm
 	m.Thickness = 100e-9 // nominal thin-film class for conversion consistency
+	return m
+}
+
+// Crystals2021FigFerroelectricBTODigitized returns a BTO preset calibrated for
+// the direct pixel-digitized Figure 7 trace variant.
+func Crystals2021FigFerroelectricBTODigitized() *HZOMaterial {
+	m := BTO()
+	m.Name = "BTO (Crystals 2021 fig7, pixel-digitized calibrated)"
+	m.Pr = 8.63e-2       // 8.63 uC/cm2 (paper/figure-scale anchor)
+	m.Ps = 10.8e-2       // calibrated saturation margin above Pr
+	m.Ec = 0.25e8        // 0.25 MV/cm (figure-scale anchor)
+	m.Thickness = 360e-9 // tri-layer total thickness reported in paper
 	return m
 }

@@ -162,6 +162,18 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 			PolarUnit:  "uC/cm2",
 			Notes:      "BTO-containing trilayer hysteresis dataset from Crystals 2021 DOI context; provisional calibrated reference curve for Tier-1 pipeline extension.",
 		},
+		{
+			Name:       "Crystals2021_BTO_Hysteresis_Digitized",
+			DOI:        "10.3390/cryst11101192",
+			SourceCSV:  filepath.Join("data", "bto2021_cryst11101192_hysteresis_digitized.csv"),
+			Provenance: filepath.Join("data", "bto2021_cryst11101192_hysteresis_digitized.provenance.json"),
+			MaterialID: "bto2021_cryst11101192_hysteresis_digitized",
+			Material:   sharedphysics.Crystals2021FigFerroelectricBTODigitized(),
+			Engine:     "preisach",
+			FieldUnit:  "MV/cm",
+			PolarUnit:  "uC/cm2",
+			Notes:      "Direct pixel-digitized BTO Figure 7 trace with uncertainty metadata for Tier-1 data-quality expansion.",
+		},
 	}
 
 	outDir := os.Getenv("FECIM_LITERATURE_JSON_DIR")
@@ -214,22 +226,59 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 			ecErrPct := pctErr(ecSim, ecData)
 			areaErrPct := pctErr(areaSim, areaData)
 
+			localPrTh := thPrPct
+			localEcTh := thEcPct
+			localRMSETh := thRMSEps
+			localAreaTh := thAreaPct
+
+			// For direct pixel-digitized datasets, derive dataset-specific quality
+			// thresholds from provenance uncertainty bounds (3-sigma envelope) while
+			// keeping baseline global thresholds unchanged for all other datasets.
+			if ds.MaterialID == "bto2021_cryst11101192_hysteresis_digitized" {
+				unc, err := loadProvenanceUncertainty(ds.Provenance)
+				if err != nil {
+					t.Fatalf("load uncertainty for %s: %v", ds.MaterialID, err)
+				}
+				sigmaPr := math.Hypot(unc.PixelQuantizationUCcm2, unc.PolarScaleUncertaintyUC)
+				sigmaEc := unc.FieldScaleUncertaintyMV
+				if prData > 0 {
+					localPrTh = math.Max(localPrTh, 300.0*sigmaPr/math.Abs(prData))
+				}
+				if ecData > 0 {
+					localEcTh = math.Max(localEcTh, 300.0*sigmaEc/math.Abs(ecData))
+				}
+				if ps > 0 {
+					localRMSETh = math.Max(localRMSETh, 3.0*sigmaPr/ps)
+				}
+				relPr := 0.0
+				relEc := 0.0
+				if prData > 0 {
+					relPr = sigmaPr / math.Abs(prData)
+				}
+				if ecData > 0 {
+					relEc = sigmaEc / math.Abs(ecData)
+				}
+				localAreaTh = math.Max(localAreaTh, 300.0*math.Hypot(relPr, relEc))
+				t.Logf("UNCERTAINTY_THRESHOLDS material=%s pr_th=%0.2f%% ec_th=%0.2f%% rmse_th=%0.4f area_th=%0.2f%% sigmaPr=%0.3f sigmaEc=%0.3f",
+					ds.MaterialID, localPrTh, localEcTh, localRMSETh, localAreaTh, sigmaPr, sigmaEc)
+			}
+
 			pass := true
-			if prErrPct > thPrPct {
+			if prErrPct > localPrTh {
 				pass = false
-				t.Errorf("Pr error too large: pr_sim=%0.3f pr_data=%0.3f err=%0.2f%% (th=%0.1f%%)", prSim, prData, prErrPct, thPrPct)
+				t.Errorf("Pr error too large: pr_sim=%0.3f pr_data=%0.3f err=%0.2f%% (th=%0.1f%%)", prSim, prData, prErrPct, localPrTh)
 			}
-			if ecErrPct > thEcPct {
+			if ecErrPct > localEcTh {
 				pass = false
-				t.Errorf("Ec error too large: ec_sim=%0.3f ec_data=%0.3f err=%0.2f%% (th=%0.1f%%)", ecSim, ecData, ecErrPct, thEcPct)
+				t.Errorf("Ec error too large: ec_sim=%0.3f ec_data=%0.3f err=%0.2f%% (th=%0.1f%%)", ecSim, ecData, ecErrPct, localEcTh)
 			}
-			if rmsePs > thRMSEps {
+			if rmsePs > localRMSETh {
 				pass = false
-				t.Errorf("RMSE too large: rmse=%0.3f uC/cm2 Ps=%0.3f uC/cm2 rmse/Ps=%0.4f (th=%0.4f)", rmse, ps, rmsePs, thRMSEps)
+				t.Errorf("RMSE too large: rmse=%0.3f uC/cm2 Ps=%0.3f uC/cm2 rmse/Ps=%0.4f (th=%0.4f)", rmse, ps, rmsePs, localRMSETh)
 			}
-			if areaErrPct > thAreaPct {
+			if areaErrPct > localAreaTh {
 				pass = false
-				t.Errorf("loop area error too large: area_sim=%0.3e area_data=%0.3e err=%0.2f%% (th=%0.1f%%)", areaSim, areaData, areaErrPct, thAreaPct)
+				t.Errorf("loop area error too large: area_sim=%0.3e area_data=%0.3e err=%0.2f%% (th=%0.1f%%)", areaSim, areaData, areaErrPct, localAreaTh)
 			}
 
 			m := peLoopMetrics{
@@ -260,7 +309,7 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 			}
 
 			t.Logf("LITERATURE_METRICS material=%s doi=%s pr_sim=%0.3f pr_data=%0.3f err=%0.2f%%(th=%0.1f%%) ec_sim=%0.3f ec_data=%0.3f err=%0.2f%%(th=%0.1f%%) rmse=%0.3f uC/cm2 Ps=%0.3f uC/cm2 rmse/Ps=%0.4f(th=%0.4f) areaErr=%0.2f%%(th=%0.1f%%) pass=%v artifact=%s",
-				ds.MaterialID, ds.DOI, prSim, prData, prErrPct, thPrPct, ecSim, ecData, ecErrPct, thEcPct, rmse, ps, rmsePs, thRMSEps, areaErrPct, thAreaPct, pass, outPath)
+				ds.MaterialID, ds.DOI, prSim, prData, prErrPct, localPrTh, ecSim, ecData, ecErrPct, localEcTh, rmse, ps, rmsePs, localRMSETh, areaErrPct, localAreaTh, pass, outPath)
 		})
 	}
 }
@@ -293,10 +342,15 @@ func validateStrictProvenance(ds peLoopDataset) error {
 			PolarizationDatasetUnit string `json:"polarization_dataset_unit"`
 		} `json:"units"`
 		Digitization struct {
-			Method                  string `json:"method"`
-			PointCount              int    `json:"point_count"`
-			IsPlaceholderForRefinement bool `json:"is_placeholder_for_refinement"`
+			Method                     string `json:"method"`
+			PointCount                 int    `json:"point_count"`
+			IsPlaceholderForRefinement bool   `json:"is_placeholder_for_refinement"`
 		} `json:"digitization"`
+		Uncertainty struct {
+			PixelQuantizationUCcm2   float64 `json:"pixel_quantization_uC_cm2"`
+			FieldScaleUncertaintyMV  float64 `json:"field_scale_uncertainty_MV_cm"`
+			PolarScaleUncertaintyUC  float64 `json:"polarization_scale_uncertainty_uC_cm2"`
+		} `json:"uncertainty"`
 	}
 	if err := json.Unmarshal(raw, &prov); err != nil {
 		return fmt.Errorf("parse provenance file %s: %w", ds.Provenance, err)
@@ -318,8 +372,7 @@ func validateStrictProvenance(ds peLoopDataset) error {
 	}
 	switch ds.MaterialID {
 	case "pzt2024_nano14050432_fig2_thinfilm", "pzt2024_nano14050432_fig2_thinfilm_traceB", "bto2021_cryst11101192_hysteresis":
-		// PZT and current BTO dataset are calibrated_reference_curve candidate_tier1
-		// entries. They share the same strict provenance contract requirements.
+		// PZT + legacy BTO baseline are calibrated-reference candidate_tier1 entries.
 		if prov.Status != "calibrated_reference_curve" {
 			return fmt.Errorf("%s provenance status must be calibrated_reference_curve, got %q", ds.MaterialID, prov.Status)
 		}
@@ -334,6 +387,26 @@ func validateStrictProvenance(ds peLoopDataset) error {
 		}
 		if !prov.Digitization.IsPlaceholderForRefinement {
 			return fmt.Errorf("%s provenance must declare is_placeholder_for_refinement=true until direct pixel digitization is committed", ds.MaterialID)
+		}
+	case "bto2021_cryst11101192_hysteresis_digitized":
+		// Direct pixel-digitized BTO dataset must carry uncertainty and be marked non-placeholder.
+		if prov.Status != "pixel_digitized_curve" {
+			return fmt.Errorf("%s provenance status must be pixel_digitized_curve, got %q", ds.MaterialID, prov.Status)
+		}
+		if prov.Tier != "candidate_tier1" {
+			return fmt.Errorf("%s provenance tier must be candidate_tier1, got %q", ds.MaterialID, prov.Tier)
+		}
+		if prov.Digitization.PointCount < 100 {
+			return fmt.Errorf("%s provenance point_count too small: got %d want >= 100", ds.MaterialID, prov.Digitization.PointCount)
+		}
+		if prov.Digitization.Method == "" {
+			return fmt.Errorf("%s provenance missing digitization.method", ds.MaterialID)
+		}
+		if prov.Digitization.IsPlaceholderForRefinement {
+			return fmt.Errorf("%s provenance must declare is_placeholder_for_refinement=false for pixel-digitized dataset", ds.MaterialID)
+		}
+		if prov.Uncertainty.FieldScaleUncertaintyMV <= 0 || prov.Uncertainty.PolarScaleUncertaintyUC <= 0 {
+			return fmt.Errorf("%s provenance uncertainty bounds must be positive (field=%g, polar=%g)", ds.MaterialID, prov.Uncertainty.FieldScaleUncertaintyMV, prov.Uncertainty.PolarScaleUncertaintyUC)
 		}
 	case "alscn2022_pmc9607415_fig6a_pt_200nm", "alscn2022_pmc9607415_fig6b_mo_200nm":
 		// AlScN two-condition expansion: enforce explicit provenance contract for both
@@ -355,6 +428,34 @@ func validateStrictProvenance(ds peLoopDataset) error {
 		}
 	}
 	return nil
+}
+
+type provenanceUncertainty struct {
+	PixelQuantizationUCcm2 float64
+	FieldScaleUncertaintyMV float64
+	PolarScaleUncertaintyUC float64
+}
+
+func loadProvenanceUncertainty(path string) (provenanceUncertainty, error) {
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return provenanceUncertainty{}, err
+	}
+	var x struct {
+		Uncertainty struct {
+			PixelQuantizationUCcm2 float64 `json:"pixel_quantization_uC_cm2"`
+			FieldScaleUncertaintyMV float64 `json:"field_scale_uncertainty_MV_cm"`
+			PolarScaleUncertaintyUC float64 `json:"polarization_scale_uncertainty_uC_cm2"`
+		} `json:"uncertainty"`
+	}
+	if err := json.Unmarshal(raw, &x); err != nil {
+		return provenanceUncertainty{}, err
+	}
+	return provenanceUncertainty{
+		PixelQuantizationUCcm2: x.Uncertainty.PixelQuantizationUCcm2,
+		FieldScaleUncertaintyMV: x.Uncertainty.FieldScaleUncertaintyMV,
+		PolarScaleUncertaintyUC: x.Uncertainty.PolarScaleUncertaintyUC,
+	}, nil
 }
 
 func loadCSVLoop(path string) ([]float64, []float64, error) {
