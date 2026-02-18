@@ -4,10 +4,10 @@ package gui
 
 import (
 	"fmt"
-	"os"
 	"image"
 	"image/color"
 	"math"
+	"os"
 	"sync"
 
 	"fyne.io/fyne/v2"

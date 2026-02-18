@@ -31,20 +31,20 @@ func TestArrheniusSwitching(t *testing.T) {
 	fields := []float64{0.5, 0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0} // in units of Ec
 
 	// Extract material parameters for Merz law (NLS)
-	tau0 := mat.Tau0NLS // Attempt time (NLS)
+	tau0 := mat.Tau0NLS          // Attempt time (NLS)
 	activationField := mat.EaNLS // Activation field
 
 	// For HZO: typical values are τ0 ≈ 1e-9 s, Ea ≈ 1-2e9 V/m
 	t.Logf("Material: τ0 = %e s, Ea = %e V/m", tau0, activationField)
 
 	type merzResult struct {
-		E_Ec     float64 `json:"E_over_Ec"`
-		E_V_m    float64 `json:"E_V_per_m"`
-		TauSim   float64 `json:"tau_simulated_s"`
-		TauMerz  float64 `json:"tau_merz_law_s"`
-		ErrPct   float64 `json:"error_pct"`
-		LogTau   float64 `json:"log10_tau"`
-		LogTauM  float64 `json:"log10_merz"`
+		E_Ec    float64 `json:"E_over_Ec"`
+		E_V_m   float64 `json:"E_V_per_m"`
+		TauSim  float64 `json:"tau_simulated_s"`
+		TauMerz float64 `json:"tau_merz_law_s"`
+		ErrPct  float64 `json:"error_pct"`
+		LogTau  float64 `json:"log10_tau"`
+		LogTauM float64 `json:"log10_merz"`
 	}
 
 	var results []merzResult
@@ -101,8 +101,8 @@ func TestArrheniusSwitching(t *testing.T) {
 		"material":        "DefaultHZO",
 		"tau0_s":          tau0,
 		"activationField": activationField,
-		"ec_V_m":         ec,
-		"results":        results,
+		"ec_V_m":          ec,
+		"results":         results,
 	}
 
 	b, err := json.MarshalIndent(data, "", "  ")
@@ -128,7 +128,7 @@ func TestArrheniusMultiMaterial(t *testing.T) {
 	}
 
 	type materialResult struct {
-		Name          string  `json:"name"`
+		Name         string  `json:"name"`
 		Tau0NLS      float64 `json:"tau0_nls_s"`
 		EaNLS        float64 `json:"ea_nls_V_m"`
 		Ec           float64 `json:"ec_V_m"`
@@ -164,8 +164,8 @@ func TestArrheniusMultiMaterial(t *testing.T) {
 
 		results = append(results, materialResult{
 			Name:         mat.Name,
-			Tau0NLS:     mat.Tau0NLS,
-			EaNLS:       mat.EaNLS,
+			Tau0NLS:      mat.Tau0NLS,
+			EaNLS:        mat.EaNLS,
 			Ec:           mat.Ec,
 			TauAt1EcSim:  tauSim,
 			TauAt1EcMerz: tauMerz,
@@ -183,7 +183,7 @@ func TestArrheniusMultiMaterial(t *testing.T) {
 
 	data := map[string]interface{}{
 		"description": "Arrhenius switching validation across materials",
-		"results":    results,
+		"results":     results,
 	}
 
 	b, err := json.MarshalIndent(data, "", "  ")
@@ -199,4 +199,3 @@ func TestArrheniusMultiMaterial(t *testing.T) {
 		t.Fatal("No materials with valid NLS parameters")
 	}
 }
-	

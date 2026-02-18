@@ -93,10 +93,10 @@ func TestPerformance_M3_PERF_03_Scaling(t *testing.T) {
 	// Compare batch 100 vs batch 1000 - should not regress significantly
 	idx100 := 2  // batchSizes[2] = 100
 	idx1000 := 3 // batchSizes[3] = 1000
-	
+
 	throughput100 := throughputs[idx100]
 	throughput1000 := throughputs[idx1000]
-	
+
 	// Allow up to 10% regression from batch 100 to 1000 (GC effects, cache misses)
 	if throughput1000 < throughput100*0.90 {
 		t.Errorf("Throughput regressed from batch 100 to 1000: %.1f → %.1f img/s (%.1f%%)",
@@ -155,10 +155,10 @@ func TestScaling_LatencyVsThroughput(t *testing.T) {
 
 	batchSizes := []int{1, 10, 50, 100, 500, 1000}
 	type result struct {
-		batchSize   int
-		throughput  float64
-		avgLatency  float64
-		totalTimeS  float64
+		batchSize  int
+		throughput float64
+		avgLatency float64
+		totalTimeS float64
 	}
 	results := make([]result, 0, len(batchSizes))
 

@@ -13,9 +13,9 @@ import (
 	"math/rand"
 	"time"
 
-	"fecim-lattice-tools/shared/crossbar"
 	"fecim-lattice-tools/module3-mnist/pkg/mnist"
 	"fecim-lattice-tools/module3-mnist/pkg/training"
+	"fecim-lattice-tools/shared/crossbar"
 )
 
 // SimpleNetwork is a minimal neural network for MNIST

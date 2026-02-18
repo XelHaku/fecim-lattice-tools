@@ -42,7 +42,7 @@ func TestM6_SPICE_02_Subcircuit_1T1R_Topology(t *testing.T) {
 	if !strings.Contains(subckt, "W=") || !strings.Contains(subckt, "L=") {
 		t.Error("M6-SPICE-02: 1T1R MSEL missing W/L parameters")
 	}
-	
+
 	// Verify values are present (allow for formatting variations)
 	if !strings.Contains(subckt, "4.2") && !strings.Contains(subckt, "4.20000") {
 		t.Errorf("M6-SPICE-02: 1T1R MSEL width value incorrect (expected W≈4.2e-07 from SKY130NMOS preset W=%.12e)",
@@ -96,7 +96,7 @@ func TestM6_SPICE_02_Subcircuit_2T1R_Topology(t *testing.T) {
 
 	// Verify FET parameters
 	sel := physics.SKY130NMOS()
-	
+
 	// Count W= and L= occurrences (should be 2 each for dual transistors)
 	wCount := strings.Count(subckt, "W=")
 	lCount := strings.Count(subckt, "L=")
@@ -106,7 +106,7 @@ func TestM6_SPICE_02_Subcircuit_2T1R_Topology(t *testing.T) {
 	if lCount != 2 {
 		t.Errorf("M6-SPICE-02: 2T1R should have 2 FETs with L= parameters, got %d", lCount)
 	}
-	
+
 	// Verify values are approximately correct
 	if !strings.Contains(subckt, "4.2") {
 		t.Errorf("M6-SPICE-02: 2T1R FET width value incorrect (expected W≈%.3e)", sel.W)

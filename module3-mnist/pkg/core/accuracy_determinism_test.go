@@ -64,11 +64,11 @@ func TestAccuracyDeterminism_M3_ACC_05(t *testing.T) {
 	// Run 3 independent inference passes
 	const numRuns = 3
 	type runResult struct {
-		predictions    []int
-		fpLogits       [][]float64
-		cimLogits      [][]float64
-		fpProbs        [][]float64
-		cimProbs       [][]float64
+		predictions     []int
+		fpLogits        [][]float64
+		cimLogits       [][]float64
+		fpProbs         [][]float64
+		cimProbs        [][]float64
 		predictionsHash [32]byte
 		fpLogitsHash    [32]byte
 		cimLogitsHash   [32]byte

@@ -1,0 +1,44 @@
+{
+  "dataset_id": "alscn2022_pmc9607415_fig6b_mo_200nm",
+  "status": "calibrated_reference_curve",
+  "tier": "candidate_tier1",
+  "reference": {
+    "doi": "10.3390/mi13101629"
+  },
+  "paper": {
+    "title": "Characterization of Ferroelectric Al0.7Sc0.3N Thin Film on Pt and Mo Electrodes",
+    "journal": "Micromachines",
+    "year": 2022,
+    "doi": "10.3390/mi13101629",
+    "url": "https://www.mdpi.com/2072-666X/13/10/1629"
+  },
+  "figure": {
+    "figure_id": "6b",
+    "description": "P-E hysteresis loop for Al0.7Sc0.3N (200 nm) on Mo bottom electrode"
+  },
+  "material": {
+    "name": "Al0.7Sc0.3N on Mo",
+    "thickness_nm": 200
+  },
+  "units": {
+    "field_dataset_unit": "MV/cm",
+    "polarization_dataset_unit": "uC/cm2"
+  },
+  "digitization": {
+    "method": "calibrated reference curve generated from Preisach model using DOI-reported Mo-condition loop scale",
+    "tool": "go generator (module1 Preisach model)",
+    "date_utc": "2026-02-18T02:20:00Z",
+    "operator": "Riju",
+    "point_count": 61,
+    "is_placeholder_for_refinement": true,
+    "notes": [
+      "OA second-condition dataset for Tier-1 AlScN expansion (Mo electrode condition).",
+      "Direct point-by-point pixel digitization from Figure 6b remains required for strict final closure."
+    ]
+  },
+  "physics_priors_from_paper": {
+    "pr_uC_cm2": 350.0,
+    "ec_MV_cm": 3.0,
+    "source": "Figure 6b narrative: Mo condition shows larger apparent remanent polarization and approximately 3 MV/cm coercive field"
+  }
+}

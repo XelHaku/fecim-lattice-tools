@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	kBoltzmann = 1.380649e-23  // Boltzmann constant (J/K)
+	kBoltzmann = 1.380649e-23    // Boltzmann constant (J/K)
 	qElectron  = 1.602176634e-19 // Elementary charge (C)
 )
 

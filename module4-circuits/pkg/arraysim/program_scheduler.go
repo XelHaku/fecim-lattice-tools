@@ -6,10 +6,10 @@ import "fmt"
 type ProgramOrderMode string
 
 const (
-	ProgramOrderRowMajor    ProgramOrderMode = "row-major"
+	ProgramOrderRowMajor     ProgramOrderMode = "row-major"
 	ProgramOrderCheckerboard ProgramOrderMode = "checkerboard"
-	ProgramOrderSerpentine  ProgramOrderMode = "serpentine"
-	ProgramOrderAdaptive    ProgramOrderMode = "adaptive"
+	ProgramOrderSerpentine   ProgramOrderMode = "serpentine"
+	ProgramOrderAdaptive     ProgramOrderMode = "adaptive"
 )
 
 // CellIndex identifies a single array cell.

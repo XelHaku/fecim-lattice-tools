@@ -14,16 +14,16 @@ import (
 // Validates that the LK RK4 solver achieves convergence with decreasing timestep.
 //
 // Method:
-//   1. Apply constant moderate field for fixed physical time at dt = {1e-10, 5e-11, 2.5e-11, 1.25e-11}
-//   2. Measure final polarization P
-//   3. Compute Richardson error ratios: (P[i-1] - P[i]) / (P[i] - P[i+1])
-//   4. For pure RK4, expected ratio = 2^4 = 16. However, the LK solver has:
-//      - Stiffness detection switching to implicit stepping
-//      - Rate clamping (maxAbsRate)
-//      - P clamping
-//      - Effective viscosity from series resistance
-//      These features can reduce observed convergence order, so we accept ratio >= 2
-//   5. Verify convergence is monotonic (finer dt gives more accurate result)
+//  1. Apply constant moderate field for fixed physical time at dt = {1e-10, 5e-11, 2.5e-11, 1.25e-11}
+//  2. Measure final polarization P
+//  3. Compute Richardson error ratios: (P[i-1] - P[i]) / (P[i] - P[i+1])
+//  4. For pure RK4, expected ratio = 2^4 = 16. However, the LK solver has:
+//     - Stiffness detection switching to implicit stepping
+//     - Rate clamping (maxAbsRate)
+//     - P clamping
+//     - Effective viscosity from series resistance
+//     These features can reduce observed convergence order, so we accept ratio >= 2
+//  5. Verify convergence is monotonic (finer dt gives more accurate result)
 //
 // Pass criteria:
 //   - Error ratio >= 2 for at least one pair (proves at least 2nd order convergence)

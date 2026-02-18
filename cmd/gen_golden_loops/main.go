@@ -29,29 +29,29 @@ type GoldenLoopData struct {
 
 func main() {
 	materials := physics.AllMaterials()
-	
+
 	fmt.Printf("Found %d materials\n", len(materials))
-	
+
 	outDir := "<local-path>"
 	os.MkdirAll(outDir, 0755)
-	
+
 	for _, mat := range materials {
 		fmt.Printf("Processing: %s\n", mat.Name)
-		
+
 		if mat.Ec <= 0 || mat.Ps <= 0 {
 			fmt.Printf("  SKIP: missing Ec or Ps\n")
 			continue
 		}
-		
+
 		// PREISACH ENGINE
 		preisachModel := ferroelectric.NewPreisachModel(mat)
 		preisachModel.Reset()
-		
+
 		Emax := 2.0 * mat.Ec
 		points := 100
-		
+
 		E_p, P_p := generatePreisachLoop(preisachModel, Emax, points)
-		
+
 		safeName := safeFilename(mat.Name)
 		goldenP := GoldenLoopData{
 			Version:     "1.5.0",
@@ -69,29 +69,29 @@ func main() {
 		}
 		goldenP.Data.E = E_p
 		goldenP.Data.P = P_p
-		
+
 		pFile := filepath.Join(outDir, fmt.Sprintf("golden_loop_%s_preisach.json", safeName))
 		writeJSON(pFile, goldenP)
 		fmt.Printf("  ✓ Preisach: %s\n", filepath.Base(pFile))
-		
+
 		fmt.Printf("  ○ LK: pending (see shared/physics/landau.go)\n")
 	}
-	
+
 	fmt.Println("\nDone! Golden loops generated.")
 }
 
 func generatePreisachLoop(model *ferroelectric.PreisachModel, Emax float64, points int) ([]float64, []float64) {
 	E := make([]float64, points)
 	P := make([]float64, points)
-	
+
 	step := 2 * Emax / float64(points-1)
-	
+
 	for i := 0; i < points; i++ {
 		e := -Emax + step*float64(i)
 		P[i] = model.Update(e)
 		E[i] = e
 	}
-	
+
 	return E, P
 }
 
@@ -116,7 +116,7 @@ func writeJSON(path string, data GoldenLoopData) {
 		return
 	}
 	defer f.Close()
-	
+
 	enc := json.NewEncoder(f)
 	enc.SetIndent("", "  ")
 	if err := enc.Encode(data); err != nil {

@@ -164,15 +164,15 @@ type App struct {
 	dataLogger *HysteresisDataLogger
 
 	// UI state
-	running         atomic.Bool
-	paused          atomic.Bool
-	autoMode        bool
-	waveform          WaveformType
-	physicsEngine     PhysicsEngine
-	physicsSelect     *widget.Select
-	isppMethodSelect  *widget.Select
-	tempContainer     *fyne.Container // Temperature controls (L-K only)
-	stressContainer   *fyne.Container // Stress controls (L-K only)
+	running          atomic.Bool
+	paused           atomic.Bool
+	autoMode         bool
+	waveform         WaveformType
+	physicsEngine    PhysicsEngine
+	physicsSelect    *widget.Select
+	isppMethodSelect *widget.Select
+	tempContainer    *fyne.Container // Temperature controls (L-K only)
+	stressContainer  *fyne.Container // Stress controls (L-K only)
 
 	// Plot view (presentation-only)
 	plotViewMode   PlotViewMode
@@ -298,25 +298,25 @@ type App struct {
 	tempCalibrations map[int]*TempCalibration // Cache of calibrations at key temperatures (key: temp in K)
 
 	// UI components
-	plot            *widgets.PEPlot
-	levelIndicator  *widgets.LevelIndicator
-	cellViz         *widgets.CellVisualizer
-	phaseIndicator  *widgets.PhaseIndicator // State machine phase indicator (PROGRAM|VERIFY|RESULT)
+	plot             *widgets.PEPlot
+	levelIndicator   *widgets.LevelIndicator
+	cellViz          *widgets.CellVisualizer
+	phaseIndicator   *widgets.PhaseIndicator // State machine phase indicator (PROGRAM|VERIFY|RESULT)
 	eFieldSlider     *widget.Slider
 	eFieldLabel      *widget.Label
 	eFieldModeLabel  *widget.Label // Shows "MANUAL" or "AUTO" for slider control mode
 	eFieldRangeLabel *widget.Label // Shows slider range in MV/cm (e.g. "±2.12 MV/cm")
-	tempSlider      *widget.Slider
-	stressSlider    *widget.Slider
-	envAccordion    *widget.AccordionItem // Environment section (disabled for Preisach)
-	pLabel          *widget.Label
-	levelLabel      *widget.Label
-	stateLabel      *widget.Label  // State description (Negative P, Intermediate, Positive P)
-	materialBtn     *widget.Button // Opens material picker, shows current material name
-	waveformSelect  *widget.Select
-	waveformHelp    *widget.Label
-	statusLabel     *widget.Label
-	pauseBtn        *widget.Button
+	tempSlider       *widget.Slider
+	stressSlider     *widget.Slider
+	envAccordion     *widget.AccordionItem // Environment section (disabled for Preisach)
+	pLabel           *widget.Label
+	levelLabel       *widget.Label
+	stateLabel       *widget.Label  // State description (Negative P, Intermediate, Positive P)
+	materialBtn      *widget.Button // Opens material picker, shows current material name
+	waveformSelect   *widget.Select
+	waveformHelp     *widget.Label
+	statusLabel      *widget.Label
+	pauseBtn         *widget.Button
 
 	// Wake-up/Fatigue display labels (Dr. Tour recommendation)
 	cyclesLabel     *widget.Label

@@ -23,11 +23,11 @@ type DualModeAppTestHooks struct {
 
 func (app *DualModeApp) TestHooks() DualModeAppTestHooks {
 	return DualModeAppTestHooks{
-		LevelsSelect: app.levelsSelect,
-		NoiseSlider:  app.noiseSlider,
-		StatusLabel:  app.statusLabel,
-		FPPredLabel:  app.fpPredLabel,
-		CIMPredLabel: app.cimPredLabel,
+		LevelsSelect:   app.levelsSelect,
+		NoiseSlider:    app.noiseSlider,
+		StatusLabel:    app.statusLabel,
+		FPPredLabel:    app.fpPredLabel,
+		CIMPredLabel:   app.cimPredLabel,
 		AgreementLabel: app.agreementLabel,
 	}
 }

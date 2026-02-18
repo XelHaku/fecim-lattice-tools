@@ -24,14 +24,14 @@ import (
 	"fecim-lattice-tools/module4-circuits/pkg/arraysim"
 )
 
-const kclTolerance = 5e-9  // 5 nA max KCL imbalance (0.02% of typical cell current)
-const kvlTolerance = 1e-9  // 1 nV max KVL imbalance around any loop
+const kclTolerance = 5e-9 // 5 nA max KCL imbalance (0.02% of typical cell current)
+const kvlTolerance = 1e-9 // 1 nV max KVL imbalance around any loop
 
 type kclConfig struct {
-	name       string
-	size       int
-	gPattern   string // "uniform", "random", "hi_contrast", "gradient"
-	vPattern   string // "symmetric", "half_select", "all_one"
+	name     string
+	size     int
+	gPattern string // "uniform", "random", "hi_contrast", "gradient"
+	vPattern string // "symmetric", "half_select", "all_one"
 }
 
 func TestKCLKVLExhaustive(t *testing.T) {
@@ -53,12 +53,12 @@ func TestKCLKVLExhaustive(t *testing.T) {
 	}
 
 	type kclResult struct {
-		Name         string  `json:"name"`
-		Size         int     `json:"size"`
-		MaxKCLErr_A  float64 `json:"max_kcl_error_A"`
-		MaxKVLErr_V  float64 `json:"max_kvl_error_V"`
-		PassKCL      bool    `json:"pass_kcl"`
-		PassKVL      bool    `json:"pass_kvl"`
+		Name        string  `json:"name"`
+		Size        int     `json:"size"`
+		MaxKCLErr_A float64 `json:"max_kcl_error_A"`
+		MaxKVLErr_V float64 `json:"max_kvl_error_V"`
+		PassKCL     bool    `json:"pass_kcl"`
+		PassKVL     bool    `json:"pass_kvl"`
 	}
 
 	var results []kclResult
@@ -179,8 +179,8 @@ func TestKCLConvergenceVsArraySize(t *testing.T) {
 	rng := rand.New(rand.NewSource(99))
 
 	type convergenceResult struct {
-		Size        int     `json:"size"`
-		MaxKCL_A    float64 `json:"max_kcl_A"`
+		Size          int     `json:"size"`
+		MaxKCL_A      float64 `json:"max_kcl_A"`
 		ExpectedOrder float64 `json:"expected_O_N2_eps"`
 	}
 
@@ -276,7 +276,7 @@ func buildVoltages(n int, pattern string) (VWL, VBL []float64) {
 	case "half_select":
 		// V/2 half-select scheme
 		for i := 0; i < n; i++ {
-			VWL[i] = 0.5 // selected row
+			VWL[i] = 0.5  // selected row
 			VBL[i] = 0.25 // half-select
 		}
 		VBL[0] = 0.0 // one selected column

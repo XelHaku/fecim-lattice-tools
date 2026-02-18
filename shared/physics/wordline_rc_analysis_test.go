@@ -15,13 +15,13 @@ type wlTechNode struct {
 }
 
 type wlRow struct {
-	TechNode      string
-	N             int
-	RSegOhm       float64
-	CSegFF        float64
-	TauNS         float64
-	PulseWidthNS  float64
-	Viable        bool
+	TechNode     string
+	N            int
+	RSegOhm      float64
+	CSegFF       float64
+	TauNS        float64
+	PulseWidthNS float64
+	Viable       bool
 }
 
 func computeWordlineRows() []wlRow {

@@ -11,10 +11,10 @@ import (
 )
 
 var (
-	headingRE       = regexp.MustCompile(`(?m)^(#{1,6})\s+(.+?)\s*$`)
-	markdownLinkRE  = regexp.MustCompile(`\[[^\]]+\]\(([^)]+)\)`)
-	imagePrefixRE   = regexp.MustCompile(`^!\[[^\]]*\]\(`)
-	htmlAnchorRE    = regexp.MustCompile(`(?i)<a\s+id=["']([^"']+)["']`)
+	headingRE      = regexp.MustCompile(`(?m)^(#{1,6})\s+(.+?)\s*$`)
+	markdownLinkRE = regexp.MustCompile(`\[[^\]]+\]\(([^)]+)\)`)
+	imagePrefixRE  = regexp.MustCompile(`^!\[[^\]]*\]\(`)
+	htmlAnchorRE   = regexp.MustCompile(`(?i)<a\s+id=["']([^"']+)["']`)
 )
 
 func TestModule7DocsIntegrity(t *testing.T) {
@@ -149,7 +149,7 @@ func resolveDocsRoot(t *testing.T) string {
 	t.Helper()
 	candidates := []string{
 		filepath.Clean(filepath.Join("..", "..", "..", "docs", "documentation")), // legacy path
-		filepath.Clean(filepath.Join("..", "..", "..", "docs")),                   // current docs layout
+		filepath.Clean(filepath.Join("..", "..", "..", "docs")),                  // current docs layout
 	}
 	for _, root := range candidates {
 		abs := root

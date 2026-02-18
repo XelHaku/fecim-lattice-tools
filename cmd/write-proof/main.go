@@ -14,13 +14,15 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 
-	sharedtheme "fecim-lattice-tools/shared/theme"
 	gui "fecim-lattice-tools/module4-circuits/pkg/gui"
+	sharedtheme "fecim-lattice-tools/shared/theme"
 )
 
 func savePNG(path string, img image.Image) error {
 	f, err := os.Create(path)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	defer f.Close()
 	return png.Encode(f, img)
 }

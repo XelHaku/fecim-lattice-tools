@@ -8,12 +8,12 @@ import (
 )
 
 type isppCycleResult struct {
-	targetLevel  int
-	finalLevel   int
-	pulses       int
-	maxAbsField  float64
-	converged    bool
-	writeState   WriteState
+	targetLevel int
+	finalLevel  int
+	pulses      int
+	maxAbsField float64
+	converged   bool
+	writeState  WriteState
 }
 
 func runISPPFullCyclePreisachLevel(t *testing.T, targetLevel, numLevels int, startPositive bool) isppCycleResult {

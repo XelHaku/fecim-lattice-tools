@@ -149,7 +149,9 @@ func TestCompute_ScipyRowCurrentCrossVal(t *testing.T) {
 	if err != nil {
 		t.Fatalf("scipy: %v\n%s", err, out)
 	}
-	var pyRes struct{ RowI []float64 `json:"row_I_A"` }
+	var pyRes struct {
+		RowI []float64 `json:"row_I_A"`
+	}
 	if err := json.Unmarshal(out, &pyRes); err != nil {
 		t.Fatalf("parse scipy: %v\nraw: %s", err, out)
 	}
@@ -188,12 +190,14 @@ func TestCompute_ScipyRowCurrentCrossVal(t *testing.T) {
 //
 // The FeCIM simulator uses EXPONENTIAL (log-space) conductance mapping
 // (ParseConductanceModel default → ConductanceExponential per 2024 literature,
-//  Nature Comms 2018: linear model fundamentally wrong for FeFET subthreshold).
+//
+//	Nature Comms 2018: linear model fundamentally wrong for FeFET subthreshold).
 //
 // Reference formula (independent of any simulator function):
-//   n(lvl)  = (normalizedP + 1) / 2  where normalizedP = -1 + 2*lvl/(N-1)
-//   G(lvl)  = exp(log(Gmin) + (log(Gmax)-log(Gmin)) * n)
-//           = Gmin * (Gmax/Gmin)^n             (log-space interpolation)
+//
+//	n(lvl)  = (normalizedP + 1) / 2  where normalizedP = -1 + 2*lvl/(N-1)
+//	G(lvl)  = exp(log(Gmin) + (log(Gmax)-log(Gmin)) * n)
+//	        = Gmin * (Gmax/Gmin)^n             (log-space interpolation)
 //
 // This IS physics: subthreshold FET Id ∝ exp(VGS/nVT), so G ∝ exp(ΔVt*P/nVT).
 // With kvT=0 (FeCIMMaterial default), the code falls back to pure log-space.
@@ -251,10 +255,12 @@ func TestRead_TIAFirstPrinciples(t *testing.T) {
 // WRITE: LK solver small-signal regime cross-validation.
 //
 // For E << Ec, the Landau-Khalatnikov equation linearises to:
-//   ρ * dP/dt ≈ -2*α*P + E   (restoring force dominant, γP^5 << βP^3 << αP)
+//
+//	ρ * dP/dt ≈ -2*α*P + E   (restoring force dominant, γP^5 << βP^3 << αP)
 //
 // The small-signal response at P ≈ +Pr is approximately:
-//   P(t) ≈ Pr + ΔP * (1 - exp(-t/τ_lin))
+//
+//	P(t) ≈ Pr + ΔP * (1 - exp(-t/τ_lin))
 //
 // where τ_lin = ρ / (2*|α|)   (linearized around +Pr)
 //
@@ -263,7 +269,9 @@ func TestRead_TIAFirstPrinciples(t *testing.T) {
 // Tolerance: 5% (captures digitization and nonlinear correction at finite E).
 //
 // Literature basis:
-//   Tagantsev et al., Phys. Rev. B 2010 — LK small-signal susceptibility
+//
+//	Tagantsev et al., Phys. Rev. B 2010 — LK small-signal susceptibility
+//
 // ─────────────────────────────────────────────────────────────────────────────
 func TestWrite_LKSmallSignalAnalytical(t *testing.T) {
 	mat := sharedphysics.FeCIMMaterial()
@@ -358,14 +366,14 @@ func TestWrite_LKSmallSignalAnalytical(t *testing.T) {
 	dir := "../../output/validation/external"
 	os.MkdirAll(dir, 0755)
 	artifact := map[string]interface{}{
-		"test": "lk_small_signal_analytical",
+		"test":     "lk_small_signal_analytical",
 		"material": mat.Name,
-		"doi": "10.1103/PhysRevB.82.054107",
-		"alpha": alpha, "beta": beta, "gamma": gamma, "rho": rho,
-		"tau_lin_s": tau_lin,
-		"E_field_V_m": E_small,
+		"doi":      "10.1103/PhysRevB.82.054107",
+		"alpha":    alpha, "beta": beta, "gamma": gamma, "rho": rho,
+		"tau_lin_s":      tau_lin,
+		"E_field_V_m":    E_small,
 		"max_err_uC_cm2": maxErr,
-		"pass": allPass,
+		"pass":           allPass,
 	}
 	b, _ := json.MarshalIndent(artifact, "", "  ")
 	os.WriteFile(dir+"/lk_small_signal_analytical.json", b, 0644)

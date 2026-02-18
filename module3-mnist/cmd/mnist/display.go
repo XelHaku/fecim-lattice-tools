@@ -1,13 +1,14 @@
 package mnistcli
 
 import (
-"fmt"
-"math"
-"math/rand"
-"strings"
+	"fmt"
+	"math"
+	"math/rand"
+	"strings"
 
-"fecim-lattice-tools/module3-mnist/pkg/training"
+	"fecim-lattice-tools/module3-mnist/pkg/training"
 )
+
 func showImage(img []float64) {
 	fmt.Println("\nInput Image:")
 	for row := 0; row < 28; row++ {

@@ -100,15 +100,15 @@ func TestCrossbarCoreInterface_ArraySatisfiesInterface(t *testing.T) {
 
 // mockDevice is a minimal DeviceModel implementation for interface contract testing.
 type mockDevice struct {
-	levels    int
+	levels     int
 	gMin, gMax float64
 }
 
-func (d *mockDevice) ApplyWriteError(targetG float64) float64         { return targetG }
-func (d *mockDevice) ReadNoise(storedG float64) float64               { return storedG }
-func (d *mockDevice) DriftError(storedG, _ float64) float64           { return storedG }
-func (d *mockDevice) Levels() int                                     { return d.levels }
-func (d *mockDevice) ConductanceRange() (float64, float64)            { return d.gMin, d.gMax }
+func (d *mockDevice) ApplyWriteError(targetG float64) float64 { return targetG }
+func (d *mockDevice) ReadNoise(storedG float64) float64       { return storedG }
+func (d *mockDevice) DriftError(storedG, _ float64) float64   { return storedG }
+func (d *mockDevice) Levels() int                             { return d.levels }
+func (d *mockDevice) ConductanceRange() (float64, float64)    { return d.gMin, d.gMax }
 
 // Compile-time assertion: mockDevice must satisfy DeviceModel.
 var _ DeviceModel = (*mockDevice)(nil)

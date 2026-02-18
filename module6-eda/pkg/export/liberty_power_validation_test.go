@@ -53,8 +53,8 @@ func TestM6LIB03_PowerDynamicPowerEntriesPresent(t *testing.T) {
 // TestM6LIB03_PowerModule4EnergyAnnotation validates Module 4 internal_power injection
 func TestM6LIB03_PowerModule4EnergyAnnotation(t *testing.T) {
 	cfg := config.DefaultCellConfig()
-	cfg.RiseTime = 50.0  // ns
-	cfg.FallTime = 5.0   // ns
+	cfg.RiseTime = 50.0 // ns
+	cfg.FallTime = 5.0  // ns
 
 	// Module 4 energy model (J/op)
 	energy := &Module4EnergyModel{

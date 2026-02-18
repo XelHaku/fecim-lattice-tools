@@ -53,8 +53,8 @@ func DefaultFeCapHZO() FeCapParams {
 		ThicknessFE: tFE,
 		CoerciveV:   Vc,
 		EpsFEr:      30.0,
-		Qs:          0.25,                // 25 µC/cm²
-		A:           1.0 / (0.1 * Vc),   // steep switching
+		Qs:          0.25,             // 25 µC/cm²
+		A:           1.0 / (0.1 * Vc), // steep switching
 		Rho:         0.0,
 	}
 }

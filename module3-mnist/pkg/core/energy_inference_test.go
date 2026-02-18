@@ -14,10 +14,10 @@ func TestM3_ENERGY_03_InferenceEnergyBreakdown(t *testing.T) {
 
 	// Typical FeCIM parameters for MNIST 2-layer network (784→128→10)
 	const (
-		capacitanceF = 10e-15 // 10 fF per cell
-		voltageV     = 1.8    // 1.8V write voltage
-		readVoltageV = 0.2    // 0.2V read voltage
-		iOffA        = 1e-9   // 1 nA off-current
+		capacitanceF   = 10e-15 // 10 fF per cell
+		voltageV       = 1.8    // 1.8V write voltage
+		readVoltageV   = 0.2    // 0.2V read voltage
+		iOffA          = 1e-9   // 1 nA off-current
 		inferenceTimeS = 100e-6 // 100 µs per inference (typical CIM latency)
 	)
 
@@ -137,8 +137,8 @@ func TestM3_ENERGY_03_InferenceTimeImpact(t *testing.T) {
 	totalLeakage := float64(totalWeights) * leakagePerCell
 
 	times := []struct {
-		name   string
-		timeS  float64
+		name  string
+		timeS float64
 	}{
 		{"fast (10 µs)", 10e-6},
 		{"typical (100 µs)", 100e-6},

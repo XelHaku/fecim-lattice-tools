@@ -26,10 +26,10 @@ func TestMVMVMMSymmetry_M2MVM04(t *testing.T) {
 	rand.Seed(3)
 	// Use 8-bit quantization (typical), and compare within 1 LSB plus epsilon.
 	const (
-		n    = 16
-		dac  = 8
-		adc  = 8
-		eps  = 1e-12
+		n   = 16
+		dac = 8
+		adc = 8
+		eps = 1e-12
 	)
 	lsb := 1.0 / float64((1<<adc)-1)
 	tol := lsb + eps

@@ -134,7 +134,7 @@ func RampADC(bits int, columnsPerADC int) *ADC {
 // Only distinguishes above/below a threshold — suitable for binary neural networks.
 func ComparatorADC() *ADC {
 	return &ADC{
-		Bits:           1,   // 1-bit: 2 levels (binary)
+		Bits:           1, // 1-bit: 2 levels (binary)
 		VrefHigh:       1.0,
 		VrefLow:        0.0,
 		INL:            0.1, // Single comparator has excellent linearity

@@ -158,8 +158,8 @@ func TestFeCAPMVMCharge(t *testing.T) {
 // add on top.
 func TestFeCAPMVMChargeEnergy_LiteratureBenchmark(t *testing.T) {
 	const (
-		rows      = 128
-		cols      = 128
+		rows = 128
+		cols = 128
 		// HZO FeCAP arrays typically operate with 0.5 V word-line swing
 		// (below the coercive voltage for read-disturb-free operation).
 		// The Adv. Intell. Syst. 2022 demo used 0.5 V sense pulse.

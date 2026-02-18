@@ -30,14 +30,14 @@ func TestMaterial_CapacitanceCalculation(t *testing.T) {
 		{
 			name:      "HZO",
 			epsR:      25.0,
-			thickness: 10e-9, // 10 nm
+			thickness: 10e-9,     // 10 nm
 			area:      2.025e-15, // ~45nm × 45nm
 		},
 		{
 			name:      "PZT",
 			epsR:      1000.0,
 			thickness: 100e-9, // 100 nm
-			area:      1e-14, // 100nm × 100nm
+			area:      1e-14,  // 100nm × 100nm
 		},
 		{
 			name:      "BTO",
@@ -55,16 +55,16 @@ func TestMaterial_CapacitanceCalculation(t *testing.T) {
 			// Calculate capacitance in fF for reporting
 			expectedCapFF := expectedCap * 1e15
 
-			t.Logf("%s: εᵣ=%.1f, d=%.1e m, A=%.3e m² → C_fe=%.3f fF", 
+			t.Logf("%s: εᵣ=%.1f, d=%.1e m, A=%.3e m² → C_fe=%.3f fF",
 				tc.name, tc.epsR, tc.thickness, tc.area, expectedCapFF)
 
 			// Verify capacitance calculation formula
 			tolerance := 0.01 // 1%
 			calculatedCap := eps0 * tc.epsR * tc.area / tc.thickness
-			delta := math.Abs(calculatedCap - expectedCap) / expectedCap
-			
+			delta := math.Abs(calculatedCap-expectedCap) / expectedCap
+
 			if delta > tolerance {
-				t.Errorf("Capacitance mismatch: calculated %.6e F, expected %.6e F (delta %.2f%%)", 
+				t.Errorf("Capacitance mismatch: calculated %.6e F, expected %.6e F (delta %.2f%%)",
 					calculatedCap, expectedCap, delta*100)
 			}
 
@@ -107,17 +107,17 @@ func TestMaterial_ConductanceMapping(t *testing.T) {
 	// Verify conductance range mapping
 	for idx, cell := range design.Cells {
 		if cell.Conductance < config.GMin || cell.Conductance > config.GMax {
-			t.Errorf("Cell %d: conductance %.3f μS out of range [%.1f, %.1f]", 
+			t.Errorf("Cell %d: conductance %.3f μS out of range [%.1f, %.1f]",
 				idx, cell.Conductance, config.GMin, config.GMax)
 		}
 
 		// Verify conductance/resistance consistency: R = 1e6 / G (Ω from μS)
 		expectedR := 1e6 / cell.Conductance
 		tolerance := 0.01 // 1%
-		delta := math.Abs(cell.Resistance - expectedR) / expectedR
-		
+		delta := math.Abs(cell.Resistance-expectedR) / expectedR
+
 		if delta > tolerance {
-			t.Errorf("Cell %d: R/G inconsistency: R=%.3e Ω, G=%.3f μS, expected R=%.3e Ω (delta %.2f%%)", 
+			t.Errorf("Cell %d: R/G inconsistency: R=%.3e Ω, G=%.3f μS, expected R=%.3e Ω (delta %.2f%%)",
 				idx, cell.Resistance, cell.Conductance, expectedR, delta*100)
 		}
 	}
@@ -142,7 +142,7 @@ func TestMaterial_ConductanceMapping(t *testing.T) {
 		t.Errorf("Maximum conductance %.3f μS far from GMax %.1f μS", maxCond, config.GMax)
 	}
 
-	t.Logf("Conductance range: [%.3f, %.3f] μS (config: [%.1f, %.1f] μS)", 
+	t.Logf("Conductance range: [%.3f, %.3f] μS (config: [%.1f, %.1f] μS)",
 		minCond, maxCond, config.GMin, config.GMax)
 }
 
@@ -172,13 +172,13 @@ func TestMaterial_ResistanceFromConductance(t *testing.T) {
 
 			// All cells should have the same conductance/resistance
 			for idx, cell := range design.Cells {
-				if math.Abs(cell.Conductance - tc.conductance) > 1e-6 {
-					t.Errorf("Cell %d: conductance %.6f μS != expected %.6f μS", 
+				if math.Abs(cell.Conductance-tc.conductance) > 1e-6 {
+					t.Errorf("Cell %d: conductance %.6f μS != expected %.6f μS",
 						idx, cell.Conductance, tc.conductance)
 				}
 
-				if math.Abs(cell.Resistance - tc.expectedR) / tc.expectedR > 0.01 {
-					t.Errorf("Cell %d: resistance %.6e Ω != expected %.6e Ω", 
+				if math.Abs(cell.Resistance-tc.expectedR)/tc.expectedR > 0.01 {
+					t.Errorf("Cell %d: resistance %.6e Ω != expected %.6e Ω",
 						idx, cell.Resistance, tc.expectedR)
 				}
 			}
@@ -213,7 +213,7 @@ func TestMaterial_ProgrammingVoltageMapping(t *testing.T) {
 	var minV, maxV float64 = math.MaxFloat64, 0.0
 	for _, cell := range design.Cells {
 		if cell.ProgramV < config.VProgMin || cell.ProgramV > config.VProgMax {
-			t.Errorf("Cell (%d,%d): V_prog %.3f V out of range [%.1f, %.1f]", 
+			t.Errorf("Cell (%d,%d): V_prog %.3f V out of range [%.1f, %.1f]",
 				cell.Row, cell.Col, cell.ProgramV, config.VProgMin, config.VProgMax)
 		}
 
@@ -233,7 +233,7 @@ func TestMaterial_ProgrammingVoltageMapping(t *testing.T) {
 		t.Errorf("Maximum V_prog %.3f V far from VProgMax %.1f V", maxV, config.VProgMax)
 	}
 
-	t.Logf("Programming voltage range: [%.3f, %.3f] V (config: [%.1f, %.1f] V)", 
+	t.Logf("Programming voltage range: [%.3f, %.3f] V (config: [%.1f, %.1f] V)",
 		minV, maxV, config.VProgMin, config.VProgMax)
 }
 
@@ -262,14 +262,14 @@ func TestMaterial_SharedPhysicsIntegration(t *testing.T) {
 	if area <= 0 {
 		area = 2.025e-15 // Default if not set
 	}
-	
+
 	expectedCap := eps0 * hzoMat.Epsilon * area / thickness
 	expectedCapFF := expectedCap * 1e15
 
 	// Coercive field in MV/cm for reporting
 	EcMVcm := hzoMat.Ec / 1e6 / 100 // V/m → MV/cm
 
-	t.Logf("HZO from shared/physics: εᵣ=%.1f, Ec=%.2f MV/cm → C_fe=%.3f fF (d=%.1e m, A=%.2e m²)", 
+	t.Logf("HZO from shared/physics: εᵣ=%.1f, Ec=%.2f MV/cm → C_fe=%.3f fF (d=%.1e m, A=%.2e m²)",
 		hzoMat.Epsilon, EcMVcm, expectedCapFF, thickness, area)
 
 	// Verify tolerance against literature values
@@ -322,13 +322,13 @@ func TestMaterial_MultiMaterialConsistency(t *testing.T) {
 
 			// Verify permittivity range
 			if material.Epsilon < mat.epsRRange[0] || material.Epsilon > mat.epsRRange[1] {
-				t.Logf("Warning: %s εᵣ=%.1f outside expected range [%.0f, %.0f]", 
+				t.Logf("Warning: %s εᵣ=%.1f outside expected range [%.0f, %.0f]",
 					mat.name, material.Epsilon, mat.epsRRange[0], mat.epsRRange[1])
 			}
 
 			// Verify coercive field range
 			if EcMVcm < mat.EcRangeMVcm[0] || EcMVcm > mat.EcRangeMVcm[1] {
-				t.Logf("Warning: %s Ec=%.3f MV/cm outside expected range [%.2f, %.2f]", 
+				t.Logf("Warning: %s Ec=%.3f MV/cm outside expected range [%.2f, %.2f]",
 					mat.name, EcMVcm, mat.EcRangeMVcm[0], mat.EcRangeMVcm[1])
 			}
 
@@ -341,11 +341,11 @@ func TestMaterial_MultiMaterialConsistency(t *testing.T) {
 			if area <= 0 {
 				area = 2.025e-15
 			}
-			
+
 			cap := eps0 * material.Epsilon * area / thickness
 			capFF := cap * 1e15
 
-			t.Logf("%s: εᵣ=%.1f, Ec=%.3f MV/cm, C_fe=%.3f fF", 
+			t.Logf("%s: εᵣ=%.1f, Ec=%.3f MV/cm, C_fe=%.3f fF",
 				mat.name, material.Epsilon, EcMVcm, capFF)
 		})
 	}

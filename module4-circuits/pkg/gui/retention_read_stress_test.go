@@ -24,9 +24,9 @@ func TestRetentionReadStress_MidLevelConductanceStable(t *testing.T) {
 	// d(ΔG/G)=k*(Vread/Vc)^η*(limit-ΔG/G), with limit=0.8%.
 	rel := 0.0
 	const (
-		k      = 0.02
-		eta    = 3.0
-		limit  = 0.008
+		k     = 0.02
+		eta   = 3.0
+		limit = 0.008
 	)
 	for i := 0; i < reads; i++ {
 		ds.wlVoltages[row], ds.wlVoltages[1] = readHalfV, 0

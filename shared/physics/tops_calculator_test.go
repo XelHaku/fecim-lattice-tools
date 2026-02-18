@@ -20,13 +20,13 @@ func almostEqual(t *testing.T, got, want, relTol float64) {
 
 func TestComputeMetrics8x8At1GHz(t *testing.T) {
 	m := ComputeMetrics{
-		ArrayRows:      8,
-		ArrayCols:      8,
-		Frequency:      1e9,
-		DACBits:        5,
-		ADCBits:        5,
-		EnergyPerMVM:   2.944e-12, // 64 cells * 46 fJ/cell
-		LatencyPerMVM:  1e-9,
+		ArrayRows:     8,
+		ArrayCols:     8,
+		Frequency:     1e9,
+		DACBits:       5,
+		ADCBits:       5,
+		EnergyPerMVM:  2.944e-12, // 64 cells * 46 fJ/cell
+		LatencyPerMVM: 1e-9,
 	}
 
 	almostEqual(t, m.OpsPerSecond(), 1.28e11, 1e-12)

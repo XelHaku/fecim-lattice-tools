@@ -16,12 +16,12 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
-	"fecim-lattice-tools/shared/crossbar"
 	"fecim-lattice-tools/module3-mnist/pkg/mnist"
 	"fecim-lattice-tools/module3-mnist/pkg/training"
+	"fecim-lattice-tools/shared/canvas"
+	"fecim-lattice-tools/shared/crossbar"
 	"fecim-lattice-tools/shared/logging"
 	"fecim-lattice-tools/shared/themes"
-	"fecim-lattice-tools/shared/canvas"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 

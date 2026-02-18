@@ -26,6 +26,15 @@ jobs:
       - name: Architecture check
         run: make arch-check
 
+      - name: Literature P-E loop validation (RG-PHY-OBS-01, PR lane)
+        env:
+          FECIM_CI_GATE: pr
+          FECIM_GIT_COMMIT: ${{ github.sha }}
+          FECIM_LITERATURE_JSON_DIR: ${{ github.workspace }}/output/validation/literature
+        run: |
+          mkdir -p output/validation/literature
+          go test -v -count=1 ./validation/literature/... -run TestModule1_PELoop_LiteratureBacked
+
       - name: Race detection (core packages)
         run: go test -race -short ./shared/... ./validation/...
 

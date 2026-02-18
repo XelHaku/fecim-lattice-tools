@@ -132,7 +132,7 @@ func TestIRCorrectness_InstanceCount(t *testing.T) {
 				}
 			}
 
-			t.Logf("%s: %d instances, %d parasitic elements (modeled in export)", 
+			t.Logf("%s: %d instances, %d parasitic elements (modeled in export)",
 				tc.name, actualInstances, 0)
 		})
 	}
@@ -141,12 +141,12 @@ func TestIRCorrectness_InstanceCount(t *testing.T) {
 // TestIRCorrectness_WithWeights verifies net conservation with weight mapping
 func TestIRCorrectness_WithWeights(t *testing.T) {
 	testCases := []struct {
-		name        string
-		weightRows  int
-		weightCols  int
-		arrayRows   int
-		arrayCols   int
-		arch        string
+		name       string
+		weightRows int
+		weightCols int
+		arrayRows  int
+		arrayCols  int
+		arch       string
 	}{
 		{"4x4_weights_in_4x4", 4, 4, 4, 4, ArchPassive},
 		{"2x3_weights_in_8x8", 2, 3, 8, 8, ArchPassive},
@@ -160,7 +160,7 @@ func TestIRCorrectness_WithWeights(t *testing.T) {
 			for i := range weights {
 				weights[i] = make([]float64, tc.weightCols)
 				for j := range weights[i] {
-					weights[i][j] = float64(i*tc.weightCols + j) / float64(tc.weightRows*tc.weightCols)
+					weights[i][j] = float64(i*tc.weightCols+j) / float64(tc.weightRows*tc.weightCols)
 				}
 			}
 
@@ -191,7 +191,7 @@ func TestIRCorrectness_WithWeights(t *testing.T) {
 						if cell.Row == i && cell.Col == j {
 							found = true
 							if cell.InitialWeight != weights[i][j] {
-								t.Errorf("Cell (%d, %d): weight %.6f != expected %.6f", 
+								t.Errorf("Cell (%d, %d): weight %.6f != expected %.6f",
 									i, j, cell.InitialWeight, weights[i][j])
 							}
 							weightCellsFound++
@@ -214,7 +214,7 @@ func TestIRCorrectness_WithWeights(t *testing.T) {
 				t.Errorf("Stats.ActiveCells = %d, expected %d", design.Stats.ActiveCells, expectedWeightCells)
 			}
 
-			t.Logf("%s: %d total cells, %d active weights, net conservation PASS", 
+			t.Logf("%s: %d total cells, %d active weights, net conservation PASS",
 				tc.name, len(design.Cells), design.Stats.ActiveCells)
 		})
 	}
@@ -250,11 +250,11 @@ func TestIRCorrectness_AreaCalculation(t *testing.T) {
 			expectedAreaMM2 := cellAreaMM2 * float64(tc.rows*tc.cols)
 
 			if design.Stats.AreaMM2 != expectedAreaMM2 {
-				t.Errorf("Area mismatch: got %.6e mm², expected %.6e mm²", 
+				t.Errorf("Area mismatch: got %.6e mm², expected %.6e mm²",
 					design.Stats.AreaMM2, expectedAreaMM2)
 			}
 
-			t.Logf("%s: Area = %.6e mm² (cell: %.2f×%.2f μm)", 
+			t.Logf("%s: Area = %.6e mm² (cell: %.2f×%.2f μm)",
 				tc.name, design.Stats.AreaMM2, tc.cellPitch, tc.rowHeight)
 		})
 	}

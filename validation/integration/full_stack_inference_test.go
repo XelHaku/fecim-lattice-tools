@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"fecim-lattice-tools/shared/crossbar"
 	mnistcore "fecim-lattice-tools/module3-mnist/pkg/core"
 	"fecim-lattice-tools/module3-mnist/pkg/mnist"
+	"fecim-lattice-tools/shared/crossbar"
 	"fecim-lattice-tools/shared/physics"
 )
 

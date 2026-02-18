@@ -74,7 +74,7 @@ func TestMonteCarlo_ISPPConvergence(t *testing.T) {
 			dir := GetDirection(currentLevel, targetLevel)
 			v := calc.CalculateStartVoltage(ec)
 			step := calc.CalculateVoltageStep()
-			programGain := (math.Abs(v)/ec)*(pr/base.Pr)
+			programGain := (math.Abs(v) / ec) * (pr / base.Pr)
 			if programGain < 0.2 {
 				programGain = 0.2
 			}

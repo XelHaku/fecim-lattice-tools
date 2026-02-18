@@ -35,18 +35,18 @@ import (
 // quasi-static Preisach does not capture true kinetics – only shape.
 
 type switchingKineticsMetrics struct {
-	MaterialID      string  `json:"material_id"`
-	Material        string  `json:"material"`
-	Generated       string  `json:"generated_at"`
-	Ec_MV_cm        float64 `json:"ec_MV_cm"`
-	FracAtEc        float64 `json:"frac_at_ec"`
-	FracAtHalfEc    float64 `json:"frac_at_half_ec"`
-	FracAtTwoEc     float64 `json:"frac_at_two_ec"`
-	Monotonic       bool    `json:"monotonic"`
-	LogisticK       float64 `json:"logistic_k"`     // fitted slope (MV/cm)^-1
-	LogisticEc      float64 `json:"logistic_ec_MV_cm"` // fitted midpoint
-	LogisticRMSE    float64 `json:"logistic_rmse"`
-	Pass            bool    `json:"pass"`
+	MaterialID   string  `json:"material_id"`
+	Material     string  `json:"material"`
+	Generated    string  `json:"generated_at"`
+	Ec_MV_cm     float64 `json:"ec_MV_cm"`
+	FracAtEc     float64 `json:"frac_at_ec"`
+	FracAtHalfEc float64 `json:"frac_at_half_ec"`
+	FracAtTwoEc  float64 `json:"frac_at_two_ec"`
+	Monotonic    bool    `json:"monotonic"`
+	LogisticK    float64 `json:"logistic_k"`        // fitted slope (MV/cm)^-1
+	LogisticEc   float64 `json:"logistic_ec_MV_cm"` // fitted midpoint
+	LogisticRMSE float64 `json:"logistic_rmse"`
+	Pass         bool    `json:"pass"`
 }
 
 // Thresholds for switching kinetics invariants.
@@ -114,9 +114,9 @@ func TestModule1_SwitchingKinetics_Falsification(t *testing.T) {
 func computeSwitchingKineticsMetrics(t *testing.T, id string, mat *sharedphysics.HZOMaterial) switchingKineticsMetrics {
 	t.Helper()
 
-	ec := mat.Ec           // V/m
-	esat := ec * 4.0       // saturation field (well beyond Ec)
-	ec_MV_cm := ec * 1e-8  // convert V/m → MV/cm for output
+	ec := mat.Ec          // V/m
+	esat := ec * 4.0      // saturation field (well beyond Ec)
+	ec_MV_cm := ec * 1e-8 // convert V/m → MV/cm for output
 
 	// Sweep E from 0 to 2.5*Ec in 60 steps.
 	const nSteps = 60

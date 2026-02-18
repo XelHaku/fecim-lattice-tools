@@ -15,9 +15,9 @@ const (
 // Test case: HZO with εᵣ=30, A=100nm², d=10nm → expected ~26.56 fF
 func TestM6_SPICE_03_Capacitance_Formula_HZO(t *testing.T) {
 	// Test parameters
-	epsR := 30.0           // Relative permittivity for HZO
-	area_m2 := 100e-18     // 100 nm² in m²
-	thickness_m := 10e-9   // 10 nm in m
+	epsR := 30.0         // Relative permittivity for HZO
+	area_m2 := 100e-18   // 100 nm² in m²
+	thickness_m := 10e-9 // 10 nm in m
 
 	// Expected capacitance: C = ε₀ × εᵣ × A / d
 	expectedCap_F := epsilon0 * epsR * area_m2 / thickness_m
@@ -272,13 +272,13 @@ func parseFloatSimple(s string) float64 {
 		// Decimal mantissa
 		intPart := mStr[:dotPos]
 		fracPart := mStr[dotPos+1:]
-		
+
 		for _, c := range intPart {
 			if c >= '0' && c <= '9' {
 				mantissa = mantissa*10 + float64(c-'0')
 			}
 		}
-		
+
 		frac := 0.0
 		divisor := 1.0
 		for _, c := range fracPart {
@@ -300,7 +300,7 @@ func parseFloatSimple(s string) float64 {
 		} else if strings.HasPrefix(expStr, "+") {
 			expStr = expStr[1:]
 		}
-		
+
 		for _, c := range expStr {
 			if c >= '0' && c <= '9' {
 				exponent = exponent*10 + float64(c-'0')

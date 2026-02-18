@@ -19,8 +19,8 @@ func TestGeneratePublicationsCSVHeaders(t *testing.T) {
 	}
 
 	expect := map[string][]string{
-		"pe_loop.csv":          {"electric_field_mv_cm", "polarization_uc_cm2"},
-		"ispp_convergence.csv": {"pulse_index", "threshold_voltage_v"},
+		"pe_loop.csv":           {"electric_field_mv_cm", "polarization_uc_cm2"},
+		"ispp_convergence.csv":  {"pulse_index", "threshold_voltage_v"},
 		"read_margin_sweep.csv": {"delta_vread_v", "read_margin_mv"},
 	}
 

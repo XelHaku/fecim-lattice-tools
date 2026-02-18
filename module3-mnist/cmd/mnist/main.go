@@ -18,9 +18,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"fecim-lattice-tools/shared/crossbar"
 	"fecim-lattice-tools/module3-mnist/pkg/training"
 	"fecim-lattice-tools/shared/cli"
+	"fecim-lattice-tools/shared/crossbar"
 	"fecim-lattice-tools/shared/logging"
 )
 

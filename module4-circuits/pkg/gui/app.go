@@ -44,29 +44,29 @@ type CircuitsApp struct {
 	pump *peripherals.ChargePump
 
 	// Configuration state
-	mu                sync.RWMutex
-	uiUpdateMu        sync.Mutex
-	lastUIUpdate      time.Time
-	pendingUIUpd      bool
-	arrayRows         int
-	arrayCols         int
-	quantLevels       int
-	dacBits           int
-	adcBits           int
-	vMin              float64 // Min write voltage
-	vMax              float64 // Max write voltage
-	pulseWidth        float64 // ns
-	readVoltage       float64 // Read voltage (safe zone)
-	tiaGain           float64 // TIA gain (kOhm)
-	selectedRow       int
-	selectedCol       int
-	targetLevel       int
-	arrayWeights      [][]int     // Current programmed levels
-	halfSelectResidue [][]float64 // Fractional disturb accumulation for half-selected cells
-	inputVector       []int       // Input vector for compute
+	mu                 sync.RWMutex
+	uiUpdateMu         sync.Mutex
+	lastUIUpdate       time.Time
+	pendingUIUpd       bool
+	arrayRows          int
+	arrayCols          int
+	quantLevels        int
+	dacBits            int
+	adcBits            int
+	vMin               float64 // Min write voltage
+	vMax               float64 // Max write voltage
+	pulseWidth         float64 // ns
+	readVoltage        float64 // Read voltage (safe zone)
+	tiaGain            float64 // TIA gain (kOhm)
+	selectedRow        int
+	selectedCol        int
+	targetLevel        int
+	arrayWeights       [][]int                      // Current programmed levels
+	halfSelectResidue  [][]float64                  // Fractional disturb accumulation for half-selected cells
+	inputVector        []int                        // Input vector for compute
 	writeDisturbEngine *crossbar.WriteDisturbEngine // Module 2 cumulative stress model for V/2 disturb
-	outputVector      []float64
-	architecture      string // "1T1R" or "0T1R" - affects row selection behavior
+	outputVector       []float64
+	architecture       string // "1T1R" or "0T1R" - affects row selection behavior
 
 	// Tab-specific GUI components
 	// Tab 1: Write

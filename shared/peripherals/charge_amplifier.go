@@ -62,10 +62,10 @@ func DefaultChargeAmplifier() *ChargeAmplifier {
 	cfb := DefaultCfb
 	ca := &ChargeAmplifier{
 		Cfb:                 cfb,
-		Bandwidth:           500e6,    // 500 MHz
-		InputChargeNoiseRMS: 5.6e-18,  // ~sqrt(kT*Cfb) ≈ 5.6 aC/sqrt(Hz)
-		MaxInputCharge:      128e-15,  // 128 fC
-		MaxOutputVoltage:    1.0,      // 1 V (matches ADC Vref)
+		Bandwidth:           500e6,   // 500 MHz
+		InputChargeNoiseRMS: 5.6e-18, // ~sqrt(kT*Cfb) ≈ 5.6 aC/sqrt(Hz)
+		MaxInputCharge:      128e-15, // 128 fC
+		MaxOutputVoltage:    1.0,     // 1 V (matches ADC Vref)
 	}
 	log.Calculation("DefaultChargeAmplifier", map[string]interface{}{
 		"cfb_fF":              ca.Cfb * 1e15,
@@ -142,8 +142,8 @@ func (ca *ChargeAmplifier) SettlingTime() float64 {
 // At 500 MHz: P ≈ 2 × 4e-21 × 500e6 / 0.5 ≈ 8 µW per column (placeholder).
 func (ca *ChargeAmplifier) PowerConsumption() float64 {
 	const (
-		kT = 4.14e-21 // k_B × T at 300 K (J)
-		eta = 0.5     // noise efficiency factor (heuristic)
+		kT  = 4.14e-21 // k_B × T at 300 K (J)
+		eta = 0.5      // noise efficiency factor (heuristic)
 	)
 	return 2 * kT * ca.Bandwidth / eta
 }

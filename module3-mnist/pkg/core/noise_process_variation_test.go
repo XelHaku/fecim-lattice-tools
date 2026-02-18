@@ -193,9 +193,9 @@ func TestProcessVariation_M3_NOISE_03_WorstCase(t *testing.T) {
 
 	// Test worst-case scenarios
 	scenarios := []struct {
-		name   string
-		sigma  float64
-		bias   float64 // Systematic bias (0 = symmetric, >0 = positive shift)
+		name  string
+		sigma float64
+		bias  float64 // Systematic bias (0 = symmetric, >0 = positive shift)
 	}{
 		{"Symmetric 5%", 0.05, 0.0},
 		{"Positive bias 3%+2%", 0.03, 0.02},

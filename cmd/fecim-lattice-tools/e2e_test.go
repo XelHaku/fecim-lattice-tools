@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"fecim-lattice-tools/shared/crossbar"
 	"fecim-lattice-tools/module3-mnist/pkg/core"
+	"fecim-lattice-tools/shared/crossbar"
 )
 
 // =============================================================================

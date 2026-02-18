@@ -94,8 +94,8 @@ func _TestLKSolver_ScipyComparison_SubCoercive(t *testing.T) {
 
 	// Sub-coercive field step: E = +0.3*Ec (30% of Ec, no switching)
 	E_subcoercive := 0.3 * mat.Ec
-	dt := 2e-11  // 20 ps per step (keeps stiffness < 0.5)
-	nSteps := 300  // 6 ns total
+	dt := 2e-11   // 20 ps per step (keeps stiffness < 0.5)
+	nSteps := 300 // 6 ns total
 
 	// --- Run Go solver ---
 	goP := make([]float64, nSteps+1)
@@ -206,7 +206,8 @@ func _TestLKSolver_ScipyComparison_SubCoercive(t *testing.T) {
 //   - KS test: p-value > 0.05 = pass (distribution consistent with Gaussian)
 //
 // Literature: Pike et al., J. Geophys. Res. 104, 695 (1999), doi:10.1029/1998JB900002
-//             Preisach (1935), Z. Phys. 94, 277
+//
+//	Preisach (1935), Z. Phys. 94, 277
 //
 // Failure modes:
 //   - Non-Gaussian switching distribution → parameterization bug in Preisach kernel
@@ -223,7 +224,7 @@ func _TestPreisach_SwitchingDistribution_KSTest(t *testing.T) {
 	mat := ferroelectric.DefaultHZO()
 	model := ferroelectric.NewPreisachModel(mat)
 
-	Ec := mat.Ec  // V/m
+	Ec := mat.Ec // V/m
 	Ps := mat.Ps
 
 	// Collect switching fields from 300 FORCs
@@ -244,7 +245,7 @@ func _TestPreisach_SwitchingDistribution_KSTest(t *testing.T) {
 		// Reverse to reversal field
 		nRamp := 50
 		for k := 0; k <= nRamp; k++ {
-			E := 3.0*Ec * (1 - float64(k)/float64(nRamp))
+			E := 3.0 * Ec * (1 - float64(k)/float64(nRamp))
 			model.Update(E + E_rev*float64(k)/float64(nRamp))
 		}
 		P_start := model.Update(E_rev)
@@ -333,18 +334,18 @@ print(json.dumps({
 	}
 
 	var ks struct {
-		N          int     `json:"n"`
-		Mu         float64 `json:"mu"`
-		Sigma      float64 `json:"sigma"`
-		MuFracEc   float64 `json:"mu_frac_Ec"`
-		SigFracEc  float64 `json:"sigma_frac_Ec"`
-		BiasPct    float64 `json:"bias_pct"`
-		KSStat     float64 `json:"ks_stat"`
-		KSp        float64 `json:"ks_p"`
-		SWStat     float64 `json:"sw_stat"`
-		SWp        float64 `json:"sw_p"`
-		PassKS     bool    `json:"pass_ks"`
-		PassBias   bool    `json:"pass_bias"`
+		N         int     `json:"n"`
+		Mu        float64 `json:"mu"`
+		Sigma     float64 `json:"sigma"`
+		MuFracEc  float64 `json:"mu_frac_Ec"`
+		SigFracEc float64 `json:"sigma_frac_Ec"`
+		BiasPct   float64 `json:"bias_pct"`
+		KSStat    float64 `json:"ks_stat"`
+		KSp       float64 `json:"ks_p"`
+		SWStat    float64 `json:"sw_stat"`
+		SWp       float64 `json:"sw_p"`
+		PassKS    bool    `json:"pass_ks"`
+		PassBias  bool    `json:"pass_bias"`
 	}
 	json.Unmarshal(outBytes, &ks)
 
@@ -366,21 +367,21 @@ print(json.dumps({
 	dir := filepath.Join("..", "..", "output", "validation", "literature")
 	os.MkdirAll(dir, 0755)
 	artifact := map[string]interface{}{
-		"test":            "preisach_switching_distribution_ks",
-		"doi":             "10.1029/1998JB900002",
-		"n_forcs":         nFORCs,
-		"n_extracted":     ks.N,
-		"mu_V_m":          ks.Mu,
-		"sigma_V_m":       ks.Sigma,
-		"Ec_V_m":          Ec,
-		"mu_pct_Ec":       ks.MuFracEc,
-		"sigma_pct_Ec":    ks.SigFracEc,
-		"bias_pct_Ec":     ks.BiasPct,
-		"ks_stat":         ks.KSStat,
-		"ks_p_value":      ks.KSp,
-		"sw_p_value":      ks.SWp,
-		"pass_ks":         ks.PassKS,
-		"pass_bias":       ks.PassBias,
+		"test":         "preisach_switching_distribution_ks",
+		"doi":          "10.1029/1998JB900002",
+		"n_forcs":      nFORCs,
+		"n_extracted":  ks.N,
+		"mu_V_m":       ks.Mu,
+		"sigma_V_m":    ks.Sigma,
+		"Ec_V_m":       Ec,
+		"mu_pct_Ec":    ks.MuFracEc,
+		"sigma_pct_Ec": ks.SigFracEc,
+		"bias_pct_Ec":  ks.BiasPct,
+		"ks_stat":      ks.KSStat,
+		"ks_p_value":   ks.KSp,
+		"sw_p_value":   ks.SWp,
+		"pass_ks":      ks.PassKS,
+		"pass_bias":    ks.PassBias,
 	}
 	b, _ := json.MarshalIndent(artifact, "", "  ")
 	os.WriteFile(filepath.Join(dir, "preisach_forc_ks_test.json"), b, 0644)
@@ -389,16 +390,16 @@ print(json.dumps({
 // TestLKSolver_MerzLaw_FieldDependence validates switching time τ(E) from the
 // LK solver against Merz's law (empirical + analytical):
 //
-//   τ = τ₀ · exp(Ea / E)    [Merz (1954), Phys. Rev. 95, 690]
+//	τ = τ₀ · exp(Ea / E)    [Merz (1954), Phys. Rev. 95, 690]
 //
 // Method: step-field LK simulation at 8 field values from 1.2×Ec to 3.0×Ec.
 // Each sim drives from -Ps → crossing of P=0 → switching time extracted.
 // Merz fit: log(τ) = log(τ₀) + Ea/E → linear in 1/E.
 //
 // Pass criteria:
-//   1. R² of Merz log-linear fit ≥ 0.92
-//   2. Extracted Ea within 20% of material's activation field parameter
-//   3. τ decreases monotonically with increasing E (sanity check)
+//  1. R² of Merz log-linear fit ≥ 0.92
+//  2. Extracted Ea within 20% of material's activation field parameter
+//  3. τ decreases monotonically with increasing E (sanity check)
 func _TestLKSolver_MerzLaw_FieldDependence(t *testing.T) {
 	if _, err := exec.LookPath("python3"); err != nil {
 		t.Skip("python3 not installed")
@@ -417,7 +418,7 @@ func _TestLKSolver_MerzLaw_FieldDependence(t *testing.T) {
 
 	// Fields from 1.2×Ec to 3.0×Ec
 	fieldMults := []float64{1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.5, 3.0}
-	dt := 1e-10 // 100 ps resolution for switching time accuracy
+	dt := 1e-10       // 100 ps resolution for switching time accuracy
 	maxSteps := 10000 // 1 µs max
 
 	type merzPoint struct {
@@ -550,14 +551,14 @@ print(json.dumps({
 	}
 
 	var fit struct {
-		NPoints   int     `json:"n_points"`
-		EaFit     float64 `json:"Ea_fit"`
-		EaMat     float64 `json:"Ea_mat"`
-		EaErrPct  float64 `json:"Ea_err_pct"`
-		Tau0      float64 `json:"tau0_fit"`
-		R2        float64 `json:"r2"`
-		PassR2    bool    `json:"pass_r2"`
-		PassEa    bool    `json:"pass_Ea"`
+		NPoints  int     `json:"n_points"`
+		EaFit    float64 `json:"Ea_fit"`
+		EaMat    float64 `json:"Ea_mat"`
+		EaErrPct float64 `json:"Ea_err_pct"`
+		Tau0     float64 `json:"tau0_fit"`
+		R2       float64 `json:"r2"`
+		PassR2   bool    `json:"pass_r2"`
+		PassEa   bool    `json:"pass_Ea"`
 	}
 	json.Unmarshal(outBytes, &fit)
 
@@ -574,19 +575,19 @@ print(json.dumps({
 	dir := filepath.Join("..", "..", "output", "validation", "literature")
 	os.MkdirAll(dir, 0755)
 	artifact := map[string]interface{}{
-		"test":         "lk_merz_law_field_dependence",
-		"doi":          "10.1103/PhysRev.95.690",
-		"material":     "materlik_hzo2",
-		"n_points":     fit.NPoints,
-		"Ea_fit_V_m":   fit.EaFit,
-		"Ea_mat_V_m":   fit.EaMat,
-		"Ea_err_pct":   fit.EaErrPct,
-		"tau0_s":       fit.Tau0,
-		"r2":           fit.R2,
-		"pass_r2":      fit.PassR2,
-		"pass_Ea":      fit.PassEa,
-		"monotone":     allMonotone,
-		"points":       points,
+		"test":       "lk_merz_law_field_dependence",
+		"doi":        "10.1103/PhysRev.95.690",
+		"material":   "materlik_hzo2",
+		"n_points":   fit.NPoints,
+		"Ea_fit_V_m": fit.EaFit,
+		"Ea_mat_V_m": fit.EaMat,
+		"Ea_err_pct": fit.EaErrPct,
+		"tau0_s":     fit.Tau0,
+		"r2":         fit.R2,
+		"pass_r2":    fit.PassR2,
+		"pass_Ea":    fit.PassEa,
+		"monotone":   allMonotone,
+		"points":     points,
 	}
 	b, _ := json.MarshalIndent(artifact, "", "  ")
 	os.WriteFile(filepath.Join(dir, "lk_merz_law.json"), b, 0644)

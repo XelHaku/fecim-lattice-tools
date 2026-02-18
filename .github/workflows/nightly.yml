@@ -1,0 +1,76 @@
+name: Nightly
+
+on:
+  schedule:
+    - cron: '0 2 * * *'   # 02:00 UTC every day
+  workflow_dispatch:        # manual trigger for testing
+
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    env:
+      FECIM_CI_GATE: nightly
+      FECIM_GIT_COMMIT: ${{ github.sha }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+
+      - name: Build & vet
+        run: go build ./... && go vet ./...
+
+      - name: Full test suite (no -short)
+        run: go test -count=1 ./...
+
+      - name: Architecture check
+        run: make arch-check
+
+      - name: Literature P-E loop validation (RG-PHY-OBS-01)
+        env:
+          FECIM_LITERATURE_JSON_DIR: ${{ github.workspace }}/output/validation/literature
+        run: |
+          mkdir -p output/validation/literature
+          go test -v -count=1 ./validation/literature/... -run TestModule1_PELoop_LiteratureBacked
+
+      - name: Full literature validation suite
+        env:
+          FECIM_LITERATURE_JSON_DIR: ${{ github.workspace }}/output/validation/literature
+        run: |
+          mkdir -p output/validation/literature
+          go test -v -count=1 ./validation/literature/...
+
+      - name: Monte Carlo uncertainty (RG-VAL-M1-04)
+        env:
+          FECIM_LITERATURE_JSON_DIR: ${{ github.workspace }}/output/montecarlo
+        run: |
+          mkdir -p output/montecarlo
+          go test -v -count=1 ./validation/... -run TestM1_MonteCarlo_Uncertainty
+
+      - name: Write-verify stats regression (RG-VAL-M1-03)
+        env:
+          FECIM_LITERATURE_JSON_DIR: ${{ github.workspace }}/output/write_stats
+        run: |
+          mkdir -p output/write_stats
+          go test -v -count=1 ./validation/... -run TestM1_WriteVerifyStats_Regression
+
+      - name: Race detection (core physics + shared)
+        run: go test -race -short ./module1-hysteresis/... ./shared/physics/... ./shared/crossbar/...
+
+      - name: Upload validation artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nightly-validation-${{ github.run_id }}
+          path: |
+            output/validation/
+            output/montecarlo/
+            output/write_stats/
+          if-no-files-found: warn

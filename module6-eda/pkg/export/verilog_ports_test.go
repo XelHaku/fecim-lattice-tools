@@ -19,43 +19,43 @@ import (
 // TestM6VER04_InputPortWidths verifies WL input port width matches rows
 func TestM6VER04_InputPortWidths(t *testing.T) {
 	testCases := []struct {
-		name         string
-		rows         int
-		cols         int
-		expectedWL   string // Expected WL port declaration
-		expectedSL   string // Expected SL port (for 1T1R/2T1R)
-		expectedCSL  string // Expected CSL port (for 2T1R only)
+		name        string
+		rows        int
+		cols        int
+		expectedWL  string // Expected WL port declaration
+		expectedSL  string // Expected SL port (for 1T1R/2T1R)
+		expectedCSL string // Expected CSL port (for 2T1R only)
 	}{
 		{
-			name:       "4×4 array",
-			rows:       4,
-			cols:       4,
-			expectedWL: "input  wire [3:0] WL",
-			expectedSL: "input  wire [3:0] SL",
+			name:        "4×4 array",
+			rows:        4,
+			cols:        4,
+			expectedWL:  "input  wire [3:0] WL",
+			expectedSL:  "input  wire [3:0] SL",
 			expectedCSL: "input  wire [3:0] CSL",
 		},
 		{
-			name:       "2×2 array",
-			rows:       2,
-			cols:       2,
-			expectedWL: "input  wire [1:0] WL",
-			expectedSL: "input  wire [1:0] SL",
+			name:        "2×2 array",
+			rows:        2,
+			cols:        2,
+			expectedWL:  "input  wire [1:0] WL",
+			expectedSL:  "input  wire [1:0] SL",
 			expectedCSL: "input  wire [1:0] CSL",
 		},
 		{
-			name:       "8×4 array",
-			rows:       8,
-			cols:       4,
-			expectedWL: "input  wire [7:0] WL",
-			expectedSL: "input  wire [3:0] SL",
+			name:        "8×4 array",
+			rows:        8,
+			cols:        4,
+			expectedWL:  "input  wire [7:0] WL",
+			expectedSL:  "input  wire [3:0] SL",
 			expectedCSL: "input  wire [3:0] CSL",
 		},
 		{
-			name:       "1×1 array (edge case)",
-			rows:       1,
-			cols:       1,
-			expectedWL: "input  wire [0:0] WL",
-			expectedSL: "input  wire [0:0] SL",
+			name:        "1×1 array (edge case)",
+			rows:        1,
+			cols:        1,
+			expectedWL:  "input  wire [0:0] WL",
+			expectedSL:  "input  wire [0:0] SL",
 			expectedCSL: "input  wire [0:0] CSL",
 		},
 	}

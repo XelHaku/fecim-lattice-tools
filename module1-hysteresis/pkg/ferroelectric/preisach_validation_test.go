@@ -60,7 +60,7 @@ func TestPreisach_PR1_SaturationSymmetry(t *testing.T) {
 				P_desc := descendingP[i]
 
 				// For antisymmetry: P(E) + P(-E) should be small
-				asymmetry := math.Abs(P_asc + P_desc) / mat.Ps
+				asymmetry := math.Abs(P_asc+P_desc) / mat.Ps
 				if asymmetry > maxAsymmetry {
 					maxAsymmetry = asymmetry
 				}

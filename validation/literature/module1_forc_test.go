@@ -48,16 +48,16 @@ type forcMetrics struct {
 	Integral_uC_cm2 float64 `json:"integral_uC_cm2"`   // ∫∫ρ dHc dHu (expect ≈ Ps)
 	IntegralErrPct  float64 `json:"integral_err_pct"`
 	HcErrPct        float64 `json:"hc_err_pct"`
-	HuAbsMV_cm      float64 `json:"hu_abs_MV_cm"`      // |peak Hu| (expect ≈ 0)
+	HuAbsMV_cm      float64 `json:"hu_abs_MV_cm"` // |peak Hu| (expect ≈ 0)
 	Pass            bool    `json:"pass"`
 }
 
 // Thresholds for FORC invariants.
 const (
-	thFORCNegFrac   = 0.06  // <6% of FORC cells may be negative (numerical noise, 25×25 grid)
-	thFORCHcErrPct  = 20.0  // peak Hc within 20% of Ec
-	thFORCHuMV_cm   = 0.20  // |peak Hu| < 0.2 MV/cm (unbiased material)
-	thFORCIntErrPct = 30.0  // integral within 30% of Ps
+	thFORCNegFrac   = 0.06 // <6% of FORC cells may be negative (numerical noise, 25×25 grid)
+	thFORCHcErrPct  = 20.0 // peak Hc within 20% of Ec
+	thFORCHuMV_cm   = 0.20 // |peak Hu| < 0.2 MV/cm (unbiased material)
+	thFORCIntErrPct = 30.0 // integral within 30% of Ps
 )
 
 func TestModule1_FORC_Falsification(t *testing.T) {
@@ -112,9 +112,9 @@ func TestModule1_FORC_Falsification(t *testing.T) {
 func computeFORCMetrics(t *testing.T, id string, mat *sharedphysics.HZOMaterial) forcMetrics {
 	t.Helper()
 
-	ec := mat.Ec          // V/m
-	esat := ec * 3.5      // saturation field
-	ps := mat.Ps * 1e2    // C/m² → μC/cm²
+	ec := mat.Ec       // V/m
+	esat := ec * 3.5   // saturation field
+	ps := mat.Ps * 1e2 // C/m² → μC/cm²
 
 	// FORC grid: NHa reversal fields from -esat to +esat, NHb measurement steps.
 	const NHa = 25
@@ -197,7 +197,7 @@ func computeFORCMetrics(t *testing.T, id string, mat *sharedphysics.HZOMaterial)
 				continue
 			}
 			d2P := (p11 - p1m - pm1 + pmm) / (4 * dHa * dHb * 1e-16) // 1e-16 converts (V/m)² → (MV/cm)²
-			rho := -0.5 * d2P                                           // μC/cm² / (MV/cm)²
+			rho := -0.5 * d2P                                        // μC/cm² / (MV/cm)²
 
 			hc := (hb[j] - ha[i]) * 0.5e-8 // MV/cm
 			hu := (ha[i] + hb[j]) * 0.5e-8

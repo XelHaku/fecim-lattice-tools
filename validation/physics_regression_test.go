@@ -452,9 +452,9 @@ func TestPhysicsRegressionCurves_AllMaterials(t *testing.T) {
 			yErrMax := maxAbsError(yP, golden.Data.Y)
 
 			// Tight tolerances for 6+ sig-fig drift detection (Preisach is deterministic).
-			xTol := 1e-12              // V/m — E grid must be exactly reproducible
-			yTolRMS := 0.001 * ps     // 0.1% of Ps
-			yTolMax := 0.002 * ps     // 0.2% of Ps
+			xTol := 1e-12         // V/m — E grid must be exactly reproducible
+			yTolRMS := 0.001 * ps // 0.1% of Ps
+			yTolMax := 0.002 * ps // 0.2% of Ps
 
 			if xErrMax > xTol {
 				t.Errorf("x max|err|=%e > tol=%e for %s", xErrMax, xTol, mc.id)

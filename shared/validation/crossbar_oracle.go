@@ -32,24 +32,24 @@ type CrossbarResult struct {
 //
 // Electrical model (matches badcrossbar's single-ended drive convention):
 //
-//	- N rows, M columns
-//	- Column j is driven at its TOP by colVoltages[j].
-//	- Row i is GROUNDED at its LEFT end (virtual-ground current sensing).
-//	- Wire resistance wireR (Ω) per cell-pitch along both row and column wires.
-//	  Set wireR = 0 for ideal wires; the exact result then equals Σ G[i][j]·V[j].
-//	- Bottom of each column and right end of each row are open (no connection).
+//   - N rows, M columns
+//   - Column j is driven at its TOP by colVoltages[j].
+//   - Row i is GROUNDED at its LEFT end (virtual-ground current sensing).
+//   - Wire resistance wireR (Ω) per cell-pitch along both row and column wires.
+//     Set wireR = 0 for ideal wires; the exact result then equals Σ G[i][j]·V[j].
+//   - Bottom of each column and right end of each row are open (no connection).
 //
 // Node layout (N=2 rows, M=2 cols illustrated):
 //
-//	         V_in[0]        V_in[1]
-//	           │              │
-//	       col[0][0]      col[1][0]    ← row 0 junction nodes on columns
-//	        G[0][0]         G[0][1]    ← cells connecting cols to rows
-//	     ─── row[0][0] ─── row[0][1]  ← row 0 wire  (row[0][0]=0V grounded)
-//	           │              │
-//	       col[0][1]      col[1][1]    ← row 1 junction nodes on columns
-//	        G[1][0]         G[1][1]
-//	     ─── row[1][0] ─── row[1][1]  ← row 1 wire  (row[1][0]=0V grounded)
+//	    V_in[0]        V_in[1]
+//	      │              │
+//	  col[0][0]      col[1][0]    ← row 0 junction nodes on columns
+//	   G[0][0]         G[0][1]    ← cells connecting cols to rows
+//	─── row[0][0] ─── row[0][1]  ← row 0 wire  (row[0][0]=0V grounded)
+//	      │              │
+//	  col[0][1]      col[1][1]    ← row 1 junction nodes on columns
+//	   G[1][0]         G[1][1]
+//	─── row[1][0] ─── row[1][1]  ← row 1 wire  (row[1][0]=0V grounded)
 //
 // The result RowCurrents[i] = total current consumed by the sensing resistor on
 // row i, which equals Σ_j G[i][j]·V_col_j for wireR=0.

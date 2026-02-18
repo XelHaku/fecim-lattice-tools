@@ -202,7 +202,7 @@ func TestConcurrentStressISPPDifferentCells(t *testing.T) {
 	for idx := 0; idx < cellsToProgram; idx++ {
 		row := idx / size
 		col := idx % size
-		want := float64((idx%DefaultQuantizationLevels)) / float64(DefaultQuantizationLevels-1)
+		want := float64((idx % DefaultQuantizationLevels)) / float64(DefaultQuantizationLevels-1)
 		targets = append(targets, target{row: row, col: col, want: QuantizeToLevels(want)})
 	}
 
@@ -299,7 +299,7 @@ func TestConcurrentStressMemoryBounded(t *testing.T) {
 }
 
 type mismatchError struct {
-	index    int
+	index     int
 	got, want float64
 }
 

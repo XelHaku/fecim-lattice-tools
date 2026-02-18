@@ -2,6 +2,7 @@ package recording
 
 import (
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -696,13 +697,16 @@ func TestOnFrameCapturedCallback(t *testing.T) {
 	manager := NewManager()
 	mockCapture := &MockCaptureSource{width: 640, height: 480}
 
-	frameCount := 0
-	var mu sync.Mutex
+	var frameCount atomic.Int32
+	firstFrameCh := make(chan struct{}, 1)
 
 	manager.OnFrameCaptured(func(frameNum int) {
-		mu.Lock()
-		frameCount++
-		mu.Unlock()
+		_ = frameNum
+		frameCount.Add(1)
+		select {
+		case firstFrameCh <- struct{}{}:
+		default:
+		}
 	})
 
 	err := manager.Start(mockCapture)
@@ -713,17 +717,33 @@ func TestOnFrameCapturedCallback(t *testing.T) {
 		t.Fatalf("Start failed: %v", err)
 	}
 
-	time.Sleep(200 * time.Millisecond)
-	manager.Stop()
-
-	mu.Lock()
-	defer mu.Unlock()
-
-	if frameCount == 0 {
-		t.Error("OnFrameCaptured callback was never called")
+	gotFirstFrame := false
+	select {
+	case <-firstFrameCh:
+		gotFirstFrame = true
+	case <-time.After(2 * time.Second):
+		// Continue to Stop() and assert with full context below.
 	}
 
-	t.Logf("OnFrameCaptured called %d times", frameCount)
+	if _, stopErr := manager.Stop(); stopErr != nil {
+		t.Fatalf("Stop failed: %v", stopErr)
+	}
+
+	// Callback dispatch is asynchronous; give it a short bounded drain window.
+	if !gotFirstFrame {
+		select {
+		case <-firstFrameCh:
+			gotFirstFrame = true
+		case <-time.After(150 * time.Millisecond):
+		}
+	}
+
+	count := int(frameCount.Load())
+	if !gotFirstFrame || count == 0 {
+		t.Fatalf("OnFrameCaptured callback was not observed within timeout (gotFirstFrame=%v frameCount=%d managerFramesCaptured=%d)", gotFirstFrame, count, manager.FramesCaptured())
+	}
+
+	t.Logf("OnFrameCaptured called %d times", count)
 }
 
 func TestOnErrorCallback(t *testing.T) {

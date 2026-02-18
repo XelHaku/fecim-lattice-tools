@@ -65,8 +65,8 @@ func TestM3_ENERGY_02_LeakageScalesWithArraySize(t *testing.T) {
 	t.Parallel()
 
 	const (
-		voltageV = 0.2   // 0.2V read voltage
-		iOffA    = 1e-9  // 1 nA off-current per cell
+		voltageV = 0.2  // 0.2V read voltage
+		iOffA    = 1e-9 // 1 nA off-current per cell
 	)
 
 	arraySizes := []struct {
@@ -171,9 +171,9 @@ func TestM3_ENERGY_02_LeakageEnergyOverTime(t *testing.T) {
 	t.Parallel()
 
 	const (
-		voltageV = 0.2   // 0.2V read voltage
-		iOffA    = 1e-9  // 1 nA off-current
-		cells    = 1024  // small 32×32 array
+		voltageV = 0.2  // 0.2V read voltage
+		iOffA    = 1e-9 // 1 nA off-current
+		cells    = 1024 // small 32×32 array
 	)
 
 	cellLeakage := physics.CellLeakagePower(voltageV, iOffA)
@@ -219,11 +219,11 @@ func TestM3_ENERGY_02_LeakagePhysicalRange(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name      string
-		voltageV  float64
-		iOffA     float64
-		minPW     float64
-		maxPW     float64
+		name     string
+		voltageV float64
+		iOffA    float64
+		minPW    float64
+		maxPW    float64
 	}{
 		{
 			name:     "ultra-low leakage (ideal selector)",

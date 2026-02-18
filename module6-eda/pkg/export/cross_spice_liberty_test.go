@@ -21,6 +21,7 @@ import (
 // Note: These are different physical capacitances:
 //   - C_fe: ferroelectric storage capacitance (~0.045 fF for HZO)
 //   - input_cap: gate/pin input capacitance (~15 fF for SKY130 transistor gates)
+//
 // This test verifies both values are physically reasonable and consistent with their contexts.
 func TestCrossFormat_SPICE_Liberty_Capacitance(t *testing.T) {
 	// Create test array design

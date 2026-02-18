@@ -35,14 +35,14 @@ func dominantNoiseSource(quantVar, thermalVar, shotVar, flickerVar float64) stri
 
 func TestNoiseVsADC_M4INV04_TableAndCrossover(t *testing.T) {
 	const (
-		vRange         = 1.8
-		tempK          = 300.0
-		bandwidthHz    = 10e6
-		rTIAOhm        = 10e3
-		shotCurrentA   = 1e-6
-		flickerK       = 1e-12
-		flickerFreqHz  = 1e3
-		signalRMS      = vRange / (2 * math.Sqrt2) // full-scale sine within 0-1.8 V range
+		vRange        = 1.8
+		tempK         = 300.0
+		bandwidthHz   = 10e6
+		rTIAOhm       = 10e3
+		shotCurrentA  = 1e-6
+		flickerK      = 1e-12
+		flickerFreqHz = 1e3
+		signalRMS     = vRange / (2 * math.Sqrt2) // full-scale sine within 0-1.8 V range
 	)
 
 	bitsList := []int{4, 5, 6, 7, 8, 10, 12}
@@ -111,11 +111,11 @@ func TestNoiseVsADC_M4INV04_TableAndCrossover(t *testing.T) {
 
 func TestNoiseVsADC_M4INV04_ArrayScalingByWireResistance(t *testing.T) {
 	const (
-		vRange             = 1.8
-		tempK              = 300.0
-		bandwidthHz        = 10e6
-		rTIAOhm            = 10e3
-		wireResPerCellOhm  = 10.0 // lumped total wire resistance per traversed cell segment
+		vRange            = 1.8
+		tempK             = 300.0
+		bandwidthHz       = 10e6
+		rTIAOhm           = 10e3
+		wireResPerCellOhm = 10.0 // lumped total wire resistance per traversed cell segment
 	)
 
 	arraySizes := []int{8, 64, 128}

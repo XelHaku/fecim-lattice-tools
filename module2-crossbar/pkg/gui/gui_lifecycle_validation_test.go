@@ -5,8 +5,8 @@ import (
 
 	"fyne.io/fyne/v2/test"
 
-	"fecim-lattice-tools/shared/crossbar"
 	"fecim-lattice-tools/module2-crossbar/pkg/gui/tabs"
+	"fecim-lattice-tools/shared/crossbar"
 )
 
 // M2-GUI-01: Headless GUI smoke test (tab lifecycle).

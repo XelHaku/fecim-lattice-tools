@@ -14,8 +14,8 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/module3-mnist/pkg/core"
-	"fecim-lattice-tools/shared/physics"
 	"fecim-lattice-tools/shared/canvas"
+	"fecim-lattice-tools/shared/physics"
 )
 
 // EnergyConfig defines energy parameters for calculations.

@@ -68,7 +68,7 @@ func TestPerformance_M3_PERF_02_Throughput(t *testing.T) {
 	t.Logf("  Total time:  %.3f s", totalTimeS)
 	t.Logf("  Throughput:  %.1f img/s", throughput)
 	t.Logf("  Accuracy:    %.1f%% (%d/%d correct)", accuracy, correctCount, batchSize)
-	t.Logf("  Avg latency: %.3f ms/image", (totalTimeS * 1000.0) / float64(batchSize))
+	t.Logf("  Avg latency: %.3f ms/image", (totalTimeS*1000.0)/float64(batchSize))
 
 	// Requirement: > 100 images/second
 	const minThroughput = 100.0

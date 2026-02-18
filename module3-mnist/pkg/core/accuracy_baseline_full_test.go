@@ -92,7 +92,7 @@ func TestAccuracyBaseline_M3_ACC_02_8bit(t *testing.T) {
 	net := NewDualModeNetwork(784, 128, 10)
 	net.Config.DACBits = 8
 	net.Config.ADCBits = 8
-	net.Config.NumLevels = 256 // 8-bit = 2^8 = 256 levels
+	net.Config.NumLevels = 256  // 8-bit = 2^8 = 256 levels
 	net.Config.NoiseLevel = 0.0 // Deterministic for baseline
 
 	weightsFile := filepath.Join(dataDir, "pretrained_weights_8.json")

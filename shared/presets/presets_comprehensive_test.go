@@ -28,11 +28,11 @@ func TestComprehensive_MaterialPresetsLoadableAndPhysicsValid(t *testing.T) {
 
 	// Common UI aliases used by presets.
 	aliasToCanonical := map[string]string{
-		normalizePresetToken("HZO (optimized)"):        normalizePresetToken("FeCIM HZO"),
-		normalizePresetToken("HZO (Si-doped)"):        normalizePresetToken("HZO (Si-doped)"),
+		normalizePresetToken("HZO (optimized)"):         normalizePresetToken("FeCIM HZO"),
+		normalizePresetToken("HZO (Si-doped)"):          normalizePresetToken("HZO (Si-doped)"),
 		normalizePresetToken("Literature Superlattice"): normalizePresetToken("Literature Superlattice"),
-		normalizePresetToken("Cryogenic HZO"):         normalizePresetToken("Cryogenic HZO"),
-		normalizePresetToken("AlScN"):                 normalizePresetToken("AlScN (8-16 states)"),
+		normalizePresetToken("Cryogenic HZO"):           normalizePresetToken("Cryogenic HZO"),
+		normalizePresetToken("AlScN"):                   normalizePresetToken("AlScN (8-16 states)"),
 	}
 
 	materialPresetCount := 0

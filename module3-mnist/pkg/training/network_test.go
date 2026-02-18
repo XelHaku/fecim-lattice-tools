@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"fecim-lattice-tools/shared/crossbar"
 	"fecim-lattice-tools/module3-mnist/pkg/mnist"
+	"fecim-lattice-tools/shared/crossbar"
 )
 
 // Test constants for reproducibility and clarity

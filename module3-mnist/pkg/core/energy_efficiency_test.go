@@ -15,32 +15,32 @@ func TestM3_ENERGY_04_ENAC_Definition(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name        string
-		energyJ     float64
-		accuracy    float64
-		inferences  int
-		wantENACpJ  float64
+		name       string
+		energyJ    float64
+		accuracy   float64
+		inferences int
+		wantENACpJ float64
 	}{
 		{
-			name:        "high accuracy, low energy",
-			energyJ:     50e-12, // 50 pJ per inference
-			accuracy:    0.95,   // 95% accuracy
-			inferences:  1,
-			wantENACpJ:  50.0 / 0.95, // ~52.6 pJ
+			name:       "high accuracy, low energy",
+			energyJ:    50e-12, // 50 pJ per inference
+			accuracy:   0.95,   // 95% accuracy
+			inferences: 1,
+			wantENACpJ: 50.0 / 0.95, // ~52.6 pJ
 		},
 		{
-			name:        "moderate accuracy, moderate energy",
-			energyJ:     80e-12, // 80 pJ per inference
-			accuracy:    0.80,   // 80% accuracy
-			inferences:  1,
-			wantENACpJ:  80.0 / 0.80, // 100 pJ
+			name:       "moderate accuracy, moderate energy",
+			energyJ:    80e-12, // 80 pJ per inference
+			accuracy:   0.80,   // 80% accuracy
+			inferences: 1,
+			wantENACpJ: 80.0 / 0.80, // 100 pJ
 		},
 		{
-			name:        "low accuracy, high energy",
-			energyJ:     100e-12, // 100 pJ per inference
-			accuracy:    0.60,    // 60% accuracy
-			inferences:  1,
-			wantENACpJ:  100.0 / 0.60, // ~166.7 pJ
+			name:       "low accuracy, high energy",
+			energyJ:    100e-12, // 100 pJ per inference
+			accuracy:   0.60,    // 60% accuracy
+			inferences: 1,
+			wantENACpJ: 100.0 / 0.60, // ~166.7 pJ
 		},
 	}
 
@@ -274,7 +274,7 @@ func TestM3_ENERGY_04_ENAC_BatchProcessing(t *testing.T) {
 
 	const (
 		energyPerInferenceJ = 50e-12 // 50 pJ per inference
-		accuracy            = 0.82    // 82% accuracy
+		accuracy            = 0.82   // 82% accuracy
 	)
 
 	batches := []int{1, 10, 100, 1000}

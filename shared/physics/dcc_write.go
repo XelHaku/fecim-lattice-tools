@@ -98,10 +98,10 @@ func NewDCCController(solver *LKSolver, material *HZOMaterial) *DCCController {
 	return &DCCController{
 		Solver:       solver,
 		Material:     material,
-		WriteVoltage: 3.0 * vc,  // 3× Vc to ensure full switching
-		MaxPulseTime: 100e-9,    // 100 ns maximum single pulse
-		Tolerance:    0.01,      // 1 % of 2Ps
-		TimeStep:     1e-12,     // 1 ps integration step
+		WriteVoltage: 3.0 * vc, // 3× Vc to ensure full switching
+		MaxPulseTime: 100e-9,   // 100 ns maximum single pulse
+		Tolerance:    0.01,     // 1 % of 2Ps
+		TimeStep:     1e-12,    // 1 ps integration step
 	}
 }
 
@@ -210,15 +210,15 @@ func (d *DCCController) ProgramDCC(targetG float64, reset bool) DCCResult {
 type ISPPvsDCCComparison struct {
 	TargetG float64
 
-	ISPPSuccess   bool
-	ISPPAttempts  int
+	ISPPSuccess    bool
+	ISPPAttempts   int
 	ISPPOvershoots int
-	ISPPFinalG    float64
+	ISPPFinalG     float64
 
-	DCCSuccess      bool
+	DCCSuccess       bool
 	DCCPulseDuration float64 // single DCC pulse duration (s)
-	DCCSteps        int
-	DCCFinalG       float64
+	DCCSteps         int
+	DCCFinalG        float64
 }
 
 // CompareISPPvsDCC runs both ISPP (WriteController) and DCC (DCCController) on

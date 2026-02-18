@@ -406,10 +406,10 @@ func TestDrift_M3_NOISE_04_TemperatureDependence(t *testing.T) {
 	// Arrhenius temperature acceleration: rate ∝ exp(-Ea/kT)
 	// Drift at higher T is faster by factor exp(Ea/k * (1/T_ref - 1/T))
 	const baseDriftCoeff = 0.02
-	const timeS = 86400.0           // 1 day
-	const activationEnergyEV = 0.8  // Typical for ferroelectric polarization switching
-	const boltzmannEV = 8.617e-5    // Boltzmann constant in eV/K
-	const refTempK = 300.0          // Room temperature reference
+	const timeS = 86400.0          // 1 day
+	const activationEnergyEV = 0.8 // Typical for ferroelectric polarization switching
+	const boltzmannEV = 8.617e-5   // Boltzmann constant in eV/K
+	const refTempK = 300.0         // Room temperature reference
 
 	temperatures := []struct {
 		tempC float64

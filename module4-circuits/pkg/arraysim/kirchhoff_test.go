@@ -47,13 +47,13 @@ func solveForKirchhoff(t *testing.T, n int) (SolveParams, DCResult) {
 
 func TestKirchhoff_ExactIdentities(t *testing.T) {
 	// Exact arithmetic sanity identities.
-	if got := math.Abs((1.2-0.7)+(0.7-0.1)+(0.1-1.2)); got > tolExact {
+	if got := math.Abs((1.2 - 0.7) + (0.7 - 0.1) + (0.1 - 1.2)); got > tolExact {
 		t.Fatalf("KVL exact identity failed: residual=%g", got)
 	}
 	if got := math.Abs((3.0 - 1.5 - 1.5)); got > tolExact {
 		t.Fatalf("KCL exact identity failed: residual=%g", got)
 	}
-	if got := math.Abs((2e-4*0.5)-1e-4); got > tolExact {
+	if got := math.Abs((2e-4 * 0.5) - 1e-4); got > tolExact {
 		t.Fatalf("Ohm exact identity failed: residual=%g A", got)
 	}
 }

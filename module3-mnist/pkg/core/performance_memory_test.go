@@ -85,9 +85,9 @@ func TestPerformance_M3_PERF_04_Memory(t *testing.T) {
 	// Note on memory measurement:
 	// Go's GC is asynchronous, so malloc/free counts may show imbalance even without leaks.
 	// The real leak test is in TestMemory_LeakDetection which measures heap growth over time.
-	_ = int64(numMallocs - numFrees)                                          // netObjects (unused, for debugging)
-	_ = (float64(heapAllocBytes) / float64(totalAllocBytes)) * 100.0         // heapGrowthPercent (unused, for debugging)
-	
+	_ = int64(numMallocs - numFrees)                                 // netObjects (unused, for debugging)
+	_ = (float64(heapAllocBytes) / float64(totalAllocBytes)) * 100.0 // heapGrowthPercent (unused, for debugging)
+
 	t.Logf("")
 	if numFrees == 0 {
 		t.Logf("  Note: GC has not run during test (Frees=0)")

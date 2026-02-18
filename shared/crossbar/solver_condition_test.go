@@ -13,7 +13,7 @@ func TestSolverCondition_M2KCH05_RpOverRcellAffectsIterations(t *testing.T) {
 		t.Skip("skipping solver conditioning sweep in -short (can be sensitive to SOR configuration)")
 	}
 	const (
-		n  = 16
+		n   = 16
 		vIn = 1.0
 	)
 

@@ -157,7 +157,7 @@ func TestMVMNumpyCrossValidation(t *testing.T) {
 			// --- Python/scipy reference ---
 			input := map[string]interface{}{
 				"rows": n, "cols": n,
-				"G":   G, "VWL": VWL, "VBL": VBL,
+				"G": G, "VWL": VWL, "VBL": VBL,
 				"gWL": 1.0 / RWL, "gBL": 1.0 / RBL,
 				"gWLD": 1.0 / RWL, "gBLD": 1.0 / RBL, // drive = wire
 			}

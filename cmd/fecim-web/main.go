@@ -4,9 +4,9 @@
 package main
 
 import (
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2"
 
 	docs "fecim-lattice-tools/module7-docs/pkg/gui"
 )
@@ -17,8 +17,8 @@ import (
 // dependencies (Vulkan renderer, terminal TUI, etc.).
 const (
 	webWindowTitle = "FeCIM Lattice Tools (Web Demo)"
-	webWindowW    = float32(1200)
-	webWindowH    = float32(800)
+	webWindowW     = float32(1200)
+	webWindowH     = float32(800)
 )
 
 func main() {

@@ -25,7 +25,7 @@ func TestCurrentValidation_2x2_AnalyticParallelRows(t *testing.T) {
 			{1e-4, 2e-4},
 			{3e-4, 4e-4},
 		},
-		Wire: WireParams{RWordLine: 1e-9, RBitLine: 1e-9},
+		Wire:     WireParams{RWordLine: 1e-9, RBitLine: 1e-9},
 		Boundary: BoundaryParams{WLDriveResistance: 1e-9, BLDriveResistance: 1e-9},
 	}
 	res, err := NewTierBSolver().Solve(params)

@@ -160,8 +160,8 @@ func TestM3_ENERGY_01_DynamicEnergyPositiveAllLayers(t *testing.T) {
 	t.Logf("PASS: Total E_dyn = %.3f pJ (%.1f fF cells, %.2fV)", totalDynamic*1e12, capacitanceF*1e15, voltageV)
 
 	// Verify it's in reasonable range for 2-layer MNIST network (101,632 weights)
-	minExpectedPJ := 0.1     // at least 0.1 pJ
-	maxExpectedPJ := 5000.0  // at most 5000 pJ for full MNIST network
+	minExpectedPJ := 0.1    // at least 0.1 pJ
+	maxExpectedPJ := 5000.0 // at most 5000 pJ for full MNIST network
 	totalPJ := totalDynamic * 1e12
 
 	if totalPJ < minExpectedPJ {

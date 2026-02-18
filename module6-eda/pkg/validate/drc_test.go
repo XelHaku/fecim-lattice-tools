@@ -83,10 +83,10 @@ END LIBRARY`
 
 func TestValidateLEFWithPDKConstraints_GeneratedLEFPasses(t *testing.T) {
 	cfg := config.CellConfig{
-		Name:      "fecim_bitcell",
-		CellType:  "passive",
-		Width:     0.460,
-		Height:    2.720,
+		Name:       "fecim_bitcell",
+		CellType:   "passive",
+		Width:      0.460,
+		Height:     2.720,
 		MetalWidth: 0.14,
 	}
 	lef := export.GenerateLEF(cfg)

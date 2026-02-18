@@ -7,13 +7,15 @@ import (
 
 // Extracted from module4-circuits/pkg/gui/tab_unified_voltage.go
 // (legacy deterministic disturb accumulator used by UI hooks):
-//   base := 0.01 * halfSelectDisturbRate
-//   halfSelectDisturbRate = 0.25
-//   disturb residue += sign(targetVCell) * base
+//
+//	base := 0.01 * halfSelectDisturbRate
+//	halfSelectDisturbRate = 0.25
+//	disturb residue += sign(targetVCell) * base
+//
 // Drift by ±1 level happens when |residue| >= 1.0.
 const (
 	halfSelectDisturbRateFromGUI = 0.25
-	halfSelectResidueStep         = 0.01 * halfSelectDisturbRateFromGUI // 0.0025 per half-select write event
+	halfSelectResidueStep        = 0.01 * halfSelectDisturbRateFromGUI // 0.0025 per half-select write event
 )
 
 func disturbEventsToAdjacentLevel() int {

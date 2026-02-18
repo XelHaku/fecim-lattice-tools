@@ -57,12 +57,12 @@ func TestM6LIB04_CornersOperatingConditionsAttributes(t *testing.T) {
 
 	// Define expected corners with process/temp/voltage ranges
 	cornerTests := []struct {
-		name        string
-		processMin  float64
-		processMax  float64
-		tempC       float64
-		voltageMin  float64
-		voltageMax  float64
+		name       string
+		processMin float64
+		processMax float64
+		tempC      float64
+		voltageMin float64
+		voltageMax float64
 	}{
 		// FF (fast-fast): process < 1.0, higher voltage
 		{"ff_n40c", 0.7, 0.9, -40.0, 1.8, 2.0},
@@ -124,7 +124,7 @@ func TestM6LIB04_CornersTimingScaling(t *testing.T) {
 	if ffIdx < 0 {
 		t.Fatal("missing FF corner library")
 	}
-	ffLib := lib[ffIdx:strings.Index(lib[ffIdx+50:], "library(")+ffIdx+50]
+	ffLib := lib[ffIdx : strings.Index(lib[ffIdx+50:], "library(")+ffIdx+50]
 	ffRise := extractFirstNLDMValue(t, ffLib, "cell_rise")
 
 	// Extract cell_rise first value from TT corner
@@ -132,7 +132,7 @@ func TestM6LIB04_CornersTimingScaling(t *testing.T) {
 	if ttIdx < 0 {
 		t.Fatal("missing TT corner library")
 	}
-	ttLib := lib[ttIdx:strings.Index(lib[ttIdx+50:], "library(")+ttIdx+50]
+	ttLib := lib[ttIdx : strings.Index(lib[ttIdx+50:], "library(")+ttIdx+50]
 	ttRise := extractFirstNLDMValue(t, ttLib, "cell_rise")
 
 	// Extract cell_rise first value from SS corner

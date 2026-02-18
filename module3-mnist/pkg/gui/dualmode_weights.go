@@ -4,9 +4,9 @@ package gui
 
 import (
 	"fmt"
-	"os"
 	"image"
 	"image/color"
+	"os"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -471,7 +471,7 @@ func (app *DualModeApp) updateWeightHeatmap() {
 		// In headless test driver, fyne.Do() scheduling can deadlock because there is no real
 		// render loop. GUI integration tests validate wiring/binding and do not require heatmap refresh.
 		return
-		}
+	}
 
 	if !app.initialized {
 		return

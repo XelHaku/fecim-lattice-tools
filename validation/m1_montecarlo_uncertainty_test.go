@@ -24,6 +24,7 @@ import (
 	"fecim-lattice-tools/module1-hysteresis/pkg/controller"
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 	sharedphysics "fecim-lattice-tools/shared/physics"
+	sharedval "fecim-lattice-tools/shared/validation"
 )
 
 const (
@@ -51,19 +52,41 @@ type mcPercentileStats struct {
 	CIWidth float64 `json:"ci_width_frac"` // (P95-P5)/mean
 }
 
+// mcMetricsBlock holds the key scalar metrics for machine-readable validation.
+type mcMetricsBlock struct {
+	CIWidthPr          float64 `json:"ci_width_pr"`
+	CIWidthEc          float64 `json:"ci_width_ec"`
+	CIWidthArea        float64 `json:"ci_width_area"`
+	SeedDeterminismOK  bool    `json:"seed_determinism_ok"`
+	ISPPConvergenceFrac float64 `json:"ispp_convergence_frac"`
+}
+
+// mcThresholds carries the hard-gate values for this artifact.
+type mcThresholds struct {
+	CIWidthMax          float64 `json:"ci_width_max"`
+	ISPPConvergenceMin  float64 `json:"ispp_convergence_min"`
+}
+
 // mcReport is the JSON artifact for this test.
 type mcReport struct {
+	sharedval.ArtifactEnvelope // schema_version, timestamp_utc, commit, gate, test_id, verdict
+
 	MaterialID  string            `json:"material_id"`
+	Material    string            `json:"material"`
+	Dataset     string            `json:"dataset"`
 	NTrialsPE   int               `json:"n_trials_pe"`
 	NTrialsISPP int               `json:"n_trials_ispp"`
 	Seed        int64             `json:"seed"`
 	SigmaFrac   float64           `json:"sigma_frac"`
-	Generated   string            `json:"generated_at"`
+	Generated   string            `json:"generated_at"` // kept for backwards compat; see timestamp_utc
 	PrStats     mcPercentileStats `json:"pr_stats"`
 	EcStats     mcPercentileStats `json:"ec_stats"`
 	AreaStats   mcPercentileStats `json:"area_stats"`
 	DetermOK    bool              `json:"seed_determinism_ok"`
-	ISPPConvFrac float64          `json:"ispp_convergence_frac"`
+
+	Metrics     mcMetricsBlock               `json:"metrics"`
+	Uncertainty sharedval.ArtifactUncertainty `json:"uncertainty"`
+	Thresholds  mcThresholds                 `json:"thresholds"`
 }
 
 func TestM1_MonteCarlo_Uncertainty(t *testing.T) {
@@ -131,18 +154,41 @@ func TestM1_MonteCarlo_Uncertainty(t *testing.T) {
 		t.Logf("MC_PE n=%d sigma=%.0f%% Area: mean=%.3e p5=%.3e p95=%.3e ci=%.2f%%",
 			mcNTrialsPE, mcSigmaFrac*100, areaStats.Mean, areaStats.P5, areaStats.P95, areaStats.CIWidth*100)
 
+		pePass := determOK &&
+			prStats.CIWidth <= 0.60 &&
+			ecStats.CIWidth <= 0.60 &&
+			areaStats.CIWidth <= 0.60
+
 		// Write artifact.
 		report := mcReport{
-			MaterialID:  "default_hzo",
-			NTrialsPE:   mcNTrialsPE,
-			NTrialsISPP: mcNTrialsISPP,
-			Seed:        mcSeed,
-			SigmaFrac:   mcSigmaFrac,
-			Generated:   time.Now().UTC().Format(time.RFC3339),
-			PrStats:     prStats,
-			EcStats:     ecStats,
-			AreaStats:   areaStats,
-			DetermOK:    determOK,
+			ArtifactEnvelope: sharedval.NewEnvelope("RG-VAL-M1-04", "", pePass),
+			MaterialID:       "default_hzo",
+			Material:         mat.Name,
+			Dataset:          "default_hzo_pe_mc",
+			NTrialsPE:        mcNTrialsPE,
+			NTrialsISPP:      mcNTrialsISPP,
+			Seed:             mcSeed,
+			SigmaFrac:        mcSigmaFrac,
+			Generated:        time.Now().UTC().Format(time.RFC3339),
+			PrStats:          prStats,
+			EcStats:          ecStats,
+			AreaStats:        areaStats,
+			DetermOK:         determOK,
+			Metrics: mcMetricsBlock{
+				CIWidthPr:         prStats.CIWidth,
+				CIWidthEc:         ecStats.CIWidth,
+				CIWidthArea:       areaStats.CIWidth,
+				SeedDeterminismOK: determOK,
+			},
+			Uncertainty: sharedval.ArtifactUncertainty{
+				Method:     "monte_carlo",
+				Confidence: 0.90, // 5th–95th percentile
+				SampleSize: mcNTrialsPE,
+			},
+			Thresholds: mcThresholds{
+				CIWidthMax:         0.60,
+				ISPPConvergenceMin: 0.90,
+			},
 		}
 
 		outPath := filepath.Join(outDir, fmt.Sprintf("mc_pe_uncertainty_%s.json", "default_hzo"))

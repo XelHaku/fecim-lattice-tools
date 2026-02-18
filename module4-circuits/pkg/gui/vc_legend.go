@@ -72,7 +72,7 @@ func vcOverlayColor(voltage, maxAbs float64) color.RGBA {
 		n = -1
 	}
 
-	cool := color.RGBA{70, 130, 255, 255}   // blue: negative voltage
+	cool := color.RGBA{70, 130, 255, 255}     // blue: negative voltage
 	neutral := color.RGBA{255, 255, 255, 255} // white: zero voltage
 	warm := color.RGBA{255, 80, 80, 255}      // red: positive voltage
 

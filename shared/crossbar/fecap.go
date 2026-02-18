@@ -68,8 +68,8 @@ func DefaultFeCAPConfig(rows, cols int) *Config {
 	return &Config{
 		Rows:             rows,
 		Cols:             cols,
-		ADCBits:          4,                       // 4-bit per literature consensus
-		DACBits:          4,                       // 4-bit per literature consensus
+		ADCBits:          4, // 4-bit per literature consensus
+		DACBits:          4, // 4-bit per literature consensus
 		CellType:         CellTypeFeCAP,
 		CMin:             DefaultCMin,
 		CMax:             DefaultCMax,

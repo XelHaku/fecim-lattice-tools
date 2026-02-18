@@ -35,14 +35,14 @@ func TestFlowConfigRequiredVariables_M6_OL_02(t *testing.T) {
 	// Required OpenLane v2.0 variables
 	// Reference: https://openlane.readthedocs.io/en/latest/reference/configuration.html
 	requiredVars := []string{
-		"DESIGN_NAME",        // Design identification
-		"VERILOG_FILES",      // Source Verilog files
-		"FP_SIZING",          // Floorplan sizing mode
-		"DIE_AREA",           // Die dimensions
-		"FP_DEF_TEMPLATE",    // Pre-placed DEF template
-		"EXTRA_LEFS",         // Custom cell LEF
-		"EXTRA_LIBS",         // Custom cell Liberty
-		"RUN_CTS",            // Clock tree synthesis flag
+		"DESIGN_NAME",          // Design identification
+		"VERILOG_FILES",        // Source Verilog files
+		"FP_SIZING",            // Floorplan sizing mode
+		"DIE_AREA",             // Die dimensions
+		"FP_DEF_TEMPLATE",      // Pre-placed DEF template
+		"EXTRA_LEFS",           // Custom cell LEF
+		"EXTRA_LIBS",           // Custom cell Liberty
+		"RUN_CTS",              // Clock tree synthesis flag
 		"SYNTH_ELABORATE_ONLY", // Synthesis mode
 	}
 

@@ -74,31 +74,31 @@ func TestM6VER02_MVMStructuralModel(t *testing.T) {
 // TestM6VER02_OutputBitWidth verifies output port width calculation
 func TestM6VER02_OutputBitWidth(t *testing.T) {
 	testCases := []struct {
-		name        string
-		rows        int
-		cols        int
-		levels      int
+		name         string
+		rows         int
+		cols         int
+		levels       int
 		expectedBits int // log2(rows × max_current) where max_current depends on levels
 	}{
 		{
-			name:        "4×4 array, 16 levels",
-			rows:        4,
-			cols:        4,
-			levels:      16,
+			name:         "4×4 array, 16 levels",
+			rows:         4,
+			cols:         4,
+			levels:       16,
 			expectedBits: 4, // BL width = cols = 4 bits [3:0]
 		},
 		{
-			name:        "8×8 array, 16 levels",
-			rows:        8,
-			cols:        8,
-			levels:      16,
+			name:         "8×8 array, 16 levels",
+			rows:         8,
+			cols:         8,
+			levels:       16,
 			expectedBits: 8, // BL width = cols = 8 bits [7:0]
 		},
 		{
-			name:        "2×2 array, 4 levels",
-			rows:        2,
-			cols:        2,
-			levels:      4,
+			name:         "2×2 array, 4 levels",
+			rows:         2,
+			cols:         2,
+			levels:       4,
 			expectedBits: 2, // BL width = cols = 2 bits [1:0]
 		},
 	}

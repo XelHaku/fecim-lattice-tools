@@ -40,12 +40,12 @@ import (
 	demo7gui "fecim-lattice-tools/module7-docs/pkg/gui"
 	"fecim-lattice-tools/shared/accessibility"
 
+	"fecim-lattice-tools/shared/canvas"
 	"fecim-lattice-tools/shared/logging"
 	"fecim-lattice-tools/shared/recentfiles"
 	"fecim-lattice-tools/shared/recording"
 	"fecim-lattice-tools/shared/themes"
 	"fecim-lattice-tools/shared/undo"
-	"fecim-lattice-tools/shared/canvas"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 

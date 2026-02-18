@@ -22,8 +22,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	physics "fecim-lattice-tools/shared/physics"
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
+	physics "fecim-lattice-tools/shared/physics"
 )
 
 const (
@@ -40,7 +40,7 @@ func TestTemperatureDependentSwitching(t *testing.T) {
 
 	// Test temperatures spanning practical range: -40°C to 85°C (233K to 358K)
 	temps := []float64{233, 263, 298, 323, 358} // K
-	field := 1.5 * mat.Ec // Fixed field = 1.5×Ec
+	field := 1.5 * mat.Ec                       // Fixed field = 1.5×Ec
 
 	// Use LK solver with temperature-dependent Alpha via UpdateParams
 	type tempResult struct {
@@ -53,7 +53,6 @@ func TestTemperatureDependentSwitching(t *testing.T) {
 	}
 
 	var results []tempResult
-	
 
 	for _, T := range temps {
 		solver := physics.NewLKSolver()
@@ -138,8 +137,9 @@ func TestTemperatureDependentSwitching(t *testing.T) {
 // fatigue follows Weibull distribution (statistical failure model).
 //
 // Weibull: F(t) = 1 - exp(-(t/η)^β)
-//   η = characteristic lifetime (63.2% failure)
-//   β = shape parameter (slope, >1 indicates wear-out)
+//
+//	η = characteristic lifetime (63.2% failure)
+//	β = shape parameter (slope, >1 indicates wear-out)
 //
 // Literature:
 //   - Weibull (1951): J. Appl. Mech. 18, 293
@@ -162,8 +162,8 @@ func TestEnduranceWeibullDistribution(t *testing.T) {
 	N_fatigue := 1e9
 
 	type fatigueResult struct {
-		Cycles     float64 `json:"N_cycles"`
-		Pr_frac    float64 `json:"Pr_remaining_frac"`
+		Cycles      float64 `json:"N_cycles"`
+		Pr_frac     float64 `json:"Pr_remaining_frac"`
 		Degradation float64 `json:"degradation_pct"`
 	}
 
@@ -215,11 +215,11 @@ func TestEnduranceWeibullDistribution(t *testing.T) {
 	dir := filepath.Join("..", "..", "output", "validation", "literature")
 	os.MkdirAll(dir, 0755)
 	artifact := map[string]interface{}{
-		"test":            "endurance_weibull",
-		"material":        "DefaultHZO",
-		"doi":             "10.1111/j.1151-2916.1996.tb08064.x",
+		"test":             "endurance_weibull",
+		"material":         "DefaultHZO",
+		"doi":              "10.1111/j.1151-2916.1996.tb08064.x",
 		"N_fatigue_cycles": N_fatigue,
-		"results":         results,
+		"results":          results,
 	}
 	b, _ := json.MarshalIndent(artifact, "", "  ")
 	os.WriteFile(filepath.Join(dir, "endurance_weibull.json"), b, 0644)
@@ -326,10 +326,10 @@ func TestLoopAreaNormalization(t *testing.T) {
 	dir := filepath.Join("..", "..", "output", "validation", "literature")
 	os.MkdirAll(dir, 0755)
 	artifact := map[string]interface{}{
-		"test":            "loop_area_normalization",
-		"material":        "DefaultHZO",
-		"Ec_MV_cm":        Ec,
-		"results":         results,
+		"test":     "loop_area_normalization",
+		"material": "DefaultHZO",
+		"Ec_MV_cm": Ec,
+		"results":  results,
 	}
 	b, _ := json.MarshalIndent(artifact, "", "  ")
 	os.WriteFile(filepath.Join(dir, "loop_area_normalization.json"), b, 0644)

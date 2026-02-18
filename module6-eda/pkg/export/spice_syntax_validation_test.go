@@ -104,16 +104,16 @@ func TestM6_SPICE_01_SyntaxValidation_4x4Array(t *testing.T) {
 
 // spiceParseResult captures SPICE netlist structural elements
 type spiceParseResult struct {
-	subcktCount        int
-	endsCount          int
-	subcircuitDefined  map[string]bool
-	instanceCount      int
-	vsourceCount       int
-	resistorCount      int
-	hasOpAnalysis      bool
-	hasControl         bool
-	hasEnd             bool
-	hasModelCard       bool
+	subcktCount       int
+	endsCount         int
+	subcircuitDefined map[string]bool
+	instanceCount     int
+	vsourceCount      int
+	resistorCount     int
+	hasOpAnalysis     bool
+	hasControl        bool
+	hasEnd            bool
+	hasModelCard      bool
 }
 
 // parseSPICENetlist is a simple SPICE parser that validates structural elements.

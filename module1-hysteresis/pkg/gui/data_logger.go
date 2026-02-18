@@ -111,7 +111,9 @@ func NewHysteresisDataLogger(materialName string) (*HysteresisDataLogger, error)
 		return nil, fmt.Errorf("create data log dir: %w", err)
 	}
 
-	timestamp := time.Now().Format("2006-01-02_15-04-05")
+	// Include microseconds to avoid filename collisions when multiple headless
+	// runs start within the same second (common in fast test suites).
+	timestamp := time.Now().Format("2006-01-02_15-04-05.000000")
 	safeMaterial := sanitizeMaterialName(materialName)
 	filename := fmt.Sprintf("hysteresis-%s-%s.csv", safeMaterial, timestamp)
 	path := filepath.Join(logsDir, filename)

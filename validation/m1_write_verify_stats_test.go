@@ -18,6 +18,7 @@ import (
 	"fecim-lattice-tools/module1-hysteresis/pkg/controller"
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 	sharedphysics "fecim-lattice-tools/shared/physics"
+	sharedval "fecim-lattice-tools/shared/validation"
 )
 
 type writeTargetStats struct {
@@ -32,21 +33,43 @@ type writeTargetStats struct {
 	Fluence        float64 `json:"cumulative_fluence"`
 }
 
+// wvsMetricsBlock mirrors key scalar metrics for machine-readable validation.
+type wvsMetricsBlock struct {
+	AllConverge    bool    `json:"all_converge"`
+	MaxPulses      int     `json:"max_pulses_observed"`
+	MaxOvershoots  int     `json:"max_overshoots_observed"`
+}
+
+// wvsThresholds carries the hard-gate values for this artifact.
+type wvsThresholds struct {
+	MaxPulsesPerTarget int `json:"max_pulses_per_target"`
+	MaxOvershoots      int `json:"max_overshoots"`
+	MaxStuckPerTarget  int `json:"max_stuck_per_target"`
+	MaxGuardPerTarget  int `json:"max_guard_per_target"`
+}
+
 type writeVerifyStatsReport struct {
+	sharedval.ArtifactEnvelope // schema_version, timestamp_utc, commit, gate, test_id, verdict
+
 	MaterialID  string             `json:"material_id"`
 	Material    string             `json:"material"`
+	Dataset     string             `json:"dataset"`
 	NumLevels   int                `json:"num_levels"`
-	Generated   string             `json:"generated_at"`
+	Generated   string             `json:"generated_at"` // kept for backwards compat; see timestamp_utc
 	Targets     []writeTargetStats `json:"targets"`
 	AllConverge bool               `json:"all_converge"`
+
+	Metrics     wvsMetricsBlock              `json:"metrics"`
+	Uncertainty sharedval.ArtifactUncertainty `json:"uncertainty"`
+	Thresholds  wvsThresholds                `json:"thresholds"`
 }
 
 // Bounds for write verify stats.
 const (
-	maxPulsesPerTarget    = 200 // Upper bound on ISPP pulses per target
-	maxOvershoots         = 30  // Must not exceed OvershootLimit (which terminates as success)
-	maxStuckPerTarget     = 5   // Stuck detection should fire rarely
-	maxGuardPerTarget     = 10  // Guard pulses should be rare
+	maxPulsesPerTarget = 200 // Upper bound on ISPP pulses per target
+	maxOvershoots      = 30  // Must not exceed OvershootLimit (which terminates as success)
+	maxStuckPerTarget  = 5   // Stuck detection should fire rarely
+	maxGuardPerTarget  = 10  // Guard pulses should be rare
 )
 
 func TestM1_WriteVerifyStats_Regression(t *testing.T) {
@@ -77,17 +100,14 @@ func TestM1_WriteVerifyStats_Regression(t *testing.T) {
 	for _, mc := range cases {
 		mc := mc
 		t.Run(mc.id, func(t *testing.T) {
-			report := writeVerifyStatsReport{
-				MaterialID: mc.id,
-				Material:   mc.mat.Name,
-				NumLevels:  numLevels,
-				Generated:  time.Now().UTC().Format(time.RFC3339),
-			}
-
 			allConverge := true
+			maxPulsesObs := 0
+			maxOvershootsObs := 0
+			var targetStats []writeTargetStats
+
 			for _, tgt := range targets {
 				stats := runISPPTarget(mc.mat, numLevels, tgt)
-				report.Targets = append(report.Targets, stats)
+				targetStats = append(targetStats, stats)
 
 				if !stats.Converged {
 					allConverge = false
@@ -114,9 +134,41 @@ func TestM1_WriteVerifyStats_Regression(t *testing.T) {
 				t.Logf("WRITE_STATS material=%s target=%d final=%d converged=%v pulses=%d overshoot=%d stuck=%d guard=%d",
 					mc.id, tgt, stats.FinalLevel, stats.Converged, stats.TotalPulses,
 					stats.OvershootCount, stats.StuckCount, stats.GuardPulses)
+
+				if stats.TotalPulses > maxPulsesObs {
+					maxPulsesObs = stats.TotalPulses
+				}
+				if stats.OvershootCount > maxOvershootsObs {
+					maxOvershootsObs = stats.OvershootCount
+				}
 			}
 
-			report.AllConverge = allConverge
+			report := writeVerifyStatsReport{
+				ArtifactEnvelope: sharedval.NewEnvelope("RG-VAL-M1-03", "", allConverge),
+				MaterialID:       mc.id,
+				Material:         mc.mat.Name,
+				Dataset:          fmt.Sprintf("%s_ispp_write_verify", mc.id),
+				NumLevels:        numLevels,
+				Generated:        time.Now().UTC().Format(time.RFC3339),
+				Targets:          targetStats,
+				AllConverge:      allConverge,
+				Metrics: wvsMetricsBlock{
+					AllConverge:   allConverge,
+					MaxPulses:     maxPulsesObs,
+					MaxOvershoots: maxOvershootsObs,
+				},
+				Uncertainty: sharedval.ArtifactUncertainty{
+					Method:     "none",
+					Confidence: 1.0,
+					SampleSize: len(targets),
+				},
+				Thresholds: wvsThresholds{
+					MaxPulsesPerTarget: maxPulsesPerTarget,
+					MaxOvershoots:      maxOvershoots,
+					MaxStuckPerTarget:  maxStuckPerTarget,
+					MaxGuardPerTarget:  maxGuardPerTarget,
+				},
+			}
 
 			outPath := filepath.Join(outDir, fmt.Sprintf("write_verify_stats_%s.json", mc.id))
 			b, _ := json.MarshalIndent(report, "", "  ")

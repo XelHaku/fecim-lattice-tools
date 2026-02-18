@@ -14,6 +14,7 @@ import (
 
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 	sharedphysics "fecim-lattice-tools/shared/physics"
+	sharedval "fecim-lattice-tools/shared/validation"
 )
 
 type peLoopDataset struct {
@@ -31,12 +32,14 @@ type peLoopDataset struct {
 }
 
 type peLoopMetrics struct {
+	sharedval.ArtifactEnvelope // schema_version, timestamp_utc, commit, gate, test_id, verdict
+
 	MaterialID string `json:"material_id"`
 	Material   string `json:"material"`
 	Engine     string `json:"engine"`
 	DOI        string `json:"doi"`
 	Dataset    string `json:"dataset"`
-	Generated  string `json:"generated_at"`
+	Generated  string `json:"generated_at"` // kept for backwards compat; see timestamp_utc
 
 	PrData_uC_cm2 float64 `json:"pr_data_uC_cm2"`
 	PrSim_uC_cm2  float64 `json:"pr_sim_uC_cm2"`
@@ -53,7 +56,28 @@ type peLoopMetrics struct {
 	LoopAreaSim    float64 `json:"loop_area_sim_J_m3"`
 	LoopAreaErrPct float64 `json:"loop_area_err_pct"`
 
+	// Required sub-objects for artifact schema validation.
+	Metrics     peLoopMetricsBlock           `json:"metrics"`
+	Uncertainty sharedval.ArtifactUncertainty `json:"uncertainty"`
+	Thresholds  peLoopThresholds             `json:"thresholds"`
+
 	Pass bool `json:"pass"`
+}
+
+// peLoopMetricsBlock mirrors key scalar metrics for machine-readable validation.
+type peLoopMetricsBlock struct {
+	PrErrPct       float64 `json:"pr_err_pct"`
+	EcErrPct       float64 `json:"ec_err_pct"`
+	RMSEOverPs     float64 `json:"rmse_over_ps"`
+	LoopAreaErrPct float64 `json:"loop_area_err_pct"`
+}
+
+// peLoopThresholds carries the hard-gate values applied to this artifact.
+type peLoopThresholds struct {
+	PrErrPctMax       float64 `json:"pr_err_pct_max"`
+	EcErrPctMax       float64 `json:"ec_err_pct_max"`
+	RMSEOverPsMax     float64 `json:"rmse_over_ps_max"`
+	LoopAreaErrPctMax float64 `json:"loop_area_err_pct_max"`
 }
 
 // REQUIRED THRESHOLDS (Juan request)
@@ -282,25 +306,43 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 			}
 
 			m := peLoopMetrics{
-				MaterialID:     ds.MaterialID,
-				Material:       ds.Material.Name,
-				Engine:         ds.Engine,
-				DOI:            ds.DOI,
-				Dataset:        ds.Name,
-				Generated:      time.Now().UTC().Format(time.RFC3339),
-				PrData_uC_cm2:  prData,
-				PrSim_uC_cm2:   prSim,
-				PrErrPct:       prErrPct,
-				EcData_MV_cm:   ecData,
-				EcSim_MV_cm:    ecSim,
-				EcErrPct:       ecErrPct,
-				RMSE_uC_cm2:    rmse,
-				RMSEOverPs:     rmsePs,
-				Ps_uC_cm2:      ps,
-				LoopAreaData:   areaData,
-				LoopAreaSim:    areaSim,
-				LoopAreaErrPct: areaErrPct,
-				Pass:           pass,
+				ArtifactEnvelope: sharedval.NewEnvelope("RG-PHY-OBS-01", "", pass),
+				MaterialID:       ds.MaterialID,
+				Material:         ds.Material.Name,
+				Engine:           ds.Engine,
+				DOI:              ds.DOI,
+				Dataset:          ds.Name,
+				Generated:        time.Now().UTC().Format(time.RFC3339),
+				PrData_uC_cm2:    prData,
+				PrSim_uC_cm2:     prSim,
+				PrErrPct:         prErrPct,
+				EcData_MV_cm:     ecData,
+				EcSim_MV_cm:      ecSim,
+				EcErrPct:         ecErrPct,
+				RMSE_uC_cm2:      rmse,
+				RMSEOverPs:       rmsePs,
+				Ps_uC_cm2:        ps,
+				LoopAreaData:     areaData,
+				LoopAreaSim:      areaSim,
+				LoopAreaErrPct:   areaErrPct,
+				Metrics: peLoopMetricsBlock{
+					PrErrPct:       prErrPct,
+					EcErrPct:       ecErrPct,
+					RMSEOverPs:     rmsePs,
+					LoopAreaErrPct: areaErrPct,
+				},
+				Uncertainty: sharedval.ArtifactUncertainty{
+					Method:     "analytical",
+					Confidence: 1.0,
+					SampleSize: len(Edata),
+				},
+				Thresholds: peLoopThresholds{
+					PrErrPctMax:       thPrPct,
+					EcErrPctMax:       thEcPct,
+					RMSEOverPsMax:     thRMSEps,
+					LoopAreaErrPctMax: thAreaPct,
+				},
+				Pass: pass,
 			}
 
 			outPath := filepath.Join(outDir, fmt.Sprintf("module1_pe_loop_%s.json", ds.MaterialID))

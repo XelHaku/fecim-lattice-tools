@@ -28,7 +28,7 @@ func TestDeterminism_IRGeneration(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			config := NewComputeConfig(tc.rows, tc.cols)
-			
+
 			switch tc.arch {
 			case Arch1T1R:
 				config.With1T1R()
@@ -63,7 +63,7 @@ func TestDeterminism_IRGeneration(t *testing.T) {
 			referenceHash := hashes[0]
 			for i := 1; i < iterations; i++ {
 				if hashes[i] != referenceHash {
-					t.Errorf("Iteration %d: hash mismatch\n  Reference: %s\n  Got:       %s", 
+					t.Errorf("Iteration %d: hash mismatch\n  Reference: %s\n  Got:       %s",
 						i, referenceHash, hashes[i])
 				}
 			}
@@ -133,7 +133,7 @@ func TestDeterminism_CellOrdering(t *testing.T) {
 	for i := range weights {
 		weights[i] = make([]float64, 8)
 		for j := range weights[i] {
-			weights[i][j] = float64(i*8+j) / 64.0 * 2.0 - 1.0 // [-1, 1]
+			weights[i][j] = float64(i*8+j)/64.0*2.0 - 1.0 // [-1, 1]
 		}
 	}
 	config.WithWeights(weights)
@@ -209,7 +209,7 @@ func TestDeterminism_QuantizationStability(t *testing.T) {
 	for iter := 1; iter < iterations; iter++ {
 		for i := range reference {
 			if quantLevels[iter][i] != reference[i] {
-				t.Errorf("Iteration %d: quantization level mismatch at index %d: got %d, expected %d", 
+				t.Errorf("Iteration %d: quantization level mismatch at index %d: got %d, expected %d",
 					iter, i, quantLevels[iter][i], reference[i])
 			}
 		}
