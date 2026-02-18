@@ -139,6 +139,18 @@ func TestModule1_PELoop_LiteratureBacked(t *testing.T) {
 			Notes:      "PZT thin film from Nanomaterials 2024 Fig 2. Provisional calibrated reference curve until direct pixel digitization is committed.",
 		},
 		{
+			Name:       "Nanomaterials2024_Fig2_PZT_ThinFilm_TraceB",
+			DOI:        "10.3390/nano14050432",
+			SourceCSV:  filepath.Join("data", "pzt2024_nano14050432_fig2_thinfilm_traceB.csv"),
+			Provenance: filepath.Join("data", "pzt2024_nano14050432_fig2_thinfilm_traceB.provenance.json"),
+			MaterialID: "pzt2024_nano14050432_fig2_thinfilm_traceB",
+			Material:   sharedphysics.Nanomaterials2024Fig2PZTThinFilm(),
+			Engine:     "preisach",
+			FieldUnit:  "MV/cm",
+			PolarUnit:  "uC/cm2",
+			Notes:      "Secondary PZT pack entry from the same OA DOI context (Fig 2) for Tier-1 expansion; provisional calibrated reference curve pending direct pixel-digitized replacement.",
+		},
+		{
 			Name:       "Crystals2021_BTO_Hysteresis",
 			DOI:        "10.3390/cryst11101192",
 			SourceCSV:  filepath.Join("data", "bto2021_cryst11101192_hysteresis.csv"),
@@ -305,7 +317,7 @@ func validateStrictProvenance(ds peLoopDataset) error {
 		return fmt.Errorf("polarization unit mismatch for %s: got %q want %q", ds.Provenance, prov.Units.PolarizationDatasetUnit, ds.PolarUnit)
 	}
 	switch ds.MaterialID {
-	case "pzt2024_nano14050432_fig2_thinfilm", "bto2021_cryst11101192_hysteresis":
+	case "pzt2024_nano14050432_fig2_thinfilm", "pzt2024_nano14050432_fig2_thinfilm_traceB", "bto2021_cryst11101192_hysteresis":
 		// Both PZT and BTO are calibrated_reference_curve candidate_tier1 datasets.
 		// They share the same provenance contract requirements.
 		if prov.Status != "calibrated_reference_curve" {

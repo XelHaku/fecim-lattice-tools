@@ -1,0 +1,51 @@
+{
+  "dataset_id": "pzt2024_nano14050432_fig2_thinfilm_traceB",
+  "status": "calibrated_reference_curve",
+  "tier": "candidate_tier1",
+  "reference": {
+    "doi": "10.3390/nano14050432"
+  },
+  "paper": {
+    "title": "Interfacial Polarization Control Engineering and Ferroelectric PZT/Graphene Heterostructure Integrated Application",
+    "journal": "Nanomaterials",
+    "year": 2024,
+    "doi": "10.3390/nano14050432",
+    "url": "https://www.mdpi.com/2079-4991/14/5/432"
+  },
+  "figure": {
+    "figure_id": "2",
+    "description": "P-E hysteresis loop of PZT thin film under ±25 V sweep (secondary trace pack entry)",
+    "trace_variant": "traceB"
+  },
+  "material": {
+    "name": "PZT thin film",
+    "thickness_nm": 100
+  },
+  "units": {
+    "field_dataset_unit": "MV/cm",
+    "polarization_dataset_unit": "uC/cm2"
+  },
+  "digitization": {
+    "method": "calibrated reference curve generated from Preisach model using DOI-reported Pr/Ec targets",
+    "tool": "go generator (module1 Preisach model)",
+    "date_utc": "2026-02-18T13:15:00Z",
+    "operator": "Riju",
+    "point_count": 61,
+    "is_placeholder_for_refinement": true,
+    "notes": [
+      "Secondary PZT pack entry for Tier-1 expansion using the same OA DOI source.",
+      "Direct pixel-digitized trace replacement remains required for final reproducibility closure."
+    ]
+  },
+  "uncertainty": {
+    "pixel_digitization_pending": true,
+    "estimated_field_axis_uncertainty_MV_cm": 0.02,
+    "estimated_polarization_axis_uncertainty_uC_cm2": 0.5,
+    "notes": "Uncertainty placeholders until direct point-by-point extraction is committed."
+  },
+  "physics_priors_from_paper": {
+    "pr_uC_cm2": 69.0,
+    "ec_MV_cm": 1.148,
+    "source": "text near Figure 2 description"
+  }
+}
