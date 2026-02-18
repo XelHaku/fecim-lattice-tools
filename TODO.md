@@ -2,7 +2,7 @@
 
 **Mission**: Educational FeCIM visualization and simulation tool based on HfO₂-ZrO₂ superlattice research.
 
-**Last Updated**: 2026-02-16 (Added literature review recommendations from comprehensive 2025 crossbar/circuits analysis)
+**Last Updated**: 2026-02-18 (Release-readiness audit refresh; BTO digitized Tier-1 integration validated)
 
 **Source Documents**: `CRITIQUE_MASTER_LIST.md`, `docs/neural-network/mnist.fixes.todo.md`, `docs/ACCESSIBILITY_AUDIT.md`, `docs/peripheral-circuits/ARRAY_SIMULATION_FIDELITY.md`, `docs/development/ARCHITECTURE.md`, `PHYSICS_REALISM_AUDIT.md`, `OBSERVATIONS.md`, `docs/research/crossbar-circuits-literature-review-2025.md`, code comments
 
@@ -924,18 +924,18 @@ All 46 items complete:
 
 ---
 
-## Progress Summary
+## Progress Summary (refreshed 2026-02-18)
 
-| Priority | Total | Complete | Remaining |
-|----------|-------|----------|-----------|
-| **Current Focus** | **106** | **58** | **48** |
-| 🔴 Critical | 8 | 8 | 0 |
-| 🟠 High | 52 | 35 | 17 |
-| 🟡 Medium | 36 | 34 | 2 |
-| 🟢 Low | 22 | 6 | 16 |
-| **Total** | **224** | **141** | **83** |
+| Bucket | Remaining | Notes |
+|--------|-----------|-------|
+| 🔴 Critical (non-deferred) | 0 | No open critical items in active scope |
+| 🟠 High (non-deferred) | 0 | No open high-priority items in active scope |
+| 🟡 Medium (non-deferred) | 0 | No open medium-priority items in active scope |
+| 🟢 Low (non-deferred) | 2 | `L09`, `L10` roadmap features |
+| Deferred | 8 | `M1-WC-05/06/07`, `M4-WC-01/06/07/08/10` |
+| **Total Remaining** | **10** | **2 actionable now + 8 deferred** |
 
-*Note: "Current Focus" items (FOCUS-01 through FOCUS-125) are the active work direction. Module 5 is deferred.*
+*Counting rule: remaining items are derived from explicit status markers in this file (`⏳` and `⬜ DEFERRED`) plus roadmap entries not marked complete.*
 
 ---
 
@@ -1050,7 +1050,7 @@ See `CONTRIBUTING.md` and `CLAUDE.md` for development guidelines.
 
 | ID | Gap | Status | Evidence |
 |----|-----|--------|----------|
-| DOCA-01 | Exported Go APIs missing doc comments in several packages (`cmd/`, `module2-crossbar`, `module3-mnist`, `module5-comparison`, etc.) | ⚠️ Open (repo-wide backlog) | ✅ Done (added package docs to all 31 missing packages via doc.go files; 12 doc.go created, 8 cmd main.go updated) |
+| DOCA-01 | Exported Go APIs missing doc comments in several packages (`cmd/`, `module2-crossbar`, `module3-mnist`, `module5-comparison`, etc.) | ✅ Fixed | Added package docs to all 31 missing packages via doc.go files; 12 doc.go created, 8 cmd main.go updated. |
 | DOCA-02 | `ValidationError.Error()` lacked explicit Godoc comment | ✅ Fixed | `validation/configvalidator/validator.go` now documents `Error` method. |
 | DOCA-03 | Module README missing in `module1-hysteresis/` | ✅ Fixed | Added `module1-hysteresis/README.md`. |
 | DOCA-04 | Module README missing in `module3-mnist/` | ✅ Fixed | Added `module3-mnist/README.md`. |
@@ -1060,8 +1060,8 @@ See `CONTRIBUTING.md` and `CLAUDE.md` for development guidelines.
 | DOCA-08 | Top-level launcher CLI flags were not centrally documented in `docs/CLI.md` | ✅ Fixed | Added `Top-level launcher flags` table covering all flags from `cmd/fecim-lattice-tools/main.go`. |
 | DOCA-09 | `training.yaml` had fields without inline field descriptions | ✅ Fixed | Added descriptions for `learning_rate`, `momentum`, `default_batch_size`, `gradient_clip` in `config/training.yaml`. |
 | DOCA-10 | Default mirrored training config had same missing field descriptions | ✅ Fixed | Added same descriptions in `config/physics/defaults/training.yaml`. |
-| DOCA-11 | Some config YAML files still contain undocumented scalar fields (notably large material catalogs and mirrored defaults) | ⚠️ Open (backlog) | ✅ Done (added FIELD REFERENCE block to config/materials.yaml and config/physics/defaults/materials.yaml) |
-| DOCA-12 | Not all module/config roots have README-level entry docs (`config/` currently missing) | ⚠️ Open (backlog) | ✅ Done (`config/README.md` added with table of all YAML files) |
+| DOCA-11 | Some config YAML files still contain undocumented scalar fields (notably large material catalogs and mirrored defaults) | ✅ Fixed | Added FIELD REFERENCE block to `config/materials.yaml` and `config/physics/defaults/materials.yaml`. |
+| DOCA-12 | Not all module/config roots have README-level entry docs (`config/` currently missing) | ✅ Fixed | Added `config/README.md` with table of all YAML files. |
 
 ## Discovered from Code Audit (2026-02-11)
 

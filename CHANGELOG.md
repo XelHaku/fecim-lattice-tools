@@ -2,6 +2,37 @@
 
 All notable changes to this project are documented here.
 
+## [2026-02-18] Tier-1 BTO Digitization + Release-Readiness Refresh
+
+### Literature Validation / Physics Falsification
+
+- Added direct pixel-digitized BTO dataset from Crystals 2021 Fig. 7 with explicit provenance and uncertainty metadata.
+  - `validation/literature/data/bto2021_cryst11101192_hysteresis_digitized.csv`
+  - `validation/literature/data/bto2021_cryst11101192_hysteresis_digitized.provenance.json`
+- Added integrity gate for the new digitized dataset/provenance contract:
+  - `validation/literature/bto_digitized_integrity_test.go`
+- Integrated the digitized BTO dataset into `TestModule1_PELoop_LiteratureBacked` with dataset-specific uncertainty-derived thresholds.
+- Added calibrated material preset for the digitized BTO variant:
+  - `shared/physics/material_calibrated.go` (`Crystals2021FigFerroelectricBTODigitized`).
+
+### QA Baseline
+
+- Maintained deterministic A0 baseline after integration:
+  - `LIST_TOTAL=103 JSON_TOTAL=103`
+  - `PKG_SUM pass=103 fail=0 skip=0 total=103`
+
+### Release-Readiness Hygiene
+
+- README quick-start install paths re-verified in current HEAD:
+  - `go run ./cmd/fecim-lattice-tools --help` (PASS)
+  - `go build -o /tmp/fecim-lattice-tools ./cmd/fecim-lattice-tools` + `/tmp/fecim-lattice-tools --help` (PASS)
+- Refreshed `TODO.md` summary counts and resolved stale open-status labels for completed docs backlog entries (`DOCA-01`, `DOCA-11`, `DOCA-12`).
+
+### Representative commits
+
+- `c2b14b7` validation(literature): add BTO pixel-digitized dataset + uncertainty metadata
+- `16cc658` validation(literature): wire BTO pixel-digitized dataset into PE-loop gate with uncertainty-derived thresholds
+
 ## [2026-02-12] Sprint Continuation (Waves 10–17)
 
 Follow-up work extended the 2026-02-11 sprint with additional stabilization, testing breadth, and documentation.
