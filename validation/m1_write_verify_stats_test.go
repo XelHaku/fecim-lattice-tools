@@ -35,9 +35,9 @@ type writeTargetStats struct {
 
 // wvsMetricsBlock mirrors key scalar metrics for machine-readable validation.
 type wvsMetricsBlock struct {
-	AllConverge    bool    `json:"all_converge"`
-	MaxPulses      int     `json:"max_pulses_observed"`
-	MaxOvershoots  int     `json:"max_overshoots_observed"`
+	AllConverge   bool `json:"all_converge"`
+	MaxPulses     int  `json:"max_pulses_observed"`
+	MaxOvershoots int  `json:"max_overshoots_observed"`
 }
 
 // wvsThresholds carries the hard-gate values for this artifact.
@@ -59,9 +59,9 @@ type writeVerifyStatsReport struct {
 	Targets     []writeTargetStats `json:"targets"`
 	AllConverge bool               `json:"all_converge"`
 
-	Metrics     wvsMetricsBlock              `json:"metrics"`
+	Metrics     wvsMetricsBlock               `json:"metrics"`
 	Uncertainty sharedval.ArtifactUncertainty `json:"uncertainty"`
-	Thresholds  wvsThresholds                `json:"thresholds"`
+	Thresholds  wvsThresholds                 `json:"thresholds"`
 }
 
 // Bounds for write verify stats.

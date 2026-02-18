@@ -57,9 +57,9 @@ type peLoopMetrics struct {
 	LoopAreaErrPct float64 `json:"loop_area_err_pct"`
 
 	// Required sub-objects for artifact schema validation.
-	Metrics     peLoopMetricsBlock           `json:"metrics"`
+	Metrics     peLoopMetricsBlock            `json:"metrics"`
 	Uncertainty sharedval.ArtifactUncertainty `json:"uncertainty"`
-	Thresholds  peLoopThresholds             `json:"thresholds"`
+	Thresholds  peLoopThresholds              `json:"thresholds"`
 
 	Pass bool `json:"pass"`
 }
@@ -389,9 +389,9 @@ func validateStrictProvenance(ds peLoopDataset) error {
 			IsPlaceholderForRefinement bool   `json:"is_placeholder_for_refinement"`
 		} `json:"digitization"`
 		Uncertainty struct {
-			PixelQuantizationUCcm2   float64 `json:"pixel_quantization_uC_cm2"`
-			FieldScaleUncertaintyMV  float64 `json:"field_scale_uncertainty_MV_cm"`
-			PolarScaleUncertaintyUC  float64 `json:"polarization_scale_uncertainty_uC_cm2"`
+			PixelQuantizationUCcm2  float64 `json:"pixel_quantization_uC_cm2"`
+			FieldScaleUncertaintyMV float64 `json:"field_scale_uncertainty_MV_cm"`
+			PolarScaleUncertaintyUC float64 `json:"polarization_scale_uncertainty_uC_cm2"`
 		} `json:"uncertainty"`
 	}
 	if err := json.Unmarshal(raw, &prov); err != nil {
@@ -473,7 +473,7 @@ func validateStrictProvenance(ds peLoopDataset) error {
 }
 
 type provenanceUncertainty struct {
-	PixelQuantizationUCcm2 float64
+	PixelQuantizationUCcm2  float64
 	FieldScaleUncertaintyMV float64
 	PolarScaleUncertaintyUC float64
 }
@@ -485,7 +485,7 @@ func loadProvenanceUncertainty(path string) (provenanceUncertainty, error) {
 	}
 	var x struct {
 		Uncertainty struct {
-			PixelQuantizationUCcm2 float64 `json:"pixel_quantization_uC_cm2"`
+			PixelQuantizationUCcm2  float64 `json:"pixel_quantization_uC_cm2"`
 			FieldScaleUncertaintyMV float64 `json:"field_scale_uncertainty_MV_cm"`
 			PolarScaleUncertaintyUC float64 `json:"polarization_scale_uncertainty_uC_cm2"`
 		} `json:"uncertainty"`
@@ -494,7 +494,7 @@ func loadProvenanceUncertainty(path string) (provenanceUncertainty, error) {
 		return provenanceUncertainty{}, err
 	}
 	return provenanceUncertainty{
-		PixelQuantizationUCcm2: x.Uncertainty.PixelQuantizationUCcm2,
+		PixelQuantizationUCcm2:  x.Uncertainty.PixelQuantizationUCcm2,
 		FieldScaleUncertaintyMV: x.Uncertainty.FieldScaleUncertaintyMV,
 		PolarScaleUncertaintyUC: x.Uncertainty.PolarScaleUncertaintyUC,
 	}, nil

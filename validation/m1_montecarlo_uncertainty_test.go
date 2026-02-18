@@ -54,17 +54,17 @@ type mcPercentileStats struct {
 
 // mcMetricsBlock holds the key scalar metrics for machine-readable validation.
 type mcMetricsBlock struct {
-	CIWidthPr          float64 `json:"ci_width_pr"`
-	CIWidthEc          float64 `json:"ci_width_ec"`
-	CIWidthArea        float64 `json:"ci_width_area"`
-	SeedDeterminismOK  bool    `json:"seed_determinism_ok"`
+	CIWidthPr           float64 `json:"ci_width_pr"`
+	CIWidthEc           float64 `json:"ci_width_ec"`
+	CIWidthArea         float64 `json:"ci_width_area"`
+	SeedDeterminismOK   bool    `json:"seed_determinism_ok"`
 	ISPPConvergenceFrac float64 `json:"ispp_convergence_frac"`
 }
 
 // mcThresholds carries the hard-gate values for this artifact.
 type mcThresholds struct {
-	CIWidthMax          float64 `json:"ci_width_max"`
-	ISPPConvergenceMin  float64 `json:"ispp_convergence_min"`
+	CIWidthMax         float64 `json:"ci_width_max"`
+	ISPPConvergenceMin float64 `json:"ispp_convergence_min"`
 }
 
 // mcReport is the JSON artifact for this test.
@@ -84,9 +84,9 @@ type mcReport struct {
 	AreaStats   mcPercentileStats `json:"area_stats"`
 	DetermOK    bool              `json:"seed_determinism_ok"`
 
-	Metrics     mcMetricsBlock               `json:"metrics"`
+	Metrics     mcMetricsBlock                `json:"metrics"`
 	Uncertainty sharedval.ArtifactUncertainty `json:"uncertainty"`
-	Thresholds  mcThresholds                 `json:"thresholds"`
+	Thresholds  mcThresholds                  `json:"thresholds"`
 }
 
 func TestM1_MonteCarlo_Uncertainty(t *testing.T) {

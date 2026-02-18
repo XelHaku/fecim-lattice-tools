@@ -38,7 +38,7 @@ func TestBTO2021_DigitizedDatasetIntegrity(t *testing.T) {
 			PolarizationDatasetUnit string `json:"polarization_dataset_unit"`
 		} `json:"units"`
 		Digitization struct {
-			PointCount                int  `json:"point_count"`
+			PointCount                 int  `json:"point_count"`
 			IsPlaceholderForRefinement bool `json:"is_placeholder_for_refinement"`
 		} `json:"digitization"`
 		Uncertainty map[string]any `json:"uncertainty"`

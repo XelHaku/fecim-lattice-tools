@@ -107,9 +107,12 @@ def validate_module4(run_root: Path):
 
 
 def validate_module1(root: Path):
-    files = sorted(root.rglob("*.json"))
+    # Only validate PE-loop artifacts; other artifact types (FORC, arrhenius,
+    # kinetics, chi-squared, etc.) have distinct schemas and are not required to
+    # carry the full envelope.
+    files = sorted(root.rglob("module1_pe_loop_*.json"))
     if not files:
-        raise ValidationError(f"no module1 artifacts found under {root}")
+        raise ValidationError(f"no module1 PE-loop artifacts found under {root}")
 
     checked = 0
     for p in files:
