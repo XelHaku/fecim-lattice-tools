@@ -146,3 +146,33 @@ func TestMaterialPresets_AllNineProduceValidHysteresis(t *testing.T) {
 		})
 	}
 }
+
+func TestMaterialFromConfig_NLSFallbackWhenMissing(t *testing.T) {
+	cfg, err := configphysics.Load()
+	if err != nil {
+		t.Fatalf("failed to load physics config: %v", err)
+	}
+	raw := cfg.GetMaterial("alscn")
+	if raw == nil {
+		t.Fatal("config material 'alscn' not found")
+	}
+
+	// Simulate missing NLS block from config path to ensure hydration fallback.
+	raw.NLS.ActivationFieldVM = 0
+	raw.NLS.TauInfS = 0
+	raw.NLS.Sigma = 0
+
+	mat := MaterialFromConfig(raw, cfg)
+	if mat == nil {
+		t.Fatal("MaterialFromConfig returned nil")
+	}
+	if mat.Tau0NLS <= 0 {
+		t.Fatalf("Tau0NLS fallback missing: got %e", mat.Tau0NLS)
+	}
+	if mat.EaNLS <= 0 {
+		t.Fatalf("EaNLS fallback missing: got %e", mat.EaNLS)
+	}
+	if mat.NLSSigma <= 0 {
+		t.Fatalf("NLSSigma fallback missing: got %f", mat.NLSSigma)
+	}
+}

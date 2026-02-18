@@ -757,6 +757,24 @@ func AllMaterialsFromConfig(cfg *physics.Config) []*HZOMaterial {
 
 // MaterialFromConfig converts a physics.Material to an HZOMaterial.
 func MaterialFromConfig(m *physics.Material, cfg *physics.Config) *HZOMaterial {
+	// NLS hydration fallback: some config profiles omit the `nls` block.
+	// Keep material kinetics usable in Arrhenius/Merz validation by deriving
+	// conservative defaults from core switching fields instead of zeroing out.
+	tau0NLS := m.NLS.TauInfS
+	eaNLS := m.NLS.ActivationFieldVM
+	nlsSigma := m.NLS.Sigma
+	if tau0NLS <= 0 {
+		tau0NLS = m.Tau0S
+	}
+	if eaNLS <= 0 {
+		// Match legacy AlScN/FE fallback behavior (~4.4*Ec for activation field)
+		// while remaining generic for any config-driven material lacking NLS.
+		eaNLS = 4.4 * m.EcVM
+	}
+	if nlsSigma <= 0 {
+		nlsSigma = 1.5
+	}
+
 	return &HZOMaterial{
 		Name:                m.Name,
 		Pr:                  m.PrCM2,
@@ -788,9 +806,9 @@ func MaterialFromConfig(m *physics.Material, cfg *physics.Config) *HZOMaterial {
 		Q12:                 m.Coupling.Q12Electrostriction,
 		StressGPa:           m.Coupling.StressGPa,
 		SeriesResistanceOhm: m.Circuit.SeriesResistanceOhm,
-		Tau0NLS:             m.NLS.TauInfS,
-		EaNLS:               m.NLS.ActivationFieldVM,
-		NLSSigma:            m.NLS.Sigma,
+		Tau0NLS:             tau0NLS,
+		EaNLS:               eaNLS,
+		NLSSigma:            nlsSigma,
 		Gmin:                m.Conductance.GminS,
 		Gmax:                m.Conductance.GmaxS,
 		ConductanceModel:    m.Conductance.Model,
