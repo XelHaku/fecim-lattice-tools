@@ -26,6 +26,7 @@ import (
 	"fecim-lattice-tools/module1-hysteresis/pkg/gui/widgets"
 	"fecim-lattice-tools/shared/logging"
 	"fecim-lattice-tools/shared/physics"
+	"fecim-lattice-tools/shared/presets"
 	sharedtheme "fecim-lattice-tools/shared/theme"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
@@ -603,6 +604,9 @@ func NewApp() *App {
 	uiApp.lkSolver.EnableNoise = false
 	uiApp.adaptiveISPP = physics.NewAdaptiveISPP(uiApp.lkSolver, mat)
 
+	// Register with global preset manager
+	presets.Global().RegisterProvider(NewHysteresisPresetProvider(uiApp))
+
 	return uiApp
 }
 
@@ -694,6 +698,9 @@ func NewAppWithMaterial(materialName string) *App {
 	uiApp.lkSolver.UseNLS = false
 	uiApp.lkSolver.EnableNoise = false
 	uiApp.adaptiveISPP = physics.NewAdaptiveISPP(uiApp.lkSolver, mat)
+
+	// Register with global preset manager
+	presets.Global().RegisterProvider(NewHysteresisPresetProvider(uiApp))
 
 	return uiApp
 }

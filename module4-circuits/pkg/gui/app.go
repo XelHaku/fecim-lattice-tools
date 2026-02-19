@@ -19,6 +19,7 @@ import (
 	crossbar "fecim-lattice-tools/shared/crossbar"
 	"fecim-lattice-tools/shared/peripherals"
 	"fecim-lattice-tools/shared/physics"
+	"fecim-lattice-tools/shared/presets"
 	sharedtheme "fecim-lattice-tools/shared/theme"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
@@ -364,6 +365,9 @@ func NewCircuitsApp() *CircuitsApp {
 
 	// Initialize stop channel for goroutine lifecycle
 	ca.stopChan = make(chan struct{})
+
+	// Register with global preset manager
+	presets.Global().RegisterProvider(NewCircuitsPresetProvider(ca))
 
 	return ca
 }

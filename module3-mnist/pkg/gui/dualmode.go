@@ -16,6 +16,7 @@ import (
 	"fecim-lattice-tools/module3-mnist/pkg/core"
 	"fecim-lattice-tools/shared/logging"
 	"fecim-lattice-tools/shared/physics"
+	"fecim-lattice-tools/shared/presets"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
@@ -141,6 +142,9 @@ func NewDualModeApp() *DualModeApp {
 		networkCtrl:       NewNetworkController(MNISTInputSize, MNISTHiddenSize, MNISTOutputSize),
 		preprocessEnabled: true,
 	}
+
+	// Register with global preset manager
+	presets.Global().RegisterProvider(NewMNISTPresetProvider(app))
 
 	return app
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"fecim-lattice-tools/shared/crossbar"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 // syncSelection updates the app-level selection and syncs it to all heatmaps.
@@ -45,7 +46,7 @@ func (ca *CrossbarApp) onCellTapped(row, col int) {
 	ca.levelIndicator.SetLevel(level)
 
 	// Generate comprehensive tooltip
-	tooltip := ConductanceTooltip(row, col, value, ca.array)
+	tooltip := sharedwidgets.ConductanceTooltip(row, col, value, ca.array)
 
 	// Display in stats label (formatted for readability)
 	ca.statsLabel.SetText(tooltip)
@@ -103,7 +104,7 @@ func (ca *CrossbarApp) onIRDropCellTapped(row, col int) {
 	ca.stateMu.RUnlock()
 
 	// Generate comprehensive IR drop tooltip with architecture
-	tooltip := IRDropTooltipWithArch(row, col, analysis, ca.array, arch)
+	tooltip := sharedwidgets.IRDropTooltipWithArch(row, col, analysis, ca.array, arch)
 	ca.statsLabel.SetText(tooltip)
 
 	// Update status with key info
@@ -200,7 +201,7 @@ func (ca *CrossbarApp) onSneakCellTapped(row, col int) {
 	ca.stateMu.RUnlock()
 
 	// Generate comprehensive sneak path tooltip with architecture
-	tooltip := SneakPathTooltipWithArch(row, col, analysis, sneakTargetRow, sneakTargetCol, ca.array, arch)
+	tooltip := sharedwidgets.SneakPathTooltipWithArch(row, col, analysis, sneakTargetRow, sneakTargetCol, ca.array, arch)
 	ca.statsLabel.SetText(tooltip)
 
 	// Update status with key info
@@ -373,7 +374,7 @@ func (ca *CrossbarApp) refreshSelectedCellTooltip() {
 		matrix := ca.array.GetConductanceMatrix()
 		if row < len(matrix) && col < len(matrix[0]) {
 			value := matrix[row][col]
-			tooltip := ConductanceTooltip(row, col, value, ca.array)
+			tooltip := sharedwidgets.ConductanceTooltip(row, col, value, ca.array)
 			ca.statsLabel.SetText(tooltip)
 		}
 
@@ -381,7 +382,7 @@ func (ca *CrossbarApp) refreshSelectedCellTooltip() {
 		ca.stateMu.RLock()
 		analysis := ca.lastIRDropAnalysis
 		ca.stateMu.RUnlock()
-		tooltip := IRDropTooltipWithArch(row, col, analysis, ca.array, arch)
+		tooltip := sharedwidgets.IRDropTooltipWithArch(row, col, analysis, ca.array, arch)
 		ca.statsLabel.SetText(tooltip)
 
 	case "Sneak Paths":
@@ -390,7 +391,7 @@ func (ca *CrossbarApp) refreshSelectedCellTooltip() {
 		ca.stateMu.RLock()
 		analysis := ca.lastSneakAnalysis
 		ca.stateMu.RUnlock()
-		tooltip := SneakPathTooltipWithArch(row, col, analysis, sneakTargetRow, sneakTargetCol, ca.array, arch)
+		tooltip := sharedwidgets.SneakPathTooltipWithArch(row, col, analysis, sneakTargetRow, sneakTargetCol, ca.array, arch)
 		ca.statsLabel.SetText(tooltip)
 	}
 

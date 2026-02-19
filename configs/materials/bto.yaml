@@ -1,0 +1,47 @@
+# BaTiO₃ — Barium Titanate ferroelectric
+# Representative parameters for bulk BaTiO₃ at room temperature (tetragonal phase)
+#
+# References:
+#   Merz, Phys. Rev. 95, 690 (1954) (switching dynamics)
+#   Jona & Shirane, "Ferroelectric Crystals" (1962) (polarization data)
+#   Li et al., Phys. Rev. B 73, 184112 (2006) (Landau coefficients)
+
+name: "BaTiO3"
+description: "Barium Titanate (BaTiO3), tetragonal phase, room temperature"
+source: "Merz 1954; Jona & Shirane 1962; Li et al. PRB 2006"
+
+# Polarization (µC/cm²)
+remnant_polarization_uc_cm2: 26.0
+saturation_polarization_uc_cm2: 30.0
+
+# Coercive field (kV/cm)
+coercive_field_kv_cm: 20.0
+
+# Dielectric
+dielectric_constant: 1700.0
+dielectric_constant_lf: 3000.0
+
+# Film geometry
+film_thickness_nm: 100.0
+
+# Landau coefficients (Li et al. PRB 2006, room temp)
+landau:
+  beta: -2.0e8    # J·m⁵/C⁴
+  gamma: 3.0e9    # J·m⁹/C⁶
+  rho: 1.0e4      # Ω·m
+
+depolarization_coeff: 1.0e7
+
+# Merz/NLS switching dynamics (bulk BTO is slower than thin-film HfO2)
+tau0_nls_s: 1.0e-9
+ea_nls_v_per_m: 2.0e8    # ~2 MV/cm activation field
+nls_sigma: 1.2
+
+curie_temp_k: 393.0    # ~120°C
+curie_const_k: 1.7e5
+
+g_min_s: 1.0e-9
+g_max_s: 1.0e-7
+
+num_levels: 30
+symmetrize: true

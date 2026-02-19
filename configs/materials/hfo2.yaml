@@ -1,0 +1,52 @@
+# HfO₂ / HZO — Hafnium-Zirconium Oxide ferroelectric
+# Representative parameters for Si-doped Hf₀.₅Zr₀.₅O₂ orthorhombic phase
+#
+# References:
+#   Park et al., Adv. Mater. 2015 (HZO ferroelectricity)
+#   Müller et al., Nano Lett. 2012 (HfO2 ferroelectric properties)
+#   Materlik et al., J. Appl. Phys. 117, 134109 (2015) (LGD coefficients)
+
+name: "HfO2"
+description: "Hafnium-Zirconium Oxide (Hf0.5Zr0.5O2), orthorhombic Pca21 phase"
+source: "Park et al., Adv. Mater. 2015; Müller et al., Nano Lett. 2012"
+
+# Polarization (µC/cm²)
+remnant_polarization_uc_cm2: 15.0
+saturation_polarization_uc_cm2: 25.0
+
+# Coercive field (kV/cm)
+coercive_field_kv_cm: 1000.0
+
+# Dielectric
+dielectric_constant: 30.0
+dielectric_constant_lf: 30.0
+
+# Film geometry
+film_thickness_nm: 10.0
+
+# Landau-Khalatnikov coefficients (Materlik et al. 2015 baseline)
+landau:
+  beta: -6.72e8    # J·m⁵/C⁴
+  gamma: 1.95e10   # J·m⁹/C⁶
+  rho: 1.0e5       # Ω·m (damping)
+
+# Depolarization coefficient (V·m/C)
+depolarization_coeff: 2.0e8
+
+# Merz/NLS switching dynamics
+tau0_nls_s: 1.0e-11       # attempt time (s)
+ea_nls_v_per_m: 1.0e9    # activation field (V/m, ~10 MV/cm)
+nls_sigma: 1.5             # log-normal sigma (Guo et al. APL 2018)
+
+# Temperature
+curie_temp_k: 598.0
+curie_const_k: 5.3e5
+
+# Conductance window (FeFET model)
+g_min_s: 1.0e-8   # off-state (HRS)
+g_max_s: 1.0e-6   # on-state (LRS)
+
+# Analog states
+num_levels: 30
+
+symmetrize: true

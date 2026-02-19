@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"fecim-lattice-tools/shared/crossbar"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 func TestImpactHelpers(t *testing.T) {
@@ -39,7 +40,7 @@ func TestTooltips_GracefulAndSeverityBranches(t *testing.T) {
 	_ = arr.ProgramWeight(1, 0, 0.2)
 	_ = arr.ProgramWeight(1, 1, 0.8)
 
-	if got := IRDropTooltipWithArch(0, 0, nil, arr, ""); !strings.Contains(got, "Run MVM") {
+	if got := sharedwidgets.IRDropTooltipWithArch(0, 0, nil, arr, ""); !strings.Contains(got, "Run MVM") {
 		t.Fatalf("expected nil-analysis hint, got %q", got)
 	}
 
@@ -50,9 +51,9 @@ func TestTooltips_GracefulAndSeverityBranches(t *testing.T) {
 		AvgIRDrop:        0.10,
 	}
 
-	ok := IRDropTooltipWithArch(0, 0, ir, arr, "")
-	moderate := IRDropTooltipWithArch(0, 1, ir, arr, "1T1R")
-	high := IRDropTooltipWithArch(1, 1, ir, arr, "2T1R")
+	ok := sharedwidgets.IRDropTooltipWithArch(0, 0, ir, arr, "")
+	moderate := sharedwidgets.IRDropTooltipWithArch(0, 1, ir, arr, "1T1R")
+	high := sharedwidgets.IRDropTooltipWithArch(1, 1, ir, arr, "2T1R")
 
 	if !strings.Contains(ok, "OK") || !strings.Contains(ok, "0T1R") {
 		t.Fatalf("expected OK + default arch, got %q", ok)
@@ -63,11 +64,11 @@ func TestTooltips_GracefulAndSeverityBranches(t *testing.T) {
 	if !strings.Contains(high, "High") {
 		t.Fatalf("expected High severity, got %q", high)
 	}
-	if got := IRDropTooltipWithArch(3, 0, ir, arr, ""); got != "Cell out of range" {
+	if got := sharedwidgets.IRDropTooltipWithArch(3, 0, ir, arr, ""); got != "Cell out of range" {
 		t.Fatalf("expected out-of-range guard, got %q", got)
 	}
 
-	if got := SneakPathTooltipWithArch(0, 0, nil, 0, 0, arr, ""); !strings.Contains(got, "Run MVM") {
+	if got := sharedwidgets.SneakPathTooltipWithArch(0, 0, nil, 0, 0, arr, ""); !strings.Contains(got, "Run MVM") {
 		t.Fatalf("expected nil-analysis hint, got %q", got)
 	}
 
@@ -77,19 +78,19 @@ func TestTooltips_GracefulAndSeverityBranches(t *testing.T) {
 		MaxSneakRatio: 1.5,
 	}
 
-	tt := SneakPathTooltipWithArch(0, 0, sneak, 0, 0, arr, "")
+	tt := sharedwidgets.SneakPathTooltipWithArch(0, 0, sneak, 0, 0, arr, "")
 	if !strings.Contains(tt, "TARGET") || !strings.Contains(tt, "High") {
 		t.Fatalf("expected target/high branch, got %q", tt)
 	}
-	rowPath := SneakPathTooltipWithArch(0, 1, sneak, 0, 0, arr, "1T1R")
+	rowPath := sharedwidgets.SneakPathTooltipWithArch(0, 1, sneak, 0, 0, arr, "1T1R")
 	if !strings.Contains(rowPath, "Row") || !strings.Contains(rowPath, "1T1R: ~1000×") {
 		t.Fatalf("expected row + 1T1R note, got %q", rowPath)
 	}
-	diagCritical := SneakPathTooltipWithArch(1, 1, sneak, 0, 0, arr, "2T1R")
+	diagCritical := sharedwidgets.SneakPathTooltipWithArch(1, 1, sneak, 0, 0, arr, "2T1R")
 	if !strings.Contains(diagCritical, "Critical") || !strings.Contains(diagCritical, "actual") {
 		t.Fatalf("expected critical + capped-ratio note, got %q", diagCritical)
 	}
-	if got := SneakPathTooltipWithArch(4, 0, sneak, 0, 0, arr, ""); got != "Cell out of range" {
+	if got := sharedwidgets.SneakPathTooltipWithArch(4, 0, sneak, 0, 0, arr, ""); got != "Cell out of range" {
 		t.Fatalf("expected out-of-range guard, got %q", got)
 	}
 }
@@ -112,17 +113,17 @@ func TestTooltips_MVMAndComprehensive(t *testing.T) {
 		Latency:          5,
 	}
 
-	if got := MVMResultTooltip(0, mvm); !strings.Contains(got, "Error") {
+	if got := sharedwidgets.MVMResultTooltip(0, mvm); !strings.Contains(got, "Error") {
 		t.Fatalf("expected formatted mvm tooltip, got %q", got)
 	}
-	if got := MVMResultTooltip(1, mvm); !strings.Contains(got, "Error:  0.00%") {
+	if got := sharedwidgets.MVMResultTooltip(1, mvm); !strings.Contains(got, "Error:  0.00%") {
 		t.Fatalf("expected zero-ideal branch, got %q", got)
 	}
-	if got := MVMResultTooltip(99, mvm); got != "Row out of range" {
+	if got := sharedwidgets.MVMResultTooltip(99, mvm); got != "Row out of range" {
 		t.Fatalf("expected out-of-range guard, got %q", got)
 	}
 
-	summary := ComprehensiveTooltip(0, 1, arr, ir, sneak, mvm)
+	summary := sharedwidgets.ComprehensiveTooltip(0, 1, arr, ir, sneak, mvm)
 	for _, want := range []string{"SUMMARY", "IR Drop", "Sneak", "Energy"} {
 		if !strings.Contains(summary, want) {
 			t.Fatalf("expected summary to contain %q, got %q", want, summary)

@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/shared/crossbar"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
 func TestSneakCompareWidget_HelperLogic(t *testing.T) {
@@ -63,17 +64,17 @@ func TestConductanceTooltipAndWrapperHelpers(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewArray failed: %v", err)
 	}
-	text := ConductanceTooltip(0, 0, 0.5, arr)
+	text := sharedwidgets.ConductanceTooltip(0, 0, 0.5, arr)
 	if !strings.Contains(text, "CONDUCTANCE") || !strings.Contains(text, "Bits/cell") {
 		t.Fatalf("unexpected conductance tooltip: %q", text)
 	}
 
 	ir := &crossbar.IRDropAnalysis{EffectiveVoltage: [][]float64{{0.9}}, WorstCaseCell: [2]int{0, 0}}
-	if !strings.Contains(IRDropTooltip(0, 0, ir, arr), "IR DROP") {
+	if !strings.Contains(sharedwidgets.IRDropTooltip(0, 0, ir, arr), "IR DROP") {
 		t.Fatalf("wrapper IRDropTooltip should include IR DROP")
 	}
 	sn := &crossbar.SneakPathAnalysis{SneakCurrents: [][]float64{{0.01}}, TotalSignal: 1, MaxSneakRatio: 0.01}
-	if !strings.Contains(SneakPathTooltip(0, 0, sn, 0, 0, arr), "SNEAK PATH") {
+	if !strings.Contains(sharedwidgets.SneakPathTooltip(0, 0, sn, 0, 0, arr), "SNEAK PATH") {
 		t.Fatalf("wrapper SneakPathTooltip should include SNEAK PATH")
 	}
 }

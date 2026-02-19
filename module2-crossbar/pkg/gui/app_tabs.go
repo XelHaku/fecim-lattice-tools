@@ -351,7 +351,7 @@ func (ca *CrossbarApp) updateTooltipForTab(tabName string, row, col int) {
 		matrix := ca.array.GetConductanceMatrix()
 		if row < len(matrix) && col < len(matrix[0]) {
 			value := matrix[row][col]
-			tooltip := ConductanceTooltip(row, col, value, ca.array)
+			tooltip := sharedwidgets.ConductanceTooltip(row, col, value, ca.array)
 			ca.statsLabel.SetText(tooltip)
 			level := crossbar.GetLevel(value)
 			ca.updateStatus(fmt.Sprintf("READ | Cell [%d,%d] = Level %d/30 (%.2f µS)",
@@ -359,7 +359,7 @@ func (ca *CrossbarApp) updateTooltipForTab(tabName string, row, col int) {
 		}
 
 	case "IR Drop":
-		tooltip := IRDropTooltip(row, col, ca.lastIRDropAnalysis, ca.array)
+		tooltip := sharedwidgets.IRDropTooltip(row, col, ca.lastIRDropAnalysis, ca.array)
 		ca.statsLabel.SetText(tooltip)
 		if ca.lastIRDropAnalysis != nil && row < len(ca.lastIRDropAnalysis.EffectiveVoltage) &&
 			col < len(ca.lastIRDropAnalysis.EffectiveVoltage[0]) {
@@ -372,7 +372,7 @@ func (ca *CrossbarApp) updateTooltipForTab(tabName string, row, col int) {
 	case "Sneak Paths":
 		sneakTargetRow := ca.config.Rows / 2
 		sneakTargetCol := ca.config.Cols / 2
-		tooltip := SneakPathTooltip(row, col, ca.lastSneakAnalysis, sneakTargetRow, sneakTargetCol, ca.array)
+		tooltip := sharedwidgets.SneakPathTooltip(row, col, ca.lastSneakAnalysis, sneakTargetRow, sneakTargetCol, ca.array)
 		ca.statsLabel.SetText(tooltip)
 		if ca.lastSneakAnalysis != nil && row < len(ca.lastSneakAnalysis.SneakCurrents) &&
 			col < len(ca.lastSneakAnalysis.SneakCurrents[0]) {

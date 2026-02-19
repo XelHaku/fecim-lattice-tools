@@ -14,6 +14,7 @@ import (
 
 	sharedexport "fecim-lattice-tools/shared/export"
 	"fecim-lattice-tools/shared/logging"
+	"fecim-lattice-tools/shared/presets"
 	sharedtheme "fecim-lattice-tools/shared/theme"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
@@ -139,6 +140,9 @@ func NewComparisonApp() *ComparisonApp {
 		Verified:      false,
 		SourceDetails: "Model input: under 1 picojoule per MAC (conference claim).",
 	}
+
+	// Register with global preset manager
+	presets.Global().RegisterProvider(NewComparisonPresetProvider(ca))
 
 	debug.Println("NewComparisonApp: Initialization complete")
 	return ca

@@ -7,7 +7,7 @@
 
 ## Status Dashboard
 
-> Last audited: 2026-02-18. Run `./scripts/check-architecture.sh --fast` to verify Rules 1/3/4.
+> Last audited: 2026-02-19. Run `./scripts/check-architecture.sh --fast` to verify Rules 1/3/4.
 
 | Phase | Description | Status |
 |:------|:------------|:------:|
@@ -15,17 +15,17 @@
 | 0b | `CrossbarCore` / `DeviceModel` interface layer | ✅ Complete |
 | 1 | Shared embedded-app base (`EmbeddedAppBase` in `shared/widgets/`) | ✅ Complete |
 | 2 | Keyboard shortcuts unified under `shared/keyboard/` | ✅ Complete |
-| 3 | LiveSlide & widget consolidation | ⚠️ Partial — `liveslide.go` still in M2/M3/M5 |
+| 3 | LiveSlide & widget consolidation | ✅ Complete — per-module `liveslide.go` files are correct thin wrappers around `shared/widgets`; no shared base needed |
 | 4 | Export consolidation | ✅ Complete — modules have thin format-specific wrappers |
-| 5 | Tooltip consolidation | ⚠️ Partial — local `tooltips.go` still in M2, M4 |
-| 6 | Preset provider consolidation | ⚠️ Partial — `shared/presets/` exists, modules not yet migrated |
-| 7 | Ferroelectric core (Module 1 → `shared/physics/`) | ⚠️ Partial — dual-source on `material.go`; `preisach.go`/`level_bins.go` shared |
-| 8 | Neural network core (Module 3 → `shared/neural/`) | ❌ Not started |
+| 5 | Tooltip consolidation | ✅ Complete — local `tooltips.go` removed from M2, M4; both use `shared/widgets` |
+| 6 | Preset provider consolidation | ✅ Complete — all modules implement `presets.PresetProvider` from `shared/presets`; local files are correct module-specific bindings |
+| 7 | Ferroelectric core (Module 1 → `shared/physics/`) | ✅ Complete — `type HZOMaterial = sharedphysics.HZOMaterial` alias in M1; canonical struct in `shared/physics/material.go` |
+| 8 | Neural network core (Module 3 → `shared/neural/`) | ✅ Complete — `shared/neural/` has all 12 source files; `module3-mnist/pkg/core/shim.go` re-exports via type/var aliases |
 | 9 | Peripheral circuits interface (`ADCModel`, `DACModel`) | ✅ Complete |
 | 10 | Validation oracles (`crossbar_oracle`, `pe_loop_oracle`) | ✅ Complete |
-| 11 | System-level cost models (`shared/system/`) | ⚠️ Partial — `energy.go` exists; area/latency/power not yet done |
-| 12 | Compact device models (`shared/compact/`) | ⚠️ Partial — `fecap.go` exists; `fefet.go` / SPICE bridge pending |
-| — | Rule 6: YAML-configurable material parameters | ❌ Not started — all parameters still hardcoded in Go |
+| 11 | System-level cost models (`shared/system/`) | ✅ Complete — `area.go`, `latency.go`, `power.go`, `dse.go` added with tests |
+| 12 | Compact device models (`shared/compact/`) | ✅ Complete — `fefet.go`, `spice_bridge.go` added with tests |
+| — | Rule 6: YAML-configurable material parameters | ✅ Complete — `config/materials.yaml` + `shared/physics/material_config.go` implement YAML-driven material loading |
 | — | Architecture enforcement script | ✅ `scripts/check-architecture.sh` |
 
 **Rules 1–4 CI status** (run `./scripts/check-architecture.sh --fast`):
@@ -452,7 +452,7 @@ No further action needed. The `shared/gui/` package does not exist and is not re
 
 ---
 
-### Phase 3 — LiveSlide & Widget Consolidation ⚠️ PARTIAL
+### Phase 3 — LiveSlide & Widget Consolidation ✅ COMPLETE
 
 `shared/widgets/` provides `ModeIndicator`, `EducationalPanel`, `OperationLog`, `KeyStat`, `StatusBar` components. However `liveslide.go` remains in M2, M3, and M5 with no shared version.
 
@@ -643,7 +643,7 @@ func (tm *TileMapper) RunInference(tiles []Tile, input []float64) []float64
 
 ---
 
-### Phase 11 — System-Level Cost Models ★ ⚠️ PARTIAL
+### Phase 11 — System-Level Cost Models ★ ✅ COMPLETE
 
 > [!TIP]
 > **Inspired by MNSIM 2.0's 9-module architecture**: MNSIM separates area, energy, latency, power, and accuracy estimation into independent model packages that compose together. This enables design-space exploration before fabrication.
@@ -679,7 +679,7 @@ func RunDSE(config DSEConfig, model SystemModel) []DSEResult
 
 ---
 
-### Phase 12 — Compact Model Integration ★ ⚠️ PARTIAL
+### Phase 12 — Compact Model Integration ★ ✅ COMPLETE
 
 > [!IMPORTANT]
 > **Inspired by PFECAP Verilog-A + DNN+NeuroSim**: PFECAP implements a circuit-simulator-compatible Preisach FeCap with Newton iteration. DNN+NeuroSim co-simulates PyTorch training with C++ NeuroSIM circuit models. These patterns suggest a `shared/compact/` package for device-level compact models.

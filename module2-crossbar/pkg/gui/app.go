@@ -17,6 +17,7 @@ import (
 
 	"fecim-lattice-tools/shared/crossbar"
 	"fecim-lattice-tools/shared/logging"
+	"fecim-lattice-tools/shared/presets"
 	sharedtheme "fecim-lattice-tools/shared/theme"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
@@ -188,6 +189,9 @@ func NewCrossbarApp() (*CrossbarApp, error) {
 
 	// Program initial random weights
 	ca.programRandomWeights()
+
+	// Register with global preset manager
+	presets.Global().RegisterProvider(NewCrossbarPresetProvider(ca))
 
 	return ca, nil
 }
