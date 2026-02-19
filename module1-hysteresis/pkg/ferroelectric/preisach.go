@@ -108,10 +108,20 @@ func tuneDeltaForPr(ec, saturationE, psIrrev, targetPr float64) float64 {
 	return 0.5 * (lo + hi)
 }
 
-// PreisachModel implements the Preisach hysteresis model for ferroelectrics.
-// Wraps the shared/physics.PreisachStack engine.
-// PreisachModel implements the Preisach hysteresis model for ferroelectrics.
-// Wraps the shared/physics.PreisachStack engine.
+// PreisachModel implements the classical Preisach hysteresis model for
+// ferroelectric materials, wrapping shared/physics.PreisachStack.
+//
+// The total polarization has two contributions:
+//   P_total(E) = P_irrev(E) + P_rev(E)
+// where P_irrev comes from the Preisach stack (irreversible domain switching)
+// and P_rev = P_sat_rev * tanh(E/Ec) is a nonlinear reversible (dielectric)
+// contribution derived from the material's low-frequency permittivity.
+//
+// NLS (Nucleation-Limited Switching) kinetics from physics.NLSKinetics provide
+// time-dependent relaxation: P_final = NLS.Relax(P_start, P_target, E, dt).
+//
+// dynamicP tracks physical polarization across Reset() calls to prevent
+// plot teleportation during PREP phases (see MEMORY.md).
 type PreisachModel struct {
 	material *HZOMaterial
 	stack    *physics.PreisachStack
@@ -193,9 +203,8 @@ type DiscreteState struct {
 	Conductance  float64
 }
 
-// DiscreteStates returns the polarization values for n evenly spaced discrete states.
-// This is a helper for testing and visualization.
-// DiscreteStates returns the discrete states for n evenly spaced levels.
+// DiscreteStates returns n evenly spaced polarization states from -Ps to +Ps.
+// Used for testing and visualization of programmable level distributions.
 func (p *PreisachModel) DiscreteStates(n int) []DiscreteState {
 	states := make([]DiscreteState, n)
 	step := 2.0 * p.material.Ps / float64(n-1)
@@ -334,8 +343,13 @@ func (p *PreisachModel) NormalizedPolarization() float64 {
 	return p.Polarization() / denom
 }
 
-// reversiblePolarization returns the nonlinear reversible contribution.
-// The small-signal slope matches the material permittivity.
+// reversiblePolarization returns the nonlinear reversible (dielectric) contribution.
+//
+//	P_rev(E) = P_sat_rev * tanh(E / Ec)
+//
+// where P_sat_rev = chi * Ec (chi from eps0 * (epsilon_LF - 1)).
+// The small-signal slope dP_rev/dE|_{E=0} = P_sat_rev / Ec = chi matches
+// the material's low-frequency permittivity.
 func (p *PreisachModel) reversiblePolarization(E float64) float64 {
 	if p.reversiblePSat == 0 || p.everett == nil || p.everett.Ec <= 0 {
 		return 0
@@ -450,8 +464,14 @@ func (p *PreisachModel) SetStress(stressGPa float64) {
 	p.updateEffectiveParameters()
 }
 
-// updateEffectiveParameters recalculates Ec and Ps based on Curie-Weiss temperature
-// scaling and electrostriction stress coupling.
+// updateEffectiveParameters recalculates Ec and Ps based on Curie-Weiss
+// temperature scaling and electrostriction stress coupling.
+//
+// Temperature: Ps(T) = Ps(300K) + TempCoeffPr * (T - 300)
+// Coercive field: Ec(T,sigma) scales as |alpha(T,sigma)/alpha_ref|^1.5
+//   where alpha(T) = (T - T_C) / (2*eps0*C)    (Curie-Weiss)
+//   and   alpha(T,sigma) = alpha(T) - 2*Q12*sigma  (electrostriction)
+// Q12 is the transverse electrostriction coefficient (default -0.026 for HZO).
 func (p *PreisachModel) updateEffectiveParameters() {
 	if p.material == nil || p.everett == nil {
 		return

@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"encoding/csv"
 	"errors"
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -75,8 +77,7 @@ func TestHeadlessHysteresis_VerificationMatrix_NoNaNOrCrash(t *testing.T) {
 				if err != nil {
 					t.Fatalf("read log %s: %v", logPath, err)
 				}
-				content := strings.ToLower(string(b))
-				if strings.Contains(content, "nan") || strings.Contains(content, "+inf") || strings.Contains(content, "-inf") {
+				if hasNonFiniteCSVValue(b) {
 					t.Fatalf("non-finite value found in log %s for %s/%s", logPath, engine, material)
 				}
 			})
@@ -218,4 +219,20 @@ func readFinalWriteCounters(logPath string) (successWrites int, totalWrites int,
 		return 0, 0, err
 	}
 	return sw, tw, nil
+}
+
+// nonFiniteCSVRe matches standalone NaN, +Inf, -Inf as CSV field values
+// (delimited by commas or line boundaries). This avoids false positives from
+// material names like "nanolaminate" that contain "nan" as a substring.
+var nonFiniteCSVRe = regexp.MustCompile(`(?i)(^|,)(NaN|\+Inf|-Inf)(,|$)`)
+
+// hasNonFiniteCSVValue checks whether any CSV field in the raw bytes contains
+// a non-finite floating-point value (NaN, +Inf, -Inf).
+func hasNonFiniteCSVValue(data []byte) bool {
+	for _, line := range bytes.Split(data, []byte("\n")) {
+		if nonFiniteCSVRe.Match(line) {
+			return true
+		}
+	}
+	return false
 }

@@ -2,26 +2,23 @@
 
 ## For AI Agents
 
-**Full reference:** See `docs/development/SCRIPT_REFERENCE.md` for detailed lookups.
+**Full reference:** See `docs/archive/old-structure/development/SCRIPT_REFERENCE.md` for detailed lookups (legacy; paths inside may be stale).
 
 | I need to... | Look in |
 |--------------|---------|
-| Find a function | `docs/development/SCRIPT_REFERENCE.md#quick-function-lookups` |
-| Fix an error | `docs/development/SCRIPT_REFERENCE.md#error-resolution-guide` |
-| Add a feature | `docs/development/SCRIPT_REFERENCE.md#decision-trees` |
-| Check thread safety | `docs/development/SCRIPT_REFERENCE.md#thread-safety-guide` |
-| Fix Fyne GUI issues | `docs/development/GUI/FYNE_NOTES.md` |
-| Run/understand tests | `docs/development/TESTING.md` |
-| Review UI analysis | `docs/development/HYPER_ANALYSIS_REPORT.md` |
-| EDA documentation | `docs/eda/README.md` |
-| OpenLane integration | `docs/eda/guides/integration.md` |
-| EDA CLI reference | `docs/eda/references/cli-reference.md` |
+| Find a function | `docs/3-develop/api-reference.md` |
+| Fix an error | `docs/archive/old-structure/development/SCRIPT_REFERENCE.md#error-resolution-guide` |
+| Add a feature | `docs/archive/old-structure/development/SCRIPT_REFERENCE.md#decision-trees` |
+| Check thread safety | `docs/3-develop/gui/FYNE_NOTES.md#threading-critical` |
+| Fix Fyne GUI issues | `docs/3-develop/gui/FYNE_NOTES.md` |
+| Run/understand tests | `docs/3-develop/testing/TESTING.md` |
+| EDA documentation | `docs/2-learn/module6-eda/README.md` |
 
 ## Overview
 
 Go-based lattice tool suite for Ferroelectric Compute-in-Memory (FeCIM) visualization and simulation. It includes configurable material presets, crossbar models, and an educational EDA pipeline.
 
-**Status**: Education phase (simulation-only). See `docs/project/STATUS.md`.
+**Status**: Education phase (simulation-only). See `status.md`.
 
 **Core concept**: The simulator quantizes conductance to a default of 30 discrete levels (configurable). This is a **simulation baseline**, not a validated hardware claim.
 
@@ -52,12 +49,14 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-too
 ```
 cmd/fecim-lattice-tools/     # Main unified app entry point
 module1-hysteresis/       # P-E curve, Preisach model
-module2-crossbar/         # MVM, non-idealities (IR drop, sneak paths, drift)
+module2-crossbar/         # Crossbar GUI (pkg/gui/)
 module3-mnist/            # Neural network digit recognition
 module4-circuits/         # DAC/ADC/TIA peripherals
 module5-comparison/       # Technology comparison
 module6-eda/              # EDA tools
-shared/                   # Theme, widgets, logging
+shared/                   # Theme, widgets, logging, physics, crossbar core
+  crossbar/               # MVM, non-idealities (IR drop, sneak paths, drift)
+  physics/                # L-K solver, Preisach engine, ISPP write controller
 ```
 
 ## Model Defaults (Simulation Parameters)
@@ -65,12 +64,12 @@ shared/                   # Theme, widgets, logging
 The project includes **preset parameters** for education and visualization. Treat these as **simulation defaults**, not validated device measurements.
 
 - Material presets: `module1-hysteresis/pkg/ferroelectric/material.go`
-- Crossbar defaults: `module2-crossbar/pkg/crossbar/array.go`
-- EDA defaults: `module6-eda/pkg/core/config.go`
+- Crossbar defaults: `shared/crossbar/array.go`
+- EDA defaults: `module6-eda/pkg/config/types.go`
 
 ## Accuracy & Honesty Policy
 
-Scientific accuracy over marketing claims. Full audit: `docs/comparison/HONESTY_AUDIT.md`.
+Scientific accuracy over marketing claims. Full audit: `docs/4-research/honesty-audit.md`.
 
 ### Verified External Claim (Current Audit)
 
@@ -86,10 +85,10 @@ Scientific accuracy over marketing claims. Full audit: `docs/comparison/HONESTY_
 
 ```bash
 go test ./...                            # See CI for latest status
-go test ./module2-crossbar/pkg/crossbar  # Crossbar only
+go test ./shared/crossbar/...            # Crossbar only
 ```
 
-Full test documentation: `docs/development/TESTING.md`
+Full test documentation: `docs/3-develop/testing/TESTING.md`
 
 ## Git Conventions
 

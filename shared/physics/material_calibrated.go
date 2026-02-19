@@ -51,8 +51,9 @@ func MDPI2020Fig3aHZO10nmWakeup() *HZOMaterial {
 func Micromachines2022Fig6aAlScNPt200nm() *HZOMaterial {
 	m := AlScN()
 	m.Name = "AlScN (Micromachines 2022 Fig 6a Pt, calibrated)"
-	m.Pr = 100e-2        // 100 uC/cm2 (paper-reported remanent magnitude, Pt)
-	m.Ps = 110e-2        // 110 uC/cm2 (calibrated saturation for loop-shape fit)
+	// Pr_param tuned so that a ±3 MV/cm Preisach sweep produces Pr_sim≈100.
+	m.Pr = 92e-2         // tuned: produces Pr_sim≈100 under ±3 MV/cm sweep
+	m.Ps = 105e-2        // 105 uC/cm2 (calibrated saturation for loop-shape fit)
 	m.Ec = 3.0e8         // 3.0 MV/cm
 	m.Thickness = 200e-9 // 200 nm film in the paper
 	return m
@@ -75,10 +76,15 @@ func Micromachines2022Fig6bAlScNMo200nm() *HZOMaterial {
 func Nanomaterials2024Fig2PZTThinFilm() *HZOMaterial {
 	m := PZT()
 	m.Name = "PZT (Nanomaterials 2024 Fig 2, calibrated)"
-	// Re-calibrated after model updates to keep Tier-1 literature metrics within threshold.
-	m.Pr = 46.5e-2       // 46.5 uC/cm2
-	m.Ps = 56.0e-2       // 56.0 uC/cm2
-	m.Ec = 0.99e8        // 0.99 MV/cm
+	// Calibrated to digitized loop metrics: Pr~21.5 uC/cm2, Ec~0.30 MV/cm,
+	// saturation envelope Ps~56 uC/cm2 from data max.
+	// Pr_param tuned so that a ±3 MV/cm Preisach sweep produces Pr_sim≈21.5.
+	// EpsilonLF overridden to minimize reversible distortion of loop shape.
+	m.Pr = 15.0e-2       // tuned: produces Pr_sim≈21.3 under ±3 MV/cm sweep
+	m.Ps = 56.0e-2       // 56.0 uC/cm2 (from data saturation at ±3 MV/cm)
+	m.Ec = 0.30e8        // 0.30 MV/cm (from digitized zero-crossing)
+	m.EpsilonLF = 30     // reduced to keep reversible P small vs irreversible Preisach
+	m.Epsilon = 30
 	m.Thickness = 100e-9 // ~100 nm class film
 	return m
 }
@@ -88,10 +94,15 @@ func Nanomaterials2024Fig2PZTThinFilm() *HZOMaterial {
 func Crystals2021FigFerroelectricBTOTrilayer() *HZOMaterial {
 	m := BTO()
 	m.Name = "BTO (Crystals 2021 hysteresis fig, calibrated)"
-	// Re-calibrated after model updates to keep Tier-1 literature metrics within threshold.
-	m.Pr = 7.8e-2        // 7.8 uC/cm2
-	m.Ps = 10.0e-2       // 10.0 uC/cm2
-	m.Ec = 0.40e8        // 0.40 MV/cm
+	// Calibrated to digitized loop metrics: Pr~4.3 uC/cm2, Ec~0.131 MV/cm,
+	// saturation Ps~10 uC/cm2 from data max.
+	// Pr_param tuned so that the data-driven Preisach sweep produces Pr_sim≈4.6.
+	// EpsilonLF overridden to minimize reversible distortion of loop shape.
+	m.Pr = 2.25e-2       // tuned: produces Pr_sim≈4.6 under data-driven ±2 MV/cm sweep
+	m.Ps = 10.0e-2       // 10.0 uC/cm2 (from data saturation at ±2 MV/cm)
+	m.Ec = 0.131e8       // 0.131 MV/cm (from digitized zero-crossing)
+	m.EpsilonLF = 30     // reduced to keep reversible P small vs irreversible Preisach
+	m.Epsilon = 30
 	m.Thickness = 100e-9 // nominal thin-film class for conversion consistency
 	return m
 }

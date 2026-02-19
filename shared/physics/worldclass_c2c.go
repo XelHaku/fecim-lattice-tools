@@ -2,7 +2,6 @@ package physics
 
 import (
 	"fmt"
-	"math"
 	"math/rand"
 )
 
@@ -91,5 +90,3 @@ func SweepC2CRelativeNoise(G_values []float64, cfg StateDepC2CConfig) ([]float64
 	return out, nil
 }
 
-// ensure math is used
-var _ = math.NaN

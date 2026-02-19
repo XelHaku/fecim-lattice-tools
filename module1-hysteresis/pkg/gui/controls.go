@@ -320,11 +320,13 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			// Revert selection to current mode
 			go func() {
 				time.Sleep(100 * time.Millisecond)
-				if a.writeController.StepMode == "logarithmic" {
-					a.isppMethodSelect.SetSelected("Logarithmic (A-ISPP)")
-				} else {
-					a.isppMethodSelect.SetSelected("Linear (Standard)")
-				}
+				fyne.Do(func() {
+					if a.writeController.StepMode == "logarithmic" {
+						a.isppMethodSelect.SetSelected("Logarithmic (A-ISPP)")
+					} else {
+						a.isppMethodSelect.SetSelected("Linear (Standard)")
+					}
+				})
 			}()
 		}
 	})

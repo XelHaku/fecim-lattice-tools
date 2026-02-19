@@ -155,7 +155,32 @@ go test -race ./...
 - `TestPEPlotSetData` - P-E plot data
 - `TestPEPlotConcurrency` - Thread-safe data access
 
-### 5. Integration Tests
+### 5. ISPP Controller Tests
+
+**Location:** `module1-hysteresis/pkg/controller/`
+
+These tests cover the waveform-based ISPP state machine (APPLY/WAIT/VERIFY loop):
+
+#### Core ISPP Tests
+- `TestWriteController_BasicConvergence` - Single-target convergence
+- `TestWriteController_OvershootRecovery` - Overshoot detection and reset handling
+- `TestWriteController_GuardBand` - Guard-band correction at target level
+- `TestWriteController_BoundsCollapse` - Binary search bounds recovery
+- `TestWriteController_StuckDetection` - Stuck-level escalation and termination
+
+#### Ensemble / Multi-Material Tests
+- `TestISPPConverges_LandauK_Ensemble_Superlattice` - 9 materials x LO/MID/HI targets (sensitive to ACCEPT +/-1 threshold)
+- `TestISPPFullCycle` - Full write cycle with reset and re-approach
+
+#### Stress Tests
+- `TestWriteController_StressAllLevels` - All 30 levels with random starting points
+- `TestWriteController_LKTuning` - L-K solver-specific tuning parameters
+
+**Location:** `shared/physics/ispp_write.go` (L-K solver-based controller)
+
+Headless ISPP tests in `cmd/fecim-lattice-tools/mode_engine_matrix_test.go` exercise 9 materials x 2 engines (Preisach + L-K) end-to-end.
+
+### 6. Integration Tests
 
 **Location:** `cmd/fecim-lattice-tools/integration_test.go`
 
@@ -171,7 +196,7 @@ go test -race ./...
 - `TestEndToEndMNISTInference` - Full inference for all digits
 - `TestConcurrentInferenceStability` - Thread safety under load
 
-### 6. Calculation Tests
+### 7. Calculation Tests
 
 **Location:** `module3-mnist/pkg/core/physics_test.go`
 
@@ -181,7 +206,7 @@ go test -race ./...
 - `TestArgmaxCorrectness` - Index of maximum value
 - `TestEnergyCalculation` - FeCIM energy estimate (10 fJ/bit/MAC × log2(levels) + ADC/DAC overhead; shared core model)
 
-### 7. Network/Training Tests
+### 8. Network/Training Tests
 
 **Location:** `module3-mnist/pkg/core/integration_test.go`, `module3-mnist/pkg/core/quantize_test.go`
 
@@ -297,7 +322,7 @@ go test -bench=. ./module2-crossbar/pkg/crossbar/... ./module3-mnist/pkg/core/..
 - Hardware-in-the-loop testing
 - Multi-GPU rendering
 - OpenLane flow integration tests
-- Audio recording dB conversion (known failing test)
+- Audio recording tests (skipped when no audio device is available)
 
 ## Adding New Tests
 
@@ -320,22 +345,35 @@ module1-hysteresis/
 ├── pkg/ferroelectric/
 │   ├── ferroelectric_test.go       # Physics model tests
 │   └── preisach_advanced_test.go   # Advanced Preisach tests
+├── pkg/controller/
+│   ├── writer_test.go              # ISPP state machine unit tests
+│   ├── writer_extended_test.go     # Extended ISPP coverage
+│   ├── writer_stress_test.go       # Stress-scenario ISPP tests
+│   ├── writer_lk_tuning_test.go    # L-K tuning parameter tests
+│   ├── ispp_convergence_test.go    # Convergence guarantees
+│   ├── ispp_full_cycle_test.go     # Full write-cycle tests
+│   ├── ispp_landau_ensemble_test.go # Ensemble convergence (9 materials)
+│   ├── landau_remanent_sweep_test.go # Remanent-state sweep tests
+│   └── headless_regression_test.go # Headless regression suite
 ├── pkg/simulation/
 │   └── engine_test.go              # Simulation engine tests
 └── pkg/gui/widgets/
     └── widgets_test.go             # Widget logic tests (headless)
 
-module2-crossbar/
-└── pkg/crossbar/
-    ├── physics_test.go             # IR drop, sneak, drift tests
-    ├── nonidealities_test.go       # Non-ideality model tests
-    └── array_test.go               # Crossbar array tests
+shared/crossbar/
+├── array_test.go                   # Crossbar array tests
+├── array_additional_test.go        # Additional array coverage
+└── array_gaps_test.go              # Gap-coverage tests
 
 module3-mnist/
 └── pkg/core/
     ├── physics_test.go             # Math/calculation tests
     ├── quantize_test.go            # Quantization tests
     └── integration_test.go         # E2E inference tests
+
+shared/physics/
+├── preisach_test.go               # Preisach stack tests
+└── ispp_write_test.go             # L-K solver ISPP tests (if present)
 
 module2-crossbar/
 └── pkg/weights/
@@ -370,7 +408,7 @@ shared/
 └── widgets/color_legend_test.go    # Shared widget tests
 ```
 
-### 8. EDA Compiler Tests (New)
+### 9. EDA Compiler Tests
 
 **Location:** `module6-eda/pkg/compiler/compiler_extended_test.go`
 
@@ -394,7 +432,7 @@ shared/
 - `TestQuantization_SymmetricBipolar` - Symmetric quantization q(-x) ≈ -q(x)
 - `TestQuantization_30Levels` - Full 30-level utilization
 
-### 9. EDA Export Tests (New)
+### 10. EDA Export Tests
 
 **Location:** `module6-eda/pkg/export/lattice_generator_test.go`, `module6-eda/pkg/export/svg_test.go`
 
@@ -409,7 +447,7 @@ shared/
 - `TestGenerateLayoutSVG_1T1R*` - 1T1R architecture visualization
 - `TestGenerateLayoutSVG_ShowGrid/Labels/CellIDs` - Configuration options
 
-### 10. Weight Management Tests (New)
+### 11. Weight Management Tests
 
 **Location:** `module2-crossbar/pkg/weights/weights_test.go`
 
@@ -430,7 +468,7 @@ shared/
 - `TestQuantizeModel` - Model quantization to int8
 - `TestGenerateCrossbarMapping` - Crossbar tile mapping
 
-### 11. Peripheral Analysis Tests (New)
+### 12. Peripheral Analysis Tests
 
 **Location:** `module4-circuits/pkg/peripherals/analysis_test.go`
 
@@ -446,7 +484,7 @@ shared/
 
 ## Last Updated
 
-- **Date:** 2026-01-29
+- **Date:** 2026-02-18
 - **Total Tests:** See CI (`go test ./...`)
 - **Pass Rate:** 100%
 - **Coverage:** Physics, integration, GUI logic (headless), EDA export, weight management, peripheral analysis, compute, GPU, IO, utilities

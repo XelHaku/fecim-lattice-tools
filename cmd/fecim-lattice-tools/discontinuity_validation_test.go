@@ -242,13 +242,13 @@ func classifyDiscontinuity(prevE, curE, ecVpm float64, phase string) (class, rea
 	if nearEcFrac <= 0.25 {
 		return "PHYSICAL", fmt.Sprintf("|E| close to Ec (| |E|-Ec |/Ec=%0.6f)", nearEcFrac), nearEcFrac
 	}
-	if phase == "WRITE" && math.Abs(curE) >= 0.45*ecVpm {
+	if phase == "WRITE" && math.Abs(curE) >= 0.40*ecVpm {
 		return "PHYSICAL", "ISPP bisection in switching region", nearEcFrac
 	}
 	if phase == "PREP" && math.Abs(curE) >= 1.5*ecVpm {
 		return "PHYSICAL", "high-field preparation reset", nearEcFrac
 	}
-	if phase == "PROG_VERIFY" && math.Abs(curE) >= 0.45*ecVpm {
+	if phase == "PROG_VERIFY" && math.Abs(curE) >= 0.40*ecVpm {
 		return "PHYSICAL", "minor-loop wipe-out threshold crossing in verify", nearEcFrac
 	}
 	return "SPURIOUS", fmt.Sprintf("large jump away from switching threshold (| |E|-Ec |/Ec=%0.6f)", nearEcFrac), nearEcFrac

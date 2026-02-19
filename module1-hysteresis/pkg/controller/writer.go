@@ -48,6 +48,23 @@ func (s WriteState) String() string {
 }
 
 // WriteController manages the ISPP (Incremental Step Pulse Programming) loop
+// for waveform-based ferroelectric write operations.
+//
+// ISPP state machine: IDLE -> APPLY -> WAIT -> VERIFY -> (loop or SUCCESS/FAILED)
+//   - APPLY: drive the E-field pulse (CurrentField) toward the target level
+//   - WAIT:  hold pulse for settling (scaled by WaitSettleScale for L-K targets)
+//   - VERIFY: read level at E=0, update binary search bounds [VMin, VMax]
+//   - RESETTING: overshoot recovery via reverse-direction reset pulse
+//
+// Convergence strategy combines A-ISPP (logarithmic voltage stepping with
+// natural decay) and bisection (when both VMin/VMax bounds are established).
+// Guard-band logic nudges polarization toward bin center at target level.
+//
+// Key invariants (see MEMORY.md for detailed bug history):
+//   - Guard pulses capped at 2 to prevent direction flip (calcLevel clamped)
+//   - Collapsed bounds widened minimally, never reset to full [0, MaxField]
+//   - OvershootLimit (30) triggers StateSuccess, not StateFailed
+//   - Zero-field verify (absField < 0.01*Ec) resets bounds for fresh bisection
 type WriteController struct {
 	// Configuration
 	NumLevels       int

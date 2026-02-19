@@ -15,19 +15,34 @@ func getISPPLogger() *logging.Logger {
 	return isppLog
 }
 
+// WriteController implements Landau-Khalatnikov (L-K) solver-based ISPP for
+// physics-accurate ferroelectric write operations. Unlike the waveform-based
+// controller in module1-hysteresis/pkg/controller/writer.go, this controller
+// operates in voltage domain and uses the L-K ODE solver directly.
+//
+// Algorithm:
+//  1. Predict initial pulse voltage from atanh(P_target/Ps) * thickness
+//  2. Apply pulse via L-K integration (subdivided into MaxStep sub-steps)
+//  3. Verify resulting conductance against target (Tolerance threshold)
+//  4. On undershoot: raise VMin, bisect [VMin, VMax] with crossing-aware bias
+//  5. On overshoot: lower VMax, optionally reset to -Pr and re-approach
+//
+// The crossing-aware bias (0.1-0.3 instead of 0.5) reduces overshoot when the
+// target polarization has opposite sign to the current state, since the tanh
+// P(E) curve is steepest near E=Ec.
 type WriteController struct {
 	Solver   *LKSolver
 	Material *HZOMaterial
 
-	MaxVoltage    float64
-	MinVoltage    float64
-	PulseWidth    float64
-	Tolerance     float64
-	MaxIterations int
-	MaxStep       float64 // Maximum integration step size (s) for stability
+	MaxVoltage    float64 // Maximum programming voltage (V)
+	MinVoltage    float64 // Minimum non-zero pulse voltage (V)
+	PulseWidth    float64 // Programming pulse width (s); default 10 ns
+	Tolerance     float64 // Convergence threshold in conductance units; default 0.01
+	MaxIterations int     // Max ISPP pulses before declaring failure; default 20
+	MaxStep       float64 // Maximum L-K integration sub-step (s); default 1 ps for stability
 
-	VMin float64
-	VMax float64
+	VMin float64 // Lower bound of voltage search (established by undershoot)
+	VMax float64 // Upper bound of voltage search (established by overshoot)
 
 	// FailureReason is set when WriteTarget fails (e.g., unreachable due to bounds).
 	FailureReason string

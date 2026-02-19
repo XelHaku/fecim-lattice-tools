@@ -54,7 +54,9 @@ func TestApplyStateDepC2C_NonNegative(t *testing.T) {
 func TestSweepC2CRelativeNoise(t *testing.T) {
 	G_max := 1e-5
 	cfg := DefaultStateDepC2CConfig(G_max)
-	Gs := []float64{G_max, G_max / 2, G_max / 5, G_max / 10}
+	// Values stay above the 0.5*G clamp threshold (G > sqrt(AbsoluteNoiseSigma*G_ref/0.5) ≈ 0.316*G_max).
+	// G_max/5 and G_max/10 both saturate at rel=0.5 and would make the monotonicity check spuriously fail.
+	Gs := []float64{G_max, G_max / 2, G_max / 2.5, G_max / 3}
 	rels, err := SweepC2CRelativeNoise(Gs, cfg)
 	if err != nil {
 		t.Fatal(err)
@@ -62,7 +64,7 @@ func TestSweepC2CRelativeNoise(t *testing.T) {
 	if len(rels) != len(Gs) {
 		t.Fatalf("expected %d results, got %d", len(Gs), len(rels))
 	}
-	// Relative noise should increase as G decreases (1/G relationship)
+	// Relative noise should increase as G decreases (1/G relationship), all in non-clamped region.
 	for i := 1; i < len(rels); i++ {
 		if rels[i] <= rels[i-1] {
 			t.Errorf("relative noise should increase as G decreases: rels[%d]=%g rels[%d]=%g", i, rels[i], i-1, rels[i-1])
