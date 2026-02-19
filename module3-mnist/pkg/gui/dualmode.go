@@ -317,9 +317,12 @@ func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
 	// Status footer
 	footer := app.statusLabel
 
+	// Zone 5: Accuracy sweep analysis
+	zone5 := NewAccuracySweepPanel(app).Content()
+
 	// Create AdaptiveLayout for responsive design
-	zones := []fyne.CanvasObject{zone1, zone2, zone3, zone4}
-	tabLabels := []string{"Draw", "Results", "Config", "Weights"}
+	zones := []fyne.CanvasObject{zone1, zone2, zone3, zone4, zone5}
+	tabLabels := []string{"Draw", "Results", "Config", "Weights", "Analysis"}
 	app.adaptiveLayout = sharedwidgets.NewAdaptiveLayout(zones, tabLabels)
 
 	// Set desktop layout builder - creates the split-based layout

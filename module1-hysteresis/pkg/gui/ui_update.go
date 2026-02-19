@@ -7,6 +7,7 @@ import (
 
 	"fecim-lattice-tools/module1-hysteresis/pkg/controller"
 	"fecim-lattice-tools/module1-hysteresis/pkg/gui/widgets"
+	sharedphysics "fecim-lattice-tools/shared/physics"
 	"fyne.io/fyne/v2"
 )
 
@@ -407,8 +408,28 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 	}
 
 	// Update wake-up/fatigue labels (Dr. Tour recommendation)
-	// Update wake-up/fatigue labels (Dr. Tour recommendation)
-	cycles, degradation, wakeup := 0, 0.0, 1.0 // Placeholder for clean-up
+	cycles := a.wrdTotalWrites
+	wakeup := 1.0
+	degradation := 0.0
+	if a.material != nil && a.material.Pr > 0 {
+		cfg := sharedphysics.WakeUpModelConfig{
+			PrInitial_Cm2:      a.material.Pr,
+			WakeUpGainFraction: 0.2,
+			WakeUpTauCycles:    1000,
+			FatigueOnsetCycles: 1e6,
+			FatigueTauCycles:   2e6,
+		}
+		if pr, err := sharedphysics.WakeUpPolarization(float64(cycles), cfg); err == nil && a.material.Pr > 0 {
+			wakeup = pr / (a.material.Pr * (1 + cfg.WakeUpGainFraction))
+			if wakeup > 1 {
+				wakeup = 1
+			}
+			degradation = 1 - pr/a.material.Pr
+			if degradation < 0 {
+				degradation = 0
+			}
+		}
+	}
 	if a.cyclesLabel != nil {
 		if cycles >= 1000000 {
 			a.cyclesLabel.SetText(fmt.Sprintf("%.1fM", float64(cycles)/1e6))

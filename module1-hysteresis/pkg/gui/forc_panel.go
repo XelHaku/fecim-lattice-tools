@@ -4,6 +4,8 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"image"
+	"image/color"
 	"math"
 	"os"
 	"os/exec"
@@ -13,6 +15,7 @@ import (
 	"time"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
@@ -182,6 +185,77 @@ func renderHeatmapText(matrix FORCDensityMatrix) string {
 	return b.String()
 }
 
+// NewFORCDensityRaster creates a Fyne canvas.Raster rendering the FORC density matrix.
+// Color map: 0=dark blue → mid=green → max=red (scientific hot colormap).
+func NewFORCDensityRaster(matrix FORCDensityMatrix) *canvas.Raster {
+	if matrix.Rows == 0 || matrix.Cols == 0 {
+		return canvas.NewRaster(func(w, h int) image.Image {
+			return image.NewRGBA(image.Rect(0, 0, w, h))
+		})
+	}
+
+	// Find max density for normalization
+	maxDensity := 0.0
+	for i := 0; i < matrix.Rows; i++ {
+		for j := 0; j < matrix.Cols; j++ {
+			if matrix.Density[i][j] > maxDensity {
+				maxDensity = matrix.Density[i][j]
+			}
+		}
+	}
+	if maxDensity == 0 {
+		maxDensity = 1
+	}
+
+	return canvas.NewRaster(func(w, h int) image.Image {
+		img := image.NewRGBA(image.Rect(0, 0, w, h))
+		for py := 0; py < h; py++ {
+			// Map pixel y to matrix row (flip y: row 0 = bottom)
+			row := matrix.Rows - 1 - int(float64(py)*float64(matrix.Rows)/float64(h))
+			if row < 0 {
+				row = 0
+			}
+			if row >= matrix.Rows {
+				row = matrix.Rows - 1
+			}
+			for px := 0; px < w; px++ {
+				col := int(float64(px) * float64(matrix.Cols) / float64(w))
+				if col >= matrix.Cols {
+					col = matrix.Cols - 1
+				}
+				v := matrix.Density[row][col] / maxDensity
+				img.Set(px, py, heatColor(v))
+			}
+		}
+		return img
+	})
+}
+
+// heatColor maps a value in [0,1] to a hot colormap color.
+func heatColor(v float64) color.RGBA {
+	if v <= 0 {
+		return color.RGBA{0, 0, 80, 255} // dark blue
+	}
+	if v >= 1 {
+		return color.RGBA{255, 255, 0, 255} // yellow
+	}
+	// 4-segment linear hot colormap: blue→cyan→green→yellow→red
+	switch {
+	case v < 0.25:
+		t := v / 0.25
+		return color.RGBA{0, uint8(t * 255), 255, 255}
+	case v < 0.5:
+		t := (v - 0.25) / 0.25
+		return color.RGBA{0, 255, uint8((1 - t) * 255), 255}
+	case v < 0.75:
+		t := (v - 0.5) / 0.25
+		return color.RGBA{uint8(t * 255), 255, 0, 255}
+	default:
+		t := (v - 0.75) / 0.25
+		return color.RGBA{255, uint8((1 - t) * 255), 0, 255}
+	}
+}
+
 func ExportFORCSweepCSV(result sharedphysics.FORCResult, path string) error {
 	f, err := os.Create(path)
 	if err != nil {
@@ -272,6 +346,11 @@ func (a *App) createFORCPanel() fyne.CanvasObject {
 	resultScroll := container.NewHScroll(resultLabel)
 	resultScroll.SetMinSize(fyne.NewSize(0, 200))
 
+	// Density raster display (updated after each FORC run)
+	rasterPlaceholder := NewFORCDensityRaster(FORCDensityMatrix{})
+	rasterPlaceholder.SetMinSize(fyne.NewSize(300, 300))
+	rasterContainer := container.NewStack(rasterPlaceholder)
+
 	var last FORCWorkflowResult
 	runFORC := func() {
 		a.mu.RLock()
@@ -294,7 +373,13 @@ func (a *App) createFORCPanel() fyne.CanvasObject {
 			return
 		}
 		last = out
-		fyne.Do(func() { resultLabel.SetText(out.Stats + "\n\n" + out.HeatmapText) })
+		fyne.Do(func() {
+			resultLabel.SetText(out.Stats + "\n\n" + out.HeatmapText)
+			newRaster := NewFORCDensityRaster(out.Matrix)
+			newRaster.SetMinSize(fyne.NewSize(300, 300))
+			rasterContainer.Objects = []fyne.CanvasObject{newRaster}
+			rasterContainer.Refresh()
+		})
 	}
 
 	exportSweepBtn := widget.NewButton("Export sweep CSV", func() {
@@ -367,6 +452,8 @@ func (a *App) createFORCPanel() fyne.CanvasObject {
 		controls,
 		runBtn,
 		container.NewGridWithColumns(3, exportSweepBtn, exportMatrixBtn, exportMetaBtn),
+		widget.NewLabel("Density map (run FORC to populate):"),
+		rasterContainer,
 		resultScroll,
 	))
 }
