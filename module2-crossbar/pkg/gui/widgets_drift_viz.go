@@ -142,15 +142,18 @@ func (w *DriftVisualization) CreateRenderer() fyne.WidgetRenderer {
 	// Status and info labels
 	w.statusLabel = widget.NewLabel("Click 'Run Simulation' to see drift predictions")
 	w.statusLabel.Alignment = fyne.TextAlignCenter
+	w.statusLabel.Wrapping = fyne.TextWrapWord
 
 	w.techCompare = widget.NewLabel("FeCIM: ~50× better retention than RRAM")
 	w.techCompare.Alignment = fyne.TextAlignCenter
 	w.techCompare.TextStyle = fyne.TextStyle{Italic: true}
+	w.techCompare.Wrapping = fyne.TextWrapWord
 
 	// Model info with assumption warning
-	w.modelInfo = widget.NewLabel("⚠️ Drift coefficient: ASSUMED (derived from retention studies)")
+	w.modelInfo = widget.NewLabel("⚠ Drift coefficient: ASSUMED (from retention studies)")
 	w.modelInfo.Alignment = fyne.TextAlignCenter
 	w.modelInfo.TextStyle = fyne.TextStyle{Italic: true}
+	w.modelInfo.Wrapping = fyne.TextWrapWord
 
 	// Run button
 	runBtn := widget.NewButton("Run Simulation", func() {

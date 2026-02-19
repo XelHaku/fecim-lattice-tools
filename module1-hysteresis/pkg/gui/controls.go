@@ -398,6 +398,8 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 
 	// Target range (effective Ps back-off for level mapping)
 	a.wrdRangeLabel = widget.NewLabel(a.rangeFracLabelText(a.wrdRangeFrac))
+	a.wrdRangeLabel.Wrapping = fyne.TextWrapWord
+	a.wrdRangeLabel.Truncation = fyne.TextTruncateEllipsis
 	a.wrdRangeSlider = widget.NewSlider(0.5, 1.0)
 	a.wrdRangeSlider.Step = 0.005
 	a.wrdRangeSlider.Value = clampRangeFrac(a.wrdRangeFrac)
@@ -635,7 +637,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	a.stressSlider = stressSlider
 	stressSlider.Step = 0.1
 	stressSlider.Value = 1.0
-	stressLabel := widget.NewLabel("Mechanical Stress: 1.0 GPa")
+	stressLabel := widget.NewLabel("Stress: 1.0 GPa")
 
 	// Stress slider (Phase 4.1: Electrostriction control)
 	stressSlider.OnChanged = func(v float64) {
@@ -649,7 +651,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			a.lkSolver.Stress = v * 1e9
 		}
 		a.mu.Unlock()
-		stressLabel.SetText(fmt.Sprintf("Mechanical Stress: %.1f GPa", v))
+		stressLabel.SetText(fmt.Sprintf("Stress: %.1f GPa", v))
 	}
 
 	// Temperature slider (L-K only — Preisach has no intrinsic T dependence)
@@ -725,7 +727,7 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 	learnRow := container.NewGridWithColumns(2, eli5Btn, eqBtn)
 
 	levelsGrid := container.NewGridWithColumns(2, a.levelsLabel, a.levelsEntry)
-	rangeGrid := container.NewGridWithColumns(2, a.wrdRangeLabel, a.wrdRangeSlider)
+	rangeGrid := container.NewVBox(a.wrdRangeLabel, a.wrdRangeSlider)
 
 	// Helper to create a row with an info button for tooltips
 	withInfo := func(content fyne.CanvasObject, tc sharedwidgets.TooltipContent) fyne.CanvasObject {
@@ -1087,7 +1089,7 @@ func (a *App) onMaterialPickerSelected(materialID string, physMat *physics.Mater
 		a.materialNameLabel.SetText(hzoMat.Name)
 	}
 	if a.materialPropsLabel != nil {
-		a.materialPropsLabel.SetText(fmt.Sprintf("Pr %.1f µC/cm²   Ec %.2f MV/cm",
+		a.materialPropsLabel.SetText(fmt.Sprintf("Pr %.1f  Ec %.2f MV/cm",
 			hzoMat.Pr*100, hzoMat.Ec/1e8))
 	}
 	if a.materialBadgeBox != nil {

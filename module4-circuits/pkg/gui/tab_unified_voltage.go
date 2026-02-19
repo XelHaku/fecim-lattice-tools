@@ -889,8 +889,8 @@ func (ca *CircuitsApp) createCompactWritePanel() fyne.CanvasObject {
 	methodSelect.SetSelected("Logarithmic (A-ISPP)")
 	ca.isppMethodSelect = methodSelect
 
-	engineRow := container.NewHBox(widget.NewLabel("ISPP Engine:"), engineSelect)
-	methodRow := container.NewHBox(widget.NewLabel("ISPP Method:"), methodSelect)
+	engineRow := container.NewBorder(nil, nil, widget.NewLabel("ISPP Engine:"), nil, engineSelect)
+	methodRow := container.NewBorder(nil, nil, widget.NewLabel("ISPP Method:"), nil, methodSelect)
 	isppConfidence := container.NewHBox(widget.NewLabel("ISPP confidence:"), sharedwidgets.NewConfidenceBadge(sharedwidgets.Estimated))
 
 	return container.NewVBox(

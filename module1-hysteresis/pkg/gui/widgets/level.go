@@ -575,7 +575,9 @@ func (r *levelRenderer) layoutWithSize(size fyne.Size) {
 		modeText := canvas.NewText("CLICK TO SET", color.RGBA{255, 255, 255, 255})
 		modeText.TextSize = 14
 		modeText.TextStyle = fyne.TextStyle{Bold: true}
-		modeText.Move(fyne.NewPos(8, modeY+4))
+		modeText.Alignment = fyne.TextAlignCenter
+		modeText.Move(fyne.NewPos(4, modeY+4))
+		modeText.Resize(fyne.NewSize(size.Width-8, 18))
 		r.objects = append(r.objects, modeText)
 	} else {
 		// Auto mode - show "AUTO" with dimmed background

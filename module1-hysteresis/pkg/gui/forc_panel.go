@@ -382,7 +382,7 @@ func (a *App) createFORCPanel() fyne.CanvasObject {
 		})
 	}
 
-	exportSweepBtn := widget.NewButton("Export sweep CSV", func() {
+	exportSweepBtn := widget.NewButton("Sweep CSV", func() {
 		if len(last.Sweep.Curves) == 0 {
 			runFORC()
 		}
@@ -396,7 +396,7 @@ func (a *App) createFORCPanel() fyne.CanvasObject {
 		a.setStatus("Exported " + name)
 	})
 
-	exportMatrixBtn := widget.NewButton("Export matrix CSV/JSON", func() {
+	exportMatrixBtn := widget.NewButton("Matrix CSV", func() {
 		if len(last.Sweep.Curves) == 0 {
 			runFORC()
 		}
@@ -417,7 +417,7 @@ func (a *App) createFORCPanel() fyne.CanvasObject {
 		a.setStatus("Exported " + csvPath + " and JSON")
 	})
 
-	exportMetaBtn := widget.NewButton("Export metadata JSON", func() {
+	exportMetaBtn := widget.NewButton("Meta JSON", func() {
 		a.mu.RLock()
 		mat := "unknown"
 		engine := a.physicsEngine.String()
@@ -444,7 +444,7 @@ func (a *App) createFORCPanel() fyne.CanvasObject {
 
 	controls := container.NewGridWithColumns(2,
 		widget.NewLabel("Emax (V/m):"), emaxEntry,
-		widget.NewLabel("Reversal steps:"), reversalEntry,
+		widget.NewLabel("Reversals:"), reversalEntry,
 		widget.NewLabel("Resolution:"), resolutionEntry,
 	)
 

@@ -329,15 +329,17 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	// Status
 	ca.statusLabel = widget.NewLabel("Status: Ready")
 	ca.statusLabel.TextStyle = fyne.TextStyle{Bold: true}
+	ca.statusLabel.Truncation = fyne.TextTruncateEllipsis
 	ca.statusBar = sharedwidgets.NewStatusBarWithLabel(ca.statusLabel, "Status: ")
 
 	// === SIMULATION WARNING BANNER ===
 	// CRITICAL: Per Dr. Tour critique - must prominently display TRL status
 	warningBanner := widget.NewLabelWithStyle(
-		"⚠️ SIMULATION ONLY - NOT VALIDATED | TRL 4 Lab Prototype | All values are model inputs",
+		"SIMULATION ONLY - NOT VALIDATED | TRL 4 Lab Prototype | All values are model inputs",
 		fyne.TextAlignCenter,
 		fyne.TextStyle{Bold: true},
 	)
+	warningBanner.Wrapping = fyne.TextWrapWord
 
 	// === HEADER (title moved to main navbar) ===
 	resetBtn := widget.NewButton("Reset", func() {
@@ -415,7 +417,9 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 		ca.exportReproducibilityPack()
 	}, ca.window)
 
-	configRow := container.NewHBox(
+	// Use a wrapping grid so controls don't overflow at 1024px minimum width.
+	// Row 1: mode/scenario/workload selectors + calculate
+	controlsRow1 := container.NewHBox(
 		widget.NewLabel("Mode:"),
 		uiModeSelect,
 		widget.NewLabel("Scenario:"),
@@ -423,14 +427,19 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 		widget.NewLabel("Workload:"),
 		ca.workloadSelect,
 		layout.NewSpacer(),
+		calcBtn,
+	)
+	// Row 2: slider label + slider + export buttons
+	ca.inferencesLabel.Truncation = fyne.TextTruncateEllipsis
+	controlsRow2 := container.NewHBox(
 		ca.inferencesLabel,
 		sliderContainer,
-		calcBtn,
-		widget.NewSeparator(),
+		layout.NewSpacer(),
 		exportDataBtn,
 		exportImageBtn,
 		exportReproBtn,
 	)
+	configRow := container.NewVBox(controlsRow1, controlsRow2)
 	roiSection := container.NewVBox(
 		sectionROIHeader,
 		container.NewPadded(configRow),
@@ -505,6 +514,7 @@ func (ca *ComparisonApp) createEvidenceFirstPanel() fyne.CanvasObject {
 	}
 
 	assumptions := widget.NewLabel(PlainTextEvidence("Assumptions & outputs", run))
+	assumptions.Wrapping = fyne.TextWrapWord
 	sensitivity := SensitivityRanking(run, "tco_reduction_pct")
 	top := "n/a"
 	if len(sensitivity) > 0 {
@@ -521,7 +531,11 @@ func (ca *ComparisonApp) createPlainTextEvidencePanel(title string) fyne.CanvasO
 	}
 	text := widget.NewLabel(PlainTextEvidence(title, run))
 	text.Wrapping = fyne.TextWrapWord
-	return widget.NewCard("Plain-text evidence", "Screen-reader-first", text)
+	// Wrap in a fixed-height scroll so the raw parameter dump doesn't push
+	// content below out of view or overlap content above at narrow widths.
+	scrolled := container.NewScroll(text)
+	scrolled.SetMinSize(fyne.NewSize(0, 120))
+	return widget.NewCard("Plain-text evidence", "Screen-reader-first", scrolled)
 }
 
 func (ca *ComparisonApp) createScenarioDiffPanel() fyne.CanvasObject {

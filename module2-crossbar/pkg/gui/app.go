@@ -301,7 +301,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 		"instead of digital logic.\n\n" +
 		"All operations happen in\n" +
 		"parallel - no sequential ALU!")
-	ca.eduContentLabel.Wrapping = fyne.TextWrapOff
+	ca.eduContentLabel.Wrapping = fyne.TextWrapWord
 	ca.keyStatLabel = widget.NewLabel("N² Operations")
 	ca.keyStatLabel.Alignment = fyne.TextAlignCenter
 	ca.keyStatValue = widget.NewLabelWithStyle(fmt.Sprintf("%d MACs", ca.config.Rows*ca.config.Cols), fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
@@ -312,13 +312,14 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 
 	// Array size slider - create without callback to avoid triggering
 	// recreateArray before UI is initialized
-	ca.arraySizeLabel = widget.NewLabel("Array Size: 64×64")
+	ca.arraySizeLabel = widget.NewLabel("64×64")
+	ca.arraySizeLabel.Truncation = fyne.TextTruncateEllipsis
 	ca.arraySizeSlider = widget.NewSlider(8, 128)
 	ca.arraySizeSlider.Step = 8
 	ca.arraySizeSlider.Value = 64
 	ca.arraySizeSlider.OnChanged = func(v float64) {
 		size := int(v)
-		ca.arraySizeLabel.SetText(fmt.Sprintf("Array Size: %d×%d", size, size))
+		ca.arraySizeLabel.SetText(fmt.Sprintf("%d×%d", size, size))
 		ca.recreateArray(size, ca.config.NoiseLevel, ca.config.ADCBits)
 	}
 
@@ -338,7 +339,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	ca.adcBitsSlider.Value = 6
 	ca.adcBitsSlider.OnChanged = func(v float64) {
 		bits := int(v)
-		ca.adcBitsLabel.SetText(fmt.Sprintf("ADC Bits: %d", bits))
+		ca.adcBitsLabel.SetText(fmt.Sprintf("%d", bits))
 		ca.config.ADCBits = bits
 		ca.runEnhancedMVMInstant()
 	}
@@ -346,6 +347,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	// Temperature slider (Kelvin)
 	ca.temperatureLabel = widget.NewLabel(ca.formatTemperatureLabel(ca.currentTemperatureK()))
 	ca.temperatureLabel.Wrapping = fyne.TextWrapOff
+	ca.temperatureLabel.Truncation = fyne.TextTruncateEllipsis
 	ca.temperatureSlider = widget.NewSlider(77, 450)
 	ca.temperatureSlider.Step = 5
 	ca.temperatureSlider.Value = ca.currentTemperatureK()
@@ -441,7 +443,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	ca.archToggle = container.NewGridWithColumns(3, ca.archPassiveBtn, ca.arch1T1RBtn, ca.arch2T1RBtn)
 
 	ca.statsLabel = widget.NewLabel("Analysis Results\n\nNo data yet.\nClick Run MVM to start.")
-	ca.statsLabel.Wrapping = fyne.TextWrapOff
+	ca.statsLabel.Wrapping = fyne.TextWrapWord
 	ca.statsLabel.TextStyle = fyne.TextStyle{Monospace: true} // Fixed-width prevents resize
 
 	// Create status labels
@@ -450,6 +452,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	ca.statusBar = sharedwidgets.NewStatusBarWithLabel(ca.statusLabel, "Status: ")
 
 	ca.infoLabel = widget.NewLabel("")
+	ca.infoLabel.Truncation = fyne.TextTruncateEllipsis
 	ca.updateInfoLabel()
 
 	// Hover info label - shows cell info on mouse hover
@@ -606,13 +609,14 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	)
 
 	// Left panel using simple labels (no custom widgets)
-	// M2 UX fix: Wrap educational content in fixed-size container to prevent layout shifts
-	// when content changes between tabs (BUG-M2-004 mitigation)
-	eduContentWrapper := container.NewGridWrap(fyne.NewSize(200, 280), ca.eduContentLabel)
+	// Wrap educational content to allow word-wrap at narrow widths
+	ca.eduTitleLabel.Truncation = fyne.TextTruncateEllipsis
+	ca.keyStatLabel.Truncation = fyne.TextTruncateEllipsis
+	ca.keyStatValue.Truncation = fyne.TextTruncateEllipsis
 	leftPanelContent := container.NewVBox(
 		ca.eduTitleLabel,
 		widget.NewSeparator(),
-		eduContentWrapper,
+		ca.eduContentLabel,
 		widget.NewSeparator(),
 		ca.keyStatLabel,
 		ca.keyStatValue,
@@ -620,16 +624,12 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 	leftPanel := container.NewVScroll(leftPanelContent)
 
 	// Simple status footer with hover info
-	// Wrap hoverInfoLabel in fixed-size container to prevent layout recalc on text change
-	hoverInfoContainer := container.NewGridWrap(fyne.NewSize(450, 20), ca.hoverInfoLabel)
-	simpleFooter := container.NewHBox(
-		ca.modeIndicator,
-		widget.NewSeparator(),
-		ca.statusLabel,
-		layout.NewSpacer(),
-		hoverInfoContainer,
-		widget.NewSeparator(),
-		ca.infoLabel,
+	ca.statusLabel.Truncation = fyne.TextTruncateEllipsis
+	simpleFooter := container.NewBorder(
+		nil, nil,
+		container.NewHBox(ca.modeIndicator, widget.NewSeparator()), // left - fixed
+		ca.infoLabel, // right - fixed
+		container.NewHBox(ca.statusLabel, layout.NewSpacer(), ca.hoverInfoLabel), // center
 	)
 
 	// Use HSplit for proportional 3-column layout

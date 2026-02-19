@@ -916,11 +916,12 @@ func (a *App) createUI() fyne.CanvasObject {
 	adaptive := sharedwidgets.NewAdaptiveLayout(zones, tabLabels)
 	adaptive.SetDesktopLayout(func(zones []fyne.CanvasObject) fyne.CanvasObject {
 		// Desktop: Left (Cell+Info) | Plot | Controls
+		// At 1024px: left=256px, inner=(768px * 0.65)=499px plot, 269px controls
 		innerSplit := container.NewHSplit(zones[1], zones[2])
 		innerSplit.SetOffset(0.65) // Give controls more room (35% instead of 30%)
 
 		outerSplit := container.NewHSplit(zones[0], innerSplit)
-		outerSplit.SetOffset(0.22) // Slightly wider left column for log readability
+		outerSplit.SetOffset(0.25) // 25% left column: 256px at 1024px (enough for 220px MinSize + padding)
 
 		return outerSplit
 	})

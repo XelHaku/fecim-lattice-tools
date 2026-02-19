@@ -180,7 +180,7 @@ func (qw *QuantizationWidget) Clear() {
 
 // MinSize returns the minimum size for the widget.
 func (qw *QuantizationWidget) MinSize() fyne.Size {
-	return fyne.NewSize(350, 180)
+	return fyne.NewSize(260, 140)
 }
 
 // CreateRenderer implements fyne.Widget.

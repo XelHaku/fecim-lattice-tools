@@ -83,14 +83,13 @@ func (f *FabricationReality) CreateRenderer() fyne.WidgetRenderer {
 		widget.NewLabel("• Yield challenges for analog multi-level cells"),
 	)
 
-	// Disclaimer
-	disclaimer := canvas.NewText(
+	// Disclaimer - use widget.Label so it wraps at narrow widths
+	disclaimer := widget.NewLabelWithStyle(
 		"Note: These are model input estimates based on industry-typical figures. Actual costs vary by process node and complexity.",
-		color.RGBA{150, 150, 150, 255},
+		fyne.TextAlignCenter,
+		fyne.TextStyle{Italic: true},
 	)
-	disclaimer.TextSize = 14
-	disclaimer.TextStyle = fyne.TextStyle{Italic: true}
-	disclaimer.Alignment = fyne.TextAlignCenter
+	disclaimer.Wrapping = fyne.TextWrapWord
 
 	content := container.NewVBox(
 		header,
@@ -118,13 +117,14 @@ func createTimelineItem(phase, duration string, c color.Color) fyne.CanvasObject
 	indicator.SetMinSize(fyne.NewSize(10, 10))
 
 	phaseLabel := widget.NewLabel(phase)
+	phaseLabel.Truncation = fyne.TextTruncateEllipsis
 	durationLabel := widget.NewLabel(duration)
 	durationLabel.TextStyle = fyne.TextStyle{Bold: true}
 
 	return container.NewHBox(
 		indicator,
 		phaseLabel,
-		widget.NewLabel("→"),
+		widget.NewLabel("->"),
 		durationLabel,
 	)
 }
@@ -132,11 +132,12 @@ func createTimelineItem(phase, duration string, c color.Color) fyne.CanvasObject
 // createCostItem creates a cost entry.
 func createCostItem(item, cost string) fyne.CanvasObject {
 	itemLabel := widget.NewLabel(item)
+	itemLabel.Truncation = fyne.TextTruncateEllipsis
 	costLabel := widget.NewLabel(cost)
 	costLabel.TextStyle = fyne.TextStyle{Bold: true}
 
 	return container.NewHBox(
-		widget.NewLabel("•"),
+		widget.NewLabel("*"),
 		itemLabel,
 		widget.NewLabel(":"),
 		costLabel,

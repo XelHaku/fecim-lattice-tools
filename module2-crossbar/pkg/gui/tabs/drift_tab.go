@@ -249,7 +249,7 @@ minimal drift over time.`,
 		stats.TechnologyComparison.FeFETDrift)
 
 	t.statsLabel.SetText(statsText)
-	t.statsLabel.Wrapping = fyne.TextWrapOff
+	t.statsLabel.Wrapping = fyne.TextWrapWord
 	t.statsLabel.TextStyle = fyne.TextStyle{Monospace: true}
 }
 

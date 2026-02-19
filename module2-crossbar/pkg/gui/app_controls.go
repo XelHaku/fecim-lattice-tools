@@ -86,19 +86,21 @@ func (ca *CrossbarApp) createControlWidgets() {
 	// Array size slider (8 to 128 in steps of 8)
 	// Create without callback first, set value, then add callback to avoid
 	// triggering recreateArray before UI is initialized
-	ca.arraySizeLabel = widget.NewLabel("Array Size: 64×64")
+	ca.arraySizeLabel = widget.NewLabel("64×64")
+	ca.arraySizeLabel.Truncation = fyne.TextTruncateEllipsis
 	ca.arraySizeSlider = widget.NewSlider(8, 128)
 	ca.arraySizeSlider.Step = 8
 	ca.arraySizeSlider.Value = 64
 	ca.arraySizeSlider.OnChanged = func(v float64) {
 		size := int(v)
-		ca.arraySizeLabel.SetText(fmt.Sprintf("Array Size: %d×%d", size, size))
+		ca.arraySizeLabel.SetText(fmt.Sprintf("%d×%d", size, size))
 		ca.recreateArray(size, ca.config.NoiseLevel, ca.config.ADCBits)
 	}
 
 	// m1 UX fix: Changed noise step from 0.5% to 1.0% for simpler interaction
 	ca.noiseLabel = widget.NewLabel("2.0%")
 	ca.noiseLabel.Wrapping = fyne.TextWrapOff
+	ca.noiseLabel.Truncation = fyne.TextTruncateEllipsis
 	ca.noiseSlider = widget.NewSlider(0, 50)
 	ca.noiseSlider.Step = 0.5
 	ca.noiseSlider.Value = 2
@@ -108,14 +110,15 @@ func (ca *CrossbarApp) createControlWidgets() {
 		ca.runEnhancedMVMInstant()
 	}
 
-	ca.adcBitsLabel = widget.NewLabel("6 bits")
+	ca.adcBitsLabel = widget.NewLabel("6b")
 	ca.adcBitsLabel.Wrapping = fyne.TextWrapOff
+	ca.adcBitsLabel.Truncation = fyne.TextTruncateEllipsis
 	ca.adcBitsSlider = widget.NewSlider(4, 10)
 	ca.adcBitsSlider.Step = 1
 	ca.adcBitsSlider.Value = 6
 	ca.adcBitsSlider.OnChanged = func(v float64) {
 		bits := int(v)
-		ca.adcBitsLabel.SetText(fmt.Sprintf("%d bits", bits))
+		ca.adcBitsLabel.SetText(fmt.Sprintf("%db", bits))
 		ca.config.ADCBits = bits
 		ca.runEnhancedMVMInstant()
 	}
@@ -123,6 +126,7 @@ func (ca *CrossbarApp) createControlWidgets() {
 	// Temperature slider (Kelvin)
 	ca.temperatureLabel = widget.NewLabel(ca.formatTemperatureLabel(ca.currentTemperatureK()))
 	ca.temperatureLabel.Wrapping = fyne.TextWrapOff
+	ca.temperatureLabel.Truncation = fyne.TextTruncateEllipsis
 	ca.temperatureSlider = widget.NewSlider(77, 450)
 	ca.temperatureSlider.Step = 5
 	ca.temperatureSlider.Value = ca.currentTemperatureK()
@@ -281,10 +285,12 @@ func (ca *CrossbarApp) createRightPanel(metricsScroll *container.Scroll) fyne.Ca
 	})
 	toolWidgets.Button.Importance = widget.LowImportance
 
-	toolsRow := container.NewHBox(
-		widget.NewLabel("CrossSim:"), toolWidgets.CrossSimStatus,
-		widget.NewLabel("BadCrossbar:"), toolWidgets.BadCrossbarStatus,
-		layout.NewSpacer(),
+	crossSimLabel := widget.NewLabel("CrossSim:")
+	crossSimLabel.Truncation = fyne.TextTruncateEllipsis
+	badCrossbarLabel := widget.NewLabel("BadXbar:")
+	badCrossbarLabel.Truncation = fyne.TextTruncateEllipsis
+	toolsRow := container.NewVBox(
+		container.NewHBox(crossSimLabel, toolWidgets.CrossSimStatus, badCrossbarLabel, toolWidgets.BadCrossbarStatus),
 		toolWidgets.Button,
 	)
 
@@ -341,6 +347,7 @@ func (ca *CrossbarApp) createStatusFooter() *fyne.Container {
 
 	ca.infoLabel = widget.NewLabel("")
 	ca.infoLabel.Wrapping = fyne.TextWrapOff
+	ca.infoLabel.Truncation = fyne.TextTruncateEllipsis
 	ca.updateInfoLabel()
 
 	infoRow := container.NewHBox(ca.infoLabel, levelsInfoBtn)
@@ -353,14 +360,12 @@ func (ca *CrossbarApp) createStatusFooter() *fyne.Container {
 	ca.modeIndicator = newModeIndicator()
 	ca.levelIndicator = NewLevelIndicator()
 
-	// Use direct label for flexibility at narrow widths
-	return container.NewHBox(
-		ca.modeIndicator,
-		widget.NewSeparator(),
-		ca.statusLabel,
-		layout.NewSpacer(),
-		ca.hoverInfoLabel,
-		widget.NewSeparator(),
-		infoRow,
+	// Use Border layout: fixed items on sides, stretchy center for truncation at narrow widths
+	ca.statusLabel.Truncation = fyne.TextTruncateEllipsis
+	return container.NewBorder(
+		nil, nil,
+		container.NewHBox(ca.modeIndicator, widget.NewSeparator()), // left
+		infoRow, // right
+		container.NewHBox(ca.statusLabel, layout.NewSpacer(), ca.hoverInfoLabel), // center
 	)
 }

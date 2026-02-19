@@ -208,25 +208,29 @@ func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
 	e.statStrip.Alignment = fyne.TextAlignCenter
 
 	// === SYSTEM POWER BREAKDOWN (C10: Per Dr. Tour critique) ===
-	// Shows total system power distribution, not just array power
-	powerBreakdown := canvas.NewText("Model assumption: System Power = Array ~45% | ADC/DAC ~40% | Peripherals ~15%", heroAmberColor)
-	powerBreakdown.TextSize = 14
+	// Use widget.Label so it wraps at narrow widths instead of overflowing.
+	powerBreakdown := widget.NewLabel("Model assumption: System Power = Array ~45% | ADC/DAC ~40% | Peripherals ~15%")
 	powerBreakdown.TextStyle = fyne.TextStyle{Italic: true}
 	powerBreakdown.Alignment = fyne.TextAlignCenter
+	powerBreakdown.Wrapping = fyne.TextWrapWord
+	powerBreakdown.Truncation = fyne.TextTruncateEllipsis
 
 	// === CITATION ===
-	citation := canvas.NewText("Model input references (not validated): Samsung Nature 2025 range, NVIDIA H100 datasheets, Intel/AMD datasheets", heroMutedColor)
-	citation.TextSize = 14
+	// Use widget.Label so the long reference text wraps at narrow widths and does
+	// not visually overflow into or overlap with the section below it.
+	citation := widget.NewLabel("Model input references (not validated): Samsung Nature 2025 range, NVIDIA H100 datasheets, Intel/AMD datasheets")
 	citation.TextStyle = fyne.TextStyle{Italic: true}
 	citation.Alignment = fyne.TextAlignCenter
+	citation.Wrapping = fyne.TextWrapWord
+	citation.Truncation = fyne.TextTruncateEllipsis
 
 	// === ASSEMBLE ===
 	e.container = container.NewVBox(
 		heroSection,
 		comparisonSection,
 		container.NewCenter(e.statStrip),
-		container.NewCenter(powerBreakdown),
-		container.NewCenter(citation),
+		powerBreakdown,
+		citation,
 	)
 
 	// Initialize cache values to force first update
@@ -449,10 +453,10 @@ func (p *PhasedStrategyDiagram) CreateRenderer() fyne.WidgetRenderer {
 	)
 
 	// === CITATION ===
-	citation := canvas.NewText("Strategy based on WSTS/Gartner market analysis", heroMutedColor)
-	citation.TextSize = 14
+	citation := widget.NewLabel("Strategy based on WSTS/Gartner market analysis")
 	citation.TextStyle = fyne.TextStyle{Italic: true}
 	citation.Alignment = fyne.TextAlignCenter
+	citation.Truncation = fyne.TextTruncateEllipsis
 
 	// Assemble phases horizontally
 	phasesRow := container.NewHBox(

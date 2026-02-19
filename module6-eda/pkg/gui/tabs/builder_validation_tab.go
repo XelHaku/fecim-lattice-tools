@@ -1135,16 +1135,24 @@ Date: %s
 	capEntry.SetPlaceHolder("0.015")
 	leakageEntry.SetPlaceHolder("0.0003")
 
-	cellConfigGrid := container.NewGridWithColumns(8,
+	// Cell config in two rows of 4 columns to fit within 1024px minimum width
+	cellConfigRow1 := container.NewGridWithColumns(4,
 		widget.NewLabel("Name"), nameEntry,
 		widget.NewLabel("Width"), widthEntry,
+	)
+	cellConfigRow2 := container.NewGridWithColumns(4,
 		widget.NewLabel("Height"), heightEntry,
 		widget.NewLabel("Rise"), riseEntry,
+	)
+	cellConfigRow3 := container.NewGridWithColumns(4,
 		widget.NewLabel("Fall"), fallEntry,
 		widget.NewLabel("Capacitance"), capEntry,
-		widget.NewLabel("Leakage"), leakageEntry,
-		cellAreaLabel,
 	)
+	cellConfigRow4 := container.NewGridWithColumns(4,
+		widget.NewLabel("Leakage"), leakageEntry,
+		cellAreaLabel, widget.NewLabel(""),
+	)
+	cellConfigGrid := container.NewVBox(cellConfigRow1, cellConfigRow2, cellConfigRow3, cellConfigRow4)
 
 	cellPanel := container.NewVBox(
 		cellConfigGrid,
@@ -1159,20 +1167,22 @@ Date: %s
 		widget.NewLabel("Arch:"), archToggle,
 	)
 
-	// Horizontal stats - use HBox with separators for proper spacing
-	statsRow := container.NewHBox(
+	// Horizontal stats in two rows to fit within 1024px minimum width
+	statsRow1 := container.NewHBox(
 		totalLabel,
-		widget.NewLabel(" | "),
+		widget.NewLabel("|"),
 		areaLabel,
-		widget.NewLabel(" | "),
+		widget.NewLabel("|"),
 		wlLengthLabel,
-		widget.NewLabel(" | "),
+	)
+	statsRow2 := container.NewHBox(
 		blLengthLabel,
-		widget.NewLabel(" | "),
+		widget.NewLabel("|"),
 		utilizationLabel,
-		widget.NewLabel(" | "),
+		widget.NewLabel("|"),
 		densityLabel,
 	)
+	statsRow := container.NewVBox(statsRow1, statsRow2)
 
 	arrayPanel := container.NewVBox(
 		arrayConfigRow,
@@ -1306,10 +1316,17 @@ Date: %s
 	)
 
 	// Top section: config + actions (compact)
+	actionsStatusRow := container.NewHBox(
+		actionButtons,
+		widget.NewSeparator(),
+		statusBar,
+		layout.NewSpacer(),
+		exportConfidence,
+	)
 	topSection := container.NewVBox(
 		configAccordion,
 		widget.NewSeparator(),
-		container.NewHBox(actionButtons, widget.NewSeparator(), statusBar, widget.NewSeparator(), exportConfidence),
+		actionsStatusRow,
 	)
 
 	// Use VSplit for resizable preview/validation areas

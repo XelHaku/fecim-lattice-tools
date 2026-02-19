@@ -298,6 +298,7 @@ func (app *DualModeApp) Stop() {
 func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
 	// Status label must be created first (used by callbacks in controls zone)
 	app.statusLabel = widget.NewLabel("Ready. Draw a digit or click 'Random' to load a test sample from the MNIST dataset.")
+	app.statusLabel.Truncation = fyne.TextTruncateEllipsis
 
 	// Header
 	header := app.createHeader()
@@ -368,8 +369,9 @@ func (app *DualModeApp) createMainLayout() fyne.CanvasObject {
 func (app *DualModeApp) createHeader() fyne.CanvasObject {
 	// Header with peer-reviewed accuracy context (87% claim removed)
 	// C09: Distinguish verified literature results from simulated demo results
-	title := widget.NewLabel("FeCIM MNIST Demo | Literature: 96.6% FeFET, 98.24% FTJ (non-FeCIM) | Demo: modeled")
+	title := widget.NewLabel("FeCIM MNIST Demo | Lit: 96.6% FeFET, 98.24% FTJ (non-FeCIM) | Demo: modeled")
 	title.TextStyle = fyne.TextStyle{Bold: true}
+	title.Truncation = fyne.TextTruncateEllipsis
 
 	// Quick Demo button - prominent call to action
 	quickDemoBtn := widget.NewButton("Quick Demo", func() {
@@ -394,7 +396,8 @@ func (app *DualModeApp) createHeader() fyne.CanvasObject {
 		infoBtn,
 	)
 
-	return container.NewHBox(title, layout.NewSpacer(), buttonRow)
+	// Use Border layout so title takes remaining space (truncates) and buttons stay fixed
+	return container.NewBorder(nil, nil, nil, buttonRow, title)
 }
 
 // createDrawingZone creates the drawing canvas zone (Zone 1).

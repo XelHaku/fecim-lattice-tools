@@ -10,7 +10,6 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/shared/logging"
@@ -106,7 +105,7 @@ func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 	topicSelector.Select(0)
 
 	// Layout with sidebar - increased width and better spacing
-	sidebarTitle := widget.NewLabelWithStyle("📚 Topics", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	sidebarTitle := widget.NewLabelWithStyle("Topics", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	sidebarSpacer := widget.NewLabel("") // Add spacing after title
 	sidebarSpacer.Resize(fyne.NewSize(1, 8))
 
@@ -122,11 +121,14 @@ func MakeLearnTab(state interface{}, w fyne.Window) fyne.CanvasObject {
 
 	// Header
 	title := widget.NewLabelWithStyle("FeCIM Array Builder - Learning Center", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	title.Truncation = fyne.TextTruncateEllipsis
 	aboutScienceBtn := sharedwidgets.CreateAboutScienceButton(w)
 	aboutScienceBtn.Importance = widget.LowImportance
+	subTitle := widget.NewLabel("Understanding OpenLane and where our tool fits in")
+	subTitle.Wrapping = fyne.TextWrapWord
 	header := container.NewVBox(
-		container.NewHBox(layout.NewSpacer(), title, layout.NewSpacer(), aboutScienceBtn),
-		widget.NewLabel("Understanding OpenLane and where our tool fits in"),
+		container.NewBorder(nil, nil, nil, aboutScienceBtn, title),
+		subTitle,
 		widget.NewSeparator(),
 	)
 

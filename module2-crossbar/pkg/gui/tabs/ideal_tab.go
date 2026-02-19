@@ -102,7 +102,7 @@ Output = G × V
 This is the theoretical best case.`
 
 	t.statsLabel.SetText(statsText)
-	t.statsLabel.Wrapping = fyne.TextWrapOff
+	t.statsLabel.Wrapping = fyne.TextWrapWord
 	t.statsLabel.TextStyle = fyne.TextStyle{Monospace: true}
 
 	// Wrap stats in scroll to prevent layout resize

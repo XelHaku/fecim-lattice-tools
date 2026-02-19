@@ -109,7 +109,7 @@ func (ca *CircuitsApp) createReferenceSpecsSection() fyne.CanvasObject {
 		container.NewVBox(widget.NewSeparator(), buttonBox),
 		nil,
 		nil,
-		container.NewVScroll(mainContent),
+		container.NewVScroll(container.NewHScroll(mainContent)),
 	)
 }
 

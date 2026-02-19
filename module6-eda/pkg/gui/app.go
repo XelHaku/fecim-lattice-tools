@@ -88,6 +88,7 @@ func CreateMainWindow(app fyne.App) fyne.Window {
 	// Header with inline view selector
 	banner := widget.NewLabel("Educational outputs for OpenLane/SKY130 (simulation-only; not tapeout-ready)")
 	banner.Alignment = fyne.TextAlignCenter
+	banner.Truncation = fyne.TextTruncateEllipsis
 
 	headerRow := container.NewHBox(
 		widget.NewLabel("View:"),

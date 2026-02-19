@@ -75,7 +75,7 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 
 	// Material name — prominent, updated on material change
 	a.materialNameLabel = widget.NewLabelWithStyle(a.material.Name, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	a.materialNameLabel.Wrapping = fyne.TextWrapWord
+	a.materialNameLabel.Truncation = fyne.TextTruncateEllipsis
 
 	// Confidence badge in a swappable container (replaced on material change)
 	confidence := sharedwidgets.Estimated
@@ -85,8 +85,9 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 	a.materialBadgeBox = container.NewHBox(sharedwidgets.NewConfidenceBadge(confidence))
 
 	// Pr / Ec summary — updated on material change
-	a.materialPropsLabel = widget.NewLabel(fmt.Sprintf("Pr %.1f µC/cm²   Ec %.2f MV/cm",
+	a.materialPropsLabel = widget.NewLabel(fmt.Sprintf("Pr %.1f  Ec %.2f MV/cm",
 		a.material.Pr*100, a.material.Ec/1e8))
+	a.materialPropsLabel.Truncation = fyne.TextTruncateEllipsis
 
 	// ── METRICS section ──────────────────────────────────────────────────────
 
@@ -97,9 +98,13 @@ func (a *App) createInfoPanel() fyne.CanvasObject {
 		sqVal = a.material.Pr / a.material.Ps
 	}
 	a.effEcLabel = widget.NewLabel(fmt.Sprintf("Ec(T): %.2f±%.2f MV/cm", ecVal, ecVal*0.15))
+	a.effEcLabel.Truncation = fyne.TextTruncateEllipsis
 	a.effPrLabel = widget.NewLabel(fmt.Sprintf("Pr(T): %.1f±%.1f µC/cm²", prVal, prVal*0.20))
-	a.squarenessLabel = widget.NewLabel(fmt.Sprintf("Squareness: %.2f", sqVal))
-	a.switchedLabel = widget.NewLabel("Switched: 0%")
+	a.effPrLabel.Truncation = fyne.TextTruncateEllipsis
+	a.squarenessLabel = widget.NewLabel(fmt.Sprintf("Sq: %.2f", sqVal))
+	a.squarenessLabel.Truncation = fyne.TextTruncateEllipsis
+	a.switchedLabel = widget.NewLabel("Sw: 0%")
+	a.switchedLabel.Truncation = fyne.TextTruncateEllipsis
 
 	metricsGrid := container.NewGridWithColumns(2,
 		a.effEcLabel,

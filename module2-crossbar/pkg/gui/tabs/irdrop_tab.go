@@ -204,7 +204,7 @@ impact compared to DRAM/SRAM.`,
 		severity)
 
 	t.statsLabel.SetText(statsText)
-	t.statsLabel.Wrapping = fyne.TextWrapOff
+	t.statsLabel.Wrapping = fyne.TextWrapWord
 	t.statsLabel.TextStyle = fyne.TextStyle{Monospace: true}
 }
 

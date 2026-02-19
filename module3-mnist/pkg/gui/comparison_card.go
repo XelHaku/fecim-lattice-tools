@@ -53,6 +53,7 @@ func NewComparisonCard() *ComparisonCard {
 	cc := &ComparisonCard{}
 	cc.titleLabel = widget.NewLabelWithStyle("FP vs CIM Comparison", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	cc.statusLabel = widget.NewLabel("Draw a digit to compare predictions")
+	cc.statusLabel.Truncation = fyne.TextTruncateEllipsis
 	cc.ExtendBaseWidget(cc)
 	return cc
 }
@@ -92,7 +93,7 @@ func (cc *ComparisonCard) Clear() {
 
 // MinSize returns the minimum size for the widget.
 func (cc *ComparisonCard) MinSize() fyne.Size {
-	return fyne.NewSize(550, 480) // Redesigned with hero layout
+	return fyne.NewSize(380, 380) // Raster scales; keep min small for narrow windows
 }
 
 // CreateRenderer implements fyne.Widget.
@@ -770,7 +771,7 @@ func (dpc *DualProbabilityChart) Clear() {
 
 // MinSize returns the minimum size.
 func (dpc *DualProbabilityChart) MinSize() fyne.Size {
-	return fyne.NewSize(400, 150)
+	return fyne.NewSize(280, 120)
 }
 
 // CreateRenderer implements fyne.Widget.

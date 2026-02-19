@@ -64,41 +64,44 @@ func NewControlPanel() *ControlPanel {
 	}
 
 	// Array size slider (8 to 128)
-	cp.arraySizeLabel = widget.NewLabel("Array Size: 64x64")
+	cp.arraySizeLabel = widget.NewLabel("64×64")
+	cp.arraySizeLabel.Truncation = fyne.TextTruncateEllipsis
 	cp.ArraySizeSlider = widget.NewSlider(8, 128)
 	cp.ArraySizeSlider.Step = 8
 	cp.ArraySizeSlider.Value = 64
 	cp.ArraySizeSlider.OnChanged = func(v float64) {
 		log.SliderChange("ArraySize", v)
 		size := int(v)
-		cp.arraySizeLabel.SetText(fmt.Sprintf("Array Size: %dx%d", size, size))
+		cp.arraySizeLabel.SetText(fmt.Sprintf("%d×%d", size, size))
 		if cp.OnArraySizeChanged != nil {
 			cp.OnArraySizeChanged(size)
 		}
 	}
 
 	// Noise level slider (0 to 50%)
-	cp.noiseLabel = widget.NewLabel("Noise: 2.0%")
+	cp.noiseLabel = widget.NewLabel("2.0%")
+	cp.noiseLabel.Truncation = fyne.TextTruncateEllipsis
 	cp.NoiseSlider = widget.NewSlider(0, 50)
 	cp.NoiseSlider.Step = 0.5
 	cp.NoiseSlider.Value = 2
 	cp.NoiseSlider.OnChanged = func(v float64) {
 		log.SliderChange("Noise", v)
-		cp.noiseLabel.SetText(fmt.Sprintf("Noise: %.1f%%", v))
+		cp.noiseLabel.SetText(fmt.Sprintf("%.1f%%", v))
 		if cp.OnNoiseChanged != nil {
 			cp.OnNoiseChanged(v / 100.0)
 		}
 	}
 
 	// ADC bits slider (4 to 10)
-	cp.adcBitsLabel = widget.NewLabel("ADC Bits: 6")
+	cp.adcBitsLabel = widget.NewLabel("6b")
+	cp.adcBitsLabel.Truncation = fyne.TextTruncateEllipsis
 	cp.ADCBitsSlider = widget.NewSlider(4, 10)
 	cp.ADCBitsSlider.Step = 1
 	cp.ADCBitsSlider.Value = 6
 	cp.ADCBitsSlider.OnChanged = func(v float64) {
 		log.SliderChange("ADCBits", v)
 		bits := int(v)
-		cp.adcBitsLabel.SetText(fmt.Sprintf("ADC Bits: %d", bits))
+		cp.adcBitsLabel.SetText(fmt.Sprintf("%db", bits))
 		if cp.OnADCBitsChanged != nil {
 			cp.OnADCBitsChanged(bits)
 		}
@@ -222,7 +225,7 @@ func NewStatsPanel(title string) *StatsPanel {
 	sp.titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 
 	sp.statsText = widget.NewLabel("No data")
-	sp.statsText.Wrapping = fyne.TextWrapOff // Prevent resize on content change
+	sp.statsText.Wrapping = fyne.TextWrapWord // Allow wrapping at narrow widths
 	sp.progressBar = widget.NewProgressBar()
 	sp.progressBar.Hide()
 

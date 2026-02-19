@@ -75,6 +75,7 @@ func NewEnergyWidget(inputSize, hiddenSize, outputSize int) *EnergyWidget {
 	}
 	ew.titleLabel = widget.NewLabelWithStyle("Energy Efficiency", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	ew.statsLabel = widget.NewLabel("Ready - Draw a digit to begin")
+	ew.statsLabel.Wrapping = fyne.TextWrapWord
 	ew.ExtendBaseWidget(ew)
 	return ew
 }
@@ -158,7 +159,7 @@ func (ew *EnergyWidget) GetEfficiencyRatio() float64 {
 
 // MinSize returns the minimum size for the widget.
 func (ew *EnergyWidget) MinSize() fyne.Size {
-	return fyne.NewSize(400, 200)
+	return fyne.NewSize(280, 160)
 }
 
 // CreateRenderer implements fyne.Widget.

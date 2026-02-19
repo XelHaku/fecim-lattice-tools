@@ -270,22 +270,18 @@ func (lm *LayoutManager) buildMobileLayout() *fyne.Container {
 }
 
 // buildTabletLayout creates the tablet layout (600-900px)
-// Fixed sidebar (30%) + content (70%)
+// Fixed sidebar (28%) + content (72%), no ToC to avoid overflow
 func (lm *LayoutManager) buildTabletLayout() *fyne.Container {
 	var mainContent fyne.CanvasObject = lm.content
 
 	if lm.sidebar != nil && lm.sidebarVisible {
 		split := container.NewHSplit(lm.sidebar, lm.content)
-		split.SetOffset(0.30) // 30% sidebar, 70% content
+		split.SetOffset(0.28) // 28% sidebar, 72% content
 		mainContent = split
 	}
 
-	// Add ToC if visible and available (minimal width on tablet)
-	if lm.toc != nil && lm.tocVisible {
-		finalSplit := container.NewHSplit(mainContent, lm.toc)
-		finalSplit.SetOffset(0.85) // 85% main, 15% ToC
-		mainContent = finalSplit
-	}
+	// Skip ToC at tablet width to avoid cramped layout (< 900px)
+	// ToC is only shown in desktop (>= 900px) and wide (> 1200px) modes
 
 	return container.NewBorder(lm.topBar, nil, nil, nil, mainContent)
 }

@@ -188,6 +188,7 @@ func (w *VariationModelGUI) CreateRenderer() fyne.WidgetRenderer {
 			"RRAM typical: σ_prog=10-20%, σ_read=2-5%",
 	)
 	techCompareLabel.TextStyle = fyne.TextStyle{Italic: true}
+	techCompareLabel.Wrapping = fyne.TextWrapWord
 
 	// Initial calculation
 	w.recalculate()

@@ -101,7 +101,14 @@ func (b *BreadcrumbWidget) refresh() {
 	for i, segment := range b.segments {
 		// Create clickable label for segment
 		segmentPath := segment.Path // Capture for closure
-		label := widget.NewButton(segment.Label, func() {
+
+		// Truncate long segment labels to prevent overflow
+		displayLabel := segment.Label
+		if len(displayLabel) > 20 {
+			displayLabel = displayLabel[:17] + "..."
+		}
+
+		label := widget.NewButton(displayLabel, func() {
 			if b.onNavigate != nil {
 				b.onNavigate(segmentPath)
 			}
@@ -112,15 +119,35 @@ func (b *BreadcrumbWidget) refresh() {
 
 		// Add separator (except after last segment)
 		if i < len(b.segments)-1 {
-			separator := canvas.NewText(" > ", fecimTheme.ColorTextDim)
+			separator := canvas.NewText(">", fecimTheme.ColorTextDim)
 			separator.TextSize = 14
 			items = append(items, separator)
 		}
 	}
 
-	b.container = container.NewHBox(items...)
+	// Wrap in HScroll so breadcrumbs never overflow the panel
+	inner := container.NewHBox(items...)
+	b.container = container.New(&breadcrumbLayout{}, inner)
 	// Note: Don't call b.Refresh() here - it causes infinite recursion
 	// CreateRenderer -> refresh -> Refresh -> CreateRenderer -> ...
+}
+
+// breadcrumbLayout is a layout that clips the breadcrumb HBox to available width.
+type breadcrumbLayout struct{}
+
+func (bl *breadcrumbLayout) Layout(objs []fyne.CanvasObject, size fyne.Size) {
+	for _, o := range objs {
+		o.Move(fyne.NewPos(0, 0))
+		o.Resize(fyne.NewSize(size.Width, size.Height))
+	}
+}
+
+func (bl *breadcrumbLayout) MinSize(objs []fyne.CanvasObject) fyne.Size {
+	if len(objs) == 0 {
+		return fyne.NewSize(0, 0)
+	}
+	// Return height from inner container but allow width to shrink to 0
+	return fyne.NewSize(0, objs[0].MinSize().Height)
 }
 
 // TOCHeading represents a heading in the table of contents
@@ -213,7 +240,7 @@ func (toc *TableOfContentsWidget) refresh() {
 	for _, heading := range toc.headings {
 		anchor := heading.Anchor // Capture for closure
 
-		// Create button for heading
+		// Create button for heading with truncation for long titles
 		btn := widget.NewButton(heading.Text, func() {
 			if toc.onSelect != nil {
 				toc.onSelect(anchor)

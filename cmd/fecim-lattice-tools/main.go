@@ -520,8 +520,11 @@ func main() {
 	})
 
 	// Create current module label (left-justified in toolbar)
+	// Truncation prevents it from pushing into the right-side buttons at narrow widths.
 	currentModuleLabel := widget.NewLabel("Home")
 	currentModuleLabel.TextStyle = fyne.TextStyle{Bold: true}
+	currentModuleLabel.Truncation = fyne.TextTruncateEllipsis
+	currentModuleLabel.Wrapping = fyne.TextWrapOff
 
 	// Track current demo for start/stop
 	currentDemo := 0
@@ -645,12 +648,15 @@ func main() {
 		}
 	})
 
-	// Create toolbar with module label left, buttons aligned right
+	// Create toolbar with module label left, buttons aligned right.
+	// Border layout gives the right-side HBox its natural size first; the label
+	// fills remaining space and truncates if the window is narrow.
 	fmt.Println("[STARTUP] Creating toolbar...")
+	rightButtons := container.NewHBox(homeBtn, docsBtn, learnMoreBtn, undoToolbar, themeToggleBtn, micLevelWidget, screenshotBtn, recordBtn, recordTimeLabel, closeBtn)
 	toolbar := container.NewBorder(
 		nil, nil,
-		currentModuleLabel, // Left side: current module name
-		container.NewHBox(homeBtn, docsBtn, learnMoreBtn, undoToolbar, themeToggleBtn, micLevelWidget, screenshotBtn, recordBtn, recordTimeLabel, closeBtn), // Right side: buttons
+		currentModuleLabel, // Left side: truncates when narrow
+		rightButtons,       // Right side: buttons keep natural width
 	)
 
 	// Stack content with toolbar on top

@@ -807,16 +807,24 @@ func (r *responsiveHeaderRenderer) layoutWithSize(size fyne.Size) {
 	var titleSize, subtitleSize, taglineSize float32
 	showTagline := true
 
+	// Full tagline (shown at XL only), shortened variants at smaller sizes
+	const taglineFull = "\"Compute in memory where the same device does the memory and the computation.\" — Dr. external research group"
+	const taglineMD = "\"The same device does the memory and the computation.\" — Dr. external research group"
+	const taglineLG = "\"Same device: memory and computation.\" — Dr. external research group"
+
 	switch bp {
 	case sharedwidgets.BreakpointSM:
 		titleSize, subtitleSize, taglineSize = 28, 16, 12
 		showTagline = false // Hide tagline on mobile
 	case sharedwidgets.BreakpointMD:
 		titleSize, subtitleSize, taglineSize = 30, 17, 13
+		h.taglineText.Text = taglineMD
 	case sharedwidgets.BreakpointLG:
 		titleSize, subtitleSize, taglineSize = 32, 17, 13
+		h.taglineText.Text = taglineLG
 	default: // XL
 		titleSize, subtitleSize, taglineSize = 32, 18, 14
+		h.taglineText.Text = taglineFull
 	}
 
 	h.titleText.TextSize = titleSize
@@ -840,8 +848,15 @@ func (r *responsiveHeaderRenderer) layoutWithSize(size fyne.Size) {
 	// Tagline (conditional)
 	if showTagline {
 		taglineWidth := h.taglineText.MinSize().Width
-		// Truncate if too wide
-		if taglineWidth > size.Width-20 {
+		availWidth := size.Width - 20
+		// Resize the canvas.Text so it is clipped to the available width,
+		// then center it when it fits or left-align when it overflows.
+		renderWidth := taglineWidth
+		if renderWidth > availWidth {
+			renderWidth = availWidth
+		}
+		h.taglineText.Resize(fyne.NewSize(renderWidth, taglineSize+4))
+		if taglineWidth > availWidth {
 			h.taglineText.Move(fyne.NewPos(10, y))
 		} else {
 			h.taglineText.Move(fyne.NewPos((size.Width-taglineWidth)/2, y))

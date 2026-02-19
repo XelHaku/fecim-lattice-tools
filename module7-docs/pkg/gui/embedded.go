@@ -349,6 +349,7 @@ func (app *EmbeddedDocsApp) createDocTree() *widget.Tree {
 			badge := NewCategoryBadge("")
 			badge.Hide()
 			label := widget.NewLabel("Document")
+			label.Truncation = fyne.TextTruncateEllipsis
 			starBtn := widget.NewButtonWithIcon("", theme.ContentAddIcon(), nil)
 			starBtn.Importance = widget.LowImportance
 			starBtn.Hidden = true

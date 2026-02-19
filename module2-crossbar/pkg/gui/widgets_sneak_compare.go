@@ -219,18 +219,21 @@ func (w *SneakCompareWidget) updateStats() {
 func (w *SneakCompareWidget) CreateRenderer() fyne.WidgetRenderer {
 	// Create labels
 	w.passiveLabel = widget.NewLabelWithStyle(
-		"PASSIVE (0T1R) - High Sneak",
+		"PASSIVE (0T1R)",
 		fyne.TextAlignCenter,
 		fyne.TextStyle{Bold: true},
 	)
+	w.passiveLabel.Truncation = fyne.TextTruncateEllipsis
 	w.activeLabel = widget.NewLabelWithStyle(
-		"1T1R (Active) - Low Sneak",
+		"1T1R (Active)",
 		fyne.TextAlignCenter,
 		fyne.TextStyle{Bold: true},
 	)
+	w.activeLabel.Truncation = fyne.TextTruncateEllipsis
 
 	w.statsLabel = widget.NewLabel("Run MVM to compare architectures")
 	w.statsLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	w.statsLabel.Wrapping = fyne.TextWrapWord
 
 	w.comparisonLabel = widget.NewLabel("Select cells to compare sneak paths")
 	w.comparisonLabel.Alignment = fyne.TextAlignCenter

@@ -51,7 +51,10 @@ func (g *GlossaryPillsWidget) DetectTerms(markdownContent string) []string {
 
 // CreateRenderer implements fyne.Widget
 func (g *GlossaryPillsWidget) CreateRenderer() fyne.WidgetRenderer {
-	return widget.NewSimpleRenderer(g.container)
+	// Wrap in a horizontal scroll so pills never overflow the available width
+	scroll := container.NewHScroll(g.container)
+	scroll.SetMinSize(fyne.NewSize(0, 36))
+	return widget.NewSimpleRenderer(scroll)
 }
 
 func (g *GlossaryPillsWidget) rebuild() {

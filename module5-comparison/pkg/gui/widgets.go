@@ -423,10 +423,12 @@ func (d *DataCenterCalculator) CreateRenderer() fyne.WidgetRenderer {
 	)
 
 	// === CITATION ===
-	citation := canvas.NewText("Model input references (not validated): NVIDIA H100 datasheets, Intel/AMD datasheets | Cost: $0.10/kWh", color.RGBA{160, 180, 200, 255})
-	citation.TextSize = 14
+	// Use widget.Label (not canvas.Text) so text wraps at narrow widths.
+	citation := widget.NewLabel("Model input references (not validated): NVIDIA H100 datasheets, Intel/AMD datasheets | Cost: $0.10/kWh")
 	citation.TextStyle = fyne.TextStyle{Italic: true}
 	citation.Alignment = fyne.TextAlignCenter
+	citation.Wrapping = fyne.TextWrapWord
+	citation.Truncation = fyne.TextTruncateEllipsis
 
 	content := container.NewVBox(
 		container.NewHBox(
@@ -439,7 +441,7 @@ func (d *DataCenterCalculator) CreateRenderer() fyne.WidgetRenderer {
 		),
 		container.NewCenter(configRow),
 		comparisonSection,
-		container.NewCenter(citation),
+		citation,
 	)
 
 	return widget.NewSimpleRenderer(content)

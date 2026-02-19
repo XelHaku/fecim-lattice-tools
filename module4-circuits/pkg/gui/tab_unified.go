@@ -123,6 +123,7 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 	// Initialize device state
 	ca.deviceState = NewDeviceState(ca.arrayRows, ca.arrayCols, ca.tia, ca.adc)
 	ca.operationsStatusLabel = widget.NewLabel("Ready")
+	ca.operationsStatusLabel.Truncation = fyne.TextTruncateEllipsis
 
 	// In passive (0T1R) mode, all WLs are always active - no transistor gating
 	if ca.architecture == sharedwidgets.Architecture0T1R {
@@ -199,6 +200,10 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 	ca.sharedArrayInfoLabel = widget.NewLabel(fmt.Sprintf("%dx%d array | %d levels | ~%.0f bits",
 		ca.arrayRows, ca.arrayCols, ca.quantLevels, bitCapacity))
 
+	// Truncate labels that may carry long dynamic text at narrow widths
+	ca.sharedCellInfoLabel.Truncation = fyne.TextTruncateEllipsis
+	ca.sharedArrayInfoLabel.Truncation = fyne.TextTruncateEllipsis
+
 	// Compact info row below canvas
 	infoRow := container.NewHBox(
 		ca.sharedCellDisplayToggle,
@@ -217,17 +222,16 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 	// Status/info label
 	ca.operationsModeHelp = widget.NewLabel("Click cells to select")
 	ca.operationsModeHelp.TextStyle = fyne.TextStyle{Italic: true}
+	ca.operationsModeHelp.Truncation = fyne.TextTruncateEllipsis
 
 	// Initialize architecture info (compact single-line)
 	ca.passiveVoltagePanel = ca.createCompactPassivePanel()
 	ca.activeVoltagePanel = ca.createCompactActivePanel()
 	ca.passiveVoltagePanel.Hide() // Hidden initially (1T1R default)
 
-	statusBar := container.NewHBox(
-		ca.operationsModeHelp,
-		layout.NewSpacer(),
-		widget.NewLabel("DAC -> Array -> TIA -> ADC"),
-	)
+	pipelineLabel := widget.NewLabel("DAC -> Array -> TIA -> ADC")
+	pipelineLabel.Truncation = fyne.TextTruncateEllipsis
+	statusBar := container.NewBorder(nil, nil, nil, pipelineLabel, ca.operationsModeHelp)
 
 	// Initialize button states for default READ mode
 	ca.updateActionButtons()

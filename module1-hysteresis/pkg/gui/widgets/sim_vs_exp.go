@@ -130,19 +130,20 @@ func (s *SimVsExpComparison) createContent() fyne.CanvasObject {
 
 	// Context banner
 	disclaimerBg := canvas.NewRectangle(color.RGBA{35, 55, 40, 255})
-	disclaimerText := canvas.NewText("Model output compared against literature ranges (not device-specific lab data)", color.RGBA{170, 235, 180, 255})
-	disclaimerText.TextSize = 13
+	disclaimerText := widget.NewLabel("Model vs literature ranges")
+	disclaimerText.TextStyle = fyne.TextStyle{Italic: true}
 	disclaimerText.Alignment = fyne.TextAlignCenter
+	disclaimerText.Truncation = fyne.TextTruncateEllipsis
 	disclaimer := container.NewStack(
 		disclaimerBg,
 		container.NewCenter(disclaimerText),
 	)
 
-	// Column headers
-	colParam := widget.NewLabelWithStyle("Parameter", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	colSim := widget.NewLabelWithStyle("Simulation", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	colExp := widget.NewLabelWithStyle("Literature range", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-	colStatus := widget.NewLabelWithStyle("Status", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	// Column headers — kept short to avoid overflow in narrow left panel
+	colParam := widget.NewLabelWithStyle("Param", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	colSim := widget.NewLabelWithStyle("Sim", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	colExp := widget.NewLabelWithStyle("Lit. range", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	colStatus := widget.NewLabelWithStyle("OK?", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 
 	headerRow := container.NewGridWithColumns(4, colParam, colSim, colExp, colStatus)
 
@@ -156,10 +157,14 @@ func (s *SimVsExpComparison) createContent() fyne.CanvasObject {
 	s.prStatusText.Alignment = fyne.TextAlignCenter
 
 	s.prSimLabel = widget.NewLabel(fmt.Sprintf("%.1f", s.simPr*100))
-	s.prRangeLabel = widget.NewLabel(fmt.Sprintf("%.1f - %.1f", s.expPrMin*100, s.expPrMax*100))
+	s.prSimLabel.Truncation = fyne.TextTruncateEllipsis
+	s.prRangeLabel = widget.NewLabel(fmt.Sprintf("%.0f-%.0f", s.expPrMin*100, s.expPrMax*100))
+	s.prRangeLabel.Truncation = fyne.TextTruncateEllipsis
 
+	prParamLabel := widget.NewLabel("Pr")
+	prParamLabel.Truncation = fyne.TextTruncateEllipsis
 	prRow := container.NewGridWithColumns(4,
-		widget.NewLabel("Pr (µC/cm²)"),
+		prParamLabel,
 		s.prSimLabel,
 		s.prRangeLabel,
 		container.NewCenter(s.prStatusText),
@@ -173,10 +178,14 @@ func (s *SimVsExpComparison) createContent() fyne.CanvasObject {
 	s.ecStatusText.Alignment = fyne.TextAlignCenter
 
 	s.ecSimLabel = widget.NewLabel(fmt.Sprintf("%.2f", s.simEc/1e8))
-	s.ecRangeLabel = widget.NewLabel(fmt.Sprintf("%.1f - %.1f", s.expEcMin/1e8, s.expEcMax/1e8))
+	s.ecSimLabel.Truncation = fyne.TextTruncateEllipsis
+	s.ecRangeLabel = widget.NewLabel(fmt.Sprintf("%.1f-%.1f", s.expEcMin/1e8, s.expEcMax/1e8))
+	s.ecRangeLabel.Truncation = fyne.TextTruncateEllipsis
 
+	ecParamLabel := widget.NewLabel("Ec")
+	ecParamLabel.Truncation = fyne.TextTruncateEllipsis
 	ecRow := container.NewGridWithColumns(4,
-		widget.NewLabel("Ec (MV/cm)"),
+		ecParamLabel,
 		s.ecSimLabel,
 		s.ecRangeLabel,
 		container.NewCenter(s.ecStatusText),
@@ -190,10 +199,14 @@ func (s *SimVsExpComparison) createContent() fyne.CanvasObject {
 	s.sqStatusText.Alignment = fyne.TextAlignCenter
 
 	s.sqSimLabel = widget.NewLabel(fmt.Sprintf("%.2f", s.simSquareness))
-	s.sqRangeLabel = widget.NewLabel(fmt.Sprintf("%.2f - %.2f", s.expSquareMin, s.expSquareMax))
+	s.sqSimLabel.Truncation = fyne.TextTruncateEllipsis
+	s.sqRangeLabel = widget.NewLabel(fmt.Sprintf("%.2f-%.2f", s.expSquareMin, s.expSquareMax))
+	s.sqRangeLabel.Truncation = fyne.TextTruncateEllipsis
 
+	sqParamLabel := widget.NewLabel("Sq")
+	sqParamLabel.Truncation = fyne.TextTruncateEllipsis
 	sqRow := container.NewGridWithColumns(4,
-		widget.NewLabel("Squareness"),
+		sqParamLabel,
 		s.sqSimLabel,
 		s.sqRangeLabel,
 		container.NewCenter(s.sqStatusText),
@@ -205,20 +218,21 @@ func (s *SimVsExpComparison) createContent() fyne.CanvasObject {
 	s.sourceLabel.TextStyle = fyne.TextStyle{Italic: true}
 	s.sourceLabel.Wrapping = fyne.TextWrapWord
 
-	// Legend
-	legendGreen := canvas.NewText("✓ Within range", color.RGBA{0, 200, 0, 255})
-	legendGreen.TextSize = 14
-	legendYellow := canvas.NewText("~ Close (<20% off)", color.RGBA{255, 200, 0, 255})
-	legendYellow.TextSize = 14
+	// Legend — vertical stacking prevents overflow in narrow left panel
+	legendGreen := canvas.NewText("✓ In range", color.RGBA{0, 200, 0, 255})
+	legendGreen.TextSize = 13
+	legendYellow := canvas.NewText("~ Close (<20%)", color.RGBA{255, 200, 0, 255})
+	legendYellow.TextSize = 13
 	legendRed := canvas.NewText("✗ Out of range", color.RGBA{255, 80, 80, 255})
-	legendRed.TextSize = 14
+	legendRed.TextSize = 13
 
-	legend := container.NewHBox(legendGreen, legendYellow, legendRed)
+	legend := container.NewVBox(legendGreen, legendYellow, legendRed)
 
 	// Placeholder for future experimental data upload
-	uploadPlaceholder := widget.NewLabel("[ Future: Upload your experimental P-E loop data for comparison ]")
+	uploadPlaceholder := widget.NewLabel("[ Future: upload P-E loop data ]")
 	uploadPlaceholder.TextStyle = fyne.TextStyle{Italic: true}
 	uploadPlaceholder.Alignment = fyne.TextAlignCenter
+	uploadPlaceholder.Truncation = fyne.TextTruncateEllipsis
 
 	return container.NewVBox(
 		header,
@@ -242,7 +256,7 @@ func (s *SimVsExpComparison) Refresh() {
 	if s.prSimLabel != nil {
 		// Pr row
 		s.prSimLabel.SetText(fmt.Sprintf("%.1f", s.simPr*100))
-		s.prRangeLabel.SetText(fmt.Sprintf("%.1f - %.1f", s.expPrMin*100, s.expPrMax*100))
+		s.prRangeLabel.SetText(fmt.Sprintf("%.0f-%.0f", s.expPrMin*100, s.expPrMax*100))
 		prStatus, prColor := checkInRange(s.simPr, s.expPrMin, s.expPrMax)
 		s.prStatusText.Text = prStatus
 		s.prStatusText.Color = prColor
@@ -250,7 +264,7 @@ func (s *SimVsExpComparison) Refresh() {
 
 		// Ec row
 		s.ecSimLabel.SetText(fmt.Sprintf("%.2f", s.simEc/1e8))
-		s.ecRangeLabel.SetText(fmt.Sprintf("%.1f - %.1f", s.expEcMin/1e8, s.expEcMax/1e8))
+		s.ecRangeLabel.SetText(fmt.Sprintf("%.1f-%.1f", s.expEcMin/1e8, s.expEcMax/1e8))
 		ecStatus, ecColor := checkInRange(s.simEc, s.expEcMin, s.expEcMax)
 		s.ecStatusText.Text = ecStatus
 		s.ecStatusText.Color = ecColor
@@ -258,7 +272,7 @@ func (s *SimVsExpComparison) Refresh() {
 
 		// Squareness row
 		s.sqSimLabel.SetText(fmt.Sprintf("%.2f", s.simSquareness))
-		s.sqRangeLabel.SetText(fmt.Sprintf("%.2f - %.2f", s.expSquareMin, s.expSquareMax))
+		s.sqRangeLabel.SetText(fmt.Sprintf("%.2f-%.2f", s.expSquareMin, s.expSquareMax))
 		sqStatus, sqColor := checkInRange(s.simSquareness, s.expSquareMin, s.expSquareMax)
 		s.sqStatusText.Text = sqStatus
 		s.sqStatusText.Color = sqColor

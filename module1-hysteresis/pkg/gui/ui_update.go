@@ -476,10 +476,10 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 		a.effPrLabel.SetText(fmt.Sprintf("Pr(T): %.1f±%.1f µC/cm²", prVal, prVal*0.20))
 	}
 	if a.squarenessLabel != nil {
-		a.squarenessLabel.SetText(fmt.Sprintf("Squareness: %.2f", squareness))
+		a.squarenessLabel.SetText(fmt.Sprintf("Sq: %.2f", squareness))
 	}
 	if a.switchedLabel != nil {
-		a.switchedLabel.SetText(fmt.Sprintf("Switched: %.0f%%", switchedFraction*100))
+		a.switchedLabel.SetText(fmt.Sprintf("Sw: %.0f%%", switchedFraction*100))
 	}
 
 	// Update phase/target widgets from a single UI snapshot struct (G11b).

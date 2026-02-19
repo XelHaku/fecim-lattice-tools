@@ -29,7 +29,7 @@ func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
 
 	// Create heatmap raster (quantized weights)
 	app.hoverableWeightHeatmap = NewHoverableHeatmap(app)
-	app.hoverableWeightHeatmap.SetMinSize(fyne.NewSize(600, 400))
+	app.hoverableWeightHeatmap.SetMinSize(fyne.NewSize(300, 200))
 	app.weightHeatmap = app.hoverableWeightHeatmap.raster // Keep reference for updateWeightHeatmap
 
 	// Create FP vs Quantized comparison widget
@@ -50,13 +50,13 @@ func (app *DualModeApp) createWeightZone() fyne.CanvasObject {
 
 	// Build expanded content (default state)
 	layerSelect := widget.NewRadioGroup(
-		[]string{"Layer1 (784x128)", "Layer2 (128x10)"},
+		[]string{"L1 (784x128)", "L2 (128x10)"},
 		nil,
 	)
 	layerSelect.Horizontal = true
-	layerSelect.SetSelected("Layer1 (784x128)")
+	layerSelect.SetSelected("L1 (784x128)")
 	layerSelect.OnChanged = func(s string) {
-		if s == "Layer1 (784x128)" {
+		if s == "L1 (784x128)" {
 			app.weightLayer = 0
 		} else {
 			app.weightLayer = 1
@@ -156,17 +156,17 @@ func (app *DualModeApp) toggleWeightsCollapsed() {
 
 			// Rebuild expanded content (to get fresh tabs)
 			layerSelect := widget.NewRadioGroup(
-				[]string{"Layer1 (784x128)", "Layer2 (128x10)"},
+				[]string{"L1 (784x128)", "L2 (128x10)"},
 				nil,
 			)
 			layerSelect.Horizontal = true
 			if app.weightLayer == 0 {
-				layerSelect.SetSelected("Layer1 (784x128)")
+				layerSelect.SetSelected("L1 (784x128)")
 			} else {
-				layerSelect.SetSelected("Layer2 (128x10)")
+				layerSelect.SetSelected("L2 (128x10)")
 			}
 			layerSelect.OnChanged = func(s string) {
-				if s == "Layer1 (784x128)" {
+				if s == "L1 (784x128)" {
 					app.weightLayer = 0
 				} else {
 					app.weightLayer = 1
