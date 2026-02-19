@@ -109,7 +109,7 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 		return 0, false, 0
 	}
 
-	targetP := ConductanceToPolarization(targetG, c.Material.Gmin, c.Material.Gmax, c.Material.Ps)
+	targetP := ConductanceToPolarizationModel(targetG, c.Material.Gmin, c.Material.Gmax, c.Material.Ps, ParseConductanceModel(c.Material.ConductanceModel))
 
 	c.VMin = 0.0
 	c.VMax = c.MaxVoltage

@@ -218,10 +218,13 @@ func TestDCC_SwitchesCorrectDirection(t *testing.T) {
 	}
 
 	// Write to -Pr region: final P should be negative.
+	// For the exponential conductance model (default), the midpoint is the geometric mean
+	// sqrt(Gmin*Gmax) = sqrt(1µS * 100µS) = 10 µS. Use 2% of linear range (≈2.98 µS)
+	// which sits well below the geometric mean in log space → clearly negative P.
 	solverNeg := NewLKSolver()
 	solverNeg.ConfigureFromMaterial(mat)
 	dcc.Solver = solverNeg
-	resNeg := dcc.ProgramDCC(mat.Gmin+0.2*(mat.Gmax-mat.Gmin), true)
+	resNeg := dcc.ProgramDCC(mat.Gmin+0.02*(mat.Gmax-mat.Gmin), true)
 	if resNeg.FinalP >= 0 {
 		t.Errorf("negative target: FinalP=%e should be < 0", resNeg.FinalP)
 	}

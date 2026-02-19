@@ -123,7 +123,7 @@ func (d *DCCController) ProgramDCC(targetG float64, reset bool) DCCResult {
 	}
 
 	// Map target conductance → target polarization.
-	targetP := ConductanceToPolarization(targetG, mat.Gmin, mat.Gmax, mat.Ps)
+	targetP := ConductanceToPolarizationModel(targetG, mat.Gmin, mat.Gmax, mat.Ps, ParseConductanceModel(mat.ConductanceModel))
 
 	// Determine write direction.
 	direction := 1.0

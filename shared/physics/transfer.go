@@ -102,3 +102,56 @@ func ConductanceToPolarization(G, Gmin, Gmax, Ps float64) float64 {
 
 	return normalizedP * Ps
 }
+
+// ConductanceToPolarizationModel maps conductance to polarization using the
+// specified conductance model as the inverse function.
+//
+// For the exponential model (ConductanceExponential/ConductanceSubthreshold),
+// uses the physically correct log-space inverse:
+//
+//	gNorm = ln(G/Gmin) / ln(Gmax/Gmin)
+//	P/Ps  = 2*gNorm - 1
+//
+// This is the exact inverse of PolarizationToConductanceWithParams for the
+// exponential case. Using the linear inverse for an exponential-mapped G
+// introduces level errors of 5–10 discrete steps at moderate conductances.
+//
+// For linear and other models, falls back to the linear inverse (same as
+// the original ConductanceToPolarization).
+func ConductanceToPolarizationModel(G, Gmin, Gmax, Ps float64, model ConductanceModel) float64 {
+	if Gmax == Gmin {
+		return 0
+	}
+	if G < Gmin {
+		G = Gmin
+	}
+	if G > Gmax {
+		G = Gmax
+	}
+
+	var gNorm float64
+	switch model {
+	case ConductanceExponential:
+		if Gmin <= 0 {
+			// Gmin must be positive for log-space inverse; fall back to linear.
+			gNorm = (G - Gmin) / (Gmax - Gmin)
+		} else {
+			logRatio := math.Log(Gmax / Gmin)
+			if logRatio < 1e-12 {
+				gNorm = 0.5
+			} else {
+				gNorm = math.Log(G/Gmin) / logRatio
+			}
+		}
+	default:
+		gNorm = (G - Gmin) / (Gmax - Gmin)
+	}
+
+	if gNorm < 0 {
+		gNorm = 0
+	}
+	if gNorm > 1 {
+		gNorm = 1
+	}
+	return (2*gNorm - 1) * Ps
+}

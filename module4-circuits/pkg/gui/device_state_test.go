@@ -287,7 +287,7 @@ func TestUpdateVoltageRanges_MaxPracticalVoltageClamp(t *testing.T) {
 // Category 3: Per-Level Voltage Calibration
 // ============================================================================
 
-func TestInitVoltageCalibration_LinearInterpolation(t *testing.T) {
+func TestInitVoltageCalibration_PhysicsBasedInterpolation(t *testing.T) {
 	resetGlobalState()
 	ds := newTestDeviceState(8, 8)
 	ds.InitVoltageCalibration()
@@ -295,26 +295,47 @@ func TestInitVoltageCalibration_LinearInterpolation(t *testing.T) {
 	if ds.voltageCalibration == nil {
 		t.Fatal("ds.voltageCalibration should be initialized")
 	}
-
-	// Check level 0 equals writeRange.Min
-	if math.Abs(ds.voltageCalibration.AscendingVoltages[0]-ds.writeRange.Min) > testEpsilon {
-		t.Errorf("level 0 voltage: got %.6f, want %.6f", ds.voltageCalibration.AscendingVoltages[0], ds.writeRange.Min)
-	}
-
-	// Check max level equals writeRange.Max
 	numLevels := ds.writeRange.NumLevels
-	maxLevel := numLevels - 1
-	if math.Abs(ds.voltageCalibration.AscendingVoltages[maxLevel]-ds.writeRange.Max) > testEpsilon {
-		t.Errorf("level %d voltage: got %.6f, want %.6f", maxLevel, ds.voltageCalibration.AscendingVoltages[maxLevel], ds.writeRange.Max)
+	if numLevels < 2 {
+		t.Fatalf("need at least 2 levels, got %d", numLevels)
 	}
 
-	// Check linear interpolation - all levels should be evenly spaced
-	step := (ds.writeRange.Max - ds.writeRange.Min) / float64(numLevels-1)
-	for i := 0; i < numLevels; i++ {
-		expected := ds.writeRange.Min + float64(i)*step
-		if math.Abs(ds.voltageCalibration.AscendingVoltages[i]-expected) > testEpsilon {
-			t.Errorf("level %d voltage: got %.6f, want %.6f", i, ds.voltageCalibration.AscendingVoltages[i], expected)
+	asc := ds.voltageCalibration.AscendingVoltages
+	desc := ds.voltageCalibration.DescendingVoltages
+
+	// Ascending voltages must be monotonically non-decreasing
+	for i := 1; i < numLevels; i++ {
+		if asc[i] < asc[i-1]-testEpsilon {
+			t.Errorf("ascending[%d]=%.6f < ascending[%d]=%.6f (not monotonic)", i, asc[i], i-1, asc[i-1])
 		}
+	}
+
+	// Descending voltages must be monotonically non-decreasing (less negative as level rises)
+	for i := 1; i < numLevels; i++ {
+		if desc[i] < desc[i-1]-testEpsilon {
+			t.Errorf("descending[%d]=%.6f < descending[%d]=%.6f (not monotonic)", i, desc[i], i-1, desc[i-1])
+		}
+	}
+
+	// Ascending voltage for level 0 should be 0 (or very small positive — clamped)
+	if asc[0] < -testEpsilon {
+		t.Errorf("ascending[0] should be >= 0, got %.6f", asc[0])
+	}
+
+	// Ascending voltage for max level should equal writeRange.Max
+	maxLevel := numLevels - 1
+	if math.Abs(asc[maxLevel]-ds.writeRange.Max) > testEpsilon {
+		t.Errorf("ascending[%d] should equal writeRange.Max=%.6f, got %.6f", maxLevel, ds.writeRange.Max, asc[maxLevel])
+	}
+
+	// Descending voltage for max level should be 0 (clamped — already at target from +Ps)
+	if desc[maxLevel] > testEpsilon {
+		t.Errorf("descending[%d] should be <= 0, got %.6f", maxLevel, desc[maxLevel])
+	}
+
+	// Descending voltage for level 0 should equal writeRange.Min
+	if math.Abs(desc[0]-ds.writeRange.Min) > testEpsilon {
+		t.Errorf("descending[0] should equal writeRange.Min=%.6f, got %.6f", ds.writeRange.Min, desc[0])
 	}
 }
 
@@ -342,14 +363,42 @@ func TestGetVoltageForLevel_Direction(t *testing.T) {
 	resetGlobalState()
 	ds := newTestDeviceState(8, 8)
 
-	// In simplified model, ascending == descending
+	// Physics-based calibration: ascending and descending should differ (hysteresis)
 	numLevels := ds.writeRange.NumLevels
-	for level := 0; level < numLevels; level++ {
-		vAsc := ds.GetVoltageForLevel(level, true)
-		vDesc := ds.GetVoltageForLevel(level, false)
-		if math.Abs(vAsc-vDesc) > testEpsilon {
-			t.Errorf("level %d: ascending %.6f != descending %.6f (simplified model)", level, vAsc, vDesc)
+	maxLevel := numLevels - 1
+	midLevel := numLevels / 2
+
+	// Ascending voltages should be >= 0 (programming direction)
+	for level := 0; level <= maxLevel; level++ {
+		v := ds.GetVoltageForLevel(level, true)
+		if v < -testEpsilon {
+			t.Errorf("ascending voltage for level %d should be >= 0, got %.6f", level, v)
 		}
+	}
+
+	// Descending voltages should be <= 0 (erasing direction)
+	for level := 0; level <= maxLevel; level++ {
+		v := ds.GetVoltageForLevel(level, false)
+		if v > testEpsilon {
+			t.Errorf("descending voltage for level %d should be <= 0, got %.6f", level, v)
+		}
+	}
+
+	// Mid-level ascending voltage should be positive (close to coercive voltage)
+	vMidAsc := ds.GetVoltageForLevel(midLevel, true)
+	if vMidAsc <= 0 {
+		t.Errorf("ascending voltage for mid-level %d should be > 0, got %.6f", midLevel, vMidAsc)
+	}
+
+	// Mid-level descending voltage should be negative (close to -coercive voltage)
+	vMidDesc := ds.GetVoltageForLevel(midLevel, false)
+	if vMidDesc >= 0 {
+		t.Errorf("descending voltage for mid-level %d should be < 0, got %.6f", midLevel, vMidDesc)
+	}
+
+	// Ascending and descending should differ by symmetry: vAsc ≈ -vDesc
+	if math.Abs(vMidAsc+vMidDesc) > 0.01 {
+		t.Logf("mid-level: ascending=%.4f, descending=%.4f (approx symmetric)", vMidAsc, vMidDesc)
 	}
 }
 

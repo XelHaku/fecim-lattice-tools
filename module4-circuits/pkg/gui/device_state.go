@@ -554,7 +554,14 @@ func (ds *DeviceState) conductanceToLevel(gPhys float64, levels int) int {
 	if gmax <= gmin {
 		return 0
 	}
-	gNorm := (gPhys - gmin) / (gmax - gmin)
+	// Use the model-aware inverse so conductanceToLevel is consistent with
+	// levelToConductance (which uses mat.DiscreteLevel → PolarizationToConductanceWithParams
+	// with the exponential model). Linear inverse introduces 5–10 level errors at mid-range.
+	model := sharedphysics.ConductanceExponential // default matches ParseConductanceModel default
+	if ds.material != nil {
+		model = sharedphysics.ParseConductanceModel(ds.material.ConductanceModel)
+	}
+	gNorm := sharedphysics.PhysicalToNormalizedModel(gPhys, gmin, gmax, model)
 	return sharedphysics.GetLevel(gNorm, levels)
 }
 
@@ -596,7 +603,8 @@ func (ds *DeviceState) programLevelFromCoupledVoltage(currentLevel int, effectiv
 
 	gmin, gmax := ds.conductanceBounds()
 	currentG := ds.levelToConductance(currentLevel, levels)
-	currentP := sharedphysics.ConductanceToPolarization(currentG, gmin, gmax, mat.Ps)
+	conductanceModel := sharedphysics.ParseConductanceModel(mat.ConductanceModel)
+	currentP := sharedphysics.ConductanceToPolarizationModel(currentG, gmin, gmax, mat.Ps, conductanceModel)
 
 	solver := sharedphysics.NewLKSolver()
 	solver.ConfigureFromMaterial(mat)
@@ -1615,15 +1623,18 @@ func (ds *DeviceState) Resize(rows, cols int) {
 // 1. PER-LEVEL VOLTAGE CALIBRATION
 // ============================================================================
 
-// PerLevelVoltageCalibration holds calibrated voltages for each level
-// Linear interpolation used as simplified demo (not physics-accurate Preisach model)
+// PerLevelVoltageCalibration holds calibrated voltages for each level.
+// Ascending and descending voltages are now distinct (physics-derived ISPP tanh mapping).
 type PerLevelVoltageCalibration struct {
 	AscendingVoltages  []float64 // Voltages for writing up (level 0→max)
 	DescendingVoltages []float64 // Voltages for writing down (level max→0)
 }
 
-// initVoltageCalibrationInternal initializes the per-level voltage arrays (internal, no locking)
-// Caller must hold appropriate lock
+// initVoltageCalibrationInternal initializes the per-level voltage arrays (internal, no locking).
+// Uses a Preisach-derived tanh mapping: ascending V_L = Ec*(1+atanh(P_L/Ps))*d,
+// descending V_L = -Ec*(1+atanh(-P_L/Ps))*d — consistent with ispp.go PredictState.
+// Falls back to linear interpolation when material Ec/thickness are unavailable.
+// Caller must hold appropriate lock.
 func (ds *DeviceState) initVoltageCalibrationInternal() {
 	numLevels := ds.writeRange.NumLevels
 	cal := &PerLevelVoltageCalibration{
@@ -1631,22 +1642,72 @@ func (ds *DeviceState) initVoltageCalibrationInternal() {
 		DescendingVoltages: make([]float64, numLevels),
 	}
 
-	// Linear interpolation: Level 0 → WriteRange.Min, Level (numLevels-1) → WriteRange.Max
+	// Physics-based ISPP voltage calibration using Preisach-derived tanh mapping.
+	//
+	// For a ferroelectric with coercive field Ec and film thickness d, the remanent
+	// polarization after an ISPP ascending pulse to peak field E_peak (starting from -Ps)
+	// is approximately: P_rem = Ps * tanh((E_peak − Ec) / Delta)
+	// Using Delta=Ec (same approximation as AdaptiveISPP.PredictState in shared/physics/ispp.go):
+	//   E_peak = Ec * (1 + atanh(P_L/Ps))    → always ≥ 0 for P_L in (-Ps, +Ps)
+	//   V_asc = E_peak * thickness (clamped to [0, WriteRange.Max])
+	//
+	// For descending (starting from +Ps):
+	//   E_peak_desc = Ec * (1 + atanh(-P_L/Ps))
+	//   V_desc = -E_peak_desc * thickness (clamped to [WriteRange.Min, 0])
+	//
+	// Level → normalized P: P_L/Ps = 2*L/(N-1) - 1 (linear in gNorm space)
+	// Mid-level (L ≈ N/2): V_asc ≈ Ec*d = Vc (coercive voltage) — physically exact.
+	var ec, thickness float64
+	mat := ds.material
+	if mat != nil && mat.Ec > 0 && mat.Thickness > 0 {
+		ec = mat.Ec
+		thickness = mat.Thickness
+	}
 	minV := ds.writeRange.Min
 	maxV := ds.writeRange.Max
-	step := (maxV - minV) / float64(numLevels-1)
-
+	const atanhClamp = 0.9999 // Avoid atanh(±1) → ±∞ divergence
 	for i := 0; i < numLevels; i++ {
-		voltage := minV + float64(i)*step
-		cal.AscendingVoltages[i] = voltage
-		cal.DescendingVoltages[i] = voltage // Same for simplified model
+		ratio := 2.0*float64(i)/float64(numLevels-1) - 1.0 // P_L/Ps ∈ (-1, +1)
+		if ratio > atanhClamp {
+			ratio = atanhClamp
+		}
+		if ratio < -atanhClamp {
+			ratio = -atanhClamp
+		}
+
+		if ec > 0 && thickness > 0 {
+			// Ascending: positive pulse to program from erase state (−Ps → P_L)
+			vAsc := ec * (1.0 + math.Atanh(ratio)) * thickness
+			if vAsc > maxV {
+				vAsc = maxV
+			}
+			if vAsc < 0 {
+				vAsc = 0 // Ascending pulses are always non-negative
+			}
+			cal.AscendingVoltages[i] = vAsc
+
+			// Descending: negative pulse to erase from program state (+Ps → P_L)
+			vDesc := -ec * (1.0 + math.Atanh(-ratio)) * thickness
+			if vDesc < minV {
+				vDesc = minV
+			}
+			if vDesc > 0 {
+				vDesc = 0 // Descending pulses are always non-positive
+			}
+			cal.DescendingVoltages[i] = vDesc
+		} else {
+			// Fallback: linear interpolation when material parameters are unavailable
+			voltage := minV + float64(i)*(maxV-minV)/float64(numLevels-1)
+			cal.AscendingVoltages[i] = voltage
+			cal.DescendingVoltages[i] = voltage
+		}
 	}
 
 	ds.voltageCalibration = cal
 }
 
-// InitVoltageCalibration initializes the per-level voltage arrays using linear interpolation
-// This is a simplified demo - real devices would use non-linear Preisach-derived values
+// InitVoltageCalibration initializes the per-level voltage arrays using the Preisach-based
+// tanh ISPP mapping (ascending/descending are now distinct, physics-derived voltages).
 func (ds *DeviceState) InitVoltageCalibration() {
 	ds.mu.Lock()
 	defer ds.mu.Unlock()

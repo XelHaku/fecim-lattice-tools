@@ -147,6 +147,36 @@ func PhysicalToNormalizedRange(gPhys, gMin, gMax float64) float64 {
 	return (gPhys - gMin) / (gMax - gMin)
 }
 
+// PhysicalToNormalizedModel converts physical conductance to normalized [0,1]
+// using the specified conductance model as the inverse function.
+//
+// For the exponential model: gNorm = ln(G/Gmin) / ln(Gmax/Gmin)
+// This is the exact inverse of NormalizedToPhysicalRange for ConductanceExponential.
+//
+// For linear and other models: gNorm = (G-Gmin) / (Gmax-Gmin)
+func PhysicalToNormalizedModel(gPhys, gMin, gMax float64, model ConductanceModel) float64 {
+	if gPhys <= gMin {
+		return 0.0
+	}
+	if gPhys >= gMax {
+		return 1.0
+	}
+	switch model {
+	case ConductanceExponential:
+		if gMin <= 0 {
+			// Positive Gmin required for log-space; fall back to linear.
+			return (gPhys - gMin) / (gMax - gMin)
+		}
+		logRatio := math.Log(gMax / gMin)
+		if logRatio < 1e-12 {
+			return 0.5
+		}
+		return math.Log(gPhys/gMin) / logRatio
+	default:
+		return (gPhys - gMin) / (gMax - gMin)
+	}
+}
+
 // ConductanceToLevel converts physical conductance to discrete level (0-29).
 func ConductanceToLevel(gPhys float64, levels int) int {
 	gNorm := PhysicalToNormalized(gPhys)

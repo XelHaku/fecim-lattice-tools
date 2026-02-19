@@ -407,7 +407,8 @@ func (ca *CircuitsApp) runISPPWithLK(row, col, targetLevel int) {
 	// Initialize solver state from current level.
 	gmin, gmax := ds.conductanceBounds()
 	currentG := ds.levelToConductance(currentLevel, levels)
-	currentP := sharedphysics.ConductanceToPolarization(currentG, gmin, gmax, mat.Ps)
+	conductanceModel := sharedphysics.ParseConductanceModel(mat.ConductanceModel)
+	currentP := sharedphysics.ConductanceToPolarizationModel(currentG, gmin, gmax, mat.Ps, conductanceModel)
 
 	solver := sharedphysics.NewLKSolver()
 	solver.ConfigureFromMaterial(mat)
