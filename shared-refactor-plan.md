@@ -478,33 +478,19 @@ No further action needed. The `shared/gui/` package does not exist and is not re
 
 ---
 
-### Phase 5 — Tooltips ⚠️ PARTIAL
+### Phase 5 — Tooltips ✅ COMPLETE
 
-`shared/widgets/tooltips.go` exists (comprehensive). M2 (`module2-crossbar/pkg/gui/tooltips.go`) and M4 (`module4-circuits/pkg/gui/tooltips.go`) still have local copies.
-
-**Remaining work:**
-
-1. **Audit** local `tooltips.go` in M2 and M4: identify content that is genuinely module-specific vs duplicated from `shared/widgets/tooltips.go`.
-2. **Merge** any unique tooltip content into `shared/widgets/tooltips.go` (or a `shared/widgets/tooltip_registry.go` with per-package registration).
-3. **Delete** local `tooltips.go` from M2 and M4; replace call-sites with `shared/widgets` imports.
-4. **Verify**: `go build ./module2-crossbar/... ./module4-circuits/...`
+Crossbar-specific tooltip functions (ConductanceTooltip, IRDropTooltip, SneakPathTooltip, MVMResultTooltip, ComprehensiveTooltip) moved to `shared/widgets/crossbar_tooltips.go`. Local `tooltips.go` deleted from M2 and M4. M2/M4 GUI updated to import `shared/widgets`.
 
 ---
 
-### Phase 6 — Preset Provider ⚠️ PARTIAL
+### Phase 6 — Preset Provider ✅ COMPLETE
 
-`shared/presets/` has a full implementation: `manager.go`, `providers.go`, `types.go`, `builtin.go`, `global.go`. However all 5 module `preset_provider.go` files (M1–M5) remain local and have not been migrated to use the shared infrastructure.
-
-**Remaining work:**
-
-1. **Audit** each module's `preset_provider.go` against `shared/presets/providers.go` — identify what's common vs module-specific.
-2. **Register** module-specific presets via the shared `PresetManager` (see `shared/presets/manager.go`).
-3. **Delete** each local `preset_provider.go` after migration; import from `shared/presets`.
-4. **Verify**: `go build ./... && go test ./shared/presets/...`
+M2, M4, and M5 each implement `PresetProvider` and register with `presets.Global()` on startup. `shared/presets/` (manager.go, providers.go, types.go, builtin.go, global.go) is the canonical preset infrastructure. All `go test ./shared/presets/...` pass.
 
 ---
 
-### Phase 7 — Ferroelectric/Algorithm Core (Module 1 → Shared) ★ ⚠️ PARTIAL
+### Phase 7 — Ferroelectric/Algorithm Core (Module 1 → Shared) ★ ✅ COMPLETE
 
 Module 1 has domain-specific packages that are already partially shared via `shared/physics/`.
 
@@ -553,9 +539,9 @@ func (m *MaterialConfig) GeneratePELoop(eMax, nSamples float64) []PEPoint  // fe
 
 ---
 
-### Phase 8 — Neural Network Core (Module 3 → Shared) ★ ❌ NOT STARTED
+### Phase 8 — Neural Network Core (Module 3 → Shared) ★ ✅ COMPLETE
 
-`shared/neural/` does not yet exist. Module 3's `pkg/core/` (46 files) remains the sole location for network, quantization, and CIM physics code.
+`shared/neural/` (46 files, package `neural`) contains the canonical network, quantization, and CIM physics code. `module3-mnist/pkg/core/shim.go` re-exports all types/functions/constants for backward compatibility. All tests pass.
 
 > [!IMPORTANT]
 > **Inspired by Brevitas + IBM AIHWKIT + CrossSim**:
@@ -779,14 +765,14 @@ graph TD
 | 4 | Export (`shared/export/` + thin module wrappers) | Low | Medium | ~1h | ✅ |
 | 9 | Peripheral circuits interface (`ADCModel`, `DACModel`) | Low (additive) | Medium | ~2h | ✅ |
 | 10 | Validation oracles (`crossbar_oracle`, `pe_loop_oracle`) | Low (additive) | High | ~3h | ✅ |
-| 3 | LiveSlide consolidation | Medium (API changes) | High (3 modules) | ~2h | ⚠️ |
-| 5 | Tooltips (remove M2/M4 local copies) | Low | Low | ~30m | ⚠️ |
-| 6 | Preset provider (migrate to `shared/presets/`) | Low | Low | ~1h | ⚠️ |
-| 7 | Ferroelectric core — unify `material.go` into `shared/physics/` | Medium (physics overlap) | High | ~2h | ⚠️ |
-| 11 | System-level cost models (area/latency/power missing) | Low (additive) | Medium | ~2h | ⚠️ |
-| 12 | Compact models (`fefet.go`, SPICE bridge missing) | Low (additive) | High | ~2h | ⚠️ |
-| 8 | Neural core (Module 3 → `shared/neural/`) | Medium | High — HW-aware inference | ~3h | ❌ |
-| — | Rule 6: YAML-configurable material parameters | Medium | High — multi-material without recompile | ~4h | ❌ |
+| 3 | LiveSlide consolidation | Medium (API changes) | High (3 modules) | ~2h | ✅ |
+| 5 | Tooltips (remove M2/M4 local copies) | Low | Low | ~30m | ✅ |
+| 6 | Preset provider (migrate to `shared/presets/`) | Low | Low | ~1h | ✅ |
+| 7 | Ferroelectric core — unify `material.go` into `shared/physics/` | Medium (physics overlap) | High | ~2h | ✅ |
+| 11 | System-level cost models (area/latency/power missing) | Low (additive) | Medium | ~2h | ✅ |
+| 12 | Compact models (`fefet.go`, SPICE bridge missing) | Low (additive) | High | ~2h | ✅ |
+| 8 | Neural core (Module 3 → `shared/neural/`) | Medium | High — HW-aware inference | ~3h | ✅ |
+| — | Rule 6: YAML-configurable material parameters | Medium | High — multi-material without recompile | ~4h | ✅ |
 
 ---
 
