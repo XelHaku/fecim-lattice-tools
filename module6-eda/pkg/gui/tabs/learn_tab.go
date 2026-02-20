@@ -226,7 +226,8 @@ func makeCrossbarContent() fyne.CanvasObject {
 
 	oneToneRTitle := widget.NewLabelWithStyle("1T1R (1 Transistor + 1 Resistor)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	oneToneRDesc := widget.NewLabel(`Ports: WL[], BL[], SL[], VPWR, VGND | Cell Size: 0.92 x 4.07 µm (2x width, hvl height)
-+ No sneak paths (transistor isolates) | + Scales to 128x128+ arrays
++ Column-direction sneak paths eliminated (transistors block unselected rows)
++ Scales to 128x128+ arrays | Same-row half-select (cols-1 paths) remains
 - Larger cell area (2x) | - More complex routing`)
 	oneToneRDesc.Wrapping = fyne.TextWrapWord
 
@@ -248,7 +249,7 @@ func makeCrossbarContent() fyne.CanvasObject {
 
 	// Sneak path explanation (clean prose, no ASCII)
 	sneakPathTitle := widget.NewLabelWithStyle("The Sneak Path Problem", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	sneakPathDesc := widget.NewLabel(`In passive arrays, reading cell (0,0) can cause unintended current paths. The intended path is WL[0] -> Cell(0,0) -> BL[0]. But sneak paths occur through other cells: WL[0] -> Cell(0,1) -> BL[1] -> Cell(1,1) -> Cell(1,0) -> BL[0]. This error grows as N^2 for NxN arrays!`)
+	sneakPathDesc := widget.NewLabel(`In passive arrays, reading cell (0,0) causes unintended current paths. Intended: WL[0] → Cell(0,0) → BL[0]. Sneak path example: WL[0] → Cell(0,1) → BL[1] → Cell(1,1) → Cell(1,0) → BL[0]. For a write to cell (r,c), (rows-1)+(cols-1) cells are directly half-selected, and (rows-1)×(cols-1) additional cells form parasitic 2-hop paths. Both scale with array size, making large passive arrays impractical.`)
 	sneakPathDesc.Wrapping = fyne.TextWrapWord
 
 	// Recommendation card
