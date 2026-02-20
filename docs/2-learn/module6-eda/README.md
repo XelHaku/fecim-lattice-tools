@@ -72,7 +72,7 @@ module6-eda/
 │   │   │   ├── builder_validation_tab.go # Array builder + validation
 │   │   │   ├── export_viewer_tab.go      # Export file viewer
 │   │   │   ├── layout_visualizer_tab.go  # SVG layout visualizer
-│   │   │   ├── flow_scripts_tab.go       # EDA flow scripts (15 formats)
+│   │   │   ├── flow_scripts_tab.go       # EDA flow scripts (16 formats)
 │   │   │   ├── conductance_heatmap.go    # Conductance heatmap panel
 │   │   │   ├── learn_visuals.go          # OpenLane flow diagram
 │   │   │   ├── learn_visuals_array.go    # Isometric crossbar diagrams
@@ -280,7 +280,7 @@ Export: MVM interface (optional weight pre-programming)
 
 ## Export Formats
 
-Module 6 generates **18 output formats** from a single `ArrayConfig`:
+Module 6 generates **21 output formats** from a single `ArrayConfig`:
 
 | Format | File | Tool |
 |--------|------|------|
@@ -301,8 +301,9 @@ Module 6 generates **18 output formats** from a single `ArrayConfig`:
 | CrossSim YAML | `.yaml` | CrossSim |
 | CrossSim Python | `.py` | CrossSim |
 | PySpice Python | `.py` | PySpice |
-| Magic DRC script | `.tcl` | Magic VLSI |
-| Netgen LVS script | `.tcl` | Netgen |
+| OpenVAF Verilog-A | `.va` | OpenVAF, ngspice (OSDI) |
+| Magic DRC script | `.sh` | Magic VLSI |
+| Netgen LVS script | `.sh` | Netgen |
 | Shell runner | `run_flow.sh` | bash |
 
 ### SPICE Netlist (.sp)
