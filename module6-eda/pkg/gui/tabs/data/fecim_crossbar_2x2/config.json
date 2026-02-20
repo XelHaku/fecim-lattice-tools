@@ -1,4 +1,5 @@
 {
+  "BASE_SDC_FILE": "dir::constraints.sdc",
   "DESIGN_IS_CORE": 0,
   "DESIGN_NAME": "fecim_crossbar_2x2",
   "DIE_AREA": "0 0 2.920 7.440",
@@ -11,6 +12,7 @@
   "PL_TARGET_DENSITY": 0.6,
   "RUN_CTS": 0,
   "SYNTH_ELABORATE_ONLY": 1,
+  "SYNTH_READ_BLACKBOX_LIB": 1,
   "VERILOG_FILES": "dir::output/fecim_crossbar_2x2.v",
   "VERILOG_FILES_BLACKBOX": "dir::cells/fecim_bitcell/fecim_bitcell.v"
 }
