@@ -418,3 +418,40 @@ func extractSummarySection(s, keyword string) string {
 	}
 	return "(not found)"
 }
+
+// TestGenerateDesignSummary_GMinResistanceMOhm verifies that G_min is displayed
+// in MΩ using the direct reciprocal R(MΩ) = 1/G(µS), not the wrong formula
+// 1/(G×1e-3) which gives kΩ and inflates the displayed value by 1000×.
+//   - 1T1R / 2T1R: G_min = 0.01 µS → R = 100 MΩ
+//   - passive:     G_min = 0.001 µS → R = 1000 MΩ
+func TestGenerateDesignSummary_GMinResistanceMOhm(t *testing.T) {
+	cases := []struct {
+		arch    string
+		wantMOhm string
+	}{
+		{"1t1r", "100 MΩ"},
+		{"2t1r", "100 MΩ"},
+		{"passive", "1000 MΩ"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.arch, func(t *testing.T) {
+			cfg := config.ArrayConfig{
+				Rows: 4, Cols: 4,
+				Mode: "storage", Architecture: tc.arch, Technology: "sky130",
+				CellWidth: 0.46, CellHeight: 2.72,
+			}
+			summary := GenerateDesignSummary(cfg)
+			line := extractSummarySection(summary, "G_min")
+			if !strings.Contains(line, tc.wantMOhm) {
+				t.Errorf("arch=%s: G_min line should contain %q, got: %q", tc.arch, tc.wantMOhm, line)
+			}
+			// Also confirm the line does NOT contain a value 1000× too large.
+			if tc.arch != "passive" && strings.Contains(line, "100000 MΩ") {
+				t.Errorf("arch=%s: G_min shows 100000 MΩ (kΩ formula bug), expected 100 MΩ", tc.arch)
+			}
+			if tc.arch == "passive" && strings.Contains(line, "1000000 MΩ") {
+				t.Errorf("arch=passive: G_min shows 1000000 MΩ (kΩ formula bug), expected 1000 MΩ", )
+			}
+		})
+	}
+}

@@ -122,7 +122,7 @@ func GenerateDesignSummary(cfg config.ArrayConfig) string {
 	sb.WriteString(fmt.Sprintf("  G_max (LRS):        %.3f µS  (R = %.0f kΩ)\n",
 		gMaxUS, 1.0/(gMaxUS*1e-3)))
 	sb.WriteString(fmt.Sprintf("  G_min (HRS):        %.4f µS  (R = %.0f MΩ)\n",
-		gMinUS, 1.0/(gMinUS*1e-3)))
+		gMinUS, 1.0/gMinUS))
 	sb.WriteString(fmt.Sprintf("  Conductance levels: %d (30-level simulation baseline)\n", nLevels))
 	sb.WriteString(fmt.Sprintf("  WL line resistance: %.1f Ω  (%d cols × 1 Ω/cell estimate)\n",
 		wlResOhm, cfg.Cols))

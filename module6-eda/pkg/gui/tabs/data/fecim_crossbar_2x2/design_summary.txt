@@ -1,6 +1,6 @@
 FeCIM Crossbar Design Summary — 2x2 (passive / sky130)
 ────────────────────────────────────────────────────────────
-Generated:  2026-02-20 12:45
+Generated:  2026-02-20 13:37
 Mode:       storage
 
 ── Physical ───────────────────────────────────────────
@@ -18,7 +18,7 @@ Mode:       storage
   VDD:                1.8 V
   V_read (MVM):       0.10 V
   G_max (LRS):        10.000 µS  (R = 100 kΩ)
-  G_min (HRS):        0.0010 µS  (R = 1000000 MΩ)
+  G_min (HRS):        0.0010 µS  (R = 1000 MΩ)
   Conductance levels: 30 (30-level simulation baseline)
   WL line resistance: 2.0 Ω  (2 cols × 1 Ω/cell estimate)
   IR drop (est.):     0.00 mV  (worst case, far cell)
