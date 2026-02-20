@@ -42,7 +42,7 @@ func CellComparisonTable() fyne.CanvasObject {
 	rows := []row{
 		{"Property", "Passive", "1T1R", "2T1R", "Best"},
 		{"Cell Width", "0.46 µm", "0.92 µm", "~1.38 µm", "Passive"},
-		{"Area (µm²)", "1.25", "2.50", "~3.75", "Passive"},
+		{"Area (µm²)", "1.25", "~3.74", "~5.62", "Passive"},
 		{"Sneak Path", "HIGH", "Row-only", "NONE", "2T1R"},
 		{"Max Array", "~32×32", "128×128+", "512×512+", "2T1R"},
 		{"Ports", "WL,BL", "WL,BL,SL", "WL,CSL,BL,SL", "1T1R"},
