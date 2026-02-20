@@ -198,8 +198,8 @@ func loadExportPreviewContent(format string, cfg *config.ArrayConfig) (content s
 				return s, p
 			}
 		}
-		// Generate structural DEF in-memory (no compiled design required).
-		return export.GenerateLatticeDEF(cfg.Rows, cfg.Cols), "generated (in-memory)"
+		// Generate architecture-aware DEF in-memory (passive/1t1r/2t1r).
+		return generateBuilderDEF(*cfg), "generated (in-memory)"
 
 	case "Config (JSON)":
 		if s, ok := tryRead(filepath.Join(dataDir, "config.json")); ok {
