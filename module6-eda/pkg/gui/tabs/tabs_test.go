@@ -934,6 +934,38 @@ func TestConductancePatterns(t *testing.T) {
 			t.Error("different seeds produced identical matrices")
 		}
 	})
+
+	t.Run("SineWave_range", func(t *testing.T) {
+		m := makeConductanceSineWave(rows, cols)
+		if m.Rows != rows || m.Cols != cols {
+			t.Fatalf("wrong dims %d×%d", m.Rows, m.Cols)
+		}
+		for i := range m.Values {
+			for j, v := range m.Values[i] {
+				if v < 0 || v > 1 {
+					t.Errorf("[%d][%d]: out of [0,1]: %f", i, j, v)
+				}
+			}
+		}
+	})
+
+	t.Run("SineWave_has_variation", func(t *testing.T) {
+		// A 2D sine wave on an 8×8 grid must contain at least two distinct values.
+		m := makeConductanceSineWave(8, 8)
+		first := m.Values[0][0]
+		varied := false
+		for i := range m.Values {
+			for _, v := range m.Values[i] {
+				if v != first {
+					varied = true
+					break
+				}
+			}
+		}
+		if !varied {
+			t.Error("SineWave pattern should contain more than one distinct value")
+		}
+	})
 }
 
 func TestConductancePatterns_NeuralWeights(t *testing.T) {

@@ -329,7 +329,16 @@ DEF GENERATION:
 LEF GENERATION:
 • Define LAYER (met1) for pin geometries
 • Define SITE with cell dimensions
-• Define MACRO with pin locations and obstruction areas`)
+• Define MACRO with pin locations and obstruction areas
+
+SPICE GENERATION:
+• Write provenance header + mode/array metadata
+• Emit LK FeCap subcircuit (FECAP_HZO) — parameters from DefaultHzoFeFETMaterial()
+• Emit fefet_cell subcircuit: programmable resistor R_level in series with FECAP_HZO
+• For 1T1R: emit SKY130 NMOS model card + fefet_1t1r (row NMOS selector → fefet_cell)
+• For 2T1R: emit fefet_2t1r (row NMOS M_ROW + column NMOS M_COL in series → fefet_cell)
+• Instantiate active cells: X{row}_{col} with WL[row]/BL[col] connections
+• Output: ngspice/HSPICE-compatible .sp file; run via "ngspice design.sp"`)
 	genText.Wrapping = fyne.TextWrapWord
 
 	// Section 2: How We Validate
