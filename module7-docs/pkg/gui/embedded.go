@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -18,6 +19,8 @@ import (
 	"fecim-lattice-tools/shared/canvas"
 	sharedWidgets "fecim-lattice-tools/shared/widgets"
 )
+
+var htmlCommentRe = regexp.MustCompile(`(?s)<!--.*?-->`)
 
 // EmbeddedDocsApp is the embeddable documentation viewer
 type EmbeddedDocsApp struct {
@@ -354,7 +357,8 @@ func (app *EmbeddedDocsApp) createDocTree() *widget.Tree {
 			starBtn.Importance = widget.LowImportance
 			starBtn.Hidden = true
 
-			center := container.NewHBox(badge, label)
+			// Border layout: badge pinned left, label fills remaining space and truncates.
+			center := container.NewBorder(nil, nil, badge, nil, label)
 			return container.NewBorder(nil, nil, icon, starBtn, center)
 		},
 		// Update - update tree node with data
@@ -386,7 +390,7 @@ func (app *EmbeddedDocsApp) createDocTree() *widget.Tree {
 			}
 
 			if entry, ok := app.pathMap[uid]; ok {
-				label.SetText(entry.name)
+				label.SetText(humanizeTreeLabel(entry.name, entry.isDir))
 
 				category := app.treeCategory(entry)
 				if entry.isDir {
@@ -459,8 +463,11 @@ func (app *EmbeddedDocsApp) loadDocument(path string) {
 
 	markdown := string(content)
 
+	// Pre-process: strip HTML comments, convert tables to code blocks for Fyne
+	processedMarkdown := preprocessMarkdown(markdown)
+
 	// Highlight glossary terms inline (Wikipedia-style clickable links)
-	highlightedMarkdown := HighlightGlossaryTerms(markdown)
+	highlightedMarkdown := HighlightGlossaryTerms(processedMarkdown)
 
 	fyne.Do(func() {
 		app.contentText.ParseMarkdown(highlightedMarkdown)
@@ -833,6 +840,89 @@ func moduleFileRank(entry *docEntry) int {
 	default:
 		return 10
 	}
+}
+
+// humanizeTreeLabel converts raw filenames/dirnames into readable display labels.
+// "module1-hysteresis" → "Module 1: Hysteresis", "ELI5.md" → "ELI5", "README.md" → "Readme"
+func humanizeTreeLabel(name string, isDir bool) string {
+	if !isDir {
+		name = strings.TrimSuffix(name, filepath.Ext(name))
+	}
+	// module1-hysteresis → Module 1: Hysteresis
+	lower := strings.ToLower(name)
+	if strings.HasPrefix(lower, "module") {
+		rest := name[6:]
+		num := ""
+		for len(rest) > 0 && rest[0] >= '0' && rest[0] <= '9' {
+			num += string(rest[0])
+			rest = rest[1:]
+		}
+		if num != "" {
+			rest = strings.TrimPrefix(rest, "-")
+			rest = strings.ReplaceAll(rest, "-", " ")
+			rest = strings.Title(strings.ToLower(rest))
+			if rest != "" {
+				return "Module " + num + ": " + rest
+			}
+			return "Module " + num
+		}
+	}
+	name = strings.ReplaceAll(name, "-", " ")
+	name = strings.ReplaceAll(name, "_", " ")
+	return strings.Title(strings.ToLower(name))
+}
+
+// preprocessMarkdown prepares markdown for Fyne's RichText renderer:
+//   - strips HTML comments (<!-- ... -->) so comment headers don't appear in content
+//   - wraps markdown tables in fenced code blocks (Fyne's RichText doesn't render tables)
+func preprocessMarkdown(md string) string {
+	md = htmlCommentRe.ReplaceAllString(md, "")
+	md = convertTablesToCode(md)
+	return strings.TrimSpace(md)
+}
+
+// convertTablesToCode wraps markdown pipe tables in fenced code blocks so they
+// render as monospace text rather than raw pipe characters.
+func convertTablesToCode(md string) string {
+	lines := strings.Split(md, "\n")
+	var out []string
+	i := 0
+	for i < len(lines) {
+		if isTableRow(lines[i]) {
+			// Collect all consecutive table lines (rows + separator)
+			var tableLines []string
+			for i < len(lines) && (isTableRow(lines[i]) || isSeparatorRow(lines[i])) {
+				tableLines = append(tableLines, lines[i])
+				i++
+			}
+			out = append(out, "```")
+			out = append(out, tableLines...)
+			out = append(out, "```")
+		} else {
+			out = append(out, lines[i])
+			i++
+		}
+	}
+	return strings.Join(out, "\n")
+}
+
+func isTableRow(line string) bool {
+	t := strings.TrimSpace(line)
+	return strings.HasPrefix(t, "|") && strings.HasSuffix(t, "|") && len(t) > 2 && !isSeparatorRow(line)
+}
+
+func isSeparatorRow(line string) bool {
+	t := strings.TrimSpace(line)
+	if !strings.HasPrefix(t, "|") || !strings.HasSuffix(t, "|") {
+		return false
+	}
+	for _, cell := range strings.Split(t[1:len(t)-1], "|") {
+		cell = strings.TrimSpace(cell)
+		if cell != "" && !regexp.MustCompile(`^[-:]+$`).MatchString(cell) {
+			return false
+		}
+	}
+	return true
 }
 
 // Start is called when this demo tab is selected
