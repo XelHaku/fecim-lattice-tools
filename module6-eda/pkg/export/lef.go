@@ -152,6 +152,12 @@ func Generate1T1RLEF(cfg config.CellConfig) string {
 		metalWidth = 0.14 // SKY130 met1 minimum width
 	}
 
+	// Power rail stripes track the cell top edge (VPWR) and bottom edge (VGND).
+	// OBS occupies the interior 0.1 µm clear of each rail.
+	vpwrY1 := height - metalWidth
+	obsX2 := width - 0.100
+	obsY2 := height - 0.100
+
 	return fmt.Sprintf(characterizationProvenanceBlockHash+`VERSION 5.8 ;
 BUSBITCHARS "[]" ;
 DIVIDERCHAR "/" ;
@@ -210,7 +216,7 @@ MACRO %s
     USE POWER ;
     PORT
       LAYER met1 ;
-      RECT 0.000 3.260 0.920 3.400 ;
+      RECT 0.000 %.3f %.3f %.3f ;
     END
   END VPWR
 
@@ -219,19 +225,19 @@ MACRO %s
     USE GROUND ;
     PORT
       LAYER met1 ;
-      RECT 0.000 0.000 0.920 0.140 ;
+      RECT 0.000 0.000 %.3f 0.140 ;
     END
   END VGND
 
   OBS
     LAYER met1 ;
-    RECT 0.100 0.300 0.820 3.300 ;
+    RECT 0.100 0.300 %.3f %.3f ;
   END
 
 END %s
 
 END LIBRARY
-`, metalPitch, metalWidth, width, height, cellName, width, height, cellName)
+`, metalPitch, metalWidth, width, height, cellName, width, height, vpwrY1, width, height, width, obsX2, obsY2, cellName)
 }
 
 // Generate2T1RLEF generates LEF for 2T1R FeCIM bitcell with CSL (Column Select Line) pin
@@ -261,6 +267,13 @@ func Generate2T1RLEF(cfg config.CellConfig) string {
 	if metalWidth <= 0 {
 		metalWidth = 0.14 // SKY130 met1 minimum width
 	}
+
+	// Power rail stripes track the cell top edge (VPWR) and bottom edge (VGND).
+	// BL output pin in 2T1R is at the top of the cell (near VPWR rail).
+	// OBS occupies the interior 0.1 µm clear of each rail.
+	vpwrY1 := height - metalWidth
+	obsX2 := width - 0.100
+	obsY2 := height - 0.100
 
 	return fmt.Sprintf(characterizationProvenanceBlockHash+`VERSION 5.8 ;
 BUSBITCHARS "[]" ;
@@ -311,7 +324,7 @@ MACRO %s
     USE SIGNAL ;
     PORT
       LAYER met1 ;
-      RECT 0.620 3.260 0.760 3.400 ;
+      RECT 0.620 %.3f 0.760 %.3f ;
     END
   END BL
 
@@ -329,7 +342,7 @@ MACRO %s
     USE POWER ;
     PORT
       LAYER met1 ;
-      RECT 0.000 3.260 1.380 3.400 ;
+      RECT 0.000 %.3f %.3f %.3f ;
     END
   END VPWR
 
@@ -338,17 +351,17 @@ MACRO %s
     USE GROUND ;
     PORT
       LAYER met1 ;
-      RECT 0.000 0.000 1.380 0.140 ;
+      RECT 0.000 0.000 %.3f 0.140 ;
     END
   END VGND
 
   OBS
     LAYER met1 ;
-    RECT 0.100 0.100 1.280 3.300 ;
+    RECT 0.100 0.100 %.3f %.3f ;
   END
 
 END %s
 
 END LIBRARY
-`, metalPitch, metalWidth, width, height, cellName, width, height, cellName)
+`, metalPitch, metalWidth, width, height, cellName, width, height, vpwrY1, height, vpwrY1, width, height, width, obsX2, obsY2, cellName)
 }
