@@ -1,0 +1,52 @@
+// FeCIM Ferroelectric Cell - Verilog-A Compact Model
+// Generated: 2026-02-20
+// Technology: sky130
+//
+// Simplified Landau-Khalatnikov (L-K) model for HZO ferroelectric capacitor.
+// Compile with OpenVAF:
+//   openvaf fecim_lk.va --output fecim_lk.so
+//
+// Terminals:
+//   plus  (T): top electrode (applied voltage)
+//   minus (B): bottom electrode (BL or GND)
+//
+// Parameters: Mikolajick et al., Adv. Electron. Mater. 6, 1900078 (2020)
+// WARNING: Educational model only — not silicon-validated.
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module fecim_lk(plus, minus);
+    inout plus, minus;
+    electrical plus, minus;
+
+    // Physical parameters
+    parameter real T_FE    = 10.0  from (0:inf); // nm FE layer thickness
+    parameter real EC      = 1.00  from (0:inf); // MV/cm coercive field
+    parameter real PR      = 15.0  from (0:inf); // uC/cm2 remnant polarization
+    parameter real PS      = 30.0  from (0:inf); // uC/cm2 saturation polarization
+    parameter real AREA    = 1.0   from (0:inf); // um2 cell area
+    parameter real RHO     = 1.0e5 from (0:inf); // Ohm*cm2 L-K damping coeff
+    parameter real EPS_INF = 25.0  from (0:inf); // Background dielectric
+
+    // State variables
+    real P, dPdt, Vfe, Efe, C_par, alpha, beta;
+
+    initial begin
+        P = -PR;  // Start in negative remnant state
+    end
+
+    analog begin
+        Vfe   = V(plus, minus);
+        Efe   = Vfe / (T_FE * 1e-7);     // V/cm
+        alpha = -EC / (2.0 * PS);
+        beta  =  EC / (4.0 * PS * PS * PS);
+        // L-K: rho * dP/dt = E - 2*alpha*P - 4*beta*P^3
+        dPdt = (Efe - 2.0*alpha*P - 4.0*beta*P*P*P) / (RHO * 1e-4);
+        P     = idt(dPdt, -PR);
+        C_par = 8.854e-14 * EPS_INF * (AREA * 1e-8) / (T_FE * 1e-7);
+        I(plus, minus) <+ (AREA * 1e-8) * dPdt * 1e-6;
+        I(plus, minus) <+ C_par * ddt(Vfe);
+    end
+
+endmodule  // fecim_lk

@@ -19,9 +19,22 @@ Array: 2 × 2 cells, mode=storage, arch=passive, tech=sky130
 - config.json              — LibreLane / OpenLane v1 configuration
 - constraints.sdc          — SDC timing constraints (referenced by config.json)
 - synthesis.tcl            — Yosys hierarchy check script
-- gen_gds.py               — KLayout DEF+LEF → GDS II stream-out
 - openroad_flow.tcl        — OpenROAD placement validation script
+- gen_gds.py               — KLayout DEF+LEF → GDS II stream-out
+- opensta_check.tcl        — OpenSTA standalone timing analysis
+- config.tcl               — OpenLane v1 TCL config (legacy format)
+- macros.cfg               — OpenLane v1 macro placement constraints
 - run_flow.sh              — Full flow orchestration (Yosys → KLayout → OpenROAD → LibreLane)
+
+### Verification
+- run_drc.sh               — Magic DRC (Design Rule Check)
+- run_lvs.sh               — Netgen LVS (Layout vs. Schematic)
+
+### Simulation
+- crosssim.yaml            — CrossSim hardware-accurate MVM simulation config
+- run_crosssim.py          — CrossSim Python runner script
+- run_pyspice.py           — PySpice/Ngspice crossbar simulation
+- fecim_lk.va              — OpenVAF Verilog-A L-K compact model
 
 ### Metadata
 - fecim_crossbar_2x2.json       — machine-readable design parameters

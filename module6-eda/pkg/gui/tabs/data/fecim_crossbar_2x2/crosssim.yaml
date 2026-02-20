@@ -1,0 +1,83 @@
+# FeCIM CrossSim Configuration
+# Generated: 2026-02-20
+# Design: fecim_crossbar_2x2
+# Array:  2x2 cells, architecture=passive, mode=storage
+#
+# Usage:
+#   pip install crosssim
+#   python3 -c "from simulator import CrossSimParameters; ..."
+#   OR: python3 run_crosssim.py --config fecim_crossbar_2x2_crosssim.yaml
+#
+# CrossSim documentation: https://github.com/sandialabs/cross-sim/wiki
+# Paper: Taheri et al., DATE 2022
+
+# ── Array geometry ─────────────────────────────────────────────────────────────
+array:
+  rows: 2
+  cols: 2
+  architecture: passive     # passive=0T1R, 1t1r=selector+FeCap, 2t1r=dual-selector
+  task: lookup              # inference | training | lookup
+
+# ── Device model ───────────────────────────────────────────────────────────────
+device:
+  model: ferroelectric_resistive   # FeCIM: resistive state via ferroelectric switching
+  technology: sky130
+
+  # Conductance range (µS)
+  # Source: FeCIM simulation defaults (module6-eda physics-based estimates)
+  g_max: 10.0000          # µS — low-resistance state (LRS / programmed)
+  g_min: 0.001000         # µS — high-resistance state (HRS / erased)
+
+  # Non-idealities
+  noise:
+    model: gaussian_relative       # σ relative to G_range
+    sigma: 0.3000        # µS — cycle-to-cycle variation (~3% of G_range)
+  drift:
+    model: power_law               # G(t) = G0 * (t/t0)^(-beta)
+    beta: 0.02                     # FeCIM retention exponent
+    t0_s: 1.0                      # Reference time (1 second)
+
+# ── Peripheral circuit models ───────────────────────────────────────────────────
+peripherals:
+  dac:
+    bits: 4                       # 4-bit DAC (literature-optimal for CIM, Xu et al. 2021)
+    model: ideal                   # ideal | non_monotonic | with_noise
+    vref: 1.8                     # V (supply voltage)
+
+  adc:
+    bits: 4                       # 4-bit ADC (literature-optimal, ADC dominates 40-60% energy)
+    model: ideal                   # ideal | flash | sar | sigma_delta
+    vref: 1.8                     # V
+
+# ── Parasitic models ────────────────────────────────────────────────────────────
+parasitics:
+  # Word-line (row) resistance
+  wire_resistance:
+    model: lumped                  # lumped | distributed
+    r_wl_ohm: 2.00                 # Ω total word-line resistance (2 cols × 1Ω/cell)
+    r_bl_ohm: 2.00                 # Ω total bit-line resistance (2 rows × 1Ω/cell)
+
+  # Sneak path (passive arrays only)
+  sneak_paths:
+    enabled: true                    # True for passive 0T1R, False for 1T1R/2T1R
+
+# ── Simulation parameters ───────────────────────────────────────────────────────
+simulation:
+  n_runs: 10                       # Monte Carlo runs for noise statistics
+  seed: 42                         # Random seed for reproducibility
+  log_level: INFO
+
+  # Output metrics
+  metrics:
+    - array_output_current         # Column sum currents (A)
+    - effective_conductance        # Per-cell conductance (µS)
+    - snr_db                       # Signal-to-noise ratio (dB)
+    - linearity_error              # INL/DNL from ideal linear response
+
+# ── Output ─────────────────────────────────────────────────────────────────────
+output:
+  directory: output/crosssim
+  formats:
+    - csv                          # Raw current/conductance data
+    - json                         # Structured metrics
+  plot: false                      # Set true for matplotlib visualizations
