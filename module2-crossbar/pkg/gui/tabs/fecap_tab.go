@@ -158,7 +158,7 @@ func (t *FeCAPTab) Content() fyne.CanvasObject {
 		),
 		controlsScroll,
 	)
-	content.SetOffset(0.40)
+	content.SetOffset(0.40) // 40% charge display, 60% controls
 
 	return content
 }

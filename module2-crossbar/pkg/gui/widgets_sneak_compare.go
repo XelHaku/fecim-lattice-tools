@@ -250,7 +250,7 @@ func (w *SneakCompareWidget) CreateRenderer() fyne.WidgetRenderer {
 
 	// Split view
 	splitView := container.NewHSplit(leftPane, rightPane)
-	splitView.SetOffset(0.5)
+	splitView.SetOffset(0.5) // 50% passive heatmap, 50% 1T1R heatmap
 
 	// Info panel at bottom
 	infoPanel := container.NewVBox(

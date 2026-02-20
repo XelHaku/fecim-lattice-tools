@@ -240,6 +240,7 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 		evalBtn.Disable()
 		loadTestBtn.Disable()
 		evalBtn.SetText("Evaluating...")
+		// Evaluation goroutine: runs once per button click; exits after evaluation completes.
 		go func() {
 			ma.evaluateNetwork()
 			fyne.Do(func() {
@@ -255,6 +256,7 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 		loadTestBtn.Disable()
 		evalBtn.Disable()
 		loadTestBtn.SetText("Loading...")
+		// Data loading goroutine: runs once per button click; exits after data is loaded.
 		go func() {
 			ma.loadTestData()
 			fyne.Do(func() {
@@ -373,7 +375,7 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 			ma.classStatsPanel,
 		),
 	)
-	metricsSplit.SetOffset(0.5)
+	metricsSplit.SetOffset(0.5) // 50% confusion matrix, 50% metrics
 
 	// Use HSplit for proportional 3-column layout (like demo2)
 	// Left panel (20%) | Center panel (55%) | Right panel (25%)
@@ -457,7 +459,7 @@ func (ma *MNISTApp) onDigitChanged(pixels []float64) {
 
 	pixels = preprocessIfUserInput(ma.digitCanvas, pixels)
 
-	// Run animated inference in goroutine for smooth UI
+	// Inference goroutine: runs once per digit change; exits after prediction completes.
 	go ma.runInferenceAnimated(pixels)
 }
 

@@ -319,10 +319,10 @@ func (ca *CrossbarApp) createMainLayoutStructure(metricsPanel *MetricsPanel, com
 
 	// Layout with HSplit
 	ca.leftCenterSplit = container.NewHSplit(leftPanel, ca.tabs)
-	ca.leftCenterSplit.SetOffset(0.15)
+	ca.leftCenterSplit.SetOffset(0.15) // 15% nav panel, 85% tab content
 
 	ca.mainSplit = container.NewHSplit(ca.leftCenterSplit, rightPanel)
-	ca.mainSplit.SetOffset(0.75)
+	ca.mainSplit.SetOffset(0.75) // 75% nav+tabs, 25% right info panel
 
 	// Create responsive detector for breakpoint-based layout adjustments
 	ca.responsiveDetector = sharedwidgets.NewResponsiveDetector(ca.onBreakpointChangeEnhanced)

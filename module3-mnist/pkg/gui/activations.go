@@ -146,10 +146,10 @@ func (lav *LayerActivationView) CreateRenderer() fyne.WidgetRenderer {
 
 	// Use HSplit for proper proportional layout that resizes
 	leftSplit := container.NewHSplit(inputBox, hiddenBox)
-	leftSplit.SetOffset(0.45)
+	leftSplit.SetOffset(0.45) // 45% input layer, 55% hidden layer
 
 	mainSplit := container.NewHSplit(leftSplit, outputBox)
-	mainSplit.SetOffset(0.65)
+	mainSplit.SetOffset(0.65) // 65% input+hidden, 35% output
 
 	return widget.NewSimpleRenderer(mainSplit)
 }

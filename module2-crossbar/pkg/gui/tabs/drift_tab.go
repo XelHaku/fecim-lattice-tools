@@ -129,7 +129,7 @@ func (t *DriftTab) Content() fyne.CanvasObject {
 		),
 		rightPanel,
 	)
-	content.SetOffset(0.6)
+	content.SetOffset(0.6) // 60% chart, 40% controls
 
 	return content
 }

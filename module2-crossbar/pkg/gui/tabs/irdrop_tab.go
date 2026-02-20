@@ -128,7 +128,7 @@ func (t *IRDropTab) Content() fyne.CanvasObject {
 		),
 		rightPanel,
 	)
-	content.SetOffset(0.6)
+	content.SetOffset(0.6) // 60% heatmap, 40% controls
 
 	return content
 }

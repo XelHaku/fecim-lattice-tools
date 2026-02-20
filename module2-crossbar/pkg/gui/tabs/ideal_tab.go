@@ -130,7 +130,7 @@ This is the theoretical best case.`
 		),
 		controls,
 	)
-	content.SetOffset(0.65)
+	content.SetOffset(0.65) // 65% heatmap, 35% controls
 
 	return content
 }

@@ -309,7 +309,7 @@ func (b *BeforeAfterToggle) CreateRenderer() fyne.WidgetRenderer {
 	rightPane := container.NewBorder(b.rightLabel, nil, nil, nil, b.rightHeatmap)
 
 	splitView := container.NewHSplit(leftPane, rightPane)
-	splitView.SetOffset(0.5)
+	splitView.SetOffset(0.5) // 50% ideal heatmap, 50% actual heatmap
 
 	// Top controls with toggle, stats, and legend
 	topControls := container.NewVBox(

@@ -106,7 +106,11 @@ type App struct {
 	timeScale float64 // Simulation time scaling (1.0 = real-time)
 	simTime   float64
 
-	// Write/Read Demo state (improved physics)
+	// Write-Read-Demo (wrd) fields
+	// These fields drive the ISPP write-verify-read demo cycle (WaveformWriteReadDemo).
+	// "wrd" is short for Write-Read-Demo — a project-internal abbreviation.
+	// All wrd* state fields are protected by a.mu. UI widget fields (wrdRangeLabel,
+	// wrdRangeSlider) must only be accessed from the Fyne main thread.
 	wrdPhase           int     // 0=prep, 1=unused (hold-prep), 2=write, 3/4=unused, 5=display
 	wrdTargetLevel     int     // Target level to write (1-30)
 	wrdNextTargetLevel int     // Queued next target (applied at next PREP start)
@@ -196,8 +200,7 @@ type App struct {
 	relaxCompUp   []float64 // Relaxation compensation factors (ascending, 0-indexed)
 	relaxCompDown []float64 // Relaxation compensation factors (descending, 0-indexed)
 
-	// ISPP (Incremental Step Pulse Programming) state
-	// True ISPP: climb hysteresis S-curve incrementally instead of single calibrated pulse
+	// ISPP (Incremental Step Pulse Programming) convergence state
 	isppEnabled        bool    // Whether to use ISPP algorithm (default: true)
 	isppPulseCount     int     // Current pulse number in ISPP sequence (1-based)
 	isppCurrentVoltage float64 // Current ISPP pulse voltage (E-field)
@@ -295,7 +298,7 @@ type App struct {
 	adaptiveISPP *physics.AdaptiveISPP // Phase 2 Adaptive ISPP
 	lkSolver     *physics.LKSolver     // Shared L-K Solver for time-domain physics
 
-	// LK polydomain ensemble toggle for ISPP waveform only.
+	// LK polydomain ensemble for ISPP — disabled in GUI, used in tests only
 	lkISPPPolydomainEnabled bool
 	lkISPPPolydomainDomains int
 	lkISPPPolydomainSeed    uint64
@@ -495,7 +498,7 @@ func (a *App) run() error {
 	stopCh := make(chan struct{})
 	var simWG sync.WaitGroup
 
-	// Try to load saved calibration, or perform fresh calibration at room temp
+	// Calibration goroutine: runs once at startup; exits after first calibration completes.
 	go func() {
 		time.Sleep(100 * time.Millisecond) // Let UI settle
 		a.mu.Lock()
@@ -509,6 +512,7 @@ func (a *App) run() error {
 		a.mu.Unlock()
 	}()
 
+	// Simulation goroutine: runs until a.running.Store(false) on window close.
 	simWG.Add(1)
 	go func() {
 		defer simWG.Done()

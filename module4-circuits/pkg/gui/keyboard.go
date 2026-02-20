@@ -93,15 +93,15 @@ func (ca *CircuitsApp) handleKeyPress(ke *fyne.KeyEvent) {
 
 	case fyne.KeyW:
 		// Switch to Write mode
-		ca.setMode(ModeWrite)
+		ca.setMode(OperationModeWrite)
 
 	case fyne.KeyD:
 		// Switch to Read mode
-		ca.setMode(ModeRead)
+		ca.setMode(OperationModeRead)
 
 	case fyne.KeyM:
 		// Switch to Compute mode
-		ca.setMode(ModeCompute)
+		ca.setMode(OperationModeCompute)
 
 	case fyne.KeyA:
 		// Toggle animation
@@ -216,25 +216,25 @@ func (ca *CircuitsApp) prevTab() {
 
 // programSelectedCell programs the currently selected cell
 func (ca *CircuitsApp) programSelectedCell() {
-	if ca.opsProgramBtn != nil && ca.currentMode == ModeWrite {
+	if ca.opsProgramBtn != nil && ca.currentMode == OperationModeWrite {
 		ca.opsProgramBtn.OnTapped()
 	}
 }
 
 // readSelectedCell reads the currently selected cell
 func (ca *CircuitsApp) readSelectedCell() {
-	if ca.opsReadBtn != nil && ca.currentMode == ModeRead {
+	if ca.opsReadBtn != nil && ca.currentMode == OperationModeRead {
 		ca.opsReadBtn.OnTapped()
 	}
 }
 
 // runCompute runs the compute operation
 func (ca *CircuitsApp) runCompute() {
-	if ca.opsComputeBtn != nil && ca.currentMode == ModeCompute {
+	if ca.opsComputeBtn != nil && ca.currentMode == OperationModeCompute {
 		ca.opsComputeBtn.OnTapped()
 		return
 	}
-	if ca.actionComputeBtn != nil && ca.currentMode == ModeCompute {
+	if ca.actionComputeBtn != nil && ca.currentMode == OperationModeCompute {
 		ca.actionComputeBtn.OnTapped()
 	}
 }

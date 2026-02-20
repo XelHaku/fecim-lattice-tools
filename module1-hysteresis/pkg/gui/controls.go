@@ -317,17 +317,15 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			if a.statusLabel != nil {
 				a.statusLabel.SetText("DCC method is not yet available in this build; using current ISPP mode")
 			}
-			// Revert selection to current mode
-			go func() {
-				time.Sleep(100 * time.Millisecond)
-				fyne.Do(func() {
-					if a.writeController.StepMode == "logarithmic" {
-						a.isppMethodSelect.SetSelected("Logarithmic (A-ISPP)")
-					} else {
-						a.isppMethodSelect.SetSelected("Linear (Standard)")
-					}
-				})
-			}()
+			// Capture current mode under lock, then revert via fyne.Do to avoid
+			// re-entrant SetSelected within OnChanged (fyne.Do queues for next cycle).
+			revertTo := "Linear (Standard)"
+			if a.writeController.StepMode == "logarithmic" {
+				revertTo = "Logarithmic (A-ISPP)"
+			}
+			fyne.Do(func() {
+				a.isppMethodSelect.SetSelected(revertTo)
+			})
 		}
 	})
 	a.isppMethodSelect.SetSelected("Logarithmic (A-ISPP)")
@@ -683,9 +681,10 @@ func (a *App) createControlsPanel() fyne.CanvasObject {
 			effPr := a.material.Pr
 			a.mu.Unlock()
 
-			// Only update material markers (Ec/Pr lines), NOT the axis bounds
-			// The X-axis should stay fixed - only the marker positions change
-			a.plot.SetMaterialParams(effEc, effPr)
+			// SetMaterialParams calls Refresh() — must run on UI thread.
+			fyne.Do(func() {
+				a.plot.SetMaterialParams(effEc, effPr)
+			})
 		}()
 
 		// Update label immediately (don't wait for calibration)

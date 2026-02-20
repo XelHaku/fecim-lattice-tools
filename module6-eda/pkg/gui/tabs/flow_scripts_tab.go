@@ -2,6 +2,7 @@
 // Flow Scripts tab: shows generated EDA tool scripts for the open-source RTL-to-GDS flow.
 //
 // Scripts generated cover:
+//   Design Summary    — formatted design report (area, electrical, timing, validation)
 //   Yosys TCL         — hierarchy check / synthesis
 //   OpenROAD TCL      — placement check + timing
 //   KLayout Python    — DEF+LEF → GDS II
@@ -19,6 +20,8 @@
 package tabs
 
 import (
+	"fmt"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
@@ -29,6 +32,8 @@ import (
 )
 
 var flowScriptFormats = []string{
+	// Summary report
+	"Design Summary (design_summary.txt)",
 	// Physical design flow
 	"Yosys TCL (synthesis.tcl)",
 	"OpenROAD TCL (openroad_flow.tcl)",
@@ -84,6 +89,24 @@ func MakeFlowScriptsTab(cfg *config.ArrayConfig, window fyne.Window) fyne.Canvas
 		dialog.ShowInformation("Copied", "Script copied to clipboard.", window)
 	})
 
+	saveBtn := widget.NewButton("Save to File…", func() {
+		ext := flowScriptExtension(formatSelect.Selected)
+		design := fmt.Sprintf("fecim_crossbar_%dx%d", cfg.Rows, cfg.Cols)
+		defaultName := design + ext
+
+		dlg := dialog.NewFileSave(func(w fyne.URIWriteCloser, err error) {
+			if err != nil || w == nil {
+				return
+			}
+			defer w.Close()
+			if _, werr := w.Write([]byte(preview.Text)); werr != nil {
+				dialog.ShowError(werr, window)
+			}
+		}, window)
+		dlg.SetFileName(defaultName)
+		dlg.Show()
+	})
+
 	toolNote := widget.NewLabel("Tools: yosys · klayout · openroad · librelane · magic · netgen · ngspice · PySpice · CrossSim · openvaf")
 	toolNote.Wrapping = fyne.TextWrapWord
 
@@ -93,6 +116,7 @@ func MakeFlowScriptsTab(cfg *config.ArrayConfig, window fyne.Window) fyne.Canvas
 			formatSelect,
 			refreshBtn,
 			copyBtn,
+			saveBtn,
 		),
 		status,
 		toolNote,
@@ -104,6 +128,34 @@ func MakeFlowScriptsTab(cfg *config.ArrayConfig, window fyne.Window) fyne.Canvas
 	return container.NewBorder(header, nil, nil, nil, container.NewScroll(preview))
 }
 
+// flowScriptExtension returns a suitable file extension for the given script format.
+func flowScriptExtension(format string) string {
+	switch format {
+	case "Design Summary (design_summary.txt)":
+		return ".txt"
+	case "Yosys TCL (synthesis.tcl)", "OpenROAD TCL (openroad_flow.tcl)", "OpenSTA TCL (opensta_check.tcl)":
+		return ".tcl"
+	case "KLayout Python (gen_gds.py)", "CrossSim Python (run_crosssim.py)", "PySpice Simulation (run_pyspice.py)":
+		return ".py"
+	case "SDC Constraints (constraints.sdc)":
+		return ".sdc"
+	case "LibreLane JSON (config.json)":
+		return ".json"
+	case "OpenLane v1 TCL (config.tcl)":
+		return ".tcl"
+	case "OpenLane v1 Macro Placement (macros.cfg)":
+		return ".cfg"
+	case "Shell Runner (run_flow.sh)", "Netgen LVS Script (run_lvs.sh)", "Magic DRC Script (run_drc.sh)":
+		return ".sh"
+	case "CrossSim YAML (crosssim.yaml)":
+		return ".yaml"
+	case "OpenVAF Verilog-A (fecim_lk.va)":
+		return ".va"
+	default:
+		return ".txt"
+	}
+}
+
 // loadFlowScriptContent generates or loads the script for the given format.
 func loadFlowScriptContent(format string, cfg *config.ArrayConfig) (content, desc string) {
 	// Default cell config used for single-cell generators (netgen, magic, OpenVAF)
@@ -112,6 +164,11 @@ func loadFlowScriptContent(format string, cfg *config.ArrayConfig) (content, des
 	cellCfg.Technology = cfg.Technology
 
 	switch format {
+	// ── Summary ────────────────────────────────────────────────────────────
+	case "Design Summary (design_summary.txt)":
+		return export.GenerateDesignSummary(*cfg),
+			"Array design summary — physical, electrical, and timing parameters for the configured crossbar"
+
 	// ── Physical design flow ───────────────────────────────────────────────
 	case "Yosys TCL (synthesis.tcl)":
 		return export.GenerateSynthesisScript(*cfg),

@@ -164,7 +164,7 @@ func (ca *ComparisonApp) Run() {
 	ca.updateCalculations()
 	ca.updateStatus("Ready. Select workload and adjust parameters. Press ? for shortcuts.")
 
-	// Start animation loop
+	// Animation goroutine: runs at 30 FPS until ca.running=false on window close.
 	ca.animMu.Lock()
 	ca.running = true
 	ca.animMu.Unlock()
@@ -316,6 +316,7 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	calcBtn = widget.NewButton("Calculate", func() {
 		calcBtn.Disable()
 		calcBtn.SetText("Calculating...")
+		// Calculation goroutine: runs once per button click; exits after updateCalculations completes.
 		go func() {
 			ca.updateCalculations()
 			sharedwidgets.SafeDo(func() {

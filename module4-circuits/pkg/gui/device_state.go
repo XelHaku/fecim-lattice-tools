@@ -17,9 +17,9 @@ import (
 type OperationMode int
 
 const (
-	ModeWrite OperationMode = iota
-	ModeRead
-	ModeCompute
+	OperationModeWrite   OperationMode = iota
+	OperationModeRead
+	OperationModeCompute
 )
 
 // OpMode represents the unified operation mode for the device simulation
@@ -96,7 +96,9 @@ func loadCalibrationParams() CalibrationParams {
 // MaxPracticalVoltage: Hardware DAC/driver limit (prevents unrealistic voltages)
 const MaxPracticalVoltage = 3.0
 
-// DeviceState holds the unified simulation state
+// DeviceState holds mutable simulation state for the circuit visualization.
+// Threading: all fields are protected by the parent CrossbarApp.stateMu RWMutex.
+// Callers must hold stateMu (read or write lock as appropriate) when accessing fields.
 type DeviceState struct {
 	// Mutex for thread-safe access to state
 	mu sync.RWMutex

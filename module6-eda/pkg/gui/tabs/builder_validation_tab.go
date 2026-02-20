@@ -1335,7 +1335,7 @@ Date: %s
 		previewTabs,
 		validationSection,
 	)
-	mainSplit.SetOffset(0.55)
+	mainSplit.SetOffset(0.55) // 55% preview tabs, 45% validation section
 
 	// Main layout: fixed top section, resizable middle/bottom
 	mainContent := container.NewBorder(
