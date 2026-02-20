@@ -556,7 +556,7 @@ func TestGenerateLayoutSVG_2T1RCSLLines(t *testing.T) {
 	}
 }
 
-func TestGenerateLayoutSVG_2T1RNoSLLines(t *testing.T) {
+func TestGenerateLayoutSVG_2T1RHasBothSLAndCSL(t *testing.T) {
 	arrayCfg := config.DefaultArrayConfig()
 	arrayCfg.Rows = 4
 	arrayCfg.Cols = 4
@@ -564,13 +564,19 @@ func TestGenerateLayoutSVG_2T1RNoSLLines(t *testing.T) {
 
 	svg := GenerateLayoutSVG(arrayCfg, DefaultSVGConfig())
 
-	// 2T1R should NOT have standalone SL[] labels (CSL[] is used instead).
-	// Note: "CSL[" contains "SL[" as substring so we check for ">SL[" to match text nodes.
-	if strings.Contains(svg, ">SL[") {
-		t.Error("2T1R architecture should not have SL[] text labels")
+	// 2T1R has both SL (source line, per-column) and CSL (column select, per-column).
+	// Both should be rendered in the SVG.
+	if !strings.Contains(svg, ">SL[") {
+		t.Error("2T1R architecture should have SL[] text labels (SL is a 2T1R port)")
 	}
-	if strings.Contains(svg, "class=\"wire-sl\"") {
-		t.Error("2T1R architecture should not have wire-sl elements")
+	if !strings.Contains(svg, "class=\"wire-sl\"") {
+		t.Error("2T1R architecture should have wire-sl elements (SL is a 2T1R port)")
+	}
+	if !strings.Contains(svg, ">CSL[") {
+		t.Error("2T1R architecture should have CSL[] text labels")
+	}
+	if !strings.Contains(svg, "class=\"wire-csl\"") {
+		t.Error("2T1R architecture should have wire-csl elements")
 	}
 }
 
@@ -605,9 +611,9 @@ func TestGenerateLayoutSVG_2T1RLegend(t *testing.T) {
 	if !strings.Contains(svg, "CSL (Col Select)") {
 		t.Error("2T1R legend missing CSL description")
 	}
-	// Should NOT show SL in legend
-	if strings.Contains(svg, "SL (Source Line)") {
-		t.Error("2T1R legend should not contain SL description")
+	// 2T1R has both SL and CSL ports — SL should appear in legend too
+	if !strings.Contains(svg, "SL (Source Line)") {
+		t.Error("2T1R legend missing SL description (2T1R has SL per column)")
 	}
 }
 

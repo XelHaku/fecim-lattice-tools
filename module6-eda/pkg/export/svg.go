@@ -55,9 +55,11 @@ func GenerateLayoutSVG(cfg config.ArrayConfig, svgCfg SVGConfig) string {
 	totalWidth := arrayWidth + 2*svgCfg.Margin
 	totalHeight := arrayHeight + 2*svgCfg.Margin
 
-	// If 1T1R or 2T1R, add space for extra labels at bottom
-	if is1T1R || is2T1R {
-		totalHeight += 30
+	// Extra vertical space for signal labels below the array
+	if is2T1R {
+		totalHeight += 50 // SL labels at +50, CSL labels at +65, legend below
+	} else if is1T1R {
+		totalHeight += 30 // SL labels at +50
 	}
 
 	// SVG header
@@ -155,12 +157,12 @@ func GenerateLayoutSVG(cfg config.ArrayConfig, svgCfg SVGConfig) string {
 	}
 	sb.WriteString("\n")
 
-	// Draw Source Lines for 1T1R (vertical, separate from BL)
-	if is1T1R {
-		sb.WriteString("  <!-- Source Lines (1T1R) -->\n")
+	// Draw Source Lines for 1T1R and 2T1R (vertical, separate from BL)
+	if is1T1R || is2T1R {
+		sb.WriteString("  <!-- Source Lines -->\n")
 		for col := 0; col < cfg.Cols; col++ {
 			x := svgCfg.Margin + float64(col)*svgCfg.CellWidth + svgCfg.CellWidth/2 + 8
-			// SL wire (offset from BL)
+			// SL wire (offset right of BL center)
 			sb.WriteString(fmt.Sprintf(`  <line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" class="wire-sl" stroke-dasharray="4,2"/>
 `, x, svgCfg.Margin, x, svgCfg.Margin+arrayHeight+20))
 			// SL pin
@@ -190,7 +192,7 @@ func GenerateLayoutSVG(cfg config.ArrayConfig, svgCfg SVGConfig) string {
 `, x, svgCfg.Margin+arrayHeight+20))
 			if svgCfg.ShowLabels {
 				sb.WriteString(fmt.Sprintf(`  <text x="%.1f" y="%.1f" class="label" text-anchor="middle" fill="#ff8800">CSL[%d]</text>
-`, x, svgCfg.Margin+arrayHeight+50, col))
+`, x, svgCfg.Margin+arrayHeight+65, col))
 			}
 		}
 		sb.WriteString("\n")
@@ -275,8 +277,10 @@ func GenerateLayoutSVG(cfg config.ArrayConfig, svgCfg SVGConfig) string {
 `)
 	}
 	if is2T1R {
-		sb.WriteString(`    <line x1="200" y1="0" x2="220" y2="0" class="wire-csl" stroke-dasharray="4,2"/>
-    <text x="225" y="4" class="label-small" fill="#ff8800">CSL (Col Select)</text>
+		sb.WriteString(`    <line x1="200" y1="0" x2="220" y2="0" class="wire-sl" stroke-dasharray="4,2"/>
+    <text x="225" y="4" class="label-small">SL (Source Line)</text>
+    <line x1="320" y1="0" x2="340" y2="0" class="wire-csl" stroke-dasharray="4,2"/>
+    <text x="345" y="4" class="label-small" fill="#ff8800">CSL (Col Select)</text>
 `)
 	}
 	sb.WriteString("  </g>\n\n")
