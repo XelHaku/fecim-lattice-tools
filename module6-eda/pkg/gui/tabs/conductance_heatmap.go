@@ -109,6 +109,30 @@ func makeConductanceChecker(rows, cols int) conductanceMatrix {
 	return m
 }
 
+// makeConductanceNeuralWeights simulates a trained neural network weight matrix.
+// Values follow a zero-centered Gaussian distribution (σ=0.18) mapped to [0,1],
+// illustrating how a weight distribution spanning G_min..G_max looks in a CIM array.
+// Seed is fixed (42) so the pattern is reproducible across refreshes.
+func makeConductanceNeuralWeights(rows, cols int) conductanceMatrix {
+	rng := rand.New(rand.NewSource(42))
+	m := conductanceMatrix{Rows: rows, Cols: cols, Values: make([][]float64, rows)}
+	for i := range m.Values {
+		m.Values[i] = make([]float64, cols)
+		for j := range m.Values[i] {
+			// Box-Muller (stdlib NormFloat64): μ=0.5, σ=0.18 → mid-range weights
+			v := rng.NormFloat64()*0.18 + 0.5
+			if v < 0 {
+				v = 0
+			}
+			if v > 1 {
+				v = 1
+			}
+			m.Values[i][j] = v
+		}
+	}
+	return m
+}
+
 // newConductanceRaster creates a canvas.Raster rendering the conductance matrix
 // using the hot colormap (blue=low, yellow=high). Row 0 is at the bottom.
 func newConductanceRaster(m conductanceMatrix) *canvas.Raster {
@@ -239,7 +263,7 @@ func MakeConductanceHeatmapPanel(cfg *config.ArrayConfig) fyne.CanvasObject {
 		cfg = &config.ArrayConfig{Rows: 8, Cols: 8}
 	}
 
-	patterns := []string{"Gradient", "Random", "Checkerboard", "Uniform Hi", "Uniform Lo"}
+	patterns := []string{"Gradient", "Random", "Checkerboard", "Uniform Hi", "Uniform Lo", "Neural Weights"}
 	patternSelect := widget.NewSelect(patterns, nil)
 	patternSelect.SetSelected("Gradient")
 
@@ -281,6 +305,8 @@ func MakeConductanceHeatmapPanel(cfg *config.ArrayConfig) fyne.CanvasObject {
 			m = makeConductanceUniform(rows, cols, 0.9)
 		case "Uniform Lo":
 			m = makeConductanceUniform(rows, cols, 0.1)
+		case "Neural Weights":
+			m = makeConductanceNeuralWeights(rows, cols)
 		default: // Gradient
 			m = makeConductanceGradient(rows, cols)
 		}
@@ -321,7 +347,8 @@ func MakeConductanceHeatmapPanel(cfg *config.ArrayConfig) fyne.CanvasObject {
 	)
 
 	descLabel := widget.NewLabelWithStyle(
-		"Note: Patterns are illustrative (not from device state). Blue = low conductance, Yellow = high.",
+		"Note: Patterns are illustrative (not from device state). Blue = low conductance, Yellow = high. "+
+			"'Neural Weights' shows a Gaussian weight distribution (σ=0.18) typical after training — most cells cluster near mid-conductance.",
 		fyne.TextAlignLeading,
 		fyne.TextStyle{Italic: true},
 	)
