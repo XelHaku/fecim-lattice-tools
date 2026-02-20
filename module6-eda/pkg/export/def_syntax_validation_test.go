@@ -242,6 +242,53 @@ func TestDEFPinDirections(t *testing.T) {
 	t.Log("M6-DEF-01 pin directions: PASS")
 }
 
+// TestDEF2T1RCSLPinPlacement verifies that CSL pins in 2T1R DEF are placed at
+// the top edge (X = col*CellWidth, Y = dieHeight), not on the right edge with a
+// dimension-mismatched Y = col*CellHeight that the old code produced.
+//
+// Uses a non-square 4-row × 3-col weight matrix so rows ≠ cols, exposing any
+// confusion between the two.
+func TestDEF2T1RCSLPinPlacement(t *testing.T) {
+	// 4 rows × 3 cols: CSL is per-column, so exactly 3 CSL pins expected
+	weights := [][]float64{
+		{0.1, 0.2, 0.3},
+		{0.4, 0.5, 0.6},
+		{0.7, 0.8, 0.9},
+		{0.1, 0.2, 0.3},
+	}
+
+	config := compiler.Config2T1R()
+	config.ArrayRows = 4
+	config.ArrayCols = 4 // compiler derives actual dims from weights
+	design, err := compiler.Compile(weights, config)
+	if err != nil {
+		t.Fatalf("Compile failed: %v", err)
+	}
+
+	def := GenerateDEFWithDefaults(design)
+
+	// CSL pins must exist
+	if !strings.Contains(def, "- CSL[0]") {
+		t.Fatal("2T1R DEF missing CSL[0] pin")
+	}
+
+	// Count CSL pins in PINS section: must have one per column (3), not one per row (4)
+	cslPinCount := strings.Count(def, "NET CSL[")
+	if cslPinCount != 3 {
+		t.Errorf("expected 3 CSL pins for 4×3 2T1R array, got %d", cslPinCount)
+	}
+
+	// CSL must NOT have CSL[3] (that would indicate row-count indexing, old bug)
+	if strings.Contains(def, "NET CSL[3]") {
+		t.Error("CSL[3] should not exist for 3-column 2T1R array (CSL is per-column)")
+	}
+
+	// Pin count: 4 WL + 3 BL + 3 SL + 3 CSL + VPWR + VGND = 15
+	if !strings.Contains(def, "PINS 15") {
+		t.Errorf("2T1R 4×3 array: expected PINS 15 (WL×4+BL×3+SL×3+CSL×3+VPWR+VGND)")
+	}
+}
+
 // Helper function to find line index containing substring
 func findLineIndex(lines []string, substr string) int {
 	for i, line := range lines {

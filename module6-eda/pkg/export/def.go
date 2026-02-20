@@ -134,7 +134,7 @@ func GenerateDEF(design *compiler.ArrayDesign, config DEFConfig) string {
 	}
 	if is2T1R {
 		sb.WriteString("# Note: 2T1R includes Column Select Line (CSL) pins for individual cell addressing\n")
-		sb.WriteString("# CSL pins located at right edge (column transistor gates)\n")
+		sb.WriteString("# CSL pins located at top edge (column transistor gates, same X as BL)\n")
 	}
 	sb.WriteString("\n")
 
@@ -235,13 +235,16 @@ func GenerateDEF(design *compiler.ArrayDesign, config DEFConfig) string {
 		}
 	}
 
-	// Column Select Line pins for 2T1R (right edge)
+	// Column Select Line pins for 2T1R (top edge, like BL).
+	// CSL[col] is per-column (vertical wire), so its die-level pin uses the
+	// column's X centre — not the row-based Y formula the old code mistakenly used.
+	// met1 (vs BL's met2) avoids a layer conflict at the top boundary.
 	if is2T1R {
 		for col := 0; col < numCols; col++ {
-			pinY := config.OriginY + float64(col)*config.CellHeight + config.CellHeight/2
-			pinYDBU := int(pinY * float64(dbu))
+			pinX := config.OriginX + float64(col)*config.CellWidth + config.CellWidth/2
+			pinXDBU := int(pinX * float64(dbu))
 			sb.WriteString(fmt.Sprintf("    - CSL[%d] + NET CSL[%d] + DIRECTION INPUT + USE SIGNAL\n", col, col))
-			sb.WriteString(fmt.Sprintf("      + LAYER met1 ( 0 0 ) ( 80 200 ) + FIXED ( %d %d ) N ;\n", dieWidthDBU, pinYDBU))
+			sb.WriteString(fmt.Sprintf("      + LAYER met1 ( 0 0 ) ( 80 200 ) + FIXED ( %d %d ) N ;\n", pinXDBU, dieHeightDBU))
 		}
 	}
 
