@@ -311,17 +311,18 @@ func makeFilesContent() fyne.CanvasObject {
 	// Section 1: How We Generate Files
 	genText := widget.NewLabel(`VERILOG GENERATION:
 • Loop through array dimensions (Rows × Cols)
-• Instantiate cell macros: fecim_bitcell (passive) or fecim_1t1r_bitcell (1T1R)
+• Instantiate cell macros: fecim_bitcell (passive), fecim_1t1r_bitcell (1T1R), or fecim_2t1r_bitcell (2T1R)
 • Connect WL[row] to each cell's WL pin
 • Connect BL[col] to each cell's BL pin
 • For 1T1R: also connect SL[col] to each cell's SL pin
+• For 2T1R: also connect CSL[col] (column transistor gate) and SL[col] to each cell's pins
 
 DEF GENERATION:
 • Calculate die area from cell dimensions + margins
 • Generate SITE definition matching the LEF
 • Generate ROW definitions (required for placement validation)
 • Place each cell at calculated (X, Y) coordinates with FIXED keyword
-• Declare all pins: WL[], BL[], SL[] (1T1R), VPWR, VGND
+• Declare all pins: WL[], BL[], SL[] (1T1R/2T1R), CSL[] (2T1R only), VPWR, VGND
 
 LEF GENERATION:
 • Define LAYER (met1) for pin geometries

@@ -854,6 +854,52 @@ func TestConductancePatterns(t *testing.T) {
 	})
 }
 
+func TestConductancePatterns_NeuralWeights(t *testing.T) {
+	rows, cols := 16, 16
+	m := makeConductanceNeuralWeights(rows, cols)
+
+	t.Run("dimensions", func(t *testing.T) {
+		if m.Rows != rows || m.Cols != cols {
+			t.Fatalf("expected %d×%d, got %d×%d", rows, cols, m.Rows, m.Cols)
+		}
+	})
+
+	t.Run("values_in_range", func(t *testing.T) {
+		for i := range m.Values {
+			for j, v := range m.Values[i] {
+				if v < 0 || v > 1 {
+					t.Errorf("[%d][%d]: %f out of [0,1]", i, j, v)
+				}
+			}
+		}
+	})
+
+	t.Run("reproducible_fixed_seed", func(t *testing.T) {
+		m2 := makeConductanceNeuralWeights(rows, cols)
+		for i := range m.Values {
+			for j := range m.Values[i] {
+				if m.Values[i][j] != m2.Values[i][j] {
+					t.Errorf("[%d][%d]: second call gave different value (seed should be fixed)", i, j)
+				}
+			}
+		}
+	})
+
+	t.Run("mean_near_half", func(t *testing.T) {
+		sum := 0.0
+		n := rows * cols
+		for i := range m.Values {
+			for _, v := range m.Values[i] {
+				sum += v
+			}
+		}
+		mean := sum / float64(n)
+		if mean < 0.40 || mean > 0.60 {
+			t.Errorf("expected mean ≈ 0.5 (σ=0.18 Gaussian centered at 0.5), got %.3f", mean)
+		}
+	})
+}
+
 func TestConductanceLevelCounts(t *testing.T) {
 	// Uniform Hi (0.9) → all cells should land in the top bin of 30 levels.
 	m := makeConductanceUniform(4, 4, 0.9)
