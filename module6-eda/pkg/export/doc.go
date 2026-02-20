@@ -24,7 +24,7 @@
 //
 // DEF (.def):
 // Design Exchange Format file with cell placements. Uses FIXED keyword for
-// locked positions compatible with OpenLane's PLACEMENT_CURRENT_DEF injection.
+// locked positions compatible with OpenLane's FP_DEF_TEMPLATE injection.
 //
 // # OpenLane Integration
 //
@@ -37,7 +37,7 @@
 //
 //	// OpenLane config.json:
 //	// "VERILOG_FILES": "dir::crossbar.v",
-//	// "PLACEMENT_CURRENT_DEF": "dir::crossbar.def",
+//	// "FP_DEF_TEMPLATE": "dir::crossbar.def",
 //	// "SYNTH_ELABORATE_ONLY": 1,
 //	// "PL_SKIP_INITIAL_PLACEMENT": 1
 //

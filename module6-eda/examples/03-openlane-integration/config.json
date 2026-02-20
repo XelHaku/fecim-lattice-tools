@@ -20,7 +20,7 @@
   "DIE_AREA": "0 0 100 100",
   "DESIGN_IS_CORE": 0,
 
-  "PLACEMENT_CURRENT_DEF": "dir::src/crossbar.def",
+  "FP_DEF_TEMPLATE": "dir::src/crossbar.def",
   "PL_SKIP_INITIAL_PLACEMENT": 1,
 
   "FP_PDN_ENABLE_RAILS": 0,

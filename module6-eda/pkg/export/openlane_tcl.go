@@ -25,7 +25,6 @@ package export
 
 import (
 	"fmt"
-	"math"
 	"strings"
 	"time"
 
@@ -110,8 +109,6 @@ set ::env(STD_CELL_LIBRARY) sky130_fd_sc_hd`
 
 	// IR drop: check is useful for any design
 	runIRDrop := 1
-
-	_ = math.Sqrt // keep math import if needed later
 
 	return fmt.Sprintf(`########################################################################
 # FeCIM OpenLane v1 Configuration

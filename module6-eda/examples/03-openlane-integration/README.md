@@ -62,7 +62,7 @@ make mount
 {
   "DESIGN_NAME": "fecim_crossbar_16x16",
   "VERILOG_FILES": "dir::src/crossbar.v",
-  "PLACEMENT_CURRENT_DEF": "dir::src/crossbar.def",
+  "FP_DEF_TEMPLATE": "dir::src/crossbar.def",
   "PL_SKIP_INITIAL_PLACEMENT": 1
 }
 ```

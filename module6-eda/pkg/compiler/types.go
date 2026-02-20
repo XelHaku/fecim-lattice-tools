@@ -46,7 +46,7 @@
 // # OpenLane Integration
 //
 // Generated DEF files use FIXED placement keywords for OpenLane integration.
-// Set PLACEMENT_CURRENT_DEF and PL_SKIP_INITIAL_PLACEMENT=1 in config.
+// Set FP_DEF_TEMPLATE and PL_SKIP_INITIAL_PLACEMENT=1 in config.
 package compiler
 
 // OperationMode defines the target application for the FeCIM array
