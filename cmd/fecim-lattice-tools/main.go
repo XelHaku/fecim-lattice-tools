@@ -612,15 +612,6 @@ func main() {
 		selectView(7) // Documentation is view index 7
 	})
 
-	// L05: Unified "Learn More" entry point (About the Science)
-	learnMoreBtn := widget.NewButtonWithIcon("Learn More", theme.InfoIcon(), func() {
-		log.Button("LearnMore")
-		selectView(7)
-		// After switching to docs, navigate to the unified entry page.
-		demos.demo7.OpenAboutScience()
-	})
-	learnMoreBtn.Importance = widget.LowImportance
-
 	// Create theme toggle button (cycles through dark/light/high-contrast)
 	themeToggleBtn := themes.CreateQuickToggle(themeManager)
 
@@ -652,7 +643,7 @@ func main() {
 	// Border layout gives the right-side HBox its natural size first; the label
 	// fills remaining space and truncates if the window is narrow.
 	fmt.Println("[STARTUP] Creating toolbar...")
-	rightButtons := container.NewHBox(homeBtn, docsBtn, learnMoreBtn, undoToolbar, themeToggleBtn, micLevelWidget, screenshotBtn, recordBtn, recordTimeLabel, closeBtn)
+	rightButtons := container.NewHBox(homeBtn, docsBtn, undoToolbar, themeToggleBtn, micLevelWidget, screenshotBtn, recordBtn, recordTimeLabel, closeBtn)
 	toolbar := container.NewBorder(
 		nil, nil,
 		currentModuleLabel, // Left side: truncates when narrow
