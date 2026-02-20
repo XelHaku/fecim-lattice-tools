@@ -60,7 +60,11 @@ func parseLEFPinsAndMacro(content string) ([]string, string) {
 
 func parseVerilogPortsAndModule(content string) ([]string, string) {
 	moduleRe := regexp.MustCompile(`(?m)^\s*module\s+(\w+)`)
-	declRe := regexp.MustCompile(`(?m)^\s*(input|output|inout)\s+(?:wire|reg\s+)?([^;]+);`)
+	// Match both ANSI-style (input wire WL,  // comment) and non-ANSI (input WL;) declarations.
+	// Captures the identifier immediately after the optional wire/reg keyword.
+	// Non-ANSI style groups all ports into one multi-line match via [^;]+; which causes
+	// comment words like "Ground" to be mistaken for the last port name (VGND).
+	declRe := regexp.MustCompile(`(?m)^\s*(?:input|output|inout)\s+(?:wire\s+|reg\s+)?(\w+)`)
 
 	module := ""
 	if m := moduleRe.FindStringSubmatch(content); m != nil {
@@ -68,15 +72,7 @@ func parseVerilogPortsAndModule(content string) ([]string, string) {
 	}
 	var ports []string
 	for _, m := range declRe.FindAllStringSubmatch(content, -1) {
-		chunks := strings.Split(m[2], ",")
-		for _, c := range chunks {
-			name := strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(c), ")"))
-			fields := strings.Fields(name)
-			if len(fields) == 0 {
-				continue
-			}
-			ports = append(ports, strings.TrimSuffix(fields[len(fields)-1], ","))
-		}
+		ports = append(ports, m[1])
 	}
 	return uniqueSorted(ports), module
 }
