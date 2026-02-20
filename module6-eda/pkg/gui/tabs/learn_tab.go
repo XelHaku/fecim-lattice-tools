@@ -448,13 +448,23 @@ func makeFAQContent() fyne.CanvasObject {
 	faq5 := widget.NewCard("Q: How do I use the generated files with LibreLane/OpenLane?", "",
 		widget.NewLabel("A: Export Package creates a ready-to-use directory with run_flow.sh.\n\nWith the bundled script (recommended):\n  cd <export_dir>/\n  bash run_flow.sh\n\nWith LibreLane directly:\n  librelane config.json\n\nWith OpenLane (Docker):\n  flow.tcl -design <your_design_name>"))
 
+	faq6 := widget.NewCard("Q: What validations does this tool NOT perform?", "",
+		widget.NewLabel("A: The following checks are outside scope — you need an external EDA flow for these:\n"+
+			"• Physical DRC (Design Rule Check) — requires foundry PDK + KLayout/Magic\n"+
+			"• Parasitic extraction (RC) — requires Magic/OpenRCX; affects timing\n"+
+			"• Static timing analysis signoff — requires real Liberty files from SPICE char.\n"+
+			"• SPICE-level simulation — requires validated FeFET SPICE model from foundry\n"+
+			"• ESD / latch-up checks — requires PDK-specific LVS runsets\n"+
+			"• Power integrity (IR drop) — requires post-layout simulation with parasitics\n"+
+			"\nGenerated Liberty, LEF, and SDC files are structural templates, not signoff data."))
+
 	troubleCard := widget.NewCard("🔧 Troubleshooting", "",
 		widget.NewLabel("• 'Docker not available': Install Docker Desktop and ensure daemon is running\n• 'Yosys validation failed': Check Verilog syntax in the log output\n• 'DEF validation failed': Ensure cell dimensions match LEF\n• 'Cross-check failed': Regenerate all files to ensure consistency"))
 
 	return container.NewVBox(
 		title,
 		widget.NewSeparator(),
-		faq1, faq2, faq3, faq4, faq5,
+		faq1, faq2, faq3, faq4, faq5, faq6,
 		widget.NewSeparator(),
 		troubleCard,
 	)

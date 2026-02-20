@@ -1525,9 +1525,15 @@ Array: %d × %d cells, mode=%s, arch=%s, tech=%s
 
 	// Log section with improved visibility
 	logOutput.SetMinRowsVisible(6)
+	copyLogBtn := widget.NewButton("Copy Log", func() {
+		if window != nil && logOutput.Text != "" {
+			window.Clipboard().SetContent(logOutput.Text)
+		}
+	})
 	logHeader := container.NewHBox(
 		widget.NewLabelWithStyle("Validation Log", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 		clearLogBtn,
+		copyLogBtn,
 	)
 	logScroll := container.NewScroll(logOutput)
 	logScroll.SetMinSize(fyne.NewSize(0, 140))
