@@ -13,7 +13,7 @@ type CellConfig struct {
 	Name       string  // Cell name, e.g., "fecim_bitcell"
 	Width      float64 // Cell width in μm (SKY130 unithd site width: 0.46 μm)
 	Height     float64 // Cell height in μm (SKY130 standard cell height: 2.72 μm)
-	CellType   string  // "passive" (0T1R) or "1t1r" (with selector)
+	CellType   string  // "passive" (0T1R), "1t1r", or "2t1r"
 	Technology string  // Target PDK, e.g., "sky130"
 
 	// Operating conditions (for Liberty file generation)
@@ -39,7 +39,7 @@ type ArrayConfig struct {
 	Rows         int     // Number of rows (e.g., 4, 8, 16, 32)
 	Cols         int     // Number of columns
 	Mode         string  // "storage", "memory", or "compute"
-	Architecture string  // "passive" or "1t1r"
+	Architecture string  // "passive", "1t1r", or "2t1r"
 	Technology   string  // e.g., "sky130"
 	CellWidth    float64 // From CellConfig, in μm
 	CellHeight   float64 // From CellConfig, in μm
@@ -124,7 +124,7 @@ func DefaultArrayConfig() ArrayConfig {
 		Rows:         4,
 		Cols:         4,
 		Mode:         "storage", // "storage", "memory", or "compute"
-		Architecture: "passive", // "passive" (0T1R) or "1t1r"
+		Architecture: "passive", // "passive" (0T1R), "1t1r", or "2t1r"
 		Technology:   "sky130",
 		CellWidth:    0.46, // μm (from DefaultCellConfig)
 		CellHeight:   2.72, // μm (from DefaultCellConfig)
