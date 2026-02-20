@@ -14,7 +14,7 @@ import (
 	"fecim-lattice-tools/module6-eda/pkg/export"
 )
 
-var exportFormats = []string{"LEF", "Liberty", "Verilog", "DEF", "Config (JSON)", "SDC", "Design Summary", "SPICE", "Array Statistics"}
+var exportFormats = []string{"LEF", "Liberty", "Liberty (Multi-Corner)", "Verilog", "DEF", "Config (JSON)", "SDC", "Design Summary", "SPICE", "Array Statistics"}
 
 // MakeExportViewerTab creates a read-only export preview tab for LEF/Liberty/Verilog/DEF/SPICE.
 func MakeExportViewerTab(cfg *config.ArrayConfig, window fyne.Window) fyne.CanvasObject {
@@ -86,6 +86,8 @@ func formatExtension(format string) string {
 	case "LEF":
 		return ".lef"
 	case "Liberty":
+		return ".lib"
+	case "Liberty (Multi-Corner)":
 		return ".lib"
 	case "Verilog":
 		return ".v"
@@ -170,6 +172,9 @@ func loadExportPreviewContent(format string, cfg *config.ArrayConfig) (content s
 			return s, archLib
 		}
 		return export.GenerateLiberty(cellCfg), "generated (in-memory)"
+
+	case "Liberty (Multi-Corner)":
+		return export.GenerateMultiCornerLiberty(cellCfg), "generated (in-memory, TT/SS/FF corners)"
 
 	case "Verilog":
 		p := filepath.Join(dataDir, design+".v")

@@ -963,3 +963,20 @@ func TestExportViewerArrayStatisticsFormat(t *testing.T) {
 		t.Error("expected cell count in Array Statistics output")
 	}
 }
+
+func TestExportViewerMultiCornerLiberty(t *testing.T) {
+	cfg := &config.ArrayConfig{
+		Rows: 4, Cols: 4, Architecture: "passive", CellWidth: 0.46, CellHeight: 2.72, Technology: "sky130",
+	}
+	content, source := loadExportPreviewContent("Liberty (Multi-Corner)", cfg)
+	if content == "" {
+		t.Fatal("Liberty (Multi-Corner) format returned empty content")
+	}
+	if !findSubstring(source, "TT/SS/FF") {
+		t.Errorf("source should mention corners, got: %s", source)
+	}
+	// Should contain multiple library blocks for different corners
+	if !findSubstring(content, "library(") {
+		t.Error("multi-corner Liberty should contain library blocks")
+	}
+}
