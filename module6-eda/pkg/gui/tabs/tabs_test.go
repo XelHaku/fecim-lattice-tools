@@ -1203,13 +1203,22 @@ func TestExportViewerCSVTableFormat(t *testing.T) {
 	if !findSubstring(content, "row,col,level,conductance_uS,resistance_ohm,program_V") {
 		t.Error("CSV Table missing expected header")
 	}
-	// GMin=10 µS at level 0: first cell should have conductance_uS=10.0000.
-	if !findSubstring(content, "0,0,0,10.0000") {
-		t.Error("CSV Table first cell should be level 0 at 10.0000 µS")
+	// Passive arch: GMin=0.001 µS at level 0 (HRS ~1 GΩ).
+	if !findSubstring(content, "0,0,0,0.0010") {
+		t.Error("CSV Table passive first cell should be level 0 at 0.0010 µS (HRS)")
 	}
-	// GMax=100 µS: last level 29 row should appear (4×4 has 16 cells, all shown).
-	if !findSubstring(content, ",29,100.0000") {
-		t.Error("CSV Table last level should be 29 at 100.0000 µS")
+	// Passive arch: GMax=10 µS at last level 29 (LRS ~100 kΩ).
+	if !findSubstring(content, ",29,10.0000") {
+		t.Error("CSV Table passive last level should be 29 at 10.0000 µS (LRS)")
+	}
+	// 1T1R arch should use different range: GMax=100 µS.
+	cfg1t1r := &config.ArrayConfig{
+		Rows: 4, Cols: 4, Mode: "storage", Architecture: "1t1r",
+		CellWidth: 0.46, CellHeight: 2.72, Technology: "sky130",
+	}
+	content1t1r, _ := loadExportPreviewContent("CSV Table", cfg1t1r)
+	if !findSubstring(content1t1r, ",29,100.0000") {
+		t.Error("CSV Table 1T1R last level should be 29 at 100.0000 µS (LRS)")
 	}
 	// Verify truncation annotation for a larger array.
 	largeCfg := &config.ArrayConfig{Rows: 8, Cols: 8, Mode: "storage", Architecture: "passive"}

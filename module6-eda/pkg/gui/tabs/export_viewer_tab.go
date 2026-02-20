@@ -304,15 +304,29 @@ func loadExportPreviewContent(format string, cfg *config.ArrayConfig) (content s
 // The real CSV (via CLI --csv flag) encodes actual programmed conductance states;
 // this preview shows representative values only.
 //
+// Conductance range is architecture-specific (matching CrossSim config defaults):
+//   - passive (0T1R): G_min=0.001 µS (HRS ~1 GΩ), G_max=10 µS (LRS ~100 kΩ)
+//   - 1T1R / 2T1R:    G_min=0.01 µS  (HRS ~100 MΩ), G_max=100 µS (LRS ~10 kΩ)
+//
 // Header: row,col,level,conductance_uS,resistance_ohm,program_V
-// Constants: GMin=10 µS, GMax=100 µS, VProgMin=2.0 V, VProgMax=5.0 V (defaults).
 func generateCSVPreview(cfg *config.ArrayConfig) string {
 	const quantLevels = 30
-	const gMin = 10.0  // µS (GMin = 10e-6 S)
-	const gMax = 100.0 // µS (GMax = 100e-6 S)
-	const vMin = 2.0   // V (VProgMin default)
-	const vMax = 5.0   // V (VProgMax default)
 	const maxPreview = 16 // rows to show before truncating
+
+	// Architecture-specific conductance range (matches crosssim.go convention)
+	var gMin, gMax float64
+	switch strings.ToLower(cfg.Architecture) {
+	case "1t1r", "2t1r":
+		gMin = 0.01  // µS — HRS with selector (~100 MΩ)
+		gMax = 100.0 // µS — LRS with selector (~10 kΩ)
+	default: // passive 0T1R
+		gMin = 0.001 // µS — HRS passive (~1 GΩ)
+		gMax = 10.0  // µS — LRS passive (~100 kΩ)
+	}
+
+	// Programming voltage range (scaled to match conductance range)
+	const vMin = 2.0 // V (VProgMin default)
+	const vMax = 5.0 // V (VProgMax default)
 
 	rows, cols := cfg.Rows, cfg.Cols
 	if rows <= 0 {
@@ -324,7 +338,8 @@ func generateCSVPreview(cfg *config.ArrayConfig) string {
 	total := rows * cols
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("# FeCIM Crossbar CSV Export — %dx%d array, mode=%s\n", rows, cols, cfg.Mode))
+	sb.WriteString(fmt.Sprintf("# FeCIM Crossbar CSV Export — %dx%d array, mode=%s, arch=%s\n", rows, cols, cfg.Mode, cfg.Architecture))
+	sb.WriteString(fmt.Sprintf("# GMin=%.4fµS (HRS)  GMax=%.4fµS (LRS)  Levels=%d\n", gMin, gMax, quantLevels))
 	sb.WriteString("# row,col,level,conductance_uS,resistance_ohm,program_V\n")
 	sb.WriteString("# NOTE: Synthetic gradient sample; actual data requires compilation.\n")
 	sb.WriteString("#       Use CLI: fecim-lattice-tools --csv output.csv\n")
