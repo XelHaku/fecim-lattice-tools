@@ -243,7 +243,7 @@ func Run(args []string) error {
 		return fmt.Errorf("unknown mode %q", *mode)
 	}
 
-	logging.Printf("FeCIM Array Generator - %s Mode\n", strings.Title(*mode))
+	logging.Printf("FeCIM Array Generator - %s Mode\n", strings.ToUpper((*mode)[:1])+(*mode)[1:])
 	logging.Printf("========================================\n\n")
 
 	// Create configuration
