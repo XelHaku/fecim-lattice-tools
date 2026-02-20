@@ -81,6 +81,9 @@ func MakeLayoutVisualizerTab(cfg *config.ArrayConfig, window fyne.Window) fyne.C
 	})
 
 	saveSVGBtn := widget.NewButton("Save SVG…", func() {
+		if window == nil {
+			return
+		}
 		design := fmt.Sprintf("fecim_crossbar_%dx%d", cfg.Rows, cfg.Cols)
 		dlg := dialog.NewFileSave(func(w fyne.URIWriteCloser, err error) {
 			if err != nil || w == nil {
