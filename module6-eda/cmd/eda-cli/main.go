@@ -26,6 +26,7 @@ import (
 	"strings"
 
 	"fecim-lattice-tools/module6-eda/pkg/compiler"
+	edaconfig "fecim-lattice-tools/module6-eda/pkg/config"
 	"fecim-lattice-tools/module6-eda/pkg/export"
 	"fecim-lattice-tools/shared/cli"
 	"fecim-lattice-tools/shared/logging"
@@ -152,6 +153,7 @@ func Run(args []string) error {
 	exportSPICE := fs.Bool("spice", true, "Export SPICE netlist")
 	exportVerilog := fs.Bool("verilog", true, "Export Verilog netlist")
 	exportDEF := fs.Bool("def", true, "Export DEF placement")
+	exportScripts := fs.Bool("scripts", false, "Export flow scripts (Yosys TCL, OpenROAD TCL, KLayout Python, SDC, LibreLane JSON, shell runner)")
 	help := fs.Bool("help", false, "Show help")
 
 	fs.Usage = func() {
@@ -410,6 +412,45 @@ func Run(args []string) error {
 			}
 			outputFiles = append(outputFiles, path)
 		}
+	}
+
+	if *exportScripts {
+		// Build pkg/config.ArrayConfig from compiler config for script generation.
+		// compiler.ArrayConfig uses ArrayRows/ArrayCols/CellPitch/RowHeight naming;
+		// pkg/config.ArrayConfig uses Rows/Cols/CellWidth/CellHeight.
+		scriptCfg := edaconfig.ArrayConfig{
+			Rows:         config.ArrayRows,
+			Cols:         config.ArrayCols,
+			Mode:         strings.ToLower(*mode),
+			Architecture: config.Architecture,
+			Technology:   strings.ToLower(*tech),
+			CellWidth:    config.CellPitch,
+			CellHeight:   config.RowHeight,
+		}
+
+		flowScripts := map[string]string{
+			"synth.tcl":         export.GenerateSynthesisScript(scriptCfg),
+			"openroad_flow.tcl": export.GenerateOpenROADFlowScript(scriptCfg),
+			"gen_gds.py":        export.GenerateKLayoutGDSScript(scriptCfg),
+			"opensta_check.tcl": export.GenerateOpenSTAScript(scriptCfg),
+			"constraints.sdc":   export.GenerateSDC(scriptCfg),
+			"librelane.json":    export.GenerateLibreLaneConfig(scriptCfg),
+			"run_flow.sh":       export.GenerateFlowRunner(scriptCfg),
+		}
+
+		for filename, content := range flowScripts {
+			path := filepath.Join(*outputDir, filename)
+			if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+				logging.Printf("  Script export error (%s): %v\n", filename, err)
+			} else {
+				if !*quiet {
+					logging.Printf("  ✓ %s\n", path)
+				}
+				outputFiles = append(outputFiles, path)
+			}
+		}
+		// Make shell runner executable
+		_ = os.Chmod(filepath.Join(*outputDir, "run_flow.sh"), 0755)
 	}
 
 	// JSON output mode

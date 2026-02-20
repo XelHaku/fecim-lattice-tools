@@ -19,9 +19,9 @@ func TestM6LIB04_CornersMultiCornerGeneration(t *testing.T) {
 
 	// Verify 9 operating_conditions blocks (FF/TT/SS × -40/25/125°C)
 	expectedCorners := []string{
-		"ff_n40c", "ff_25c", "ff_125c",
-		"tt_n40c", "tt_25c", "tt_125c",
-		"ss_n40c", "ss_25c", "ss_125c",
+		"ff_n40C_1v95", "ff_025C_1v95", "ff_125C_1v95",
+		"tt_n40C_1v80", "tt_025C_1v80", "tt_125C_1v80",
+		"ss_n40C_1v60", "ss_025C_1v60", "ss_125C_1v60",
 	}
 
 	for _, corner := range expectedCorners {
@@ -65,17 +65,17 @@ func TestM6LIB04_CornersOperatingConditionsAttributes(t *testing.T) {
 		voltageMax float64
 	}{
 		// FF (fast-fast): process < 1.0, higher voltage
-		{"ff_n40c", 0.7, 0.9, -40.0, 1.8, 2.0},
-		{"ff_25c", 0.7, 0.9, 25.0, 1.8, 2.0},
-		{"ff_125c", 0.7, 0.9, 125.0, 1.7, 1.9},
+		{"ff_n40C_1v95", 0.7, 0.9, -40.0, 1.8, 2.0},
+		{"ff_025C_1v95", 0.7, 0.9, 25.0, 1.8, 2.0},
+		{"ff_125C_1v95", 0.7, 0.9, 125.0, 1.7, 1.9},
 		// TT (typical-typical): process = 1.0, nominal voltage
-		{"tt_n40c", 0.9, 1.1, -40.0, 1.7, 1.9},
-		{"tt_25c", 0.9, 1.1, 25.0, 1.7, 1.9},
-		{"tt_125c", 0.9, 1.1, 125.0, 1.6, 1.8},
+		{"tt_n40C_1v80", 0.9, 1.1, -40.0, 1.7, 1.9},
+		{"tt_025C_1v80", 0.9, 1.1, 25.0, 1.7, 1.9},
+		{"tt_125C_1v80", 0.9, 1.1, 125.0, 1.6, 1.8},
 		// SS (slow-slow): process > 1.0, lower voltage
-		{"ss_n40c", 1.1, 1.3, -40.0, 1.6, 1.8},
-		{"ss_25c", 1.1, 1.3, 25.0, 1.5, 1.8},
-		{"ss_125c", 1.1, 1.3, 125.0, 1.5, 1.7},
+		{"ss_n40C_1v60", 1.1, 1.3, -40.0, 1.6, 1.8},
+		{"ss_025C_1v60", 1.1, 1.3, 25.0, 1.5, 1.8},
+		{"ss_125C_1v60", 1.1, 1.3, 125.0, 1.5, 1.7},
 	}
 
 	for _, tc := range cornerTests {
@@ -120,7 +120,7 @@ func TestM6LIB04_CornersTimingScaling(t *testing.T) {
 	lib := GenerateMultiCornerLiberty(cfg)
 
 	// Extract cell_rise first value from FF corner
-	ffIdx := strings.Index(lib, "library(fecim_cells_ff_n40c)")
+	ffIdx := strings.Index(lib, "library(fecim_cells_ff_n40C_1v95)")
 	if ffIdx < 0 {
 		t.Fatal("missing FF corner library")
 	}
@@ -128,7 +128,7 @@ func TestM6LIB04_CornersTimingScaling(t *testing.T) {
 	ffRise := extractFirstNLDMValue(t, ffLib, "cell_rise")
 
 	// Extract cell_rise first value from TT corner
-	ttIdx := strings.Index(lib, "library(fecim_cells_tt_25c)")
+	ttIdx := strings.Index(lib, "library(fecim_cells_tt_025C_1v80)")
 	if ttIdx < 0 {
 		t.Fatal("missing TT corner library")
 	}
@@ -136,7 +136,7 @@ func TestM6LIB04_CornersTimingScaling(t *testing.T) {
 	ttRise := extractFirstNLDMValue(t, ttLib, "cell_rise")
 
 	// Extract cell_rise first value from SS corner
-	ssIdx := strings.Index(lib, "library(fecim_cells_ss_125c)")
+	ssIdx := strings.Index(lib, "library(fecim_cells_ss_125C_1v60)")
 	if ssIdx < 0 {
 		t.Fatal("missing SS corner library")
 	}
@@ -172,17 +172,17 @@ func TestM6LIB04_CornersLibraryNaming(t *testing.T) {
 	cfg := config.DefaultCellConfig()
 	lib := GenerateMultiCornerLiberty(cfg)
 
-	// Expected library names
+	// Expected library names (SKY130-convention corner names)
 	expectedLibraries := []string{
-		"library(fecim_cells_ff_n40c)",
-		"library(fecim_cells_ff_25c)",
-		"library(fecim_cells_ff_125c)",
-		"library(fecim_cells_tt_n40c)",
-		"library(fecim_cells_tt_25c)",
-		"library(fecim_cells_tt_125c)",
-		"library(fecim_cells_ss_n40c)",
-		"library(fecim_cells_ss_25c)",
-		"library(fecim_cells_ss_125c)",
+		"library(fecim_cells_ff_n40C_1v95)",
+		"library(fecim_cells_ff_025C_1v95)",
+		"library(fecim_cells_ff_125C_1v95)",
+		"library(fecim_cells_tt_n40C_1v80)",
+		"library(fecim_cells_tt_025C_1v80)",
+		"library(fecim_cells_tt_125C_1v80)",
+		"library(fecim_cells_ss_n40C_1v60)",
+		"library(fecim_cells_ss_025C_1v60)",
+		"library(fecim_cells_ss_125C_1v60)",
 	}
 
 	for _, libName := range expectedLibraries {
@@ -205,9 +205,9 @@ func TestM6LIB04_CornersDefaultOperatingConditions(t *testing.T) {
 		library string
 		corner  string
 	}{
-		{"library(fecim_cells_ff_n40c)", "ff_n40c"},
-		{"library(fecim_cells_tt_25c)", "tt_25c"},
-		{"library(fecim_cells_ss_125c)", "ss_125c"},
+		{"library(fecim_cells_ff_n40C_1v95)", "ff_n40C_1v95"},
+		{"library(fecim_cells_tt_025C_1v80)", "tt_025C_1v80"},
+		{"library(fecim_cells_ss_125C_1v60)", "ss_125C_1v60"},
 	}
 
 	for _, cp := range cornerPairs {

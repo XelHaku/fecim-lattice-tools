@@ -128,6 +128,34 @@ func (m *Manager) IsNativeYosysAvailable() bool {
 	return err == nil
 }
 
+// IsNativeKLayoutAvailable checks if klayout is in PATH.
+// KLayout is used for DEF+LEF → GDS conversion (gen_gds.py script).
+func (m *Manager) IsNativeKLayoutAvailable() bool {
+	_, err := exec.LookPath("klayout")
+	return err == nil
+}
+
+// IsLibreLaneAvailable checks if the librelane Python package is installed.
+// LibreLane (https://librelane.readthedocs.io) is the Python-based successor
+// to OpenLane v1 and is recommended for all new designs.
+// Install: pip install librelane
+func (m *Manager) IsLibreLaneAvailable() bool {
+	cmd := exec.Command("python3", "-m", "librelane", "--version")
+	return cmd.Run() == nil
+}
+
+// GetToolStatus returns a map of tool → availability for all EDA tools.
+func (m *Manager) GetToolStatus() map[string]bool {
+	return map[string]bool{
+		"docker":    m.IsDockerAvailable(),
+		"openroad":  m.IsNativeOpenROADAvailable(),
+		"yosys":     m.IsNativeYosysAvailable(),
+		"klayout":   m.IsNativeKLayoutAvailable(),
+		"librelane": m.IsLibreLaneAvailable(),
+		"pdk":       m.IsPDKInstalled(),
+	}
+}
+
 // DetectMode returns the best available execution mode
 func (m *Manager) DetectMode() Mode {
 	if m.IsDockerImagePulled() {

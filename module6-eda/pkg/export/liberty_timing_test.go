@@ -61,7 +61,7 @@ func TestGenerateLiberty_NLDMTablesAndPins(t *testing.T) {
 
 func TestGenerateMultiCornerLiberty_Contains9CornersAndScalesTiming(t *testing.T) {
 	lib := GenerateMultiCornerLiberty(config.DefaultCellConfig())
-	corners := []string{"ff_n40c", "ff_25c", "ff_125c", "tt_n40c", "tt_25c", "tt_125c", "ss_n40c", "ss_25c", "ss_125c"}
+	corners := []string{"ff_n40C_1v95", "ff_025C_1v95", "ff_125C_1v95", "tt_n40C_1v80", "tt_025C_1v80", "tt_125C_1v80", "ss_n40C_1v60", "ss_025C_1v60", "ss_125C_1v60"}
 	for _, c := range corners {
 		if !strings.Contains(lib, "operating_conditions("+c+")") {
 			t.Fatalf("missing corner %s", c)
@@ -72,7 +72,7 @@ func TestGenerateMultiCornerLiberty_Contains9CornersAndScalesTiming(t *testing.T
 	}
 
 	ff := extractFirstNLDMValue(t, lib, "cell_rise")
-	ssIdx := strings.LastIndex(lib, "library(fecim_cells_ss_125c)")
+	ssIdx := strings.LastIndex(lib, "library(fecim_cells_ss_125C_1v60)")
 	if ssIdx < 0 {
 		t.Fatal("missing SS 125C library")
 	}

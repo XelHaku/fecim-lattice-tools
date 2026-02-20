@@ -37,16 +37,20 @@ type libertyCorner struct {
 	VoltageScale float64
 }
 
+// defaultCorners matches SKY130 PDK timing corner naming convention
+// (e.g., sky130_fd_sc_hd__tt_025C_1v80.lib, ff_n40C_1v95, ss_125C_1v60).
+// This allows OpenLane 2 MACROS dict glob patterns like "*_tt_025C_1v80" to
+// resolve the correct Liberty file for each STA timing corner.
 var defaultCorners = []libertyCorner{
-	{Name: "ff_n40c", Process: 0.8, TempC: -40.0, TimingScale: 0.76, VoltageScale: 1.05},
-	{Name: "ff_25c", Process: 0.8, TempC: 25.0, TimingScale: 0.82, VoltageScale: 1.02},
-	{Name: "ff_125c", Process: 0.8, TempC: 125.0, TimingScale: 0.93, VoltageScale: 0.98},
-	{Name: "tt_n40c", Process: 1.0, TempC: -40.0, TimingScale: 0.90, VoltageScale: 1.02},
-	{Name: "tt_25c", Process: 1.0, TempC: 25.0, TimingScale: 1.00, VoltageScale: 1.00},
-	{Name: "tt_125c", Process: 1.0, TempC: 125.0, TimingScale: 1.12, VoltageScale: 0.97},
-	{Name: "ss_n40c", Process: 1.2, TempC: -40.0, TimingScale: 1.08, VoltageScale: 0.98},
-	{Name: "ss_25c", Process: 1.2, TempC: 25.0, TimingScale: 1.20, VoltageScale: 0.95},
-	{Name: "ss_125c", Process: 1.2, TempC: 125.0, TimingScale: 1.35, VoltageScale: 0.92},
+	{Name: "ff_n40C_1v95", Process: 0.8, TempC: -40.0, TimingScale: 0.76, VoltageScale: 1.05},
+	{Name: "ff_025C_1v95", Process: 0.8, TempC: 25.0, TimingScale: 0.82, VoltageScale: 1.02},
+	{Name: "ff_125C_1v95", Process: 0.8, TempC: 125.0, TimingScale: 0.93, VoltageScale: 0.98},
+	{Name: "tt_n40C_1v80", Process: 1.0, TempC: -40.0, TimingScale: 0.90, VoltageScale: 1.02},
+	{Name: "tt_025C_1v80", Process: 1.0, TempC: 25.0, TimingScale: 1.00, VoltageScale: 1.00},
+	{Name: "tt_125C_1v80", Process: 1.0, TempC: 125.0, TimingScale: 1.12, VoltageScale: 0.97},
+	{Name: "ss_n40C_1v60", Process: 1.2, TempC: -40.0, TimingScale: 1.08, VoltageScale: 0.98},
+	{Name: "ss_025C_1v60", Process: 1.2, TempC: 25.0, TimingScale: 1.20, VoltageScale: 0.95},
+	{Name: "ss_125C_1v60", Process: 1.2, TempC: 125.0, TimingScale: 1.35, VoltageScale: 0.92},
 }
 
 func GenerateLibertyFromCharacterization(cfg config.CellConfig, char *CharacterizationResult) string {
