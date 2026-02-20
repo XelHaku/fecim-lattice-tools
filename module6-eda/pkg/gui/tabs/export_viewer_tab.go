@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -14,7 +15,7 @@ import (
 	"fecim-lattice-tools/module6-eda/pkg/export"
 )
 
-var exportFormats = []string{"LEF", "Liberty", "Liberty (Multi-Corner)", "Verilog", "DEF", "Config (JSON)", "SDC", "Design Summary", "SPICE", "SVG Layout", "Array Statistics", "Export Manifest"}
+var exportFormats = []string{"LEF", "Liberty", "Liberty (Multi-Corner)", "Verilog", "DEF", "Config (JSON)", "SDC", "Design Summary", "SPICE", "SVG Layout", "CSV Table", "Array Statistics", "Export Manifest"}
 
 // MakeExportViewerTab creates a read-only export preview tab for LEF/Liberty/Verilog/DEF/SPICE.
 func MakeExportViewerTab(cfg *config.ArrayConfig, window fyne.Window) fyne.CanvasObject {
@@ -106,6 +107,8 @@ func formatExtension(format string) string {
 		return ".sp"
 	case "SVG Layout":
 		return ".svg"
+	case "CSV Table":
+		return ".csv"
 	case "Array Statistics":
 		return ".txt"
 	case "Export Manifest":
@@ -280,6 +283,9 @@ func loadExportPreviewContent(format string, cfg *config.ArrayConfig) (content s
 		}
 		return export.GenerateLayoutSVGWithDefaults(*cfg), "generated (in-memory)"
 
+	case "CSV Table":
+		return generateCSVPreview(cfg), "generated (synthetic sample)"
+
 	case "Array Statistics":
 		return generateArrayStatistics(cfg), "generated (in-memory)"
 
@@ -289,6 +295,60 @@ func loadExportPreviewContent(format string, cfg *config.ArrayConfig) (content s
 	default:
 		return "", "unknown format"
 	}
+}
+
+// generateCSVPreview generates a synthetic CSV sample showing what the exported
+// conductance table looks like. Values are derived from a linear level gradient
+// across cells to illustrate the full G_min..G_max range.
+//
+// The real CSV (via CLI --csv flag) encodes actual programmed conductance states;
+// this preview shows representative values only.
+//
+// Header: row,col,level,conductance_uS,resistance_ohm,program_V
+// Constants: GMin=10 µS, GMax=100 µS, VProgMin=2.0 V, VProgMax=5.0 V (defaults).
+func generateCSVPreview(cfg *config.ArrayConfig) string {
+	const quantLevels = 30
+	const gMin = 10.0  // µS (GMin = 10e-6 S)
+	const gMax = 100.0 // µS (GMax = 100e-6 S)
+	const vMin = 2.0   // V (VProgMin default)
+	const vMax = 5.0   // V (VProgMax default)
+	const maxPreview = 16 // rows to show before truncating
+
+	rows, cols := cfg.Rows, cfg.Cols
+	if rows <= 0 {
+		rows = 4
+	}
+	if cols <= 0 {
+		cols = 4
+	}
+	total := rows * cols
+
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("# FeCIM Crossbar CSV Export — %dx%d array, mode=%s\n", rows, cols, cfg.Mode))
+	sb.WriteString("# row,col,level,conductance_uS,resistance_ohm,program_V\n")
+	sb.WriteString("# NOTE: Synthetic gradient sample; actual data requires compilation.\n")
+	sb.WriteString("#       Use CLI: fecim-lattice-tools --csv output.csv\n")
+	sb.WriteString("row,col,level,conductance_uS,resistance_ohm,program_V\n")
+
+	shown := 0
+	for r := 0; r < rows && shown < maxPreview; r++ {
+		for c := 0; c < cols && shown < maxPreview; c++ {
+			// Linear level gradient across cells (row-major).
+			cellIdx := r*cols + c
+			denom := max(total-1, 1)
+			level := int(float64(cellIdx) / float64(denom) * float64(quantLevels-1))
+			gNorm := float64(level) / float64(quantLevels-1) // [0,1]
+			gUS := gMin + gNorm*(gMax-gMin)                  // µS
+			rOhm := 1e6 / gUS                                // Ω (1/G, G in S = G_µS * 1e-6)
+			progV := vMin + gNorm*(vMax-vMin)
+			fmt.Fprintf(&sb, "%d,%d,%d,%.4f,%.2f,%.4f\n", r, c, level, gUS, rOhm, progV)
+			shown++
+		}
+	}
+	if total > maxPreview {
+		fmt.Fprintf(&sb, "# ... (%d more rows not shown — %d total cells)\n", total-maxPreview, total)
+	}
+	return sb.String()
 }
 
 // generateArrayStatistics produces a concise complexity and feasibility report

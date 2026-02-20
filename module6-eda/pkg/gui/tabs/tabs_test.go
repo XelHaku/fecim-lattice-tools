@@ -1187,6 +1187,38 @@ func TestExportViewerManifestFormat(t *testing.T) {
 	}
 }
 
+func TestExportViewerCSVTableFormat(t *testing.T) {
+	cfg := &config.ArrayConfig{
+		Rows: 4, Cols: 4, Mode: "storage", Architecture: "passive",
+		CellWidth: 0.46, CellHeight: 2.72, Technology: "sky130",
+	}
+	content, source := loadExportPreviewContent("CSV Table", cfg)
+	if content == "" {
+		t.Fatal("CSV Table format returned empty content")
+	}
+	if source != "generated (synthetic sample)" {
+		t.Errorf("unexpected source: %q", source)
+	}
+	// Must contain the CSV header row.
+	if !findSubstring(content, "row,col,level,conductance_uS,resistance_ohm,program_V") {
+		t.Error("CSV Table missing expected header")
+	}
+	// GMin=10 µS at level 0: first cell should have conductance_uS=10.0000.
+	if !findSubstring(content, "0,0,0,10.0000") {
+		t.Error("CSV Table first cell should be level 0 at 10.0000 µS")
+	}
+	// GMax=100 µS: last level 29 row should appear (4×4 has 16 cells, all shown).
+	if !findSubstring(content, ",29,100.0000") {
+		t.Error("CSV Table last level should be 29 at 100.0000 µS")
+	}
+	// Verify truncation annotation for a larger array.
+	largeCfg := &config.ArrayConfig{Rows: 8, Cols: 8, Mode: "storage", Architecture: "passive"}
+	largeContent, _ := loadExportPreviewContent("CSV Table", largeCfg)
+	if !findSubstring(largeContent, "more rows not shown") {
+		t.Error("CSV Table for 8x8 should show truncation note (64 > 16 preview limit)")
+	}
+}
+
 func TestExportViewerMultiCornerLiberty(t *testing.T) {
 	cfg := &config.ArrayConfig{
 		Rows: 4, Cols: 4, Architecture: "passive", CellWidth: 0.46, CellHeight: 2.72, Technology: "sky130",
