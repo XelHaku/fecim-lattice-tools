@@ -26,8 +26,12 @@ func TestCLIAndGUI_DEFEquivalenceByTopology(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			guiCfg := config.ArrayConfig{Rows: tt.rows, Cols: tt.cols, Architecture: tt.arch, CellWidth: 0.46, CellHeight: 2.72}
-			if tt.arch == "2t1r" {
+			switch tt.arch {
+			case "1t1r":
 				guiCfg.CellWidth = 0.92
+				guiCfg.CellHeight = 4.07
+			case "2t1r":
+				guiCfg.CellWidth = 1.38
 				guiCfg.CellHeight = 4.07
 			}
 			guiDEF := generateBuilderDEF(guiCfg)

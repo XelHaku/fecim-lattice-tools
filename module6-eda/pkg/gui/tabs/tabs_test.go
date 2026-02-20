@@ -87,7 +87,7 @@ func TestMakeBuilderValidationTab_2T1RArchitecture(t *testing.T) {
 		Mode:         "compute",
 		Architecture: "2t1r",
 		Technology:   "sky130",
-		CellWidth:    0.92,
+		CellWidth:    1.38,
 		CellHeight:   4.07,
 	}
 
@@ -255,7 +255,7 @@ func TestMakeLayoutVisualizerTab(t *testing.T) {
 }
 
 func TestBuildLayerSummary_CSLWires_2T1R(t *testing.T) {
-	cfg := &config.ArrayConfig{Rows: 4, Cols: 4, Mode: "storage", Architecture: "2t1r", CellWidth: 1.38, CellHeight: 3.40}
+	cfg := &config.ArrayConfig{Rows: 4, Cols: 4, Mode: "storage", Architecture: "2t1r", CellWidth: 1.38, CellHeight: 4.07}
 	svg, _ := loadLayoutSVGContent(cfg)
 
 	// CSL enabled: summary must mention CSL wires line
@@ -1060,7 +1060,7 @@ func TestGenerateArrayStatistics_1T1R(t *testing.T) {
 
 func TestGenerateArrayStatistics_2T1R(t *testing.T) {
 	cfg := &config.ArrayConfig{
-		Rows: 64, Cols: 64, Architecture: "2t1r", CellWidth: 0.92, CellHeight: 4.07,
+		Rows: 64, Cols: 64, Architecture: "2t1r", CellWidth: 1.38, CellHeight: 4.07,
 	}
 	stats := generateArrayStatistics(cfg)
 	if !findSubstring(stats, "NONE") {
