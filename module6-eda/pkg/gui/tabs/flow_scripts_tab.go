@@ -85,11 +85,17 @@ func MakeFlowScriptsTab(cfg *config.ArrayConfig, window fyne.Window) fyne.Canvas
 	refreshBtn := widget.NewButton("Refresh", refresh)
 
 	copyBtn := widget.NewButton("Copy to Clipboard", func() {
+		if window == nil {
+			return
+		}
 		window.Clipboard().SetContent(preview.Text)
 		dialog.ShowInformation("Copied", "Script copied to clipboard.", window)
 	})
 
 	saveBtn := widget.NewButton("Save to File…", func() {
+		if window == nil {
+			return
+		}
 		ext := flowScriptExtension(formatSelect.Selected)
 		design := fmt.Sprintf("fecim_crossbar_%dx%d", cfg.Rows, cfg.Cols)
 		defaultName := design + ext

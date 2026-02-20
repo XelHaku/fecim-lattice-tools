@@ -346,8 +346,8 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		if isDefaultCellName(nameEntry.Text) {
 			nameEntry.SetText("fecim_1t1r_bitcell")
 		}
-		// Update to 1T1R cell dimensions - SKY130 hvl standard (triggers updateStats via OnChanged)
-		widthEntry.SetText("0.460")
+		// Update to 1T1R cell dimensions: 2 SKY130 sites wide, hvl height (triggers updateStats via OnChanged)
+		widthEntry.SetText("0.920")
 		heightEntry.SetText("4.070")
 		updateArchButtons()
 		updateLayoutImage()
@@ -362,8 +362,8 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		if isDefaultCellName(nameEntry.Text) {
 			nameEntry.SetText("fecim_2t1r_bitcell")
 		}
-		// Update to 2T1R cell dimensions - two SKY130 sites wide, hvl height (triggers updateStats via OnChanged)
-		widthEntry.SetText("0.920")
+		// Update to 2T1R cell dimensions: 3 SKY130 sites wide (~1.38 µm pitch), hvl height (triggers updateStats via OnChanged)
+		widthEntry.SetText("1.380")
 		heightEntry.SetText("4.070")
 		updateArchButtons()
 		updateLayoutImage()

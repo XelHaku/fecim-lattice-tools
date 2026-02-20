@@ -190,6 +190,55 @@ func TestArchitectureSwitch_UpdatesNameEntry(t *testing.T) {
 	}
 }
 
+// TestArchitectureSwitch_UpdatesCellDimensions verifies that the width entry is set
+// to the correct physical pitch when switching between passive/1T1R/2T1R.
+// These defaults match the LEF generator's minimum thresholds, preventing silent
+// dimension overrides in the generated output.
+func TestArchitectureSwitch_UpdatesCellDimensions(t *testing.T) {
+	app := test.NewApp()
+	defer app.Quit()
+	w := app.NewWindow("arch-dims")
+	defer w.Close()
+
+	cfg := &config.ArrayConfig{
+		Rows:         4,
+		Cols:         4,
+		Mode:         "storage",
+		Architecture: "passive",
+		Technology:   "sky130",
+		CellWidth:    0.46,
+		CellHeight:   2.72,
+	}
+
+	root := MakeBuilderValidationTab(cfg, w)
+	passive := findButtonByText(root, "PASSIVE")
+	oneT1R := findButtonByText(root, "1T1R")
+	twoT1R := findButtonByText(root, "2T1R")
+	// Find widthEntry while it still shows the passive default.
+	widthEntry := findEntryWithText(root, "0.460")
+	if passive == nil || oneT1R == nil || twoT1R == nil || widthEntry == nil {
+		t.Fatal("failed to find required widgets")
+	}
+
+	// passive → 1T1R: width must be 0.920 (2 SKY130 sites, matches LEF min)
+	oneT1R.OnTapped()
+	if widthEntry.Text != "0.920" {
+		t.Errorf("passive→1T1R: widthEntry = %q, want %q", widthEntry.Text, "0.920")
+	}
+
+	// 1T1R → 2T1R: width must be 1.380 (3 SKY130 sites, matches LEF min)
+	twoT1R.OnTapped()
+	if widthEntry.Text != "1.380" {
+		t.Errorf("1T1R→2T1R: widthEntry = %q, want %q", widthEntry.Text, "1.380")
+	}
+
+	// 2T1R → passive: width must return to 0.460
+	passive.OnTapped()
+	if widthEntry.Text != "0.460" {
+		t.Errorf("2T1R→passive: widthEntry = %q, want %q", widthEntry.Text, "0.460")
+	}
+}
+
 func waitUntil(t *testing.T, timeout time.Duration, cond func() bool) {
 	t.Helper()
 	deadline := time.Now().Add(timeout)
