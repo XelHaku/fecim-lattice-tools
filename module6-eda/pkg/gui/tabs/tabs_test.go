@@ -1138,8 +1138,8 @@ func TestGenerateArrayStatistics_1T1R(t *testing.T) {
 		Rows: 32, Cols: 32, Architecture: "1t1r", CellWidth: 0.46, CellHeight: 4.07,
 	}
 	stats := generateArrayStatistics(cfg)
-	if !findSubstring(stats, "COLUMN-ONLY") {
-		t.Error("1T1R should report COLUMN-ONLY sneak path suppression")
+	if !findSubstring(stats, "ROW-ONLY") {
+		t.Error("1T1R should report ROW-ONLY remaining sneak path type")
 	}
 }
 

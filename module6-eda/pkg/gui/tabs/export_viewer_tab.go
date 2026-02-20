@@ -406,7 +406,9 @@ func generateArrayStatistics(cfg *config.ArrayConfig) string {
 			sneakRisk = fmt.Sprintf("LOW (%d half-select paths per write — acceptable for passive)", halfSelect)
 		}
 	case "1t1r":
-		sneakRisk = fmt.Sprintf("COLUMN-ONLY (%d same-row half-select paths eliminated by transistor; %d column sneak remain)", cols-1, rows-1)
+		// WL gates each row's transistor. Writing row r: only row-r transistors ON.
+		// Column-direction sneak (different rows) eliminated; same-row half-select remain.
+		sneakRisk = fmt.Sprintf("ROW-ONLY (%d same-row half-select paths remain; column sneak eliminated by transistors)", cols-1)
 	case "2t1r":
 		sneakRisk = "NONE (both row and column transistors isolate cells)"
 	default:
