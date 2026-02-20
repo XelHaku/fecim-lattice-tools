@@ -110,7 +110,7 @@ type ArrayConfig struct {
 
 	// Technology selection
 	Technology   string `json:"technology"`   // SKY130, GF180MCU, IHP_SG13G2
-	Architecture string `json:"architecture"` // "passive" or "1T1R"
+	Architecture string `json:"architecture"` // "passive", "1t1r", or "2t1r"
 
 	// Physical parameters
 	CellPitch float64 `json:"cell_pitch"` // Cell width in microns

@@ -77,7 +77,8 @@ func DEFConfigFrom(design *compiler.ArrayDesign) DEFConfig {
 // Works with all operation modes (Storage, Memory, Compute).
 // Architecture is determined from design.Config.Architecture:
 //   - "passive": WL[], BL[] pins
-//   - "1T1R": WL[], BL[], SL[] pins
+//   - "1t1r": WL[], BL[], SL[] pins
+//   - "2t1r": WL[], BL[], SL[], CSL[] pins
 func GenerateDEF(design *compiler.ArrayDesign, config DEFConfig) string {
 	logDEF.Input("GenerateDEF", map[string]interface{}{
 		"designName": config.DesignName, "mode": design.Config.Mode, "arch": design.Config.Architecture,
