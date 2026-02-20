@@ -305,6 +305,8 @@ func makeFilesContent() fyne.CanvasObject {
 		DEFPreviewCard(),
 		VerilogPreviewCard(),
 		LibertyPreviewCard(),
+		SPICEPreviewCard(),
+		CSVPreviewCard(),
 	)
 	filePreviewsCard := widget.NewCard("File Format Examples", "", cardsGrid)
 
@@ -470,7 +472,7 @@ func makeQuickStartContent() fyne.CanvasObject {
 		widget.NewLabel("Use the Layout tab to view generated images from KLayout, OpenROAD, or Yosys. Zoom controls let you inspect details."))
 
 	tipCard := widget.NewCard("💡 Tips", "",
-		widget.NewLabel("• Start with a small array (4x4) to verify workflow\n• Use passive architecture for arrays ≤16x16\n• Check validation log for detailed error messages\n• Docker required for KLayout/OpenROAD image generation\n• Tab 5 (Flow Scripts) previews all generated scripts before exporting\n• Builder subtab 'Wire Grid' shows Go-rendered WL/BL wire layout; 'Array Map' shows conductance heatmap patterns"))
+		widget.NewLabel("• Start with a small array (4x4) to verify workflow\n• Use passive architecture for arrays ≤16x16\n• Check validation log for detailed error messages\n• Docker required for KLayout/OpenROAD image generation\n• Tab 2 (Export Viewer) previews 13 output formats — LEF/Liberty/DEF/SPICE/CSV/SVG/…\n• Tab 5 (Flow Scripts) previews all 16 generated scripts before exporting\n• Builder subtab 'Wire Grid' shows Go-rendered WL/BL wire layout; 'Array Map' shows conductance heatmap patterns\n• Save Config / Load Config lets you save array settings as JSON for repeatability"))
 
 	return container.NewVBox(
 		title,

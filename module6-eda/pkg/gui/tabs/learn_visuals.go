@@ -337,6 +337,32 @@ func LibertyPreviewCard() fyne.CanvasObject {
 	return FileFormatCard("Liberty", "lib", content)
 }
 
+// SPICEPreviewCard shows a SPICE netlist example with FeCap subcircuit.
+func SPICEPreviewCard() fyne.CanvasObject {
+	content := `* FeCIM Crossbar Array SPICE
+.subckt FECAP_HZO wl bl
+C_ferro wl bl 28e-15 ; FeCap ~28 fF
+.ends
+.subckt fefet_cell wl bl
+X_cap wl bl FECAP_HZO
+R_level wl bl 18182 ; L15
+.ends
+X0_0 WL[0] BL[0] fefet_cell
+; ...run: ngspice design.sp`
+	return FileFormatCard("SPICE", "sp", content)
+}
+
+// CSVPreviewCard shows a CSV conductance table example.
+func CSVPreviewCard() fyne.CanvasObject {
+	content := `row,col,level,conductance_uS,resistance_ohm,program_V
+0,0,0,10.0000,100000.00,2.0000
+0,1,10,41.0345,24369.75,3.0345
+0,2,20,72.0690,13876.69,4.0690
+0,3,29,100.0000,10000.00,5.0000
+; GMin=10µS(OFF) GMax=100µS(ON) 30 levels`
+	return FileFormatCard("CSV Table", "csv", content)
+}
+
 // =============================================================================
 // REFERENCES CARD
 // =============================================================================
