@@ -145,7 +145,7 @@ set ::env(PDK_VARIANT) "%s"
 
 # ── Input files ──────────────────────────────────────────────────────────────
 set ::env(VERILOG_FILES) "$::env(DESIGN_DIR)/design.v"
-set ::env(SDC_FILE) "$::env(DESIGN_DIR)/constraints.sdc"
+set ::env(BASE_SDC_FILE) "$::env(DESIGN_DIR)/constraints.sdc"
 
 # Hard macro (FeCIM cell is a pre-characterized GDS/LEF macro):
 set ::env(EXTRA_LEFS) [list \

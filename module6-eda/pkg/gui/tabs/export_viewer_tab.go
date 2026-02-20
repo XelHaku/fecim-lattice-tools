@@ -7,16 +7,17 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 
 	"fecim-lattice-tools/module6-eda/pkg/config"
 	"fecim-lattice-tools/module6-eda/pkg/export"
 )
 
-var exportFormats = []string{"LEF", "Liberty", "Verilog", "SPICE"}
+var exportFormats = []string{"LEF", "Liberty", "Verilog", "DEF", "SPICE"}
 
-// MakeExportViewerTab creates a read-only export preview tab for LEF/Liberty/Verilog/SPICE.
-func MakeExportViewerTab(cfg *config.ArrayConfig, _ fyne.Window) fyne.CanvasObject {
+// MakeExportViewerTab creates a read-only export preview tab for LEF/Liberty/Verilog/DEF/SPICE.
+func MakeExportViewerTab(cfg *config.ArrayConfig, window fyne.Window) fyne.CanvasObject {
 	if cfg == nil {
 		cfg = &config.ArrayConfig{Rows: 4, Cols: 4, Mode: "storage", Architecture: "passive", CellWidth: 0.46, CellHeight: 2.72}
 	}
@@ -40,10 +41,29 @@ func MakeExportViewerTab(cfg *config.ArrayConfig, _ fyne.Window) fyne.CanvasObje
 
 	refreshBtn := widget.NewButton("Refresh", refresh)
 
+	saveBtn := widget.NewButton("Save to File…", func() {
+		ext := formatExtension(formatSelect.Selected)
+		design := fmt.Sprintf("fecim_crossbar_%dx%d", cfg.Rows, cfg.Cols)
+		defaultName := design + ext
+
+		dlg := dialog.NewFileSave(func(w fyne.URIWriteCloser, err error) {
+			if err != nil || w == nil {
+				return
+			}
+			defer w.Close()
+			if _, werr := w.Write([]byte(preview.Text)); werr != nil {
+				dialog.ShowError(werr, window)
+			}
+		}, window)
+		dlg.SetFileName(defaultName)
+		dlg.Show()
+	})
+
 	header := container.NewHBox(
 		widget.NewLabel("Format:"),
 		formatSelect,
 		refreshBtn,
+		saveBtn,
 		widget.NewSeparator(),
 		status,
 	)
@@ -53,13 +73,35 @@ func MakeExportViewerTab(cfg *config.ArrayConfig, _ fyne.Window) fyne.CanvasObje
 	return container.NewBorder(header, nil, nil, nil, container.NewScroll(preview))
 }
 
+// formatExtension returns the canonical file extension for the given format name.
+func formatExtension(format string) string {
+	switch format {
+	case "LEF":
+		return ".lef"
+	case "Liberty":
+		return ".lib"
+	case "Verilog":
+		return ".v"
+	case "DEF":
+		return ".def"
+	case "SPICE":
+		return ".sp"
+	default:
+		return ".txt"
+	}
+}
+
 func loadExportPreviewContent(format string, cfg *config.ArrayConfig) (content string, source string) {
+	tech := cfg.Technology
+	if tech == "" {
+		tech = "sky130"
+	}
 	cellCfg := config.CellConfig{
 		Name:         "fecim_bitcell",
 		Width:        cfg.CellWidth,
 		Height:       cfg.CellHeight,
 		CellType:     cfg.Architecture,
-		Technology:   "sky130",
+		Technology:   tech,
 		RiseTime:     10.0,
 		FallTime:     10.0,
 		InputCap:     0.015,
@@ -108,6 +150,17 @@ func loadExportPreviewContent(format string, cfg *config.ArrayConfig) (content s
 			return s, p
 		}
 		return export.GenerateArrayVerilog(*cfg), "generated (in-memory)"
+	case "DEF":
+		paths := []string{
+			filepath.Join(dataDir, design+".def"),
+			filepath.Join("output", design+".def"),
+		}
+		for _, p := range paths {
+			if s, ok := tryRead(p); ok {
+				return s, p
+			}
+		}
+		return "# DEF requires array compilation.\n# Generate via CLI:\n#   fecim-lattice-tools eda cli --def\n", "(not generated)"
 	case "SPICE":
 		paths := []string{
 			filepath.Join(dataDir, design+".sp"),

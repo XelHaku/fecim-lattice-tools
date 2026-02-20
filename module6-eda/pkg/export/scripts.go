@@ -158,12 +158,21 @@ import os
 import sys
 
 # ── pya import ────────────────────────────────────────────────────────────────
-# pya is the KLayout Python API. Available in native KLayout and Docker image.
+# pya is the KLayout Python API. Available in:
+#   - Native KLayout (https://www.klayout.de/build.html)
+#   - OpenLane/LibreLane Docker image (bundled klayout)
+#
+# NOTE: "pip install klayout" installs KLayout's Python module, but the PyPI
+# package has LIMITED DEF/LEF support. For reliable DEF→GDS conversion,
+# use native KLayout (installed via package manager or downloaded from klayout.de)
+# or the OpenLane Docker container.
 try:
     import pya
 except ImportError:
     print("ERROR: pya not found. Run this script inside KLayout:")
     print("  klayout -z -r gen_gds.py -rd lef_file=... -rd def_file=... -rd out_file=...")
+    print("  NOTE: 'pip install klayout' has limited DEF/LEF support.")
+    print("  Use native KLayout: https://www.klayout.de/build.html")
     sys.exit(1)
 
 # ── Variable injection (from -rd flags) ───────────────────────────────────────
@@ -179,26 +188,24 @@ print(f"  DEF: {_def_file}")
 print(f"  GDS: {_out_file}")
 
 # ── Load layout ───────────────────────────────────────────────────────────────
-app = pya.Application.instance()
-main_window = app.main_window() if app else None
-
 layout = pya.Layout()
 
-# Load LEF (defines cell geometry and pin shapes)
+# Use lefdef_config approach: register LEF files as configuration for DEF reading.
+# This is the correct KLayout pya API for combined LEF+DEF workflows — it lets
+# KLayout resolve cell references in the DEF against the LEF geometry.
+layout_options = pya.LoadLayoutOptions()
+
 if os.path.exists(_lef_file):
-    lef_opts = pya.LoadLayoutOptions()
-    lef_opts.set_format_from_suffix("lef")
-    layout.read(_lef_file, lef_opts)
-    print(f"  Loaded LEF: {_lef_file}")
+    # Register LEF as cell-definition source for the DEF reader
+    layout_options.lefdef_config.lef_files = [_lef_file]
+    print(f"  LEF registered: {_lef_file}")
 else:
     print(f"WARNING: LEF file not found: {_lef_file}")
     print("  Generating minimal GDS from DEF placement only")
 
-# Load DEF (defines array placement)
+# Load DEF (defines array placement); LEF geometry is resolved via lefdef_config
 if os.path.exists(_def_file):
-    def_opts = pya.LoadLayoutOptions()
-    def_opts.set_format_from_suffix("def")
-    layout.read(_def_file, def_opts)
+    layout.read(_def_file, layout_options)
     print(f"  Loaded DEF: {_def_file}")
 else:
     print(f"ERROR: DEF file not found: {_def_file}")

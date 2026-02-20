@@ -165,7 +165,7 @@ func loadFlowScriptContent(format string, cfg *config.ArrayConfig) (content, des
 
 	case "CrossSim Python (run_crosssim.py)":
 		return export.GenerateCrossSIMRunScript(*cfg),
-			"CrossSim runner — loads YAML config and runs NumericCore MVM (run: python3 run_crosssim.py)"
+			"CrossSim runner — loads YAML config and runs AnalogCore MVM (run: python3 run_crosssim.py)"
 
 	case "PySpice Simulation (run_pyspice.py)":
 		return export.GeneratePySpiceScript(*cfg),

@@ -93,7 +93,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 			Width:        width,
 			Height:       height,
 			CellType:     cfg.Architecture, // Uses shared architecture selector
-			Technology:   "sky130",
+			Technology:   cfg.Technology,
 			RiseTime:     rise,
 			FallTime:     fall,
 			InputCap:     cap,
