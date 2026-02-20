@@ -1450,7 +1450,7 @@ Array: %d × %d cells, mode=%s, arch=%s, tech=%s
 		container.NewTabItem("Verilog", verilogTab),
 		container.NewTabItem("DEF", defTab),
 		container.NewTabItem("Layout", layoutTab),
-		container.NewTabItem("Go Layout", container.NewScroll(layoutCanvas)),
+		container.NewTabItem("Wire Grid", container.NewScroll(layoutCanvas)),
 		container.NewTabItem("Array Map", MakeConductanceHeatmapPanel(cfg)),
 	)
 	previewTabs.SetTabLocation(container.TabLocationTop)

@@ -469,7 +469,7 @@ func makeQuickStartContent() fyne.CanvasObject {
 		widget.NewLabel("Use the Layout tab to view generated images from KLayout, OpenROAD, or Yosys. Zoom controls let you inspect details."))
 
 	tipCard := widget.NewCard("💡 Tips", "",
-		widget.NewLabel("• Start with a small array (4x4) to verify workflow\n• Use passive architecture for arrays ≤16x16\n• Check validation log for detailed error messages\n• Docker required for KLayout/OpenROAD image generation\n• Tab 5 (Flow Scripts) previews all generated scripts before exporting"))
+		widget.NewLabel("• Start with a small array (4x4) to verify workflow\n• Use passive architecture for arrays ≤16x16\n• Check validation log for detailed error messages\n• Docker required for KLayout/OpenROAD image generation\n• Tab 5 (Flow Scripts) previews all generated scripts before exporting\n• Builder subtab 'Wire Grid' shows Go-rendered WL/BL wire layout; 'Array Map' shows conductance heatmap patterns"))
 
 	return container.NewVBox(
 		title,
@@ -541,13 +541,33 @@ func makeFAQContent() fyne.CanvasObject {
 			"Example — 64×64 1T1R compute array with flow scripts:\n"+
 			"  ./fecim-eda-cli --arch 1t1r --rows 64 --cols 64 --scripts --output results/"))
 
+	faq9 := widget.NewCard("Q: What is the Array Map tab and what does it show?", "",
+		widget.NewLabel("A: The 'Array Map' tab (inside Builder & Validation → Array Map) shows a\n"+
+			"synthetic conductance heatmap of the configured crossbar array.\n\n"+
+			"Each cell in the heatmap represents one FeCIM bitcell, colored by conductance:\n"+
+			"  • Blue  (dark) = G_min  — cell in low-conductance (LRS) state\n"+
+			"  • Yellow       = G_max  — cell in high-conductance (HRS) state\n\n"+
+			"Patterns are ILLUSTRATIVE, not from actual device simulation:\n"+
+			"  • Gradient     — smooth center-bright, edges-dark radial pattern\n"+
+			"  • Random       — uniform random values, new each Refresh\n"+
+			"  • Checkerboard — alternating G_min/G_max (worst-case sneak path pattern)\n"+
+			"  • Uniform Hi/Lo — all cells at G_max or G_min (single-state array)\n"+
+			"  • Neural Weights — Gaussian distribution (σ=0.18) centered at G_mid\n"+
+			"                     typical weight distribution after neural network training\n"+
+			"  • Sine Wave    — 2D sin product showing how a smooth analog function\n"+
+			"                   maps to 30 discrete conductance levels\n\n"+
+			"The histogram below the map shows how many cells fall in each of the\n"+
+			"30 conductance bins, matching the default CIM quantization scheme.\n"+
+			"'Occupied levels' indicates how many bins are used — useful for seeing\n"+
+			"whether a weight distribution makes efficient use of analog states."))
+
 	troubleCard := widget.NewCard("🔧 Troubleshooting", "",
 		widget.NewLabel("• 'Docker not available': Install Docker Desktop and ensure daemon is running\n• 'Yosys validation failed': Check Verilog syntax in the log output\n• 'DEF validation failed': Ensure cell dimensions match LEF\n• 'Cross-check failed': Regenerate all files to ensure consistency"))
 
 	return container.NewVBox(
 		title,
 		widget.NewSeparator(),
-		faq1, faq2, faq3, faq4, faq5, faq6, faq7, faq8,
+		faq1, faq2, faq3, faq4, faq5, faq6, faq7, faq8, faq9,
 		widget.NewSeparator(),
 		troubleCard,
 	)
