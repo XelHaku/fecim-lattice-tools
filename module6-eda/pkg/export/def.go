@@ -1,6 +1,6 @@
 // pkg/export/def.go
 // DEF (Design Exchange Format) placement generator for FeCIM crossbar arrays
-// Supports both passive and 1T1R architectures
+// Supports passive, 1T1R, and 2T1R architectures
 
 package export
 
