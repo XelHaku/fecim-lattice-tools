@@ -139,6 +139,82 @@ func newConductanceRaster(m conductanceMatrix) *canvas.Raster {
 	})
 }
 
+// conductanceLevelCounts quantizes each cell value into `levels` bins and returns counts.
+// Level i spans [i/levels, (i+1)/levels). This matches the 30-level CIM quantization scheme.
+func conductanceLevelCounts(m conductanceMatrix, levels int) []int {
+	if levels < 1 {
+		levels = 1
+	}
+	counts := make([]int, levels)
+	for i := range m.Values {
+		for _, v := range m.Values[i] {
+			bin := int(v * float64(levels))
+			if bin >= levels {
+				bin = levels - 1
+			}
+			if bin < 0 {
+				bin = 0
+			}
+			counts[bin]++
+		}
+	}
+	return counts
+}
+
+// newConductanceHistogram creates a canvas.Raster bar chart of quantized level counts.
+// Each bar is colored with the heatmap color for its bin center value.
+func newConductanceHistogram(m conductanceMatrix, levels int) *canvas.Raster {
+	counts := conductanceLevelCounts(m, levels)
+
+	maxCount := 0
+	for _, c := range counts {
+		if c > maxCount {
+			maxCount = c
+		}
+	}
+	if maxCount == 0 {
+		maxCount = 1
+	}
+
+	r := canvas.NewRaster(func(w, h int) image.Image {
+		img := image.NewRGBA(image.Rect(0, 0, w, h))
+
+		// Background
+		bgColor := color.RGBA{20, 20, 30, 255}
+		for py := 0; py < h; py++ {
+			for px := 0; px < w; px++ {
+				img.Set(px, py, bgColor)
+			}
+		}
+
+		barW := math.Max(float64(w)/float64(levels), 1)
+		for b := 0; b < levels; b++ {
+			barHeight := int(float64(counts[b]) / float64(maxCount) * float64(h-2))
+			if barHeight < 0 {
+				barHeight = 0
+			}
+			binCenter := (float64(b) + 0.5) / float64(levels)
+			barColor := heatColorCIM(binCenter)
+
+			x0 := int(float64(b) * barW)
+			x1 := int(float64(b+1)*barW) - 1
+			if x1 >= w {
+				x1 = w - 1
+			}
+			yTop := h - 1 - barHeight
+
+			for px := x0; px <= x1; px++ {
+				for py := yTop; py < h; py++ {
+					img.Set(px, py, barColor)
+				}
+			}
+		}
+		return img
+	})
+	r.SetMinSize(fyne.NewSize(360, 80))
+	return r
+}
+
 // newHeatmapLegend creates a horizontal color scale legend bar.
 func newHeatmapLegend() *canvas.Raster {
 	r := canvas.NewRaster(func(w, h int) image.Image {
@@ -169,10 +245,21 @@ func MakeConductanceHeatmapPanel(cfg *config.ArrayConfig) fyne.CanvasObject {
 
 	infoLabel := widget.NewLabel("")
 
-	// Stack container: swap rasters on each refresh without rebuilding the layout.
+	// Stack containers: swap rasters on each refresh without rebuilding the layout.
+	const quantLevels = 30 // matches crossbar.QuantizeTo30Levels default
+
 	placeholder := newConductanceRaster(conductanceMatrix{})
 	placeholder.SetMinSize(fyne.NewSize(360, 270))
 	rasterContainer := container.NewStack(placeholder)
+
+	histPlaceholder := newConductanceHistogram(conductanceMatrix{}, quantLevels)
+	histContainer := container.NewStack(histPlaceholder)
+
+	histLabel := widget.NewLabelWithStyle(
+		fmt.Sprintf("Level distribution (%d quantization bins)", quantLevels),
+		fyne.TextAlignLeading,
+		fyne.TextStyle{Bold: true},
+	)
 
 	updateRaster := func() {
 		rows := cfg.Rows
@@ -203,9 +290,21 @@ func MakeConductanceHeatmapPanel(cfg *config.ArrayConfig) fyne.CanvasObject {
 		rasterContainer.Objects = []fyne.CanvasObject{r}
 		rasterContainer.Refresh()
 
+		h := newConductanceHistogram(m, quantLevels)
+		histContainer.Objects = []fyne.CanvasObject{h}
+		histContainer.Refresh()
+
+		// Show dominant level stats
+		counts := conductanceLevelCounts(m, quantLevels)
+		maxC, maxL := 0, 0
+		for l, c := range counts {
+			if c > maxC {
+				maxC, maxL = c, l
+			}
+		}
 		infoLabel.SetText(fmt.Sprintf(
-			"Array: %d × %d  |  Total cells: %d  |  Pattern: %s",
-			rows, cols, rows*cols, patternSelect.Selected,
+			"Array: %d × %d  |  Cells: %d  |  Pattern: %s  |  Peak level: %d/%d (%d cells)",
+			rows, cols, rows*cols, patternSelect.Selected, maxL+1, quantLevels, maxC,
 		))
 	}
 
@@ -234,5 +333,8 @@ func MakeConductanceHeatmapPanel(cfg *config.ArrayConfig) fyne.CanvasObject {
 		container.NewCenter(rasterContainer),
 		legendRow,
 		descLabel,
+		widget.NewSeparator(),
+		histLabel,
+		container.NewCenter(histContainer),
 	)
 }

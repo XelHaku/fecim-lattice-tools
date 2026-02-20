@@ -831,3 +831,61 @@ func TestConductancePatterns(t *testing.T) {
 		}
 	})
 }
+
+func TestConductanceLevelCounts(t *testing.T) {
+	// Uniform Hi (0.9) → all cells should land in the top bin of 30 levels.
+	m := makeConductanceUniform(4, 4, 0.9)
+	counts := conductanceLevelCounts(m, 30)
+	if len(counts) != 30 {
+		t.Fatalf("expected 30 bins, got %d", len(counts))
+	}
+	total := 0
+	for _, c := range counts {
+		total += c
+	}
+	if total != 4*4 {
+		t.Errorf("counts sum %d, want %d", total, 4*4)
+	}
+	// bin for 0.9 with 30 levels: int(0.9*30) = 27
+	if counts[27] != 16 {
+		t.Errorf("uniform 0.9: expected all 16 cells in bin 27, got %d", counts[27])
+	}
+
+	// Uniform Lo (0.1) → bin 3.
+	m = makeConductanceUniform(4, 4, 0.1)
+	counts = conductanceLevelCounts(m, 30)
+	if counts[3] != 16 {
+		t.Errorf("uniform 0.1: expected all 16 cells in bin 3, got %d", counts[3])
+	}
+
+	// Checkerboard → two bins should be non-zero.
+	m = makeConductanceChecker(4, 4)
+	counts = conductanceLevelCounts(m, 30)
+	nonZero := 0
+	for _, c := range counts {
+		if c > 0 {
+			nonZero++
+		}
+	}
+	if nonZero != 2 {
+		t.Errorf("checkerboard: expected exactly 2 non-zero bins, got %d", nonZero)
+	}
+}
+
+func TestNewConductanceHistogram(t *testing.T) {
+	testApp := test.NewApp()
+	defer testApp.Quit()
+
+	// Empty matrix.
+	h := newConductanceHistogram(conductanceMatrix{}, 30)
+	if h == nil {
+		t.Fatal("newConductanceHistogram(empty): returned nil")
+	}
+
+	// Non-empty.
+	m := makeConductanceRandom(8, 8, 42)
+	h = newConductanceHistogram(m, 30)
+	if h == nil {
+		t.Fatal("newConductanceHistogram(8×8 random): returned nil")
+	}
+}
