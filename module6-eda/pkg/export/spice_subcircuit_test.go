@@ -99,7 +99,8 @@ func TestGenerateSPICE_2T1RIncludesSelectorsAndPins(t *testing.T) {
 	if !strings.Contains(netlist, ".subckt fefet_2t1r") {
 		t.Fatal("missing 2T1R subcircuit")
 	}
-	if !strings.Contains(netlist, "X_0_1 wl0 csl1 bl1 sl0 fefet_2t1r") {
-		t.Fatal("2T1R instance connection does not match expected node map WL/CSL/BL/SL")
+	// SL is per-column: cell at row=0, col=1 connects to sl1 (col=1), not sl0 (row=0).
+	if !strings.Contains(netlist, "X_0_1 wl0 csl1 bl1 sl1 fefet_2t1r") {
+		t.Fatal("2T1R instance connection does not match expected node map WL/CSL/BL/SL (SL must use col index)")
 	}
 }

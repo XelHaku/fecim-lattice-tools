@@ -153,9 +153,10 @@ func GenerateSPICE(design *compiler.ArrayDesign, vdd float64) string {
 	sb.WriteString("\n")
 
 	if arch == compiler.Arch1T1R || arch == compiler.Arch2T1R {
-		sb.WriteString("* Source Line Drivers\n")
-		for row := 0; row <= maxRow; row++ {
-			sb.WriteString(fmt.Sprintf("VSL%d sl%d 0 DC 0\n", row, row))
+		// SL is per-column (like BL), not per-row — consistent with Verilog SL[numCols-1:0].
+		sb.WriteString("* Source Line Drivers (per-column, one per BL)\n")
+		for col := 0; col <= maxCol; col++ {
+			sb.WriteString(fmt.Sprintf("VSL%d sl%d 0 DC 0\n", col, col))
 		}
 		sb.WriteString("\n")
 	}
@@ -187,11 +188,13 @@ func GenerateSPICE(design *compiler.ArrayDesign, vdd float64) string {
 		}
 
 		if arch == compiler.Arch1T1R {
+			// SL is per-column (consistent with Verilog .SL(SL[col])).
 			sb.WriteString(fmt.Sprintf("X_%d_%d wl%d bl%d sl%d fefet_1t1r R_level=%.2f\n",
-				cell.Row, cell.Col, cell.Row, cell.Col, cell.Row, resistance))
+				cell.Row, cell.Col, cell.Row, cell.Col, cell.Col, resistance))
 		} else if arch == compiler.Arch2T1R {
+			// SL is per-column (consistent with Verilog .SL(SL[col])).
 			sb.WriteString(fmt.Sprintf("X_%d_%d wl%d csl%d bl%d sl%d fefet_2t1r R_level=%.2f\n",
-				cell.Row, cell.Col, cell.Row, cell.Col, cell.Col, cell.Row, resistance))
+				cell.Row, cell.Col, cell.Row, cell.Col, cell.Col, cell.Col, resistance))
 		} else {
 			sb.WriteString(fmt.Sprintf("X_%d_%d wl%d bl%d fefet_cell R_level=%.2f LEVEL=%d\n",
 				cell.Row, cell.Col, cell.Row, cell.Col, resistance, cell.Level))

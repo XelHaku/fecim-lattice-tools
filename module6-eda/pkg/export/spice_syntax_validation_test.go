@@ -220,6 +220,99 @@ func TestM6_SPICE_01_SyntaxValidation_2T2RArray(t *testing.T) {
 		parsed.instanceCount, parsed.vsourceCount)
 }
 
+// TestSPICE_SLUsesColsNotRows verifies SL (Source Line) net indices use column, not row.
+//
+// SL is per-column in the Verilog (SL[numCols-1:0], .SL(SL[col])) and DEF pin placement.
+// A non-square 3×5 array exposes any row/column confusion:
+//   - 3 WL voltage sources (rows 0-2)
+//   - 5 SL voltage sources (cols 0-4, after fix)  ← old bug gave 3 SL (rows)
+//   - 1 VDD → total 9
+// Cell instantiation: sl2 (not sl0) for cell at row=0, col=2.
+func TestSPICE_SLUsesColsNotRows(t *testing.T) {
+	// 3 rows × 5 cols non-square 1T1R array
+	var cells []compiler.CellAssignment
+	for row := 0; row < 3; row++ {
+		for col := 0; col < 5; col++ {
+			cells = append(cells, compiler.CellAssignment{
+				Row: row, Col: col,
+				Conductance: 50.0, Resistance: 20000.0, Level: 0,
+			})
+		}
+	}
+	design := &compiler.ArrayDesign{
+		Config: &compiler.ArrayConfig{
+			Mode:         compiler.ModeStorage,
+			Architecture: compiler.Arch1T1R,
+		},
+		Cells: cells,
+		Stats: compiler.DesignStats{TotalCells: 15, ActiveCells: 15},
+	}
+
+	netlist := GenerateSPICE(design, 1.8)
+	parsed := parseSPICENetlist(netlist)
+
+	// 3 WL + 5 SL (per-column) + 1 VDD = 9 V-sources
+	// Old bug: 3 WL + 3 SL (per-row) + 1 VDD = 7
+	expectedVSources := 3 + 5 + 1
+	if parsed.vsourceCount != expectedVSources {
+		t.Errorf("3×5 1T1R: expected %d voltage sources (3 WL + 5 SL-per-col + 1 VDD), got %d\n"+
+			"Check that SL drivers loop over maxCol (5) not maxRow (3)",
+			expectedVSources, parsed.vsourceCount)
+	}
+
+	// Row 0, Col 2 should connect to sl2 (column net), not sl0 (row net)
+	if !strings.Contains(netlist, "wl0 bl2 sl2 fefet_1t1r") {
+		t.Error("3×5 1T1R: cell[0,2] should connect to sl2 (col=2), not sl0 (row=0)\n" +
+			"Check 1T1R instantiation uses cell.Col for SL net")
+	}
+
+	// Row 2, Col 0 should connect to sl0 (column 0), not sl2 (row 2)
+	if !strings.Contains(netlist, "wl2 bl0 sl0 fefet_1t1r") {
+		t.Error("3×5 1T1R: cell[2,0] should connect to sl0 (col=0), not sl2 (row=2)\n" +
+			"Check 1T1R instantiation uses cell.Col for SL net")
+	}
+}
+
+// TestSPICE_2T1R_SLUsesColsNotRows verifies 2T1R SL net indices use column, not row.
+func TestSPICE_2T1R_SLUsesColsNotRows(t *testing.T) {
+	// 4 rows × 3 cols non-square 2T1R array
+	var cells []compiler.CellAssignment
+	for row := 0; row < 4; row++ {
+		for col := 0; col < 3; col++ {
+			cells = append(cells, compiler.CellAssignment{
+				Row: row, Col: col,
+				Conductance: 50.0, Resistance: 20000.0, Level: 0,
+			})
+		}
+	}
+	design := &compiler.ArrayDesign{
+		Config: &compiler.ArrayConfig{
+			Mode:         compiler.ModeCompute,
+			Architecture: compiler.Arch2T1R,
+		},
+		Cells: cells,
+		Stats: compiler.DesignStats{TotalCells: 12, ActiveCells: 12},
+	}
+
+	netlist := GenerateSPICE(design, 1.8)
+	parsed := parseSPICENetlist(netlist)
+
+	// 4 WL + 3 SL (per-column) + 3 CSL + 1 VDD = 11 V-sources
+	// Old bug: 4 WL + 4 SL (per-row) + 3 CSL + 1 VDD = 12
+	expectedVSources := 4 + 3 + 3 + 1
+	if parsed.vsourceCount != expectedVSources {
+		t.Errorf("4×3 2T1R: expected %d voltage sources (4 WL + 3 SL-per-col + 3 CSL + 1 VDD), got %d\n"+
+			"Check that SL drivers loop over maxCol (3) not maxRow (4)",
+			expectedVSources, parsed.vsourceCount)
+	}
+
+	// Row 3, Col 1 should connect to sl1 (col=1), not sl3 (row=3)
+	if !strings.Contains(netlist, "wl3 csl1 bl1 sl1 fefet_2t1r") {
+		t.Error("4×3 2T1R: cell[3,1] should connect to sl1 (col=1), not sl3 (row=3)\n" +
+			"Check 2T1R instantiation uses cell.Col for SL net")
+	}
+}
+
 // TestM6_SPICE_01_SyntaxValidation_PassiveArray tests passive (0T1R) architecture
 func TestM6_SPICE_01_SyntaxValidation_PassiveArray(t *testing.T) {
 	cells := []compiler.CellAssignment{
