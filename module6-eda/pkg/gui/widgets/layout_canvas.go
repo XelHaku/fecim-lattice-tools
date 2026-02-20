@@ -80,7 +80,7 @@ func (lc *LayoutCanvas) MinSize() fyne.Size {
 	if lc.config.Architecture == "1t1r" {
 		legendSpace = 90
 	} else if lc.config.Architecture == "2t1r" {
-		legendSpace = 110 // Extra space for SL + CSL labels
+		legendSpace = 120 // Extra space for BL (+28), SL (+42), CSL (+56), legend (+70)
 	}
 	height := lc.margin*2 + float32(lc.config.Rows)*lc.cellHeight + legendSpace
 	// Ensure minimum usable size
@@ -259,35 +259,41 @@ func (r *layoutCanvasRenderer) buildLayout() []fyne.CanvasObject {
 		}
 	}
 
-	// 2T1R: Column Select Lines (CSL, horizontal like WL but at row bottom, dashed)
-	// and Source Lines (SL, vertical like BL but offset)
+	// 2T1R: CSL and SL are both vertical column lines (one per column, like BL).
+	// CSL[col] gates the column transistor; SL[col] is the source line.
+	// This matches the Verilog port CSL[numCols-1:0] and the SVG generator.
 	if is2T1R {
-		// CSL wires — one per row, drawn at row-bottom (y + cellHeight - 10), dashed
-		for row := 0; row < cfg.Rows; row++ {
-			y := lc.margin + float32(row)*lc.cellHeight + lc.cellHeight - 10
+		// CSL wires — one per column, dashed vertical, offset left of BL center
+		for col := 0; col < cfg.Cols; col++ {
+			x := lc.margin + float32(col)*lc.cellWidth + lc.cellWidth/2 - 8
 
-			// CSL wire (dashed effect)
-			for i := 0; i < int(arrayWidth)/8; i++ {
-				x1 := lc.margin + float32(i*8)
-				x2 := x1 + 4
-				if x2 > lc.margin+arrayWidth {
-					x2 = lc.margin + arrayWidth
+			for i := 0; i < int(arrayHeight)/8; i++ {
+				y1 := lc.margin + float32(i*8)
+				y2 := y1 + 4
+				if y2 > lc.margin+arrayHeight {
+					y2 = lc.margin + arrayHeight
 				}
 				cslLine := canvas.NewLine(colorCSL)
-				cslLine.Position1 = fyne.NewPos(x1, y)
-				cslLine.Position2 = fyne.NewPos(x2, y)
+				cslLine.Position1 = fyne.NewPos(x, y1)
+				cslLine.Position2 = fyne.NewPos(x, y2)
 				cslLine.StrokeWidth = 2
 				objects = append(objects, cslLine)
 			}
 
-			// CSL label (right side)
-			label := canvas.NewText(fmt.Sprintf("CSL[%d]", row), colorCSL)
+			// CSL pin
+			pin := canvas.NewCircle(colorCSL)
+			pin.Resize(fyne.NewSize(8, 8))
+			pin.Move(fyne.NewPos(x-4, lc.margin+arrayHeight+15))
+			objects = append(objects, pin)
+
+			// CSL label (below SL label)
+			label := canvas.NewText(fmt.Sprintf("CSL[%d]", col), colorCSL)
 			label.TextSize = 11
-			label.Move(fyne.NewPos(lc.margin+arrayWidth+4, y-5))
+			label.Move(fyne.NewPos(x-14, lc.margin+arrayHeight+56))
 			objects = append(objects, label)
 		}
 
-		// SL wires — one per column, dashed vertical, offset from BL
+		// SL wires — one per column, dashed vertical, offset right of BL center
 		for col := 0; col < cfg.Cols; col++ {
 			x := lc.margin + float32(col)*lc.cellWidth + lc.cellWidth/2 + 8
 
