@@ -356,8 +356,8 @@ END COMPONENTS
 - **OpenLane integration:** Compatible with LibreLane v2+ and legacy OpenLane v1
 - **Cross-validation:** Automatic LEF/Liberty/Verilog pin consistency checks
 - **Bundled example:** Complete 2×2 passive design at `pkg/gui/tabs/data/fecim_crossbar_2x2/`
-- **GUI tabs:** Learn, Builder/Validation, Export Viewer, Layout Visualizer, Flow Scripts (15 formats)
-- **Conductance heatmap:** 6 preset patterns with 30-level quantization histogram
+- **GUI tabs:** Learn, Builder/Validation, Export Viewer, Layout Visualizer, Flow Scripts (16 formats)
+- **Conductance heatmap:** 7 preset patterns (Gradient, Random, Checkerboard, Uniform Hi/Lo, Neural Weights, Sine Wave) with 30-level quantization histogram
 
 ---
 
