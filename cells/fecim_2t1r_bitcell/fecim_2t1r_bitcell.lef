@@ -1,0 +1,96 @@
+# CHARACTERIZATION PROVENANCE
+# CHAR_STATUS: ESTIMATED_SCALAR
+# WARNING: This Liberty file is generated from analytical models,
+# NOT from silicon measurement or SPICE post-layout simulation.
+# Timing values are estimated from Landau-Khalatnikov transient simulation.
+# NOT suitable for signoff or tapeout. Educational/research use only.
+# For production characterization, use Cadence Liberate or Synopsys SiliconSmart
+# with measured device data.
+VERSION 5.8 ;
+BUSBITCHARS "[]" ;
+DIVIDERCHAR "/" ;
+
+# Minimal layer definition for standalone validation
+LAYER met1
+  TYPE ROUTING ;
+  DIRECTION HORIZONTAL ;
+  PITCH 0.46 ;
+  WIDTH 0.14 ;
+END met1
+
+# Site definition for 2T1R placement
+SITE fecim_2t1r_site
+  CLASS CORE ;
+  SIZE 1.380 BY 4.070 ;
+  SYMMETRY X Y ;
+END fecim_2t1r_site
+
+MACRO fecim_2t1r_bitcell
+  CLASS CORE ;
+  ORIGIN 0 0 ;
+  SIZE 1.380 BY 4.070 ;
+  SYMMETRY X Y ;
+  SITE fecim_2t1r_site ;
+
+  PIN WL
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER met1 ;
+      RECT 0.000 1.600 0.140 1.800 ;
+    END
+  END WL
+
+  PIN CSL
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER met1 ;
+      RECT 1.240 1.600 1.380 1.800 ;
+    END
+  END CSL
+
+  PIN BL
+    DIRECTION OUTPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER met1 ;
+      RECT 0.620 3.930 0.760 4.070 ;
+    END
+  END BL
+
+  PIN SL
+    DIRECTION INPUT ;
+    USE SIGNAL ;
+    PORT
+      LAYER met1 ;
+      RECT 0.620 0.000 0.760 0.140 ;
+    END
+  END SL
+
+  PIN VPWR
+    DIRECTION INOUT ;
+    USE POWER ;
+    PORT
+      LAYER met1 ;
+      RECT 0.000 3.930 1.380 4.070 ;
+    END
+  END VPWR
+
+  PIN VGND
+    DIRECTION INOUT ;
+    USE GROUND ;
+    PORT
+      LAYER met1 ;
+      RECT 0.000 0.000 1.380 0.140 ;
+    END
+  END VGND
+
+  OBS
+    LAYER met1 ;
+    RECT 0.100 0.100 1.280 3.970 ;
+  END
+
+END fecim_2t1r_bitcell
+
+END LIBRARY
