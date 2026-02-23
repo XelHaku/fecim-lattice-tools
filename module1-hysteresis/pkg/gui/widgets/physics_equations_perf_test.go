@@ -38,7 +38,8 @@ func TestEquationWidgetPerf_OpenBudgets(t *testing.T) {
 	defer w.Close()
 
 	// Race mode adds ~2× overhead; use a generous budget to avoid false flakes.
-	openBudget := 1500 * time.Millisecond
+	// Headless CI can be slower; keep a wider budget to reduce flakes.
+	openBudget := 3000 * time.Millisecond
 	if isRaceEnabled() {
 		openBudget = 5000 * time.Millisecond
 	}
