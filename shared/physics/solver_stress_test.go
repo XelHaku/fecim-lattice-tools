@@ -275,6 +275,9 @@ func TestLKSolver_Stress_TemperatureDependence(t *testing.T) {
 // ============================================================================
 
 func TestWriteController_Stress_AllLevels(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping all-levels stress test in -short mode (>50s under -race)")
+	}
 	mat := DefaultHZO()
 	s := NewLKSolver()
 	s.ConfigureFromMaterial(mat)

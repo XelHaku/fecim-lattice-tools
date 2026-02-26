@@ -148,7 +148,7 @@ func newestHysteresisLogAfter(after time.Time) (string, error) {
 		if err != nil {
 			continue
 		}
-		if info.ModTime().Before(after.Add(-2 * time.Second)) {
+		if info.ModTime().Before(after.Add(-100 * time.Millisecond)) {
 			continue
 		}
 		if newestPath == "" || info.ModTime().After(newestTime) {

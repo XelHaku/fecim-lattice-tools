@@ -134,7 +134,7 @@ func newestHysteresisCSVAfter(t *testing.T, before time.Time) string {
 		if err != nil {
 			continue
 		}
-		if info.ModTime().After(before.Add(-2 * time.Second)) {
+		if info.ModTime().After(before.Add(-100 * time.Millisecond)) {
 			return p
 		}
 	}

@@ -97,7 +97,7 @@ func newestHysteresisLogAfterWithTB(t *testing.T, after time.Time) string {
 	})
 	for _, p := range paths {
 		info, err := os.Stat(p)
-		if err == nil && info.ModTime().After(after.Add(-2*time.Second)) {
+		if err == nil && info.ModTime().After(after.Add(-100*time.Millisecond)) {
 			return p
 		}
 	}

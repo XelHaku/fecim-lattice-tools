@@ -234,6 +234,14 @@ func classifyDiscontinuity(prevE, curE, ecVpm float64, phase string) (class, rea
 	}
 	nearEcFrac = math.Abs(math.Abs(curE)-ecVpm) / ecVpm
 
+	// E=0 during WRITE/PROG_VERIFY is a verify step — the ISPP controller
+	// sets CurrentField=0 to read back the polarization state. Large |ΔP|
+	// here is the Preisach model relaxing from the last programming pulse
+	// (minor-loop closure), not a spurious discontinuity.
+	if curE == 0 && (phase == "WRITE" || phase == "PROG_VERIFY") {
+		return "PHYSICAL", "zero-field verify step (minor-loop relaxation)", nearEcFrac
+	}
+
 	// In PROG_VERIFY the controller intentionally reverses polarity during
 	// overshoot recovery. Large |ΔP| on a same-phase polarity flip is expected.
 	if prevE != 0 && curE != 0 && (prevE > 0) != (curE > 0) {

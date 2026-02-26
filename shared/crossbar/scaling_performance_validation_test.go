@@ -110,7 +110,9 @@ func TestM2SCL03_MemoryFootprint_ScalesLikeN2(t *testing.T) {
 		t.Logf("n=%-3d bytes/run=%.1f allocs/run=%.2f", s.n, s.bytesRun, s.allocs)
 	}
 
-	if samples[len(samples)-1].allocs > 5 {
+	// The race detector instruments memory operations, inflating AllocsPerRun
+	// counts (e.g., 1 → 355). Only assert allocation counts without -race.
+	if !raceDetectorEnabled && samples[len(samples)-1].allocs > 5 {
 		t.Fatalf("expected low allocations on SolveMVMFast, got allocs/run=%.2f at n=%d", samples[len(samples)-1].allocs, samples[len(samples)-1].n)
 	}
 }

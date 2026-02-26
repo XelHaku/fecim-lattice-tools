@@ -214,6 +214,9 @@ func TestWeightsAreQuantizedTo30Levels(t *testing.T) {
 
 // TestTrainEpochReducesLoss verifies training makes progress
 func TestTrainEpochReducesLoss(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping epoch training test in -short mode (>120s)")
+	}
 	// Use local RNG for reproducible tests (rand.Seed is deprecated since Go 1.20)
 	rng := rand.New(rand.NewSource(testRNGSeed))
 

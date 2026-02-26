@@ -450,6 +450,10 @@ func (a *Array) applyEnduranceFatigue(cell *Cell, gPhys float64) float64 {
 
 // ProgramWeightMatrix programs an entire weight matrix to the array.
 func (a *Array) ProgramWeightMatrix(weights [][]float64) error {
+	if len(weights) == 0 {
+		return fmt.Errorf("weight matrix is empty or nil")
+	}
+
 	getLog().Input("ProgramWeightMatrix", map[string]interface{}{
 		"matrixRows": len(weights),
 		"matrixCols": len(weights[0]),
@@ -490,6 +494,9 @@ func (a *Array) MVM(input []float64) ([]float64, error) {
 		"cols":     a.config.Cols,
 	})
 
+	if len(input) == 0 {
+		return nil, fmt.Errorf("MVM input is empty")
+	}
 	if len(input) > a.config.Cols {
 		err := fmt.Errorf("input size (%d) exceeds array columns (%d)", len(input), a.config.Cols)
 		getLog().Error(err, "MVM validation failed")
