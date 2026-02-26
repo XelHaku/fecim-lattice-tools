@@ -853,8 +853,8 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 						bitsStored := float64(a.wrdTotalWrites) * a.wrdBitsStored
 						a.addLogEntry("━━ ENERGY COMPARISON ━━")
 						a.addLogEntry(fmt.Sprintf("FeCIM: %.0f pJ total", fecimEnergy))
-						a.addLogEntry(fmt.Sprintf("NAND:  %.0f pJ (50×!)", nandEquiv))
-						a.addLogEntry(fmt.Sprintf("DRAM:  %.0f pJ (1000×)", dramEquiv))
+						a.addLogEntry(fmt.Sprintf("NAND:  %.0f pJ (~50× est.)", nandEquiv))
+						a.addLogEntry(fmt.Sprintf("DRAM:  %.0f pJ (~1000× est.)", dramEquiv))
 						a.addLogEntry(fmt.Sprintf("Bits stored: %.0f (%.2f×binary)", bitsStored, a.wrdBitsStored))
 						a.addLogEntry("━━━━━━━━━━━━━━━━━━━━━━")
 					}

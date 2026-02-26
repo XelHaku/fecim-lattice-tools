@@ -228,7 +228,7 @@ Level Errors: %d (%.4f%%)
 10-Year Retention: %.2f%%
 
 FeCIM Drift Coefficient: %.4f
-(50x better than RRAM!)
+(est. ~50x better than RRAM)
 
 Why It Matters:
 ---------------
@@ -272,11 +272,11 @@ func (t *DriftTab) showTechComparison() {
 	}
 
 	compText += "\n"
-	compText += "FeCIM achieves:\n"
-	compText += "- 50x lower drift than RRAM\n"
-	compText += "- 100x lower drift than PCM\n"
-	compText += "- 20x lower drift than Flash\n"
-	compText += "\n10-year retention: >99.9%"
+	compText += "FeCIM achieves (model est.):\n"
+	compText += "- ~50x lower drift than RRAM\n"
+	compText += "- ~100x lower drift than PCM\n"
+	compText += "- ~20x lower drift than Flash\n"
+	compText += "\n10-year retention: >99.9% (modeled)"
 
 	t.statsLabel.SetText(compText)
 	t.statusLabel.SetText("Technology comparison complete")

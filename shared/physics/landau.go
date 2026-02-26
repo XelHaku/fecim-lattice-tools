@@ -546,7 +546,7 @@ func (s *LKSolver) nlsSwitchedFraction(E, totalTime float64) float64 {
 	}
 	tauInf := s.TauInf
 	if tauInf <= 0 {
-		tauInf = 1e-13
+		tauInf = 1e-10 // 100 ps macroscopic NLS attempt time; Guo et al. APL 112, 262903 (2018)
 	}
 	activationField := s.ActivationField
 	if activationField <= 0 {

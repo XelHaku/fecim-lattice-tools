@@ -949,10 +949,10 @@ func (r *responsiveFooterRenderer) layoutWithSize(size fyne.Size) {
 		f.metricsText.Text = "30 States (claim) | 96-98% MNIST | TRL 4"
 	case sharedwidgets.BreakpointMD:
 		metricsSize, journeySize = 12, 11
-		f.metricsText.Text = "30 States (claim) | 96-98% MNIST | 25-100× vs NAND | TRL 4"
+		f.metricsText.Text = "30 States (claim) | 96-98% MNIST (lit.) | 25-100× vs NAND (est.) | TRL 4"
 	default:
 		metricsSize, journeySize = 13, 12
-		f.metricsText.Text = "30 States (conference claim) | 96-98% MNIST | 25-100× vs NAND | 10⁹ Cycles | TRL 4"
+		f.metricsText.Text = "30 States (conference claim) | 96-98% MNIST (lit.) | 25-100× vs NAND (est.) | 10⁹ Cycles (est.) | TRL 4"
 	}
 
 	f.metricsText.TextSize = metricsSize

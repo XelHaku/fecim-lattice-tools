@@ -2,7 +2,7 @@
 
 **A scientific desktop application for ferroelectric compute-in-memory (FeCIM) research and education.** Simulates HZO/PZT/BTO ferroelectric devices across 7 integrated modules: hysteresis (Preisach + Landau-Khalatnikov), crossbar arrays with IR drop and sneak paths, MNIST inference at 80% accuracy through the full CIM pipeline, peripheral circuits (DAC/ADC/TIA), technology comparison, EDA export (SPICE/Verilog/Liberty/DEF/LEF), and interactive documentation.
 
-Built on **published physics** — Materlik 2015, Park 2015, Alessandri 2018, Guo 2018 — with every parameter cited or explicitly marked educational. Validated by 3717+ automated tests across 70 packages, Kirchhoff-law current verification, and cross-tool comparison harnesses. Peer-review reproducible: clone, run one script, verify all claims.
+Built on **published physics** — Materlik 2015, Park 2015, Alessandri 2018, Guo 2018 — with core parameters cited or explicitly marked educational. Verified by 3717+ automated tests across 70 packages, Kirchhoff-law current verification, and cross-tool comparison harnesses. Reproducible: clone, run one script, verify internal model claims.
 
 **For:** Physics/EE researchers, graduate students, device engineers working on ferroelectric memory, neuromorphic computing, or compute-in-memory architectures.
 

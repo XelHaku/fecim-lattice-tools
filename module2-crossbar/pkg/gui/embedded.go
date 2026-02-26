@@ -95,7 +95,7 @@ func (e *EmbeddedCrossbarApp) BuildContent(fyneApp fyne.App, parentWindow fyne.W
 			"3. Use controls (right)\n"+
 			"4. Explore tabs\n\n"+
 			"Key Concepts:\n"+
-			"• 30 levels/cell\n"+
+			"• 30 levels/cell (claim)\n"+
 			"• MVM = W × V\n"+
 			"• Parallel compute")
 

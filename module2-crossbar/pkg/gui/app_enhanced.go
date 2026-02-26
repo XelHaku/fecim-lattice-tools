@@ -187,7 +187,7 @@ func (ca *CrossbarApp) runEnhancedMVMAnimated(input []float64) {
 	fyne.Do(func() {
 		ca.conductanceHeatmap.ClearAnimation()
 		ca.updateEnhancedWidgets(mvmResult)
-		ca.updateStatus(fmt.Sprintf("COMPUTE | Complete: %d MACs, %.2f pJ, %.0f× better than GPU",
+		ca.updateStatus(fmt.Sprintf("COMPUTE | Complete: %d MACs, %.2f pJ, ~%.0f× vs GPU (modeled)",
 			mvmResult.MACOperations, mvmResult.TotalEnergy, mvmResult.EnergyEfficiency))
 		ca.modeIndicator.SetMode(int(DemoModeIdle))
 	})

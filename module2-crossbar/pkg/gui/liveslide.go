@@ -139,8 +139,8 @@ func setMVMExplanation(ep *sharedwidgets.EducationalPanel, phase int) {
 			"The crossbar computes\n" +
 			"the entire matrix-vector\n" +
 			"product in ONE analog step.\n\n" +
-			"Speed: ~1ns (vs. µs in CPU)\n" +
-			"Energy: ~10pJ (vs. nJ in GPU)"
+			"Analog step: ~1ns settling\n" +
+			"Energy: ~10pJ/MVM (modeled)"
 	}
 	ep.SetContent("Compute-in-Memory", content)
 }

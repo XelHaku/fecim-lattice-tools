@@ -234,7 +234,7 @@ func (w *DriftVisualization) Refresh() {
 		// Update tech comparison
 		if w.techCompare != nil {
 			w.techCompare.SetText(fmt.Sprintf(
-				"FeCIM: %.0f× better than RRAM, %.0f× better than PCM",
+				"FeCIM: ~%.0f× vs RRAM, ~%.0f× vs PCM (modeled)",
 				stats.TechnologyComparison.FeFETAdvantage,
 				stats.TechnologyComparison.PCMDrift/stats.TechnologyComparison.FeFETDrift))
 		}
