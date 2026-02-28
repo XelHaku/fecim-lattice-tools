@@ -2,9 +2,9 @@
 
 **Mission**: Educational FeCIM visualization and simulation tool based on HfO2-ZrO2 superlattice research.
 
-**Last Updated**: 2026-02-27
+**Last Updated**: 2026-02-28
 
-**Phase**: Education (simulation-only). All Critical/High/Medium items cleared. Two low-priority platform extensions remain. Eight world-class features deferred pending prerequisites.
+**Phase**: Education (simulation-only). All pending items cleared. Eight world-class features deferred pending prerequisites.
 
 ---
 
@@ -12,11 +12,11 @@
 
 | Bucket | Count | Notes |
 |--------|-------|-------|
-| Pending | 2 | L09, L10 — low-priority platform extensions |
-| Open Issues | 1 | Capture pipeline black-screen regression (P2) |
+| Pending | 0 | — |
+| Open Issues | 0 | — |
 | Scheduled | 1 | Quarterly Literature Review — April 2026 |
 | Deferred | 8 | Blocked on prerequisites (see below) |
-| Completed | ~250+ | All Critical, High, Medium items done |
+| Completed | ~260+ | All items done including L09, L10 |
 
 ---
 
@@ -24,17 +24,19 @@
 
 ### Pending
 
-| ID | Task | Priority | Est. |
-|----|------|----------|------|
-| L09 | Vulkan rendering implementation for large arrays | Low | 20hr |
-| L10 | 3D multi-layer visualization (512-layer roadmap) | Low | 24hr |
+None.
 
 ### Open Issues
 
-**2026-02-25: Capture pipeline black-screen regression for MNIST GUI** (P2)
-- Capturing MNIST GUI window on real display yields fully black image (all pixels 0) even when window is visible.
-- Suspect: `xrandr` shows DP-2 brightness=0.0 may affect capture pipeline.
-- Investigate: Fyne window capture on X11; try different capture method (xwd/import) or move window to primary monitor; check compositor/security policy.
+None.
+
+### Resolved Issues
+
+**2026-02-27: Capture pipeline black-screen regression for MNIST GUI** (P2) — RESOLVED
+- Root cause: Session runs under **Xwayland** (`XDG_SESSION_TYPE=wayland`, X server is `Xwayland :0 -rootless`). External X11 screenshot tools (`maim`, `scrot`, `xwd`) produce all-black images on Xwayland because Xwayland composites X11 windows inside the Wayland compositor buffer, leaving the X11 root window unmapped. Setting `xrandr --brightness` does not fix this — it is an architectural limitation of Xwayland, not a software bug.
+- The `fecim-screenshotter` is **not affected**: it uses `Canvas().Capture()` (Fyne's `glReadPixels` on the GL framebuffer), which reads from the application's own OpenGL context and bypasses X11 screen capture entirely.
+- Fix applied (`cmd/fecim-screenshotter/main.go`): Added `isXwaylandDisplay()` detection; updated `checkDisplayBrightness()` to emit a NOTE (not a WARNING) under Xwayland, clarifying that `Canvas.Capture()` is unaffected; added `captureBlackDiagnostic()` with Xwayland-specific guidance including Mesa GL front-buffer timing issues and the `grim` alternative for external captures.
+- External capture workaround on Wayland: `grim(1)` (confirmed installed and working: captures non-black content). For window-specific: `grim -g "$(slurp)" /tmp/capture.png`.
 
 ### Scheduled
 
@@ -154,8 +156,8 @@ LIT-P0-01..04, LIT-P1-01..07, LIT-P2-01..07, LIT-P3-01..05 — 4-bit DAC/ADC def
 ### Shared Code (7 items)
 SHARE-001..007 — Keyboard unification, shortcut metadata, Preisach model to shared, Module4 decoupling, export provider, tab navigation, theme boilerplate.
 
-### Architecture & Platform (14 items)
-ARCH-1..7, VK-1..4, L05/L07/L08/L11 — EDA placement/routing, multi-cell arrays, sneak path visualization, custom training, chip peripherals, SPICE export, Vulkan lifecycle, WASM deployment, demo video, LK indicators, About Science section.
+### Architecture & Platform (16 items)
+ARCH-1..7, VK-1..4, L05/L07/L08/L09/L10/L11 — EDA placement/routing, multi-cell arrays, sneak path visualization, custom training, chip peripherals, SPICE export, Vulkan lifecycle, WASM deployment, demo video, LK indicators, About Science section, Vulkan GPU heatmap renderer (shared/render), 3D multi-layer stack visualization (shared/render3d).
 
 ### Beyond World-Class (15 items)
 BW-01..15 — Model confidence ledger, calibration studio, reproducibility pack, cross-model comparator, device aging engine, array program scheduler, research trace mode, statistical verification dashboard, publications mode, benchmark suite, mixed-precision CIM planner, PDK reality bridge, uncertainty-aware UI, scenario replay engine, executive readiness report.
