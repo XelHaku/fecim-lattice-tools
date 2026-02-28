@@ -913,7 +913,7 @@ func (ca *CrossbarApp) getBaseTabName(tabText string) string {
 		}
 	}
 	// For enhanced mode tabs
-	enhancedTabs := []string{"Ideal vs Actual", "Accuracy Analysis"}
+	enhancedTabs := []string{"Ideal vs Actual", "Accuracy Analysis", "3D Stack"}
 	for _, base := range enhancedTabs {
 		if len(tabText) >= len(base) && tabText[:len(base)] == base {
 			return base

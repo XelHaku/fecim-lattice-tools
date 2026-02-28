@@ -121,6 +121,10 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 	fecapTab := tabs.NewFeCAPTab(fecapRows)
 	fecapContent := fecapTab.Content()
 
+	// L10: 3D multi-layer stack visualization
+	stack3dTab := tabs.NewStack3DTab()
+	stack3dContent := stack3dTab.Content()
+
 	// Create tabbed view with new tabs
 	ca.tabs = container.NewAppTabs(
 		container.NewTabItem("Conductance", condContent),
@@ -130,6 +134,7 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 		container.NewTabItem("Ideal vs Actual", beforeAfterTab),
 		container.NewTabItem("Accuracy Analysis", waterfallTab),
 		container.NewTabItem("FeCAP Mode", fecapContent),
+		container.NewTabItem("3D Stack", stack3dContent),
 	)
 
 	// Update educational panel based on selected tab and preserve selection
@@ -251,6 +256,23 @@ func (ca *CrossbarApp) createEnhancedMainLayout() fyne.CanvasObject {
 					"Reference:\n"+
 					"Adv. Intell. Syst. 2022\n"+
 					"128×128 demo, 3.8 pJ/MVM")
+		case "3D Stack":
+			ca.setEducationalContent("3D Layer Stack",
+				"Multi-layer FeCIM array\nvisualization (like 3D NAND).\n\n"+
+					"Stacked crossbar layers\n"+
+					"share vertical interconnects.\n\n"+
+					"Controls:\n"+
+					"• Drag to rotate camera\n"+
+					"• Scroll to zoom\n"+
+					"• Click to select layer\n"+
+					"• Adjust sliders for\n"+
+					"  layer count and grid\n\n"+
+					"Performance:\n"+
+					"• Up to 512 layers\n"+
+					"• Auto-subsampling when\n"+
+					"  layers exceed visible cap\n\n"+
+					"Pure software renderer\n"+
+					"(no GPU required)")
 		}
 	}
 
