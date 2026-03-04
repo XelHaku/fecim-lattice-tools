@@ -13,7 +13,7 @@
 | Bucket | Count | Notes |
 |--------|-------|-------|
 | Pending | 0 | — |
-| Open Issues | 0 | — |
+| Open Issues | 1 | Display/session wiring for GUI capture + live UI audits |
 | Scheduled | 1 | Quarterly Literature Review — April 2026 |
 | Deferred | 8 | Blocked on prerequisites (see below) |
 | Completed | ~260+ | All items done including L09, L10 |
@@ -28,7 +28,12 @@ None.
 
 ### Open Issues
 
-None.
+**2026-03-03: Display/session wiring missing for GUI screenshot + visual audit runs** (P1) — OPEN
+- Symptom: `fecim-screenshotter` fails with `X11: The DISPLAY environment variable is missing` and GLFW not initialized.
+- Verified context: shell session has empty `DISPLAY` and `WAYLAND_DISPLAY`; `xdpyinfo` on `:0` fails.
+- Impact: blocks screenshot-based GUI audits and visual overlap validation in this runtime.
+- Required fix: wire this agent/runtime to active desktop session (X11/Wayland env + permissions), then rerun `cmd/fecim-screenshotter` for Module 4 and all modules.
+- Validation after fix: screenshot capture succeeds with non-empty images, plus GUI layout audit checklist executed hourly.
 
 ### Resolved Issues
 
