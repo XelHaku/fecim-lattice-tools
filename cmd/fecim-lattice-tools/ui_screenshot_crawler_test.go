@@ -509,10 +509,10 @@ func setupHeadlessIfNeeded(t *testing.T) {
 	t.Helper()
 
 	if isHeadlessEnvironment() {
-		if os.Getenv("DISPLAY") == "" {
-			t.Skip("DISPLAY is not set (run under xvfb-run -a)")
+		ensureDisplayForGraphicalTests(t)
+		if display := strings.TrimSpace(os.Getenv("DISPLAY")); display != "" {
+			t.Logf("Running in headless mode with DISPLAY=%s", display)
 		}
-		t.Logf("Running in headless mode with DISPLAY=%s", os.Getenv("DISPLAY"))
 	}
 }
 

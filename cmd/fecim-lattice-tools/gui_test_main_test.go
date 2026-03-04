@@ -64,6 +64,7 @@ func TestMain(m *testing.M) {
 				job.fn()
 				close(job.done)
 			case code := <-exitCh:
+				shutdownAutoXvfbForTests()
 				os.Exit(code)
 			}
 		}
@@ -81,5 +82,6 @@ func TestMain(m *testing.M) {
 	}()
 
 	a.Run()
+	shutdownAutoXvfbForTests()
 	os.Exit(<-codeCh)
 }

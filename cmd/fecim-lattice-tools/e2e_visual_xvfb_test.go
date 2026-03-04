@@ -29,9 +29,7 @@ func TestVisualXvfbRegressionCrossbar(t *testing.T) {
 	if os.Getenv("FECIM_RUN_XVFB") != "1" {
 		t.Skip("Set FECIM_RUN_XVFB=1 to enable real-driver Xvfb visual tests")
 	}
-	if os.Getenv("DISPLAY") == "" {
-		t.Skip("DISPLAY is not set (run under xvfb-run -a)")
-	}
+	ensureDisplayForGraphicalTests(t)
 
 	module, err := demo2gui.NewEmbeddedCrossbarApp()
 	if err != nil {
@@ -51,9 +49,7 @@ func TestVisualXvfbRegressionMNIST(t *testing.T) {
 	if os.Getenv("FECIM_RUN_XVFB") != "1" {
 		t.Skip("Set FECIM_RUN_XVFB=1 to enable real-driver Xvfb visual tests")
 	}
-	if os.Getenv("DISPLAY") == "" {
-		t.Skip("DISPLAY is not set (run under xvfb-run -a)")
-	}
+	ensureDisplayForGraphicalTests(t)
 
 	module := demo3gui.NewEmbeddedDualModeApp()
 

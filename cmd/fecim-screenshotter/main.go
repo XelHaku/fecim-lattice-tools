@@ -21,12 +21,15 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"image"
 	"image/png"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -62,7 +65,20 @@ func main() {
 	only := flag.String("only", "", "capture only a single module (hysteresis|crossbar|mnist|circuits|comparison|eda|docs)")
 	tag := flag.String("tag", "initial", "filename tag suffix (e.g. initial|after_badges)")
 	hysEngine := flag.String("hys-engine", "preisach", "hysteresis physics engine: preisach|lk")
+	autoXvfb := flag.Bool("auto-xvfb", true, "auto-start Xvfb when DISPLAY/WAYLAND_DISPLAY is missing")
+	xvfbScreen := flag.String("xvfb-screen", "1920x1080x24", "Xvfb virtual screen (WIDTHxHEIGHTxDEPTH)")
+	xvfbDisplayStart := flag.Int("xvfb-display-start", 99, "first Xvfb display number to try")
+	xvfbDisplayEnd := flag.Int("xvfb-display-end", 110, "last Xvfb display number to try")
 	flag.Parse()
+
+	cleanupDisplay, err := ensureDisplayForCapture(*autoXvfb, *xvfbScreen, *xvfbDisplayStart, *xvfbDisplayEnd)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to initialize graphical display: %v\n", err)
+		os.Exit(2)
+	}
+	if cleanupDisplay != nil {
+		defer cleanupDisplay()
+	}
 
 	checkDisplayBrightness()
 
@@ -224,6 +240,148 @@ func waitForCanvasSize(w fyne.Window, wantW, wantH float32, timeout time.Duratio
 	return false
 }
 
+type xvfbSession struct {
+	display string
+	cmd     *exec.Cmd
+	waitCh  chan error
+	stderr  bytes.Buffer
+}
+
+func (s *xvfbSession) stop() {
+	if s == nil || s.cmd == nil || s.cmd.Process == nil {
+		return
+	}
+	_ = s.cmd.Process.Kill()
+	if s.waitCh == nil {
+		return
+	}
+	select {
+	case <-s.waitCh:
+	case <-time.After(2 * time.Second):
+	}
+}
+
+func ensureDisplayForCapture(auto bool, screen string, displayStart, displayEnd int) (func(), error) {
+	if hasGraphicalSession() {
+		return nil, nil
+	}
+	if !auto {
+		return nil, fmt.Errorf("DISPLAY and WAYLAND_DISPLAY are both unset (enable -auto-xvfb or run inside an X11/Wayland session)")
+	}
+
+	sess, err := startAutoXvfb(screen, displayStart, displayEnd)
+	if err != nil {
+		return nil, err
+	}
+	if err := os.Setenv("DISPLAY", sess.display); err != nil {
+		sess.stop()
+		return nil, fmt.Errorf("failed to set DISPLAY=%s: %w", sess.display, err)
+	}
+	_ = os.Unsetenv("WAYLAND_DISPLAY")
+
+	fmt.Printf("[screenshotter] started Xvfb on DISPLAY=%s\n", sess.display)
+	return func() {
+		sess.stop()
+		fmt.Printf("[screenshotter] stopped Xvfb on DISPLAY=%s\n", sess.display)
+	}, nil
+}
+
+func hasGraphicalSession() bool {
+	return strings.TrimSpace(os.Getenv("DISPLAY")) != "" || strings.TrimSpace(os.Getenv("WAYLAND_DISPLAY")) != ""
+}
+
+func startAutoXvfb(screen string, displayStart, displayEnd int) (*xvfbSession, error) {
+	xvfbBin, err := exec.LookPath("Xvfb")
+	if err != nil {
+		return nil, fmt.Errorf("Xvfb binary not found in PATH: %w", err)
+	}
+	if displayStart > displayEnd {
+		displayStart, displayEnd = displayEnd, displayStart
+	}
+	if displayStart <= 0 {
+		displayStart = 99
+	}
+	if displayEnd < displayStart {
+		displayEnd = displayStart
+	}
+
+	var launchErrors []string
+	for n := displayStart; n <= displayEnd; n++ {
+		display := fmt.Sprintf(":%d", n)
+		sess, err := launchXvfb(xvfbBin, display, screen)
+		if err != nil {
+			launchErrors = append(launchErrors, fmt.Sprintf("%s: %v", display, err))
+			continue
+		}
+		if waitForXDisplay(display, 4*time.Second) {
+			return sess, nil
+		}
+		stderr := strings.TrimSpace(sess.stderr.String())
+		if stderr == "" {
+			stderr = "display did not become ready"
+		}
+		launchErrors = append(launchErrors, fmt.Sprintf("%s: %s", display, stderr))
+		sess.stop()
+	}
+
+	return nil, fmt.Errorf("unable to start Xvfb on displays %d-%d (%s)", displayStart, displayEnd, strings.Join(launchErrors, "; "))
+}
+
+func launchXvfb(xvfbBin, display, screen string) (*xvfbSession, error) {
+	sess := &xvfbSession{display: display, waitCh: make(chan error, 1)}
+	sess.cmd = exec.Command(xvfbBin, display, "-screen", "0", screen, "-nolisten", "tcp", "+extension", "GLX", "+render", "-ac")
+	sess.cmd.Stdout = io.Discard
+	sess.cmd.Stderr = &sess.stderr
+	if err := sess.cmd.Start(); err != nil {
+		return nil, err
+	}
+	go func() {
+		sess.waitCh <- sess.cmd.Wait()
+	}()
+	return sess, nil
+}
+
+func waitForXDisplay(display string, timeout time.Duration) bool {
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		if xDisplayReady(display) {
+			return true
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	return xDisplayReady(display)
+}
+
+func xDisplayReady(display string) bool {
+	if xdpyinfoBin, err := exec.LookPath("xdpyinfo"); err == nil {
+		cmd := exec.Command(xdpyinfoBin, "-display", display)
+		cmd.Stdout = io.Discard
+		cmd.Stderr = io.Discard
+		return cmd.Run() == nil
+	}
+	displayNum, ok := parseDisplayNumber(display)
+	if !ok {
+		return false
+	}
+	socket := filepath.Join("/tmp/.X11-unix", "X"+strconv.Itoa(displayNum))
+	if _, err := os.Stat(socket); err != nil {
+		return false
+	}
+	return true
+}
+
+func parseDisplayNumber(display string) (int, bool) {
+	trimmed := strings.TrimSpace(display)
+	if !strings.HasPrefix(trimmed, ":") {
+		return 0, false
+	}
+	num, err := strconv.Atoi(strings.TrimPrefix(trimmed, ":"))
+	if err != nil {
+		return 0, false
+	}
+	return num, true
+}
+
 func savePNG(filename string, img image.Image) error {
 	f, err := os.Create(filename)
 	if err != nil {
@@ -281,10 +439,16 @@ func checkDisplayBrightness() {
 						" Xwayland regardless of brightness. Use grim(1) for external window"+
 						" capture on Wayland: grim -g \"$(slurp)\" /tmp/capture.png\n", o.name)
 			} else {
-				fmt.Fprintf(os.Stderr,
-					"WARNING: Output %s has brightness 0.0 — captures via external X11 tools"+
-						" may be black. Run: xrandr --output %s --brightness 1.0\n",
-					o.name, o.name)
+				if trySetOutputBrightness(o.name, 1.0) {
+					fmt.Fprintf(os.Stderr,
+						"NOTE: Output %s brightness was 0.0; auto-set to 1.0 for capture stability.\n",
+						o.name)
+				} else {
+					fmt.Fprintf(os.Stderr,
+						"WARNING: Output %s has brightness 0.0 — captures via external X11 tools"+
+							" may be black. Run: xrandr --output %s --brightness 1.0\n",
+						o.name, o.name)
+				}
 			}
 		}
 	}
@@ -325,6 +489,19 @@ func captureBlackDiagnostic() string {
 		sb.WriteString("    If display brightness is fine, try increasing the -settle duration.\n")
 	}
 	return sb.String()
+}
+
+func trySetOutputBrightness(output string, brightness float64) bool {
+	if strings.TrimSpace(output) == "" {
+		return false
+	}
+	if _, err := exec.LookPath("xrandr"); err != nil {
+		return false
+	}
+	cmd := exec.Command("xrandr", "--output", output, "--brightness", fmt.Sprintf("%.1f", brightness))
+	cmd.Stdout = io.Discard
+	cmd.Stderr = io.Discard
+	return cmd.Run() == nil
 }
 
 // xrandrOutput holds parsed state for one xrandr output.

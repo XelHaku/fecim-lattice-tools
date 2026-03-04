@@ -35,9 +35,7 @@ func TestXvfbCrawlerCircuits(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping xvfb crawler in short mode")
 	}
-	if os.Getenv("DISPLAY") == "" {
-		t.Skip("DISPLAY is not set (run under xvfb-run -a)")
-	}
+	ensureDisplayForGraphicalTests(t)
 
 	module := demo4gui.NewEmbeddedCircuitsApp()
 	if module == nil {
@@ -82,9 +80,7 @@ func TestXvfbCrawlerCircuitsDetailed(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping detailed xvfb crawler in short mode")
 	}
-	if os.Getenv("DISPLAY") == "" {
-		t.Skip("DISPLAY is not set (run under xvfb-run -a)")
-	}
+	ensureDisplayForGraphicalTests(t)
 
 	module := demo4gui.NewEmbeddedCircuitsApp()
 	if module == nil {
