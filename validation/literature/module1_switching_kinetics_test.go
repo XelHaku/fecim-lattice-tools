@@ -7,10 +7,10 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 	sharedphysics "fecim-lattice-tools/shared/physics"
+	sharedval "fecim-lattice-tools/shared/validation"
 )
 
 // RG-PHY-OBS-02: Switching kinetics falsification.
@@ -179,7 +179,7 @@ func computeSwitchingKineticsMetrics(t *testing.T, id string, mat *sharedphysics
 	return switchingKineticsMetrics{
 		MaterialID:   id,
 		Material:     mat.Name,
-		Generated:    time.Now().UTC().Format(time.RFC3339),
+		Generated:    sharedval.NewEnvelope("", "", true).TimestampUTC,
 		Ec_MV_cm:     ec_MV_cm,
 		FracAtHalfEc: fracAtHalfEc,
 		FracAtEc:     fracAtEc,
