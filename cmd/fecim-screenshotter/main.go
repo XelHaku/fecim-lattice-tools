@@ -22,8 +22,10 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"image"
+	_ "image/jpeg"
 	"image/png"
 	"io"
 	"os"
@@ -130,7 +132,8 @@ func captureOne(outDir, fileBase string, size fyne.Size, settle time.Duration, s
 
 	a := app.NewWithID("com.fecim.screenshotter")
 	a.Settings().SetTheme(&sharedtheme.FeCIMTheme{})
-	w := a.NewWindow("FeCIM Screenshotter - " + fileBase)
+	windowTitle := "FeCIM Screenshotter - " + fileBase
+	w := a.NewWindow(windowTitle)
 	w.Resize(size)
 
 	// Quit after we capture, so app.Run returns and we can proceed to next module.
@@ -198,6 +201,15 @@ func captureOne(outDir, fileBase string, size fyne.Size, settle time.Duration, s
 							diag := captureBlackDiagnostic()
 							fmt.Fprintf(os.Stderr, "[screenshotter] WARNING: capture still all-black for %s.\n%s\n", fileBase, diag)
 						}
+					}
+				}
+				if isImageAllBlack(img) {
+					extImg, extErr := captureWindowUsingImport(windowTitle)
+					if extErr != nil {
+						fmt.Fprintf(os.Stderr, "[screenshotter] NOTE: external X11 capture fallback failed for %s: %v\n", fileBase, extErr)
+					} else if !isImageAllBlack(extImg) {
+						fmt.Printf("[screenshotter] external X11 fallback capture succeeded for %s\n", fileBase)
+						img = extImg
 					}
 				}
 
@@ -380,6 +392,54 @@ func parseDisplayNumber(display string) (int, bool) {
 		return 0, false
 	}
 	return num, true
+}
+
+func captureWindowUsingImport(windowTitle string) (image.Image, error) {
+	if strings.TrimSpace(windowTitle) == "" {
+		return nil, fmt.Errorf("window title is empty")
+	}
+	if strings.TrimSpace(os.Getenv("DISPLAY")) == "" {
+		return nil, fmt.Errorf("DISPLAY is not set")
+	}
+	importBin, err := exec.LookPath("import")
+	if err != nil {
+		return nil, fmt.Errorf("imagemagick import not found: %w", err)
+	}
+
+	tmpFile, err := os.CreateTemp("", "fecim-import-capture-*.png")
+	if err != nil {
+		return nil, fmt.Errorf("create temp capture file: %w", err)
+	}
+	tmpPath := tmpFile.Name()
+	_ = tmpFile.Close()
+	defer os.Remove(tmpPath)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, importBin, "-window", windowTitle, tmpPath)
+	cmd.Stdout = io.Discard
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		msg := strings.TrimSpace(stderr.String())
+		if msg == "" {
+			msg = err.Error()
+		}
+		return nil, fmt.Errorf("import capture failed: %s", msg)
+	}
+
+	f, err := os.Open(tmpPath)
+	if err != nil {
+		return nil, fmt.Errorf("open temp capture file: %w", err)
+	}
+	defer f.Close()
+
+	img, _, err := image.Decode(f)
+	if err != nil {
+		return nil, fmt.Errorf("decode external capture: %w", err)
+	}
+	return img, nil
 }
 
 func savePNG(filename string, img image.Image) error {

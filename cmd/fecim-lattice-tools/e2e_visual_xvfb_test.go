@@ -85,7 +85,8 @@ func captureWithRealAppOnMain(module moduleLifecycle, size fyne.Size, settle tim
 	// effectively means: do UI setup inside the lifecycle callbacks that run after
 	// the app event loop has started.
 	a.Lifecycle().SetOnStarted(func() {
-		w := a.NewWindow("VisualXvfb")
+		windowTitle := "VisualXvfb"
+		w := a.NewWindow(windowTitle)
 		w.Resize(size)
 
 		content := module.BuildContent(a, w)
@@ -97,7 +98,7 @@ func captureWithRealAppOnMain(module moduleLifecycle, size fyne.Size, settle tim
 		// Capture after settle, then stop/close/quit.
 		time.AfterFunc(settle, func() {
 			fyne.Do(func() {
-				imgCh <- w.Canvas().Capture()
+				imgCh <- captureCanvasWithX11Fallback(w, windowTitle)
 				module.Stop()
 				w.Close()
 				a.Quit()

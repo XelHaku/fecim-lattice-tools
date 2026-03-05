@@ -36,9 +36,11 @@ None.
 - Root cause: Real-driver paths (`cmd/fecim-screenshotter`, xvfb visual/crawler test lanes) required `DISPLAY` and failed/skipped when the shell had neither `DISPLAY` nor `WAYLAND_DISPLAY`.
 - Fix applied:
   - `cmd/fecim-screenshotter/main.go`: added automatic Xvfb bootstrap (`-auto-xvfb` default true), display readiness checks, and teardown.
+  - `cmd/fecim-screenshotter/main.go`: when `Canvas().Capture()` is all-black under Xvfb, fallback to X11 window capture via `import -window <title>` to produce non-empty PNGs.
   - `cmd/fecim-lattice-tools/*_test.go`: added shared test helper to auto-start Xvfb in headless runs and wired graphical tests (`e2e_gui`, `e2e_visual_xvfb`, `ui_crawler_xvfb`, crawler setup) to use it.
+  - `cmd/fecim-lattice-tools/*_test.go`: added shared X11 capture fallback for real-driver xvfb tests and fixed crawler capture sizing/initialization (module `Start()/Stop()` + unique window titles).
   - `cmd/fecim-lattice-tools/gui_test_main_test.go`: explicit cleanup of auto-started Xvfb at test process exit.
-- Validation: `env -u DISPLAY -u WAYLAND_DISPLAY go run ./cmd/fecim-screenshotter -only circuits ...` now starts Xvfb automatically and proceeds to capture path without the previous GLFW initialization panic.
+- Validation: `env -u DISPLAY -u WAYLAND_DISPLAY go run ./cmd/fecim-screenshotter -only circuits ...` now starts Xvfb automatically, avoids GLFW initialization panic, and saves non-black images via fallback when needed.
 
 **2026-02-27: Capture pipeline black-screen regression for MNIST GUI** (P2) — RESOLVED
 - Root cause: Session runs under **Xwayland** (`XDG_SESSION_TYPE=wayland`, X server is `Xwayland :0 -rootless`). External X11 screenshot tools (`maim`, `scrot`, `xwd`) produce all-black images on Xwayland because Xwayland composites X11 windows inside the Wayland compositor buffer, leaving the X11 root window unmapped. Setting `xrandr --brightness` does not fix this — it is an architectural limitation of Xwayland, not a software bug.
