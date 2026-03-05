@@ -19,7 +19,6 @@ import (
 	"path/filepath"
 	"sort"
 	"testing"
-	"time"
 
 	"fecim-lattice-tools/module1-hysteresis/pkg/controller"
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
@@ -169,7 +168,7 @@ func TestM1_MonteCarlo_Uncertainty(t *testing.T) {
 			NTrialsISPP:      mcNTrialsISPP,
 			Seed:             mcSeed,
 			SigmaFrac:        mcSigmaFrac,
-			Generated:        time.Now().UTC().Format(time.RFC3339),
+			Generated:        sharedval.NewEnvelope("", "", true).TimestampUTC,
 			PrStats:          prStats,
 			EcStats:          ecStats,
 			AreaStats:        areaStats,

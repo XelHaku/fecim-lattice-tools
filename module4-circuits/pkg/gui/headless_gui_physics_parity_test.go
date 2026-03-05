@@ -72,7 +72,7 @@ func TestHeadlessPhysicsParity_GUIVsHeadless_ReadComputeWriteStep_MaterialAware(
 	artifact := parityArtifact{
 		Version:       "v1",
 		Profile:       os.Getenv("FECIM_MATERIAL_PROFILE"),
-		GeneratedUnix: time.Now().Unix(),
+		GeneratedUnix: 0,
 		Records:       nil,
 	}
 

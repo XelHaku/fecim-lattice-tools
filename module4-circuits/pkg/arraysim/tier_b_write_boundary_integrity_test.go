@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 )
 
 type writeBoundaryArtifact struct {
@@ -76,7 +75,7 @@ func TestTierBWriteBoundaryIntegrity_TopInjectedAndSolverDerivedInternals(t *tes
 
 	art := writeBoundaryArtifact{
 		Version:       "v1",
-		GeneratedUnix: time.Now().Unix(),
+		GeneratedUnix: 0,
 		TestName:      t.Name(),
 		MaxNodeDelta:  maxNodeDelta,
 		TopNodeDelta:  topNodeDelta,
@@ -135,7 +134,7 @@ func TestTierBWriteBoundaryIntegrity_NoDirectInternalAssignmentPath(t *testing.T
 
 	art := writeBoundaryArtifact{
 		Version:       "v1",
-		GeneratedUnix: time.Now().Unix(),
+		GeneratedUnix: 0,
 		TestName:      t.Name(),
 		FarEndShift:   farEndShift,
 		MiddleShift:   middleShift,

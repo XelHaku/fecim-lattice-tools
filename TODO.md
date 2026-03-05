@@ -32,6 +32,15 @@ None.
 
 ### Resolved Issues
 
+**2026-03-05: Targeted gate blocker — validation package build break after reproducibility refactor** (P1) — RESOLVED
+- Blocker type: `bug`
+- Scope/impact: blocked targeted regression gate for validation/module4 during core shipping slice.
+- Evidence:
+  - Command: `go test -count=1 ./validation ./module4-circuits/pkg/arraysim ./module4-circuits/pkg/gui`
+  - Error: `validation/m1_montecarlo_uncertainty_test.go:22:2: "time" imported and not used` and `validation/m1_write_verify_stats_test.go:16:2: "time" imported and not used`
+- Resolution path applied: removed unused `time` imports from both validation test files.
+- Pivot executed immediately: compile-fix + rerun targeted gate, qa-a0, and full suite.
+
 **2026-03-05: Full-suite blocker — flaky process-variation mean assertion in shared/crossbar** (P1) — RESOLVED
 - Blocker type: `bug`
 - Scope/impact: blocked `go test ./...` anti-regression gate and test->deploy continuity.

@@ -2,9 +2,7 @@ package validation
 
 import (
 	"os"
-	"os/exec"
 	"strings"
-	"time"
 )
 
 // ArtifactEnvelope is the standard metadata header required on every Module 1
@@ -46,7 +44,7 @@ func NewEnvelope(testID, gate string, pass bool) ArtifactEnvelope {
 	}
 	return ArtifactEnvelope{
 		SchemaVersion: "v1",
-		TimestampUTC:  time.Now().UTC().Format(time.RFC3339),
+		TimestampUTC:  artifactTimestampUTC(),
 		Commit:        resolveCommit(),
 		Gate:          gate,
 		TestID:        testID,
@@ -54,15 +52,18 @@ func NewEnvelope(testID, gate string, pass bool) ArtifactEnvelope {
 	}
 }
 
-// resolveCommit returns the short git commit hash.
-// Priority: FECIM_GIT_COMMIT env var → git rev-parse --short HEAD → "unknown".
+func artifactTimestampUTC() string {
+	if ts := strings.TrimSpace(os.Getenv("FECIM_ARTIFACT_TIMESTAMP_UTC")); ts != "" {
+		return ts
+	}
+	return "1970-01-01T00:00:00Z"
+}
+
+// resolveCommit returns a deterministic artifact commit marker unless explicitly overridden.
+// Priority: FECIM_GIT_COMMIT env var → "reproducible-build".
 func resolveCommit() string {
 	if c := strings.TrimSpace(os.Getenv("FECIM_GIT_COMMIT")); c != "" {
 		return c
 	}
-	out, err := exec.Command("git", "rev-parse", "--short", "HEAD").Output()
-	if err != nil {
-		return "unknown"
-	}
-	return strings.TrimSpace(string(out))
+	return "reproducible-build"
 }

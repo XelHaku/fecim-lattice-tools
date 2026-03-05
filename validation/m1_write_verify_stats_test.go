@@ -13,7 +13,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"fecim-lattice-tools/module1-hysteresis/pkg/controller"
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
@@ -149,7 +148,7 @@ func TestM1_WriteVerifyStats_Regression(t *testing.T) {
 				Material:         mc.mat.Name,
 				Dataset:          fmt.Sprintf("%s_ispp_write_verify", mc.id),
 				NumLevels:        numLevels,
-				Generated:        time.Now().UTC().Format(time.RFC3339),
+				Generated:        sharedval.NewEnvelope("", "", true).TimestampUTC,
 				Targets:          targetStats,
 				AllConverge:      allConverge,
 				Metrics: wvsMetricsBlock{
