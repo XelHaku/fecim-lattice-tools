@@ -37,9 +37,8 @@ func writeParityArtifact(t interface{ Logf(string, ...any) }, art *parityArtifac
 	if art.Version == "" {
 		art.Version = "v1"
 	}
-	if art.GeneratedUnix == 0 {
-		art.GeneratedUnix = 0
-	}
+	// Force deterministic metadata for regression artifacts.
+	art.GeneratedUnix = 0
 
 	b, err := json.MarshalIndent(art, "", "  ")
 	if err != nil {

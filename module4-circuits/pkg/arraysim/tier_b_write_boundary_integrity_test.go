@@ -155,6 +155,9 @@ func writeWriteBoundaryArtifact(t *testing.T, art writeBoundaryArtifact) {
 		return
 	}
 
+	// Force deterministic metadata for regression artifacts.
+	art.GeneratedUnix = 0
+
 	payload := map[string]any{}
 	if b, err := os.ReadFile(path); err == nil {
 		_ = json.Unmarshal(b, &payload)
