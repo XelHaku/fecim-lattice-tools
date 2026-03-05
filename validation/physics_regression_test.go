@@ -8,10 +8,10 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 	"fecim-lattice-tools/shared/physics"
+	sharedval "fecim-lattice-tools/shared/validation"
 )
 
 const (
@@ -269,7 +269,7 @@ func TestPhysicsRegressionCurves(t *testing.T) {
 					Version:     physicsRegressionVersion,
 					Scenario:    tc.scenario,
 					Description: tc.assumptions,
-					Generated:   time.Now().UTC().Format(time.RFC3339),
+					Generated:   sharedval.NewEnvelope("", "", true).TimestampUTC,
 					Parameters:  params,
 				}
 				ref.Data.X = x
@@ -422,7 +422,7 @@ func TestPhysicsRegressionCurves_AllMaterials(t *testing.T) {
 					Version:     physicsRegressionVersion,
 					Scenario:    scenario,
 					Description: fmt.Sprintf("Golden Preisach P-E loop for material %q (RG-VAL-M1-02)", mc.id),
-					Generated:   time.Now().UTC().Format(time.RFC3339),
+					Generated:   sharedval.NewEnvelope("", "", true).TimestampUTC,
 					Parameters:  params,
 				}
 				ref.Data.X = xE

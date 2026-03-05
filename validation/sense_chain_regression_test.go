@@ -6,9 +6,9 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"fecim-lattice-tools/module4-circuits/pkg/arraysim"
+	sharedval "fecim-lattice-tools/shared/validation"
 )
 
 const (
@@ -107,7 +107,7 @@ func TestSenseChainRegression_4x4(t *testing.T) {
 			Version:     "v1",
 			Scenario:    "sense_chain_4x4",
 			Description: "Golden sense chain regression: 4x4 MVM through TIA+ADC with fixed conductance matrix and input voltages.",
-			Generated:   time.Now().UTC().Format(time.RFC3339),
+			Generated:   sharedval.NewEnvelope("", "", true).TimestampUTC,
 			Parameters:  params,
 			Results:     results,
 		}
