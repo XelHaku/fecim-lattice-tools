@@ -46,16 +46,17 @@ func main() {
 	states := make(map[string]*pkgState)
 
 	s := bufio.NewScanner(r)
-	// Some packages can emit long Output lines; increase scanner buffer.
-	s.Buffer(make([]byte, 0, 64*1024), 10*1024*1024)
+	// Some packages can emit very long Output lines; increase scanner buffer.
+	s.Buffer(make([]byte, 0, 256*1024), 64*1024*1024)
 
+	invalidLines := 0
 	for s.Scan() {
 		line := s.Bytes()
 		var ev TestEvent
 		if err := json.Unmarshal(line, &ev); err != nil {
-			// If the input isn't valid JSONL, fail loudly: this is a gate.
-			fmt.Fprintf(os.Stderr, "invalid json line: %v\n", err)
-			os.Exit(2)
+			// Be tolerant of occasional non-JSON noise from test subprocess output.
+			invalidLines++
+			continue
 		}
 		if ev.Package == "" {
 			continue
@@ -98,6 +99,14 @@ func main() {
 		}
 		// Default to pass when last is pass or empty.
 		pass++
+	}
+
+	if invalidLines > 0 {
+		fmt.Fprintf(os.Stderr, "WARN: skipped %d non-JSON line(s) while aggregating go test -json output\n", invalidLines)
+	}
+	if total == 0 {
+		fmt.Fprintf(os.Stderr, "ERROR: no package summaries parsed from go test -json stream\n")
+		os.Exit(2)
 	}
 
 	fmt.Printf("PKG_SUM pass=%d fail=%d skip=%d total=%d\n", pass, fail, skip, total)

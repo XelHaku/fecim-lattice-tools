@@ -15,7 +15,9 @@ JSON_PATH="${1:-/tmp/fecim_gotest.json}"
 # Capture test exit code without aborting early so we can always emit PKG_SUM
 # and diagnostics for flaky/runner-side failures.
 set +e
-go test -json ./... > "$JSON_PATH"
+# Some GUI/test runners can emit occasional NUL bytes on stdout/stderr; strip
+# them so the JSON parser remains stable in unattended QA loops.
+go test -json ./... | tr -d '\000' > "$JSON_PATH"
 TEST_EC=$?
 set -e
 

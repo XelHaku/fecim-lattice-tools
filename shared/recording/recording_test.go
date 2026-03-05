@@ -424,18 +424,23 @@ func TestFrameCountingDuringRecording(t *testing.T) {
 		t.Fatalf("Start failed: %v", err)
 	}
 
-	// Wait for some frames to be captured
-	time.Sleep(200 * time.Millisecond)
-
-	framesCaptured := manager.FramesCaptured()
+	// Wait up to 1s for first frame to avoid scheduler/CI startup jitter.
+	deadline := time.Now().Add(1 * time.Second)
+	framesCaptured := 0
+	for time.Now().Before(deadline) {
+		framesCaptured = manager.FramesCaptured()
+		if framesCaptured > 0 {
+			break
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
 	manager.Stop()
 
-	// Should have captured some frames (at 20 FPS, ~4 frames in 200ms)
 	if framesCaptured == 0 {
 		t.Error("Expected some frames to be captured")
 	}
 
-	t.Logf("Frames captured in ~200ms: %d", framesCaptured)
+	t.Logf("Frames captured before deadline: %d", framesCaptured)
 }
 
 func TestFrameCountingPausesDuringPause(t *testing.T) {
