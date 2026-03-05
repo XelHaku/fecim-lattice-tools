@@ -32,6 +32,20 @@ None.
 
 ### Resolved Issues
 
+**2026-03-05: Full-suite blocker — flaky allocator-scaling assertion in shared/crossbar** (P1) — RESOLVED
+- Blocker type: `bug`
+- Scope/impact: blocked `go test ./...` completion during core anti-regression gate; prevented test->deploy continuity.
+- Evidence:
+  - Command: `go test -count=1 ./...`
+  - Failure: `--- FAIL: TestM2SCL03_MemoryFootprint_ScalesLikeN2`
+  - Error: `allocation bytes scaled worse than O(N^2): n=8 bytes/run=437.6 -> n=16 bytes/run=10899.2, ratio=24.91, bound=24.00`
+- Resolution path applied: removed `t.Parallel()` from `shared/crossbar/scaling_performance_validation_test.go` because the test measures process-wide `runtime.MemStats.TotalAlloc` and is invalid under parallel allocator noise.
+- Pivot executed immediately: focused on same-goal reliability stabilization (shared/crossbar scaling test), then reran targeted + full gates.
+- Validation after fix:
+  - `go test -count=5 -run TestM2SCL03_MemoryFootprint_ScalesLikeN2 -v ./shared/crossbar` → PASS (5/5)
+  - `make qa-a0` → `pass=105 fail=0 skip=2 total=107`
+  - `go test -count=1 ./...` → PASS (exit 0)
+
 **2026-03-03: Display/session wiring missing for GUI screenshot + visual audit runs** (P1) — RESOLVED
 - Root cause: Real-driver paths (`cmd/fecim-screenshotter`, xvfb visual/crawler test lanes) required `DISPLAY` and failed/skipped when the shell had neither `DISPLAY` nor `WAYLAND_DISPLAY`.
 - Fix applied:

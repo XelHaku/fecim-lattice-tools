@@ -57,7 +57,8 @@ func TestM2SCL03_MemoryFootprint_ScalesLikeN2(t *testing.T) {
 	if testing.Short() {
 		t.Skip("scaling memory/solver stress is slow and may exceed iteration budgets; skip in -short")
 	}
-	t.Parallel()
+	// Do not run in parallel with other package tests: this case samples
+	// runtime MemStats TotalAlloc and is sensitive to unrelated allocator noise.
 
 	sizes := []int{8, 16, 32}
 	const runs = 40
