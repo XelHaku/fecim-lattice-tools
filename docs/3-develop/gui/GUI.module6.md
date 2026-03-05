@@ -1275,8 +1275,8 @@ Based on comprehensive analysis of 8 Module 6 screenshots:
 5. Architecture-aware generation (passive/1T1R/2T1R)
 
 ### Related Documentation
-- Mermaid diagrams: `docs/development/GUI/mermaid6.gui.md`
-- Physics verification: `docs/development/PHYSICS_VERIFICATION_REPORT.md`
+- Mermaid diagrams: `docs/3-develop/gui/mermaid6.gui.md`
+- Physics verification: `docs/archive/old-structure/development/PHYSICS_VERIFICATION_REPORT.md`
 
 ## Detailed UI Analysis Report (2026-01-31)
 

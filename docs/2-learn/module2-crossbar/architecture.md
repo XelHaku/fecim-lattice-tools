@@ -1,6 +1,6 @@
 # Module 2 Crossbar Array Architecture
 
-> **Citation audit note:** Any factual/numeric claim in this file that does not include a verified DOI citation should be treated as **[CITATION NEEDED - placeholder value]**.
+> **Citation policy:** Cross-check external numeric claims in this file against `docs/4-research/honesty-audit.md`. If a statement here lacks a DOI or an explicit `simulation default` / `assumption` label, treat it as documentation debt rather than evidence.
 
 ## Overview
 
@@ -392,7 +392,7 @@ var FeFETDriftCoefficients = struct {
 }
 ```
 
-**Important Note**: FeCIM drift is estimated from retention requirements (>10 years at 85°C demonstrated by Fraunhofer IPMS 2024; [CITATION NEEDED - placeholder value]), not directly measured. See `CLAUDE.md` for accuracy audit.
+**Important Note**: The FeCIM drift coefficients in this repo are simulator coefficients, not directly measured FeCIM drift constants. `DriftModelLiterature` is a conservative value derived from long-retention targets and comparative memory literature; until a DOI-backed FeCIM drift dataset is wired into `validation/literature/`, treat it as a model assumption rather than a device measurement. See `docs/4-research/honesty-audit.md` for the current verification boundary.
 
 #### Drift Physics
 
@@ -1046,13 +1046,18 @@ go test -cover ./module2-crossbar/pkg/crossbar
 
 ### Physics Constants & Peer-Reviewed Data
 
-See `/CLAUDE.md` for complete accuracy audit. Key sources:
+See `docs/4-research/honesty-audit.md` for the active external-claim boundary. Verified or DOI-backed sources used around this module include:
 
-- **Pr (Polarization)**: Nature Communications 2025, Advanced Electronics Materials 2024
-- **Ec (Coercivity)**: Nature Communications 2025, Nano Letters 2024
-- **Endurance**: IEEE IRPS 2022, Nano Letters 2024 ([CITATION NEEDED - placeholder value])
-- **MNIST Accuracy**: Nature Communications 2023 (96.6%; [CITATION NEEDED - placeholder value]), ScienceDirect 2025 (98.24%; [CITATION NEEDED - placeholder value])
-- **Temperature**: Fraunhofer IPMS 2024 (automotive grade; [CITATION NEEDED - placeholder value]), CEA-Leti 2024 (BEOL integration; [CITATION NEEDED - placeholder value])
+- **Multi-level FeFET crossbar demo**: Nature Communications 2023, DOI `10.1038/s41467-023-42110-y`
+- **Related ferroelectric benchmark (not this simulator, not a FeCIM crossbar claim)**: HZO FTJ reservoir computing at 98.24% MNIST accuracy, Journal of Alloys and Compounds 2025, DOI `10.1016/j.jallcom.2025.181869`
+- **DOI-backed hysteresis/calibration datasets bundled in this repo**:
+  - Park et al., Advanced Materials 2015, DOI `10.1002/adma.201404531`
+  - Cheema et al., Nature 2020, DOI `10.1038/s41586-020-2208-x`
+  - Crystals 2021 BTO dataset, DOI `10.3390/cryst11101192`
+  - Micromachines 2022 AlScN dataset, DOI `10.3390/mi13101629`
+  - Nanomaterials 2024 PZT dataset, DOI `10.3390/nano14050432`
+
+The following categories remain intentionally outside the verified-claim set here until exact source papers are wired into the honesty audit and validation artifacts: endurance headline numbers, automotive-grade retention extrapolations, and BEOL manufacturing claims.
 
 ### Implementation References
 

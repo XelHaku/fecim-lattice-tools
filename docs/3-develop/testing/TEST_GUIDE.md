@@ -25,7 +25,9 @@ The repo uses seven practical categories:
 
 ## 2) How to Run Each Category
 
-> Run from repo root: `<local-path>`
+> Run from repo root:
+> - preferred: `<local-path>`
+> - fallback on this host: `<local-path>`
 
 ### A. Baseline / all tests
 

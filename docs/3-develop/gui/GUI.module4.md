@@ -14,7 +14,7 @@ Conventions:
   - Bindings list event handlers or UI update calls impacting the component
 
 Related (authoritative) control semantics:
-- **Unified GUI control contract (semantics + units + clamping):** `docs/development/GUI/GUI.module4.unified-controls.md`
+- **Unified GUI control contract (semantics + units + clamping):** `docs/3-develop/gui/GUI.module4.unified-controls.md`
 
 ## Bugs Summary
 
@@ -1132,7 +1132,7 @@ If material selector fails to load or material is nil:
 
 ### Unit Test Strategy for DeviceState Methods
 
-Test structure follows `docs/development/TESTING.md` patterns:
+Test structure follows `docs/3-develop/testing/TESTING.md` patterns:
 
 ```bash
 # Run peripheral circuit tests (includes device state logic)

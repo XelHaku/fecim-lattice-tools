@@ -2,8 +2,8 @@
 
 > **Note:** This file was previously located at `docs/REPO_HEALTH.md`. It has moved to `docs/3-develop/repo-health.md`.
 
-**Project:** FeCIM Lattice Tools  
-**Generated:** 2026-02-12  
+**Project:** FeCIM Lattice Tools
+**Generated:** 2026-03-05
 **Scope:** Build quality, test posture, coverage, performance, physics validation, and tracked blockers
 
 ---
@@ -14,17 +14,30 @@
 
 | Check | Command | Status | Notes |
 |---|---|---|---|
-| Build | `go build ./...` | ✅ PASS | Clean build across repository packages |
-| Vet | `go vet ./...` | ✅ PASS | No vet diagnostics in current run |
-| Format | `gofmt -l .` | ⚠️ Needs formatting | 5 files reported |
+| Build | `go build ./...` | ✅ PASS | Revalidated on 2026-03-05 |
+| Vet | `go vet ./...` | ✅ PASS | Revalidated on 2026-03-05 |
+| Format | `gofmt -l .` | ⚠️ Needs formatting | 18 files reported on 2026-03-05 |
 
 ### Files currently not gofmt-clean
 
-- `module1-hysteresis/pkg/controller/ispp_full_cycle_test.go`
-- `module2-crossbar/pkg/crossbar/concurrent_stress_test.go`
-- `module6-eda/pkg/export/roundtrip_test.go`
-- `module7-docs/pkg/gui/docs_integrity_test.go`
-- `shared/presets/presets_comprehensive_test.go`
+- `cmd/fecim-lattice-tools/playtest_circuits_calculations_test.go`
+- `cmd/fecim-lattice-tools/playtest_report_test.go`
+- `module1-hysteresis/pkg/ferroelectric/preisach.go`
+- `module1-hysteresis/pkg/gui/gui.go`
+- `module7-docs/pkg/gui/glossary_integration_test.go`
+- `shared/compact/fefet.go`
+- `shared/physics/landau.go`
+- `shared/physics/material.go`
+- `shared/physics/material_calibrated.go`
+- `shared/physics/material_config.go`
+- `shared/physics/worldclass_c2c.go`
+- `shared/physics/worldclass_pund_sim_test.go`
+- `shared/render3d/layer_stack.go`
+- `shared/system/latency.go`
+- `shared/system/power.go`
+- `tmp_read_margin_probe.go`
+- `validation/literature/module1_pe_loop_test.go`
+- `validation/sense_chain_regression_test.go`
 
 ---
 
@@ -32,7 +45,7 @@
 
 ### Scale and package breadth
 
-- `go list ./...` reports **85 packages** (meets the 65+ package scope requirement).
+- `go list ./...` reports **107 packages**.
 - Test organization spans physics solvers, crossbar non-idealities, MNIST dual-path inference, EDA export/compiler, validation, and shared infrastructure.
 
 ### Test categories (high-level)
@@ -55,23 +68,13 @@ From `docs/3-develop/testing/TESTING.md` and project TODO tracking:
 
 ---
 
-## 3) Coverage Summary by Module
+## 3) Coverage Status
 
-Coverage source: `coverage.out` (`go tool cover -func`).
+Coverage is currently **stale / unavailable** in the active dashboard.
 
-| Module | Coverage |
-|---|---:|
-| module1-hysteresis | 39.5% |
-| module2-crossbar | 52.2% |
-| module3-mnist | 29.5% |
-| module4-circuits | 61.3% |
-| module5-comparison | 27.2% |
-| module6-eda | 78.9% |
-| module7-docs | 62.4% |
-| validation | 66.8% |
-| shared | 65.3% |
-
-**Overall total statement coverage:** **48.0%**
+- `go tool cover -func=coverage.out` now fails because the checked-in `coverage.out` references missing paths (`module1-hysteresis/pkg/gui/simulation.go: no such file or directory`).
+- A fresh coverprofile was **not** generated in this documentation slice, so historical percentages have been removed from the active health summary to avoid overstating confidence.
+- Next research-grade docs step: regenerate `coverage.out` from a clean `go test -coverprofile=coverage.out ./...` run and then repopulate per-module numbers.
 
 ---
 
@@ -130,4 +133,4 @@ Physics validation status is **healthy** based on project validation reports and
 
 ## Notes
 
-This dashboard is a repository-level operational snapshot. Re-run build/vet/format/test/coverage benchmarks before release tagging to confirm drift since this report generation timestamp.
+This dashboard is a repository-level operational snapshot. Re-run build/vet/format/test/coverage benchmarks before release tagging to confirm drift since 2026-03-05.

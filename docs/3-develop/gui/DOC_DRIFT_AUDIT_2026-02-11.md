@@ -1,6 +1,6 @@
 # GUI Documentation Drift Audit — 2026-02-11
 
-Scope: TODO G15 + G16 (docs drift mapping under `docs/development/GUI/`), aligned with resize audit/fixes from G14.
+Scope: TODO G15 + G16 (docs drift mapping under the current `docs/3-develop/gui/` tree, with historical `docs/development/GUI/` references called out where they still appear), aligned with resize audit/fixes from G14.
 
 ## Code vs Docs Checks Performed
 
