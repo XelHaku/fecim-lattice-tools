@@ -77,7 +77,7 @@ Coverage source: fresh `coverage.out` generated on 2026-03-05 via `go test -shor
 | module1-hysteresis | 33.3% |
 | module2-crossbar | 33.0% |
 | module3-mnist | 25.7% |
-| module4-circuits | 66.3% |
+| module4-circuits | 66.4% |
 | module5-comparison | 52.0% |
 | module6-eda | 74.3% |
 | module7-docs | 67.0% |
