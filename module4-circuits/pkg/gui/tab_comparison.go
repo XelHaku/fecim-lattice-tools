@@ -177,8 +177,8 @@ func (ca *CircuitsApp) drawCompArch(w, h int) image.Image {
 	drawSimpleText(img, "FeFET CIM", cpuX+fefetW/2-35, fefetY+boxH/2-10, labelColor)
 	drawSimpleText(img, "No Data Movement", cpuX+fefetW/2-55, fefetY+boxH/2+5, sharedtheme.ColorAccent)
 
-	// Right side labels
-	rightX := w - 90
+	// Right side labels (clamped to avoid clipping on narrow widths)
+	rightX := max(dramX+boxW+8, w-90)
 	drawSimpleText(img, "Von Neumann", rightX, cpuY+boxH/2-3, sharedtheme.ColorError)
 	drawSimpleText(img, "Near Memory", rightX, gpuY+boxH/2-3, sharedtheme.ColorSuccess)
 	drawSimpleText(img, "In Memory", rightX, fefetY+boxH/2-3, sharedtheme.ColorPrimary)
@@ -210,7 +210,11 @@ func (ca *CircuitsApp) drawCompTiming(w, h int) image.Image {
 	marginRight := 80
 	barH := 25
 	spacing := 35
-	maxBarW := w - marginLeft - marginRight
+	if h < 150 {
+		barH = max(16, h/8)
+		spacing = max(barH+6, h/4)
+	}
+	maxBarW := max(40, w-marginLeft-marginRight)
 
 	// CPU bar (500ns - full width)
 	cpuY := 15
@@ -239,8 +243,9 @@ func (ca *CircuitsApp) drawCompTiming(w, h int) image.Image {
 	drawRect(img, marginLeft, fefetY, fefetW, barH, sharedtheme.ColorPrimary)
 	drawSimpleText(img, "76ns", marginLeft+fefetW+5, fefetY+8, valueColor)
 
-	// Speedup annotation
-	drawSimpleText(img, "≈6.6x vs CPU", w-110, fefetY+8, sharedtheme.ColorAccent)
+	// Speedup annotation (clamped to avoid clipping on narrow widths)
+	speedupX := max(marginLeft, w-110)
+	drawSimpleText(img, "≈6.6x vs CPU", speedupX, fefetY+8, sharedtheme.ColorAccent)
 
 	// X-axis
 	axisY := h - 25
@@ -296,7 +301,11 @@ func (ca *CircuitsApp) drawCompEnergy(w, h int) image.Image {
 	marginRight := 100
 	barH := 28
 	spacing := 45
-	maxBarW := w - marginLeft - marginRight
+	if h < 200 {
+		barH = max(16, h/9)
+		spacing = max(barH+8, h/4)
+	}
+	maxBarW := max(40, w-marginLeft-marginRight)
 
 	// CPU bar (64,000 pJ - full width)
 	cpuY := 20
@@ -326,7 +335,8 @@ func (ca *CircuitsApp) drawCompEnergy(w, h int) image.Image {
 	drawSimpleText(img, "2.9 pJ", marginLeft+fefetW+5, fefetY+8, valueColor)
 
 	// Energy savings annotation (conservative claim per CLAUDE.md accuracy policy)
-	drawSimpleText(img, "10-100x savings", w-120, fefetY+8, sharedtheme.ColorAccent)
+	savingsX := max(marginLeft, w-120)
+	drawSimpleText(img, "10-100x savings", savingsX, fefetY+8, sharedtheme.ColorAccent)
 
 	// FeFET energy breakdown (below the bar)
 	breakdownY := fefetY + barH + 12

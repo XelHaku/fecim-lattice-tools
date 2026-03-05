@@ -64,37 +64,23 @@ func (ca *CircuitsApp) createReferenceSpecsSection() fyne.CanvasObject {
 
 	leftCol := container.NewVBox(
 		arrayHeader,
-		layout.NewSpacer(), // Small spacing after header
 		arraySection,
-		layout.NewSpacer(), // Spacing before separator
 		widget.NewSeparator(),
-		layout.NewSpacer(), // Spacing after separator
 		dacHeader,
-		layout.NewSpacer(),
 		dacSection,
-		layout.NewSpacer(),
 		widget.NewSeparator(),
-		layout.NewSpacer(),
 		adcHeader,
-		layout.NewSpacer(),
 		adcSection,
 	)
 
 	rightCol := container.NewVBox(
 		tiaHeader,
-		layout.NewSpacer(),
 		tiaSection,
-		layout.NewSpacer(),
 		widget.NewSeparator(),
-		layout.NewSpacer(),
 		fefetHeader,
-		layout.NewSpacer(),
 		fefetSection,
-		layout.NewSpacer(),
 		widget.NewSeparator(),
-		layout.NewSpacer(),
 		summaryHeader,
-		layout.NewSpacer(),
 		summarySection,
 	)
 
