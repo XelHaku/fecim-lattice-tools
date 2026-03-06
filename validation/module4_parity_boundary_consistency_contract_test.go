@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 )
 
@@ -49,5 +50,8 @@ func TestModule4ParityBoundaryConsistency_RootVsModulePath(t *testing.T) {
 	}
 	if len(rootRec.Records) != len(moduleRec.Records) {
 		t.Fatalf("records length mismatch root=%d module=%d", len(rootRec.Records), len(moduleRec.Records))
+	}
+	if !reflect.DeepEqual(rootRec.Records, moduleRec.Records) {
+		t.Fatalf("records payload mismatch between root and module parity artifacts")
 	}
 }
