@@ -25,6 +25,9 @@ type DriftTab struct {
 
 // NewDriftTab creates a new drift analysis tab.
 func NewDriftTab(arraySize int) *DriftTab {
+	if arraySize < 1 {
+		arraySize = 1
+	}
 	tab := &DriftTab{
 		arraySize:   arraySize,
 		statsLabel:  widget.NewLabel(""),
@@ -250,7 +253,7 @@ minimal drift over time.`,
 
 	t.statsLabel.SetText(statsText)
 	t.statsLabel.Wrapping = fyne.TextWrapWord
-	t.statsLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	t.statsLabel.TextStyle = fyne.TextStyle{Monospace: false}
 }
 
 func (t *DriftTab) showTechComparison() {

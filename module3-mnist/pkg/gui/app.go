@@ -210,13 +210,13 @@ func (ma *MNISTApp) createMainLayout() fyne.CanvasObject {
 	ma.statusBar = sharedwidgets.NewStatusBarWithLabel(ma.statusLabel, "Status: ")
 
 	ma.predictionLabel = widget.NewLabel("Prediction: -")
-	ma.predictionLabel.TextStyle = fyne.TextStyle{Bold: true, Monospace: true}
+	ma.predictionLabel.TextStyle = fyne.TextStyle{Bold: true, Monospace: false}
 
 	ma.confidenceLabel = widget.NewLabel("Confidence: -")
 
 	// Hover info label - shows activation info on mouse hover
 	ma.hoverInfoLabel = widget.NewLabel("Hover over neurons to see values")
-	ma.hoverInfoLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	ma.hoverInfoLabel.TextStyle = fyne.TextStyle{Monospace: false}
 
 	// Info label with network specs - distinguish verified vs simulated
 	ma.infoLabel = widget.NewLabel("Network: 784→128→10 | Levels: 30 (baseline) | Literature: 96-98% (non-FeCIM) | Demo: modeled")

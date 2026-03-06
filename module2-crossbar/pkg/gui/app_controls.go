@@ -222,9 +222,9 @@ func (ca *CrossbarApp) createRightPanel(metricsScroll *container.Scroll) fyne.Ca
 	// === ARRAY CONFIG - Slider with label ===
 	// Add min/max labels for array size slider
 	minLabel := widget.NewLabel("8")
-	minLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	minLabel.TextStyle = fyne.TextStyle{Monospace: false}
 	maxLabel := widget.NewLabel("128")
-	maxLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	maxLabel.TextStyle = fyne.TextStyle{Monospace: false}
 
 	sliderWithLabels := container.NewBorder(
 		nil, nil,
@@ -353,7 +353,7 @@ func (ca *CrossbarApp) createStatusFooter() *fyne.Container {
 	infoRow := container.NewHBox(ca.infoLabel, levelsInfoBtn)
 
 	ca.hoverInfoLabel = widget.NewLabel("Hover over cells to see values")
-	ca.hoverInfoLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	ca.hoverInfoLabel.TextStyle = fyne.TextStyle{Monospace: false}
 	ca.hoverInfoLabel.Wrapping = fyne.TextWrapOff
 	ca.hoverInfoLabel.Truncation = fyne.TextTruncateEllipsis
 

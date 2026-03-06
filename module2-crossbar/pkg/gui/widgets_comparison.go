@@ -292,7 +292,7 @@ func (b *BeforeAfterToggle) CreateRenderer() fyne.WidgetRenderer {
 
 	// Statistics label for RMSE, MAE, Max Diff
 	b.statsLabel = widget.NewLabel("Statistics: Run comparison to see metrics")
-	b.statsLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	b.statsLabel.TextStyle = fyne.TextStyle{Monospace: false}
 	b.statsLabel.Alignment = fyne.TextAlignCenter
 
 	// Legend for difference view

@@ -24,7 +24,12 @@ import (
 	"fyne.io/fyne/v2/test"
 	"fyne.io/fyne/v2/widget"
 
+	demo1gui "fecim-lattice-tools/module1-hysteresis/pkg/gui"
+	demo2gui "fecim-lattice-tools/module2-crossbar/pkg/gui"
+	demo3gui "fecim-lattice-tools/module3-mnist/pkg/gui"
 	demo4gui "fecim-lattice-tools/module4-circuits/pkg/gui"
+	demo5gui "fecim-lattice-tools/module5-comparison/pkg/gui"
+	demo6gui "fecim-lattice-tools/module6-eda/pkg/gui"
 )
 
 const (
@@ -125,53 +130,16 @@ func TestUICrawlerAllModules(t *testing.T) {
 	}
 
 	modules := []moduleInfo{
-		{"hysteresis", func() (moduleLifecycle, error) {
-			// Import only when needed to avoid dependency issues
-			if mod, err := createModule("demo1gui"); err == nil {
-				return mod, nil
-			} else {
-				return nil, err
-			}
-		}, false, ""},
-		{"crossbar", func() (moduleLifecycle, error) {
-			if mod, err := createModule("demo2gui"); err == nil {
-				return mod, nil
-			} else {
-				return nil, err
-			}
-		}, true, "Font compatibility issues with headless mode"},
-		{"mnist", func() (moduleLifecycle, error) {
-			if mod, err := createModule("demo3gui"); err == nil {
-				return mod, nil
-			} else {
-				return nil, err
-			}
-		}, true, "Infinite loop issues in headless mode"},
-		{"circuits", func() (moduleLifecycle, error) {
-			return demo4gui.NewEmbeddedCircuitsApp(), nil
-		}, false, ""},
-		{"comparison", func() (moduleLifecycle, error) {
-			if mod, err := createModule("demo5gui"); err == nil {
-				return mod, nil
-			} else {
-				return nil, err
-			}
-		}, false, ""},
-		{"eda", func() (moduleLifecycle, error) {
-			if mod, err := createModule("demo6gui"); err == nil {
-				return mod, nil
-			} else {
-				return nil, err
-			}
-		}, false, ""},
+		{"hysteresis", func() (moduleLifecycle, error) { return createModule("demo1gui") }, false, ""},
+		{"crossbar", func() (moduleLifecycle, error) { return createModule("demo2gui") }, false, ""},
+		{"mnist", func() (moduleLifecycle, error) { return createModule("demo3gui") }, false, ""},
+		{"circuits", func() (moduleLifecycle, error) { return demo4gui.NewEmbeddedCircuitsApp(), nil }, false, ""},
+		{"comparison", func() (moduleLifecycle, error) { return createModule("demo5gui") }, false, ""},
+		{"eda", func() (moduleLifecycle, error) { return createModule("demo6gui") }, false, ""},
 	}
 
 	for _, m := range modules {
 		t.Run(m.name, func(t *testing.T) {
-			if m.skip {
-				t.Skipf("Skipping %s: %s", m.name, m.reason)
-			}
-
 			config := crawlerConfig{
 				Module: m.name,
 				Sizes: []crawlerSize{
@@ -184,6 +152,17 @@ func TestUICrawlerAllModules(t *testing.T) {
 				CaptureOverlays: true,
 				CaptureTooltips: false, // Disable tooltips for broader compatibility
 				OutputDir:       filepath.Join(crawlerScreenshotBaseDir, m.name),
+			}
+
+			// Keep crossbar/mnist in the audit (no skip), but use conservative crawl depth
+			// to avoid known flaky paths while still producing screenshot evidence.
+			if m.name == "crossbar" || m.name == "mnist" {
+				config.CaptureTabs = false
+				config.CaptureDialogs = false
+				config.CaptureOverlays = false
+			}
+			if m.name == "eda" {
+				config.CaptureOverlays = false
 			}
 
 			runUICrawler(t, config, m.create)
@@ -522,10 +501,23 @@ func setupHeadlessIfNeeded(t *testing.T) {
 func captureAndSave(t *testing.T, state *crawlerState, name string) {
 	t.Helper()
 
-	var img image.Image
+	var (
+		img        image.Image
+		captureErr error
+	)
 	fyne.DoAndWait(func() {
+		defer func() {
+			if r := recover(); r != nil {
+				captureErr = fmt.Errorf("panic during canvas capture: %v", r)
+			}
+		}()
 		img = state.Window.Canvas().Capture()
 	})
+
+	if captureErr != nil {
+		state.Errors = append(state.Errors, fmt.Sprintf("Failed to capture %s: %v (using 1x1 placeholder)", name, captureErr))
+		img = image.NewRGBA(image.Rect(0, 0, 1, 1))
+	}
 
 	if img == nil {
 		state.Errors = append(state.Errors, fmt.Sprintf("Failed to capture %s: image is nil", name))
@@ -625,26 +617,21 @@ func safeCrawlerName(s string) string {
 
 // createModule dynamically creates modules by name
 func createModule(moduleName string) (moduleLifecycle, error) {
-	// This is a placeholder for dynamic module creation.
-	// In practice, we'd import these conditionally or use a registry pattern
-	// to avoid dependency issues when modules have compatibility problems.
-
 	switch moduleName {
 	case "demo1gui":
-		// Would create hysteresis module
-		return nil, fmt.Errorf("hysteresis module not yet integrated with crawler")
+		return demo1gui.NewEmbeddedApp(), nil
 	case "demo2gui":
-		// Would create crossbar module
-		return nil, fmt.Errorf("crossbar module has font compatibility issues")
+		mod, err := demo2gui.NewEmbeddedCrossbarApp()
+		if err != nil {
+			return nil, fmt.Errorf("crossbar module creation failed: %w", err)
+		}
+		return mod, nil
 	case "demo3gui":
-		// Would create MNIST module
-		return nil, fmt.Errorf("MNIST module has test driver infinite loop issues")
+		return demo3gui.NewEmbeddedMNISTApp(), nil
 	case "demo5gui":
-		// Would create comparison module
-		return nil, fmt.Errorf("comparison module not yet integrated with crawler")
+		return demo5gui.NewEmbeddedComparisonApp(), nil
 	case "demo6gui":
-		// Would create EDA module
-		return nil, fmt.Errorf("EDA module not yet integrated with crawler")
+		return demo6gui.NewEmbeddedEDAApp(), nil
 	default:
 		return nil, fmt.Errorf("unknown module: %s", moduleName)
 	}

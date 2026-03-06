@@ -540,7 +540,7 @@ func (csp *ClassStatsPanel) CreateRenderer() fyne.WidgetRenderer {
 	titleLabel.TextStyle = fyne.TextStyle{Bold: true}
 
 	csp.textLabel = widget.NewLabel("Select a class to view details")
-	csp.textLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	csp.textLabel.TextStyle = fyne.TextStyle{Monospace: false}
 
 	content := container.NewVBox(
 		titleLabel,

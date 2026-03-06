@@ -410,7 +410,7 @@ func (app *DualModeApp) createDrawingZone() fyne.CanvasObject {
 
 	// Pixel count display (shortened for narrow widths)
 	pixelCountLabel := widget.NewLabel("0/784")
-	pixelCountLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	pixelCountLabel.TextStyle = fyne.TextStyle{Monospace: false}
 	app.digitCanvas.OnPixelCountChanged = func(count, total int) {
 		fyne.Do(func() {
 			pixelCountLabel.SetText(fmt.Sprintf("%d/%d", count, total))

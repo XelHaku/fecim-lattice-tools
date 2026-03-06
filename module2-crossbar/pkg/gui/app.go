@@ -444,7 +444,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 
 	ca.statsLabel = widget.NewLabel("Analysis Results\n\nNo data yet.\nClick Run MVM to start.")
 	ca.statsLabel.Wrapping = fyne.TextWrapWord
-	ca.statsLabel.TextStyle = fyne.TextStyle{Monospace: true} // Fixed-width prevents resize
+	ca.statsLabel.TextStyle = fyne.TextStyle{Monospace: false} // Fixed-width prevents resize
 
 	// Create status labels
 	ca.statusLabel = widget.NewLabel("● IDLE | Ready for operations")
@@ -457,7 +457,7 @@ func (ca *CrossbarApp) createMainLayout() fyne.CanvasObject {
 
 	// Hover info label - shows cell info on mouse hover
 	ca.hoverInfoLabel = widget.NewLabel("Hover over cells to see values")
-	ca.hoverInfoLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	ca.hoverInfoLabel.TextStyle = fyne.TextStyle{Monospace: false}
 	ca.hoverInfoLabel.Wrapping = fyne.TextWrapOff
 	ca.hoverInfoLabel.Truncation = fyne.TextTruncateEllipsis
 

@@ -103,7 +103,7 @@ This is the theoretical best case.`
 
 	t.statsLabel.SetText(statsText)
 	t.statsLabel.Wrapping = fyne.TextWrapWord
-	t.statsLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	t.statsLabel.TextStyle = fyne.TextStyle{Monospace: false}
 
 	// Wrap stats in scroll to prevent layout resize
 	statsScroll := container.NewVScroll(t.statsLabel)

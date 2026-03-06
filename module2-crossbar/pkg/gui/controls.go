@@ -394,7 +394,7 @@ func (li *LevelIndicator) CreateRenderer() fyne.WidgetRenderer {
 	}
 
 	levelLabel := widget.NewLabel(levelStr)
-	levelLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	levelLabel.TextStyle = fyne.TextStyle{Monospace: false}
 	labels = append(labels, levelLabel)
 
 	currentLabel := widget.NewLabel(fmt.Sprintf("Current: Level %d / %d", li.currentLevel, li.levels-1))

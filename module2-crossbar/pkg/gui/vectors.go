@@ -103,9 +103,9 @@ func (v *VectorBarChart) CreateRenderer() fyne.WidgetRenderer {
 
 	// Y-axis labels showing min/max values and unit
 	maxLabel := widget.NewLabel("")
-	maxLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	maxLabel.TextStyle = fyne.TextStyle{Monospace: false}
 	minLabel := widget.NewLabel("")
-	minLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	minLabel.TextStyle = fyne.TextStyle{Monospace: false}
 
 	yAxisLabels := container.NewVBox(
 		maxLabel,
@@ -445,7 +445,7 @@ func (m *MVMVisualization) CreateRenderer() fyne.WidgetRenderer {
 
 	// MVM operation symbol
 	mvmLabel := widget.NewLabel("W × V = I")
-	mvmLabel.TextStyle = fyne.TextStyle{Bold: true, Monospace: true}
+	mvmLabel.TextStyle = fyne.TextStyle{Bold: true, Monospace: false}
 	mvmLabel.Alignment = fyne.TextAlignCenter
 
 	// Matrix label

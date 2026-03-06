@@ -118,7 +118,7 @@ func (w *DriftVisualization) CreateRenderer() fyne.WidgetRenderer {
 	for i, scale := range w.timeScales {
 		// Time scale label
 		w.scaleLabels[i] = widget.NewLabel(scale.Label)
-		w.scaleLabels[i].TextStyle = fyne.TextStyle{Monospace: true}
+		w.scaleLabels[i].TextStyle = fyne.TextStyle{Monospace: false}
 
 		// Drift bar (will be sized based on drift %)
 		w.driftBars[i] = canvas.NewRectangle(w.getDriftColor(scale.DriftPct))

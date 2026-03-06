@@ -26,6 +26,9 @@ type SneakTab struct {
 
 // NewSneakTab creates a new sneak path analysis tab.
 func NewSneakTab(arraySize int) *SneakTab {
+	if arraySize < 1 {
+		arraySize = 1
+	}
 	tab := &SneakTab{
 		arraySize:   arraySize,
 		statsLabel:  widget.NewLabel(""),
@@ -242,7 +245,7 @@ corrupt the target cell reading.
 
 	t.statsLabel.SetText(statsText)
 	t.statsLabel.Wrapping = fyne.TextWrapWord
-	t.statsLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	t.statsLabel.TextStyle = fyne.TextStyle{Monospace: false}
 }
 
 func (t *SneakTab) getSneakSeverity(snr float64) string {

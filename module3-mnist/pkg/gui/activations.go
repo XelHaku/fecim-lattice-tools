@@ -116,7 +116,7 @@ func (lav *LayerActivationView) CreateRenderer() fyne.WidgetRenderer {
 
 	// Prediction labels
 	lav.predictionLabel = widget.NewLabel("Prediction: -")
-	lav.predictionLabel.TextStyle = fyne.TextStyle{Bold: true, Monospace: true}
+	lav.predictionLabel.TextStyle = fyne.TextStyle{Bold: true, Monospace: false}
 	lav.predictionLabel.Alignment = fyne.TextAlignCenter
 
 	lav.confidenceLabel = widget.NewLabel("Confidence: -")

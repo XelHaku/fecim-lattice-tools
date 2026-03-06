@@ -232,7 +232,7 @@ func (w *SneakCompareWidget) CreateRenderer() fyne.WidgetRenderer {
 	w.activeLabel.Truncation = fyne.TextTruncateEllipsis
 
 	w.statsLabel = widget.NewLabel("Run MVM to compare architectures")
-	w.statsLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	w.statsLabel.TextStyle = fyne.TextStyle{Monospace: false}
 	w.statsLabel.Wrapping = fyne.TextWrapWord
 
 	w.comparisonLabel = widget.NewLabel("Select cells to compare sneak paths")

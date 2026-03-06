@@ -285,7 +285,7 @@ func (ca *CrossbarApp) createMainLayoutStructure(metricsPanel *MetricsPanel, com
 	ca.eduTitleLabel = widget.NewLabelWithStyle("What You're Seeing", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	ca.eduTitleLabel.Wrapping = fyne.TextWrapOff
 	ca.eduContentLabel = widget.NewLabel("CROSSBAR MVM\n\nClick a button to start\na demonstration.")
-	ca.eduContentLabel.Wrapping = fyne.TextWrapOff // Was TextWrapWord - causes MinSize changes
+	ca.eduContentLabel.Wrapping = fyne.TextWrapWord
 	ca.keyStatLabel = widget.NewLabel("N² Operations")
 	ca.keyStatLabel.Alignment = fyne.TextAlignCenter
 	ca.keyStatLabel.Wrapping = fyne.TextWrapOff
@@ -298,7 +298,7 @@ func (ca *CrossbarApp) createMainLayoutStructure(metricsPanel *MetricsPanel, com
 	// Stats label for cell analysis
 	ca.statsLabel = widget.NewLabel("Analysis Results\n\nNo data yet.\nClick a cell or Run MVM.")
 	ca.statsLabel.Wrapping = fyne.TextWrapOff
-	ca.statsLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	ca.statsLabel.TextStyle = fyne.TextStyle{Monospace: false}
 
 	// Metrics and comparison section
 	metricsSection := container.NewVBox(
@@ -314,9 +314,11 @@ func (ca *CrossbarApp) createMainLayoutStructure(metricsPanel *MetricsPanel, com
 	// Right panel - delegated to app_controls.go
 	rightPanel := ca.createRightPanel(metricsScroll)
 
-	// Left panel - wrap educational content in fixed-size container to prevent layout changes
-	// Educational content wrapper: fixed height prevents parent layout recalculation on text changes
-	eduContentWrapper := container.NewGridWrap(fyne.NewSize(200, 300), ca.eduContentLabel)
+	// Left panel - keep educational content in a bounded viewport to avoid parent layout shifts.
+	// Scroll + fixed viewport avoids clipping for longer descriptions on small windows.
+	eduContentScroll := container.NewVScroll(ca.eduContentLabel)
+	eduContentScroll.SetMinSize(fyne.NewSize(200, 300))
+	eduContentWrapper := container.NewGridWrap(fyne.NewSize(200, 300), eduContentScroll)
 
 	leftPanelContent := container.NewVBox(
 		ca.eduTitleLabel,

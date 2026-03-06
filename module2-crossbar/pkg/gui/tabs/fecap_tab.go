@@ -53,9 +53,9 @@ func NewFeCAPTab(arraySize int) *FeCAPTab {
 		dispLabel:   widget.NewLabel(""),
 		statusLabel: widget.NewLabel("Ready — FeCAP mode (charge-domain)"),
 	}
-	tab.chargeLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	tab.chargeLabel.TextStyle = fyne.TextStyle{Monospace: false}
 	tab.chargeLabel.Wrapping = fyne.TextWrapWord
-	tab.dispLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	tab.dispLabel.TextStyle = fyne.TextStyle{Monospace: false}
 	tab.dispLabel.Wrapping = fyne.TextWrapWord
 	return tab
 }
@@ -83,7 +83,7 @@ func (t *FeCAPTab) Content() fyne.CanvasObject {
 		crossbar.DefaultFeCAPPulseDuration*1e9,
 	)
 	physicsLabel := widget.NewLabel(physicsText)
-	physicsLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	physicsLabel.TextStyle = fyne.TextStyle{Monospace: false}
 	physicsLabel.Wrapping = fyne.TextWrapWord
 
 	leftContent := container.NewBorder(

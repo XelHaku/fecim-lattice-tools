@@ -26,6 +26,9 @@ type IRDropTab struct {
 
 // NewIRDropTab creates a new IR drop analysis tab.
 func NewIRDropTab(arraySize int) *IRDropTab {
+	if arraySize < 1 {
+		arraySize = 1
+	}
 	tab := &IRDropTab{
 		arraySize:   arraySize,
 		statsLabel:  widget.NewLabel(""),
@@ -205,7 +208,7 @@ impact compared to DRAM/SRAM.`,
 
 	t.statsLabel.SetText(statsText)
 	t.statsLabel.Wrapping = fyne.TextWrapWord
-	t.statsLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	t.statsLabel.TextStyle = fyne.TextStyle{Monospace: false}
 }
 
 func (t *IRDropTab) getIRSeverity(maxError float64) string {
