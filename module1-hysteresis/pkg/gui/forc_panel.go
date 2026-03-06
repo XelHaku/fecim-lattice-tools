@@ -451,7 +451,7 @@ func (a *App) createFORCPanel() fyne.CanvasObject {
 	return widget.NewCard("FORC Workflow", "Mixed derivative ∂²M/∂Ha∂Hb via central finite differences", container.NewVBox(
 		controls,
 		runBtn,
-		container.NewGridWithColumns(3, exportSweepBtn, exportMatrixBtn, exportMetaBtn),
+		container.NewGridWithColumns(2, exportSweepBtn, exportMatrixBtn, exportMetaBtn),
 		widget.NewLabel("Density map (run FORC to populate):"),
 		rasterContainer,
 		resultScroll,

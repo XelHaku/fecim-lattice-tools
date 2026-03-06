@@ -643,6 +643,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 
 	// ========== STATUS ==========
 	statusLabel := widget.NewLabel("Ready")
+	statusLabel.Truncation = fyne.TextTruncateEllipsis
 
 	// ========== GENERATE ALL BUTTON ==========
 	var generateAllBtn *widget.Button
@@ -1233,6 +1234,8 @@ Date: reproducible-build
 		validateAllBtn,
 		exportPackageBtn,
 	)
+	actionsScroll := container.NewHScroll(actionButtons)
+	actionsScroll.SetMinSize(fyne.NewSize(0, 48))
 
 	// Builder action shortcuts:
 	// Cmd/Ctrl+Shift+G => Generate All
@@ -1316,10 +1319,7 @@ Date: reproducible-build
 		statusLabel,
 	)
 
-	// Top section: config + actions (compact)
-	actionsStatusRow := container.NewHBox(
-		actionButtons,
-		widget.NewSeparator(),
+	statusMetaRow := container.NewHBox(
 		statusBar,
 		layout.NewSpacer(),
 		exportConfidence,
@@ -1327,7 +1327,8 @@ Date: reproducible-build
 	topSection := container.NewVBox(
 		configAccordion,
 		widget.NewSeparator(),
-		actionsStatusRow,
+		actionsScroll,
+		statusMetaRow,
 	)
 
 	// Use VSplit for resizable preview/validation areas

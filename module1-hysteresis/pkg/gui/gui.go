@@ -336,9 +336,9 @@ type App struct {
 	switchedLabel   *widget.Label
 
 	// Info panel material fields (updated on material change via onMaterialPickerSelected)
-	materialNameLabel  *widget.Label     // prominent material name display
-	materialPropsLabel *widget.Label     // Pr/Ec summary line
-	materialBadgeBox   *fyne.Container   // holds confidence badge (swappable on material change)
+	materialNameLabel  *widget.Label   // prominent material name display
+	materialPropsLabel *widget.Label   // Pr/Ec summary line
+	materialBadgeBox   *fyne.Container // holds confidence badge (swappable on material change)
 
 	// Levels selector
 	levelsEntry    *widget.Entry
@@ -827,9 +827,9 @@ func (a *App) createUI() fyne.CanvasObject {
 
 	// Create controls panel
 	controls := a.createControlsPanel()
-	controlsContent := container.New(&fixedMinWidthLayout{minWidth: 260}, controls)
+	controlsContent := container.New(&fixedMinWidthLayout{minWidth: 280}, controls)
 	controlsScroll := container.NewVScroll(controlsContent)
-	controlsScroll.SetMinSize(fyne.NewSize(260, 0))
+	controlsScroll.SetMinSize(fyne.NewSize(280, 0))
 
 	// Create info panel
 	info := a.createInfoPanel()
@@ -917,9 +917,9 @@ func (a *App) createUI() fyne.CanvasObject {
 	adaptive := sharedwidgets.NewAdaptiveLayout(zones, tabLabels)
 	adaptive.SetDesktopLayout(func(zones []fyne.CanvasObject) fyne.CanvasObject {
 		// Desktop: Left (Cell+Info) | Plot | Controls
-		// At 1024px: left=256px, inner=(768px * 0.65)=499px plot, 269px controls
+		// At 1024px: left=256px, inner=(768px * 0.60)=461px plot, 307px controls
 		innerSplit := container.NewHSplit(zones[1], zones[2])
-		innerSplit.SetOffset(0.65) // Give controls more room (35% instead of 30%)
+		innerSplit.SetOffset(0.60) // Give controls more room so export/actions stop clipping.
 
 		outerSplit := container.NewHSplit(zones[0], innerSplit)
 		outerSplit.SetOffset(0.25) // 25% left column: 256px at 1024px (enough for 220px MinSize + padding)

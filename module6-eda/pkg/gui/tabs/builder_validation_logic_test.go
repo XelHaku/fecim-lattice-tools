@@ -194,6 +194,8 @@ func walkObjects(obj fyne.CanvasObject, visit func(fyne.CanvasObject)) {
 		for _, child := range v.Objects {
 			walkObjects(child, visit)
 		}
+	case *container.Scroll:
+		walkObjects(v.Content, visit)
 	case *container.AppTabs:
 		for _, item := range v.Items {
 			walkObjects(item.Content, visit)
