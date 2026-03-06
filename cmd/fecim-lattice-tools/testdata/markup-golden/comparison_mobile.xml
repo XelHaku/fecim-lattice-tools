@@ -1,0 +1,1320 @@
+<canvas size="367x804">
+	<content>
+		<container size="367x804">
+			<container pos="0,122" size="367x637">
+				<widget pos="4,4" size="359x629" type="*widget.Scroll">
+					<container size="713x3508">
+						<container size="713x1006">
+							<widget size="713x35" type="*widget.Label">
+								<widget size="713x35" type="*widget.RichText">
+									<text alignment="center" bold pos="278,8" size="156x19">THE ENERGY PROBLEM</text>
+								</widget>
+							</widget>
+							<container pos="0,39" size="713x196">
+								<container pos="4,4" size="705x188">
+									<widget pos="4,4" size="697x180" type="*gui.AnimatedEnergyRace">
+										<container size="697x180">
+											<container size="697x88">
+												<container size="697x65">
+													<text alignment="center" bold color="rgba(240,244,248,255)" pos="264,0" size="168x65" textSize="48">80-90%</text>
+												</container>
+												<container pos="0,69" size="697x19">
+													<text alignment="center" bold color="rgba(243,156,18,255)" pos="144,0" size="409x19">⚠️ SIMULATION ONLY | MODEL INPUTS | TRL 4 Lab Context</text>
+												</container>
+											</container>
+											<container pos="0,92" size="697x68">
+												<container size="697x32">
+													<container size="160x32">
+														<container size="160x32">
+															<text color="rgba(160,180,200,255)" pos="33,6" size="92x19">Today: GPU AI</text>
+														</container>
+													</container>
+													<rectangle fillColor="rgba(231,76,60,255)" pos="164,0" size="500x32"/>
+													<container pos="668,0" size="120x32">
+														<container size="120x32">
+															<text alignment="trailing" color="rgba(240,244,248,255)" pos="29,6" size="60x19">100 units</text>
+														</container>
+													</container>
+												</container>
+												<container pos="0,36" size="697x32">
+													<container size="160x32">
+														<container size="160x32">
+															<text color="rgba(160,180,200,255)" pos="59,6" size="41x19">FeCIM</text>
+														</container>
+													</container>
+													<rectangle fillColor="rgba(46,204,113,255)" pos="164,0" size="50x32"/>
+													<container pos="218,0" size="120x32">
+														<container size="120x32">
+															<text alignment="trailing" color="rgba(240,244,248,255)" pos="29,6" size="60x19">~10 units</text>
+														</container>
+													</container>
+												</container>
+											</container>
+											<container pos="0,164" size="697x19">
+												<text alignment="center" bold color="rgba(0,212,255,255)" pos="129,0" size="438x19">Model inputs: 1000× vs CPU  |  100× vs GPU  |  ~1 pJ/MAC (TRL 4)</text>
+											</container>
+											<widget pos="0,187" size="697x35" type="*widget.Label">
+												<widget size="697x35" type="*widget.RichText">
+													<text alignment="center" italic pos="85,8" size="526x19">Model assumption: System Power = Array ~45% | ADC/DAC ~40% | Peripherals ~15%</text>
+												</widget>
+											</widget>
+											<widget pos="0,226" size="697x35" type="*widget.Label">
+												<widget size="697x35" type="*widget.RichText">
+													<text alignment="center" italic pos="19,8" size="659x19">Model input references (not validated): Samsung Nature 2025 range, NVIDIA H100 datasheets, Intel/AMD…</text>
+												</widget>
+											</widget>
+										</container>
+									</widget>
+								</container>
+							</container>
+							<widget pos="0,239" size="713x203" type="*widget.Card">
+								<widget pos="2,2" size="709x199" type="*widget.Shadow">
+									<radialGradient centerOffset="0.5,0.5" size="1x1" startColor="shadow"/>
+									<linearGradient endColor="shadow" size="709x1"/>
+									<radialGradient centerOffset="-0.5,0.5" pos="709,0" size="1x1" startColor="shadow"/>
+									<linearGradient angle="270" pos="709,0" size="1x199" startColor="shadow"/>
+									<radialGradient centerOffset="-0.5,-0.5" pos="709,199" size="1x1" startColor="shadow"/>
+									<linearGradient pos="0,199" size="709x1" startColor="shadow"/>
+									<radialGradient centerOffset="0.5,-0.5" pos="0,199" size="1x1" startColor="shadow"/>
+									<linearGradient angle="270" endColor="shadow" size="1x199"/>
+								</widget>
+								<text bold pos="10,10" size="693x32" textSize="23">Plain-text evidence</text>
+								<text pos="10,46" size="693x19">Screen-reader-first</text>
+								<widget pos="6,77" size="701x120" type="*widget.Scroll">
+									<widget size="701x397" type="*widget.Label">
+										<widget size="701x397" type="*widget.RichText">
+											<text pos="8,8" size="212x19">Energy comparison visualization</text>
+											<text pos="8,27" size="46x19">Inputs:</text>
+											<text pos="8,46" size="362x19">- cpu_co2_kg_per_kwh = 0.4 kg/kWh [calibrated, c=0.80]</text>
+											<text pos="8,65" size="392x19">- cpu_energy_pj_per_mac = 1000 pJ/MAC [estimated, c=0.70]</text>
+											<text pos="8,84" size="387x19">- cpu_latency_ns_per_mac = 3.2 ns/MAC [estimated, c=0.70]</text>
+											<text pos="8,103" size="416x19">- cpu_tco_usd_per_month = 340 USD/month [estimated, c=0.60]</text>
+											<text pos="8,122" size="375x19">- fecim_co2_kg_per_kwh = 0.4 kg/kWh [calibrated, c=0.80]</text>
+											<text pos="8,141" size="391x19">- fecim_energy_pj_per_mac = 1 pJ/MAC [placeholder, c=0.45]</text>
+											<text pos="8,160" size="410x19">- fecim_latency_ns_per_mac = 0.1 ns/MAC [placeholder, c=0.45]</text>
+											<text pos="8,179" size="439x19">- fecim_tco_usd_per_month = 190 USD/month [placeholder, c=0.45]</text>
+											<text pos="8,198" size="364x19">- gpu_co2_kg_per_kwh = 0.4 kg/kWh [calibrated, c=0.80]</text>
+											<text pos="8,217" size="386x19">- gpu_energy_pj_per_mac = 100 pJ/MAC [estimated, c=0.75]</text>
+											<text pos="8,236" size="389x19">- gpu_latency_ns_per_mac = 0.6 ns/MAC [estimated, c=0.75]</text>
+											<text pos="8,256" size="418x19">- gpu_tco_usd_per_month = 920 USD/month [estimated, c=0.70]</text>
+											<text pos="8,275" size="57x19">Outputs:</text>
+											<text pos="8,294" size="372x19">- co2_reduction_pct = 79.35 ± 15.87 % [calibrated, c=0.80]</text>
+											<text pos="8,313" size="407x19">- energy_reduction_pct = 99.00 ± 54.45 % [placeholder, c=0.45]</text>
+											<text pos="8,332" size="408x19">- latency_reduction_pct = 83.33 ± 45.83 % [placeholder, c=0.45]</text>
+											<text pos="8,351" size="381x19">- tco_reduction_pct = 79.35 ± 43.64 % [placeholder, c=0.45]</text>
+											<text pos="8,370" size="0x19"></text>
+										</widget>
+									</widget>
+									<widget pos="0,120" size="701x0" type="*widget.Shadow">
+										<linearGradient endColor="shadow" pos="0,-8" size="701x8"/>
+									</widget>
+									<widget pos="695,0" size="6x120" type="*widget.scrollBarArea">
+										<widget pos="3,0" size="3x36" type="*widget.scrollBar">
+											<rectangle fillColor="scrollbar" radius="3" size="3x36"/>
+										</widget>
+									</widget>
+								</widget>
+							</widget>
+							<widget pos="0,446" size="713x559" type="*widget.Card">
+								<widget pos="2,2" size="709x555" type="*widget.Shadow">
+									<radialGradient centerOffset="0.5,0.5" size="1x1" startColor="shadow"/>
+									<linearGradient endColor="shadow" size="709x1"/>
+									<radialGradient centerOffset="-0.5,0.5" pos="709,0" size="1x1" startColor="shadow"/>
+									<linearGradient angle="270" pos="709,0" size="1x555" startColor="shadow"/>
+									<radialGradient centerOffset="-0.5,-0.5" pos="709,555" size="1x1" startColor="shadow"/>
+									<linearGradient pos="0,555" size="709x1" startColor="shadow"/>
+									<radialGradient centerOffset="0.5,-0.5" pos="0,555" size="1x1" startColor="shadow"/>
+									<linearGradient angle="270" endColor="shadow" size="1x555"/>
+								</widget>
+								<text bold pos="10,10" size="693x32" textSize="23">Evidence-first panel</text>
+								<text pos="10,46" size="693x19">Assumptions + outputs + caveat</text>
+								<container pos="6,77" size="701x475">
+									<widget size="701x397" type="*widget.Label">
+										<widget size="701x397" type="*widget.RichText">
+											<text pos="8,8" size="153x19">Assumptions & outputs</text>
+											<text pos="8,27" size="46x19">Inputs:</text>
+											<text pos="8,46" size="362x19">- cpu_co2_kg_per_kwh = 0.4 kg/kWh [calibrated, c=0.80]</text>
+											<text pos="8,65" size="392x19">- cpu_energy_pj_per_mac = 1000 pJ/MAC [estimated, c=0.70]</text>
+											<text pos="8,84" size="387x19">- cpu_latency_ns_per_mac = 3.2 ns/MAC [estimated, c=0.70]</text>
+											<text pos="8,103" size="416x19">- cpu_tco_usd_per_month = 340 USD/month [estimated, c=0.60]</text>
+											<text pos="8,122" size="375x19">- fecim_co2_kg_per_kwh = 0.4 kg/kWh [calibrated, c=0.80]</text>
+											<text pos="8,141" size="391x19">- fecim_energy_pj_per_mac = 1 pJ/MAC [placeholder, c=0.45]</text>
+											<text pos="8,160" size="410x19">- fecim_latency_ns_per_mac = 0.1 ns/MAC [placeholder, c=0.45]</text>
+											<text pos="8,179" size="439x19">- fecim_tco_usd_per_month = 190 USD/month [placeholder, c=0.45]</text>
+											<text pos="8,198" size="364x19">- gpu_co2_kg_per_kwh = 0.4 kg/kWh [calibrated, c=0.80]</text>
+											<text pos="8,217" size="386x19">- gpu_energy_pj_per_mac = 100 pJ/MAC [estimated, c=0.75]</text>
+											<text pos="8,236" size="389x19">- gpu_latency_ns_per_mac = 0.6 ns/MAC [estimated, c=0.75]</text>
+											<text pos="8,256" size="418x19">- gpu_tco_usd_per_month = 920 USD/month [estimated, c=0.70]</text>
+											<text pos="8,275" size="57x19">Outputs:</text>
+											<text pos="8,294" size="372x19">- co2_reduction_pct = 79.35 ± 15.87 % [calibrated, c=0.80]</text>
+											<text pos="8,313" size="407x19">- energy_reduction_pct = 99.00 ± 54.45 % [placeholder, c=0.45]</text>
+											<text pos="8,332" size="408x19">- latency_reduction_pct = 83.33 ± 45.83 % [placeholder, c=0.45]</text>
+											<text pos="8,351" size="381x19">- tco_reduction_pct = 79.35 ± 43.64 % [placeholder, c=0.45]</text>
+											<text pos="8,370" size="0x19"></text>
+										</widget>
+									</widget>
+									<widget pos="0,401" size="701x35" type="*widget.Label">
+										<widget size="701x35" type="*widget.RichText">
+											<text pos="8,8" size="352x19">Top sensitivity: gpu_tco_usd_per_month impact 2.89%</text>
+										</widget>
+									</widget>
+									<widget pos="0,440" size="701x35" type="*widget.Label">
+										<widget size="701x35" type="*widget.RichText">
+											<text pos="8,8" size="397x19">Caveat: all values are model inputs/derived estimates (TRL4).</text>
+										</widget>
+									</widget>
+								</container>
+							</widget>
+						</container>
+						<widget pos="0,1010" size="713x1" type="*widget.Separator">
+							<rectangle fillColor="separator" size="713x1"/>
+						</widget>
+						<container pos="0,1015" size="713x1218">
+							<widget size="713x35" type="*widget.Label">
+								<widget size="713x35" type="*widget.RichText">
+									<text alignment="center" bold pos="275,8" size="162x19">MARKET OPPORTUNITY</text>
+								</widget>
+							</widget>
+							<container pos="0,39" size="713x168">
+								<widget pos="4,4" size="705x160" type="*gui.MarketOpportunityChart">
+									<container size="705x160">
+										<container size="705x88">
+											<spacer size="81x88"/>
+											<container pos="81,0" size="543x88">
+												<container size="543x65">
+													<text alignment="center" bold color="rgba(240,244,248,255)" pos="200,0" size="142x65" textSize="48">$721B</text>
+												</container>
+												<container pos="0,69" size="543x19">
+													<text alignment="center" bold color="rgba(243,156,18,255)" size="543x19">⚠️ SIMULATION ONLY | MODEL INPUTS (market scenarios) | TRL 4→9 Required</text>
+												</container>
+											</container>
+											<spacer pos="628,0" size="81x88"/>
+										</container>
+										<container pos="0,92" size="705x68">
+											<spacer size="174x68"/>
+											<container pos="174,0" size="108x68">
+												<container pos="4,4" size="100x60">
+													<rectangle fillColor="rgba(231,76,60,255)" radius="8" size="100x60"/>
+													<container size="100x60">
+														<spacer size="100x6"/>
+														<container pos="0,6" size="100x24">
+															<text alignment="center" bold color="rgba(240,244,248,255)" pos="28,0" size="42x24" textSize="18">$98B</text>
+														</container>
+														<container pos="0,34" size="100x19">
+															<text alignment="center" bold color="rgba(240,244,248,255)" pos="8,0" size="82x19">NAND Flash</text>
+														</container>
+														<spacer pos="0,57" size="100x6"/>
+													</container>
+												</container>
+											</container>
+											<container pos="286,0" size="108x68">
+												<container pos="4,4" size="100x60">
+													<rectangle fillColor="rgba(243,156,18,255)" radius="8" size="100x60"/>
+													<container size="100x60">
+														<spacer size="100x6"/>
+														<container pos="0,6" size="100x24">
+															<text alignment="center" bold color="rgba(240,244,248,255)" pos="23,0" size="53x24" textSize="18">$220B</text>
+														</container>
+														<container pos="0,34" size="100x19">
+															<text alignment="center" bold color="rgba(240,244,248,255)" pos="28,0" size="42x19">DRAM</text>
+														</container>
+														<spacer pos="0,57" size="100x6"/>
+													</container>
+												</container>
+											</container>
+											<container pos="398,0" size="132x68">
+												<container pos="4,4" size="124x60">
+													<rectangle fillColor="rgba(46,204,113,255)" radius="8" size="124x60"/>
+													<container size="124x60">
+														<spacer size="124x6"/>
+														<container pos="0,6" size="124x24">
+															<text alignment="center" bold color="rgba(240,244,248,255)" pos="35,0" size="53x24" textSize="18">$403B</text>
+														</container>
+														<container pos="0,34" size="124x19">
+															<text alignment="center" bold color="rgba(240,244,248,255)" size="124x19">AI Semiconductor</text>
+														</container>
+														<spacer pos="0,57" size="124x6"/>
+													</container>
+												</container>
+											</container>
+											<spacer pos="534,0" size="174x68"/>
+										</container>
+										<container pos="0,164" size="705x19">
+											<text alignment="center" color="rgba(160,180,200,255)" italic pos="161,0" size="381x19">Model input references (not validated): WSTS + Gartner (2025)</text>
+										</container>
+									</container>
+								</widget>
+							</container>
+							<widget pos="0,211" size="713x203" type="*widget.Card">
+								<widget pos="2,2" size="709x199" type="*widget.Shadow">
+									<radialGradient centerOffset="0.5,0.5" size="1x1" startColor="shadow"/>
+									<linearGradient endColor="shadow" size="709x1"/>
+									<radialGradient centerOffset="-0.5,0.5" pos="709,0" size="1x1" startColor="shadow"/>
+									<linearGradient angle="270" pos="709,0" size="1x199" startColor="shadow"/>
+									<radialGradient centerOffset="-0.5,-0.5" pos="709,199" size="1x1" startColor="shadow"/>
+									<linearGradient pos="0,199" size="709x1" startColor="shadow"/>
+									<radialGradient centerOffset="0.5,-0.5" pos="0,199" size="1x1" startColor="shadow"/>
+									<linearGradient angle="270" endColor="shadow" size="1x199"/>
+								</widget>
+								<text bold pos="10,10" size="693x32" textSize="23">Plain-text evidence</text>
+								<text pos="10,46" size="693x19">Screen-reader-first</text>
+								<widget pos="6,77" size="701x120" type="*widget.Scroll">
+									<widget size="701x397" type="*widget.Label">
+										<widget size="701x397" type="*widget.RichText">
+											<text pos="8,8" size="166x19">Market opportunity chart</text>
+											<text pos="8,27" size="46x19">Inputs:</text>
+											<text pos="8,46" size="362x19">- cpu_co2_kg_per_kwh = 0.4 kg/kWh [calibrated, c=0.80]</text>
+											<text pos="8,65" size="392x19">- cpu_energy_pj_per_mac = 1000 pJ/MAC [estimated, c=0.70]</text>
+											<text pos="8,84" size="387x19">- cpu_latency_ns_per_mac = 3.2 ns/MAC [estimated, c=0.70]</text>
+											<text pos="8,103" size="416x19">- cpu_tco_usd_per_month = 340 USD/month [estimated, c=0.60]</text>
+											<text pos="8,122" size="375x19">- fecim_co2_kg_per_kwh = 0.4 kg/kWh [calibrated, c=0.80]</text>
+											<text pos="8,141" size="391x19">- fecim_energy_pj_per_mac = 1 pJ/MAC [placeholder, c=0.45]</text>
+											<text pos="8,160" size="410x19">- fecim_latency_ns_per_mac = 0.1 ns/MAC [placeholder, c=0.45]</text>
+											<text pos="8,179" size="439x19">- fecim_tco_usd_per_month = 190 USD/month [placeholder, c=0.45]</text>
+											<text pos="8,198" size="364x19">- gpu_co2_kg_per_kwh = 0.4 kg/kWh [calibrated, c=0.80]</text>
+											<text pos="8,217" size="386x19">- gpu_energy_pj_per_mac = 100 pJ/MAC [estimated, c=0.75]</text>
+											<text pos="8,236" size="389x19">- gpu_latency_ns_per_mac = 0.6 ns/MAC [estimated, c=0.75]</text>
+											<text pos="8,256" size="418x19">- gpu_tco_usd_per_month = 920 USD/month [estimated, c=0.70]</text>
+											<text pos="8,275" size="57x19">Outputs:</text>
+											<text pos="8,294" size="372x19">- co2_reduction_pct = 79.35 ± 15.87 % [calibrated, c=0.80]</text>
+											<text pos="8,313" size="407x19">- energy_reduction_pct = 99.00 ± 54.45 % [placeholder, c=0.45]</text>
+											<text pos="8,332" size="408x19">- latency_reduction_pct = 83.33 ± 45.83 % [placeholder, c=0.45]</text>
+											<text pos="8,351" size="381x19">- tco_reduction_pct = 79.35 ± 43.64 % [placeholder, c=0.45]</text>
+											<text pos="8,370" size="0x19"></text>
+										</widget>
+									</widget>
+									<widget pos="0,120" size="701x0" type="*widget.Shadow">
+										<linearGradient endColor="shadow" pos="0,-8" size="701x8"/>
+									</widget>
+									<widget pos="695,0" size="6x120" type="*widget.scrollBarArea">
+										<widget pos="3,0" size="3x36" type="*widget.scrollBar">
+											<rectangle fillColor="scrollbar" radius="3" size="3x36"/>
+										</widget>
+									</widget>
+								</widget>
+							</widget>
+							<widget pos="0,418" size="713x211" type="*widget.Card">
+								<widget pos="2,2" size="709x207" type="*widget.Shadow">
+									<radialGradient centerOffset="0.5,0.5" size="1x1" startColor="shadow"/>
+									<linearGradient endColor="shadow" size="709x1"/>
+									<radialGradient centerOffset="-0.5,0.5" pos="709,0" size="1x1" startColor="shadow"/>
+									<linearGradient angle="270" pos="709,0" size="1x207" startColor="shadow"/>
+									<radialGradient centerOffset="-0.5,-0.5" pos="709,207" size="1x1" startColor="shadow"/>
+									<linearGradient pos="0,207" size="709x1" startColor="shadow"/>
+									<radialGradient centerOffset="0.5,-0.5" pos="0,207" size="1x1" startColor="shadow"/>
+									<linearGradient angle="270" endColor="shadow" size="1x207"/>
+								</widget>
+								<text bold pos="10,10" size="693x32" textSize="23">Phased Entry Strategy</text>
+								<text pos="10,46" size="693x19">De-risking through staged market entry</text>
+								<container pos="6,77" size="701x128">
+									<widget pos="4,4" size="693x120" type="*gui.PhasedStrategyDiagram">
+										<container size="693x120">
+											<container size="693x65">
+												<spacer size="106x65"/>
+												<container pos="106,0" size="138x65">
+													<container size="138x19">
+														<text bold color="rgba(0,212,255,255)" pos="41,0" size="56x19">PHASE 1</text>
+													</container>
+													<container pos="0,23" size="138x19">
+														<text bold color="rgba(240,244,248,255)" size="138x19">NAND Replacement</text>
+													</container>
+													<container pos="0,46" size="138x19">
+														<text color="rgba(160,180,200,255)" size="138x19">No software changes</text>
+													</container>
+												</container>
+												<container pos="249,0" size="13x65">
+													<text color="rgba(160,180,200,255)" pos="0,21" size="13x21" textSize="16">→</text>
+												</container>
+												<container pos="266,0" size="137x65">
+													<container size="137x19">
+														<text bold color="rgba(0,212,255,255)" pos="40,0" size="56x19">PHASE 2</text>
+													</container>
+													<container pos="0,23" size="137x19">
+														<text bold color="rgba(240,244,248,255)" size="137x19">DRAM Replacement</text>
+													</container>
+													<container pos="0,46" size="137x19">
+														<text color="rgba(160,180,200,255)" pos="20,0" size="96x19">Higher density</text>
+													</container>
+												</container>
+												<container pos="408,0" size="13x65">
+													<text color="rgba(160,180,200,255)" pos="0,21" size="13x21" textSize="16">→</text>
+												</container>
+												<container pos="426,0" size="160x65">
+													<container size="160x19">
+														<text bold color="rgba(46,204,113,255)" pos="51,0" size="56x19">PHASE 3</text>
+													</container>
+													<container pos="0,23" size="160x19">
+														<text bold color="rgba(240,244,248,255)" pos="51,0" size="56x19">Full CIM</text>
+													</container>
+													<container pos="0,46" size="160x19">
+														<text color="rgba(160,180,200,255)" size="160x19">80-90% model reduction</text>
+													</container>
+												</container>
+												<spacer pos="590,0" size="106x65"/>
+											</container>
+											<container pos="0,69" size="693x35">
+												<widget pos="334,0" size="23x35" type="*widget.Label">
+													<widget size="23x35" type="*widget.RichText">
+														<text alignment="center" italic pos="6,8" size="10x19">…</text>
+													</widget>
+												</widget>
+											</container>
+										</container>
+									</widget>
+								</container>
+							</widget>
+							<widget pos="0,634" size="713x203" type="*widget.Card">
+								<widget pos="2,2" size="709x199" type="*widget.Shadow">
+									<radialGradient centerOffset="0.5,0.5" size="1x1" startColor="shadow"/>
+									<linearGradient endColor="shadow" size="709x1"/>
+									<radialGradient centerOffset="-0.5,0.5" pos="709,0" size="1x1" startColor="shadow"/>
+									<linearGradient angle="270" pos="709,0" size="1x199" startColor="shadow"/>
+									<radialGradient centerOffset="-0.5,-0.5" pos="709,199" size="1x1" startColor="shadow"/>
+									<linearGradient pos="0,199" size="709x1" startColor="shadow"/>
+									<radialGradient centerOffset="0.5,-0.5" pos="0,199" size="1x1" startColor="shadow"/>
+									<linearGradient angle="270" endColor="shadow" size="1x199"/>
+								</widget>
+								<text bold pos="10,10" size="693x32" textSize="23">Plain-text evidence</text>
+								<text pos="10,46" size="693x19">Screen-reader-first</text>
+								<widget pos="6,77" size="701x120" type="*widget.Scroll">
+									<widget size="701x397" type="*widget.Label">
+										<widget size="701x397" type="*widget.RichText">
+											<text pos="8,8" size="228x19">Phased entry strategy visualization</text>
+											<text pos="8,27" size="46x19">Inputs:</text>
+											<text pos="8,46" size="362x19">- cpu_co2_kg_per_kwh = 0.4 kg/kWh [calibrated, c=0.80]</text>
+											<text pos="8,65" size="392x19">- cpu_energy_pj_per_mac = 1000 pJ/MAC [estimated, c=0.70]</text>
+											<text pos="8,84" size="387x19">- cpu_latency_ns_per_mac = 3.2 ns/MAC [estimated, c=0.70]</text>
+											<text pos="8,103" size="416x19">- cpu_tco_usd_per_month = 340 USD/month [estimated, c=0.60]</text>
+											<text pos="8,122" size="375x19">- fecim_co2_kg_per_kwh = 0.4 kg/kWh [calibrated, c=0.80]</text>
+											<text pos="8,141" size="391x19">- fecim_energy_pj_per_mac = 1 pJ/MAC [placeholder, c=0.45]</text>
+											<text pos="8,160" size="410x19">- fecim_latency_ns_per_mac = 0.1 ns/MAC [placeholder, c=0.45]</text>
+											<text pos="8,179" size="439x19">- fecim_tco_usd_per_month = 190 USD/month [placeholder, c=0.45]</text>
+											<text pos="8,198" size="364x19">- gpu_co2_kg_per_kwh = 0.4 kg/kWh [calibrated, c=0.80]</text>
+											<text pos="8,217" size="386x19">- gpu_energy_pj_per_mac = 100 pJ/MAC [estimated, c=0.75]</text>
+											<text pos="8,236" size="389x19">- gpu_latency_ns_per_mac = 0.6 ns/MAC [estimated, c=0.75]</text>
+											<text pos="8,256" size="418x19">- gpu_tco_usd_per_month = 920 USD/month [estimated, c=0.70]</text>
+											<text pos="8,275" size="57x19">Outputs:</text>
+											<text pos="8,294" size="372x19">- co2_reduction_pct = 79.35 ± 15.87 % [calibrated, c=0.80]</text>
+											<text pos="8,313" size="407x19">- energy_reduction_pct = 99.00 ± 54.45 % [placeholder, c=0.45]</text>
+											<text pos="8,332" size="408x19">- latency_reduction_pct = 83.33 ± 45.83 % [placeholder, c=0.45]</text>
+											<text pos="8,351" size="381x19">- tco_reduction_pct = 79.35 ± 43.64 % [placeholder, c=0.45]</text>
+											<text pos="8,370" size="0x19"></text>
+										</widget>
+									</widget>
+									<widget pos="0,120" size="701x0" type="*widget.Shadow">
+										<linearGradient endColor="shadow" pos="0,-8" size="701x8"/>
+									</widget>
+									<widget pos="695,0" size="6x120" type="*widget.scrollBarArea">
+										<widget pos="3,0" size="3x36" type="*widget.scrollBar">
+											<rectangle fillColor="scrollbar" radius="3" size="3x36"/>
+										</widget>
+									</widget>
+								</widget>
+							</widget>
+							<container pos="0,842" size="713x168">
+								<widget pos="4,4" size="705x160" type="*gui.CompetitiveMatrix">
+									<container size="705x160">
+										<container size="705x19">
+											<text alignment="center" bold color="rgba(0,212,255,255)" pos="136,0" size="431x19">Confidence-aware model scoring (0-100) across key categories</text>
+										</container>
+										<container pos="0,23" size="705x19">
+											<container size="114x19">
+												<text alignment="center" bold color="rgba(240,244,248,255)" pos="17,0" size="79x19">Technology</text>
+											</container>
+											<container pos="118,0" size="114x19">
+												<text alignment="center" bold color="rgba(240,244,248,255)" pos="32,0" size="48x19">Energy</text>
+											</container>
+											<container pos="236,0" size="114x19">
+												<text alignment="center" bold color="rgba(240,244,248,255)" pos="36,0" size="42x19">Speed</text>
+											</container>
+											<container pos="354,0" size="114x19">
+												<text alignment="center" bold color="rgba(240,244,248,255)" pos="19,0" size="74x19">Endurance</text>
+											</container>
+											<container pos="472,0" size="114x19">
+												<text alignment="center" bold color="rgba(240,244,248,255)" pos="36,0" size="40x19">CMOS</text>
+											</container>
+											<container pos="591,0" size="114x19">
+												<text alignment="center" bold color="rgba(240,244,248,255)" pos="28,0" size="57x19">Scalable</text>
+											</container>
+										</container>
+										<container pos="0,46" size="705x111">
+											<container size="705x19">
+												<rectangle fillColor="rgba(0,76,95,40)" radius="4" size="705x19"/>
+												<container size="705x19">
+													<container size="114x19">
+														<text bold color="rgba(0,212,255,255)" pos="35,0" size="43x19">FeCIM</text>
+													</container>
+													<container pos="118,0" size="114x19">
+														<text alignment="center" color="rgba(46,204,113,255)" pos="49,0" size="16x19">90</text>
+													</container>
+													<container pos="236,0" size="114x19">
+														<text alignment="center" color="rgba(46,204,113,255)" pos="49,0" size="16x19">81</text>
+													</container>
+													<container pos="354,0" size="114x19">
+														<text alignment="center" color="rgba(243,156,18,255)" pos="49,0" size="16x19">59</text>
+													</container>
+													<container pos="472,0" size="114x19">
+														<text alignment="center" color="rgba(46,204,113,255)" pos="49,0" size="16x19">77</text>
+													</container>
+													<container pos="591,0" size="114x19">
+														<text alignment="center" color="rgba(243,156,18,255)" pos="49,0" size="16x19">72</text>
+													</container>
+												</container>
+											</container>
+											<container pos="0,23" size="705x19">
+												<container size="114x19">
+													<text color="rgba(240,244,248,255)" pos="9,0" size="96x19">Google TPU v5</text>
+												</container>
+												<container pos="118,0" size="114x19">
+													<text alignment="center" color="rgba(243,156,18,255)" pos="49,0" size="16x19">59</text>
+												</container>
+												<container pos="236,0" size="114x19">
+													<text alignment="center" color="rgba(46,204,113,255)" pos="49,0" size="16x19">86</text>
+												</container>
+												<container pos="354,0" size="114x19">
+													<text alignment="center" color="rgba(243,156,18,255)" pos="49,0" size="16x19">62</text>
+												</container>
+												<container pos="472,0" size="114x19">
+													<text alignment="center" color="rgba(46,204,113,255)" pos="49,0" size="16x19">80</text>
+												</container>
+												<container pos="591,0" size="114x19">
+													<text alignment="center" color="rgba(46,204,113,255)" pos="49,0" size="16x19">82</text>
+												</container>
+											</container>
+											<container pos="0,46" size="705x19">
+												<container size="114x19">
+													<text color="rgba(240,244,248,255)" pos="18,0" size="76x19">Intel Loihi 2</text>
+												</container>
+												<container pos="118,0" size="114x19">
+													<text alignment="center" color="rgba(46,204,113,255)" pos="49,0" size="16x19">75</text>
+												</container>
+												<container pos="236,0" size="114x19">
+													<text alignment="center" color="rgba(46,204,113,255)" pos="49,0" size="16x19">76</text>
+												</container>
+												<container pos="354,0" size="114x19">
+													<text alignment="center" color="rgba(243,156,18,255)" pos="49,0" size="16x19">58</text>
+												</container>
+												<container pos="472,0" size="114x19">
+													<text alignment="center" color="rgba(231,76,60,255)" pos="49,0" size="16x19">46</text>
+												</container>
+												<container pos="591,0" size="114x19">
+													<text alignment="center" color="rgba(231,76,60,255)" pos="49,0" size="16x19">45</text>
+												</container>
+											</container>
+											<container pos="0,69" size="705x19">
+												<container size="114x19">
+													<text color="rgba(240,244,248,255)" pos="10,0" size="93x19">IBM Analog AI</text>
+												</container>
+												<container pos="118,0" size="114x19">
+													<text alignment="center" color="rgba(243,156,18,255)" pos="49,0" size="16x19">70</text>
+												</container>
+												<container pos="236,0" size="114x19">
+													<text alignment="center" color="rgba(243,156,18,255)" pos="49,0" size="16x19">51</text>
+												</container>
+												<container pos="354,0" size="114x19">
+													<text alignment="center" color="rgba(231,76,60,255)" pos="49,0" size="16x19">33</text>
+												</container>
+												<container pos="472,0" size="114x19">
+													<text alignment="center" color="rgba(231,76,60,255)" pos="49,0" size="16x19">42</text>
+												</container>
+												<container pos="591,0" size="114x19">
+													<text alignment="center" color="rgba(231,76,60,255)" pos="49,0" size="16x19">39</text>
+												</container>
+											</container>
+											<container pos="0,92" size="705x19">
+												<container size="114x19">
+													<text color="rgba(240,244,248,255)" pos="33,0" size="46x19">ReRAM</text>
+												</container>
+												<container pos="118,0" size="114x19">
+													<text alignment="center" color="rgba(243,156,18,255)" pos="49,0" size="16x19">73</text>
+												</container>
+												<container pos="236,0" size="114x19">
+													<text alignment="center" color="rgba(243,156,18,255)" pos="49,0" size="16x19">53</text>
+												</container>
+												<container pos="354,0" size="114x19">
+													<text alignment="center" color="rgba(231,76,60,255)" pos="49,0" size="16x19">36</text>
+												</container>
+												<container pos="472,0" size="114x19">
+													<text alignment="center" color="rgba(243,156,18,255)" pos="49,0" size="16x19">57</text>
+												</container>
+												<container pos="591,0" size="114x19">
+													<text alignment="center" color="rgba(231,76,60,255)" pos="49,0" size="16x19">41</text>
+												</container>
+											</container>
+										</container>
+										<container pos="0,161" size="705x19">
+											<text alignment="center" color="rgba(160,180,200,255)" italic pos="100,0" size="504x19">Sources: Samsung Nature 2025, IEEE IRPS 2022, Nano Letters 2024, CEA-Leti 2024</text>
+										</container>
+									</container>
+								</widget>
+							</container>
+							<widget pos="0,1014" size="713x203" type="*widget.Card">
+								<widget pos="2,2" size="709x199" type="*widget.Shadow">
+									<radialGradient centerOffset="0.5,0.5" size="1x1" startColor="shadow"/>
+									<linearGradient endColor="shadow" size="709x1"/>
+									<radialGradient centerOffset="-0.5,0.5" pos="709,0" size="1x1" startColor="shadow"/>
+									<linearGradient angle="270" pos="709,0" size="1x199" startColor="shadow"/>
+									<radialGradient centerOffset="-0.5,-0.5" pos="709,199" size="1x1" startColor="shadow"/>
+									<linearGradient pos="0,199" size="709x1" startColor="shadow"/>
+									<radialGradient centerOffset="0.5,-0.5" pos="0,199" size="1x1" startColor="shadow"/>
+									<linearGradient angle="270" endColor="shadow" size="1x199"/>
+								</widget>
+								<text bold pos="10,10" size="693x32" textSize="23">Plain-text evidence</text>
+								<text pos="10,46" size="693x19">Screen-reader-first</text>
+								<widget pos="6,77" size="701x120" type="*widget.Scroll">
+									<widget size="701x397" type="*widget.Label">
+										<widget size="701x397" type="*widget.RichText">
+											<text pos="8,8" size="207x19">Competitive matrix comparison</text>
+											<text pos="8,27" size="46x19">Inputs:</text>
+											<text pos="8,46" size="362x19">- cpu_co2_kg_per_kwh = 0.4 kg/kWh [calibrated, c=0.80]</text>
+											<text pos="8,65" size="392x19">- cpu_energy_pj_per_mac = 1000 pJ/MAC [estimated, c=0.70]</text>
+											<text pos="8,84" size="387x19">- cpu_latency_ns_per_mac = 3.2 ns/MAC [estimated, c=0.70]</text>
+											<text pos="8,103" size="416x19">- cpu_tco_usd_per_month = 340 USD/month [estimated, c=0.60]</text>
+											<text pos="8,122" size="375x19">- fecim_co2_kg_per_kwh = 0.4 kg/kWh [calibrated, c=0.80]</text>
+											<text pos="8,141" size="391x19">- fecim_energy_pj_per_mac = 1 pJ/MAC [placeholder, c=0.45]</text>
+											<text pos="8,160" size="410x19">- fecim_latency_ns_per_mac = 0.1 ns/MAC [placeholder, c=0.45]</text>
+											<text pos="8,179" size="439x19">- fecim_tco_usd_per_month = 190 USD/month [placeholder, c=0.45]</text>
+											<text pos="8,198" size="364x19">- gpu_co2_kg_per_kwh = 0.4 kg/kWh [calibrated, c=0.80]</text>
+											<text pos="8,217" size="386x19">- gpu_energy_pj_per_mac = 100 pJ/MAC [estimated, c=0.75]</text>
+											<text pos="8,236" size="389x19">- gpu_latency_ns_per_mac = 0.6 ns/MAC [estimated, c=0.75]</text>
+											<text pos="8,256" size="418x19">- gpu_tco_usd_per_month = 920 USD/month [estimated, c=0.70]</text>
+											<text pos="8,275" size="57x19">Outputs:</text>
+											<text pos="8,294" size="372x19">- co2_reduction_pct = 79.35 ± 15.87 % [calibrated, c=0.80]</text>
+											<text pos="8,313" size="407x19">- energy_reduction_pct = 99.00 ± 54.45 % [placeholder, c=0.45]</text>
+											<text pos="8,332" size="408x19">- latency_reduction_pct = 83.33 ± 45.83 % [placeholder, c=0.45]</text>
+											<text pos="8,351" size="381x19">- tco_reduction_pct = 79.35 ± 43.64 % [placeholder, c=0.45]</text>
+											<text pos="8,370" size="0x19"></text>
+										</widget>
+									</widget>
+									<widget pos="0,120" size="701x0" type="*widget.Shadow">
+										<linearGradient endColor="shadow" pos="0,-8" size="701x8"/>
+									</widget>
+									<widget pos="695,0" size="6x120" type="*widget.scrollBarArea">
+										<widget pos="3,0" size="3x36" type="*widget.scrollBar">
+											<rectangle fillColor="scrollbar" radius="3" size="3x36"/>
+										</widget>
+									</widget>
+								</widget>
+							</widget>
+						</container>
+						<widget pos="0,2237" size="713x1" type="*widget.Separator">
+							<rectangle fillColor="separator" size="713x1"/>
+						</widget>
+						<container pos="0,2242" size="713x760">
+							<widget size="713x35" type="*widget.Label">
+								<widget size="713x35" type="*widget.RichText">
+									<text alignment="center" bold pos="296,8" size="120x19">ROI CALCULATOR</text>
+								</widget>
+							</widget>
+							<container pos="0,39" size="713x84">
+								<container pos="4,4" size="705x76">
+									<container size="705x36">
+										<widget size="57x36" type="*widget.Label">
+											<widget size="57x36" type="*widget.RichText">
+												<text pos="8,8" size="41x19">Mode:</text>
+											</widget>
+										</widget>
+										<widget pos="61,0" size="127x36" type="*widget.Select">
+											<rectangle fillColor="inputBackground" radius="4" size="127x36"/>
+											<rectangle size="0x0"/>
+											<widget pos="4,4" size="95x27" type="*widget.RichText">
+												<text pos="4,4" size="75x19">(Select one)</text>
+											</widget>
+											<widget pos="99,8" size="20x20" type="*widget.Icon">
+												<image fillMode="contain" rsc="menuDropDownIcon" size="iconInlineSize" themed="foreground"/>
+											</widget>
+										</widget>
+										<widget pos="193,0" size="76x36" type="*widget.Label">
+											<widget size="76x36" type="*widget.RichText">
+												<text pos="8,8" size="60x19">Scenario:</text>
+											</widget>
+										</widget>
+										<widget pos="273,0" size="127x36" type="*widget.Select">
+											<rectangle fillColor="inputBackground" radius="4" size="127x36"/>
+											<rectangle size="0x0"/>
+											<widget pos="4,4" size="95x27" type="*widget.RichText">
+												<text pos="4,4" size="75x19">(Select one)</text>
+											</widget>
+											<widget pos="99,8" size="20x20" type="*widget.Icon">
+												<image fillMode="contain" rsc="menuDropDownIcon" size="iconInlineSize" themed="foreground"/>
+											</widget>
+										</widget>
+										<widget pos="405,0" size="82x36" type="*widget.Label">
+											<widget size="82x36" type="*widget.RichText">
+												<text pos="8,8" size="66x19">Workload:</text>
+											</widget>
+										</widget>
+										<widget pos="492,0" size="127x36" type="*widget.Select">
+											<rectangle fillColor="inputBackground" radius="4" size="127x36"/>
+											<rectangle size="0x0"/>
+											<widget pos="4,4" size="95x27" type="*widget.RichText">
+												<text pos="4,4" size="38x19">GPT-2</text>
+											</widget>
+											<widget pos="99,8" size="20x20" type="*widget.Icon">
+												<image fillMode="contain" rsc="menuDropDownIcon" size="iconInlineSize" themed="foreground"/>
+											</widget>
+										</widget>
+										<spacer pos="624,0" size="0x36"/>
+										<widget pos="624,0" size="81x36" type="*widget.Button">
+											<rectangle fillColor="primary" radius="4" size="81x36"/>
+											<rectangle size="81x36"/>
+											<widget pos="8,8" size="65x19" type="*widget.RichText">
+												<text alignment="center" bold color="foregroundOnPrimary" size="65x19">Calculate</text>
+											</widget>
+										</widget>
+									</container>
+									<container pos="0,40" size="705x36">
+										<widget size="23x36" type="*widget.Label">
+											<widget size="23x36" type="*widget.RichText">
+												<text pos="8,8" size="11x19">…</text>
+											</widget>
+										</widget>
+										<container pos="27,0" size="200x36">
+											<widget size="200x30" type="*widget.Slider">
+												<rectangle fillColor="inputBackground" pos="14,13" size="171x4"/>
+												<rectangle fillColor="foreground" pos="14,13" size="31x4"/>
+												<circle fillColor="foreground" pos="37,7" size="16x16"/>
+												<circle pos="31,1" size="28x28"/>
+											</widget>
+										</container>
+										<spacer pos="231,0" size="54x36"/>
+										<widget pos="286,0" size="122x36" type="*widget.Button">
+											<rectangle fillColor="button" radius="4" size="122x36"/>
+											<rectangle size="122x36"/>
+											<widget pos="32,8" size="82x20" type="*widget.RichText">
+												<text alignment="center" bold size="82x19">Export Data</text>
+											</widget>
+											<image fillMode="contain" pos="8,8" rsc="documentSaveIcon" size="iconInlineSize" themed="foreground"/>
+										</widget>
+										<widget pos="413,0" size="120x36" type="*widget.Button">
+											<rectangle fillColor="button" radius="4" size="120x36"/>
+											<rectangle size="120x36"/>
+											<widget pos="32,8" size="80x20" type="*widget.RichText">
+												<text alignment="center" bold size="80x19">Save Image</text>
+											</widget>
+											<image fillMode="contain" pos="8,8" rsc="media-photo.svg" size="iconInlineSize" themed="foreground"/>
+										</widget>
+										<widget pos="537,0" size="167x36" type="*widget.Button">
+											<rectangle fillColor="button" radius="4" size="167x36"/>
+											<rectangle size="167x36"/>
+											<widget pos="32,8" size="127x20" type="*widget.RichText">
+												<text alignment="center" bold size="127x19">Export Repro Pack</text>
+											</widget>
+											<image fillMode="contain" pos="8,8" rsc="storageIcon" size="iconInlineSize" themed="foreground"/>
+										</widget>
+									</container>
+								</container>
+							</container>
+							<container pos="0,127" size="713x188">
+								<widget pos="4,4" size="705x180" type="*gui.DataCenterCalculator">
+									<container size="705x180">
+										<container size="705x88">
+											<spacer size="258x88"/>
+											<container pos="258,0" size="188x88">
+												<container size="188x65">
+													<text alignment="center" bold color="rgba(46,204,113,255)" pos="44,0" size="100x65" textSize="48">$0M</text>
+												</container>
+												<container pos="0,69" size="188x19">
+													<text alignment="center" bold color="rgba(0,212,255,255)" size="188x19">ANNUAL SAVINGS (MODEL)</text>
+												</container>
+											</container>
+											<spacer pos="450,0" size="258x88"/>
+										</container>
+										<container pos="0,92" size="705x35">
+											<container pos="102,0" size="500x35">
+												<widget size="124x35" type="*widget.Label">
+													<widget size="124x35" type="*widget.RichText">
+														<text pos="8,8" size="108x19">Workload: GPT-2</text>
+													</widget>
+												</widget>
+												<widget pos="128,0" size="23x35" type="*widget.Label">
+													<widget size="23x35" type="*widget.RichText">
+														<text pos="8,8" size="7x19">|</text>
+													</widget>
+												</widget>
+												<widget pos="156,0" size="159x35" type="*widget.Label">
+													<widget size="159x35" type="*widget.RichText">
+														<text pos="8,8" size="143x19">Inferences/sec: 10000</text>
+													</widget>
+												</widget>
+												<widget pos="320,0" size="23x35" type="*widget.Label">
+													<widget size="23x35" type="*widget.RichText">
+														<text pos="8,8" size="7x19">|</text>
+													</widget>
+												</widget>
+												<widget pos="347,0" size="152x35" type="*widget.Label">
+													<widget size="152x35" type="*widget.RichText">
+														<text pos="8,8" size="136x19">Scale: 10,000 servers</text>
+													</widget>
+												</widget>
+											</container>
+										</container>
+										<container pos="0,131" size="705x21">
+											<spacer size="57x21"/>
+											<container pos="57,0" size="160x21">
+												<text alignment="center" color="rgba(231,76,60,255)" pos="0,1" size="160x19">GPU Baseline: $0/month</text>
+											</container>
+											<container pos="222,0" size="248x21">
+												<text alignment="center" color="rgba(46,204,113,255)" pos="0,1" size="248x19">FeCIM (model input; TRL 4): $0/month</text>
+											</container>
+											<container pos="475,0" size="172x21">
+												<text alignment="center" bold color="rgba(0,212,255,255)" size="172x21" textSize="16">MODEL SAVINGS: 99%</text>
+											</container>
+											<spacer pos="651,0" size="57x21"/>
+										</container>
+										<widget pos="0,157" size="705x35" type="*widget.Label">
+											<widget size="705x35" type="*widget.RichText">
+												<text alignment="center" italic pos="27,8" size="649x19">Model input references (not validated): NVIDIA H100 datasheets, Intel/AMD datasheets | Cost: $0.10/kWh</text>
+											</widget>
+										</widget>
+									</container>
+								</widget>
+							</container>
+							<widget pos="0,319" size="713x203" type="*widget.Card">
+								<widget pos="2,2" size="709x199" type="*widget.Shadow">
+									<radialGradient centerOffset="0.5,0.5" size="1x1" startColor="shadow"/>
+									<linearGradient endColor="shadow" size="709x1"/>
+									<radialGradient centerOffset="-0.5,0.5" pos="709,0" size="1x1" startColor="shadow"/>
+									<linearGradient angle="270" pos="709,0" size="1x199" startColor="shadow"/>
+									<radialGradient centerOffset="-0.5,-0.5" pos="709,199" size="1x1" startColor="shadow"/>
+									<linearGradient pos="0,199" size="709x1" startColor="shadow"/>
+									<radialGradient centerOffset="0.5,-0.5" pos="0,199" size="1x1" startColor="shadow"/>
+									<linearGradient angle="270" endColor="shadow" size="1x199"/>
+								</widget>
+								<text bold pos="10,10" size="693x32" textSize="23">Plain-text evidence</text>
+								<text pos="10,46" size="693x19">Screen-reader-first</text>
+								<widget pos="6,77" size="701x120" type="*widget.Scroll">
+									<widget size="701x397" type="*widget.Label">
+										<widget size="701x397" type="*widget.RichText">
+											<text pos="8,8" size="161x19">ROI and calculator panel</text>
+											<text pos="8,27" size="46x19">Inputs:</text>
+											<text pos="8,46" size="362x19">- cpu_co2_kg_per_kwh = 0.4 kg/kWh [calibrated, c=0.80]</text>
+											<text pos="8,65" size="392x19">- cpu_energy_pj_per_mac = 1000 pJ/MAC [estimated, c=0.70]</text>
+											<text pos="8,84" size="387x19">- cpu_latency_ns_per_mac = 3.2 ns/MAC [estimated, c=0.70]</text>
+											<text pos="8,103" size="416x19">- cpu_tco_usd_per_month = 340 USD/month [estimated, c=0.60]</text>
+											<text pos="8,122" size="375x19">- fecim_co2_kg_per_kwh = 0.4 kg/kWh [calibrated, c=0.80]</text>
+											<text pos="8,141" size="391x19">- fecim_energy_pj_per_mac = 1 pJ/MAC [placeholder, c=0.45]</text>
+											<text pos="8,160" size="410x19">- fecim_latency_ns_per_mac = 0.1 ns/MAC [placeholder, c=0.45]</text>
+											<text pos="8,179" size="439x19">- fecim_tco_usd_per_month = 190 USD/month [placeholder, c=0.45]</text>
+											<text pos="8,198" size="364x19">- gpu_co2_kg_per_kwh = 0.4 kg/kWh [calibrated, c=0.80]</text>
+											<text pos="8,217" size="386x19">- gpu_energy_pj_per_mac = 100 pJ/MAC [estimated, c=0.75]</text>
+											<text pos="8,236" size="389x19">- gpu_latency_ns_per_mac = 0.6 ns/MAC [estimated, c=0.75]</text>
+											<text pos="8,256" size="418x19">- gpu_tco_usd_per_month = 920 USD/month [estimated, c=0.70]</text>
+											<text pos="8,275" size="57x19">Outputs:</text>
+											<text pos="8,294" size="372x19">- co2_reduction_pct = 79.35 ± 15.87 % [calibrated, c=0.80]</text>
+											<text pos="8,313" size="407x19">- energy_reduction_pct = 99.00 ± 54.45 % [placeholder, c=0.45]</text>
+											<text pos="8,332" size="408x19">- latency_reduction_pct = 83.33 ± 45.83 % [placeholder, c=0.45]</text>
+											<text pos="8,351" size="381x19">- tco_reduction_pct = 79.35 ± 43.64 % [placeholder, c=0.45]</text>
+											<text pos="8,370" size="0x19"></text>
+										</widget>
+									</widget>
+									<widget pos="0,120" size="701x0" type="*widget.Shadow">
+										<linearGradient endColor="shadow" pos="0,-8" size="701x8"/>
+									</widget>
+									<widget pos="695,0" size="6x120" type="*widget.scrollBarArea">
+										<widget pos="3,0" size="3x36" type="*widget.scrollBar">
+											<rectangle fillColor="scrollbar" radius="3" size="3x36"/>
+										</widget>
+									</widget>
+								</widget>
+							</widget>
+							<widget pos="0,526" size="713x233" type="*widget.Card">
+								<widget pos="2,2" size="709x229" type="*widget.Shadow">
+									<radialGradient centerOffset="0.5,0.5" size="1x1" startColor="shadow"/>
+									<linearGradient endColor="shadow" size="709x1"/>
+									<radialGradient centerOffset="-0.5,0.5" pos="709,0" size="1x1" startColor="shadow"/>
+									<linearGradient angle="270" pos="709,0" size="1x228" startColor="shadow"/>
+									<radialGradient centerOffset="-0.5,-0.5" pos="709,229" size="1x1" startColor="shadow"/>
+									<linearGradient pos="0,229" size="709x1" startColor="shadow"/>
+									<radialGradient centerOffset="0.5,-0.5" pos="0,229" size="1x1" startColor="shadow"/>
+									<linearGradient angle="270" endColor="shadow" size="1x228"/>
+								</widget>
+								<text bold pos="10,10" size="693x32" textSize="23">Scenario Diff (Run A vs Run B)</text>
+								<text pos="10,46" size="693x19">A=baseline, B=current</text>
+								<widget pos="6,77" size="701x149" type="*widget.Label">
+									<widget size="701x149" type="*widget.RichText">
+										<text pos="8,8" size="162x19">Changed assumptions: 0</text>
+										<text pos="8,27" size="578x19">Output deltas: map[co2_reduction_pct:0 energy_reduction_pct:0 latency_reduction_pct:0</text>
+										<text pos="8,46" size="132x19">tco_reduction_pct:0]</text>
+										<text pos="8,65" size="563x19">Attribution: [co2_reduction_pct delta 0.00 is driven by changed assumptions in  profile</text>
+										<text pos="8,84" size="648x19">energy_reduction_pct delta 0.00 is driven by changed assumptions in  profile latency_reduction_pct</text>
+										<text pos="8,103" size="683x19">delta 0.00 is driven by changed assumptions in  profile tco_reduction_pct delta 0.00 is driven by changed</text>
+										<text pos="8,122" size="154x19">assumptions in  profile]</text>
+									</widget>
+								</widget>
+							</widget>
+						</container>
+						<widget pos="0,3006" size="713x1" type="*widget.Separator">
+							<rectangle fillColor="separator" size="713x1"/>
+						</widget>
+						<container pos="0,3011" size="713x497">
+							<widget size="713x35" type="*widget.Label">
+								<widget size="713x35" type="*widget.RichText">
+									<text alignment="center" bold pos="279,8" size="155x19">FABRICATION REALITY</text>
+								</widget>
+							</widget>
+							<container pos="0,39" size="713x458">
+								<widget pos="4,4" size="705x450" type="*gui.FabricationReality">
+									<container size="705x450">
+										<container size="705x19">
+											<rectangle fillColor="rgba(60,40,30,255)" size="705x19"/>
+											<container size="705x19">
+												<text alignment="center" bold color="rgba(255,180,100,255)" pos="241,0" size="221x19">⚠ FABRICATION REALITY CHECK</text>
+											</container>
+										</container>
+										<widget pos="0,23" size="705x1" type="*widget.Separator">
+											<rectangle fillColor="separator" size="705x1"/>
+										</widget>
+										<widget pos="0,28" size="705x35" type="*widget.Label">
+											<widget size="705x35" type="*widget.RichText">
+												<text bold pos="8,8" size="263x19">Development Timeline (Model Inputs)</text>
+											</widget>
+										</widget>
+										<container pos="0,67" size="705x191">
+											<container size="705x35">
+												<rectangle fillColor="rgba(100,150,200,255)" size="10x35"/>
+												<widget pos="14,0" size="23x35" type="*widget.Label">
+													<widget size="23x35" type="*widget.RichText">
+														<text pos="8,8" size="11x19">…</text>
+													</widget>
+												</widget>
+												<widget pos="41,0" size="28x35" type="*widget.Label">
+													<widget size="28x35" type="*widget.RichText">
+														<text pos="8,8" size="12x19">-></text>
+													</widget>
+												</widget>
+												<widget pos="74,0" size="94x35" type="*widget.Label">
+													<widget size="94x35" type="*widget.RichText">
+														<text bold pos="8,8" size="78x19">6-9 months</text>
+													</widget>
+												</widget>
+											</container>
+											<container pos="0,39" size="705x35">
+												<rectangle fillColor="rgba(150,150,100,255)" size="10x35"/>
+												<widget pos="14,0" size="23x35" type="*widget.Label">
+													<widget size="23x35" type="*widget.RichText">
+														<text pos="8,8" size="11x19">…</text>
+													</widget>
+												</widget>
+												<widget pos="41,0" size="28x35" type="*widget.Label">
+													<widget size="28x35" type="*widget.RichText">
+														<text pos="8,8" size="12x19">-></text>
+													</widget>
+												</widget>
+												<widget pos="74,0" size="94x35" type="*widget.Label">
+													<widget size="94x35" type="*widget.RichText">
+														<text bold pos="8,8" size="78x19">3-4 months</text>
+													</widget>
+												</widget>
+											</container>
+											<container pos="0,78" size="705x35">
+												<rectangle fillColor="rgba(200,150,100,255)" size="10x35"/>
+												<widget pos="14,0" size="23x35" type="*widget.Label">
+													<widget size="23x35" type="*widget.RichText">
+														<text pos="8,8" size="11x19">…</text>
+													</widget>
+												</widget>
+												<widget pos="41,0" size="28x35" type="*widget.Label">
+													<widget size="28x35" type="*widget.RichText">
+														<text pos="8,8" size="12x19">-></text>
+													</widget>
+												</widget>
+												<widget pos="74,0" size="94x35" type="*widget.Label">
+													<widget size="94x35" type="*widget.RichText">
+														<text bold pos="8,8" size="78x19">3-4 months</text>
+													</widget>
+												</widget>
+											</container>
+											<container pos="0,117" size="705x35">
+												<rectangle fillColor="rgba(150,100,150,255)" size="10x35"/>
+												<widget pos="14,0" size="23x35" type="*widget.Label">
+													<widget size="23x35" type="*widget.RichText">
+														<text pos="8,8" size="11x19">…</text>
+													</widget>
+												</widget>
+												<widget pos="41,0" size="28x35" type="*widget.Label">
+													<widget size="28x35" type="*widget.RichText">
+														<text pos="8,8" size="12x19">-></text>
+													</widget>
+												</widget>
+												<widget pos="74,0" size="94x35" type="*widget.Label">
+													<widget size="94x35" type="*widget.RichText">
+														<text bold pos="8,8" size="78x19">3-6 months</text>
+													</widget>
+												</widget>
+											</container>
+											<container pos="0,156" size="705x35">
+												<rectangle fillColor="rgba(200,100,100,255)" size="10x35"/>
+												<widget pos="14,0" size="23x35" type="*widget.Label">
+													<widget size="23x35" type="*widget.RichText">
+														<text pos="8,8" size="11x19">…</text>
+													</widget>
+												</widget>
+												<widget pos="41,0" size="28x35" type="*widget.Label">
+													<widget size="28x35" type="*widget.RichText">
+														<text pos="8,8" size="12x19">-></text>
+													</widget>
+												</widget>
+												<widget pos="74,0" size="110x35" type="*widget.Label">
+													<widget size="110x35" type="*widget.RichText">
+														<text bold pos="8,8" size="94x19">+6-12 months</text>
+													</widget>
+												</widget>
+											</container>
+										</container>
+										<widget pos="0,262" size="705x35" type="*widget.Label">
+											<widget size="705x35" type="*widget.RichText">
+												<text alignment="center" bold italic pos="168,8" size="369x19">TOTAL: 18-36 months to production silicon (model input)</text>
+											</widget>
+										</widget>
+										<widget pos="0,301" size="705x1" type="*widget.Separator">
+											<rectangle fillColor="separator" size="705x1"/>
+										</widget>
+										<widget pos="0,306" size="705x35" type="*widget.Label">
+											<widget size="705x35" type="*widget.RichText">
+												<text bold pos="8,8" size="240x19">Development Costs (Model Inputs)</text>
+											</widget>
+										</widget>
+										<container pos="0,345" size="705x191">
+											<container size="705x35">
+												<widget size="23x35" type="*widget.Label">
+													<widget size="23x35" type="*widget.RichText">
+														<text pos="8,8" size="7x19">*</text>
+													</widget>
+												</widget>
+												<widget pos="27,0" size="23x35" type="*widget.Label">
+													<widget size="23x35" type="*widget.RichText">
+														<text pos="8,8" size="11x19">…</text>
+													</widget>
+												</widget>
+												<widget pos="55,0" size="19x35" type="*widget.Label">
+													<widget size="19x35" type="*widget.RichText">
+														<text pos="8,8" size="3x19">:</text>
+													</widget>
+												</widget>
+												<widget pos="79,0" size="57x35" type="*widget.Label">
+													<widget size="57x35" type="*widget.RichText">
+														<text bold pos="8,8" size="41x19">$1-2M</text>
+													</widget>
+												</widget>
+											</container>
+											<container pos="0,39" size="705x35">
+												<widget size="23x35" type="*widget.Label">
+													<widget size="23x35" type="*widget.RichText">
+														<text pos="8,8" size="7x19">*</text>
+													</widget>
+												</widget>
+												<widget pos="27,0" size="23x35" type="*widget.Label">
+													<widget size="23x35" type="*widget.RichText">
+														<text pos="8,8" size="11x19">…</text>
+													</widget>
+												</widget>
+												<widget pos="55,0" size="19x35" type="*widget.Label">
+													<widget size="19x35" type="*widget.RichText">
+														<text pos="8,8" size="3x19">:</text>
+													</widget>
+												</widget>
+												<widget pos="79,0" size="73x35" type="*widget.Label">
+													<widget size="73x35" type="*widget.RichText">
+														<text bold pos="8,8" size="57x19">$10-30M</text>
+													</widget>
+												</widget>
+											</container>
+											<container pos="0,78" size="705x35">
+												<widget size="23x35" type="*widget.Label">
+													<widget size="23x35" type="*widget.RichText">
+														<text pos="8,8" size="7x19">*</text>
+													</widget>
+												</widget>
+												<widget pos="27,0" size="23x35" type="*widget.Label">
+													<widget size="23x35" type="*widget.RichText">
+														<text pos="8,8" size="11x19">…</text>
+													</widget>
+												</widget>
+												<widget pos="55,0" size="19x35" type="*widget.Label">
+													<widget size="19x35" type="*widget.RichText">
+														<text pos="8,8" size="3x19">:</text>
+													</widget>
+												</widget>
+												<widget pos="79,0" size="119x35" type="*widget.Label">
+													<widget size="119x35" type="*widget.RichText">
+														<text bold pos="8,8" size="103x19">$500K-2M/year</text>
+													</widget>
+												</widget>
+											</container>
+											<container pos="0,117" size="705x35">
+												<widget size="23x35" type="*widget.Label">
+													<widget size="23x35" type="*widget.RichText">
+														<text pos="8,8" size="7x19">*</text>
+													</widget>
+												</widget>
+												<widget pos="27,0" size="23x35" type="*widget.Label">
+													<widget size="23x35" type="*widget.RichText">
+														<text pos="8,8" size="11x19">…</text>
+													</widget>
+												</widget>
+												<widget pos="55,0" size="19x35" type="*widget.Label">
+													<widget size="19x35" type="*widget.RichText">
+														<text pos="8,8" size="3x19">:</text>
+													</widget>
+												</widget>
+												<widget pos="79,0" size="94x35" type="*widget.Label">
+													<widget size="94x35" type="*widget.RichText">
+														<text bold pos="8,8" size="78x19">$2-4M/year</text>
+													</widget>
+												</widget>
+											</container>
+											<container pos="0,156" size="705x35">
+												<widget size="23x35" type="*widget.Label">
+													<widget size="23x35" type="*widget.RichText">
+														<text pos="8,8" size="7x19">*</text>
+													</widget>
+												</widget>
+												<widget pos="27,0" size="23x35" type="*widget.Label">
+													<widget size="23x35" type="*widget.RichText">
+														<text pos="8,8" size="11x19">…</text>
+													</widget>
+												</widget>
+												<widget pos="55,0" size="19x35" type="*widget.Label">
+													<widget size="19x35" type="*widget.RichText">
+														<text pos="8,8" size="3x19">:</text>
+													</widget>
+												</widget>
+												<widget pos="79,0" size="83x35" type="*widget.Label">
+													<widget size="83x35" type="*widget.RichText">
+														<text bold pos="8,8" size="67x19">$500K-2M</text>
+													</widget>
+												</widget>
+											</container>
+										</container>
+										<widget pos="0,541" size="705x35" type="*widget.Label">
+											<widget size="705x35" type="*widget.RichText">
+												<text alignment="center" bold italic pos="185,8" size="334x19">TOTAL: $5-50M+ to first working chip (model input)</text>
+											</widget>
+										</widget>
+										<widget pos="0,580" size="705x1" type="*widget.Separator">
+											<rectangle fillColor="separator" size="705x1"/>
+										</widget>
+										<widget pos="0,585" size="705x35" type="*widget.Label">
+											<widget size="705x35" type="*widget.RichText">
+												<text bold pos="8,8" size="84x19">Risk Factors</text>
+											</widget>
+										</widget>
+										<container pos="0,624" size="705x152">
+											<widget size="705x35" type="*widget.Label">
+												<widget size="705x35" type="*widget.RichText">
+													<text pos="8,8" size="331x19">• First silicon success rate: ~50% (industry average)</text>
+												</widget>
+											</widget>
+											<widget pos="0,39" size="705x35" type="*widget.Label">
+												<widget size="705x35" type="*widget.RichText">
+													<text pos="8,8" size="269x19">• Novel memory tech adds additional risk</text>
+												</widget>
+											</widget>
+											<widget pos="0,78" size="705x35" type="*widget.Label">
+												<widget size="705x35" type="*widget.RichText">
+													<text pos="8,8" size="327x19">• FeCIM: TRL 4 (lab demo) → TRL 7 (prototype) gap</text>
+												</widget>
+											</widget>
+											<widget pos="0,117" size="705x35" type="*widget.Label">
+												<widget size="705x35" type="*widget.RichText">
+													<text pos="8,8" size="289x19">• Yield challenges for analog multi-level cells</text>
+												</widget>
+											</widget>
+										</container>
+										<widget pos="0,780" size="705x1" type="*widget.Separator">
+											<rectangle fillColor="separator" size="705x1"/>
+										</widget>
+										<container pos="0,785" size="705x35">
+											<widget pos="344,0" size="16x35" type="*widget.Label">
+												<widget size="16x35" type="*widget.RichText">
+													<text alignment="center" italic pos="3,8" size="9x19">N</text>
+													<text alignment="center" italic pos="4,27" size="7x19">o</text>
+													<text alignment="center" italic pos="5,46" size="4x19">t</text>
+													<text alignment="center" italic pos="4,65" size="6x19">e</text>
+													<text alignment="center" italic pos="6,84" size="3x19">:</text>
+													<text alignment="center" italic pos="6,103" size="3x19"> </text>
+													<text alignment="center" italic pos="4,122" size="7x19">T</text>
+													<text alignment="center" italic pos="3,141" size="8x19">h</text>
+													<text alignment="center" italic pos="4,160" size="6x19">e</text>
+													<text alignment="center" italic pos="4,179" size="6x19">s</text>
+													<text alignment="center" italic pos="4,198" size="6x19">e</text>
+													<text alignment="center" italic pos="6,217" size="3x19"> </text>
+													<text alignment="center" italic pos="4,236" size="7x19">a</text>
+													<text alignment="center" italic pos="5,256" size="5x19">r</text>
+													<text alignment="center" italic pos="4,275" size="6x19">e</text>
+													<text alignment="center" italic pos="6,294" size="3x19"> </text>
+													<text alignment="center" italic pos="1,313" size="12x19">m</text>
+													<text alignment="center" italic pos="4,332" size="7x19">o</text>
+													<text alignment="center" italic pos="3,351" size="8x19">d</text>
+													<text alignment="center" italic pos="4,370" size="6x19">e</text>
+													<text alignment="center" italic pos="6,389" size="3x19">l</text>
+													<text alignment="center" italic pos="6,408" size="3x19"> </text>
+													<text alignment="center" italic pos="6,427" size="3x19">i</text>
+													<text alignment="center" italic pos="3,446" size="8x19">n</text>
+													<text alignment="center" italic pos="3,465" size="8x19">p</text>
+													<text alignment="center" italic pos="3,484" size="8x19">u</text>
+													<text alignment="center" italic pos="5,504" size="4x19">t</text>
+													<text alignment="center" italic pos="6,523" size="3x19"> </text>
+													<text alignment="center" italic pos="4,542" size="6x19">e</text>
+													<text alignment="center" italic pos="4,561" size="6x19">s</text>
+													<text alignment="center" italic pos="5,580" size="4x19">t</text>
+													<text alignment="center" italic pos="6,599" size="3x19">i</text>
+													<text alignment="center" italic pos="1,618" size="12x19">m</text>
+													<text alignment="center" italic pos="4,637" size="7x19">a</text>
+													<text alignment="center" italic pos="5,656" size="4x19">t</text>
+													<text alignment="center" italic pos="4,675" size="6x19">e</text>
+													<text alignment="center" italic pos="4,694" size="6x19">s</text>
+													<text alignment="center" italic pos="6,713" size="3x19"> </text>
+													<text alignment="center" italic pos="3,732" size="8x19">b</text>
+													<text alignment="center" italic pos="4,752" size="7x19">a</text>
+													<text alignment="center" italic pos="4,771" size="6x19">s</text>
+													<text alignment="center" italic pos="4,790" size="6x19">e</text>
+													<text alignment="center" italic pos="3,809" size="8x19">d</text>
+													<text alignment="center" italic pos="6,828" size="3x19"> </text>
+													<text alignment="center" italic pos="4,847" size="7x19">o</text>
+													<text alignment="center" italic pos="3,866" size="8x19">n</text>
+													<text alignment="center" italic pos="6,885" size="3x19"> </text>
+													<text alignment="center" italic pos="6,904" size="3x19">i</text>
+													<text alignment="center" italic pos="3,923" size="8x19">n</text>
+													<text alignment="center" italic pos="3,942" size="8x19">d</text>
+													<text alignment="center" italic pos="3,961" size="8x19">u</text>
+													<text alignment="center" italic pos="4,980" size="6x19">s</text>
+													<text alignment="center" italic pos="5,1000" size="4x19">t</text>
+													<text alignment="center" italic pos="5,1019" size="5x19">r</text>
+													<text alignment="center" italic pos="4,1038" size="6x19">y</text>
+													<text alignment="center" italic pos="5,1057" size="4x19">-</text>
+													<text alignment="center" italic pos="5,1076" size="4x19">t</text>
+													<text alignment="center" italic pos="4,1095" size="6x19">y</text>
+													<text alignment="center" italic pos="3,1114" size="8x19">p</text>
+													<text alignment="center" italic pos="6,1133" size="3x19">i</text>
+													<text alignment="center" italic pos="4,1152" size="6x19">c</text>
+													<text alignment="center" italic pos="4,1171" size="7x19">a</text>
+													<text alignment="center" italic pos="6,1190" size="3x19">l</text>
+													<text alignment="center" italic pos="6,1209" size="3x19"> </text>
+													<text alignment="center" italic pos="5,1229" size="4x19">f</text>
+													<text alignment="center" italic pos="6,1248" size="3x19">i</text>
+													<text alignment="center" italic pos="3,1267" size="8x19">g</text>
+													<text alignment="center" italic pos="3,1286" size="8x19">u</text>
+													<text alignment="center" italic pos="5,1305" size="5x19">r</text>
+													<text alignment="center" italic pos="4,1324" size="6x19">e</text>
+													<text alignment="center" italic pos="4,1343" size="6x19">s</text>
+													<text alignment="center" italic pos="6,1362" size="3x19">.</text>
+													<text alignment="center" italic pos="6,1381" size="3x19"> </text>
+													<text alignment="center" italic pos="4,1400" size="7x19">A</text>
+													<text alignment="center" italic pos="4,1419" size="6x19">c</text>
+													<text alignment="center" italic pos="5,1438" size="4x19">t</text>
+													<text alignment="center" italic pos="3,1457" size="8x19">u</text>
+													<text alignment="center" italic pos="4,1477" size="7x19">a</text>
+													<text alignment="center" italic pos="6,1496" size="3x19">l</text>
+													<text alignment="center" italic pos="6,1515" size="3x19"> </text>
+													<text alignment="center" italic pos="4,1534" size="6x19">c</text>
+													<text alignment="center" italic pos="4,1553" size="7x19">o</text>
+													<text alignment="center" italic pos="4,1572" size="6x19">s</text>
+													<text alignment="center" italic pos="5,1591" size="4x19">t</text>
+													<text alignment="center" italic pos="4,1610" size="6x19">s</text>
+													<text alignment="center" italic pos="6,1629" size="3x19"> </text>
+													<text alignment="center" italic pos="4,1648" size="6x19">v</text>
+													<text alignment="center" italic pos="4,1667" size="7x19">a</text>
+													<text alignment="center" italic pos="5,1686" size="5x19">r</text>
+													<text alignment="center" italic pos="4,1705" size="6x19">y</text>
+													<text alignment="center" italic pos="6,1725" size="3x19"> </text>
+													<text alignment="center" italic pos="3,1744" size="8x19">b</text>
+													<text alignment="center" italic pos="4,1763" size="6x19">y</text>
+													<text alignment="center" italic pos="6,1782" size="3x19"> </text>
+													<text alignment="center" italic pos="3,1801" size="8x19">p</text>
+													<text alignment="center" italic pos="5,1820" size="5x19">r</text>
+													<text alignment="center" italic pos="4,1839" size="7x19">o</text>
+													<text alignment="center" italic pos="4,1858" size="6x19">c</text>
+													<text alignment="center" italic pos="4,1877" size="6x19">e</text>
+													<text alignment="center" italic pos="4,1896" size="6x19">s</text>
+													<text alignment="center" italic pos="4,1915" size="6x19">s</text>
+													<text alignment="center" italic pos="6,1934" size="3x19"> </text>
+													<text alignment="center" italic pos="3,1953" size="8x19">n</text>
+													<text alignment="center" italic pos="4,1973" size="7x19">o</text>
+													<text alignment="center" italic pos="3,1992" size="8x19">d</text>
+													<text alignment="center" italic pos="4,2011" size="6x19">e</text>
+													<text alignment="center" italic pos="6,2030" size="3x19"> </text>
+													<text alignment="center" italic pos="4,2049" size="7x19">a</text>
+													<text alignment="center" italic pos="3,2068" size="8x19">n</text>
+													<text alignment="center" italic pos="3,2087" size="8x19">d</text>
+													<text alignment="center" italic pos="6,2106" size="3x19"> </text>
+													<text alignment="center" italic pos="4,2125" size="6x19">c</text>
+													<text alignment="center" italic pos="4,2144" size="7x19">o</text>
+													<text alignment="center" italic pos="1,2163" size="12x19">m</text>
+													<text alignment="center" italic pos="3,2182" size="8x19">p</text>
+													<text alignment="center" italic pos="6,2201" size="3x19">l</text>
+													<text alignment="center" italic pos="4,2221" size="6x19">e</text>
+													<text alignment="center" italic pos="4,2240" size="6x19">x</text>
+													<text alignment="center" italic pos="6,2259" size="3x19">i</text>
+													<text alignment="center" italic pos="5,2278" size="4x19">t</text>
+													<text alignment="center" italic pos="4,2297" size="6x19">y</text>
+													<text alignment="center" italic pos="6,2316" size="3x19">.</text>
+												</widget>
+											</widget>
+										</container>
+									</container>
+								</widget>
+							</container>
+						</container>
+					</container>
+					<widget pos="0,629" size="359x0" type="*widget.Shadow">
+						<linearGradient endColor="shadow" pos="0,-8" size="359x8"/>
+					</widget>
+					<widget pos="359,0" size="0x629" type="*widget.Shadow">
+						<linearGradient angle="270" endColor="shadow" pos="-8,0" size="8x629"/>
+					</widget>
+					<widget pos="353,0" size="6x629" type="*widget.scrollBarArea">
+						<widget pos="3,0" size="3x112" type="*widget.scrollBar">
+							<rectangle fillColor="scrollbar" radius="3" size="3x112"/>
+						</widget>
+					</widget>
+					<widget pos="0,623" size="359x6" type="*widget.scrollBarArea">
+						<widget pos="0,3" size="180x3" type="*widget.scrollBar">
+							<rectangle fillColor="scrollbar" radius="3" size="180x3"/>
+						</widget>
+					</widget>
+				</widget>
+			</container>
+			<container size="367x118">
+				<widget size="367x73" type="*widget.Label">
+					<widget size="367x73" type="*widget.RichText">
+						<text alignment="center" bold pos="15,8" size="335x19">SIMULATION ONLY - NOT VALIDATED | TRL 4 Lab</text>
+						<text alignment="center" bold pos="46,27" size="273x19">Prototype | All values are model inputs</text>
+					</widget>
+				</widget>
+				<container pos="0,77" size="367x36">
+					<widget size="201x36" type="*widget.Label">
+						<widget size="201x36" type="*widget.RichText">
+							<text pos="8,8" size="185x19">Dr. external research group | COSM 2025</text>
+						</widget>
+					</widget>
+					<spacer pos="205,0" size="106x36"/>
+					<widget pos="312,0" size="54x36" type="*widget.Button">
+						<rectangle fillColor="button" radius="4" size="54x36"/>
+						<rectangle size="54x36"/>
+						<widget pos="8,8" size="38x19" type="*widget.RichText">
+							<text alignment="center" bold size="38x19">Reset</text>
+						</widget>
+					</widget>
+				</container>
+				<widget pos="0,117" size="367x1" type="*widget.Separator">
+					<rectangle fillColor="separator" size="367x1"/>
+				</widget>
+			</container>
+			<container pos="0,763" size="367x40">
+				<widget size="367x1" type="*widget.Separator">
+					<rectangle fillColor="separator" size="367x1"/>
+				</widget>
+				<container pos="0,5" size="367x35">
+					<widget size="23x35" type="*widget.Label">
+						<widget size="23x35" type="*widget.RichText">
+							<text bold pos="8,8" size="11x19">…</text>
+						</widget>
+					</widget>
+					<spacer pos="27,0" size="343x35"/>
+				</container>
+			</container>
+		</container>
+	</content>
+</canvas>

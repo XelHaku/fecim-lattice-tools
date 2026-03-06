@@ -1,0 +1,175 @@
+<canvas size="1192x792">
+	<content>
+		<container size="1192x792">
+			<container size="1192x792">
+				<widget pos="0,40" size="1192x752" type="*container.Split">
+					<widget size="947x752" type="*container.Split">
+						<container size="234x752">
+							<widget pos="0,359" size="234x392" type="*widget.Tree">
+								<widget size="234x392" type="*widget.Scroll">
+									<widget size="234x392" type="*widget.treeContent">
+										<widget size="234x35" type="*widget.branch">
+											<container pos="28,0" size="206x35">
+												<container pos="24,0" size="182x35">
+													<widget size="68x35" type="*gui.CategoryBadge">
+														<container size="68x35">
+															<container pos="8,0" size="60x35">
+																<text bold pos="4,4" size="52x27">Module</text>
+															</container>
+															<rectangle fillColor="rgba(96,125,139,255)" size="4x35"/>
+														</container>
+													</widget>
+													<widget pos="72,0" size="23x35" type="*widget.Label">
+														<widget size="23x35" type="*widget.RichText">
+															<text pos="8,8" size="11x19">…</text>
+														</widget>
+													</widget>
+												</container>
+												<widget size="20x35" type="*widget.Icon">
+													<image fillMode="contain" rsc="folderIcon" size="20x35" themed="foreground"/>
+												</widget>
+											</container>
+											<widget pos="4,0" size="20x35" type="*widget.branchIcon">
+												<image fillMode="contain" rsc="navigateNextIcon" size="20x35" themed="foreground"/>
+											</widget>
+										</widget>
+									</widget>
+								</widget>
+							</widget>
+							<container size="234x355">
+								<widget size="234x35" type="*widget.Label">
+									<widget size="234x35" type="*widget.RichText">
+										<text alignment="center" bold pos="78,8" size="78x19">Curriculum</text>
+									</widget>
+								</widget>
+								<container pos="0,39" size="234x195">
+									<widget size="234x35" type="*widget.Label">
+										<widget size="234x35" type="*widget.RichText">
+											<text bold pos="8,8" size="119x19">Curriculum Links</text>
+										</widget>
+									</widget>
+									<widget pos="0,39" size="234x36" type="*widget.Button">
+										<rectangle radius="4" size="234x36"/>
+										<rectangle size="234x36"/>
+										<widget pos="54,8" size="125x19" type="*widget.RichText">
+											<text alignment="center" bold color="disabled" size="125x19">About the Science</text>
+										</widget>
+									</widget>
+									<widget pos="0,79" size="234x36" type="*widget.Button">
+										<rectangle radius="4" size="234x36"/>
+										<rectangle size="234x36"/>
+										<widget pos="84,8" size="65x19" type="*widget.RichText">
+											<text alignment="center" bold color="disabled" size="65x19">Overview</text>
+										</widget>
+									</widget>
+									<widget pos="0,119" size="234x36" type="*widget.Button">
+										<rectangle radius="4" size="234x36"/>
+										<rectangle size="234x36"/>
+										<widget pos="69,8" size="95x19" type="*widget.RichText">
+											<text alignment="center" bold color="disabled" size="95x19">Module Index</text>
+										</widget>
+									</widget>
+									<widget pos="0,159" size="234x36" type="*widget.Button">
+										<rectangle radius="4" size="234x36"/>
+										<rectangle size="234x36"/>
+										<widget pos="63,8" size="106x19" type="*widget.RichText">
+											<text alignment="center" bold color="disabled" size="106x19">Research Index</text>
+										</widget>
+									</widget>
+								</container>
+								<widget pos="0,238" size="234x112" type="*gui.ModuleShortcutsPanel">
+									<container size="234x112">
+										<widget size="234x35" type="*widget.Label">
+											<widget size="234x35" type="*widget.RichText">
+												<text bold pos="8,8" size="110x19">Current Module</text>
+											</widget>
+										</widget>
+										<widget pos="0,39" size="234x73" type="*widget.Label">
+											<widget size="234x73" type="*widget.RichText">
+												<text pos="8,8" size="206x19">Select a module page to enable</text>
+												<text pos="8,27" size="65x19">shortcuts.</text>
+											</widget>
+										</widget>
+									</container>
+								</widget>
+								<widget pos="0,354" size="234x1" type="*widget.Separator">
+									<rectangle fillColor="separator" size="234x1"/>
+								</widget>
+							</container>
+						</container>
+						<widget pos="234,0" size="8x752" type="*container.divider">
+							<rectangle fillColor="shadow" size="8x752"/>
+							<rectangle fillColor="foreground" pos="3,368" size="2x16"/>
+						</widget>
+						<container pos="242,0" size="704x752">
+							<widget pos="0,48" size="704x704" type="*widget.Scroll">
+								<widget size="704x704" type="*widget.RichText">
+									<text bold pos="8,8" size="215x32" textSize="23">FeCIM Curriculum</text>
+									<text pos="8,44" size="215x19">Select a document from the tree.</text>
+									<text pos="223,44" size="464x19"></text>
+								</widget>
+							</widget>
+							<container size="704x44">
+								<widget size="704x0" type="*gui.BreadcrumbWidget">
+									<container size="704x0">
+										<container size="704x0">
+										</container>
+									</container>
+								</widget>
+								<widget pos="0,4" size="704x0" type="*gui.DocumentMetadataWidget">
+									<container size="704x0">
+									</container>
+								</widget>
+								<widget pos="0,8" size="704x36" type="*gui.GlossaryPillsWidget">
+									<widget size="704x36" type="*widget.Scroll">
+										<container size="704x36">
+										</container>
+									</widget>
+								</widget>
+							</container>
+						</container>
+					</widget>
+					<widget pos="947,0" size="8x752" type="*container.divider">
+						<rectangle fillColor="shadow" size="8x752"/>
+						<rectangle fillColor="foreground" pos="3,368" size="2x16"/>
+					</widget>
+					<container pos="955,0" size="236x752">
+						<widget pos="0,39" size="236x712" type="*gui.TableOfContentsWidget">
+							<container size="236x712">
+							</container>
+						</widget>
+						<widget size="236x35" type="*widget.Label">
+							<widget size="236x35" type="*widget.RichText">
+								<text alignment="center" bold pos="73,8" size="90x19">On This Page</text>
+							</widget>
+						</widget>
+					</container>
+				</widget>
+				<container size="1192x36">
+					<widget size="163x36" type="*widget.Label">
+						<widget size="163x36" type="*widget.RichText">
+							<text pos="8,8" size="147x19">FeCIM Documentation</text>
+						</widget>
+					</widget>
+					<container pos="1076,0" size="116x36">
+						<widget size="36x36" type="*widget.Button">
+							<rectangle fillColor="button" radius="4" size="36x36"/>
+							<rectangle size="36x36"/>
+							<image fillMode="contain" pos="8,8" rsc="menuIcon" size="iconInlineSize" themed="foreground"/>
+						</widget>
+						<widget pos="40,0" size="36x36" type="*widget.Button">
+							<rectangle fillColor="button" radius="4" size="36x36"/>
+							<rectangle size="36x36"/>
+							<image fillMode="contain" pos="8,8" rsc="list.svg" size="iconInlineSize" themed="foreground"/>
+						</widget>
+						<widget pos="80,0" size="36x36" type="*widget.Button">
+							<rectangle fillColor="button" radius="4" size="36x36"/>
+							<rectangle size="36x36"/>
+							<image fillMode="contain" pos="8,8" rsc="searchIcon" size="iconInlineSize" themed="foreground"/>
+						</widget>
+					</container>
+				</container>
+			</container>
+		</container>
+	</content>
+</canvas>

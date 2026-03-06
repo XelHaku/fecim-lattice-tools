@@ -1,0 +1,504 @@
+<canvas size="1070x804">
+	<content>
+		<container size="1070x804">
+			<container size="1070x804">
+				<widget pos="0,45" size="1070x719" type="*container.Split">
+					<widget size="788x719" type="*container.Split">
+						<widget size="200x719" type="*widget.Scroll">
+							<container size="200x719">
+								<widget size="200x35" type="*widget.Label">
+									<widget size="200x35" type="*widget.RichText">
+										<text alignment="center" bold pos="57,8" size="84x19">Quick Guide</text>
+									</widget>
+								</widget>
+								<widget pos="0,39" size="200x1" type="*widget.Separator">
+									<rectangle fillColor="separator" size="200x1"/>
+								</widget>
+								<container pos="0,44" size="200x300">
+									<widget size="200x300" type="*widget.Scroll">
+										<widget size="200x300" type="*widget.Label">
+											<widget size="200x300" type="*widget.RichText">
+												<text pos="8,8" size="143x19">Welcome to Crossbar!</text>
+												<text pos="8,27" size="0x19"></text>
+												<text pos="8,46" size="76x19">Quick Start:</text>
+												<text pos="8,65" size="119x19">1. Hover over cells</text>
+												<text pos="8,84" size="115x19">2. Click for details</text>
+												<text pos="8,103" size="140x19">3. Use controls (right)</text>
+												<text pos="8,122" size="96x19">4. Explore tabs</text>
+												<text pos="8,141" size="0x19"></text>
+												<text pos="8,160" size="91x19">Key Concepts:</text>
+												<text pos="8,179" size="139x19">• 30 levels/cell (claim)</text>
+												<text pos="8,198" size="94x19">• MVM = W × V</text>
+												<text pos="8,217" size="119x19">• Parallel compute</text>
+											</widget>
+										</widget>
+									</widget>
+								</container>
+								<widget pos="0,348" size="200x1" type="*widget.Separator">
+									<rectangle fillColor="separator" size="200x1"/>
+								</widget>
+								<widget pos="0,353" size="200x35" type="*widget.Label">
+									<widget size="200x35" type="*widget.RichText">
+										<text alignment="center" pos="53,8" size="92x19">N² Operations</text>
+									</widget>
+								</widget>
+								<widget pos="0,392" size="200x35" type="*widget.Label">
+									<widget size="200x35" type="*widget.RichText">
+										<text alignment="center" bold pos="62,8" size="74x19">4096 MACs</text>
+									</widget>
+								</widget>
+							</container>
+						</widget>
+						<widget pos="200,0" size="8x719" type="*container.divider">
+							<rectangle fillColor="shadow" size="8x719"/>
+							<rectangle fillColor="foreground" pos="3,351" size="2x16"/>
+						</widget>
+						<widget pos="208,0" size="580x719" type="*container.AppTabs">
+							<container size="580x36">
+								<container size="540x36">
+									<widget size="107x36" type="*container.tabButton">
+										<text alignment="center" bold color="primary" pos="8,8" size="91x20">Conductance</text>
+									</widget>
+									<widget pos="111,0" size="68x36" type="*container.tabButton">
+										<text alignment="center" bold pos="8,8" size="52x20">IR Drop</text>
+									</widget>
+									<widget pos="183,0" size="101x36" type="*container.tabButton">
+										<text alignment="center" bold pos="8,8" size="85x20">Sneak Paths</text>
+									</widget>
+									<widget pos="289,0" size="111x36" type="*container.tabButton">
+										<text alignment="center" bold pos="8,8" size="95x20">Input/Output</text>
+									</widget>
+									<widget pos="404,0" size="118x36" type="*container.tabButton">
+										<text alignment="center" bold pos="8,8" size="102x20">Ideal vs Actual</text>
+									</widget>
+								</container>
+								<widget pos="544,0" size="36x36" type="*widget.Button">
+									<rectangle radius="4" size="36x36"/>
+									<rectangle size="36x36"/>
+									<image fillMode="contain" pos="8,8" rsc="more-horizontal.svg" size="iconInlineSize" themed="foreground"/>
+								</widget>
+							</container>
+							<rectangle fillColor="shadow" pos="0,36" size="580x4"/>
+							<rectangle fillColor="primary" pos="0,36" radius="4" size="107x4"/>
+							<container pos="0,40" size="580x679">
+								<widget size="496x679" type="*gui.CrossbarHeatmap">
+									<raster size="496x643"/>
+									<widget pos="0,643" size="496x36" type="*widget.Label">
+										<widget size="496x36" type="*widget.RichText">
+											<text italic pos="8,8" size="471x19">Crossbar heatmap 64x64. Range 0 to 1. Colormap fecim. Selected cell: none.</text>
+										</widget>
+									</widget>
+								</widget>
+								<widget pos="500,0" size="80x679" type="*widgets.ColorLegend">
+									<container size="80x679">
+										<raster pos="57,0" size="22x679"/>
+										<container size="53x679">
+											<container size="53x19">
+												<text color="foreground" size="53x19">29 Level</text>
+											</container>
+											<text color="foreground" pos="0,23" size="53x19">10 Level</text>
+											<text color="foreground" pos="0,46" size="53x19">20 Level</text>
+											<container pos="0,69" size="53x19">
+												<text color="foreground" size="45x19">0 Level</text>
+											</container>
+										</container>
+									</container>
+								</widget>
+							</container>
+						</widget>
+					</widget>
+					<widget pos="788,0" size="8x719" type="*container.divider">
+						<rectangle fillColor="shadow" size="8x719"/>
+						<rectangle fillColor="foreground" pos="3,351" size="2x16"/>
+					</widget>
+					<container pos="796,0" size="274x719">
+						<widget pos="0,462" size="274x256" type="*widget.Scroll">
+							<container size="274x695">
+								<widget size="274x1" type="*widget.Separator">
+									<rectangle fillColor="separator" size="274x1"/>
+								</widget>
+								<widget pos="0,5" size="274x92" type="*widget.Label">
+									<widget size="274x92" type="*widget.RichText">
+										<text pos="8,8" size="104x19">Analysis Results</text>
+										<text pos="8,27" size="0x19"></text>
+										<text pos="8,46" size="79x19">No data yet.</text>
+										<text pos="8,65" size="155x19">Click a cell or Run MVM.</text>
+									</widget>
+								</widget>
+								<widget pos="0,101" size="274x1" type="*widget.Separator">
+									<rectangle fillColor="separator" size="274x1"/>
+								</widget>
+								<widget pos="0,106" size="274x479" type="*gui.MetricsPanel">
+									<container size="274x479">
+										<widget size="274x35" type="*widget.Label">
+											<widget size="274x35" type="*widget.RichText">
+												<text alignment="center" bold pos="94,8" size="84x19">Live Metrics</text>
+											</widget>
+										</widget>
+										<widget pos="0,39" size="274x1" type="*widget.Separator">
+											<rectangle fillColor="separator" size="274x1"/>
+										</widget>
+										<widget pos="0,44" size="274x35" type="*widget.Label">
+											<widget size="274x35" type="*widget.RichText">
+												<text bold pos="8,8" size="62x19">Accuracy</text>
+											</widget>
+										</widget>
+										<widget pos="0,83" size="274x35" type="*widget.Label">
+											<widget size="274x35" type="*widget.RichText">
+												<text pos="8,8" size="49x19">Ideal: --</text>
+											</widget>
+										</widget>
+										<widget pos="0,122" size="274x35" type="*widget.Label">
+											<widget size="274x35" type="*widget.RichText">
+												<text pos="8,8" size="57x19">Actual: --</text>
+											</widget>
+										</widget>
+										<widget pos="0,161" size="274x35" type="*widget.Label">
+											<widget size="274x35" type="*widget.RichText">
+												<text pos="8,8" size="24x19">Δ: --</text>
+											</widget>
+										</widget>
+										<widget pos="0,200" size="274x1" type="*widget.Separator">
+											<rectangle fillColor="separator" size="274x1"/>
+										</widget>
+										<widget pos="0,205" size="274x35" type="*widget.Label">
+											<widget size="274x35" type="*widget.RichText">
+												<text bold pos="8,8" size="48x19">Energy</text>
+											</widget>
+										</widget>
+										<widget pos="0,244" size="274x35" type="*widget.Label">
+											<widget size="274x35" type="*widget.RichText">
+												<text pos="8,8" size="57x19">FeCIM: --</text>
+											</widget>
+										</widget>
+										<widget pos="0,283" size="274x35" type="*widget.Label">
+											<widget size="274x35" type="*widget.RichText">
+												<text pos="8,8" size="45x19">GPU: --</text>
+											</widget>
+										</widget>
+										<widget pos="0,322" size="274x35" type="*widget.Label">
+											<widget size="274x35" type="*widget.RichText">
+												<text pos="8,8" size="78x19">Efficiency: --</text>
+											</widget>
+										</widget>
+										<widget pos="0,361" size="274x1" type="*widget.Separator">
+											<rectangle fillColor="separator" size="274x1"/>
+										</widget>
+										<widget pos="0,366" size="274x35" type="*widget.Label">
+											<widget size="274x35" type="*widget.RichText">
+												<text bold pos="8,8" size="90x19">Performance</text>
+											</widget>
+										</widget>
+										<widget pos="0,405" size="274x35" type="*widget.Label">
+											<widget size="274x35" type="*widget.RichText">
+												<text pos="8,8" size="53x19">MACs: --</text>
+											</widget>
+										</widget>
+										<widget pos="0,444" size="274x35" type="*widget.Label">
+											<widget size="274x35" type="*widget.RichText">
+												<text pos="8,8" size="67x19">Latency: --</text>
+											</widget>
+										</widget>
+									</container>
+								</widget>
+								<widget pos="0,590" size="274x1" type="*widget.Separator">
+									<rectangle fillColor="separator" size="274x1"/>
+								</widget>
+								<widget pos="0,595" size="274x100" type="*gui.ComparisonBadge">
+									<container size="274x100">
+										<widget size="274x35" type="*widget.Label">
+											<widget size="274x35" type="*widget.RichText">
+												<text pos="8,8" size="147x19">Energy per 4096 MACs</text>
+											</widget>
+										</widget>
+										<widget pos="0,39" size="274x35" type="*widget.Label">
+											<widget size="274x35" type="*widget.RichText">
+												<text pos="8,8" size="57x19">FeCIM: --</text>
+											</widget>
+										</widget>
+										<widget pos="0,78" size="274x35" type="*widget.Label">
+											<widget size="274x35" type="*widget.RichText">
+												<text pos="8,8" size="45x19">GPU: --</text>
+											</widget>
+										</widget>
+										<widget pos="0,117" size="274x35" type="*widget.Label">
+											<widget size="274x35" type="*widget.RichText">
+												<text pos="8,8" size="101x19">-- improvement</text>
+											</widget>
+										</widget>
+									</container>
+								</widget>
+							</container>
+							<widget pos="0,256" size="274x0" type="*widget.Shadow">
+								<linearGradient endColor="shadow" pos="0,-8" size="274x8"/>
+							</widget>
+							<widget pos="268,0" size="6x256" type="*widget.scrollBarArea">
+								<widget pos="3,0" size="3x94" type="*widget.scrollBar">
+									<rectangle fillColor="scrollbar" radius="3" size="3x94"/>
+								</widget>
+							</widget>
+						</widget>
+						<container size="274x458">
+							<container size="274x36">
+								<container pos="59,0" size="187x36">
+									<widget pos="28,0" size="115x36" type="*widget.Slider">
+										<rectangle fillColor="inputBackground" pos="14,16" size="86x4"/>
+										<rectangle fillColor="foreground" pos="14,16" size="40x4"/>
+										<circle fillColor="foreground" pos="46,10" size="16x16"/>
+										<circle pos="40,4" size="27x28"/>
+									</widget>
+									<widget size="24x36" type="*widget.Label">
+										<widget size="24x36" type="*widget.RichText">
+											<text pos="8,8" size="8x19">8</text>
+										</widget>
+									</widget>
+									<widget pos="147,0" size="40x36" type="*widget.Label">
+										<widget size="40x36" type="*widget.RichText">
+											<text pos="8,8" size="24x19">128</text>
+										</widget>
+									</widget>
+								</container>
+								<widget size="55x36" type="*widget.Label">
+									<widget size="55x36" type="*widget.RichText">
+										<text pos="8,8" size="39x19">Array:</text>
+									</widget>
+								</widget>
+								<widget pos="250,0" size="23x36" type="*widget.Label">
+									<widget size="23x36" type="*widget.RichText">
+										<text pos="8,8" size="11x19">…</text>
+									</widget>
+								</widget>
+							</container>
+							<widget pos="0,40" size="274x1" type="*widget.Separator">
+								<rectangle fillColor="separator" size="274x1"/>
+							</widget>
+							<widget pos="0,45" size="274x35" type="*widget.Label">
+								<widget size="274x35" type="*widget.RichText">
+									<text alignment="center" bold pos="93,8" size="87x19">Architecture</text>
+								</widget>
+							</widget>
+							<container pos="0,84" size="274x36">
+								<widget size="88x36" type="*widget.Button">
+									<rectangle fillColor="primary" radius="4" size="88x36"/>
+									<rectangle size="88x36"/>
+									<widget pos="8,8" size="72x19" type="*widget.RichText">
+										<text alignment="center" bold color="foregroundOnPrimary" size="72x19">● PASSIVE</text>
+									</widget>
+								</widget>
+								<widget pos="92,0" size="88x36" type="*widget.Button">
+									<rectangle radius="4" size="88x36"/>
+									<rectangle size="88x36"/>
+									<widget pos="8,8" size="71x19" type="*widget.RichText">
+										<text alignment="center" bold size="71x19">1T1R GATE</text>
+									</widget>
+								</widget>
+								<widget pos="185,0" size="88x36" type="*widget.Button">
+									<rectangle radius="4" size="88x36"/>
+									<rectangle size="88x36"/>
+									<widget pos="27,8" size="33x19" type="*widget.RichText">
+										<text alignment="center" bold size="33x19">2T1R</text>
+									</widget>
+								</widget>
+							</container>
+							<widget pos="0,124" size="274x1" type="*widget.Separator">
+								<rectangle fillColor="separator" size="274x1"/>
+							</widget>
+							<container pos="0,129" size="274x76">
+								<container size="274x36">
+									<container size="97x36">
+										<widget size="57x36" type="*widget.Label">
+											<widget size="57x36" type="*widget.RichText">
+												<text pos="8,8" size="41x19">Noise:</text>
+											</widget>
+										</widget>
+										<widget pos="61,0" size="36x36" type="*widget.Button">
+											<rectangle radius="4" size="36x36"/>
+											<rectangle size="36x36"/>
+											<image fillMode="contain" pos="8,8" rsc="infoIcon" size="iconInlineSize" themed="foreground"/>
+										</widget>
+									</container>
+									<widget pos="250,0" size="23x36" type="*widget.Label">
+										<widget size="23x36" type="*widget.RichText">
+											<text pos="8,8" size="11x19">…</text>
+										</widget>
+									</widget>
+								</container>
+								<widget pos="0,40" size="274x36" type="*widget.Slider">
+									<rectangle fillColor="inputBackground" pos="14,16" size="245x4"/>
+									<rectangle fillColor="foreground" pos="14,16" size="9x4"/>
+									<circle fillColor="foreground" pos="16,10" size="15x16"/>
+									<circle pos="10,4" size="27x28"/>
+								</widget>
+							</container>
+							<container pos="0,209" size="274x36">
+								<widget pos="51,0" size="194x36" type="*widget.Slider">
+									<rectangle fillColor="inputBackground" pos="14,16" size="165x4"/>
+									<rectangle fillColor="foreground" pos="14,16" size="55x4"/>
+									<circle fillColor="foreground" pos="61,10" size="16x16"/>
+									<circle pos="55,4" size="28x28"/>
+								</widget>
+								<widget size="47x36" type="*widget.Label">
+									<widget size="47x36" type="*widget.RichText">
+										<text pos="8,8" size="31x19">ADC:</text>
+									</widget>
+								</widget>
+								<widget pos="250,0" size="23x36" type="*widget.Label">
+									<widget size="23x36" type="*widget.RichText">
+										<text pos="8,8" size="11x19">…</text>
+									</widget>
+								</widget>
+							</container>
+							<container pos="0,249" size="274x36">
+								<widget pos="60,0" size="186x36" type="*widget.Slider">
+									<rectangle fillColor="inputBackground" pos="14,16" size="157x4"/>
+									<rectangle fillColor="foreground" pos="14,16" size="93x4"/>
+									<circle fillColor="foreground" pos="100,10" size="16x16"/>
+									<circle pos="94,4" size="28x28"/>
+								</widget>
+								<widget size="56x36" type="*widget.Label">
+									<widget size="56x36" type="*widget.RichText">
+										<text pos="8,8" size="40x19">Temp:</text>
+									</widget>
+								</widget>
+								<widget pos="250,0" size="23x36" type="*widget.Label">
+									<widget size="23x36" type="*widget.RichText">
+										<text pos="8,8" size="11x19">…</text>
+									</widget>
+								</widget>
+							</container>
+							<widget pos="0,289" size="274x1" type="*widget.Separator">
+								<rectangle fillColor="separator" size="274x1"/>
+							</widget>
+							<container pos="0,294" size="274x35">
+								<widget pos="58,0" size="215x35" type="*widget.Select">
+									<rectangle fillColor="inputBackground" radius="4" size="215x35"/>
+									<rectangle size="0x0"/>
+									<widget pos="4,4" size="183x27" type="*widget.RichText">
+										<text pos="4,4" size="36x19">fecim</text>
+									</widget>
+									<widget pos="187,7" size="20x20" type="*widget.Icon">
+										<image fillMode="contain" rsc="menuDropDownIcon" size="iconInlineSize" themed="foreground"/>
+									</widget>
+								</widget>
+								<widget size="54x35" type="*widget.Label">
+									<widget size="54x35" type="*widget.RichText">
+										<text pos="8,8" size="38x19">Color:</text>
+									</widget>
+								</widget>
+							</container>
+							<widget pos="0,333" size="274x1" type="*widget.Separator">
+								<rectangle fillColor="separator" size="274x1"/>
+							</widget>
+							<container pos="0,338" size="274x36">
+								<widget size="135x36" type="*widget.Button">
+									<rectangle fillColor="button" radius="4" size="135x36"/>
+									<rectangle size="135x36"/>
+									<widget pos="48,8" size="38x19" type="*widget.RichText">
+										<text alignment="center" bold size="38x19">Reset</text>
+									</widget>
+								</widget>
+								<widget pos="139,0" size="135x36" type="*widget.Button">
+									<rectangle fillColor="button" radius="4" size="135x36"/>
+									<rectangle size="135x36"/>
+									<widget pos="44,8" size="45x19" type="*widget.RichText">
+										<text alignment="center" bold size="45x19">Export</text>
+									</widget>
+								</widget>
+							</container>
+							<widget pos="0,378" size="274x1" type="*widget.Separator">
+								<rectangle fillColor="separator" size="274x1"/>
+							</widget>
+							<container pos="0,383" size="274x75">
+								<container size="274x35">
+									<widget size="23x35" type="*widget.Label">
+										<widget size="23x35" type="*widget.RichText">
+											<text pos="8,8" size="11x19">…</text>
+										</widget>
+									</widget>
+									<widget pos="27,0" size="24x35" type="*widget.Label">
+										<widget size="24x35" type="*widget.RichText">
+											<text monospace pos="8,8" size="8x16">○</text>
+										</widget>
+									</widget>
+									<widget pos="56,0" size="23x35" type="*widget.Label">
+										<widget size="23x35" type="*widget.RichText">
+											<text pos="8,8" size="11x19">…</text>
+										</widget>
+									</widget>
+									<widget pos="83,0" size="24x35" type="*widget.Label">
+										<widget size="24x35" type="*widget.RichText">
+											<text monospace pos="8,8" size="8x16">○</text>
+										</widget>
+									</widget>
+								</container>
+								<widget pos="0,39" size="274x36" type="*widget.Button">
+									<rectangle radius="4" size="274x36"/>
+									<rectangle size="274x36"/>
+									<widget pos="88,8" size="96x19" type="*widget.RichText">
+										<text alignment="center" bold size="96x19">Validate Tools</text>
+									</widget>
+								</widget>
+							</container>
+						</container>
+					</container>
+				</widget>
+				<container size="1070x41">
+					<container size="1070x36">
+						<spacer size="905x36"/>
+						<widget pos="905,0" size="165x36" type="*widget.Button">
+							<rectangle radius="4" size="165x36"/>
+							<rectangle size="165x36"/>
+							<widget pos="32,8" size="125x20" type="*widget.RichText">
+								<text alignment="center" bold size="125x19">About the Science</text>
+							</widget>
+							<image fillMode="contain" pos="8,8" rsc="questionIcon" size="iconInlineSize" themed="foreground"/>
+						</widget>
+					</container>
+					<widget pos="0,40" size="1070x1" type="*widget.Separator">
+						<rectangle fillColor="separator" size="1070x1"/>
+					</widget>
+				</container>
+				<container pos="0,768" size="1070x36">
+					<container pos="109,0" size="894x36">
+						<widget size="23x36" type="*widget.Label">
+							<widget size="23x36" type="*widget.RichText">
+								<text bold pos="8,8" size="11x19">…</text>
+							</widget>
+						</widget>
+						<spacer pos="27,0" size="842x36"/>
+						<widget pos="870,0" size="23x36" type="*widget.Label">
+							<widget size="23x36" type="*widget.RichText">
+								<text pos="8,8" size="11x19">…</text>
+							</widget>
+						</widget>
+					</container>
+					<container size="105x36">
+						<widget size="100x36" type="*widgets.ModeIndicator">
+							<rectangle fillColor="rgba(60,60,80,255)" size="100x36"/>
+							<rectangle size="100x36" strokeWidth="2"/>
+							<text bold color="foreground" pos="28,13" size="0x0" textSize="10">○ IDLE</text>
+						</widget>
+						<widget pos="104,0" size="1x36" type="*widget.Separator">
+							<rectangle fillColor="separator" size="1x36"/>
+						</widget>
+					</container>
+					<container pos="1007,0" size="63x36">
+						<widget size="23x36" type="*widget.Label">
+							<widget size="23x36" type="*widget.RichText">
+								<text pos="8,8" size="11x19">…</text>
+							</widget>
+						</widget>
+						<widget pos="27,0" size="36x36" type="*widget.Button">
+							<rectangle radius="4" size="36x36"/>
+							<rectangle size="36x36"/>
+							<image fillMode="contain" pos="8,8" rsc="infoIcon" size="iconInlineSize" themed="foreground"/>
+						</widget>
+					</container>
+				</container>
+			</container>
+			<widget size="1070x804" type="*widgets.ResponsiveDetector">
+				<rectangle size="1070x804"/>
+			</widget>
+		</container>
+	</content>
+</canvas>
