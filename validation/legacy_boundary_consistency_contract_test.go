@@ -7,12 +7,18 @@ import (
 	"testing"
 )
 
+type legacyBoundaryCase struct {
+	Name        string `json:"name"`
+	TargetLevel int    `json:"target_level"`
+}
+
 type legacyBoundaryContract struct {
-	Suite     string `json:"suite"`
-	Material  string `json:"material"`
-	Model     string `json:"model"`
-	Timestamp string `json:"timestamp"`
-	AllPass   bool   `json:"all_pass"`
+	Suite     string               `json:"suite"`
+	Material  string               `json:"material"`
+	Model     string               `json:"model"`
+	Timestamp string               `json:"timestamp"`
+	AllPass   bool                 `json:"all_pass"`
+	Cases     []legacyBoundaryCase `json:"cases"`
 }
 
 func readLegacyBoundaryContract(t *testing.T, p string) legacyBoundaryContract {
@@ -33,6 +39,14 @@ func readLegacyBoundaryContract(t *testing.T, p string) legacyBoundaryContract {
 	}
 	if rec.Timestamp != "1970-01-01T00:00:00Z" {
 		t.Fatalf("%s timestamp=%q want deterministic", p, rec.Timestamp)
+	}
+	if len(rec.Cases) != 3 {
+		t.Fatalf("%s expected 3 legacy cases, got %d", p, len(rec.Cases))
+	}
+	for i, c := range rec.Cases {
+		if c.Name == "" || c.TargetLevel <= 0 {
+			t.Fatalf("%s case[%d] invalid name/target: %+v", p, i, c)
+		}
 	}
 	return rec
 }
@@ -70,6 +84,15 @@ func TestLegacyRegressionBoundaryConsistency_RootVsController(t *testing.T) {
 			}
 			if rootRec.AllPass != ctlRec.AllPass {
 				t.Fatalf("all_pass mismatch root=%v controller=%v", rootRec.AllPass, ctlRec.AllPass)
+			}
+			if len(rootRec.Cases) != len(ctlRec.Cases) {
+				t.Fatalf("case count mismatch root=%d controller=%d", len(rootRec.Cases), len(ctlRec.Cases))
+			}
+			for i := range rootRec.Cases {
+				rc, cc := rootRec.Cases[i], ctlRec.Cases[i]
+				if rc.Name != cc.Name || rc.TargetLevel != cc.TargetLevel {
+					t.Fatalf("case[%d] boundary mismatch: root=(%s,%d) controller=(%s,%d)", i, rc.Name, rc.TargetLevel, cc.Name, cc.TargetLevel)
+				}
 			}
 		})
 	}
