@@ -17,6 +17,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/test"
+	"fyne.io/fyne/v2/widget"
 )
 
 // ---------------------------------------------------------------------------
@@ -31,13 +32,18 @@ type boundEntry struct {
 	W, H     float32
 }
 
+type boundRect struct {
+	X, Y float32
+	W, H float32
+}
+
 // collectBounds walks the tree and records position/size of every visible widget.
 func collectBounds(root fyne.CanvasObject) []boundEntry {
 	seen := map[uintptr]bool{}
 	var entries []boundEntry
 
-	var walk func(o fyne.CanvasObject, parentPos fyne.Position)
-	walk = func(o fyne.CanvasObject, parentPos fyne.Position) {
+	var walk func(o fyne.CanvasObject, parentPos fyne.Position, clip *boundRect)
+	walk = func(o fyne.CanvasObject, parentPos fyne.Position, clip *boundRect) {
 		if o == nil {
 			return
 		}
@@ -57,6 +63,14 @@ func collectBounds(root fyne.CanvasObject) []boundEntry {
 		absPos := fyne.NewPos(parentPos.X+pos.X, parentPos.Y+pos.Y)
 		sz := o.Size()
 		if sz.Width > 0 && sz.Height > 0 {
+			rect := boundRect{X: absPos.X, Y: absPos.Y, W: sz.Width, H: sz.Height}
+			if clip != nil {
+				var ok bool
+				rect, ok = intersectRect(rect, *clip)
+				if !ok {
+					return
+				}
+			}
 			typeName := fmt.Sprintf("%T", o)
 			if idx := strings.LastIndex(typeName, "."); idx >= 0 {
 				typeName = typeName[idx+1:]
@@ -64,10 +78,10 @@ func collectBounds(root fyne.CanvasObject) []boundEntry {
 			entries = append(entries, boundEntry{
 				TypeName: typeName,
 				Text:     resolveText(o),
-				X:        absPos.X,
-				Y:        absPos.Y,
-				W:        sz.Width,
-				H:        sz.Height,
+				X:        rect.X,
+				Y:        rect.Y,
+				W:        rect.W,
+				H:        rect.H,
 			})
 		}
 
@@ -75,21 +89,32 @@ func collectBounds(root fyne.CanvasObject) []boundEntry {
 		switch obj := o.(type) {
 		case *container.AppTabs:
 			for _, item := range obj.Items {
-				walk(item.Content, absPos)
+				walk(item.Content, absPos, clip)
 			}
 			return
 		case *container.DocTabs:
 			for _, item := range obj.Items {
-				walk(item.Content, absPos)
+				walk(item.Content, absPos, clip)
 			}
 			return
+		case *container.Scroll:
+			scrollClip := boundRect{X: absPos.X, Y: absPos.Y, W: sz.Width, H: sz.Height}
+			if clip != nil {
+				var ok bool
+				scrollClip, ok = intersectRect(scrollClip, *clip)
+				if !ok {
+					return
+				}
+			}
+			walk(obj.Content, absPos, &scrollClip)
+			return
 		case *container.Split:
-			walk(obj.Leading, absPos)
-			walk(obj.Trailing, absPos)
+			walk(obj.Leading, absPos, clip)
+			walk(obj.Trailing, absPos, clip)
 			return
 		case *fyne.Container:
 			for _, child := range obj.Objects {
-				walk(child, absPos)
+				walk(child, absPos, clip)
 			}
 			return
 		}
@@ -105,17 +130,17 @@ func collectBounds(root fyne.CanvasObject) []boundEntry {
 					continue
 				}
 				if child, ok := f.Interface().(fyne.CanvasObject); ok {
-					walk(child, absPos)
+					walk(child, absPos, clip)
 				} else if children, ok := f.Interface().([]fyne.CanvasObject); ok {
 					for _, child := range children {
-						walk(child, absPos)
+						walk(child, absPos, clip)
 					}
 				}
 			}
 		}
 	}
 
-	walk(root, fyne.NewPos(0, 0))
+	walk(root, fyne.NewPos(0, 0), nil)
 	return entries
 }
 
@@ -151,14 +176,50 @@ func TestCollectBounds_UsesAbsolutePositions(t *testing.T) {
 	}
 }
 
+func TestCollectBounds_ClipsScrollDescendantsToViewport(t *testing.T) {
+	root := container.NewWithoutLayout()
+	root.Resize(fyne.NewSize(240, 180))
+
+	content := container.NewWithoutLayout()
+	content.Resize(fyne.NewSize(300, 300))
+
+	clipped := widget.NewLabel("clipped")
+	clipped.Move(fyne.NewPos(0, 80))
+	clipped.Resize(fyne.NewSize(160, 60))
+	content.Add(clipped)
+
+	scroll := container.NewScroll(content)
+	scroll.Move(fyne.NewPos(10, 20))
+	scroll.Resize(fyne.NewSize(100, 100))
+	root.Add(scroll)
+
+	entries := collectBounds(root)
+	for _, entry := range entries {
+		if entry.Text != "clipped" {
+			continue
+		}
+		if entry.X != 10 || entry.Y != 100 || entry.W != 100 || entry.H != 20 {
+			t.Fatalf("expected clipped bounds 10,100 100x20, got %.0f,%.0f %.0fx%.0f", entry.X, entry.Y, entry.W, entry.H)
+		}
+		return
+	}
+	t.Fatal("expected clipped label entry not found")
+}
+
 // detectOverlaps checks all pairs of bound entries for bounding-box intersection.
 // Returns human-readable descriptions of overlapping pairs.
 func detectOverlaps(entries []boundEntry) []string {
 	var overlaps []string
 	for i := 0; i < len(entries); i++ {
 		a := entries[i]
+		if a.TypeName == "Spacer" {
+			continue
+		}
 		for j := i + 1; j < len(entries); j++ {
 			b := entries[j]
+			if b.TypeName == "Spacer" {
+				continue
+			}
 			// Skip if one is fully inside the other (parent-child nesting is normal)
 			if contains(a, b) || contains(b, a) {
 				continue
@@ -183,6 +244,39 @@ func contains(outer, inner boundEntry) bool {
 	return inner.X >= outer.X && inner.Y >= outer.Y &&
 		inner.X+inner.W <= outer.X+outer.W &&
 		inner.Y+inner.H <= outer.Y+outer.H
+}
+
+func intersectsRect(a, b boundRect) bool {
+	return a.X < b.X+b.W && a.X+a.W > b.X &&
+		a.Y < b.Y+b.H && a.Y+a.H > b.Y
+}
+
+func intersectRect(a, b boundRect) (boundRect, bool) {
+	if !intersectsRect(a, b) {
+		return boundRect{}, false
+	}
+	x1 := maxFloat32(a.X, b.X)
+	y1 := maxFloat32(a.Y, b.Y)
+	x2 := minFloat32(a.X+a.W, b.X+b.W)
+	y2 := minFloat32(a.Y+a.H, b.Y+b.H)
+	if x2 <= x1 || y2 <= y1 {
+		return boundRect{}, false
+	}
+	return boundRect{X: x1, Y: y1, W: x2 - x1, H: y2 - y1}, true
+}
+
+func minFloat32(a, b float32) float32 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func maxFloat32(a, b float32) float32 {
+	if a > b {
+		return a
+	}
+	return b
 }
 
 // checkMinSizes compares each widget's MinSize() against its actual Size().
