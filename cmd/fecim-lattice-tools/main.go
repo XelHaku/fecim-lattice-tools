@@ -134,6 +134,7 @@ func main() {
 	forceFlag := flag.Bool("force", false, "Force recalibration even if calibration file exists")
 	verifyFlag := flag.Bool("verify", false, "Verify calibration accuracy after calibrating")
 	listMaterialsFlag := flag.Bool("list-materials", false, "List available materials and exit")
+	materialsFlag := flag.Bool("materials", false, "Alias for --list-materials")
 	modeFlag := flag.String("mode", "", "Run a headless mode (e.g., hysteresis) and exit")
 	engineFlag := flag.String("engine", "", "Headless hysteresis engine for --mode hysteresis: preisach|lk (default: preisach)")
 	screenshotDirFlag := flag.String("screenshot-dir", screenshotOutputDir, "Output directory for GUI screenshots")
@@ -175,6 +176,9 @@ func main() {
 	}
 	if dir := strings.TrimSpace(*recordingDirFlag); dir != "" {
 		recordingOutputDir = filepath.Clean(dir)
+	}
+	if *materialsFlag {
+		*listMaterialsFlag = true
 	}
 
 	if *loggerFlag && !verbosityProvided {
@@ -229,8 +233,15 @@ func main() {
 	}
 
 	// Handle --mode (headless diagnostics) after logging is initialized
-	if *modeFlag != "" {
-		if err := runMode(*modeFlag, *engineFlag); err != nil {
+	modeName := strings.TrimSpace(*modeFlag)
+	if modeName == "preisach" || modeName == "lk" {
+		if strings.TrimSpace(*engineFlag) == "" {
+			*engineFlag = modeName
+		}
+		modeName = "hysteresis"
+	}
+	if modeName != "" {
+		if err := runMode(modeName, *engineFlag); err != nil {
 			fmt.Fprintf(os.Stderr, "Mode error: %v\n", err)
 			os.Exit(1)
 		}
