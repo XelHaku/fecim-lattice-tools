@@ -131,13 +131,14 @@ func (s *OptimizedParasiticSolver) SolveMVM(appliedVoltages []float64) (*Parasit
 			}
 		}
 
-		// Step 2: Compute cumulative currents along columns (from bit line ground to row)
+		// Step 2: Compute cumulative currents along columns (from far row toward BL ground)
+		// IsumCol[i][j] = sum of currents from row i to last row in column j
 		for j := 0; j < cols; j++ {
-			IsumCol[0][j] = Ires[0][j]
+			IsumCol[rows-1][j] = Ires[rows-1][j]
 		}
-		for i := 1; i < rows; i++ {
+		for i := rows - 2; i >= 0; i-- {
 			for j := 0; j < cols; j++ {
-				IsumCol[i][j] = IsumCol[i-1][j] + Ires[i][j]
+				IsumCol[i][j] = IsumCol[i+1][j] + Ires[i][j]
 			}
 		}
 
@@ -152,12 +153,13 @@ func (s *OptimizedParasiticSolver) SolveMVM(appliedVoltages []float64) (*Parasit
 		}
 
 		// Step 4: Compute parasitic voltage drops - Column (bit line)
+		// Wire between row i-1 and row i carries IsumCol[i] (current from rows i..N-1)
 		for j := 0; j < cols; j++ {
 			VdropsCol[0][j] = 0
 		}
 		for i := 1; i < rows; i++ {
 			for j := 0; j < cols; j++ {
-				VdropsCol[i][j] = VdropsCol[i-1][j] + s.RpCol*IsumCol[i-1][j]
+				VdropsCol[i][j] = VdropsCol[i-1][j] + s.RpCol*IsumCol[i][j]
 			}
 		}
 
@@ -290,13 +292,14 @@ func (s *OptimizedParasiticSolver) SolveMVMFast(appliedVoltages []float64) ([]fl
 			}
 		}
 
-		// Cumulative column currents
+		// Cumulative column currents (from far row toward BL ground)
+		// IsumCol[i][j] = sum of currents from row i to last row
 		for j := 0; j < cols; j++ {
-			IsumCol[0][j] = Ires[0][j]
+			IsumCol[rows-1][j] = Ires[rows-1][j]
 		}
-		for i := 1; i < rows; i++ {
+		for i := rows - 2; i >= 0; i-- {
 			for j := 0; j < cols; j++ {
-				IsumCol[i][j] = IsumCol[i-1][j] + Ires[i][j]
+				IsumCol[i][j] = IsumCol[i+1][j] + Ires[i][j]
 			}
 		}
 
@@ -309,12 +312,13 @@ func (s *OptimizedParasiticSolver) SolveMVMFast(appliedVoltages []float64) ([]fl
 		}
 
 		// Column voltage drops
+		// Wire between row i-1 and row i carries IsumCol[i] (current from rows i..N-1)
 		for j := 0; j < cols; j++ {
 			VdropsCol[0][j] = 0
 		}
 		for i := 1; i < rows; i++ {
 			for j := 0; j < cols; j++ {
-				VdropsCol[i][j] = VdropsCol[i-1][j] + s.RpCol*IsumCol[i-1][j]
+				VdropsCol[i][j] = VdropsCol[i-1][j] + s.RpCol*IsumCol[i][j]
 			}
 		}
 

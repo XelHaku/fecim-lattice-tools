@@ -29,10 +29,11 @@ func deriveKCH(r *ParasiticMVMResult, rpRow, rpCol float64) *kchDerived {
 		VdropsRow[i] = make([]float64, cols)
 	}
 
+	// Reverse cumulative: IsumCol[i][j] = sum of currents from row i to last row
 	for j := 0; j < cols; j++ {
-		IsumCol[0][j] = r.DeviceCurrents[0][j]
-		for i := 1; i < rows; i++ {
-			IsumCol[i][j] = IsumCol[i-1][j] + r.DeviceCurrents[i][j]
+		IsumCol[rows-1][j] = r.DeviceCurrents[rows-1][j]
+		for i := rows - 2; i >= 0; i-- {
+			IsumCol[i][j] = IsumCol[i+1][j] + r.DeviceCurrents[i][j]
 		}
 	}
 
@@ -43,10 +44,11 @@ func deriveKCH(r *ParasiticMVMResult, rpRow, rpCol float64) *kchDerived {
 		}
 	}
 
+	// Wire between row i-1 and row i carries IsumCol[i] (current from rows i..N-1)
 	for j := 0; j < cols; j++ {
 		VdropsCol[0][j] = 0
 		for i := 1; i < rows; i++ {
-			VdropsCol[i][j] = VdropsCol[i-1][j] + rpCol*IsumCol[i-1][j]
+			VdropsCol[i][j] = VdropsCol[i-1][j] + rpCol*IsumCol[i][j]
 		}
 	}
 
@@ -102,12 +104,15 @@ func TestSolverKirchhoff_M2KCH01_KCLResidual(t *testing.T) {
 				}
 			}
 			for j := 0; j < n; j++ {
-				r0 := d.IsumCol[0][j] - res.DeviceCurrents[0][j]
-				if a := math.Abs(r0); a > maxKCL {
+				// With reverse cumulative: IsumCol[i] = sum from row i to last row
+				// So IsumCol[i] - IsumCol[i+1] = DeviceCurrents[i] for i < n-1
+				// and IsumCol[n-1] = DeviceCurrents[n-1]
+				rLast := d.IsumCol[n-1][j] - res.DeviceCurrents[n-1][j]
+				if a := math.Abs(rLast); a > maxKCL {
 					maxKCL = a
 				}
-				for i := 1; i < n; i++ {
-					r := d.IsumCol[i][j] - d.IsumCol[i-1][j] - res.DeviceCurrents[i][j]
+				for i := 0; i < n-1; i++ {
+					r := d.IsumCol[i][j] - d.IsumCol[i+1][j] - res.DeviceCurrents[i][j]
 					if a := math.Abs(r); a > maxKCL {
 						maxKCL = a
 					}
@@ -149,12 +154,15 @@ func TestSolverKirchhoff_M2KCH01_KCLResidual(t *testing.T) {
 				}
 			}
 			for j := 0; j < n; j++ {
-				r0 := d.IsumCol[0][j] - res.DeviceCurrents[0][j]
-				if a := math.Abs(r0); a > maxKCL {
+				// With reverse cumulative: IsumCol[i] = sum from row i to last row
+				// So IsumCol[i] - IsumCol[i+1] = DeviceCurrents[i] for i < n-1
+				// and IsumCol[n-1] = DeviceCurrents[n-1]
+				rLast := d.IsumCol[n-1][j] - res.DeviceCurrents[n-1][j]
+				if a := math.Abs(rLast); a > maxKCL {
 					maxKCL = a
 				}
-				for i := 1; i < n; i++ {
-					r := d.IsumCol[i][j] - d.IsumCol[i-1][j] - res.DeviceCurrents[i][j]
+				for i := 0; i < n-1; i++ {
+					r := d.IsumCol[i][j] - d.IsumCol[i+1][j] - res.DeviceCurrents[i][j]
 					if a := math.Abs(r); a > maxKCL {
 						maxKCL = a
 					}

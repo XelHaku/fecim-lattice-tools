@@ -144,16 +144,19 @@ func (s *ParasiticSolver) SolveMVM(appliedVoltages []float64) (*ParasiticMVMResu
 			}
 		}
 
-		// Step 2: Compute cumulative currents along columns (from bit line ground to row)
-		// IsumCol[i][j] = sum of currents from row 0 to row i in column j
+		// Step 2: Compute cumulative currents along columns (from far row toward BL ground)
+		// IsumCol[i][j] = sum of currents from row i to last row in column j
+		// This represents the wire current at position i flowing toward ground at row 0.
 		IsumCol := make([][]float64, s.rows)
 		for i := 0; i < s.rows; i++ {
 			IsumCol[i] = make([]float64, s.cols)
-			for j := 0; j < s.cols; j++ {
-				if i == 0 {
+		}
+		for j := 0; j < s.cols; j++ {
+			for i := s.rows - 1; i >= 0; i-- {
+				if i == s.rows-1 {
 					IsumCol[i][j] = Ires[i][j]
 				} else {
-					IsumCol[i][j] = IsumCol[i-1][j] + Ires[i][j]
+					IsumCol[i][j] = IsumCol[i+1][j] + Ires[i][j]
 				}
 			}
 		}
@@ -173,7 +176,8 @@ func (s *ParasiticSolver) SolveMVM(appliedVoltages []float64) (*ParasiticMVMResu
 		}
 
 		// Step 4: Compute parasitic voltage drops
-		// Column drops (bit line): accumulate from ground (row 0) downward
+		// Column drops (bit line): accumulate from ground (row 0) upward
+		// Wire between row i-1 and row i carries IsumCol[i] (current from rows i..N-1)
 		VdropsCol := make([][]float64, s.rows)
 		for i := 0; i < s.rows; i++ {
 			VdropsCol[i] = make([]float64, s.cols)
@@ -181,8 +185,9 @@ func (s *ParasiticSolver) SolveMVM(appliedVoltages []float64) (*ParasiticMVMResu
 				if i == 0 {
 					VdropsCol[i][j] = 0
 				} else {
-					// Voltage rise on bit line from accumulated current
-					VdropsCol[i][j] = VdropsCol[i-1][j] + s.RpCol*IsumCol[i-1][j]
+					// Voltage rise on bit line: wire segment (i-1 to i)
+					// carries current from rows i..N-1 toward ground
+					VdropsCol[i][j] = VdropsCol[i-1][j] + s.RpCol*IsumCol[i][j]
 				}
 			}
 		}
