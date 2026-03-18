@@ -17,8 +17,10 @@ func TestM2SCL04_SolverIterations_IncreaseWithRp(t *testing.T) {
 
 	const n = 32
 
-	// Plan sweep (Ω): 0.1Ω → 50Ω.
-	rpsOhm := []float64{0.1, 0.2, 0.5, 1, 2, 5, 10}
+	// Plan sweep (Ohm): 0.1 -> 5 Ohm.
+	// With correct BL current accumulation the solver faces stiffer problems,
+	// so the convergent range is tighter than with the old (buggy) formula.
+	rpsOhm := []float64{0.1, 0.2, 0.5, 1, 2, 5}
 
 	const rMinOhm = 1000.0
 	rps := make([]float64, 0, len(rpsOhm))

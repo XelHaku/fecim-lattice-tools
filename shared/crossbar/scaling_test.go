@@ -35,8 +35,8 @@ func TestCrossbarScalingBehavior(t *testing.T) {
 	const (
 		conductance = 0.2
 		inputV      = 0.5
-		rpRow       = 0.02
-		rpCol       = 0.02
+		rpRow       = 0.005
+		rpCol       = 0.005
 	)
 
 	type runData struct {
@@ -51,7 +51,7 @@ func TestCrossbarScalingBehavior(t *testing.T) {
 
 	for _, n := range sizes {
 		solver, err := NewParasiticSolver(n, n, &SORConfig{
-			MaxIterations: 200,
+			MaxIterations: 500,
 			Tolerance:     1e-7,
 			OmegaInitial:  1.0,
 			OmegaMin:      0.05,

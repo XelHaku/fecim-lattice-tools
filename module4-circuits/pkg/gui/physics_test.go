@@ -159,10 +159,13 @@ func TestTIAConversion(t *testing.T) {
 func TestADCQuantization(t *testing.T) {
 	adc := peripherals.DefaultADC()
 
-	// Verify 4-bit ADC gives 16 levels (0-15) - Updated 2026-02-16 per literature consensus
-	if adc.Levels() != 16 {
-		t.Errorf("4-bit ADC should have 16 levels, got %d", adc.Levels())
+	// Verify 6-bit ADC gives 64 levels (0-63)
+	if adc.Levels() != 64 {
+		t.Errorf("6-bit ADC should have 64 levels, got %d", adc.Levels())
 	}
+
+	maxLevel := adc.Levels() - 1 // 63
+	midLevel := int(0.5*float64(maxLevel) + 0.5) // round(0.5 * 63) = 32
 
 	testCases := []struct {
 		voltage  float64
@@ -170,10 +173,10 @@ func TestADCQuantization(t *testing.T) {
 		desc     string
 	}{
 		{0.0, 0, "0V should give level 0"},
-		{0.5, 8, "0.5V should give level 8 (midpoint of 0-15)"},
-		{1.0, 15, "1.0V should give level 15 (max)"},
+		{0.5, midLevel, "0.5V should give midpoint level"},
+		{1.0, maxLevel, "1.0V should give max level"},
 		{-0.1, 0, "Negative voltage should clamp to level 0"},
-		{1.5, 15, "Voltage > Vref should clamp to max level"},
+		{1.5, maxLevel, "Voltage > Vref should clamp to max level"},
 	}
 
 	for _, tc := range testCases {
@@ -184,7 +187,7 @@ func TestADCQuantization(t *testing.T) {
 	}
 
 	// Verify resolution
-	expectedResolution := 1.0 / 15.0 // (VrefHigh - VrefLow) / (levels - 1)
+	expectedResolution := 1.0 / float64(maxLevel) // (VrefHigh - VrefLow) / (levels - 1)
 	actualResolution := adc.Resolution()
 	if math.Abs(actualResolution-expectedResolution) > 1e-10 {
 		t.Errorf("ADC resolution: expected %.6f V/LSB, got %.6f V/LSB",

@@ -84,7 +84,7 @@ func TestWriteRead_AllMaterials(t *testing.T) {
 	}{
 		{"FeCIM-HZO", sharedphysics.FeCIMMaterial},
 		{"Literature-Superlattice", sharedphysics.LiteratureSuperlattice},
-		{"HZO-Park2015", sharedphysics.BTO},
+		{"BTO", sharedphysics.BTO},
 	}
 
 	for _, mc := range materials {

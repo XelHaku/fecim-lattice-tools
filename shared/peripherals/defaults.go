@@ -4,13 +4,16 @@ package peripherals
 import "fecim-lattice-tools/shared/physics"
 
 // Standard peripheral configuration constants.
-// Updated 2026-02-16: Changed from 5-bit to 4-bit per 2024-2025 literature consensus.
+// Updated 2026-03-18: Changed ADC default from 4-bit to 6-bit. 4-bit produced only
+// 5 distinct codes for 30 conductance levels (effective ~2.3 bits). 6-bit (64 codes)
+// resolves all 30 levels with margin.
 const (
-	// DefaultBits is the standard resolution for ADC/DAC (4 bits = 16 levels, literature optimal).
-	DefaultBits = 4
+	// DefaultBits is the standard resolution for ADC (6 bits = 64 levels).
+	// DAC remains 4-bit; this constant now reflects the ADC default.
+	DefaultBits = 6
 
-	// DefaultLevels is the number of discrete levels (2^4 = 16).
-	DefaultLevels = 16
+	// DefaultLevels is the number of discrete ADC levels (2^6 = 64).
+	DefaultLevels = 64
 
 	// FeCIMLevels is the baseline number of analog states used in this demo.
 	// Re-exported from shared/physics for backward compatibility.

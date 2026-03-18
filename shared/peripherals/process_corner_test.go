@@ -141,8 +141,11 @@ func TestProcessCorner_Typical_MatchesNominalExactly(t *testing.T) {
 	vr := DefaultVoltageRegulator()
 	sh := DefaultSampleAndHold()
 
-	if dac.Bits != DefaultBits || adc.Bits != DefaultBits {
-		t.Fatalf("nominal resolution mismatch: dac=%d adc=%d expected=%d", dac.Bits, adc.Bits, DefaultBits)
+	if dac.Bits != 4 {
+		t.Fatalf("nominal DAC resolution mismatch: got %d, expected 4", dac.Bits)
+	}
+	if adc.Bits != DefaultBits {
+		t.Fatalf("nominal ADC resolution mismatch: got %d, expected %d", adc.Bits, DefaultBits)
 	}
 	if dac.VrefHigh != DACVrefHigh || dac.VrefLow != DACVrefLow {
 		t.Fatalf("DAC nominal refs mismatch: got [%.3f, %.3f], expected [%.3f, %.3f]", dac.VrefLow, dac.VrefHigh, DACVrefLow, DACVrefHigh)

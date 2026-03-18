@@ -211,20 +211,25 @@ func TestDACToADCRoundTrip(t *testing.T) {
 	adc.VrefLow = dac.VrefLow
 	adc.VrefHigh = dac.VrefHigh
 
-	// Test round-trip for several levels
-	testLevels := []int{0, 7, 15, 22, 29}
+	// Test round-trip for several levels (DAC levels only; DAC may have fewer
+	// levels than ADC since DAC is 4-bit and ADC is 6-bit).
+	testLevels := []int{0, 7, 15}
 	for _, level := range testLevels {
-		if level >= dac.Levels() || level >= adc.Levels() {
+		if level >= dac.Levels() {
 			continue
 		}
 
 		voltage := dac.Convert(level)
-		recoveredLevel := adc.Convert(voltage)
+		recoveredCode := adc.Convert(voltage)
 
-		// Allow ±1 level due to quantization
-		if abs(recoveredLevel-level) > 1 {
-			t.Errorf("Round-trip for level %d: got %d (Δ=%d)",
-				level, recoveredLevel, abs(recoveredLevel-level))
+		// Map recovered ADC code back to DAC-equivalent level for comparison.
+		// ADC code is in [0, adc.Levels()-1]; scale to [0, dac.Levels()-1].
+		scaledLevel := int(float64(recoveredCode) * float64(dac.Levels()-1) / float64(adc.Levels()-1) + 0.5)
+
+		// Allow +-1 DAC level due to quantization mismatch
+		if abs(scaledLevel-level) > 1 {
+			t.Errorf("Round-trip for DAC level %d: ADC code=%d, scaled=%d (Δ=%d)",
+				level, recoveredCode, scaledLevel, abs(scaledLevel-level))
 		}
 	}
 }
@@ -502,7 +507,7 @@ func TestADCSharingRatio_EffectiveEnergyPerColumn(t *testing.T) {
 // TestADCAreaEstimate_ArchitectureComparison verifies area ordering.
 // Flash > SAR > Ramp > Comparator for same bit count.
 func TestADCAreaEstimate_ArchitectureComparison(t *testing.T) {
-	sar := DefaultADC() // 4-bit SAR
+	sar := DefaultADC() // 6-bit SAR
 	flash := FlashADC(4)
 	ramp := RampADC(4, 1)
 	comp := ComparatorADC()

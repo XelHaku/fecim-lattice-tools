@@ -334,9 +334,9 @@ func (ca *CircuitsApp) drawCompEnergy(w, h int) image.Image {
 	drawRect(img, marginLeft, fefetY, fefetW, barH, sharedtheme.ColorPrimary)
 	drawSimpleText(img, "2.9 pJ", marginLeft+fefetW+5, fefetY+8, valueColor)
 
-	// Energy savings annotation (conservative claim per CLAUDE.md accuracy policy)
+	// Energy annotation — removed "10-100x savings" claim (flagged as unverified in honesty-audit.md)
 	savingsX := max(marginLeft, w-120)
-	drawSimpleText(img, "10-100x savings", savingsX, fefetY+8, sharedtheme.ColorAccent)
+	drawSimpleText(img, "model estimate", savingsX, fefetY+8, sharedtheme.ColorAccent)
 
 	// FeFET energy breakdown (below the bar)
 	breakdownY := fefetY + barH + 12

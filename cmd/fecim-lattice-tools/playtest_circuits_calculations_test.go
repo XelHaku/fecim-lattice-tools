@@ -144,10 +144,10 @@ func TestPlaytestCircuits_FullPipeline(t *testing.T) {
 // TestPlaytestCircuits_ENOBCalculation verifies ENOB and EffectiveSNR formulas.
 func TestPlaytestCircuits_ENOBCalculation(t *testing.T) {
 	playtestSkipUnlessEnabled(t)
-	adc := peripherals.DefaultADC() // Bits=4, INL=0.5, DNL=0.25
+	adc := peripherals.DefaultADC() // Bits=6, INL=0.5, DNL=0.25
 
-	// ENOB = 4 - log2(sqrt(1 + INL² + DNL²)) = 4 - log2(sqrt(1 + 0.25 + 0.0625))
-	expectedENOB := 4.0 - math.Log2(math.Sqrt(1.0+0.5*0.5+0.25*0.25))
+	// ENOB = N - log2(1 + max(|INL|, |DNL|))
+	expectedENOB := float64(adc.Bits) - math.Log2(1.0+math.Max(math.Abs(adc.INL), math.Abs(adc.DNL)))
 	gotENOB := adc.ENOB()
 	if math.Abs(gotENOB-expectedENOB) > 1e-9 {
 		t.Errorf("ENOB = %v, want %v", gotENOB, expectedENOB)

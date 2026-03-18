@@ -609,7 +609,13 @@ func (s *LKSolver) noiseTerm(dt, rhoEff float64) float64 {
 	}
 
 	const kB = 1.380649e-23 // J/K
-	sigma := math.Sqrt(2 * kB * s.Temperature * rhoEff / dt)
+	// Fluctuation-dissipation theorem for intensive polarization dynamics.
+	// sigma = sqrt(2*kB*T*rho / (dt * V_cell)) gives correct 1/sqrt(V) Landauer scaling.
+	vCell := s.Area * s.Thickness
+	if vCell <= 0 {
+		vCell = 45e-9 * 45e-9 * 10e-9 // fallback: default FeCIM cell
+	}
+	sigma := math.Sqrt(2 * kB * s.Temperature * rhoEff / (dt * vCell))
 	if s.rng != nil {
 		return s.rng.NormFloat64() * sigma
 	}

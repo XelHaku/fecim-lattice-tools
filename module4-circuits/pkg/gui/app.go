@@ -30,7 +30,7 @@ const (
 	MaxArraySize   = 128                   // Maximum array dimension
 	DefaultSize    = 8                     // Default array size
 	DefaultDACBits = 4                     // Default DAC resolution (4-bit optimal per 2024-2025 literature)
-	DefaultADCBits = 4                     // Default ADC resolution (4-bit optimal per 2024-2025 literature)
+	DefaultADCBits = 6                     // Default ADC resolution (6-bit: 64 codes for 30 conductance levels)
 )
 
 // CircuitsApp is the main application for the peripheral circuits demo.

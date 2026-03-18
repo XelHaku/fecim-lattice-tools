@@ -102,3 +102,61 @@ func ConductanceToPolarization(G, Gmin, Gmax, Ps float64) float64 {
 
 	return normalizedP * Ps
 }
+
+// ConductanceToPolarizationWithParams inverts the P->G mapping for the specified model.
+// For models without an analytical inverse, uses bisection search.
+func ConductanceToPolarizationWithParams(G, Ps, Gmin, Gmax float64, model ConductanceModel, kvT, vgsRead, vt0 float64) float64 {
+	if Gmax <= Gmin || Ps == 0 {
+		return 0
+	}
+
+	// Clamp G to valid range.
+	if G <= Gmin {
+		return -Ps
+	}
+	if G >= Gmax {
+		return Ps
+	}
+
+	switch model {
+	case ConductanceLinear:
+		// Analytical inverse of G = Gmin + (Gmax-Gmin)*(normalizedP+1)/2
+		n := (G - Gmin) / (Gmax - Gmin)
+		return Ps * (2*n - 1)
+
+	case ConductanceSubthreshold:
+		if kvT <= 0 {
+			// Log-space interpolation inverse.
+			// Forward: G = exp(log(Gmin) + (log(Gmax)-log(Gmin)) * n)
+			//   where n = (normalizedP + 1) / 2
+			// Inverse: n = (log(G) - log(Gmin)) / (log(Gmax) - log(Gmin))
+			logGmin := math.Log(Gmin)
+			logGmax := math.Log(Gmax)
+			n := (math.Log(G) - logGmin) / (logGmax - logGmin)
+			return Ps * (2*n - 1)
+		}
+		// Subthreshold with kvT > 0: use bisection.
+		return bisectInverse(G, Ps, Gmin, Gmax, model, kvT, vgsRead, vt0)
+
+	default:
+		// Saturation, Lookup, or unknown models: use bisection.
+		return bisectInverse(G, Ps, Gmin, Gmax, model, kvT, vgsRead, vt0)
+	}
+}
+
+// bisectInverse finds P such that PolarizationToConductanceWithParams(P, ...) == G
+// using 20 iterations of bisection search over [-Ps, +Ps].
+func bisectInverse(G, Ps, Gmin, Gmax float64, model ConductanceModel, kvT, vgsRead, vt0 float64) float64 {
+	lo := -Ps
+	hi := Ps
+	for i := 0; i < 20; i++ {
+		mid := (lo + hi) / 2
+		gMid := PolarizationToConductanceWithParams(mid, Ps, Gmin, Gmax, model, kvT, vgsRead, vt0)
+		if gMid < G {
+			lo = mid
+		} else {
+			hi = mid
+		}
+	}
+	return (lo + hi) / 2
+}

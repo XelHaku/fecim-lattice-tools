@@ -6,8 +6,8 @@ import (
 )
 
 func TestDACConstants(t *testing.T) {
-	if DefaultBits != 4 {
-		t.Errorf("DefaultBits = %d, want 4 (literature optimal)", DefaultBits)
+	if DefaultBits != 6 {
+		t.Errorf("DefaultBits = %d, want 6 (ADC default for 30-level resolution)", DefaultBits)
 	}
 	if DACVrefHigh != 1.5 {
 		t.Errorf("DACVrefHigh = %v, want 1.5", DACVrefHigh)
@@ -58,8 +58,8 @@ func TestDefaultDAC(t *testing.T) {
 func TestDefaultADC(t *testing.T) {
 	adc := DefaultADC()
 
-	if adc.Bits != 4 {
-		t.Errorf("ADC Bits = %d, want 4 (literature optimal)", adc.Bits)
+	if adc.Bits != 6 {
+		t.Errorf("ADC Bits = %d, want 6 (64 codes for 30 conductance levels)", adc.Bits)
 	}
 	if adc.VrefHigh != 1.0 {
 		t.Errorf("ADC VrefHigh = %v, want 1.0", adc.VrefHigh)
@@ -92,8 +92,8 @@ func TestDACResolution(t *testing.T) {
 
 func TestADCResolution(t *testing.T) {
 	adc := DefaultADC()
-	// 4-bit: 16 levels, range = 1V, LSB = 1/15 ≈ 66.67 mV
-	expected := 1.0 / 15.0
+	// 6-bit: 64 levels, range = 1V, LSB = 1/63 ≈ 15.87 mV
+	expected := 1.0 / 63.0
 	if math.Abs(adc.Resolution()-expected) > 1e-10 {
 		t.Errorf("ADC Resolution = %v, want %v", adc.Resolution(), expected)
 	}
@@ -108,8 +108,8 @@ func TestDefaultDACLevels(t *testing.T) {
 
 func TestADCLevels(t *testing.T) {
 	adc := DefaultADC()
-	if adc.Levels() != 16 {
-		t.Errorf("ADC Levels = %d, want 16 (4-bit)", adc.Levels())
+	if adc.Levels() != 64 {
+		t.Errorf("ADC Levels = %d, want 64 (6-bit)", adc.Levels())
 	}
 }
 

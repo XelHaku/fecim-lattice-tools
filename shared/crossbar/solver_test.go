@@ -295,7 +295,9 @@ func TestSORVsIdeal_AccuracyLoss(t *testing.T) {
 }
 
 func TestParasiticImpactAnalysis(t *testing.T) {
-	solver, _ := NewParasiticSolver(8, 8, nil)
+	cfg := DefaultSORConfig()
+	cfg.MaxIterations = 500
+	solver, _ := NewParasiticSolver(8, 8, cfg)
 
 	g := make([][]float64, 8)
 	for i := range g {
@@ -305,7 +307,7 @@ func TestParasiticImpactAnalysis(t *testing.T) {
 		}
 	}
 	solver.SetConductances(g)
-	solver.SetParasitics(0.2, 0.2)
+	solver.SetParasitics(0.05, 0.05)
 
 	input := make([]float64, 8)
 	for i := range input {

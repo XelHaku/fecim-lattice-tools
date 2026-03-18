@@ -458,7 +458,7 @@ func (ds *DeviceState) GetADCBits() int {
 	if ds.adc != nil {
 		return ds.adc.Bits
 	}
-	return 5 // Default
+	return 6 // Default: 6-bit (64 codes) to resolve 30 conductance levels
 }
 
 // GetADCLevels returns the number of ADC output levels (2^bits)
@@ -468,7 +468,7 @@ func (ds *DeviceState) GetADCLevels() int {
 	if ds.adc != nil {
 		return 1 << ds.adc.Bits
 	}
-	return 32 // Default 5-bit
+	return 64 // Default 6-bit
 }
 
 // GetMaterialName returns the name of the current material
@@ -596,7 +596,7 @@ func (ds *DeviceState) programLevelFromCoupledVoltage(currentLevel int, effectiv
 
 	gmin, gmax := ds.conductanceBounds()
 	currentG := ds.levelToConductance(currentLevel, levels)
-	currentP := sharedphysics.ConductanceToPolarization(currentG, gmin, gmax, mat.Ps)
+	currentP := sharedphysics.ConductanceToPolarizationWithParams(currentG, mat.Ps, gmin, gmax, sharedphysics.ParseConductanceModel(mat.ConductanceModel), mat.KvT, mat.VGSReadV, mat.VT0V)
 
 	solver := sharedphysics.NewLKSolver()
 	solver.ConfigureFromMaterial(mat)
@@ -1232,7 +1232,7 @@ func (ds *DeviceState) computeIdealLocked(weights [][]int, quantLevels int) {
 				voltage = ds.wlVoltages[r] - ds.dacVoltages[c]
 			}
 
-			if math.Abs(voltage) < 0.01 {
+			if math.Abs(voltage) < 1e-9 {
 				continue
 			}
 
@@ -1267,7 +1267,7 @@ func (ds *DeviceState) computeIdealLocked(weights [][]int, quantLevels int) {
 		activeColCount := 0
 		for c := 0; c < ds.cols; c++ {
 			v := ds.effectiveCellVoltageLocked(r, c)
-			if math.Abs(v) > 0.01 {
+			if math.Abs(v) > 1e-9 {
 				activeColCount++
 			}
 		}
@@ -1423,7 +1423,7 @@ func (ds *DeviceState) computeWithArraysimLocked(weights [][]int, quantLevels in
 			if ds.isPassive {
 				vcell = wlApplied[r] - blApplied[c]
 			}
-			if math.Abs(vcell) > 0.01 {
+			if math.Abs(vcell) > 1e-9 {
 				activeColCount++
 			}
 			expectedMaxCurrentA += conductance[r][c] * math.Abs(vcell)

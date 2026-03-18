@@ -7,8 +7,9 @@ import (
 // ADC models the read-path analog-to-digital converter that maps sensed voltage
 // (V) into quantized digital codes used as compute/readout levels.
 //
-// Default 4-bit configuration (literature optimal) provides 16 codes, balancing
-// cost/performance per multiple 2024-2025 studies. Can be increased for precision.
+// Default 6-bit configuration provides 64 codes to resolve 30 conductance levels
+// with margin. 4-bit was insufficient (only 5 distinct codes from 30 levels due to
+// exponential conductance compression). Can be reduced for area/power trade studies.
 //
 // H09: Includes SAR ADC noise modeling for realistic simulation:
 // - Comparator metastability (decision errors near thresholds)
@@ -59,7 +60,7 @@ type SARNoiseConfig struct {
 type ADCType int
 
 const (
-	ADCTypeSAR        ADCType = iota // Successive Approximation Register (default, 4-bit, 50ns, ~25fJ)
+	ADCTypeSAR        ADCType = iota // Successive Approximation Register (default, 6-bit, 50ns, ~30fJ)
 	ADCTypeFlash                     // Flash parallel: 2^N comparators, fastest (1-2ns), highest energy (50-100fJ/level)
 	ADCTypeSigmaDelta                // Sigma-Delta oversampling: high resolution, very low noise, slow (µs range)
 	ADCTypeRamp                      // Ramp/Slope integrating: simplest, 6-8 bit, 100ns+, very low energy (column-shared)
@@ -69,7 +70,7 @@ const (
 // DefaultADC returns an ADC configured for FeCIM read operations.
 func DefaultADC() *ADC {
 	adc := &ADC{
-		Bits:           4,    // 16 levels (4-bit optimal per 2024-2025 literature consensus)
+		Bits:           6,    // 6-bit: 64 codes for 30 conductance levels (4-bit had only 5 distinct codes)
 		VrefHigh:       1.0,  // Max sense voltage
 		VrefLow:        0.0,  // Min sense voltage
 		INL:            0.5,  // 0.5 LSB INL
@@ -221,7 +222,7 @@ func (a *ADC) EnergyPerConversion() float64 {
 	switch a.Type {
 	case ADCTypeSAR:
 		// SAR: ~1-10 fJ/conversion-step
-		return 5e-15 * float64(a.Bits) // ~20 fJ for 4-bit
+		return 5e-15 * float64(a.Bits) // ~30 fJ for 6-bit default
 	case ADCTypeFlash:
 		// Flash: ~50-100 fJ/level (2^N comparators in parallel)
 		// Ref: ISSCC 2023 survey - high parallelism drives high energy
