@@ -3,6 +3,7 @@ package crossbar
 
 import (
 	"fecim-lattice-tools/shared/logging"
+	"fecim-lattice-tools/shared/mathutil"
 	"fecim-lattice-tools/shared/physics"
 	"fmt"
 	"math"
@@ -621,17 +622,14 @@ func (a *Array) VMM(input []float64) ([]float64, error) {
 
 // quantizeDAC applies DAC quantization to input voltage.
 func (a *Array) quantizeDAC(value float64) float64 {
-	// Clamp to [0, 1]
-	value = math.Max(0, math.Min(1, value))
-	// Quantize based on DAC bits
+	value = mathutil.Clamp01(value)
 	levels := float64(a.dacLevels - 1)
 	return math.Round(value*levels) / levels
 }
 
 // quantizeADC applies ADC quantization to output current.
 func (a *Array) quantizeADC(value float64) float64 {
-	// Clamp to [0, 1]
-	value = math.Max(0, math.Min(1, value))
+	value = mathutil.Clamp01(value)
 	// Quantize based on ADC bits
 	levels := float64(a.adcLevels - 1)
 	return math.Round(value*levels) / levels

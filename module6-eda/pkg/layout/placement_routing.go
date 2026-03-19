@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math"
 	"sort"
+
+	"fecim-lattice-tools/shared/mathutil"
 )
 
 // MacroBlock is a coarse placement object (e.g., crossbar macro/peripheral macro).
@@ -89,7 +91,7 @@ func PlaceForceDirected(macros []MacroBlock, nets []Net, dieWidth, dieHeight, si
 			rowH = 0
 		}
 		if y+m.Height > dieHeight {
-			y = maxInt(0, dieHeight-m.Height)
+			y = max(0, dieHeight-m.Height)
 		}
 		p[m.Name] = vec{float64(x + m.Width/2), float64(y + m.Height/2)}
 		x += m.Width + sitePitchX
@@ -155,9 +157,9 @@ func PlaceForceDirected(macros []MacroBlock, nets []Net, dieWidth, dieHeight, si
 			pt.y += f.y
 
 			minX := float64(m.Width) / 2
-			maxX := float64(maxInt(m.Width/2, dieWidth-m.Width/2))
+			maxX := float64(max(m.Width/2, dieWidth-m.Width/2))
 			minY := float64(m.Height) / 2
-			maxY := float64(maxInt(m.Height/2, dieHeight-m.Height/2))
+			maxY := float64(max(m.Height/2, dieHeight-m.Height/2))
 			if pt.x < minX {
 				pt.x = minX
 			}
@@ -188,10 +190,10 @@ func PlaceForceDirected(macros []MacroBlock, nets []Net, dieWidth, dieHeight, si
 			y0 = 0
 		}
 		if x0+m.Width > dieWidth {
-			x0 = maxInt(0, dieWidth-m.Width)
+			x0 = max(0, dieWidth-m.Width)
 		}
 		if y0+m.Height > dieHeight {
-			y0 = maxInt(0, dieHeight-m.Height)
+			y0 = max(0, dieHeight-m.Height)
 		}
 		placed[m.Name] = Placement{X: x0, Y: y0}
 	}
@@ -229,7 +231,7 @@ func resolveOverlaps(placed map[string]Placement, macros []MacroBlock, dieWidth,
 				}
 				pb.X = newX
 				if pb.Y+mb.Height > dieHeight {
-					pb.Y = maxInt(0, dieHeight-mb.Height)
+					pb.Y = max(0, dieHeight-mb.Height)
 				}
 				placed[b] = pb
 				changed = true
@@ -250,13 +252,6 @@ func snapInt(v, step int) int {
 		return v
 	}
 	return (v / step) * step
-}
-
-func maxInt(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
 }
 
 // RouteManhattan routes all nets on a coarse Manhattan grid using BFS with block obstacles.
@@ -423,7 +418,7 @@ func edgeTerminals(ps Placement, ms MacroBlock, pd Placement, md MacroBlock, ste
 	sx, sy := ps.X+ms.Width/2, ps.Y+ms.Height/2
 	dx, dy := pd.X+md.Width/2, pd.Y+md.Height/2
 
-	if absInt(dx-sx) >= absInt(dy-sy) {
+	if mathutil.AbsInt(dx-sx) >= mathutil.AbsInt(dy-sy) {
 		if dx >= sx {
 			sx = ps.X + ms.Width + step
 			dx = pd.X - step
@@ -441,13 +436,6 @@ func edgeTerminals(ps Placement, ms MacroBlock, pd Placement, md MacroBlock, ste
 		}
 	}
 	return gridPoint{sx / step, sy / step}, gridPoint{dx / step, dy / step}
-}
-
-func absInt(v int) int {
-	if v < 0 {
-		return -v
-	}
-	return v
 }
 
 func copyBlocked(src [][]bool) [][]bool {

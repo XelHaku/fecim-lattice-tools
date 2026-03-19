@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"os"
 )
 
@@ -402,7 +403,7 @@ func QuantizeModel(model *Model, bits int) *QuantizedModel {
 		weightMax := 0.0
 		for _, row := range layer.Weights {
 			for _, w := range row {
-				if abs := absFloat64(w); abs > weightMax {
+				if abs := math.Abs(w); abs > weightMax {
 					weightMax = abs
 				}
 			}
@@ -427,7 +428,7 @@ func QuantizeModel(model *Model, bits int) *QuantizedModel {
 		if len(layer.Biases) > 0 {
 			biasMax := 0.0
 			for _, b := range layer.Biases {
-				if abs := absFloat64(b); abs > biasMax {
+				if abs := math.Abs(b); abs > biasMax {
 					biasMax = abs
 				}
 			}
@@ -529,10 +530,3 @@ func GenerateCrossbarMapping(layer *SerializedLayer, tileRows, tileCols int) *Cr
 	return mapping
 }
 
-// Helper function
-func absFloat64(x float64) float64 {
-	if x < 0 {
-		return -x
-	}
-	return x
-}

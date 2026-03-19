@@ -3,6 +3,8 @@ package layout
 import (
 	"fmt"
 	"testing"
+
+	"fecim-lattice-tools/shared/mathutil"
 )
 
 func TestPlaceForceDirected_WithinDieBoundsAndNoOverlap(t *testing.T) {
@@ -184,7 +186,7 @@ func polylineEndpoints(poly []RouteSegment) (point, point) {
 func routeWireLength(r RoutePath) int {
 	total := 0
 	for _, s := range r.Segments {
-		total += absInt(s.X2-s.X1) + absInt(s.Y2-s.Y1)
+		total += mathutil.AbsInt(s.X2-s.X1) + mathutil.AbsInt(s.Y2-s.Y1)
 	}
 	return total
 }
@@ -232,7 +234,7 @@ func manhattanMSTLength(nodes []string, macros map[string]MacroBlock, placements
 			if inTree[v] {
 				continue
 			}
-			d := absInt(centers[u].x-centers[v].x) + absInt(centers[u].y-centers[v].y)
+			d := mathutil.AbsInt(centers[u].x-centers[v].x) + mathutil.AbsInt(centers[u].y-centers[v].y)
 			if d < best[v] {
 				best[v] = d
 			}

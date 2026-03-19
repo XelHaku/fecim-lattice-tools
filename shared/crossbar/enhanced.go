@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"fecim-lattice-tools/shared/mathutil"
 )
 
 // scaleAroundMidpoint01 scales a normalized value in [0,1] around 0.5 by a
@@ -18,7 +20,7 @@ import (
 //
 // factor > 1 widens the window (values move away from 0.5), factor < 1 narrows it.
 func scaleAroundMidpoint01(x, factor float64) float64 {
-	x = math.Max(0, math.Min(1, x))
+	x = mathutil.Clamp01(x)
 	if factor <= 0 {
 		return 0.5
 	}

@@ -11,6 +11,8 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+
+	"fecim-lattice-tools/shared/mathutil"
 )
 
 // LayerActivationView displays neural network layer activations.
@@ -196,7 +198,7 @@ func (lav *LayerActivationView) generateInputImage(w, h int) image.Image {
 		for px := 0; px < 28; px++ {
 			value := lav.inputLayer[py*28+px]
 			if value > 0 {
-				intensity := uint8(clamp(value, 0, 1) * 255)
+				intensity := uint8(mathutil.Clamp(value, 0, 1) * 255)
 				c := color.RGBA{
 					R: uint8(float64(intensity) * 0.7),
 					G: intensity,
@@ -275,7 +277,7 @@ func (lav *LayerActivationView) generateHiddenImage(w, h int) image.Image {
 		row := i / cols
 
 		normVal := value / maxVal
-		intensity := uint8(clamp(normVal, 0, 1) * 255)
+		intensity := uint8(mathutil.Clamp(normVal, 0, 1) * 255)
 
 		// Use orange-yellow gradient for hidden layer
 		c := color.RGBA{
@@ -346,7 +348,7 @@ func (lav *LayerActivationView) generateOutputImage(w, h int) image.Image {
 	// Draw bars for each class
 	for i := 0; i < 10; i++ {
 		value := lav.outputLayer[i]
-		barHeight := int(clamp(value, 0, 1) * float64(chartHeight))
+		barHeight := int(mathutil.Clamp(value, 0, 1) * float64(chartHeight))
 
 		x0 := padding + i*barWidth + 1
 		x1 := padding + (i+1)*barWidth - 1
@@ -519,7 +521,7 @@ func (obc *OutputBarChart) generateImage(w, h int) image.Image {
 
 	// Draw bars
 	for i, val := range obc.values {
-		barHeight := int(clamp(val, 0, 1) * float64(chartHeight))
+		barHeight := int(mathutil.Clamp(val, 0, 1) * float64(chartHeight))
 
 		x0 := padding + i*barWidth + 2
 		x1 := padding + (i+1)*barWidth - 2

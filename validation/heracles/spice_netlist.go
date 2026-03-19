@@ -80,11 +80,6 @@ func GenerateHeraclesFECapNetlist(config HeraclesNetlistConfig) string {
 
 	// Step voltage for the piecewise-linear sweep.
 	stepV := config.Vmax / float64(config.Steps)
-	// Time per step — a nominal period for the transient source.
-	// We use 1 ns steps giving enough settling time for a compact model.
-	stepTimeNs := 1.0
-	totalSteps := 4 * config.Steps // -Vmax -> +Vmax -> -Vmax (full loop)
-
 	var b strings.Builder
 
 	// Simulation disclaimer header
@@ -147,9 +142,6 @@ func GenerateHeraclesFECapNetlist(config HeraclesNetlistConfig) string {
 	fmt.Fprintf(&b, "  print asc_v asc_i desc_v desc_i > %s\n", config.OutputFile)
 	fmt.Fprintf(&b, ".endc\n")
 	fmt.Fprintf(&b, "\n")
-
-	_ = totalSteps
-	_ = stepTimeNs
 
 	fmt.Fprintf(&b, ".end\n")
 

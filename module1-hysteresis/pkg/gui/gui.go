@@ -35,7 +35,6 @@ import (
 // Initialized in run() after EnableFileLogging() is called in main
 var log *logging.Logger
 
-// abs returns absolute value of int
 func abs(x int) int {
 	if x < 0 {
 		return -x
@@ -547,8 +546,7 @@ func (a *App) initDebugLog() {
 func NewApp() *App {
 	materials := ferroelectric.AllMaterials()
 	mat, matIndex := defaultMaterialSelection(materials)
-	numLevels := 30 // Default: FeCIM's 30 discrete analog states
-	// preisachGridSize := 200 // DEPRECATED: PhysicsStack uses adaptive steps
+	numLevels := physics.DefaultLevels
 	preisach := ferroelectric.NewPreisachModel(mat) // Use Wrapper
 
 	// Refactoring: Initialize managers
@@ -644,8 +642,7 @@ func NewAppWithMaterial(materialName string) *App {
 		mat, matIndex = defaultMaterialSelection(materials)
 	}
 
-	numLevels := 30 // Default: FeCIM's 30 discrete analog states
-	// preisachGridSize := 200 // DEPRECATED
+	numLevels := physics.DefaultLevels
 	preisach := ferroelectric.NewPreisachModel(mat) // Use Wrapper
 
 	// Refactoring: Initialize managers

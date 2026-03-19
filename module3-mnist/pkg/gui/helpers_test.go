@@ -4,6 +4,7 @@ import (
 	"image/color"
 	"testing"
 
+	"fecim-lattice-tools/shared/mathutil"
 	"fecim-lattice-tools/shared/physics"
 )
 
@@ -117,9 +118,9 @@ func TestClamp(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		result := clamp(tc.v, tc.min, tc.max)
+		result := mathutil.Clamp(tc.v, tc.min, tc.max)
 		if result != tc.expected {
-			t.Errorf("clamp(%v, %v, %v) = %v, expected %v", tc.v, tc.min, tc.max, result, tc.expected)
+			t.Errorf("mathutil.Clamp(%v, %v, %v) = %v, expected %v", tc.v, tc.min, tc.max, result, tc.expected)
 		}
 	}
 }

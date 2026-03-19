@@ -2,6 +2,8 @@
 
 package physics
 
+import "fecim-lattice-tools/shared/mathutil"
+
 // CalibrationBounds tracks the binary search bounds for iterative calibration.
 // Used by write-verify-retry loops to refine field values.
 type CalibrationBounds struct {
@@ -94,7 +96,7 @@ func (c *Calibrator) UpdateAscending(levelIdx int, levelError int) float64 {
 
 	// Level-dependent field constraints: higher levels need stronger fields
 	minE, maxE := c.FieldConstraintsAscending(levelIdx)
-	newVal = clamp(newVal, minE, maxE)
+	newVal = mathutil.Clamp(newVal, minE, maxE)
 
 	state.Value = newVal
 	state.LastError = levelError
@@ -142,7 +144,7 @@ func (c *Calibrator) UpdateDescending(levelIdx int, levelError int) float64 {
 
 	// Level-dependent field constraints: lower levels need more negative fields
 	minE, maxE := c.FieldConstraintsDescending(levelIdx)
-	newVal = clamp(newVal, minE, maxE)
+	newVal = mathutil.Clamp(newVal, minE, maxE)
 
 	state.Value = newVal
 	state.LastError = levelError
@@ -267,7 +269,7 @@ type VerifyResult struct {
 // CheckVerify checks if a write operation succeeded and whether to retry.
 func (c *Calibrator) CheckVerify(targetLevel, readLevel, retryCount int) VerifyResult {
 	error := readLevel - targetLevel
-	success := abs(error) <= c.Tolerance
+	success := mathutil.AbsInt(error) <= c.Tolerance
 	shouldRetry := !success && retryCount < c.MaxRetries
 
 	return VerifyResult{
@@ -278,19 +280,4 @@ func (c *Calibrator) CheckVerify(targetLevel, readLevel, retryCount int) VerifyR
 	}
 }
 
-func clamp(v, min, max float64) float64 {
-	if v < min {
-		return min
-	}
-	if v > max {
-		return max
-	}
-	return v
-}
 
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
-}

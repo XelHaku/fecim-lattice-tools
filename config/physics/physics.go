@@ -34,6 +34,8 @@ import (
 	"sync"
 
 	"gopkg.in/yaml.v3"
+
+	sharedio "fecim-lattice-tools/shared/io"
 )
 
 //go:embed defaults/*.yaml
@@ -584,7 +586,7 @@ func findSplitConfigRoot() (string, bool) {
 	for _, root := range configRoots {
 		for _, filename := range splitProbeFiles {
 			path := filepath.Join(root, filename)
-			if fileExists(path) {
+			if sharedio.FileExists(path) {
 				return root, true
 			}
 		}
@@ -595,7 +597,7 @@ func findSplitConfigRoot() (string, bool) {
 func readLegacyConfig() ([]byte, error) {
 	for _, root := range configRoots {
 		path := filepath.Join(root, legacyConfigFile)
-		if fileExists(path) {
+		if sharedio.FileExists(path) {
 			data, err := os.ReadFile(path)
 			if err != nil {
 				return nil, fmt.Errorf("failed to read %s: %w", path, err)
@@ -611,7 +613,7 @@ func readConfigFile(root, filename string) ([]byte, error) {
 		return nil, nil
 	}
 	path := filepath.Join(root, filename)
-	if !fileExists(path) {
+	if !sharedio.FileExists(path) {
 		return nil, nil
 	}
 	data, err := os.ReadFile(path)
@@ -621,13 +623,6 @@ func readConfigFile(root, filename string) ([]byte, error) {
 	return data, nil
 }
 
-func fileExists(path string) bool {
-	info, err := os.Stat(path)
-	if err != nil {
-		return false
-	}
-	return !info.IsDir()
-}
 
 // GetMaterial returns a material by name.
 // Valid names (all CMOS compatible):

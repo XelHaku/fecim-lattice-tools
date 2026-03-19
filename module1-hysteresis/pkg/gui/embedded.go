@@ -58,8 +58,7 @@ func (e *EmbeddedApp) SetPhysicsEngineName(name string) {
 func NewEmbeddedApp() *EmbeddedApp {
 	materials := ferroelectric.AllMaterials()
 	mat, matIndex := defaultMaterialSelection(materials)
-	numLevels := 30 // Default: FeCIM's 30 discrete analog states
-	// preisachGridSize := 200 // DEPRECATED
+	numLevels := physics.DefaultLevels
 	preisach := ferroelectric.NewPreisachModel(mat)
 
 	// Refactoring: Initialize managers

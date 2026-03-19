@@ -12,6 +12,8 @@ import (
 	"time"
 	"unicode"
 
+	"fecim-lattice-tools/shared/mathutil"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
@@ -545,8 +547,8 @@ func editDistance(a, b string) int {
 	}
 
 	// Optimization: if strings differ by more than 2 in length, skip
-	if absInt(len(a)-len(b)) > 2 {
-		return absInt(len(a) - len(b))
+	if mathutil.AbsInt(len(a)-len(b)) > 2 {
+		return mathutil.AbsInt(len(a) - len(b))
 	}
 
 	// Create matrix
@@ -566,35 +568,15 @@ func editDistance(a, b string) int {
 			if a[i-1] == b[j-1] {
 				cost = 0
 			}
-			matrix[i][j] = minInt(
-				matrix[i-1][j]+1,      // deletion
-				matrix[i][j-1]+1,      // insertion
+			matrix[i][j] = min(min(
+				matrix[i-1][j]+1,     // deletion
+				matrix[i][j-1]+1),    // insertion
 				matrix[i-1][j-1]+cost, // substitution
 			)
 		}
 	}
 
 	return matrix[len(a)][len(b)]
-}
-
-func absInt(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
-}
-
-func minInt(a, b, c int) int {
-	if a < b {
-		if a < c {
-			return a
-		}
-		return c
-	}
-	if b < c {
-		return b
-	}
-	return c
 }
 
 func hasGlossaryOverlap(glossarySet map[string]struct{}, docTerms []string) bool {

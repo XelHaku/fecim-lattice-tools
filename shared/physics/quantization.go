@@ -1,7 +1,11 @@
 // Package physics provides shared physics utilities for FeCIM simulations.
 package physics
 
-import "math"
+import (
+	"math"
+
+	"fecim-lattice-tools/shared/mathutil"
+)
 
 // FeCIM quantization constants
 const (
@@ -21,8 +25,7 @@ const (
 //	QuantizeToLevels(0.5, 30)  // Returns 0.5 (level 15)
 //	QuantizeToLevels(0.33, 30) // Returns ~0.345 (level 10)
 func QuantizeToLevels(value float64, levels int) float64 {
-	// Clamp to [0, 1]
-	value = math.Max(0, math.Min(1, value))
+	value = mathutil.Clamp01(value)
 	// Quantize to levels (0 to N-1)
 	level := math.Round(value * float64(levels-1))
 	return level / float64(levels-1)

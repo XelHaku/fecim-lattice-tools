@@ -105,7 +105,7 @@ func runHysteresisMode(engine string) error {
 	}
 	numLevels := mat.GetNumLevels()
 	if numLevels <= 0 {
-		numLevels = 30
+		numLevels = physics.DefaultLevels
 	}
 	midLevel := numLevels / 2
 

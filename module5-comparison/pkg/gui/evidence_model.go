@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"fecim-lattice-tools/shared/mathutil"
 	"fecim-lattice-tools/shared/physics"
 )
 
@@ -83,18 +84,9 @@ func BuildScenarioRun(profile ScenarioProfile, cfg ScenarioConfig) ScenarioRun {
 }
 
 func uncertainty(value, confidence float64) float64 {
-	return math.Abs(value) * (1 - clampConfidence(confidence))
+	return math.Abs(value) * (1 - mathutil.Clamp01(confidence))
 }
 
-func clampConfidence(c float64) float64 {
-	if c < 0 {
-		return 0
-	}
-	if c > 1 {
-		return 1
-	}
-	return c
-}
 
 func SensitivityRanking(run ScenarioRun, outputName string) []SensitivityImpact {
 	base, ok := run.Outputs[outputName]

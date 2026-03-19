@@ -271,7 +271,7 @@ func (ds *DeviceState) ensureISPPCalculatorLocked() *sharedphysics.ISPPCalculato
 		ec = 1.0
 	}
 	if numLevels < 2 {
-		numLevels = 30
+		numLevels = sharedphysics.DefaultLevels
 	}
 	ds.isppCalc = sharedphysics.NewISPPCalculator(ec, numLevels)
 	return ds.isppCalc

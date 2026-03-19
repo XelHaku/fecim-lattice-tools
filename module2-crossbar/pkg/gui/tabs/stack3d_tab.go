@@ -14,6 +14,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
+	"fecim-lattice-tools/shared/mathutil"
 	"fecim-lattice-tools/shared/render3d"
 )
 
@@ -197,7 +198,7 @@ func (t *Stack3DTab) regenerateLayers() {
 		for i := range data {
 			// Gradient with noise: base value depends on layer, noise makes it interesting
 			base := float64(l) / math.Max(float64(t.numLayers-1), 1)
-			data[i] = clamp01(base + (rand.Float64()-0.5)*0.3)
+			data[i] = mathutil.Clamp01(base + (rand.Float64()-0.5)*0.3)
 		}
 		layers[l] = render3d.LayerData{
 			Values: data,
@@ -218,13 +219,3 @@ func (t *Stack3DTab) updateInfo() {
 	})
 }
 
-// clamp01 clamps v to [0, 1].
-func clamp01(v float64) float64 {
-	if v < 0 {
-		return 0
-	}
-	if v > 1 {
-		return 1
-	}
-	return v
-}

@@ -72,7 +72,7 @@ func PreprocessDigit(pixels []float64) []float64 {
 		}
 	}
 
-	scale := float64(preprocessTarget) / float64(maxInt(cropW, cropH))
+	scale := float64(preprocessTarget) / float64(max(cropW, cropH))
 	newW := int(math.Round(float64(cropW) * scale))
 	newH := int(math.Round(float64(cropH) * scale))
 	if newW < 1 {
@@ -182,12 +182,12 @@ func resizeBilinear(src [][]float64, newH, newW int) [][]float64 {
 	for y := 0; y < newH; y++ {
 		sy := float64(y) * scaleY
 		y0 := int(math.Floor(sy))
-		y1 := minInt(y0+1, srcH-1)
+		y1 := min(y0+1, srcH-1)
 		wy := sy - float64(y0)
 		for x := 0; x < newW; x++ {
 			sx := float64(x) * scaleX
 			x0 := int(math.Floor(sx))
-			x1 := minInt(x0+1, srcW-1)
+			x1 := min(x0+1, srcW-1)
 			wx := sx - float64(x0)
 
 			v0 := src[y0][x0]*(1-wx) + src[y0][x1]*wx
@@ -199,16 +199,3 @@ func resizeBilinear(src [][]float64, newH, newW int) [][]float64 {
 	return dst
 }
 
-func minInt(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func maxInt(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}

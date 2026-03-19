@@ -8,6 +8,7 @@ import (
 	"fyne.io/fyne/v2/test"
 
 	"fecim-lattice-tools/module6-eda/pkg/config"
+	sharedio "fecim-lattice-tools/shared/io"
 )
 
 func TestMakeBuilderValidationTab(t *testing.T) {
@@ -470,13 +471,13 @@ func TestContentMakers(t *testing.T) {
 
 func TestFileExists(t *testing.T) {
 	// Test with a file that definitely doesn't exist
-	if fileExists("/this/path/should/not/exist/test.txt") {
-		t.Error("fileExists returned true for non-existent path")
+	if sharedio.FileExists("/this/path/should/not/exist/test.txt") {
+		t.Error("FileExists returned true for non-existent path")
 	}
 
-	// Test with current directory (should exist)
-	if !fileExists(".") {
-		t.Error("fileExists returned false for current directory")
+	// Directories are not files — FileExists must return false
+	if sharedio.FileExists(".") {
+		t.Error("FileExists returned true for a directory")
 	}
 }
 

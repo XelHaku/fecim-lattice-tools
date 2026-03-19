@@ -269,9 +269,9 @@ func runHeadlessReadParity(ds *DeviceState, weights [][]int, quantLevels, row, c
 	if !ds.IsPassiveMode() {
 		ds.SetWLSingle(row)
 	}
-	readVoltage := ds.GetReadRange().Max * 0.4
-	if readVoltage < 0.1 {
-		readVoltage = 0.2
+	readVoltage := ds.GetReadRange().Max * ReadVoltageFraction
+	if readVoltage < MinReadVoltageThreshold {
+		readVoltage = FallbackReadVoltage
 	}
 	// Match GUI mode-switch recompute path.
 	ds.SetAllDACVoltages(0)

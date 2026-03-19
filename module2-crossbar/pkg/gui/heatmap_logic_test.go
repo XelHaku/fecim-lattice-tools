@@ -1,6 +1,10 @@
 package gui
 
-import "testing"
+import (
+	"testing"
+
+	"fecim-lattice-tools/shared/mathutil"
+)
 
 func TestHeatmap_ColorAndImagePaths(t *testing.T) {
 	h := NewCrossbarHeatmap(3, 3)
@@ -23,7 +27,7 @@ func TestHeatmap_ColorAndImagePaths(t *testing.T) {
 		_ = h.selectionColor()
 	}
 
-	if clamp(-1, 0, 1) != 0 || clamp(2, 0, 1) != 1 || clamp(0.5, 0, 1) != 0.5 {
+	if mathutil.Clamp(-1, 0, 1) != 0 || mathutil.Clamp(2, 0, 1) != 1 || mathutil.Clamp(0.5, 0, 1) != 0.5 {
 		t.Fatal("clamp bounds failed")
 	}
 

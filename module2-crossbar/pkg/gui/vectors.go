@@ -12,6 +12,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 
+	"fecim-lattice-tools/shared/mathutil"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
@@ -667,7 +668,7 @@ func NewDiscreteLevel30Indicator() *DiscreteLevel30Indicator {
 
 // SetValue sets the value (0-1) and calculates the discrete level.
 func (d *DiscreteLevel30Indicator) SetValue(value float64) {
-	d.value = clamp(value, 0, 1)
+	d.value = mathutil.Clamp(value, 0, 1)
 	d.level = int(math.Round(d.value * 29))
 	fyne.Do(func() {
 		d.Refresh()

@@ -6,6 +6,7 @@ import (
 	"math"
 
 	"fecim-lattice-tools/shared/logging"
+	"fecim-lattice-tools/shared/mathutil"
 )
 
 var log = logging.NewLogger("eda-compiler")
@@ -178,7 +179,7 @@ func mapWeights(config *ArrayConfig) (*ArrayDesign, error) {
 				// Quantize
 				normalized := (w + wAbsMax) / (2 * wAbsMax)
 				level = int(math.Round(normalized * float64(config.Levels-1)))
-				level = clamp(level, 0, config.Levels-1)
+				level = mathutil.ClampInt(level, 0, config.Levels-1)
 				levelsUsed[level] = true
 
 				// Dequantize for stats
@@ -263,12 +264,3 @@ func Compile(weights [][]float64, legacyConfig CompileConfig) (*CrossbarMapping,
 	return GenerateDesign(config)
 }
 
-func clamp(v, min, max int) int {
-	if v < min {
-		return min
-	}
-	if v > max {
-		return max
-	}
-	return v
-}

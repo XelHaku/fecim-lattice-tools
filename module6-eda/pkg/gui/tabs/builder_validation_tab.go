@@ -24,15 +24,11 @@ import (
 	"fecim-lattice-tools/module6-eda/pkg/gui/widgets"
 	"fecim-lattice-tools/module6-eda/pkg/openlane"
 	"fecim-lattice-tools/module6-eda/pkg/validation"
+	sharedio "fecim-lattice-tools/shared/io"
 	"fecim-lattice-tools/shared/logging"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
-// fileExists checks if a file exists
-func fileExists(path string) bool {
-	_, err := os.Stat(path)
-	return err == nil
-}
 
 // MakeBuilderValidationTab creates a unified tab combining cell/array configuration,
 // preview (Verilog/DEF/Layout), validation, and export functionality
@@ -228,7 +224,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	updateLayoutImage := func() {
 		pngPath := fmt.Sprintf("data/fecim_crossbar_%dx%d.png", cfg.Rows, cfg.Cols)
 		absPath, _ := filepath.Abs(pngPath)
-		if fileExists(absPath) {
+		if sharedio.FileExists(absPath) {
 			sharedwidgets.SafeDo(func() {
 				klayoutImage.File = absPath
 				klayoutImage.Resource = nil
@@ -243,7 +239,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		// Try PNG first (converted from DOT by graphviz)
 		pngPath := fmt.Sprintf("data/fecim_crossbar_%dx%d_schematic.png", cfg.Rows, cfg.Cols)
 		absPath, _ := filepath.Abs(pngPath)
-		if fileExists(absPath) {
+		if sharedio.FileExists(absPath) {
 			sharedwidgets.SafeDo(func() {
 				yosysImage.File = absPath
 				yosysImage.Resource = nil
@@ -255,7 +251,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 		// Fallback: check if DOT file exists but PNG conversion failed
 		dotPath := fmt.Sprintf("data/fecim_crossbar_%dx%d_schematic.dot", cfg.Rows, cfg.Cols)
 		dotAbs, _ := filepath.Abs(dotPath)
-		if fileExists(dotAbs) {
+		if sharedio.FileExists(dotAbs) {
 			sharedwidgets.SafeDo(func() {
 				yosysStatus.SetText("DOT only (install graphviz)")
 			})
@@ -266,7 +262,7 @@ func MakeBuilderValidationTab(cfg *config.ArrayConfig, window fyne.Window) fyne.
 	updateOpenROADImage := func() {
 		pngPath := fmt.Sprintf("data/fecim_crossbar_%dx%d_openroad.png", cfg.Rows, cfg.Cols)
 		absPath, _ := filepath.Abs(pngPath)
-		if fileExists(absPath) {
+		if sharedio.FileExists(absPath) {
 			sharedwidgets.SafeDo(func() {
 				openroadImage.File = absPath
 				openroadImage.Resource = nil

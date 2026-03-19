@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	"math"
 	"path/filepath"
 
 	"fecim-lattice-tools/shared/io"
@@ -68,7 +69,7 @@ func FilterByCondition(dataset *LiteratureDataset, conditionKey string, conditio
 	filtered := []LiteratureDataPoint{}
 	for _, dp := range dataset.DataPoints {
 		if val, ok := dp.Conditions[conditionKey]; ok {
-			if abs(val-conditionValue) <= tolerance {
+			if math.Abs(val-conditionValue) <= tolerance {
 				filtered = append(filtered, dp)
 			}
 		}
@@ -76,9 +77,3 @@ func FilterByCondition(dataset *LiteratureDataset, conditionKey string, conditio
 	return filtered
 }
 
-func abs(x float64) float64 {
-	if x < 0 {
-		return -x
-	}
-	return x
-}

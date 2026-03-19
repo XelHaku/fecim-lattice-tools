@@ -69,6 +69,24 @@ const (
 	actionLabelExport     = "Export"
 	labelOverlay          = "Overlay:"
 	labelZoom             = "Zoom:"
+
+	// ReadVoltageFraction is the fraction of max read range used as the safe read voltage.
+	ReadVoltageFraction = 0.4
+
+	// MinReadVoltageThreshold is the threshold below which the read voltage is replaced by FallbackReadVoltage.
+	MinReadVoltageThreshold = 0.1
+
+	// FallbackReadVoltage is the default read voltage when the computed value is too low.
+	FallbackReadVoltage = 0.2
+
+	// MaxDACVoltageV is the maximum voltage that can be applied via DAC input.
+	MaxDACVoltageV = 2.0
+
+	// MaxDACCode is the maximum digital input code for DAC (8-bit).
+	MaxDACCode = 255
+
+	// DACCodeRange is the total number of DAC codes (0 to MaxDACCode).
+	DACCodeRange = 256
 )
 
 func formatCurrentA(currentA float64) string {
@@ -79,6 +97,41 @@ func formatCurrentA(currentA float64) string {
 		{unit: "nA", scale: 1e-9},
 		{unit: "pA", scale: 1e-12},
 	})
+}
+
+// techNodeSelectorParams returns (selectorRon, leakageS, nodeNm) for a technology node name.
+func techNodeSelectorParams(name string) (selectorRon, leakageS, nodeNm float64) {
+	switch name {
+	case "14nm":
+		return 0.8e3, 5e-11, 14
+	case "28nm":
+		return 1.5e3, 2e-11, 28
+	case "65nm":
+		return 3.5e3, 5e-12, 65
+	default:
+		return 7.0e3, 1e-12, 130
+	}
+}
+
+// safeReadVoltage computes a safe read voltage from the device's read range.
+// Returns ReadVoltageFraction * readRange.Max, with a floor of FallbackReadVoltage.
+func (ca *CircuitsApp) safeReadVoltage() float64 {
+	v := ca.deviceState.GetReadRange().Max * ReadVoltageFraction
+	if v < MinReadVoltageThreshold {
+		v = FallbackReadVoltage
+	}
+	return v
+}
+
+// parseBitsFromSelection extracts the bit width from a selector string like "5-bit (32)".
+// Returns the parsed bits and true, or 0 and false if parsing fails.
+func parseBitsFromSelection(selected string) (int, bool) {
+	var bits int
+	_, err := fmt.Sscanf(selected, "%d-bit", &bits)
+	if err != nil {
+		return 0, false
+	}
+	return bits, true
 }
 
 type scaledUnit struct {
@@ -197,7 +250,7 @@ func (ca *CircuitsApp) createUnifiedView() fyne.CanvasObject {
 
 	// Array info (updated on resize)
 	totalCells := ca.arrayRows * ca.arrayCols
-	bitCapacity := float64(totalCells) * 4.9
+	bitCapacity := float64(totalCells) * sharedphysics.BitsPerCell
 	ca.sharedArrayInfoLabel = widget.NewLabel(fmt.Sprintf("%dx%d array | %d levels | ~%.0f bits",
 		ca.arrayRows, ca.arrayCols, ca.quantLevels, bitCapacity))
 
@@ -559,7 +612,7 @@ func (ca *CircuitsApp) resizeArray(rows, cols int) {
 
 	// Update status (must be on UI thread)
 	totalCells := rows * cols
-	bitCapacity := float64(totalCells) * 4.9 // ~4.9 bits per 30-level cell
+	bitCapacity := float64(totalCells) * sharedphysics.BitsPerCell // ~4.9 bits per 30-level cell
 	sharedwidgets.SafeDo(func() {
 		if ca.operationsStatusLabel != nil {
 			ca.operationsStatusLabel.SetText(fmt.Sprintf("Array resized: %dx%d (%d cells, %.1f bits)",
@@ -641,17 +694,8 @@ func (ca *CircuitsApp) applyTechnologyNode(node string) {
 		MetalResistivity: tech.MetalResistivity,
 	}
 
-	var selectorRon, leakageS float64
-	switch tech.Name {
-	case "14nm":
-		selectorRon, leakageS, ca.selectedTechNodeNm = 0.8e3, 5e-11, 14
-	case "28nm":
-		selectorRon, leakageS, ca.selectedTechNodeNm = 1.5e3, 2e-11, 28
-	case "65nm":
-		selectorRon, leakageS, ca.selectedTechNodeNm = 3.5e3, 5e-12, 65
-	default:
-		selectorRon, leakageS, ca.selectedTechNodeNm = 7.0e3, 1e-12, 130
-	}
+	selectorRon, leakageS, nodeNm := techNodeSelectorParams(tech.Name)
+	ca.selectedTechNodeNm = nodeNm
 
 	if ca.deviceState != nil {
 		ca.deviceState.SetCellGeometry(geom)
@@ -696,19 +740,8 @@ func (ca *CircuitsApp) createDACBitsSelector() fyne.CanvasObject {
 	options := []string{"4-bit (16)", "5-bit (32)", "6-bit (64)", "7-bit (128)", "8-bit (256)"}
 
 	selector := widget.NewSelect(options, func(selected string) {
-		var bits int
-		switch selected {
-		case "4-bit (16)":
-			bits = 4
-		case "5-bit (32)":
-			bits = 5
-		case "6-bit (64)":
-			bits = 6
-		case "7-bit (128)":
-			bits = 7
-		case "8-bit (256)":
-			bits = 8
-		default:
+		bits, ok := parseBitsFromSelection(selected)
+		if !ok {
 			dialog.ShowError(fmt.Errorf("unsupported DAC selection %q", selected), ca.window)
 			return
 		}
@@ -738,17 +771,8 @@ func (ca *CircuitsApp) createADCBitsSelector() fyne.CanvasObject {
 	options := []string{"5-bit (32)", "6-bit (64)", "7-bit (128)", "8-bit (256)"}
 
 	selector := widget.NewSelect(options, func(selected string) {
-		var bits int
-		switch selected {
-		case "5-bit (32)":
-			bits = 5
-		case "6-bit (64)":
-			bits = 6
-		case "7-bit (128)":
-			bits = 7
-		case "8-bit (256)":
-			bits = 8
-		default:
+		bits, ok := parseBitsFromSelection(selected)
+		if !ok {
 			dialog.ShowError(fmt.Errorf("unsupported ADC selection %q", selected), ca.window)
 			return
 		}
@@ -867,12 +891,8 @@ func (ca *CircuitsApp) setOperationMode(mode OpMode) {
 		ca.deviceState.SetDACRangeMode(DACRangeRead)
 		// Per VOLTAGE_RULES.md: Only selected column gets read voltage
 		// Ground all columns first, then apply to selected column only
-		readVoltage := ca.deviceState.GetReadRange().Max * 0.4 // ~0.2V safe read
-		if readVoltage < 0.1 {
-			readVoltage = 0.2
-		}
 		ca.deviceState.SetAllDACVoltages(0)
-		ca.deviceState.SetDACVoltage(ca.deviceState.GetSelectedCol(), readVoltage)
+		ca.deviceState.SetDACVoltage(ca.deviceState.GetSelectedCol(), ca.safeReadVoltage())
 
 	case OpModeWrite:
 		// Single row active (only in 1T1R/2T1R)
@@ -901,15 +921,8 @@ func (ca *CircuitsApp) setOperationMode(mode OpMode) {
 	ca.updateModeButtons()
 	ca.updateActionButtons()  // Enable/disable action buttons based on mode
 	ca.updateModePanels(mode) // Show/hide mode-specific panels
-	ca.updateWLCheckboxes()
-	ca.updateWLHelpLabel()
 	ca.updateDACRangeModeLabel()
 	ca.recomputeAndRefresh()
-}
-
-// updateWLHelpLabel is a no-op - WL UI has been removed
-func (ca *CircuitsApp) updateWLHelpLabel() {
-	// No-op: WL UI removed
 }
 
 // updateModeButtons updates the mode button highlighting
@@ -1093,12 +1106,12 @@ func (ca *CircuitsApp) onDACVoltageChanged(col int, voltageStr string) {
 		return
 	}
 
-	// Clamp voltage to reasonable range
+	// Clamp voltage to valid DAC range
 	if voltage < 0 {
 		voltage = 0
 	}
-	if voltage > 2.0 {
-		voltage = 2.0
+	if voltage > MaxDACVoltageV {
+		voltage = MaxDACVoltageV
 	}
 
 	logInput("dac_col=%d voltage=%.3f", col, voltage)
@@ -1239,7 +1252,6 @@ func (ca *CircuitsApp) setUnifiedDACPreset(preset DACMode) {
 		ca.deviceState.SetDACPreset(DACWritePreset)
 	}
 	ca.updateDACRangeModeLabel()
-	ca.updateDACEntries()
 	ca.recomputeAndRefresh()
 }
 
@@ -1251,28 +1263,19 @@ func (ca *CircuitsApp) setAllUnifiedDACVoltages(voltageStr string) {
 	}
 	logInput("dac_all=%.3f", voltage)
 	ca.deviceState.SetAllDACVoltages(voltage)
-	ca.updateDACEntries()
 	ca.recomputeAndRefresh()
-}
-
-// onWLChanged is a no-op - WL checkboxes have been removed
-// Row selection is now done via cell clicks in onUnifiedCellTapped
-func (ca *CircuitsApp) onWLChanged(row int, checked bool) {
-	// No-op: WL checkboxes removed from UI
 }
 
 // setWLModeSingle sets WL mode to single (only selected row)
 func (ca *CircuitsApp) setWLModeSingle() {
 	selectedRow := ca.deviceState.GetSelectedRow()
 	ca.deviceState.SetWLSingle(selectedRow)
-	ca.updateWLCheckboxes()
 	ca.recomputeAndRefresh()
 }
 
 // setWLModeAll sets WL mode to all rows active
 func (ca *CircuitsApp) setWLModeAll() {
 	ca.deviceState.SetWLAll()
-	ca.updateWLCheckboxes()
 	ca.recomputeAndRefresh()
 }
 
@@ -1327,9 +1330,6 @@ func (ca *CircuitsApp) recomputeAndRefreshNow() {
 	ca.deviceState.Compute(weights, levels)
 	ca.mu.RUnlock()
 
-	// Update output display
-	ca.updateOutputDisplay()
-
 	// Update cell info
 	ca.updateCellInfo()
 	ca.updateSensePanel()
@@ -1379,28 +1379,6 @@ func (ca *CircuitsApp) refreshUnifiedArray() {
 			ca.sharedArrayCanvas.Refresh()
 		})
 	}
-}
-
-// updateDACEntries is a no-op - DAC values are shown on the diagram
-func (ca *CircuitsApp) updateDACEntries() {
-	// DAC values are displayed in the array diagram's DAC boxes
-}
-
-// updateWLCheckboxes is a no-op - WL checkboxes have been removed
-// WL state is now managed automatically based on mode and architecture
-func (ca *CircuitsApp) updateWLCheckboxes() {
-	// No-op: WL checkboxes removed from UI
-	// Row selection is done via cell clicks
-}
-
-// updateWLCheckboxesForArchitecture is a no-op - WL UI has been removed
-func (ca *CircuitsApp) updateWLCheckboxesForArchitecture() {
-	// No-op: WL UI removed
-}
-
-// updateOutputDisplay is a no-op - outputs are shown on the diagram
-func (ca *CircuitsApp) updateOutputDisplay() {
-	// Outputs are displayed in the array diagram's TIA/ADC boxes
 }
 
 // updateCellInfo updates the cell info display with detailed circuit data
@@ -1534,7 +1512,6 @@ func (ca *CircuitsApp) updateSensePanel() {
 	currentA := ca.deviceState.GetRowCurrent(row) * 1e-6
 	voltage := ca.deviceState.GetRowVoltage(row)
 	code := ca.deviceState.GetRowLevel(row)
-	_ = ca.deviceState.GetADCLevels()
 	saturated := ca.deviceState.IsSaturated(row)
 	isActive := ca.deviceState.IsRowActive(row)
 	mode := ca.deviceState.GetOperationMode()
@@ -1707,7 +1684,6 @@ func (ca *CircuitsApp) createArchitectureToggle() fyne.CanvasObject {
 			}
 		}
 
-		ca.updateWLCheckboxesForArchitecture()
 		ca.updateFootprintReference()
 		ca.recomputeAndRefresh()
 		ca.updateArchitectureSpecificUI()
@@ -2091,11 +2067,11 @@ func (ca *CircuitsApp) rebuildComputeInputs() {
 // onInputVectorEntryChanged handles input vector code changes.
 //
 // Physics meaning:
-//   - Each entry is a digital code d (0..255) mapped to an analog column voltage
-//     V = (d/255) * readRange.Max for compute-safe MVM.
+//   - Each entry is a digital code d (0..MaxDACCode) mapped to an analog column voltage
+//     V = (d/MaxDACCode) * readRange.Max for compute-safe MVM.
 //
 // Bounds / clamping:
-//   - Codes are clamped to [0,255].
+//   - Codes are clamped to [0, MaxDACCode].
 //   - DAC updates are only applied in COMPUTE mode to avoid unintentionally biasing
 //     the array in READ/WRITE modes.
 func (ca *CircuitsApp) onInputVectorEntryChanged(col int, valueStr string) {
@@ -2108,8 +2084,8 @@ func (ca *CircuitsApp) onInputVectorEntryChanged(col int, valueStr string) {
 	if value < 0 {
 		value = 0
 	}
-	if value > 255 {
-		value = 255
+	if value > MaxDACCode {
+		value = MaxDACCode
 	}
 	logInput("input_vector x%d=%d", col, value)
 
@@ -2144,7 +2120,7 @@ func (ca *CircuitsApp) randomizeInputVectorEntries() {
 	ca.mu.Lock()
 	valuesCopy := make([]int, len(ca.inputVector))
 	for i := range ca.inputVector {
-		ca.inputVector[i] = rand.Intn(256)
+		ca.inputVector[i] = rand.Intn(DACCodeRange)
 		valuesCopy[i] = ca.inputVector[i]
 	}
 	ca.mu.Unlock()

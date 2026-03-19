@@ -3,6 +3,8 @@ package validation
 import (
 	"encoding/json"
 	"math"
+
+	"fecim-lattice-tools/shared/mathutil"
 )
 
 // ReadinessInputs captures normalized [0..1] inputs.
@@ -21,22 +23,12 @@ type ReadinessReport struct {
 	NextTasks      []string `json:"next_tasks"`
 }
 
-func clamp01(v float64) float64 {
-	if v < 0 {
-		return 0
-	}
-	if v > 1 {
-		return 1
-	}
-	return v
-}
-
 // BuildExecutiveReadinessReport generates scorecard + next 5 tasks.
 func BuildExecutiveReadinessReport(in ReadinessInputs) ReadinessReport {
-	test := clamp01(in.TestPassRate)
-	cal := clamp01(in.CalibrationStatus)
-	exp := clamp01(in.ExportQuality)
-	doc := clamp01(in.DocumentationCoverage)
+	test := mathutil.Clamp01(in.TestPassRate)
+	cal := mathutil.Clamp01(in.CalibrationStatus)
+	exp := mathutil.Clamp01(in.ExportQuality)
+	doc := mathutil.Clamp01(in.DocumentationCoverage)
 
 	education := int(math.Round((0.30*test + 0.20*cal + 0.15*exp + 0.35*doc) * 100))
 	research := int(math.Round((0.35*test + 0.35*cal + 0.20*exp + 0.10*doc) * 100))

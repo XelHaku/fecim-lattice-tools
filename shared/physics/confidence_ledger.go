@@ -1,6 +1,10 @@
 package physics
 
-import "strings"
+import (
+	"strings"
+
+	"fecim-lattice-tools/shared/mathutil"
+)
 
 // Provenance describes where a parameter/value came from.
 type Provenance string
@@ -40,7 +44,7 @@ func (l *ConfidenceLedger) Register(parameter string, tag ConfidenceTag) {
 	if l == nil {
 		return
 	}
-	tag.Confidence = clamp01(tag.Confidence)
+	tag.Confidence = mathutil.Clamp01(tag.Confidence)
 	l.registry[strings.ToLower(strings.TrimSpace(parameter))] = tag
 }
 
@@ -69,12 +73,3 @@ type TaggedPhysicsValue struct {
 	Tag       ConfidenceTag `json:"tag"`
 }
 
-func clamp01(v float64) float64 {
-	if v < 0 {
-		return 0
-	}
-	if v > 1 {
-		return 1
-	}
-	return v
-}

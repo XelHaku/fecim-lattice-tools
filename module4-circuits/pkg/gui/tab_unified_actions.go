@@ -222,15 +222,9 @@ func (ca *CircuitsApp) onUnifiedRead() {
 	// Per VOLTAGE_RULES.md Section 3.1 and 4.1:
 	// - Selected BL: Read voltage (0.2V typical)
 	// - Unselected BLs: 0V (ground)
-	readRange := ca.deviceState.GetReadRange()
-	readVoltage := readRange.Max * 0.4 // ~0.2V for safe read
-	if readVoltage < 0.1 {
-		readVoltage = 0.2
-	}
-
 	// Ground all columns first, then apply read voltage only to selected column
 	ca.deviceState.SetAllDACVoltages(0)
-	ca.deviceState.SetDACVoltage(selectedCol, readVoltage)
+	ca.deviceState.SetDACVoltage(selectedCol, ca.safeReadVoltage())
 	ca.deviceState.SetDACRangeMode(DACRangeRead)
 
 	// Recompute with proper biasing
@@ -267,7 +261,6 @@ func (ca *CircuitsApp) onUnifiedCompute() {
 
 	// Ensure all rows are active for MVM
 	ca.deviceState.SetWLAll()
-	ca.updateWLCheckboxes()
 
 	// Apply input vector to DAC (convert 0-255 to read range voltages)
 	ca.mu.RLock()
@@ -388,7 +381,6 @@ func (ca *CircuitsApp) onUnifiedReset() {
 	// Reset DAC to read preset (uses material-derived voltage range)
 	ca.deviceState.SetDACPreset(DACReadPreset)
 	ca.updateDACRangeModeLabel()
-	ca.updateDACEntries()
 
 	// Reset WL based on operation mode (only in 1T1R/2T1R - passive keeps all on)
 	isPassive := ca.architecture == sharedwidgets.Architecture0T1R
@@ -399,7 +391,6 @@ func (ca *CircuitsApp) onUnifiedReset() {
 			ca.deviceState.SetWLSingle(0)
 		}
 	}
-	ca.updateWLCheckboxes()
 
 	ca.recomputeAndRefresh()
 	ca.operationsStatusLabel.SetText("Reset to mid-level complete")
@@ -429,12 +420,8 @@ func (ca *CircuitsApp) onUnifiedRandomArray() {
 		mode := ca.deviceState.GetOperationMode()
 		if mode == OpModeRead {
 			// Apply read voltage to selected column
-			readVoltage := ca.deviceState.GetReadRange().Max * 0.4
-			if readVoltage < 0.1 {
-				readVoltage = 0.2
-			}
 			ca.deviceState.SetAllDACVoltages(0)
-			ca.deviceState.SetDACVoltage(ca.deviceState.GetSelectedCol(), readVoltage)
+			ca.deviceState.SetDACVoltage(ca.deviceState.GetSelectedCol(), ca.safeReadVoltage())
 		} else if mode == OpModeCompute {
 			// Re-apply input vector as DAC voltages
 			params := make([]float64, len(ca.inputVector))

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"math"
+
+	"fecim-lattice-tools/shared/physics"
 )
 
 // ProgramOpts controls array-level ISPP execution.
@@ -58,12 +60,12 @@ func ProgramArray(config ArrayConfig, targetLevels [][]int, opts ProgramOpts) (*
 		opts.Order = "row-major"
 	}
 
-	levels := 30
+	levels := physics.DefaultLevels
 	if cfg.Material != nil {
 		levels = cfg.Material.GetNumLevels()
 	}
 	if levels < 2 {
-		levels = 30
+		levels = physics.DefaultLevels
 	}
 
 	// Initialize all cells at level 0.

@@ -21,6 +21,8 @@ import (
 	"math/rand"
 	"sync"
 	"time"
+
+	"fecim-lattice-tools/shared/mathutil"
 )
 
 // DeviceVariationConfig configures device-to-device parameter variation.
@@ -123,8 +125,8 @@ func (e *DeviceVariationEngine) GetDeviceVariation(row, col int) *DeviceVariatio
 	prFactor := 1.0 + e.config.PrSigmaRelative*prNoise
 
 	// Clamp to reasonable bounds (prevent negative or extreme values)
-	ecFactor = clampFloat(ecFactor, 0.5, 1.5)
-	prFactor = clampFloat(prFactor, 0.5, 1.5)
+	ecFactor = mathutil.Clamp(ecFactor, 0.5, 1.5)
+	prFactor = mathutil.Clamp(prFactor, 0.5, 1.5)
 
 	variation := &DeviceVariation{
 		EcFactor: ecFactor,
@@ -214,17 +216,6 @@ func (e *DeviceVariationEngine) SetSeed(seed int64) {
 	e.rng = rand.New(rand.NewSource(seed))
 	e.deviceCache = make(map[deviceKey]*DeviceVariation)
 	e.mu.Unlock()
-}
-
-// clampFloat restricts a value to [min, max].
-func clampFloat(v, min, max float64) float64 {
-	if v < min {
-		return min
-	}
-	if v > max {
-		return max
-	}
-	return v
 }
 
 // EstimateYield estimates the fraction of devices within spec.

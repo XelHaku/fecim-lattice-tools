@@ -10,6 +10,8 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+
+	"fecim-lattice-tools/shared/mathutil"
 )
 
 // ColorLegend displays a gradient bar with min/max labels and optional units.
@@ -257,9 +259,9 @@ func ViridisColor(t float64) color.RGBA {
 	g := 0.005 + t*(0.991-0.149*t)
 	b := 0.329 + t*(0.288-0.147*t)
 	return color.RGBA{
-		R: uint8(clampFloat(r, 0, 1) * 255),
-		G: uint8(clampFloat(g, 0, 1) * 255),
-		B: uint8(clampFloat(b, 0, 1) * 255),
+		R: uint8(mathutil.Clamp(r, 0, 1) * 255),
+		G: uint8(mathutil.Clamp(g, 0, 1) * 255),
+		B: uint8(mathutil.Clamp(b, 0, 1) * 255),
 		A: 255,
 	}
 }
@@ -325,15 +327,6 @@ func ErrorColor(t float64) color.RGBA {
 	}
 }
 
-func clampFloat(v, min, max float64) float64 {
-	if v < min {
-		return min
-	}
-	if v > max {
-		return max
-	}
-	return v
-}
 
 // GetColormapFunc returns the colormap function for a given name.
 func GetColormapFunc(name string) func(float64) color.RGBA {
@@ -360,9 +353,9 @@ func PlasmaColor(t float64) color.RGBA {
 	b := 0.53 - t*0.40
 
 	return color.RGBA{
-		R: uint8(clampFloat(r, 0, 1) * 255),
-		G: uint8(clampFloat(g, 0, 1) * 255),
-		B: uint8(clampFloat(b, 0, 1) * 255),
+		R: uint8(mathutil.Clamp(r, 0, 1) * 255),
+		G: uint8(mathutil.Clamp(g, 0, 1) * 255),
+		B: uint8(mathutil.Clamp(b, 0, 1) * 255),
 		A: 255,
 	}
 }

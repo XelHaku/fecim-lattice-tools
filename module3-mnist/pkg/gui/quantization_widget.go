@@ -13,6 +13,8 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+
+	"fecim-lattice-tools/shared/mathutil"
 )
 
 // QuantizationSample represents a single weight before and after quantization.
@@ -115,7 +117,7 @@ func (qw *QuantizationWidget) UpdateWithWeights(weights [][]float64, count int) 
 		quantizedOriginal := 0.0
 		if wMax > 0 {
 			normalized := (original + wMax) / (2.0 * wMax)
-			normalized = math.Max(0, math.Min(1, normalized))
+			normalized = mathutil.Clamp01(normalized)
 			bin := int(math.Round(normalized * float64(levels-1)))
 			if bin < 0 {
 				bin = 0

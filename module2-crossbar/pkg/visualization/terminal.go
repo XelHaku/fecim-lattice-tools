@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"fecim-lattice-tools/shared/crossbar"
+	"fecim-lattice-tools/shared/mathutil"
 )
 
 // TerminalVisualizer provides ASCII/Unicode visualization of crossbar operations.
@@ -252,18 +253,10 @@ func (v *TerminalVisualizer) levelToColor(level int) string {
 }
 
 func (v *TerminalVisualizer) valueToBar(value float64) string {
-	// Clamp to [0, 1]
-	value = math.Max(0, math.Min(1, value))
+	value = mathutil.Clamp01(value)
 	bars := []string{"▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"}
 	idx := int(value * float64(len(bars)-1))
 	return bars[idx]
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }
 
 // ShowIRDropAnalysis displays IR drop heatmap and statistics.

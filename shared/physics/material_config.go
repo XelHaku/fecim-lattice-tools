@@ -118,7 +118,7 @@ func (c *MaterialConfig) ToHZOMaterial() *HZOMaterial {
 
 	numLevels := c.NumLevels
 	if numLevels == 0 {
-		numLevels = 30
+		numLevels = DefaultLevels
 	}
 
 	return &HZOMaterial{

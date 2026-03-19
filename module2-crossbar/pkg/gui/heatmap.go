@@ -15,6 +15,7 @@ import (
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
 
+	"fecim-lattice-tools/shared/mathutil"
 	gpurender "fecim-lattice-tools/shared/render"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
@@ -657,9 +658,9 @@ func viridisColor(t float64) color.RGBA {
 	b := 0.329 + t*(0.288-0.147*t)
 
 	return color.RGBA{
-		R: uint8(clamp(r, 0, 1) * 255),
-		G: uint8(clamp(g, 0, 1) * 255),
-		B: uint8(clamp(b, 0, 1) * 255),
+		R: uint8(mathutil.Clamp(r, 0, 1) * 255),
+		G: uint8(mathutil.Clamp(g, 0, 1) * 255),
+		B: uint8(mathutil.Clamp(b, 0, 1) * 255),
 		A: 255,
 	}
 }
@@ -670,9 +671,9 @@ func plasmaColor(t float64) color.RGBA {
 	b := 0.53 - t*0.40
 
 	return color.RGBA{
-		R: uint8(clamp(r, 0, 1) * 255),
-		G: uint8(clamp(g, 0, 1) * 255),
-		B: uint8(clamp(b, 0, 1) * 255),
+		R: uint8(mathutil.Clamp(r, 0, 1) * 255),
+		G: uint8(mathutil.Clamp(g, 0, 1) * 255),
+		B: uint8(mathutil.Clamp(b, 0, 1) * 255),
 		A: 255,
 	}
 }
@@ -741,15 +742,6 @@ func fecimColor(t float64) color.RGBA {
 	}
 }
 
-func clamp(v, min, max float64) float64 {
-	if v < min {
-		return min
-	}
-	if v > max {
-		return max
-	}
-	return v
-}
 
 // selectionColor returns a contrasting selection border color based on the current colormap.
 func (h *CrossbarHeatmap) selectionColor() color.RGBA {

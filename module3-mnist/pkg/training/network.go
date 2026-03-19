@@ -8,6 +8,7 @@ import (
 
 	"fecim-lattice-tools/shared/crossbar"
 	"fecim-lattice-tools/shared/io"
+	"fecim-lattice-tools/shared/mathutil"
 )
 
 // MNISTNetwork represents a 2-layer neural network for MNIST classification.
@@ -71,7 +72,7 @@ func (n *MNISTNetwork) initializeWeights() {
 		for j := 0; j < n.layer1.Cols(); j++ {
 			// Map to 30 levels (0-1 range)
 			w := rand.NormFloat64()*scale1*0.5 + 0.5
-			w = math.Max(0, math.Min(1, w))
+			w = mathutil.Clamp01(w)
 			n.layer1.ProgramWeight(i, j, w)
 		}
 	}
@@ -81,7 +82,7 @@ func (n *MNISTNetwork) initializeWeights() {
 	for i := 0; i < n.layer2.Rows(); i++ {
 		for j := 0; j < n.layer2.Cols(); j++ {
 			w := rand.NormFloat64()*scale2*0.5 + 0.5
-			w = math.Max(0, math.Min(1, w))
+			w = mathutil.Clamp01(w)
 			n.layer2.ProgramWeight(i, j, w)
 		}
 	}

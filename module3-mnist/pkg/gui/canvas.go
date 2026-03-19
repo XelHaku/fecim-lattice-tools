@@ -10,6 +10,8 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
+
+	"fecim-lattice-tools/shared/mathutil"
 )
 
 // BrushSize represents predefined brush sizes.
@@ -373,7 +375,7 @@ func (dc *DigitCanvas) draw(pos fyne.Position) {
 					// Soft brush with falloff
 					intensity := 1.0 - (dist / (radius + 0.5))
 					if intensity > dc.pixels[ny][nx] {
-						dc.pixels[ny][nx] = clamp(intensity, 0, 1)
+						dc.pixels[ny][nx] = mathutil.Clamp(intensity, 0, 1)
 					}
 				}
 			}
@@ -397,16 +399,6 @@ func (dc *DigitCanvas) LastInputSource() InputSource {
 	return dc.lastInputSource
 }
 
-// clamp restricts a value to a range.
-func clamp(v, min, max float64) float64 {
-	if v < min {
-		return min
-	}
-	if v > max {
-		return max
-	}
-	return v
-}
 
 // ACCESSIBILITY: Keyboard navigation support
 // Arrow keys move cursor, Space/Enter draws, Delete clears
@@ -503,7 +495,7 @@ func (dc *DigitCanvas) drawAtGrid(px, py int) {
 				if dist <= radius {
 					intensity := 1.0 - (dist / (radius + 0.5))
 					if intensity > dc.pixels[ny][nx] {
-						dc.pixels[ny][nx] = clamp(intensity, 0, 1)
+						dc.pixels[ny][nx] = mathutil.Clamp(intensity, 0, 1)
 					}
 				}
 			}

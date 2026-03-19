@@ -5,6 +5,8 @@ import (
 	"math"
 	"math/rand"
 	"time"
+
+	"fecim-lattice-tools/shared/mathutil"
 )
 
 // ErrorModel defines the type of error distribution.
@@ -162,7 +164,7 @@ func (e *DeviceErrorEngine) ApplyProgrammingError(gTarget float64) float64 {
 	}
 
 	// Clamp to valid range [0, 1]
-	return clampValue(gProgrammed, 0, 1)
+	return mathutil.Clamp(gProgrammed, 0, 1)
 }
 
 // ApplyReadNoise applies read noise to a conductance value.
@@ -190,7 +192,7 @@ func (e *DeviceErrorEngine) ApplyReadNoise(gProgrammed float64, row, col int) fl
 	}
 
 	gRead := gProgrammed * (1 + noise)
-	return clampValue(gRead, 0, 1)
+	return mathutil.Clamp(gRead, 0, 1)
 }
 
 // ClearPersistentNoise clears all stored persistent noise values.
@@ -246,16 +248,6 @@ func (e *DeviceErrorEngine) generateNoise(model ErrorModel, sigma, gValue float6
 	}
 }
 
-// clampValue restricts a value to the range [min, max].
-func clampValue(value, min, max float64) float64 {
-	if value < min {
-		return min
-	}
-	if value > max {
-		return max
-	}
-	return value
-}
 
 // ApplyProgrammingErrorToMatrix applies programming error to an entire conductance matrix.
 // Returns a new matrix with noisy values (original is not modified).

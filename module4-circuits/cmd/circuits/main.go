@@ -376,7 +376,7 @@ func showISPPDemo(level int) {
 	mat := sharedphysics.FeCIMMaterial()
 	numLevels := mat.GetNumLevels()
 	if numLevels <= 0 {
-		numLevels = 30
+		numLevels = sharedphysics.DefaultLevels
 	}
 
 	if level < 0 || level >= numLevels {

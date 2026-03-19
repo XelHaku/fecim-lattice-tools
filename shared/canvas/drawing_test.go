@@ -4,6 +4,8 @@ import (
 	"image"
 	"image/color"
 	"testing"
+
+	"fecim-lattice-tools/shared/mathutil"
 )
 
 func TestDrawRect(t *testing.T) {
@@ -242,10 +244,10 @@ func TestLevelToColor(t *testing.T) {
 			// Allow some tolerance for interpolation
 			tolerance := uint8(30)
 
-			if abs(int(c.R)-int(tt.expectR)) > int(tolerance) {
+			if mathutil.AbsInt(int(c.R)-int(tt.expectR)) > int(tolerance) {
 				t.Errorf("expected R~%d, got R=%d", tt.expectR, c.R)
 			}
-			if abs(int(c.B)-int(tt.expectB)) > int(tolerance) {
+			if mathutil.AbsInt(int(c.B)-int(tt.expectB)) > int(tolerance) {
 				t.Errorf("expected B~%d, got B=%d", tt.expectB, c.B)
 			}
 			if c.A != 255 {
@@ -320,9 +322,9 @@ func TestAbs(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		result := abs(tt.input)
+		result := mathutil.AbsInt(tt.input)
 		if result != tt.expect {
-			t.Errorf("abs(%d) = %d, expected %d", tt.input, result, tt.expect)
+			t.Errorf("mathutil.AbsInt(%d) = %d, expected %d", tt.input, result, tt.expect)
 		}
 	}
 }

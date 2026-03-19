@@ -326,11 +326,6 @@ func (s *StackRenderer) drawWires(img *image.RGBA, quads []layerQuad, proj Mat4,
 
 	// Draw wires only at corners and center of each layer pair
 	for qi := 0; qi < len(quads)-1; qi++ {
-		q0 := quads[qi]
-		q1 := quads[qi+1]
-		_ = q0
-		_ = q1
-
 		// Connect corners
 		for ci := 0; ci < 4; ci++ {
 			x0 := int(quads[qi].corners[ci][0])

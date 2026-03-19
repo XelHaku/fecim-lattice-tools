@@ -5,6 +5,8 @@ package utils
 import (
 	"image"
 	"image/color"
+
+	"fecim-lattice-tools/shared/mathutil"
 )
 
 // DrawRect fills a rectangular region in an RGBA image with the specified color.
@@ -223,7 +225,7 @@ func DrawThickLine(img *image.RGBA, x1, y1, x2, y2, thickness int, c color.Color
 	dx := x2 - x1
 	dy := y2 - y1
 
-	steps := max(abs(dx), abs(dy))
+	steps := max(mathutil.AbsInt(dx), mathutil.AbsInt(dy))
 	if steps == 0 {
 		steps = 1
 	}
@@ -255,10 +257,3 @@ func DrawThickLine(img *image.RGBA, x1, y1, x2, y2, thickness int, c color.Color
 	}
 }
 
-// abs returns the absolute value of an integer.
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
-}

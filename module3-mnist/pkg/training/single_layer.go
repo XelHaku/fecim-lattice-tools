@@ -9,6 +9,7 @@ import (
 
 	"fecim-lattice-tools/shared/crossbar"
 	"fecim-lattice-tools/shared/io"
+	"fecim-lattice-tools/shared/mathutil"
 )
 
 // SingleLayerNetwork represents a single-layer neural network for MNIST.
@@ -50,7 +51,7 @@ func (n *SingleLayerNetwork) initializeWeights() {
 		for j := 0; j < 784; j++ {
 			// Map to 30 levels (0-1 range)
 			w := rand.NormFloat64()*scale*0.5 + 0.5
-			w = math.Max(0, math.Min(1, w))
+			w = mathutil.Clamp01(w)
 			n.layer.ProgramWeight(i, j, w)
 		}
 	}

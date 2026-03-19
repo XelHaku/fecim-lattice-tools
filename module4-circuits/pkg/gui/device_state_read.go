@@ -63,7 +63,7 @@ func (ds *DeviceState) conductanceToLevel(gPhys float64, levels int) int {
 		levels = ds.writeRange.NumLevels
 	}
 	if levels <= 0 {
-		levels = 30
+		levels = sharedphysics.DefaultLevels
 	}
 	gmin, gmax := ds.conductanceBounds()
 	if gmax <= gmin {
