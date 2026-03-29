@@ -160,7 +160,7 @@ Load material preset → Compare loop shapes side-by-side
 |----------|-------------|------------|--------|---------|
 | Standard HZO | 25 | 1.2 | 1 | 450 |
 | FeCIM HZO | 30 | 1.0 | 10 | 450 |
-| Superlattice | 50 | 0.85 | 0.36 | 500 |
+| Superlattice | 22 | 0.85 | 0.36 | 500 |
 | Cryogenic HZO | 75 | 1.5 | 1 | 450 |
 | AlScN | 120 | 5.0 | 10 | 1000 |
 | HZO-32 | 20 | 1.0 | 10 | 450 |

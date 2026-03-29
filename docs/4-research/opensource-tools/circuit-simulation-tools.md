@@ -1130,11 +1130,9 @@ pip install --upgrade PySpice
 
 ## 16. Related Documentation
 
-- **[circuits.CIM-fundamentals.md](../peripheral-circuits/circuits.CIM-fundamentals.md)** — Physics of CIM peripheral circuits
-- **[circuits.operations.md](../peripheral-circuits/circuits.operations.md)** — How read/write/compute operations work
-- **[circuits.opensource.md](../peripheral-circuits/circuits.opensource.md)** — Additional peripheral design tools
-- **[../hysteresis/hysteresis.physics.md](../hysteresis/../hysteresis/hysteresis.physics.md)** — Ferroelectric physics models
-- **[eda-learn-screen.md](../eda/guides/zero-to-asic.md)** — EDA tool learning resources (archived)
+- **[circuits.CIM-fundamentals.md](../internal-analysis/circuits.CIM-fundamentals.md)** — Physics of CIM peripheral circuits
+- **[Module 1 Physics](../../2-learn/module1-hysteresis/physics.md)** — Ferroelectric physics models
+- **[Module 6 EDA](../../2-learn/module6-eda/README.md)** — EDA tools and learning resources
 
 ---
 

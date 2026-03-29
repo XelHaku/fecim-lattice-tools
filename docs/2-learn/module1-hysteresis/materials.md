@@ -148,7 +148,7 @@ Where D is displacement, E is electric field, P is polarization.
 |----------|-------------|-------|
 | Standard HZO | 25 | Baseline |
 | FeCIM HZO | 30 | Estimated |
-| Literature Superlattice | 50 | Cheema 2020 |
+| Literature Superlattice | 22 | IEEE 10787441 2024; revised from Cheema 2020 |
 | Cryogenic HZO (4K) | 75 | Enhanced at cryo |
 | AlScN | 120 | Very high |
 

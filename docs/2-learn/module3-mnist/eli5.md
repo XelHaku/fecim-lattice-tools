@@ -34,5 +34,5 @@ The gap between the two shows how hardware constraints shape accuracy.
 
 ## Next Steps
 
-- Read the formal model in [PHYSICS.md](PHYSICS.md).
-- Connect to implementation details in [FEATURES.md](FEATURES.md).
+- Read the formal model in [physics.md](physics.md).
+- Connect to implementation details in [features.md](features.md).

@@ -402,7 +402,7 @@ Reference calculations verified against:
 - **For features** → [features.md](./features.md)
 - **For code structure** → [architecture.md](./architecture.md)
 - **For integration** → [tools.md](./tools.md)
-- **For voltage schemes** → [voltage-rules.md](./voltage-rules.md)
+- **For voltage schemes** → [architecture.md](./architecture.md)
 
 ---
 

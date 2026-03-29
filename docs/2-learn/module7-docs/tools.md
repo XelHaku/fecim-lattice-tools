@@ -1,4 +1,4 @@
-# Module 7: Docs - Open-Source Tools
+# Module 7: Documentation - Open-Source Tools
 
 ## Evidence Status (Demonstrated vs Modeled vs Aspirational)
 

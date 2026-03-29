@@ -489,8 +489,7 @@ Rcell00 WL0_internal BL0_internal 10k
 
 - **[circuit-analysis-libraries.md](circuit-analysis-libraries.md)** - Full library analysis
 - **[circuit-simulation-tools.md](circuit-simulation-tools.md)** - SPICE tools
-- **[../crossbar/reference/VOLTAGE_RULES.md](../crossbar/reference/VOLTAGE_RULES.md)** - Voltage specifications
-- **[../crossbar/educational/../educational/crossbar.physics.md](../crossbar/educational/../educational/crossbar.physics.md)** - Physics models
+- **[Module 2 Crossbar Physics](../../2-learn/module2-crossbar/physics.md)** - Physics models and voltage schemes
 
 ---
 

@@ -7,7 +7,7 @@ This matrix maps each reported scientific claim to executable verification artif
 | Pr=19.17 µC/cm² (HZO, Materlik 2015) | `TestPhysicsRegressionCurves`, `scripts/module1_automation.sh --fast` | validation/testdata/ | ±5% |
 | Ec=1.16 MV/cm | `TestPhysicsRegressionCurves`, `scripts/module1_automation.sh --fast` | validation/testdata/ | ±5% |
 | MNIST 80% accuracy | TestFullStackMNIST | validation/ | ≥80% |
-| Energy 44.94 fJ/cell | TestTransientPulse | shared/physics/ | 10-100 fJ range |
+| Energy 44.94 fJ/cell | ~~TestTransientPulse~~ (test removed/renamed — needs investigation) | shared/physics/ | 10-100 fJ range |
 | **(M4)** Power conservation < 1% | `scripts/module4_automation.sh --fast` (TestThermodynamics*) | module4-circuits/pkg/arraysim/ | < 1% |
 | **(M4)** KCL residual < 1e-12 | `scripts/module4_automation.sh --fast` (TestKirchhoff*) | module4-circuits/pkg/arraysim/ | < 1e-12 |
 | **(M4)** MVM accuracy < 5% (Tier-A) | `scripts/module4_automation.sh --full` (TestComputeMVM*) | module4-circuits/pkg/gui/ | < 5% |

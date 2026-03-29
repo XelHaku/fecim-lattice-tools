@@ -42,8 +42,6 @@ module5-comparison/pkg/gui/logs/
 *.log
 logs/
 **/*.log
-cmd/fecim-visualizer/logs/2026-01-23_19-16-14-mnist.log
-cmd/fecim-visualizer/logs/
 .commit-push.pid
 
 # AI session state (should never be tracked)
@@ -93,6 +91,13 @@ validation/literature/output/
 opensource/**
 !opensource/clone-all.sh
 !opensource/opensource-tools-summary.md
+
+# Secrets
+.env
+
+# Cognee (local knowledge engine)
+.venv-cognee/
+.cognee_system/
 
 # Tool-specific dirs (not project code)
 .claude-flow/

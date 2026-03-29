@@ -85,7 +85,7 @@ go test ./module4-circuits/pkg/arraysim -run TestMixedPrecisionPlanner -v
 ### Common Patterns
 
 - **Array creation**: `NewArray(rows, cols, tierType, config)` with `tierType` enum
-- **MVM with nonidealities**: Call underlying crossbar; Tier B applies post-processing
+- **MVM with non-idealities**: Call underlying crossbar; Tier B applies post-processing
 - **Read margin**: `ComputeReadMargin()` returns worst-case and statistical margins
 - **ISPP schedule**: `ScheduleWrites(targets)` returns ordered list of (row, col, level) tuples
 - **Transient analysis**: `ComputeTransient(inputVector, timePoints)` returns V(t)

@@ -149,7 +149,7 @@ Perfect for: Researchers, academics, verification
 ⚠️ Performance comparisons (pending silicon)
 ⚠️ Device parameters (literature ranges)
 
-Full status: See [project/STATUS.md](project/STATUS.md)
+Full status: See [status.md](../status.md)
 
 ---
 

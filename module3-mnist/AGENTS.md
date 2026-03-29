@@ -38,7 +38,7 @@ MNIST digit recognition module using ferroelectric crossbar arrays for inference
 - **Quantization levels**: Default 30 (conference claim). Configurable per-layer via `PerLayerQuant` flag.
 - **Inference path**: Two engines:
   1. **Full-precision**: No quantization (baseline)
-  2. **CIM (Compute-In-Memory)**: Quantized with noise and peripheral effects
+  2. **CIM (Compute-in-Memory)**: Quantized with noise and peripheral effects
 - **Peripheral effects**: DAC bits, ADC bits, TIA feedback/capacitance, ADC conversion time
 - **Noise decomposition**: ADC noise, thermal, flicker, cell variation (σ/μ per component)
 - **Training**: Two modes:

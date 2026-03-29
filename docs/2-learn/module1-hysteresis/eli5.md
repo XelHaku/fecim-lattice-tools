@@ -1,5 +1,11 @@
 # Module 1: Hysteresis - The Memory Cell's P-E Curve
 
+## Evidence Status (Demonstrated vs Modeled vs Aspirational)
+
+- **Demonstrated:** P-E hysteresis curves, Preisach model, LK solver, material presets are implemented in this repo and verifiable from source/tests.
+- **Modeled:** ISPP write controller, retention/wakeup/dispersion are simulator models unless explicitly tied to cited measured data.
+- **Aspirational:** Real device calibration and fabrication validation are roadmap intent and must not be reported as demonstrated results.
+
 > **Explain Like I'm 5:** The ferroelectric material remembers which way you pushed it!
 
 ---
@@ -88,9 +94,9 @@ More states per cell = store more information!
 
 | Parameter | Symbol | Value | Why It Matters |
 |-----------|--------|-------|----------------|
-| **Saturation Polarization** | Ps | 25 μC/cm² | Maximum charge separation (memory capacity) |
-| **Coercive Field** | Ec | 1.0 MV/cm | Voltage to flip the polarization (write effort) |
-| **Remanent** | Pr | ~15 μC/cm² | What stays after you stop pushing (what you read) |
+| **Saturation Polarization** | Ps | 30 μC/cm² | Maximum charge separation (memory capacity) |
+| **Coercive Field** | Ec | 1.2 MV/cm | Voltage to flip the polarization (write effort) |
+| **Remanent** | Pr | ~24.5 μC/cm² | What stays after you stop pushing (what you read) |
 
 ---
 

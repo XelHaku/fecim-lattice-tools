@@ -1,4 +1,4 @@
-# Module 7: Docs - Features
+# Module 7: Documentation - Features
 
 ## Evidence Status (Demonstrated vs Modeled vs Aspirational)
 

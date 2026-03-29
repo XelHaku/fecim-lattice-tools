@@ -14,7 +14,7 @@ func TestNewIdealTab(t *testing.T) {
 	app := test.NewApp()
 	defer app.Quit()
 
-	array, err := crossbar.NewArray(&crossbar.Config{Rows: 8, Cols: 8})
+	array, err := crossbar.NewArray(&crossbar.Config{Rows: 8, Cols: 8, ADCBits: 6, DACBits: 8})
 	if err != nil {
 		t.Fatalf("Failed to create array: %v", err)
 	}
@@ -39,7 +39,7 @@ func TestIdealTabContent(t *testing.T) {
 	app := test.NewApp()
 	defer app.Quit()
 
-	array, err := crossbar.NewArray(&crossbar.Config{Rows: 16, Cols: 16})
+	array, err := crossbar.NewArray(&crossbar.Config{Rows: 16, Cols: 16, ADCBits: 6, DACBits: 8})
 	if err != nil {
 		t.Fatalf("Failed to create array: %v", err)
 	}
@@ -56,11 +56,11 @@ func TestIdealTabSetArray(t *testing.T) {
 	app := test.NewApp()
 	defer app.Quit()
 
-	array1, err := crossbar.NewArray(&crossbar.Config{Rows: 8, Cols: 8})
+	array1, err := crossbar.NewArray(&crossbar.Config{Rows: 8, Cols: 8, ADCBits: 6, DACBits: 8})
 	if err != nil {
 		t.Fatalf("Failed to create array1: %v", err)
 	}
-	array2, err := crossbar.NewArray(&crossbar.Config{Rows: 16, Cols: 16})
+	array2, err := crossbar.NewArray(&crossbar.Config{Rows: 16, Cols: 16, ADCBits: 6, DACBits: 8})
 	if err != nil {
 		t.Fatalf("Failed to create array2: %v", err)
 	}
@@ -98,7 +98,7 @@ func TestIdealTabWithCallback(t *testing.T) {
 	app := test.NewApp()
 	defer app.Quit()
 
-	array, err := crossbar.NewArray(&crossbar.Config{Rows: 8, Cols: 8})
+	array, err := crossbar.NewArray(&crossbar.Config{Rows: 8, Cols: 8, ADCBits: 6, DACBits: 8})
 	if err != nil {
 		t.Fatalf("Failed to create array: %v", err)
 	}
@@ -611,7 +611,7 @@ func TestTabsMultipleContentCalls(t *testing.T) {
 	defer app.Quit()
 
 	t.Run("IdealTab", func(t *testing.T) {
-		array, err := crossbar.NewArray(&crossbar.Config{Rows: 8, Cols: 8})
+		array, err := crossbar.NewArray(&crossbar.Config{Rows: 8, Cols: 8, ADCBits: 6, DACBits: 8})
 		if err != nil {
 			t.Fatalf("Failed to create array: %v", err)
 		}

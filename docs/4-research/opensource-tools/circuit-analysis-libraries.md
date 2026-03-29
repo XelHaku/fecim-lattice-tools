@@ -1083,9 +1083,8 @@ python3 -c "from lcapy import Circuit; print('✅ Lcapy OK')"
 
 ## Related FeCIM Documentation
 
-- **[Crossbar Physics](../crossbar/educational/../educational/crossbar.physics.md)** - Physical principles underlying these tools
-- **[Module 2 Implementation](../development/GUI/GUI.module2.md)** - Our Go crossbar implementation
-- **[Module 4 Circuits](../peripheral-circuits/circuits.CIM-fundamentals.md)** - DAC/ADC/TIA design
+- **[Module 2 Implementation](../../3-develop/gui/GUI.module2.md)** - Our Go crossbar implementation
+- **[Module 4 Circuits](../internal-analysis/circuits.CIM-fundamentals.md)** - DAC/ADC/TIA design
 - **[Open-Source Tools Overview](README.md)** - Broader tool ecosystem
 
 ---

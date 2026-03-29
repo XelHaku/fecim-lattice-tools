@@ -16,16 +16,11 @@ Module 6 provides Electronic Design Automation (EDA) tools for compiling high-le
 
 ### For Beginners
 - **[ELI5 Explanation](./eli5.md)** - What is EDA?
-- **[Integration Guide](../../eda/guides/integration.md)** - OpenLane workflow
 
 ### For Developers
 - **[Physics Reference](./physics.md)** - Mapping model, abstraction levels
 - **[Features](./features.md)** - Compiler, export formats
-- **[CLI Reference](../../eda/references/cli-reference.md)** - Command-line tools
-
-### For Researchers
-- **[OpenLane Integration](../../eda/guides/integration.md)** - From FeCIM to GDS
-- **[PDK Setup](./pdk/README.md)** - Sky130, other PDKs
+- **[Open-Source Tools](./tools.md)** - EDA tool ecosystem
 
 ---
 
@@ -291,7 +286,7 @@ fecim-eda export --pdk sky130 --tech-file sky130A.tech
 fecim-eda --tech-config my_pdk.json
 ```
 
-See [pdk/README.md](./pdk/README.md) for PDK setup guide.
+See [tools.md](./tools.md) for PDK and EDA tool information.
 
 ---
 
@@ -329,9 +324,7 @@ netgen -batch lvs netlist.sp layout.extracted.sp
 | [eli5.md](./eli5.md) | EDA basics | Beginners |
 | [physics.md](./physics.md) | Abstraction levels | Developers |
 | [features.md](./features.md) | Compiler, export | Developers |
-| [integration.md](../../eda/guides/integration.md) | OpenLane workflow | Researchers |
-| [cli-reference.md](../../eda/references/cli-reference.md) | Command reference | All |
-| [pdk/README.md](./pdk/README.md) | PDK setup | Developers |
+| [tools.md](./tools.md) | EDA tool ecosystem | Researchers |
 
 ---
 

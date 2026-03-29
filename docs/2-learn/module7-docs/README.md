@@ -1,4 +1,4 @@
-# Module 7: Documentation Browser
+# Module 7: Documentation
 
 **Navigation:** [← Back to Learn](../README.md) | [ELI5](./eli5.md) | [Features](./features.md)
 

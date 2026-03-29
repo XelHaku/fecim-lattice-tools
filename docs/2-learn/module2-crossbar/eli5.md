@@ -1,5 +1,11 @@
 # Module 2: Crossbar - Compute-in-Memory
 
+## Evidence Status (Demonstrated vs Modeled vs Aspirational)
+
+- **Demonstrated:** MVM operation, quantization to 30 levels, heatmap visualization are implemented in this repo and verifiable from source/tests.
+- **Modeled:** IR drop, sneak paths, drift, device variation are simulator models unless explicitly tied to cited measured data.
+- **Aspirational:** Full peripheral integration and GPU acceleration are roadmap intent and must not be reported as demonstrated results.
+
 > **Explain Like I'm 5:** Physics does multiplication for free when you use a crossbar array!
 
 ---
@@ -95,7 +101,7 @@ To multiply a 1000×1000 matrix by a vector:
 - Energy: physics doing the work
 ```
 
-**Same result. 1000× faster. 1000× less energy.**
+**Same result. 1000× faster. 1000× less energy (projected; see honesty audit for caveats).**
 
 ---
 

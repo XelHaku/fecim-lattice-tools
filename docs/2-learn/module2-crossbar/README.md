@@ -16,7 +16,6 @@ Module 2 implements a physics-accurate crossbar array simulator for analog matri
 
 ### For Beginners
 - **[ELI5 Explanation](./eli5.md)** - Start here for crossbar array intuition
-- **[Demo Guide](./demo.md)** - Interactive GUI walkthrough
 
 ### For Developers
 - **[Physics Reference](./physics.md)** - MVM equations, non-idealities, conductance models
@@ -25,8 +24,6 @@ Module 2 implements a physics-accurate crossbar array simulator for analog matri
 
 ### For Researchers
 - **[Open-Source Tools](./tools.md)** - Integration with CrossSim, NeuroSim, SPICE
-- **[Voltage Rules](./voltage-rules.md)** - 0T1R, 1T1R, 2T1R architectures
-- **[Research References](./research.md)** - Literature review and citations
 
 ---
 
@@ -126,9 +123,6 @@ weights = np.load('crossbar_weights.npy')
 | [features.md](./features.md) | Feature list, workflows | Developers |
 | [architecture.md](./architecture.md) | Code structure, types, data flow | Developers |
 | [tools.md](./tools.md) | Open-source ecosystem | Researchers |
-| [voltage-rules.md](./voltage-rules.md) | 0T1R/1T1R/2T1R architectures | Researchers |
-| [demo.md](./demo.md) | GUI walkthrough | All |
-| [research.md](./research.md) | Literature references | Researchers |
 
 ---
 
@@ -175,7 +169,7 @@ This provides ~4.9 bits per cell (log₂(30) ≈ 4.9).
 | **1T1R** | 1 | Low (1000× isolation) | Medium | Moderate | Production |
 | **2T1R** | 2 | None | Low | Lower | Premium applications |
 
-See [voltage-rules.md](./voltage-rules.md) for detailed voltage schemes.
+See [architecture.md](./architecture.md) for detailed voltage schemes.
 
 ---
 
@@ -185,7 +179,7 @@ See [voltage-rules.md](./voltage-rules.md) for detailed voltage schemes.
 - **Modeled:** Equations, defaults, and performance estimates are simulator models unless explicitly tied to cited measured data
 - **Aspirational:** Production-scale or silicon-parity claims are roadmap intent and must not be reported as demonstrated results
 
-See [Physics Audit](../../4-research/comparison/honesty-audit.md) for complete accuracy policy.
+See [Physics Audit](../../4-research/honesty-audit.md) for complete accuracy policy.
 
 ---
 
@@ -284,7 +278,7 @@ go test -cover ./module2-crossbar/pkg/crossbar
 - **New to crossbars?** → Start with [ELI5](./eli5.md)
 - **Need equations?** → See [Physics](./physics.md)
 - **Want to extend?** → Read [Architecture](./architecture.md)
-- **Researching?** → Check [Tools](./tools.md) and [Research](./research.md)
+- **Researching?** → Check [Tools](./tools.md)
 
 ---
 

@@ -22,7 +22,7 @@ Module 5 provides architecture-level comparison between CPU, GPU, and FeCIM tech
 - **[Features](./features.md)** - Workload library, visualization
 
 ### For Researchers
-- **[Honesty Audit](../../4-research/comparison/honesty-audit.md)** - Validation status of all claims
+- **[Honesty Audit](../../4-research/honesty-audit.md)** - Validation status of all claims
 
 ---
 
@@ -197,7 +197,7 @@ All FeCIM values are **model-based projections**, not measured hardware:
 
 ### Validation Status
 
-See `docs/4-research/comparison/honesty-audit.md` for complete validation status of all claims.
+See `docs/4-research/honesty-audit.md` for complete validation status of all claims.
 
 **Demonstrated:** Simulation framework, comparison methodology
 **Modeled:** Performance estimates, energy calculations
@@ -212,7 +212,7 @@ See `docs/4-research/comparison/honesty-audit.md` for complete validation status
 | [eli5.md](./eli5.md) | Why compare? | Beginners |
 | [physics.md](./physics.md) | Equations, ROI math | Developers |
 | [features.md](./features.md) | Workloads, visualizations | All |
-| [honesty-audit.md](../../4-research/comparison/honesty-audit.md) | Validation status | Researchers |
+| [honesty-audit.md](../../4-research/honesty-audit.md) | Validation status | Researchers |
 
 ---
 

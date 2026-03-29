@@ -22,7 +22,7 @@ Go-based lattice tool suite for Ferroelectric Compute-in-Memory (FeCIM) visualiz
 
 **Core concept**: The simulator quantizes conductance to a default of 30 discrete levels (configurable). This is a **simulation baseline**, not a validated hardware claim.
 
-> **Historical reference**: Dr. external research group, COSM 2025 - [Transcript](docs/video-transcripts/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md) (conference material; not reported in literature).
+> **Historical reference**: Dr. external research group, COSM 2025 - [Transcript](docs/4-research/transcripts/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md) (conference material; not reported in literature).
 
 ## Build & Run
 
@@ -89,6 +89,43 @@ go test ./shared/crossbar/...            # Crossbar only
 ```
 
 Full test documentation: `docs/3-develop/testing/TESTING.md`
+
+## Cognee (Knowledge Engine)
+
+This repo has a local Cognee instance for persistent AI memory — one DB per repo, no Docker.
+
+**Setup:** `./scripts/cognee-setup.sh` then edit `.env` with your `LLM_API_KEY`.
+
+**Config:** Uses OpenRouter (`openai/gpt-4o-mini`) for LLM and `fastembed` for local embeddings. Env vars must be set BEFORE importing cognee (lru_cache). See `.env.example`.
+
+**Usage (Python API — preferred for scripts):**
+```python
+import os
+os.environ["COGNEE_SKIP_CONNECTION_TEST"] = "true"
+os.environ["ENABLE_BACKEND_ACCESS_CONTROL"] = "false"
+# ... other env vars from .env.example
+import cognee, asyncio
+
+async def main():
+    await cognee.add("your text or /absolute/path/to/file.md")
+    await cognee.cognify()
+    results = await cognee.search("your query")
+asyncio.run(main())
+```
+
+**Bulk ingest:** `python3 scripts/cognee-ingest.py` (loads key docs into the KG).
+
+**When to use:**
+- Store research findings, audit results, physics validation notes
+- Build searchable memory across sessions for FeCIM domain knowledge
+- Index docs or papers for retrieval during development
+
+**Known gotchas:**
+- Gemini Flash does NOT work with cognee (bad structured output). Use gpt-4o-mini via OpenRouter.
+- Env vars must be set before `import cognee` due to lru_cache.
+- `cognee-cli config set` persists values that override env vars — avoid using it.
+
+**Data location:** `.cognee_system/` (local, gitignored).
 
 ## Git Conventions
 

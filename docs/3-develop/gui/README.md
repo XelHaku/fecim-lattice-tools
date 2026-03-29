@@ -23,7 +23,7 @@ Welcome to the GUI module documentation. This directory contains specifications,
 |--------|----------|---------|
 | **Module 1: Hysteresis** | [GUI.module1.md](GUI.module1.md) | P-E curve visualization and Preisach model behavior |
 | **Module 2: Crossbar Array** | [GUI.module2.md](GUI.module2.md) | Matrix-vector multiplication with non-idealities (IR drop, sneak paths, drift) |
-| **Module 3: MNIST** | [GUI.module3.md](GUI.module3.md) | Neural network digit recognition training and inference |
+| **Module 3: MNIST** | GUI.module3.md *(not yet created)* | Neural network digit recognition training and inference |
 | **Module 4: Circuits** | [GUI.module4.md](GUI.module4.md) | DAC/ADC/TIA peripheral circuit simulations |
 | **Module 5: Comparison** | [GUI.module5.md](GUI.module5.md) | Technology comparison analysis (FeCIM vs DRAM vs Flash) |
 | **Module 6: EDA Tools** | [GUI.module6.md](GUI.module6.md) | EDA workflow, placement, and layout visualization |
@@ -312,9 +312,8 @@ go run ./cmd/fecim-lattice-tools eda
 - [Fyne Container API](https://docs.fyne.io/explore/container.html)
 
 ### Internal References
-- [Physics Constants & Accuracy Policy](../SCRIPT_REFERENCE.md#accuracy--honesty-policy)
-- [Testing Guide](../TESTING.md)
-- [Development Setup](../SCRIPT_REFERENCE.md)
+- [Testing Guide](../testing/TESTING.md)
+- [FYNE_NOTES.md](FYNE_NOTES.md) - Framework patterns and threading rules
 
 ## Contribution Guidelines
 

@@ -371,7 +371,7 @@ For deeper understanding of ferroelectric physics, architecture trade-offs, and 
 - **[CIM Fundamentals](../docs/4-research/internal-analysis/circuits.CIM-fundamentals.md)** — Core concepts of compute-in-memory
 - **[Module 4 ELI5](../docs/2-learn/module4-circuits/eli5.md)** — Beginner-friendly introduction to peripheral circuits
 - **[Module 4 Physics](../docs/2-learn/module4-circuits/physics.md)** — Physics equations and model details
-- **[Physics Configuration](../config/physics.yaml)** — Material properties and calibration parameters used for voltage range calculation
+- **[Physics Configuration](../config/physics/)** — Material properties and calibration parameters used for voltage range calculation
 
 ## Development Notes
 

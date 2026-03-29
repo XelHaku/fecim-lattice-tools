@@ -1,4 +1,4 @@
-# Module 7: Docs - Physics
+# Module 7: Documentation - Physics
 
 ## Evidence Status (Demonstrated vs Modeled vs Aspirational)
 

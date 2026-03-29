@@ -90,7 +90,7 @@ go test ./module2-crossbar/...          # Module-scoped testing
 
 **From CLAUDE.md:**
 - **Simulation baseline, not hardware claim:** The 30-level quantization and all material presets are for education and visualization. Not validated device measurements.
-- **Accuracy-first policy:** See `docs/comparison/HONESTY_AUDIT.md` for verified claims and removed/unverified claims.
+- **Accuracy-first policy:** See `docs/4-research/honesty-audit.md` for verified claims and removed/unverified claims.
 - **No blocking UI operations:** Never use `time.Sleep()` or blocking I/O on the Fyne main thread.
 - **Commit before pushing:** `go test ./...` must pass.
 
@@ -306,7 +306,7 @@ go fmt ./...
 - 87% MNIST accuracy (conference-only reference)
 - Energy multipliers vs NAND/GPUs without published measurement evidence
 
-**Full audit:** `docs/comparison/HONESTY_AUDIT.md`
+**Full audit:** `docs/4-research/honesty-audit.md`
 
 ## License
 

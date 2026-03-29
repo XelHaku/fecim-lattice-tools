@@ -5,7 +5,7 @@
 
 ## Purpose
 
-Provides Fyne-based GUI for crossbar module. Visualizes array conductance values, controls MVM operations, selects/deselects rows and columns, displays result outputs, manages operation history, and enables nonideality control (IR drop, sneak paths, drift, temperature). Embedded as a tabbed module within the main application.
+Provides Fyne-based GUI for crossbar module. Visualizes array conductance values, controls MVM operations, selects/deselects rows and columns, displays result outputs, manages operation history, and enables non-ideality control (IR drop, sneak paths, drift, temperature). Embedded as a tabbed module within the main application.
 
 ## Key Files
 
@@ -47,7 +47,7 @@ type EmbeddedApp interface {
 - Reset array button
 - Operation history log
 
-**Nonideality Controls:**
+**Non-ideality Controls:**
 
 - Toggle IR drop on/off
 - Toggle sneak paths on/off
@@ -82,7 +82,7 @@ go test ./module2-crossbar/pkg/gui -run TestArrayIntegration -v
 - **Row/column selection**: Bitmask or index list
 - **Input vector**: DAC voltages or conductance targets
 - **MVM execution**: Queue operation in background goroutine, update UI when done
-- **Nonideality toggle**: Modify array config struct before next MVM
+- **Non-ideality toggle**: Modify array config struct before next MVM
 - **Heatmap rendering**: Use color gradient from min to max conductance
 
 ## Dependencies

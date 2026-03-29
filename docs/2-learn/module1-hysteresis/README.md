@@ -25,7 +25,6 @@ Module 1 simulates ferroelectric hysteresis loops using Preisach and Landau-Khal
 
 ### For Researchers
 - **[Open-Source Tools](./tools.md)** - Integration with external simulation tools
-- **[Research References](./research.md)** - Literature review and citations
 
 ---
 
@@ -120,7 +119,6 @@ See [Run Modes](./run-modes.md) for complete CLI reference.
 | [tools.md](./tools.md) | Open-source tool ecosystem | Researchers |
 | [materials.md](./materials.md) | Material parameters | All |
 | [run-modes.md](./run-modes.md) | CLI usage guide | Developers |
-| [research.md](./research.md) | Literature references | Researchers |
 
 ---
 

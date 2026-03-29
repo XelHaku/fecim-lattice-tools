@@ -266,7 +266,7 @@ type DeviceVariationConfig struct {
 
 ```go
 const (
-    DefaultLevels = 30   // Default 30 analog states
+    DefaultLevels = 30   // Default 30 analog states (simulation baseline)
     BitsPerCell   = 4.91 // log2(30)
 )
 ```

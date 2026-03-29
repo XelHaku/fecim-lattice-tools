@@ -150,7 +150,7 @@ This guide is organized into 6 modules plus an overview. Each module builds on t
 → [Module 6: EDA](./module6-eda/eli5.md)
 
 **"I want all the technical details"**
-→ [Complete ELI5.md](../../ELI5.md) (2100+ lines)
+→ This document covers all modules (2100+ lines)
 
 ---
 
@@ -366,8 +366,8 @@ This simulator helps imagine the destination and plan the journey!
 ### In This Repository
 
 - **Project Status:** [status.md](../../status.md)
-- **Accuracy Audit:** [docs/4-research/honesty-audit.md](../../4-research/honesty-audit.md)
-- **Development Guide:** [docs/3-develop/api-reference.md](../../3-develop/api-reference.md)
+- **Accuracy Audit:** [docs/4-research/honesty-audit.md](../4-research/honesty-audit.md)
+- **Development Guide:** [docs/3-develop/api-reference.md](../3-develop/api-reference.md)
 
 ### External Resources
 

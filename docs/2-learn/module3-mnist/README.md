@@ -16,7 +16,6 @@ Module 3 demonstrates neural network inference on the MNIST handwritten digit da
 
 ### For Beginners
 - **[ELI5 Explanation](./eli5.md)** - What is MNIST and why it matters
-- **[Demo Guide](./demo.md)** - Using the GUI for digit recognition
 
 ### For Developers
 - **[Physics Reference](./physics.md)** - Network equations, quantization, noise models
@@ -24,7 +23,6 @@ Module 3 demonstrates neural network inference on the MNIST handwritten digit da
 
 ### For Researchers
 - **[Open-Source Tools](./tools.md)** - PyTorch, TensorFlow integration
-- **[Architecture](./architecture.md)** - Network structure, training pipeline
 
 ---
 
@@ -213,7 +211,6 @@ Efficiency gain: ~1000× (model-based)
 | [physics.md](./physics.md) | Network equations, quantization | Developers |
 | [features.md](./features.md) | Workflows, extension points | Developers |
 | [tools.md](./tools.md) | PyTorch/TF integration | Researchers |
-| [architecture.md](./architecture.md) | Code structure, training | Developers |
 
 ---
 

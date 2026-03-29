@@ -541,7 +541,6 @@ array.ExportCSV("layout_params.csv") // For layout tool
 - **[Physics Reference](./physics.md)** - Equations and models
 - **[Architecture](./architecture.md)** - Code structure and types
 - **[Tools](./tools.md)** - External tool integration
-- **[Voltage Rules](./voltage-rules.md)** - 0T1R/1T1R/2T1R details
 
 ---
 
