@@ -46,6 +46,9 @@ func (d *DAC) AnalyzeINLDNL() *INLDNLAnalysis {
 	}
 
 	lsb := d.Resolution()
+	if lsb == 0 {
+		return analysis // Cannot compute INL/DNL with zero resolution
+	}
 
 	// Calculate INL and DNL for each code
 	for i := 0; i < levels; i++ {
@@ -105,6 +108,9 @@ func (a *ADC) AnalyzeINLDNL() *INLDNLAnalysis {
 	}
 
 	lsb := a.Resolution()
+	if lsb == 0 {
+		return analysis // Cannot compute INL/DNL with zero resolution
+	}
 
 	// Sweep voltage and measure code transitions
 	for i := 0; i < levels; i++ {
@@ -256,7 +262,9 @@ func AnalyzeTiming(dac *DAC, adc *ADC, tia *TIA, pump *ChargePump) *TimingAnalys
 	t.CycleTime = t.WriteTime + t.ReadTime
 
 	// Throughput (assuming parallel columns)
-	t.MaxThroughput = 1.0 / t.CycleTime
+	if t.CycleTime > 0 {
+		t.MaxThroughput = 1.0 / t.CycleTime
+	}
 
 	log.Calculation("AnalyzeTiming", map[string]interface{}{
 		"write_time":     t.WriteTime,
