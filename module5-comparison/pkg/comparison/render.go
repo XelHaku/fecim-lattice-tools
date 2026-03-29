@@ -230,10 +230,13 @@ func (r *Renderer) RenderAdvantages(adv FeCIMAdvantage) string {
 
 func (r *Renderer) makeAdvantageBar(advantage float64) string {
 	maxBar := 30
-	// Log scale for better visualization
-	logAdv := math.Log10(advantage)
-	if logAdv < 0 {
-		logAdv = 0
+	// Log scale for better visualization (guard: advantage <= 0 produces NaN/Inf)
+	logAdv := 0.0
+	if advantage > 0 {
+		logAdv = math.Log10(advantage)
+		if logAdv < 0 {
+			logAdv = 0
+		}
 	}
 	barLen := int(logAdv / 3.0 * float64(maxBar)) // 1000x = full bar
 	if barLen > maxBar {

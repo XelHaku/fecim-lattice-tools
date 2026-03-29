@@ -363,6 +363,13 @@ func (app *DualModeApp) runQuickTest() {
 		if n > len(app.testImages()) {
 			n = len(app.testImages())
 		}
+		if n == 0 {
+			fyne.Do(func() {
+				app.testProgressBar.Hide()
+				app.testResultLabel.SetText("No test data available")
+			})
+			return
+		}
 
 		fpCorrect := 0
 		cimCorrect := 0

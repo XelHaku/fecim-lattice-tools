@@ -726,6 +726,9 @@ func (a *Array) VMM(input []float64) ([]float64, error) {
 		"cols":     a.config.Cols,
 	})
 
+	if len(input) == 0 {
+		return nil, fmt.Errorf("VMM input is empty")
+	}
 	if len(input) > a.config.Rows {
 		err := fmt.Errorf("input size (%d) exceeds array rows (%d)", len(input), a.config.Rows)
 		getLog().Error(err, "VMM validation failed")
