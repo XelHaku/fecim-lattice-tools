@@ -51,11 +51,11 @@ NoisyValue = v + N(0,1) * |v| * sigma_over_mu
 
 ## Where It Lives In Code
 
-- `module3-mnist/pkg/core/network_inference.go`
-- `module3-mnist/pkg/core/quantize.go`
+- `shared/neural/network_inference.go`
+- `shared/physics/quantization.go`
 - `module3-mnist/pkg/gui/dualmode.go`
 
 ## Sources
 
 - `docs/3-develop/api-reference.md`
-- `module3-mnist/pkg/core/network_inference.go`
+- `shared/neural/network_inference.go`

@@ -13,6 +13,6 @@
 
 ## Integration Notes
 
-- Weight loading lives in `module3-mnist/pkg/core/network.go`.
-- Quantization utilities live in `module3-mnist/pkg/core/quantize.go`.
+- Weight loading lives in `module3-mnist/pkg/training/network.go`.
+- Quantization and inference live in `shared/neural/network_inference.go`.
 - External ML frameworks are not integrated in this repo.

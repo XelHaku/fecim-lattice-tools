@@ -248,8 +248,8 @@ go test ./module3-mnist/...
 ## Source Code
 
 - **GitHub:** [module3-mnist/](../../../module3-mnist/)
-- **Network:** `pkg/core/network_inference.go`
-- **Quantization:** `pkg/core/quantize.go`
+- **Network:** `pkg/training/network.go`
+- **Training:** `pkg/training/single_layer.go`
 - **GUI:** `pkg/gui/dualmode.go`
 
 ---

@@ -31,15 +31,16 @@ Module 5 provides architecture-level comparison between CPU, GPU, and FeCIM tech
 ```
 module5-comparison/
 ├── pkg/comparison/
-│   ├── architecture.go       # CPU/GPU/FeCIM models
-│   ├── workload.go           # MNIST, ResNet, LLM workloads
-│   ├── render.go             # Chart generation
-│   └── roi.go                # ROI calculator
+│   ├── architecture.go       # CPU/GPU/FeCIM models, workloads, ROI
+│   ├── cacti_baseline.go     # CACTI-normalized DRAM/SRAM baselines
+│   └── render.go             # Chart generation
 ├── pkg/gui/
+│   ├── app.go                # Main comparison app + calculator
 │   ├── widgets.go            # Comparison visualizations
-│   └── calculator.go         # Interactive ROI tool
-└── data/
-    └── architectures.json    # Architecture parameters
+│   ├── evidence_model.go     # Evidence-based claim tracking
+│   └── fabrication_reality.go # Fab reality checks
+└── cmd/comparison/
+    └── main.go               # CLI entry point
 ```
 
 ---
