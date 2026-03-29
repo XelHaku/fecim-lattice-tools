@@ -290,17 +290,20 @@ func (li *LevelIndicator) GetLevelVertices() []PlotVertex {
 }
 
 // QuantizeTo30Levels quantizes a value to exactly 30 discrete levels.
-// Matches the crossbar package implementation for consistency.
+// Delegates to the canonical shared/physics implementation.
 func QuantizeTo30Levels(value float64) float64 {
-	value = math.Max(0, math.Min(1, value))
-	level := math.Round(value * float64(FeCIMLevels-1))
-	return level / float64(FeCIMLevels-1)
+	return physics.QuantizeTo30Levels(value)
 }
 
 // GetLevel returns the discrete level (0-29) for a normalized value.
+// Clamps to [0,1] before delegating to the canonical shared/physics implementation.
 func GetLevel(value float64) int {
-	value = math.Max(0, math.Min(1, value))
-	return int(math.Round(value * float64(FeCIMLevels-1)))
+	if value < 0 {
+		value = 0
+	} else if value > 1 {
+		value = 1
+	}
+	return physics.GetLevelFor30(value)
 }
 
 // Renderer is the main rendering interface.

@@ -8,13 +8,14 @@ import (
 
 // Conductance range constants (physical units in Siemens)
 const (
-	// GMin is the minimum conductance (OFF state) - 10 µS
-	GMin = 10e-6
+	// GMin is the minimum conductance (OFF state) - 1 µS
+	// Consistent with material presets and HZO FeFET literature (100:1 ON/OFF).
+	GMin = 1e-6
 
 	// GMax is the maximum conductance (ON state) - 100 µS
 	GMax = 100e-6
 
-	// GRatio is the ON/OFF conductance ratio (10:1)
+	// GRatio is the ON/OFF conductance ratio (100:1)
 	GRatio = GMax / GMin
 )
 
@@ -78,10 +79,10 @@ func ParseConductanceModel(model string) ConductanceModel {
 // NormalizedToPhysical converts normalized conductance [0,1] to physical units (Siemens).
 // Uses the specified model type for interpolation.
 //
-// Level 0  → GMin (10 µS)
+// Level 0  → GMin (1 µS)
 // Level 29 → GMax (100 µS)
 //
-// For exponential model, midpoint (level 15) = geometric mean ≈ 31.6 µS
+// For exponential model, midpoint (level 15) = geometric mean ≈ 10 µS
 func NormalizedToPhysical(gNorm float64, model ConductanceModel) float64 {
 	return NormalizedToPhysicalRange(gNorm, model, GMin, GMax, nil)
 }

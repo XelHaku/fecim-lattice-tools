@@ -43,7 +43,7 @@ func TestEstimateMLPEnergyJ_SingleLayer(t *testing.T) {
 	// 784 → 10 (MNIST single-layer)
 	cfg := MLPEnergyConfig{
 		LayerSizes:    []int{784, 10},
-		DefaultLevels: 16,
+		DefaultLevels: 30,
 	}
 	est := EstimateMLPEnergyJ(cfg)
 
@@ -69,7 +69,7 @@ func TestEstimateMLPEnergyJ_TwoLayer(t *testing.T) {
 	// 784 → 128 → 10
 	cfg := MLPEnergyConfig{
 		LayerSizes:    []int{784, 128, 10},
-		DefaultLevels: 16,
+		DefaultLevels: 30,
 	}
 	est := EstimateMLPEnergyJ(cfg)
 

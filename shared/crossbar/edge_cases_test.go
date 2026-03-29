@@ -433,6 +433,8 @@ func TestNewArray_NilSubconfigs(t *testing.T) {
 		Rows:             8,
 		Cols:             8,
 		NoiseLevel:       0.01,
+		ADCBits:          6,
+		DACBits:          4,
 		Endurance:        nil, // Explicitly nil
 		ProcessVariation: nil,
 		HalfSelect:       nil,

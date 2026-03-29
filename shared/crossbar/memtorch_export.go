@@ -55,7 +55,7 @@ type MemTorchWeightExport struct {
 // For the normalized noise level in Config, we interpret it as a fractional
 // sigma relative to the conductance range.
 func ExportToMemTorch(cfg *Config) MemTorchDeviceParams {
-	gMin := physics.GMin // 10 µS
+	gMin := physics.GMin // 1 µS
 	gMax := physics.GMax // 100 µS
 
 	rOn := 1.0 / gMax  // High-G state = low-R state

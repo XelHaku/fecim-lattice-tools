@@ -12,7 +12,11 @@
 //     (see docs/research/crossbar-circuits-literature-review-2025.md).
 package system
 
-import "math"
+import (
+	"math"
+
+	"fecim-lattice-tools/shared/physics"
+)
 
 // ── Energy constants ─────────────────────────────────────────────────────────
 
@@ -74,7 +78,7 @@ type MLPEnergyConfig struct {
 	// If nil, DefaultLevels is used for all layers.
 	LevelsPerLayer []int
 
-	// DefaultLevels is used when LevelsPerLayer is nil (default: 16).
+	// DefaultLevels is used when LevelsPerLayer is nil (default: physics.DefaultLevels = 30).
 	DefaultLevels int
 
 	// EnergyPerDACJ is the DAC energy per conversion (default: DefaultEnergyPerDACJ).
@@ -86,7 +90,7 @@ type MLPEnergyConfig struct {
 
 func (c *MLPEnergyConfig) defaults() {
 	if c.DefaultLevels <= 0 {
-		c.DefaultLevels = 16
+		c.DefaultLevels = physics.DefaultLevels
 	}
 	if c.EnergyPerDACJ == 0 {
 		c.EnergyPerDACJ = DefaultEnergyPerDACJ

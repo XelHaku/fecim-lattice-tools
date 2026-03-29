@@ -184,7 +184,7 @@ func FeCIMMaterial() *HZOMaterial {
 		C2CExponent:         0.5,
 		BetaLandau:          -6.720e8, // Materlik 2015 LGD baseline
 		GammaLandau:         1.950e10,
-		RhoViscosity:        0.005, // Alessandri et al., IEEE EDL 2018
+		RhoViscosity:        0.05, // Model default for HZO; see Alessandri et al., IEEE EDL 2018 for range 0.005-0.05
 		SeriesResistanceOhm: 50.0,
 		K_dep:               2.5e8,
 		StressGPa:           1.0,

@@ -66,6 +66,18 @@ type Config struct {
 	// Half-select disturb configuration
 	HalfSelect *HalfSelectConfig
 
+	// State-dependent cycle-to-cycle (C2C) variation configuration.
+	// When enabled, low-conductance (HRS) cells exhibit higher read-to-read
+	// variation than high-conductance (LRS) cells:
+	//   sigma(G) = sigma_base * (1 + k * (1 - G_norm))
+	// where G_norm is the normalized conductance [0,1] and k is StateDepC2CScaling.
+	// At LRS (G_norm=1): sigma = sigma_base.
+	// At HRS (G_norm=0): sigma = sigma_base * (1 + k).
+	// Default k=1.5 gives HRS/LRS sigma ratio of 2.5, consistent with
+	// RRAM/FeFET literature (Jang et al., IEEE TED 2015; Fantini et al., IMW 2014).
+	StateDepC2CEnabled bool    // Enable state-dependent C2C variation (opt-in)
+	StateDepC2CScaling float64 // k: scaling factor (default 1.5 if zero and enabled)
+
 	// FeCAP (capacitive) mode configuration.
 	// When CellType == CellTypeFeCAP, MVM uses charge-domain computation
 	// (Q = C × V) instead of current-domain (I = G × V).
@@ -144,6 +156,7 @@ func DefaultHalfSelectConfig() *HalfSelectConfig {
 
 // Array represents a crossbar array of ferroelectric cells.
 type Array struct {
+	mu     sync.RWMutex // protects cells and config mutation
 	config *Config
 	cells  [][]Cell
 
@@ -160,6 +173,17 @@ type Array struct {
 	totalWrites int64
 }
 
+// maxArrayDim caps the maximum row or column count to prevent memory exhaustion.
+// A 4096x4096 array of Cell structs uses ~640 MB, which is a reasonable upper
+// bound for an educational simulator.
+const maxArrayDim = 4096
+
+// maxADCDACBits caps converter resolution to prevent 1<<bits overflow on
+// 64-bit integers. 62 bits is the safe limit (1<<62 fits in int64); values
+// above 63 would overflow to negative. Practical ADC/DAC rarely exceeds 16
+// bits, but accuracy tests use up to 52 bits for float64-exact quantization.
+const maxADCDACBits = 62
+
 // NewArray creates a new crossbar array.
 func NewArray(cfg *Config) (*Array, error) {
 	getLog().Input("NewArray", map[string]interface{}{
@@ -173,6 +197,34 @@ func NewArray(cfg *Config) (*Array, error) {
 
 	if cfg.Rows <= 0 || cfg.Cols <= 0 {
 		err := fmt.Errorf("invalid array dimensions: %dx%d", cfg.Rows, cfg.Cols)
+		getLog().Error(err, "NewArray validation failed")
+		return nil, err
+	}
+
+	if cfg.Rows > maxArrayDim || cfg.Cols > maxArrayDim {
+		err := fmt.Errorf("array dimensions %dx%d exceed maximum %d", cfg.Rows, cfg.Cols, maxArrayDim)
+		getLog().Error(err, "NewArray validation failed")
+		return nil, err
+	}
+
+	// GAP-09: ADC/DAC bits must be >= 1 to avoid division-by-zero in Resolution()
+	if cfg.ADCBits < 1 {
+		err := fmt.Errorf("ADCBits must be >= 1, got %d", cfg.ADCBits)
+		getLog().Error(err, "NewArray validation failed")
+		return nil, err
+	}
+	if cfg.DACBits < 1 {
+		err := fmt.Errorf("DACBits must be >= 1, got %d", cfg.DACBits)
+		getLog().Error(err, "NewArray validation failed")
+		return nil, err
+	}
+	if cfg.ADCBits > maxADCDACBits {
+		err := fmt.Errorf("ADCBits %d exceeds maximum %d", cfg.ADCBits, maxADCDACBits)
+		getLog().Error(err, "NewArray validation failed")
+		return nil, err
+	}
+	if cfg.DACBits > maxADCDACBits {
+		err := fmt.Errorf("DACBits %d exceeds maximum %d", cfg.DACBits, maxADCDACBits)
 		getLog().Error(err, "NewArray validation failed")
 		return nil, err
 	}
@@ -211,6 +263,62 @@ func initialNoiseFactor(cfg *Config) float64 {
 		return 1.0
 	}
 	factor := 1.0 + rand.NormFloat64()*sigma
+	if factor < 0 {
+		factor = 0
+	}
+	return factor
+}
+
+// stateDepC2CScaling returns the effective C2C scaling factor k.
+// If the config value is zero (unset), defaults to 1.5.
+const defaultStateDepC2CScaling = 1.5
+
+func (a *Array) stateDepC2CScaling() float64 {
+	if a.config.StateDepC2CScaling != 0 {
+		return a.config.StateDepC2CScaling
+	}
+	return defaultStateDepC2CScaling
+}
+
+// applyStateDepC2CNoise returns a multiplicative noise factor for a single read
+// of a cell at normalized conductance gNorm.
+//
+// Model: sigma(G) = sigma_base * (1 + k * (1 - G_norm))
+//
+// The base sigma is the array's NoiseLevel (or ProcessVariation.DeviceSigma).
+// The returned factor is 1.0 + N(0, sigma(G)), representing a per-read
+// perturbation that varies with conductance state.
+//
+// Physics: Low-conductance (HRS) cells sit in broader energy minima with more
+// defect-mediated trap activity, leading to 2-3x higher sigma than LRS cells.
+// See Jang et al., IEEE TED 62(7), 2015 and Fantini et al., IMW 2014.
+func (a *Array) applyStateDepC2CNoise(gNorm float64) float64 {
+	if !a.config.StateDepC2CEnabled {
+		return 1.0
+	}
+
+	sigma := a.config.NoiseLevel
+	if a.config.ProcessVariation != nil {
+		sigma = a.config.ProcessVariation.DeviceSigma
+	}
+	if sigma <= 0 {
+		return 1.0
+	}
+
+	k := a.stateDepC2CScaling()
+
+	// Clamp gNorm to [0,1] for safety
+	if gNorm < 0 {
+		gNorm = 0
+	}
+	if gNorm > 1 {
+		gNorm = 1
+	}
+
+	// State-dependent sigma: higher at low conductance
+	effectiveSigma := sigma * (1.0 + k*(1.0-gNorm))
+
+	factor := 1.0 + rand.NormFloat64()*effectiveSigma
 	if factor < 0 {
 		factor = 0
 	}
@@ -333,6 +441,14 @@ func (a *Array) Destroy() {
 // ProgramWeight programs a weight value to a specific cell.
 // Weights are automatically quantized to discrete levels.
 func (a *Array) ProgramWeight(row, col int, weight float64) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.programWeightLocked(row, col, weight)
+}
+
+// programWeightLocked is the lock-free inner implementation of ProgramWeight.
+// The caller must hold a.mu (write lock).
+func (a *Array) programWeightLocked(row, col int, weight float64) error {
 	if row < 0 || row >= a.config.Rows || col < 0 || col >= a.config.Cols {
 		err := fmt.Errorf("cell index out of range: (%d, %d)", row, col)
 		getLog().Error(err, "ProgramWeight validation failed")
@@ -358,7 +474,7 @@ func (a *Array) ProgramWeight(row, col int, weight float64) error {
 }
 
 // QuantizeToLevels quantizes a value to exactly discrete levels (0-29).
-// This matches the demo 30-level baseline (conference claim).
+// This matches the demo 30-level baseline; simulation baseline (unverified conference reference).
 // Wrapper for shared/physics.QuantizeTo30Levels for backward compatibility.
 func QuantizeToLevels(value float64) float64 {
 	quantized := physics.QuantizeTo30Levels(value)
@@ -380,8 +496,8 @@ func GetLevel(conductance float64) int {
 //   - Exponential: G = Gmin * exp(ln(Gmax/Gmin) * gNorm)  [realistic FeFET behavior]
 //   - Lookup: G = ConductanceTable[level]  [calibration data]
 //
-// Level 0 → Gmin (10 µS), Level 29 → Gmax (100 µS)
-// For exponential model, midpoint (level 15) = geometric mean ≈ 31.6 µS
+// Level 0 → Gmin (1 µS), Level 29 → Gmax (100 µS)
+// For exponential model, midpoint (level 15) = geometric mean ≈ 10 µS
 //
 // Uses shared/physics.NormalizedToPhysicalRange for the base calculation.
 func (a *Array) GetPhysicalConductance(gNorm float64) float64 {
@@ -392,6 +508,14 @@ func (a *Array) GetPhysicalConductance(gNorm float64) float64 {
 // GetPhysicalConductanceForCell returns the physical conductance for a specific cell,
 // including effects from endurance fatigue and half-select disturb if enabled.
 func (a *Array) GetPhysicalConductanceForCell(row, col int) float64 {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+	return a.getPhysicalConductanceForCellLocked(row, col)
+}
+
+// getPhysicalConductanceForCellLocked is the lock-free inner implementation of
+// GetPhysicalConductanceForCell. The caller must hold a.mu (read or write lock).
+func (a *Array) getPhysicalConductanceForCellLocked(row, col int) float64 {
 	if row < 0 || row >= a.config.Rows || col < 0 || col >= a.config.Cols {
 		return GMin
 	}
@@ -455,6 +579,9 @@ func (a *Array) ProgramWeightMatrix(weights [][]float64) error {
 		return fmt.Errorf("weight matrix is empty or nil")
 	}
 
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
 	getLog().Input("ProgramWeightMatrix", map[string]interface{}{
 		"matrixRows": len(weights),
 		"matrixCols": len(weights[0]),
@@ -475,7 +602,7 @@ func (a *Array) ProgramWeightMatrix(weights [][]float64) error {
 			return err
 		}
 		for j, w := range row {
-			if err := a.ProgramWeight(i, j, w); err != nil {
+			if err := a.programWeightLocked(i, j, w); err != nil {
 				return err
 			}
 		}
@@ -489,6 +616,9 @@ func (a *Array) ProgramWeightMatrix(weights [][]float64) error {
 // Input x is applied to columns (bit lines), output y is read from rows (word lines).
 // Physics: I_row = Σ(G_ij × V_j) - each cell contributes current via Ohm's law.
 func (a *Array) MVM(input []float64) ([]float64, error) {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+
 	getLog().Input("MVM", map[string]interface{}{
 		"inputLen": len(input),
 		"rows":     a.config.Rows,
@@ -502,6 +632,18 @@ func (a *Array) MVM(input []float64) ([]float64, error) {
 		err := fmt.Errorf("input size (%d) exceeds array columns (%d)", len(input), a.config.Cols)
 		getLog().Error(err, "MVM validation failed")
 		return nil, err
+	}
+
+	// GAP-07: reject non-finite inputs (NaN / Inf corrupt accumulation silently)
+	for idx, v := range input {
+		if math.IsNaN(v) || math.IsInf(v, 0) {
+			return nil, fmt.Errorf("MVM: input contains NaN or Inf at index %d", idx)
+		}
+	}
+
+	// GAP-04: warn on undersized input (zero-padding is intentional but may hide bugs)
+	if len(input) < a.config.Cols {
+		getLog().Warn("MVM: input size %d < array cols %d; zero-padding remaining columns", len(input), a.config.Cols)
 	}
 
 	// Try GPU path first
@@ -549,6 +691,9 @@ func (a *Array) mvmCPU(input []float64) ([]float64, error) {
 			// Read conductance with device variation noise
 			g := a.cells[i][j].Conductance * a.GetProcessVariationFactor(i, j)
 
+			// Apply state-dependent cycle-to-cycle variation (per-read noise)
+			g *= a.applyStateDepC2CNoise(a.cells[i][j].Conductance)
+
 			// Ohm's Law: I = G × V
 			// Accumulate current (physical summation via Kirchhoff's current law)
 			sum += g * dacIn[j]
@@ -572,6 +717,9 @@ func (a *Array) mvmCPU(input []float64) ([]float64, error) {
 // VMM performs vector-matrix multiplication: y = x * W
 // Input x is applied to rows (word lines), output y is read from columns (bit lines).
 func (a *Array) VMM(input []float64) ([]float64, error) {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+
 	getLog().Input("VMM", map[string]interface{}{
 		"inputLen": len(input),
 		"rows":     a.config.Rows,
@@ -600,6 +748,9 @@ func (a *Array) VMM(input []float64) ([]float64, error) {
 		for i := 0; i < rows; i++ {
 			// Read conductance with noise
 			g := a.cells[i][j].Conductance * a.GetProcessVariationFactor(i, j)
+
+			// Apply state-dependent cycle-to-cycle variation (per-read noise)
+			g *= a.applyStateDepC2CNoise(a.cells[i][j].Conductance)
 
 			// Accumulate current
 			sum += g * dacIn[i]
@@ -643,6 +794,9 @@ func (a *Array) GetStats() (reads, writes int64) {
 // GetConductanceMatrix returns the current conductance values as a matrix.
 // This returns the programmed (ideal) conductance values without noise.
 func (a *Array) GetConductanceMatrix() [][]float64 {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+
 	matrix := make([][]float64, a.config.Rows)
 	for i := range matrix {
 		matrix[i] = make([]float64, a.config.Cols)
@@ -657,6 +811,9 @@ func (a *Array) GetConductanceMatrix() [][]float64 {
 // This includes per-cell noise factors that represent process variation and noise.
 // Use this for comparing "actual" vs "ideal" conductances.
 func (a *Array) GetEffectiveConductanceMatrix() [][]float64 {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+
 	matrix := make([][]float64, a.config.Rows)
 	for i := range matrix {
 		matrix[i] = make([]float64, a.config.Cols)
@@ -685,12 +842,17 @@ func (a *Array) GetConfig() Config {
 
 // SetConductanceModel changes the conductance model type.
 func (a *Array) SetConductanceModel(model ConductanceModel) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	a.config.ConductanceModel = model
 }
 
 // SetConductanceTable sets the lookup table for ConductanceLookup model.
 // The table should have exactly 30 entries (one per level).
 func (a *Array) SetConductanceTable(table []float64) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
 	if len(table) != DefaultQuantizationLevels {
 		return fmt.Errorf("conductance table must have exactly %d entries, got %d",
 			DefaultQuantizationLevels, len(table))
@@ -705,8 +867,11 @@ func (a *Array) SetConductanceTable(table []float64) error {
 // the selected row or column experience a V/2 voltage stress.
 // For 1T1R architectures, isPassive should be false (no disturb).
 func (a *Array) ProgramWeightWithDisturb(row, col int, weight float64, isPassive bool) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
 	// First, program the target cell normally
-	if err := a.ProgramWeight(row, col, weight); err != nil {
+	if err := a.programWeightLocked(row, col, weight); err != nil {
 		return err
 	}
 
@@ -805,6 +970,9 @@ type CellStats struct {
 
 // GetCellStats returns detailed statistics for a cell.
 func (a *Array) GetCellStats(row, col int) (*CellStats, error) {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+
 	if row < 0 || row >= a.config.Rows || col < 0 || col >= a.config.Cols {
 		return nil, fmt.Errorf("cell index out of range: (%d, %d)", row, col)
 	}
@@ -815,7 +983,7 @@ func (a *Array) GetCellStats(row, col int) (*CellStats, error) {
 		Col:             col,
 		Conductance:     cell.Conductance,
 		Level:           GetLevel(cell.Conductance),
-		PhysicalG:       a.GetPhysicalConductanceForCell(row, col),
+		PhysicalG:       a.getPhysicalConductanceForCellLocked(row, col),
 		NoiseFactor:     cell.NoiseFactor,
 		SwitchingCount:  cell.SwitchingCount,
 		HalfSelectCount: cell.HalfSelectCount,
@@ -826,6 +994,9 @@ func (a *Array) GetCellStats(row, col int) (*CellStats, error) {
 
 // ResetDisturbTracking clears all half-select disturb data.
 func (a *Array) ResetDisturbTracking() {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
 	for i := 0; i < a.config.Rows; i++ {
 		for j := 0; j < a.config.Cols; j++ {
 			a.cells[i][j].HalfSelectCount = 0
@@ -836,6 +1007,9 @@ func (a *Array) ResetDisturbTracking() {
 
 // ResetCycleCounts clears all switching cycle counts.
 func (a *Array) ResetCycleCounts() {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
 	for i := 0; i < a.config.Rows; i++ {
 		for j := 0; j < a.config.Cols; j++ {
 			a.cells[i][j].SwitchingCount = 0
@@ -846,6 +1020,9 @@ func (a *Array) ResetCycleCounts() {
 // AgeCycles artificially ages all cells by adding cycles.
 // Useful for demonstrating endurance effects.
 func (a *Array) AgeCycles(cycles int64) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
 	for i := 0; i < a.config.Rows; i++ {
 		for j := 0; j < a.config.Cols; j++ {
 			a.cells[i][j].SwitchingCount += cycles

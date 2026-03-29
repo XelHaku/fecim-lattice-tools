@@ -27,10 +27,10 @@ func TestHysteresisModelToCrossbarProgramming(t *testing.T) {
 	material := ferroelectric.DefaultHZO()
 	model := ferroelectric.NewPreisachModel(material)
 
-	// Step 2: Generate discrete states from hysteresis model (30-level baseline)
-	discreteStates := model.DiscreteStates(30)
-	if len(discreteStates) != 30 {
-		t.Fatalf("Expected 30 discrete states (demo baseline), got %d", len(discreteStates))
+	// Step 2: Generate discrete states from hysteresis model (DefaultLevels baseline)
+	discreteStates := model.DiscreteStates(physics.DefaultLevels)
+	if len(discreteStates) != physics.DefaultLevels {
+		t.Fatalf("Expected %d discrete states (demo baseline), got %d", physics.DefaultLevels, len(discreteStates))
 	}
 
 	// Step 3: Create crossbar array
@@ -51,7 +51,7 @@ func TestHysteresisModelToCrossbarProgramming(t *testing.T) {
 	for i := 0; i < 8; i++ {
 		for j := 0; j < 8; j++ {
 			// Map cell (i,j) to a discrete state level
-			level := (i*8 + j) % 30
+			level := (i*8 + j) % physics.DefaultLevels
 			state := discreteStates[level]
 
 			// Convert normalized polarization to conductance [0,1]
@@ -70,9 +70,9 @@ func TestHysteresisModelToCrossbarProgramming(t *testing.T) {
 	for i := 0; i < 8; i++ {
 		for j := 0; j < 8; j++ {
 			g := matrix[i][j]
-			// Verify quantization to 30 levels (step = 1/29)
+			// Verify quantization to DefaultLevels (step = 1/(DefaultLevels-1))
 			level := crossbar.GetLevel(g)
-			if level < 0 || level >= 30 {
+			if level < 0 || level >= physics.DefaultLevels {
 				t.Errorf("Invalid level %d at (%d,%d)", level, i, j)
 			}
 		}
@@ -464,7 +464,7 @@ func TestFullHysteresisCrossbarVisualizationPipeline(t *testing.T) {
 		material.Ps, material.Ec, polarizationWindow)
 
 	// ===== STAGE 2: Weight Quantization =====
-	levels := 30 // FeCIM baseline
+	levels := physics.DefaultLevels // FeCIM baseline
 
 	// Create weight matrix from hysteresis-derived values
 	weights := make([][]float64, 16)
@@ -502,8 +502,9 @@ func TestFullHysteresisCrossbarVisualizationPipeline(t *testing.T) {
 	mse /= float64(16 * 16)
 	psnr := -10 * math.Log10(mse+1e-10)
 
-	if psnr < 30 {
-		t.Errorf("Quantization PSNR %.1f dB below expected (30 dB)", psnr)
+	const minPSNRdB = 30.0 // minimum acceptable PSNR for FeCIM quantization
+	if psnr < minPSNRdB {
+		t.Errorf("Quantization PSNR %.1f dB below expected (%.0f dB)", psnr, minPSNRdB)
 	}
 
 	t.Logf("Stage 2 - Quantization: %d levels, MSE=%.6f, PSNR=%.1f dB", levels, mse, psnr)
@@ -614,7 +615,7 @@ func TestCrossbarNonIdealitiesFullWorkflow(t *testing.T) {
 	spAnalysis := arr.AnalyzeSneakPaths(8, 8)
 
 	// ===== Drift Simulation =====
-	driftSim := crossbar.NewDriftSimulator(size, size, 30)
+	driftSim := crossbar.NewDriftSimulator(size, size, physics.DefaultLevels)
 	driftSim.SimulateTimeStep(3600) // 1 hour
 	driftStats := driftSim.GetStats()
 
@@ -662,7 +663,7 @@ func TestQuantizationLevelConsistencyAcrossModules(t *testing.T) {
 	// Module 1: Hysteresis discrete states
 	material := ferroelectric.FeCIMMaterial()
 	model := ferroelectric.NewPreisachModel(material)
-	hysteresisStates := model.DiscreteStates(30)
+	hysteresisStates := model.DiscreteStates(physics.DefaultLevels)
 
 	// Module 2: Crossbar quantization constant
 	crossbarLevels := crossbar.DefaultQuantizationLevels
@@ -671,14 +672,14 @@ func TestQuantizationLevelConsistencyAcrossModules(t *testing.T) {
 	physicsLevels := physics.DefaultLevels
 
 	// Verify consistency
-	if len(hysteresisStates) != 30 {
-		t.Errorf("Hysteresis states: expected 30, got %d", len(hysteresisStates))
+	if len(hysteresisStates) != physics.DefaultLevels {
+		t.Errorf("Hysteresis states: expected %d, got %d", physics.DefaultLevels, len(hysteresisStates))
 	}
-	if crossbarLevels != 30 {
-		t.Errorf("Crossbar levels: expected 30, got %d", crossbarLevels)
+	if crossbarLevels != physics.DefaultLevels {
+		t.Errorf("Crossbar levels: expected %d, got %d", physics.DefaultLevels, crossbarLevels)
 	}
-	if physicsLevels != 30 {
-		t.Errorf("Physics levels: expected 30, got %d", physicsLevels)
+	if physicsLevels != physics.DefaultLevels {
+		t.Errorf("Physics levels: expected %d, got %d", physics.DefaultLevels, physicsLevels)
 	}
 
 	// Verify quantization function produces exactly 30 distinct values
@@ -689,8 +690,8 @@ func TestQuantizationLevelConsistencyAcrossModules(t *testing.T) {
 		distinctValues[quantized] = true
 	}
 
-	if len(distinctValues) != 30 {
-		t.Errorf("Quantization produced %d distinct values, expected 30", len(distinctValues))
+	if len(distinctValues) != physics.DefaultLevels {
+		t.Errorf("Quantization produced %d distinct values, expected %d", len(distinctValues), physics.DefaultLevels)
 	}
 
 	// Verify crossbar.QuantizeToLevels matches physics.QuantizeTo30Levels
@@ -727,12 +728,12 @@ func TestConductanceRangeConsistency(t *testing.T) {
 		t.Errorf("GMax mismatch: crossbar=%e, physics=%e", crossbarGMax, physicsGMax)
 	}
 
-	// Verify range is physically reasonable (10 µS to 100 µS)
-	expectedGMin := 10e-6  // 10 µS
-	expectedGMax := 100e-6 // 100 µS
+	// Verify range is physically reasonable (matches shared physics constants)
+	expectedGMin := physics.GMin  // 1 µS
+	expectedGMax := physics.GMax  // 100 µS
 
 	if math.Abs(crossbarGMin-expectedGMin) > 1e-9 {
-		t.Errorf("GMin %.0f µS outside expected 10 µS", crossbarGMin*1e6)
+		t.Errorf("GMin %.0f µS outside expected 1 µS", crossbarGMin*1e6)
 	}
 	if math.Abs(crossbarGMax-expectedGMax) > 1e-9 {
 		t.Errorf("GMax %.0f µS outside expected 100 µS", crossbarGMax*1e6)

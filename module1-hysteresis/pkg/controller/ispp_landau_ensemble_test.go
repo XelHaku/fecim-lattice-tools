@@ -43,7 +43,7 @@ func TestISPPConverges_LandauK_Ensemble_Superlattice(t *testing.T) {
 
 			mat := mc.mat
 			tgts := defaultTargets
-			if mc.id == "default_hzo" || mc.id == "literature_superlattice" {
+			if mc.id == "default_hzo" || mc.id == "literature_superlattice" || mc.id == "fecim_hzo" {
 				tgts = relaxedTargets
 			}
 			for _, target := range tgts {

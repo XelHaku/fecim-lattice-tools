@@ -329,8 +329,8 @@ materials:
 
     # Nucleation-Limited Switching (Merz law) [30]
     nls:
-      activation_field_v_m: 1.2e9  # 12 MV/cm (within 13–19 MV/cm HZO range)
-      tau_inf_s: 1.0e-10           # 100 ps attempt time (HZO typical)
+      activation_field_v_m: 1.0e9  # 10 MV/cm target (lower barrier than demonstrated 12 MV/cm)
+      tau_inf_s: 0.5e-10           # 50 ps target (faster than demonstrated 100 ps)
 
     # Conductance transfer (FeFET mapping) [15]
     conductance:
@@ -348,9 +348,9 @@ materials:
     # Depolarization field (polycrystalline slant) [32][33][34]
     depolarization_factor_vm_c: 2.5e8  # k_dep for E_dep = -k_dep * P
 
-    # Enhanced polarization [2][3][5]
-    pr_c_m2: 0.50               # 50 µC/cm² (superlattice enhanced) [5]
-    ps_c_m2: 0.55               # 55 µC/cm²
+    # Enhanced polarization — IEEE 10787441 2024: 2Pr=43.32; revised from Cheema 2020 (50 µC/cm²)
+    pr_c_m2: 0.22               # 22 µC/cm² (IEEE 10787441 2024; PMC 12254504 2025)
+    ps_c_m2: 0.27               # 27 µC/cm²
 
     # Reduced coercive field [3]
     ec_v_m: 0.85e8              # 0.85 MV/cm (Nature Commun. 2025)
@@ -443,6 +443,9 @@ materials:
     kai_exponent: 2.0  # KAI/Avrami exponent (domain-growth dimensionality, typ. 1–3).
 
     # Temperature [10][11]
+    curie_temp_k: 723           # Curie transition temperature in Kelvin
+    temp_coeff_ec: -2.0e5       # dEc/dT (V/m/K) - matches CryogenicHZO() preset
+    temp_coeff_pr: -5.0e-5      # dPr/dT (C/m²/K) - matches CryogenicHZO() preset
     operating_temp_k: 4         # 4 Kelvin
     linearity_improvement: true # Better linearity below 100K
 
@@ -518,10 +521,13 @@ materials:
 
     # Temperature
     curie_temp_k: 723  # Curie transition temperature in Kelvin.
+    temp_coeff_ec: -2.0e5       # dEc/dT (V/m/K) - matches HZOStandard32() preset
+    temp_coeff_pr: -5.0e-5      # dPr/dT (C/m²/K) - matches HZOStandard32() preset
 
     # Reliability [21]
     endurance_cycles: 1.0e8     # 10^8 cycles (2017 era)
     retention_time_s: 3.15e8    # 10 years projected
+    imprint_field_v_m: 1.0e6    # DC-bias-induced asymmetry - matches HZOStandard32() preset
 
     # =========================================================================
     # UNIFIED THEORY PARAMETERS (L-K + Electrostriction) [29][30]
@@ -589,10 +595,13 @@ materials:
 
     # Temperature
     curie_temp_k: 723  # Curie transition temperature in Kelvin.
+    temp_coeff_ec: -2.0e5       # dEc/dT (V/m/K) - matches HZOFJT140() preset
+    temp_coeff_pr: -5.0e-5      # dPr/dT (C/m²/K) - matches HZOFJT140() preset
 
     # Reliability [22]
     endurance_cycles: 1.0e7     # 10^7 cycles demonstrated
     retention_time_s: 3.15e8    # 10 years extrapolated
+    imprint_field_v_m: 1.0e6    # DC-bias-induced asymmetry - matches HZOFJT140() preset
 
     # =========================================================================
     # UNIFIED THEORY PARAMETERS (L-K + Electrostriction) [29][30]
@@ -630,7 +639,7 @@ materials:
     name: "AlScN (8-16 states)"  # Human-readable material/profile name.
     description: "Aluminum Scandium Nitride - high Pr but high Ec limits granularity"  # Short physical context and intended use-case.
     reference: "Nature Commun. 2025 [24]; APL Materials 2023 [25]"  # Primary literature/source backing this parameter set.
-    analog_states: 16           # PEER-REVIEWED: 8-16 states (penta-level demonstrated)
+    analog_states: 12           # Conservative midpoint (8-16 range) - matches AlScN() preset
     target_range_frac: 0.90    # Back-off from saturation for level mapping
     trl_level: 4                # Lower technology readiness
 
@@ -666,6 +675,11 @@ materials:
     # Reliability [24]
     endurance_cycles: 1.0e9     # 10^9 cycles
     retention_time_s: 3.15e8  # Retention horizon in seconds at stated condition (often extrapolated).
+
+    # Conductance transfer - matches AlScN() preset
+    conductance:
+      gmin_s: 0.2e-6               # 0.2 µS HRS
+      gmax_s: 300.0e-6             # 300 µS LRS
 
     # Limitations
     # - High Ec (5 MV/cm) requires high voltages, limits analog granularity

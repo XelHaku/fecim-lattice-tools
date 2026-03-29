@@ -7,14 +7,14 @@ import (
 
 func TestConductanceConstants(t *testing.T) {
 	// Verify constants match expected values
-	if GMin != 10e-6 {
-		t.Errorf("GMin = %e, want 10e-6", GMin)
+	if GMin != 1e-6 {
+		t.Errorf("GMin = %e, want 1e-6", GMin)
 	}
 	if GMax != 100e-6 {
 		t.Errorf("GMax = %e, want 100e-6", GMax)
 	}
-	if math.Abs(GRatio-10.0) > 1e-10 {
-		t.Errorf("GRatio = %v, want 10.0", GRatio)
+	if math.Abs(GRatio-100.0) > 1e-10 {
+		t.Errorf("GRatio = %v, want 100.0", GRatio)
 	}
 }
 
@@ -112,7 +112,7 @@ func TestPhysicalToNormalized(t *testing.T) {
 		{GMin, 0.0},
 		{GMax, 1.0},
 		{(GMin + GMax) / 2, 0.5},
-		{5e-6, 0.0},   // below GMin, clamped
+		{0.5e-6, 0.0}, // below GMin, clamped
 		{200e-6, 1.0}, // above GMax, clamped
 	}
 

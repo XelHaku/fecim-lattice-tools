@@ -127,7 +127,7 @@ var TermsData = []GlossaryEntry{
 	},
 	{
 		Term:       "Bits per Cell",
-		Definition: "Information density in single memory element. FeCIM demo baseline: ~4.9 bits/cell (30 analog states, conference claim), up to 6.1-7.1 bits/cell (140 states demonstrated by Song 2024). NAND flash: 2-4 bits/cell.",
+		Definition: "Information density in single memory element. FeCIM demo baseline: ~4.9 bits/cell (30 analog states, simulation baseline (unverified conference reference)), up to 6.1-7.1 bits/cell (140 states demonstrated by Song 2024). NAND flash: 2-4 bits/cell.",
 		Category:   "Metrics",
 	},
 	{
@@ -504,7 +504,7 @@ func CreateHelpMenuItems(parent fyne.Window) []*fyne.MenuItem {
 				widget.NewLabel("Ferroelectric Compute-in-Memory Simulation Suite"),
 				widget.NewSeparator(),
 				widget.NewLabel("Based on Dr. external research group's HfO₂-ZrO₂ superlattice research"),
-				widget.NewLabel("30 discrete analog states per cell (~4.9 bits/cell, conference claim)"),
+				widget.NewLabel("30 discrete analog states per cell (~4.9 bits/cell, simulation baseline (unverified conference reference))"),
 				layout.NewSpacer(),
 				newGitHubLink(),
 			)

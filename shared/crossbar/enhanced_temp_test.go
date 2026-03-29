@@ -37,6 +37,7 @@ func TestTemperatureProfile_NilIsLegacy(t *testing.T) {
 		Cols:       4,
 		NoiseLevel: 0.0,
 		ADCBits:    8,
+		DACBits:    4,
 	}
 	arr, err := NewArray(cfg)
 	if err != nil {
@@ -320,6 +321,7 @@ func TestMVMWithNonIdealities_NilOpts(t *testing.T) {
 		Cols:       4,
 		NoiseLevel: 0.0,
 		ADCBits:    8,
+		DACBits:    4,
 	}
 	arr, err := NewArray(cfg)
 	if err != nil {
@@ -356,6 +358,7 @@ func TestMVMWithNonIdealities_InputTooLarge(t *testing.T) {
 		Cols:       4,
 		NoiseLevel: 0.0,
 		ADCBits:    8,
+		DACBits:    4,
 	}
 	arr, err := NewArray(cfg)
 	if err != nil {
@@ -376,6 +379,7 @@ func TestMVMWithNonIdealities_BasicResult(t *testing.T) {
 		Cols:       4,
 		NoiseLevel: 0.0,
 		ADCBits:    8,
+		DACBits:    4,
 	}
 	arr, err := NewArray(cfg)
 	if err != nil {
@@ -427,6 +431,7 @@ func TestMVMWithNonIdealities_EnergyMetrics(t *testing.T) {
 		Cols:       8,
 		NoiseLevel: 0.0,
 		ADCBits:    6,
+		DACBits:    4,
 	}
 	arr, err := NewArray(cfg)
 	if err != nil {
@@ -488,6 +493,7 @@ func TestMVMWithNonIdealities_NoNonIdealities(t *testing.T) {
 		Cols:       4,
 		NoiseLevel: 0.0,
 		ADCBits:    10, // High precision ADC
+		DACBits:    4,
 	}
 	arr, err := NewArray(cfg)
 	if err != nil {
@@ -540,6 +546,7 @@ func TestMVMWithNonIdealities_ArchitectureComparison(t *testing.T) {
 		Cols:       16,
 		NoiseLevel: 0.0,
 		ADCBits:    8,
+		DACBits:    4,
 	}
 
 	architectures := []string{"0T1R", "1T1R", "2T1R"}
@@ -603,6 +610,7 @@ func TestMVMWithNonIdealities_TemperatureEffect(t *testing.T) {
 		Cols:       8,
 		NoiseLevel: 0.0,
 		ADCBits:    8,
+		DACBits:    4,
 	}
 
 	temperatures := []float64{250.0, 300.0, 350.0, 400.0}
@@ -657,6 +665,7 @@ func TestMVMWithNonIdealities_WithTemperatureProfile(t *testing.T) {
 		Cols:       8,
 		NoiseLevel: 0.0,
 		ADCBits:    8,
+		DACBits:    4,
 	}
 	arr, err := NewArray(cfg)
 	if err != nil {
@@ -711,6 +720,7 @@ func TestComputeFullMVMSneak(t *testing.T) {
 		Cols:       8,
 		NoiseLevel: 0.0,
 		ADCBits:    8,
+		DACBits:    4,
 	}
 	arr, err := NewArray(cfg)
 	if err != nil {
@@ -791,6 +801,7 @@ func TestAnalyzeSneakContributions(t *testing.T) {
 		Cols:       4,
 		NoiseLevel: 0.0,
 		ADCBits:    8,
+		DACBits:    4,
 	}
 	arr, err := NewArray(cfg)
 	if err != nil {
@@ -841,6 +852,7 @@ func TestComputeAccuracyDegradation(t *testing.T) {
 		Cols:       8,
 		NoiseLevel: 0.05,
 		ADCBits:    6,
+		DACBits:    4,
 	}
 	arr, err := NewArray(cfg)
 	if err != nil {

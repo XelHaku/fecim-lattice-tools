@@ -8,10 +8,10 @@ import (
 
 // TestConstantsMatchDocumentation verifies FEATURES.md values
 func TestConstantsMatchDocumentation(t *testing.T) {
-	t.Run("GMin matches 10uS", func(t *testing.T) {
-		expected := 10e-6
+	t.Run("GMin matches 1uS", func(t *testing.T) {
+		expected := 1e-6
 		if math.Abs(GMin-expected) > 1e-12 {
-			t.Errorf("GMin = %e, want %e (10 uS)", GMin, expected)
+			t.Errorf("GMin = %e, want %e (1 uS)", GMin, expected)
 		}
 	})
 
@@ -40,8 +40,8 @@ func TestConstantsMatchDocumentation(t *testing.T) {
 		}
 	})
 
-	t.Run("GRatio matches 10:1", func(t *testing.T) {
-		expected := 10.0
+	t.Run("GRatio matches 100:1", func(t *testing.T) {
+		expected := 100.0
 		actual := GMax / GMin
 		if math.Abs(actual-expected) > 1e-10 {
 			t.Errorf("GRatio = %f, want %f", actual, expected)
@@ -65,7 +65,7 @@ func TestConductanceRangeIntegrity(t *testing.T) {
 	})
 
 	t.Run("Arithmetic midpoint calculation", func(t *testing.T) {
-		expected := 55e-6 // (10 + 100) / 2
+		expected := 50.5e-6 // (1 + 100) / 2
 		actual := (GMin + GMax) / 2
 		if math.Abs(actual-expected) > 1e-12 {
 			t.Errorf("Arithmetic midpoint = %e, want %e", actual, expected)
@@ -73,8 +73,8 @@ func TestConductanceRangeIntegrity(t *testing.T) {
 	})
 
 	t.Run("Geometric midpoint calculation", func(t *testing.T) {
-		expected := math.Sqrt(GMin * GMax) // ~31.62 uS
-		actual := math.Sqrt(10e-6 * 100e-6)
+		expected := math.Sqrt(GMin * GMax) // ~10 uS
+		actual := math.Sqrt(1e-6 * 100e-6)
 		if math.Abs(actual-expected) > 1e-12 {
 			t.Errorf("Geometric midpoint = %e, want %e", actual, expected)
 		}

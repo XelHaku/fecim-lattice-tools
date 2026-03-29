@@ -3,7 +3,7 @@ package neural
 import "math"
 
 const (
-	cimGMinS = 10e-6
+	cimGMinS = 1e-6
 	cimGMaxS = 100e-6
 )
 
