@@ -30,6 +30,11 @@ type EmbeddedApp struct {
 	calibWG sync.WaitGroup
 }
 
+func (e *EmbeddedApp) bindHost(fyneApp fyne.App, parentWindow fyne.Window) {
+	e.fyneApp = fyneApp
+	e.mainWindow = parentWindow
+}
+
 // SetPhysicsEngine switches the active physics engine for the embedded module.
 // Note: this mutates simulation state and resets history (see App.setPhysicsEngine).
 func (e *EmbeddedApp) SetPhysicsEngine(engine PhysicsEngine) {
@@ -103,6 +108,14 @@ func NewEmbeddedApp() *EmbeddedApp {
 	return &EmbeddedApp{App: app}
 }
 
+// RegisterKeyboard re-registers the hysteresis module's keyboard handler on the
+// shared canvas. Called by the unified app when this tab becomes active.
+func (e *EmbeddedApp) RegisterKeyboard() {
+	if e.App != nil && e.mainWindow != nil {
+		e.setupShortcuts()
+	}
+}
+
 // BuildContent creates the UI content for embedding in a tab
 // The fyne.App instance and window must be provided by the parent
 func (e *EmbeddedApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject {
@@ -111,10 +124,7 @@ func (e *EmbeddedApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) f
 		log = logging.NewLogger("hysteresis")
 	}
 
-	e.fyneApp = fyneApp
-	e.mainWindow = parentWindow
-
-	return e.EmbeddedAppBase.BuildOrReuseContent(fyneApp, parentWindow, func() fyne.CanvasObject {
+	return e.EmbeddedAppBase.BuildOrReuseContentWithHostSync(fyneApp, parentWindow, e.bindHost, func() fyne.CanvasObject {
 		return e.createUI()
 	})
 }
@@ -215,6 +225,9 @@ func (e *EmbeddedApp) Stop() {
 
 	e.simWG.Wait()
 	e.calibWG.Wait()
+
+	// Close the UI update channel so the uiUpdateLoop goroutine exits.
+	e.closeUIUpdateLoop()
 
 	e.stopDataLogger()
 

@@ -14,6 +14,11 @@ type EmbeddedComparisonApp struct {
 	sharedwidgets.EmbeddedAppBase
 }
 
+func (e *EmbeddedComparisonApp) bindHost(fyneApp fyne.App, parentWindow fyne.Window) {
+	e.fyneApp = fyneApp
+	e.window = parentWindow
+}
+
 // NewEmbeddedComparisonApp creates a new embedded comparison app (for use in unified visualizer)
 func NewEmbeddedComparisonApp() *EmbeddedComparisonApp {
 	ca := &ComparisonApp{
@@ -51,12 +56,17 @@ func NewEmbeddedComparisonApp() *EmbeddedComparisonApp {
 	return &EmbeddedComparisonApp{ComparisonApp: ca}
 }
 
+// RegisterKeyboard re-registers the comparison module's keyboard handler on the
+// shared canvas. Called by the unified app when this tab becomes active.
+func (e *EmbeddedComparisonApp) RegisterKeyboard() {
+	if e.ComparisonApp != nil && e.window != nil {
+		e.setupKeyboard()
+	}
+}
+
 // BuildContent creates the UI content for embedding in a tab
 func (e *EmbeddedComparisonApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject {
-	e.fyneApp = fyneApp
-	e.window = parentWindow
-
-	return e.EmbeddedAppBase.BuildOrReuseContent(fyneApp, parentWindow, func() fyne.CanvasObject {
+	return e.EmbeddedAppBase.BuildOrReuseContentWithHostSync(fyneApp, parentWindow, e.bindHost, func() fyne.CanvasObject {
 		content := e.createMainLayout()
 
 		// Note: updateCalculations() is called via onWorkloadChanged when SetSelected triggers

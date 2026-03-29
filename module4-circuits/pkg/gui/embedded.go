@@ -15,6 +15,11 @@ type EmbeddedCircuitsApp struct {
 	sharedwidgets.EmbeddedAppBase
 }
 
+func (e *EmbeddedCircuitsApp) bindHost(fyneApp fyne.App, parentWindow fyne.Window) {
+	e.fyneApp = fyneApp
+	e.window = parentWindow
+}
+
 // NewEmbeddedCircuitsApp creates a new embedded circuits app (for use in unified visualizer)
 func NewEmbeddedCircuitsApp() *EmbeddedCircuitsApp {
 	ca := &CircuitsApp{
@@ -61,13 +66,18 @@ func NewEmbeddedCircuitsApp() *EmbeddedCircuitsApp {
 	return &EmbeddedCircuitsApp{CircuitsApp: ca}
 }
 
+// RegisterKeyboard re-registers the circuits module's keyboard handler on the
+// shared canvas. Called by the unified app when this tab becomes active.
+func (e *EmbeddedCircuitsApp) RegisterKeyboard() {
+	if e.CircuitsApp != nil && e.window != nil {
+		e.setupKeyboard()
+	}
+}
+
 // BuildContent creates the UI content for embedding in a tab
 // The fyne.App instance and window must be provided by the parent
 func (e *EmbeddedCircuitsApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject {
-	e.fyneApp = fyneApp
-	e.window = parentWindow
-
-	return e.EmbeddedAppBase.BuildOrReuseContent(fyneApp, parentWindow, func() fyne.CanvasObject {
+	return e.EmbeddedAppBase.BuildOrReuseContentWithHostSync(fyneApp, parentWindow, e.bindHost, func() fyne.CanvasObject {
 		return e.createMainLayout()
 	})
 }

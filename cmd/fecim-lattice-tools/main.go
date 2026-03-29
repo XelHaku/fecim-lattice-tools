@@ -49,6 +49,15 @@ import (
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
 
+// noopModule is a placeholder for modules that failed to initialize.
+type noopModule struct{}
+
+func (noopModule) BuildContent(fyne.App, fyne.Window) fyne.CanvasObject {
+	return container.NewCenter(widget.NewLabel("Module failed to initialize. Check logs."))
+}
+func (noopModule) Start() {}
+func (noopModule) Stop()  {}
+
 // Global undo manager for parameter changes across all modules
 var undoManager *undo.Manager
 
@@ -308,26 +317,36 @@ func main() {
 	d7 := demo7gui.NewEmbeddedDocsApp()
 	fmt.Println("[STARTUP] All demos created")
 
-	demos := &DemoApp{
-		demo1: d1,
-		demo2: demo2,
-		demo3: d3,
-		demo4: d4,
-		demo5: d5,
-		demo6: d6,
-		demo7: d7,
+	// Wrap nil demo2 in a safe placeholder
+	var demo2Module moduleLifecycle = noopModule{}
+	if demo2 != nil {
+		demo2Module = demo2
 	}
 
-	// View names for navigation (index matches view index)
-	viewNames := []string{
-		"Home",
-		"FeCIM Hysteresis Simulation",
-		"FeCIM Crossbar Array Visualization",
-		"FeCIM MNIST Neural Network",
-		"FeCIM Peripheral Circuits Visualizer",
-		"FeCIM: The Energy Revolution",
-		"FeCIM EDA Design Suite (Work In Progress)",
-		"Documentation",
+	// Module registry: index 0..6 maps to demos 1..7.
+	// All lifecycle operations iterate this slice instead of per-module switch blocks.
+	type moduleEntry struct {
+		name   string
+		module moduleLifecycle
+	}
+	modules := []moduleEntry{
+		{"FeCIM Hysteresis Simulation", d1},
+		{"FeCIM Crossbar Array Visualization", demo2Module},
+		{"FeCIM MNIST Neural Network", d3},
+		{"FeCIM Peripheral Circuits Visualizer", d4},
+		{"FeCIM: The Energy Revolution", d5},
+		{"FeCIM EDA Design Suite (Work In Progress)", d6},
+		{"Documentation", d7},
+	}
+
+	// Typed reference for module-specific API (Learn More / F1)
+	docsModule := d7
+
+	// View names for navigation (index 0 = Home, 1..7 = modules)
+	viewNames := make([]string, len(modules)+1)
+	viewNames[0] = "Home"
+	for i, m := range modules {
+		viewNames[i+1] = m.name
 	}
 
 	// Track current view index and content stack
@@ -365,48 +384,15 @@ func main() {
 		}
 	})
 
-	// Build content for each demo
-	fmt.Println("[STARTUP] Building demo1 content...")
-	demo1Content := demos.demo1.BuildContent(fyneApp, window)
-	fmt.Println("[STARTUP] demo1 content built")
-
-	// Handle potentially nil demo2 (initialization error)
-	var demo2Content fyne.CanvasObject
-	if demos.demo2 != nil {
-		fmt.Println("[STARTUP] Building demo2 content...")
-		demo2Content = demos.demo2.BuildContent(fyneApp, window)
-		fmt.Println("[STARTUP] demo2 content built")
-	} else {
-		demo2Content = container.NewCenter(widget.NewLabel("Crossbar demo failed to initialize. Check logs for details."))
-	}
-
-	fmt.Println("[STARTUP] Building demo3 content...")
-	demo3Content := demos.demo3.BuildContent(fyneApp, window)
-	fmt.Println("[STARTUP] demo3 content built")
-	fmt.Println("[STARTUP] Building demo4 content...")
-	demo4Content := demos.demo4.BuildContent(fyneApp, window)
-	fmt.Println("[STARTUP] demo4 content built")
-	fmt.Println("[STARTUP] Building demo5 content...")
-	demo5Content := demos.demo5.BuildContent(fyneApp, window)
-	fmt.Println("[STARTUP] demo5 content built")
-	fmt.Println("[STARTUP] Building demo6 content...")
-	demo6Content := demos.demo6.BuildContent(fyneApp, window)
-	fmt.Println("[STARTUP] demo6 content built")
-	fmt.Println("[STARTUP] Building demo7 content...")
-	demo7Content := demos.demo7.BuildContent(fyneApp, window)
-	fmt.Println("[STARTUP] demo7 content built")
-
-	// Create views - 7 demos total (plus home)
+	// Build content for each module via the registry
 	fmt.Println("[STARTUP] Creating views...")
-	views = []fyne.CanvasObject{
-		launcherContent,
-		container.NewMax(demo1Content),
-		container.NewMax(demo2Content),
-		container.NewMax(demo3Content),
-		container.NewMax(demo4Content),
-		container.NewMax(demo5Content),
-		container.NewMax(demo6Content),
-		container.NewMax(demo7Content),
+	views = make([]fyne.CanvasObject, len(modules)+1)
+	views[0] = launcherContent
+	for i, m := range modules {
+		fmt.Printf("[STARTUP] Building module %d (%s) content...\n", i+1, m.name)
+		content := m.module.BuildContent(fyneApp, window)
+		views[i+1] = container.NewMax(content)
+		fmt.Printf("[STARTUP] Module %d content built\n", i+1)
 	}
 	// Hide all views except Home initially
 	for i, v := range views {
@@ -572,59 +558,36 @@ func main() {
 		// Update current module label
 		currentModuleLabel.SetText(viewName)
 
-		// Stop previous demo
-		switch currentDemo {
-		case 1:
-			log.Debug("Stopping demo1 (Hysteresis)")
-			demos.demo1.Stop()
-		case 2:
-			log.Debug("Stopping demo2 (Crossbar+)")
-			if demos.demo2 != nil {
-				demos.demo2.Stop()
-			}
-		case 3:
-			log.Debug("Stopping demo3 (MNIST)")
-			demos.demo3.Stop()
-		case 4:
-			log.Debug("Stopping demo4 (Circuits)")
-			demos.demo4.Stop()
-		case 5:
-			log.Debug("Stopping demo5 (Comparison)")
-			demos.demo5.Stop()
-		case 6:
-			log.Debug("Stopping demo6 (EDA)")
-			demos.demo6.Stop()
-		case 7:
-			log.Debug("Stopping demo7 (Docs)")
-			demos.demo7.Stop()
+		// Stop previous module
+		if currentDemo > 0 && currentDemo <= len(modules) {
+			log.Debug("Stopping module %d (%s)", currentDemo, modules[currentDemo-1].name)
+			modules[currentDemo-1].module.Stop()
 		}
 
-		// Start new demo (index 0=Home, 1-7=demos)
+		// Start new module (index 0 = Home, no module to start)
 		currentDemo = index
-		switch index {
-		case 1:
-			log.Debug("Starting demo1 (Hysteresis)")
-			demos.demo1.Start()
-		case 2:
-			log.Debug("Starting demo2 (Crossbar+)")
-			if demos.demo2 != nil {
-				demos.demo2.Start()
+		if index > 0 && index <= len(modules) {
+			log.Debug("Starting module %d (%s)", index, modules[index-1].name)
+			modules[index-1].module.Start()
+		}
+
+		// Re-register the active module's keyboard handler on the shared canvas.
+		// Fyne only supports one SetOnTypedKey handler per canvas, so whichever
+		// module registered last during BuildContent would capture all bare-key
+		// presses. Re-registering on every tab switch ensures the correct module
+		// owns the handler.
+		if index > 0 && index <= len(modules) {
+			if kr, ok := modules[index-1].module.(sharedwidgets.KeyboardRegistrar); ok {
+				kr.RegisterKeyboard()
+			} else {
+				// Module has no keyboard handler; clear the stale handler
+				// from the previous module so key presses are not misrouted.
+				window.Canvas().SetOnTypedKey(nil)
 			}
-		case 3:
-			log.Debug("Starting demo3 (MNIST)")
-			demos.demo3.Start()
-		case 4:
-			log.Debug("Starting demo4 (Circuits)")
-			demos.demo4.Start()
-		case 5:
-			log.Debug("Starting demo5 (Comparison)")
-			demos.demo5.Start()
-		case 6:
-			log.Debug("Starting demo6 (EDA)")
-			demos.demo6.Start()
-		case 7:
-			log.Debug("Starting demo7 (Docs)")
-			demos.demo7.Start()
+		} else {
+			// Home view: clear stale keyboard handler so key presses don't
+			// route to a background module.
+			window.Canvas().SetOnTypedKey(nil)
 		}
 	}
 
@@ -639,7 +602,7 @@ func main() {
 		log.Button("LearnMore")
 		selectView(7)
 		// After switching to docs, navigate to the unified entry page.
-		demos.demo7.OpenAboutScience()
+		docsModule.OpenAboutScience()
 	})
 	learnMoreBtn.Importance = widget.LowImportance
 
@@ -655,7 +618,7 @@ func main() {
 	// L05: F1 opens the unified Learn More page (About the Science)
 	canvas.AddShortcut(&desktop.CustomShortcut{KeyName: fyne.KeyF1}, func(_ fyne.Shortcut) {
 		selectView(7)
-		demos.demo7.OpenAboutScience()
+		docsModule.OpenAboutScience()
 	})
 	canvas.AddShortcut(&fyne.ShortcutUndo{}, func(_ fyne.Shortcut) {
 		if undoManager.Undo() {
@@ -810,16 +773,11 @@ func main() {
 		}
 		audioMonitorMu.Unlock()
 
-		// Stop all demos to clean up resources (e.g., auto demo contexts)
-		log.Debug("Stopping all demos before window close...")
-		demos.demo1.Stop()
-		if demos.demo2 != nil {
-			demos.demo2.Stop()
+		// Stop all modules to clean up resources
+		log.Debug("Stopping all modules before window close...")
+		for _, m := range modules {
+			m.module.Stop()
 		}
-		demos.demo3.Stop()
-		demos.demo4.Stop()
-		demos.demo5.Stop()
-		demos.demo6.Stop()
 
 		// Close the window
 		window.Close()
@@ -956,15 +914,10 @@ func main() {
 	fmt.Println("[STARTUP] About to call ShowAndRun()...")
 	window.ShowAndRun()
 
-	// Cleanup all demos on exit
-	demos.demo1.Stop()
-	if demos.demo2 != nil {
-		demos.demo2.Stop()
+	// Close intercept handles all module cleanup; belt-and-suspenders guard:
+	for _, m := range modules {
+		m.module.Stop()
 	}
-	demos.demo3.Stop()
-	demos.demo4.Stop()
-	demos.demo5.Stop()
-	demos.demo6.Stop()
 
 	// Stop recording if still running
 	if recordingState.IsRecording() {

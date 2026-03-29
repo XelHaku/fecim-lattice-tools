@@ -23,6 +23,11 @@ type EmbeddedMNISTApp struct {
 	startupWarning string
 }
 
+func (e *EmbeddedMNISTApp) bindHost(fyneApp fyne.App, parentWindow fyne.Window) {
+	e.fyneApp = fyneApp
+	e.window = parentWindow
+}
+
 // NewEmbeddedMNISTApp creates a new embedded MNIST GUI application
 func NewEmbeddedMNISTApp() *EmbeddedMNISTApp {
 	embedded := &EmbeddedMNISTApp{MNISTApp: &MNISTApp{}}
@@ -85,10 +90,7 @@ func (e *EmbeddedMNISTApp) initialize() error {
 // BuildContent creates the UI content for embedding in a tab
 // The fyne.App instance must be provided by the parent
 func (e *EmbeddedMNISTApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject {
-	e.fyneApp = fyneApp
-	e.window = parentWindow
-
-	return e.EmbeddedAppBase.BuildOrReuseContent(fyneApp, parentWindow, func() fyne.CanvasObject {
+	return e.EmbeddedAppBase.BuildOrReuseContentWithHostSync(fyneApp, parentWindow, e.bindHost, func() fyne.CanvasObject {
 		if e.initErr != nil {
 			return sharedwidgets.NewModuleErrorContent("MNIST", e.initErr)
 		}
@@ -116,6 +118,9 @@ func (e *EmbeddedMNISTApp) Start() {
 
 // Stop cleans up any running processes
 func (e *EmbeddedMNISTApp) Stop() {
+	if e.initErr != nil {
+		return
+	}
 	e.stopAutoDemoLoop()
 	e.EmbeddedAppBase.Stop()
 }

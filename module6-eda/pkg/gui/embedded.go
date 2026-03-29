@@ -58,8 +58,8 @@ func (app *EmbeddedEDAApp) BuildContent(fyneApp fyne.App, window fyne.Window) fy
 
 // Start is called when this demo tab is selected
 func (app *EmbeddedEDAApp) Start() {
-	logging.GlobalInfo("[EDA] Module started")
 	app.EmbeddedAppBase.Start()
+	logging.GlobalInfo("[EDA] Module started")
 	// No background processes to start
 }
 

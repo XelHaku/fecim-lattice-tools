@@ -78,6 +78,26 @@ func (b *EmbeddedAppBase) BuildOrReuseContent(fyneApp fyne.App, window fyne.Wind
 	return content
 }
 
+// BuildOrReuseContentWithHostSync coordinates two pieces of state that together
+// define an embedded module's host context:
+//   - the shared EmbeddedAppBase binding (used for reuse and notifications)
+//   - the module-specific host fields needed by legacy app structs
+//
+// The syncHost callback runs before reuse/build so the embedding module can keep
+// its own host references aligned with the shared binding.
+func (b *EmbeddedAppBase) BuildOrReuseContentWithHostSync(
+	fyneApp fyne.App,
+	window fyne.Window,
+	syncHost func(fyne.App, fyne.Window),
+	build func() fyne.CanvasObject,
+) fyne.CanvasObject {
+	if syncHost != nil {
+		syncHost(fyneApp, window)
+	}
+
+	return b.BuildOrReuseContent(fyneApp, window, build)
+}
+
 // GetFyneApp returns the Fyne app instance.
 func (b *EmbeddedAppBase) GetFyneApp() fyne.App {
 	b.mu.RLock()

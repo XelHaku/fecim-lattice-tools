@@ -200,6 +200,50 @@ func TestEmbeddedAppBaseBuildOrReuseContent(t *testing.T) {
 	}
 }
 
+func TestEmbeddedAppBaseBuildOrReuseContentWithHostSync(t *testing.T) {
+	testApp := test.NewApp()
+	defer testApp.Quit()
+
+	window := testApp.NewWindow("one")
+	defer window.Close()
+
+	base := &EmbeddedAppBase{}
+	var (
+		builds    int32
+		syncCalls int32
+		syncedApp fyne.App
+		syncedWin fyne.Window
+	)
+
+	syncHost := func(app fyne.App, win fyne.Window) {
+		atomic.AddInt32(&syncCalls, 1)
+		syncedApp = app
+		syncedWin = win
+	}
+
+	content1 := base.BuildOrReuseContentWithHostSync(testApp, window, syncHost, func() fyne.CanvasObject {
+		atomic.AddInt32(&builds, 1)
+		return widget.NewLabel("first")
+	})
+	content2 := base.BuildOrReuseContentWithHostSync(testApp, window, syncHost, func() fyne.CanvasObject {
+		atomic.AddInt32(&builds, 1)
+		return widget.NewLabel("second")
+	})
+
+	if atomic.LoadInt32(&builds) != 1 {
+		t.Fatalf("expected builder to run once, ran %d times", builds)
+	}
+	if atomic.LoadInt32(&syncCalls) != 2 {
+		t.Fatalf("expected host sync to run on each call, ran %d times", syncCalls)
+	}
+	if content1 != content2 {
+		t.Fatal("expected content to be reused for the same host")
+	}
+	if syncedApp != testApp || syncedWin != window {
+		t.Fatal("expected syncHost to receive the current host binding")
+	}
+}
+
 func TestNewModuleErrorContent(t *testing.T) {
 	content := NewModuleErrorContent("Test", nil)
 	if content == nil {

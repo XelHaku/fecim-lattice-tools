@@ -48,6 +48,10 @@ type EmbeddedDocsApp struct {
 	suppressSelect map[string]bool
 }
 
+func (app *EmbeddedDocsApp) bindHost(_ fyne.App, window fyne.Window) {
+	app.window = window
+}
+
 // NewEmbeddedDocsApp creates a new embedded docs app instance
 func NewEmbeddedDocsApp() *EmbeddedDocsApp {
 	return &EmbeddedDocsApp{}
@@ -71,11 +75,17 @@ type docEntry struct {
 	children []*docEntry
 }
 
+// RegisterKeyboard re-registers the docs module's keyboard handler on the
+// shared canvas. Called by the unified app when this tab becomes active.
+func (app *EmbeddedDocsApp) RegisterKeyboard() {
+	if app.window != nil && app.searchDialog != nil {
+		SetupSearchShortcut(app.window, app.searchDialog)
+	}
+}
+
 // BuildContent creates the UI content for embedding in the main app
 func (app *EmbeddedDocsApp) BuildContent(fyneApp fyne.App, window fyne.Window) fyne.CanvasObject {
-	app.window = window
-
-	return app.EmbeddedAppBase.BuildOrReuseContent(fyneApp, window, func() fyne.CanvasObject {
+	return app.EmbeddedAppBase.BuildOrReuseContentWithHostSync(fyneApp, window, app.bindHost, func() fyne.CanvasObject {
 		app.docsPath = utils.FindDirectory(filepath.Join("docs", "documentation"))
 		if app.docsPath == "" {
 			app.docsPath = utils.FindDirectory("docs")

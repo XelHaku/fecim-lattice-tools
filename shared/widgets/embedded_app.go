@@ -35,3 +35,19 @@ type EmbeddedApp interface {
 	// Implementations should save any state needed for persistence.
 	Stop()
 }
+
+// KeyboardRegistrar is an optional interface that embedded modules may implement
+// to support re-registration of their keyboard handler when a tab becomes active.
+//
+// Fyne only supports a single SetOnTypedKey handler per canvas. In the unified app
+// all modules share one window, so whichever module registered last during
+// BuildContent would capture all bare-key presses regardless of the active tab.
+//
+// Modules that handle bare key events (SetOnTypedKey) should implement this
+// interface. The unified app calls RegisterKeyboard on the active module each
+// time the user switches tabs.
+type KeyboardRegistrar interface {
+	// RegisterKeyboard re-registers the module's keyboard handler on the
+	// shared canvas. Called by the unified app after a tab switch.
+	RegisterKeyboard()
+}

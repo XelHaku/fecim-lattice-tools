@@ -18,6 +18,11 @@ type EmbeddedCrossbarApp struct {
 	initialized bool
 }
 
+func (e *EmbeddedCrossbarApp) bindHost(fyneApp fyne.App, parentWindow fyne.Window) {
+	e.fyneApp = fyneApp
+	e.window = parentWindow
+}
+
 // NewEmbeddedCrossbarApp creates a new embedded crossbar GUI application.
 // The crossbar array is lazily initialized when the module is first opened.
 func NewEmbeddedCrossbarApp() (*EmbeddedCrossbarApp, error) {
@@ -65,13 +70,18 @@ func (e *EmbeddedCrossbarApp) initArray() error {
 	return nil
 }
 
+// RegisterKeyboard re-registers the crossbar module's keyboard handler on the
+// shared canvas. Called by the unified app when this tab becomes active.
+func (e *EmbeddedCrossbarApp) RegisterKeyboard() {
+	if e.CrossbarApp != nil && e.window != nil {
+		e.setupKeyboard()
+	}
+}
+
 // BuildContent creates the UI content for embedding in a tab
 // The fyne.App instance must be provided by the parent
 func (e *EmbeddedCrossbarApp) BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject {
-	e.fyneApp = fyneApp
-	e.window = parentWindow
-
-	return e.EmbeddedAppBase.BuildOrReuseContent(fyneApp, parentWindow, func() fyne.CanvasObject {
+	return e.EmbeddedAppBase.BuildOrReuseContentWithHostSync(fyneApp, parentWindow, e.bindHost, func() fyne.CanvasObject {
 		// Lazily initialize the crossbar array on first BuildContent call
 		if err := e.initArray(); err != nil {
 			return sharedwidgets.NewModuleErrorContent("Crossbar", err)
@@ -103,10 +113,7 @@ func (e *EmbeddedCrossbarApp) BuildContent(fyneApp fyne.App, parentWindow fyne.W
 
 // BuildContentStandard creates standard UI content for embedding (no enhanced features)
 func (e *EmbeddedCrossbarApp) BuildContentStandard(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject {
-	e.fyneApp = fyneApp
-	e.window = parentWindow
-
-	return e.EmbeddedAppBase.BuildOrReuseContent(fyneApp, parentWindow, func() fyne.CanvasObject {
+	return e.EmbeddedAppBase.BuildOrReuseContentWithHostSync(fyneApp, parentWindow, e.bindHost, func() fyne.CanvasObject {
 		// Lazily initialize the crossbar array on first BuildContent call
 		if err := e.initArray(); err != nil {
 			return sharedwidgets.NewModuleErrorContent("Crossbar", err)
