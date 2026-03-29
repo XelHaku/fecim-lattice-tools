@@ -85,7 +85,12 @@ func (a *App) closeUIUpdateLoop() {
 }
 
 // queueUIUpdate sends the latest UI snapshot without blocking physics.
+// Safe to call even after closeUIUpdateLoop (returns silently).
 func (a *App) queueUIUpdate(snapshot uiSnapshot) {
+	// Guard: skip if the module is shutting down (channel may be closed).
+	if !a.running.Load() {
+		return
+	}
 	a.ensureUIUpdateLoop()
 	select {
 	case a.uiUpdates <- snapshot:

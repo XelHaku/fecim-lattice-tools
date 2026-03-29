@@ -15,6 +15,15 @@ import (
 // simulationLoop runs the main simulation loop at ~60 FPS
 // simulationLoop runs the main simulation loop at ~60 FPS with adaptive physics stepping
 func (a *App) simulationLoop() {
+	// Recover from closed-channel panics during shutdown.
+	// Stop() closes the UI update channel, but the sim goroutine may still be
+	// mid-frame between the running.Load() check and the channel send.
+	defer func() {
+		if r := recover(); r != nil {
+			// Expected during shutdown; silently absorb.
+		}
+	}()
+
 	ticker := time.NewTicker(16 * time.Millisecond) // ~60 FPS targeting
 	defer ticker.Stop()
 
