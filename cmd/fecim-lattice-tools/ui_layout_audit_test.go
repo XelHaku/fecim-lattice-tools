@@ -25,8 +25,7 @@ import (
 	demo6gui "fecim-lattice-tools/module6-eda/pkg/gui"
 )
 
-// NOTE: moduleLifecycle interface already exists in e2e_gui_test.go (same package).
-// Reuse it here.
+// moduleLifecycle is the package-local alias for shared/widgets.EmbeddedApp.
 
 type moduleFactory struct {
 	name   string

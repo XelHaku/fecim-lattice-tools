@@ -153,11 +153,11 @@ func TestDeterminism_ISPPSameParametersSamePulseCount(t *testing.T) {
 		model := ferroelectric.NewPreisachModel(mat)
 		model.Reset()
 
-		const numLevels = 30
+		const numLevels = physics.DefaultLevels
 		const targetLevel = 20
 		wc := controller.NewWriteController(numLevels, mat.Ec, mat.Ec*2.5, nil)
 		wc.PulseDuration = 5e-4
-		wc.MaxRetries = 30
+		wc.MaxRetries = physics.DefaultLevels
 		wc.Start(targetLevel, true)
 
 		currentField := 0.0

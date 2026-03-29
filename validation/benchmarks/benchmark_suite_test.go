@@ -2,11 +2,15 @@ package benchmarks
 
 import "testing"
 
+// mnistAccuracyThreshold is the minimum CIM inference accuracy required for the
+// 8-bit quantized MNIST benchmark (M3-ACC-02).
+const mnistAccuracyThreshold = 0.80
+
 func TestRunMNISTBenchmarkDeterministic(t *testing.T) {
 	cfg := BenchmarkConfig{
 		Seed:              12345,
 		Samples:           64,
-		AccuracyThreshold: 0.80,
+		AccuracyThreshold: mnistAccuracyThreshold,
 		LatencyNsMax:      100,
 		EnergyPJMax:       10,
 	}

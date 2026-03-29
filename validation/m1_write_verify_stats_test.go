@@ -83,7 +83,7 @@ func TestM1_WriteVerifyStats_Regression(t *testing.T) {
 		{id: "default_hzo", mat: ferroelectric.DefaultHZO()},
 	}
 
-	const numLevels = 30
+	const numLevels = sharedphysics.DefaultLevels
 	// Targets: lo=5, mid=15, hi=25 (well-separated; avoids near-saturation edges
 	// where the Preisach model requires fields beyond 2.5×Ec to converge).
 	targets := []int{5, 15, 25}

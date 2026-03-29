@@ -7,6 +7,7 @@ import (
 	"fecim-lattice-tools/module1-hysteresis/pkg/controller"
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 	"fecim-lattice-tools/shared/crossbar"
+	"fecim-lattice-tools/shared/physics"
 )
 
 func TestIntegration_PreisachLoopWithinLiteratureBounds(t *testing.T) {
@@ -106,11 +107,11 @@ func TestIntegration_ISPPConvergesWithin20Pulses(t *testing.T) {
 	model := ferroelectric.NewPreisachModel(mat)
 	model.Reset()
 
-	const numLevels = 30
+	const numLevels = physics.DefaultLevels
 	const targetLevel = 20
 	wc := controller.NewWriteController(numLevels, mat.Ec, mat.Ec*2.5, nil)
 	wc.PulseDuration = 5e-4
-	wc.MaxRetries = 30
+	wc.MaxRetries = physics.DefaultLevels
 	wc.Start(targetLevel, true)
 
 	currentField := 0.0

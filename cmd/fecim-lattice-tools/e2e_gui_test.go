@@ -29,13 +29,6 @@ import (
 // MODULE LIFECYCLE TESTS (GUI-based)
 // =============================================================================
 
-// moduleLifecycle interface matches the EmbeddedApp pattern
-type moduleLifecycle interface {
-	BuildContent(fyne.App, fyne.Window) fyne.CanvasObject
-	Start()
-	Stop()
-}
-
 // TestE2EGUIAllModulesLifecycle tests BuildContent/Start/Stop for all 6 modules.
 // This test requires a display but uses test.NewApp() for headless testing.
 // NOTE: May fail with font errors on some systems - see e2e_test.go for non-GUI tests.

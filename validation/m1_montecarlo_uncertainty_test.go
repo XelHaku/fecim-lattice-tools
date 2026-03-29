@@ -31,7 +31,7 @@ const (
 	mcNTrialsISPP = 50
 	mcSigmaFrac   = 0.05 // 5% RSD on Ps, Ec, Pr
 	mcSeed        = 42
-	mcNumLevels   = 30
+	mcNumLevels   = sharedphysics.DefaultLevels
 	mcISPPTarget  = 15
 )
 

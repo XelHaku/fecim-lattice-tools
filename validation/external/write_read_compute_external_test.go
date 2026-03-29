@@ -90,7 +90,7 @@ func TestCompute_ScipyRowCurrentCrossVal(t *testing.T) {
 	// 6×6 array with physically meaningful conductance spread
 	N := 6
 	mat := sharedphysics.FeCIMMaterial()
-	quantLevels := 30
+	quantLevels := sharedphysics.DefaultLevels
 
 	// Deterministic weight pattern: diagonal-dominant, spans full level range
 	weights := [][]int{
@@ -208,7 +208,7 @@ func TestRead_TIAFirstPrinciples(t *testing.T) {
 	mat := sharedphysics.FeCIMMaterial()
 	Gmin := mat.Gmin
 	Gmax := mat.Gmax
-	quantLevels := 30
+	quantLevels := sharedphysics.DefaultLevels
 
 	levels := []int{0, 7, 14, 21, 28, 29}
 

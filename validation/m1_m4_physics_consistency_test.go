@@ -18,8 +18,8 @@ func TestM1M4PhysicsConsistency_DefaultHZO30Levels(t *testing.T) {
 		t.Fatal("module1 DefaultHZO returned nil")
 	}
 
-	if levels := matM1.GetNumLevels(); levels != 30 {
-		t.Fatalf("expected DefaultHZO to expose 30 levels, got %d", levels)
+	if levels := matM1.GetNumLevels(); levels != sharedphysics.DefaultLevels {
+		t.Fatalf("expected DefaultHZO to expose %d levels, got %d", sharedphysics.DefaultLevels, levels)
 	}
 
 	// Set to linear conductance model since PolarizationToConductance uses linear mapping
@@ -39,9 +39,9 @@ func TestM1M4PhysicsConsistency_DefaultHZO30Levels(t *testing.T) {
 			matM4.Ps, matM4.Gmin, matM4.Gmax)
 	}
 
-	states := ferroelectric.NewPreisachModel(matM1).DiscreteStates(30)
-	if len(states) != 30 {
-		t.Fatalf("expected 30 programmed states, got %d", len(states))
+	states := ferroelectric.NewPreisachModel(matM1).DiscreteStates(sharedphysics.DefaultLevels)
+	if len(states) != sharedphysics.DefaultLevels {
+		t.Fatalf("expected %d programmed states, got %d", sharedphysics.DefaultLevels, len(states))
 	}
 
 	gmin, gmax := matM4.Gmin, matM4.Gmax

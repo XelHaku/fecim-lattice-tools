@@ -1,0 +1,35 @@
+# FeCIM Lattice Tools — service dependencies
+#
+# Cognee knowledge engine on port 11002.
+# Pre-build the image from the cognee repo:
+#   cd <local-path>
+#   docker buildx build -t cognee-local -f Dockerfile --load .
+#
+# Then start:
+#   docker compose up -d
+services:
+  cognee:
+    image: cognee-local
+    container_name: fecim-cognee
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - DEBUG=false
+      - HOST=0.0.0.0
+      - ENVIRONMENT=local
+      - LOG_LEVEL=INFO
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-*}
+      - HTTP_PORT=11002
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      - LLM_MODEL=${LLM_MODEL:-openai/gpt-4o-mini}
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai}
+    volumes:
+      - cognee-data:/app/cognee/.cognee_system
+    deploy:
+      resources:
+        limits:
+          cpus: "4.0"
+          memory: 8GB
+
+volumes:
+  cognee-data:

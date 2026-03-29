@@ -44,6 +44,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 
 	sharedtheme "fecim-lattice-tools/shared/theme"
+	sharedwidgets "fecim-lattice-tools/shared/widgets"
 
 	demo1gui "fecim-lattice-tools/module1-hysteresis/pkg/gui"
 	demo2gui "fecim-lattice-tools/module2-crossbar/pkg/gui"
@@ -53,12 +54,6 @@ import (
 	demo6gui "fecim-lattice-tools/module6-eda/pkg/gui"
 	demo7gui "fecim-lattice-tools/module7-docs/pkg/gui"
 )
-
-type moduleLifecycle interface {
-	BuildContent(fyne.App, fyne.Window) fyne.CanvasObject
-	Start()
-	Stop()
-}
 
 func main() {
 	outDir := flag.String("out", "cmd/fecim-lattice-tools/testdata/screenshots", "output directory for screenshots")
@@ -93,16 +88,16 @@ func main() {
 		name   string
 		settle time.Duration
 		start  bool
-		create func() (moduleLifecycle, error)
+		create func() (sharedwidgets.EmbeddedApp, error)
 	}{
-		{"hysteresis", 800 * time.Millisecond, true, func() (moduleLifecycle, error) { return demo1gui.NewEmbeddedApp(), nil }},
-		{"crossbar", 1500 * time.Millisecond, true, func() (moduleLifecycle, error) { return demo2gui.NewEmbeddedCrossbarApp() }},
+		{"hysteresis", 800 * time.Millisecond, true, func() (sharedwidgets.EmbeddedApp, error) { return demo1gui.NewEmbeddedApp(), nil }},
+		{"crossbar", 1500 * time.Millisecond, true, func() (sharedwidgets.EmbeddedApp, error) { return demo2gui.NewEmbeddedCrossbarApp() }},
 		// MNIST Start() can spawn long-running loops; for initial-state screenshots we skip Start.
-		{"mnist", 1200 * time.Millisecond, false, func() (moduleLifecycle, error) { return demo3gui.NewEmbeddedDualModeApp(), nil }},
-		{"circuits", 1200 * time.Millisecond, true, func() (moduleLifecycle, error) { return demo4gui.NewEmbeddedCircuitsApp(), nil }},
-		{"comparison", 1200 * time.Millisecond, true, func() (moduleLifecycle, error) { return demo5gui.NewEmbeddedComparisonApp(), nil }},
-		{"eda", 1200 * time.Millisecond, true, func() (moduleLifecycle, error) { return demo6gui.NewEmbeddedEDAApp(), nil }},
-		{"docs", 900 * time.Millisecond, false, func() (moduleLifecycle, error) { return demo7gui.NewEmbeddedDocsApp(), nil }},
+		{"mnist", 1200 * time.Millisecond, false, func() (sharedwidgets.EmbeddedApp, error) { return demo3gui.NewEmbeddedDualModeApp(), nil }},
+		{"circuits", 1200 * time.Millisecond, true, func() (sharedwidgets.EmbeddedApp, error) { return demo4gui.NewEmbeddedCircuitsApp(), nil }},
+		{"comparison", 1200 * time.Millisecond, true, func() (sharedwidgets.EmbeddedApp, error) { return demo5gui.NewEmbeddedComparisonApp(), nil }},
+		{"eda", 1200 * time.Millisecond, true, func() (sharedwidgets.EmbeddedApp, error) { return demo6gui.NewEmbeddedEDAApp(), nil }},
+		{"docs", 900 * time.Millisecond, false, func() (sharedwidgets.EmbeddedApp, error) { return demo7gui.NewEmbeddedDocsApp(), nil }},
 	}
 
 	for _, m := range mods {
@@ -124,7 +119,7 @@ func main() {
 	}
 }
 
-func captureOne(outDir, fileBase string, size fyne.Size, settle time.Duration, start bool, hysEngine string, create func() (moduleLifecycle, error)) error {
+func captureOne(outDir, fileBase string, size fyne.Size, settle time.Duration, start bool, hysEngine string, create func() (sharedwidgets.EmbeddedApp, error)) error {
 	module, err := create()
 	if err != nil {
 		return err

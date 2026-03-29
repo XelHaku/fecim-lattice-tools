@@ -16,14 +16,6 @@ import (
 	"fecim-lattice-tools/shared/canvas"
 	"fecim-lattice-tools/shared/logging"
 	"fecim-lattice-tools/shared/recording"
-
-	demo1gui "fecim-lattice-tools/module1-hysteresis/pkg/gui"
-	demo2gui "fecim-lattice-tools/module2-crossbar/pkg/gui"
-	demo3gui "fecim-lattice-tools/module3-mnist/pkg/gui"
-	demo4gui "fecim-lattice-tools/module4-circuits/pkg/gui"
-	demo5gui "fecim-lattice-tools/module5-comparison/pkg/gui"
-	demo6gui "fecim-lattice-tools/module6-eda/pkg/gui"
-	demo7gui "fecim-lattice-tools/module7-docs/pkg/gui"
 )
 
 // ForceMinSizeLayout ignores the child's MinSize and returns a fixed small size.
@@ -72,17 +64,6 @@ func isVerbosityToken(token string) bool {
 	default:
 		return false
 	}
-}
-
-// DemoApp holds the demo instances
-type DemoApp struct {
-	demo1 *demo1gui.EmbeddedApp           // Hysteresis
-	demo2 *demo2gui.EmbeddedCrossbarApp   // Crossbar (original single-view)
-	demo3 *demo3gui.EmbeddedDualModeApp   // MNIST FP vs CIM (full-featured)
-	demo4 *demo4gui.EmbeddedCircuitsApp   // Circuits
-	demo5 *demo5gui.EmbeddedComparisonApp // Comparison (technical briefing)
-	demo6 *demo6gui.EmbeddedEDAApp        // EDA Design Suite
-	demo7 *demo7gui.EmbeddedDocsApp       // Documentation
 }
 
 // sectionNameFromTab converts view name to a filename-friendly section name

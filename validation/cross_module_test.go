@@ -51,7 +51,7 @@ func TestCrossModule_CrossbarConductanceMatchesModule3CIMExpectation(t *testing.
 		t.Fatalf("crossbar.NewArray failed: %v", err)
 	}
 
-	const programmedConductance = 22.0 / 29.0 // exact 30-level grid point
+	const programmedConductance = 22.0 / (sharedphysics.DefaultLevels - 1) // exact DefaultLevels grid point
 	if err := arr.ProgramWeight(0, 0, programmedConductance); err != nil {
 		t.Fatalf("ProgramWeight failed: %v", err)
 	}
@@ -78,9 +78,9 @@ func TestCrossModule_CrossbarConductanceMatchesModule3CIMExpectation(t *testing.
 		t.Fatalf("unexpected CIM inference shape: pred=%d probs=%v", pred, probs)
 	}
 
-	// Crossbar stores normalized conductance on the same 30-level grid used by CIM path.
+	// Crossbar stores normalized conductance on the same DefaultLevels grid used by CIM path.
 	level := crossbar.GetLevel(gStored)
-	wantFromLevel := (float64(level)/29.0 - 0.5) * 4.0
+	wantFromLevel := (float64(level)/float64(sharedphysics.DefaultLevels-1) - 0.5) * 4.0
 	if math.Abs(legacyExpectedWeight-wantFromLevel) > 1e-12 {
 		t.Fatalf("legacy mapping drift: got %.15f want %.15f (level=%d g=%.15f)", legacyExpectedWeight, wantFromLevel, level, gStored)
 	}

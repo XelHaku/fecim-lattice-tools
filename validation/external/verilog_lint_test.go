@@ -7,6 +7,7 @@ import (
 
 	"fecim-lattice-tools/module6-eda/pkg/compiler"
 	"fecim-lattice-tools/module6-eda/pkg/export"
+	"fecim-lattice-tools/shared/physics"
 )
 
 // makeTestDesign creates a minimal ArrayDesign for Verilog generation tests.
@@ -23,8 +24,8 @@ func makeTestDesign(rows, cols int, arch string) *compiler.ArrayDesign {
 				cells = append(cells, compiler.CellAssignment{
 					Row:         r,
 					Col:         c,
-					Level:       (r*cols + c) % 30,
-					Conductance: float64((r*cols+c)%30) * 3.0,
+					Level:       (r*cols + c) % physics.DefaultLevels,
+					Conductance: float64((r*cols+c)%physics.DefaultLevels) * 3.0,
 				})
 			}
 		}
