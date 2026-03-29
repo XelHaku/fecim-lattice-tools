@@ -86,8 +86,12 @@ func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 		}
 		a.mu.Unlock()
 
-		// Handle temperature change with calibration (runs in background)
+		// Handle temperature change with calibration (runs in background).
+		// Guard: skip if app is shutting down to avoid post-Stop() writes.
 		go func() {
+			if !a.running.Load() {
+				return
+			}
 			a.mu.Lock()
 			a.onTemperatureChanged(newTemp)
 			a.mu.Unlock()
@@ -107,8 +111,12 @@ func (a *App) handleKeyPress(ke *fyne.KeyEvent) {
 		}
 		a.mu.Unlock()
 
-		// Handle temperature change with calibration (runs in background)
+		// Handle temperature change with calibration (runs in background).
+		// Guard: skip if app is shutting down to avoid post-Stop() writes.
 		go func() {
+			if !a.running.Load() {
+				return
+			}
 			a.mu.Lock()
 			a.onTemperatureChanged(newTemp)
 			a.mu.Unlock()

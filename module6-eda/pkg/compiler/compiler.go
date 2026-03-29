@@ -11,6 +11,27 @@ import (
 
 var log = logging.NewLogger("eda-compiler")
 
+// Compiler constants
+const (
+	// conductanceToResistance converts µS to Ω: R = 1e6 / G_µS.
+	conductanceToResistance = 1e6
+
+	// standbyPowerMW is the estimated standby power for a blank array (10 µW).
+	standbyPowerMW = 0.01
+
+	// activePowerMW is the estimated active power for a programmed array (100 µW).
+	activePowerMW = 0.1
+
+	// cellAreaConversion converts µm² to mm² (1e-6).
+	cellAreaConversion = 1e-6
+
+	// maxPSNR is the PSNR ceiling when MSE is negligible (100 dB).
+	maxPSNR = 100.0
+
+	// minMSEThreshold is the MSE below which PSNR is capped to maxPSNR.
+	minMSEThreshold = 1e-9
+)
+
 // GenerateDesign is the main entry point.
 // Transforms configuration into a physical array design.
 // If config.ComputeConfig.InitialWeights is provided, performs mapping.
@@ -73,12 +94,16 @@ func GenerateBlank(config *ArrayConfig) *ArrayDesign {
 	for i := 0; i < rows; i++ {
 		for j := 0; j < cols; j++ {
 			// Initialize to reset state (Level 0)
+			resistance := 0.0
+			if config.GMin > 0 {
+				resistance = conductanceToResistance / config.GMin
+			}
 			cells = append(cells, CellAssignment{
 				Row:         i,
 				Col:         j,
 				Level:       0,
 				Conductance: config.GMin,
-				Resistance:  1e6 / config.GMin, // Ohm
+				Resistance:  resistance,
 				ProgramV:    config.VProgMin,
 			})
 		}
@@ -87,7 +112,7 @@ func GenerateBlank(config *ArrayConfig) *ArrayDesign {
 	// Calculate area estimates
 	// Standard cell area (SKY130 ref) ~ 0.25um^2 = 0.25e-6 mm^2
 	// Pitch is in microns. Area = (Pitch * Height) * 1e-6 mm^2
-	cellAreaMM2 := (config.CellPitch * config.RowHeight) * 1e-6
+	cellAreaMM2 := (config.CellPitch * config.RowHeight) * cellAreaConversion
 	totalAreaMM2 := float64(rows*cols) * cellAreaMM2
 
 	design := &ArrayDesign{
@@ -97,7 +122,7 @@ func GenerateBlank(config *ArrayConfig) *ArrayDesign {
 			TotalCells:     rows * cols,
 			ActiveCells:    0, // None programmed/used
 			AreaMM2:        totalAreaMM2,
-			PowerMW:        0.01, // 10uW standby estimate
+			PowerMW:        standbyPowerMW,
 			ThroughputGOPS: 0.0,
 		},
 	}
@@ -183,7 +208,10 @@ func mapWeights(config *ArrayConfig) (*ArrayDesign, error) {
 				levelsUsed[level] = true
 
 				// Dequantize for stats
-				qNorm := float64(level) / float64(config.Levels-1)
+				var qNorm float64
+				if config.Levels > 1 {
+					qNorm = float64(level) / float64(config.Levels-1)
+				}
 				qValue := -wAbsMax + qNorm*(2*wAbsMax)
 				mseSum += (w - qValue) * (w - qValue)
 
@@ -191,12 +219,16 @@ func mapWeights(config *ArrayConfig) (*ArrayDesign, error) {
 				progV = config.VProgMin + qNorm*(config.VProgMax-config.VProgMin)
 			}
 
+			var resistance float64
+			if conductance > 0 {
+				resistance = conductanceToResistance / conductance
+			}
 			cells = append(cells, CellAssignment{
 				Row:           i,
 				Col:           j,
 				Level:         level,
 				Conductance:   conductance,
-				Resistance:    1e6 / conductance,
+				Resistance:    resistance,
 				ProgramV:      progV,
 				InitialWeight: w,
 			})
@@ -206,12 +238,12 @@ func mapWeights(config *ArrayConfig) (*ArrayDesign, error) {
 	// Stats
 	numWeights := rows * cols
 	mse := mseSum / float64(numWeights)
-	psnr := 100.0
-	if mse > 1e-9 {
+	psnr := maxPSNR
+	if mse > minMSEThreshold {
 		psnr = 10 * math.Log10((wAbsMax*wAbsMax)/mse)
 	}
 
-	totalAreaMM2 := float64(config.ArrayRows*config.ArrayCols) * (config.CellPitch * config.RowHeight) * 1e-6
+	totalAreaMM2 := float64(config.ArrayRows*config.ArrayCols) * (config.CellPitch * config.RowHeight) * cellAreaConversion
 
 	design := &ArrayDesign{
 		Config: config,
@@ -221,7 +253,7 @@ func mapWeights(config *ArrayConfig) (*ArrayDesign, error) {
 			ActiveCells: numWeights,
 			UsedCells:   numWeights, // Deprecated: kept for backward compatibility
 			AreaMM2:     totalAreaMM2,
-			PowerMW:     0.1, // Estimate active power
+			PowerMW:     activePowerMW,
 			QuantMSE:    mse,
 			QuantPSNR:   psnr,
 			WeightMin:   wMin,

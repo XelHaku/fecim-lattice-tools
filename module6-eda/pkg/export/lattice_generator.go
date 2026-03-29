@@ -79,13 +79,14 @@ func GenerateLatticeDEF(rows, cols int) string {
 	}
 	var sb strings.Builder
 
-	// Cell dimensions in microns
-	cellWidth := 0.46
-	cellHeight := 2.72
-	originX := 10.0
-	originY := 10.0
-	margin := 20.0
-	dbu := 1000 // Database units per micron
+	// Use shared DEF defaults for single source of truth (avoids 3-way duplication)
+	defCfg := DefaultDEFConfig()
+	cellWidth := defCfg.CellWidth
+	cellHeight := defCfg.CellHeight
+	originX := defCfg.OriginX
+	originY := defCfg.OriginY
+	margin := defCfg.MarginX
+	dbu := defCfg.DatabaseUnit
 
 	// Calculate die area
 	arrayWidth := float64(cols) * cellWidth

@@ -3,6 +3,8 @@ package ferroelectric
 import (
 	"math"
 	"testing"
+
+	"fecim-lattice-tools/shared/physics"
 )
 
 // TestHysteresisLoopExists verifies the P-E curve shows proper hysteresis behavior.
@@ -116,35 +118,36 @@ func TestCoerciveFieldSwitching(t *testing.T) {
 	}
 }
 
-// TestDiscreteStatesCount verifies 30 discrete states for the demo baseline.
+// TestDiscreteStatesCount verifies DefaultLevels discrete states for the demo baseline.
 func TestDiscreteStatesCount(t *testing.T) {
 	material := DefaultHZO()
 	model := NewPreisachModel(material)
 
-	states := model.DiscreteStates(30)
+	n := physics.DefaultLevels
+	states := model.DiscreteStates(n)
 
-	if len(states) != 30 {
-		t.Errorf("Expected 30 discrete states (demo baseline), got %d", len(states))
+	if len(states) != n {
+		t.Errorf("Expected %d discrete states (demo baseline), got %d", n, len(states))
 	}
 
 	// Verify states span from -Ps to +Ps
 	if states[0].Polarization > -0.9*material.Ps {
 		t.Errorf("First state %.4f should be close to -Ps (%.4f)", states[0].Polarization, -material.Ps)
 	}
-	if states[29].Polarization < 0.9*material.Ps {
-		t.Errorf("Last state %.4f should be close to +Ps (%.4f)", states[29].Polarization, material.Ps)
+	if states[n-1].Polarization < 0.9*material.Ps {
+		t.Errorf("Last state %.4f should be close to +Ps (%.4f)", states[n-1].Polarization, material.Ps)
 	}
 
 	// Verify states are evenly spaced
-	expectedSpacing := 2 * material.Ps / 29
-	for i := 1; i < 30; i++ {
+	expectedSpacing := 2 * material.Ps / float64(n-1)
+	for i := 1; i < n; i++ {
 		spacing := states[i].Polarization - states[i-1].Polarization
 		if math.Abs(spacing-expectedSpacing) > 1e-10 {
 			t.Errorf("State spacing at index %d is %.6f, expected %.6f", i, spacing, expectedSpacing)
 		}
 	}
 
-	t.Logf("30 discrete states baseline verified, spacing: %.6f C/m²", expectedSpacing)
+	t.Logf("%d discrete states baseline verified, spacing: %.6f C/m²", n, expectedSpacing)
 }
 
 // TestMaterialParameters verifies HZO material parameters are physically reasonable.

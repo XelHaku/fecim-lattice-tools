@@ -100,6 +100,22 @@ const (
 	TechIHP    = "IHP_SG13G2" // IHP 130nm SiGe BiCMOS
 )
 
+// SKY130 physical constants for cell layout.
+// Ref: SkyWater SKY130 PDK — unithd standard cell site.
+const (
+	sky130CellPitch  = 0.46 // µm — met1 pitch / unithd site width
+	sky130RowHeight  = 2.72 // µm — standard cell row height
+	sky130VDD        = 1.8  // V — nominal supply voltage
+	sky130ClockMHz   = 100.0 // MHz — default operating frequency
+
+	// 1T1R cell dimensions (wider for transistor)
+	cell1T1RPitch  = 0.92 // µm — ~2x passive for selector transistor
+	cell1T1RHeight = 3.40 // µm — taller for transistor + FeFET stack
+
+	// 2T1R cell dimensions (widest for dual transistors)
+	cell2T1RPitch = 1.38 // µm — ~3x passive for two transistors
+)
+
 // ArrayConfig holds all parameters for FeCIM array design
 type ArrayConfig struct {
 	// Basic array parameters
@@ -172,26 +188,26 @@ type ComputeArrayConfig struct {
 // NewArrayConfig creates a new array configuration with sensible defaults
 func NewArrayConfig(mode OperationMode, rows, cols int) *ArrayConfig {
 	cfg := &ArrayConfig{
-		Name:         "fecim_crossbar", // Default name for backward compatibility
+		Name:         "fecim_crossbar",
 		Mode:         mode,
 		ArrayRows:    rows,
 		ArrayCols:    cols,
 		Technology:   TechSKY130,
 		Architecture: ArchPassive,
-		CellPitch:    0.46,  // SKY130 compatible
-		RowHeight:    2.72,  // SKY130 standard cell height
-		Levels:       30,    // FeCIM standard
-		GMin:         10.0,  // μS
-		GMax:         100.0, // μS
-		VProgMin:     2.0,   // V
-		VProgMax:     5.0,   // V
-		TPulse:       50.0,  // ns
+		CellPitch:    sky130CellPitch,
+		RowHeight:    sky130RowHeight,
+		Levels:       30,     // FeCIM standard (conference claim, DefaultLevels)
+		GMin:         10.0,   // µS
+		GMax:         100.0,  // µS
+		VProgMin:     2.0,    // V
+		VProgMax:     5.0,    // V
+		TPulse:       50.0,   // ns
 		Peripherals: PeripheralConfig{
 			DACBits:   8,
 			ADCBits:   8,
-			TIAGain:   10000.0, // 10kΩ
-			VDD:       1.8,
-			ClockFreq: 100.0, // MHz
+			TIAGain:   10000.0, // 10 kΩ
+			VDD:       sky130VDD,
+			ClockFreq: sky130ClockMHz,
 		},
 	}
 
@@ -240,8 +256,8 @@ func NewComputeConfig(rows, cols int) *ArrayConfig {
 // With1T1R switches the configuration to 1T1R architecture
 func (c *ArrayConfig) With1T1R() *ArrayConfig {
 	c.Architecture = Arch1T1R
-	c.CellPitch = 0.92 // Larger cell for transistor
-	c.RowHeight = 3.40 // Taller for transistor + FeFET stack
+	c.CellPitch = cell1T1RPitch
+	c.RowHeight = cell1T1RHeight
 	return c
 }
 
@@ -249,8 +265,8 @@ func (c *ArrayConfig) With1T1R() *ArrayConfig {
 // 2T1R uses dual transistors (row + column select) for individual cell addressing
 func (c *ArrayConfig) With2T1R() *ArrayConfig {
 	c.Architecture = Arch2T1R
-	c.CellPitch = 1.38 // ~3x passive for two transistors
-	c.RowHeight = 3.40 // Taller for dual transistor stack
+	c.CellPitch = cell2T1RPitch
+	c.RowHeight = cell1T1RHeight // Same height as 1T1R
 	return c
 }
 

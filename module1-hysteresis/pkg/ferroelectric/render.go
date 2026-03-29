@@ -183,7 +183,12 @@ func (r *PERenderer) RenderDomainStates(alphas, betas []float64, states []int) s
 	sb.WriteString("  └" + strings.Repeat("─", size-1) + "→ β (down-switch field)\n")
 	sb.WriteString("\n")
 	sb.WriteString(fmt.Sprintf("  █ Up (+1): %d    ░ Down (-1): %d\n", upCount, downCount))
-	sb.WriteString(fmt.Sprintf("  Switched fraction: %.1f%%\n", float64(upCount)/float64(upCount+downCount)*100))
+	total := upCount + downCount
+	if total > 0 {
+		sb.WriteString(fmt.Sprintf("  Switched fraction: %.1f%%\n", float64(upCount)/float64(total)*100))
+	} else {
+		sb.WriteString("  Switched fraction: N/A (no hysterons)\n")
+	}
 
 	return sb.String()
 }
@@ -192,7 +197,7 @@ func (r *PERenderer) RenderDomainStates(alphas, betas []float64, states []int) s
 func (r *PERenderer) RenderDiscreteStates(states []DiscreteState) string {
 	var sb strings.Builder
 
-	sb.WriteString("30 Discrete Analog States (demo baseline; conference claim):\n")
+	sb.WriteString(fmt.Sprintf("%d Discrete Analog States (demo baseline; conference claim):\n", len(states)))
 	sb.WriteString(strings.Repeat("═", 65) + "\n\n")
 
 	// Header

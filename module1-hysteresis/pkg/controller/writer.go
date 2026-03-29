@@ -7,6 +7,53 @@ import (
 	"fecim-lattice-tools/module1-hysteresis/pkg/algo"
 )
 
+// ISPP convergence tuning constants.
+// These control the write-verify binary search behavior. All field-relative
+// values are expressed as fractions of Ec (coercive field).
+const (
+	// defaultMinStepFrac is the minimum E-field step as a fraction of Ec.
+	// Prevents vanishingly small increments near the target level.
+	defaultMinStepFrac = 0.04
+
+	// defaultOvershootLimit is the maximum consecutive overshoots before
+	// accepting the current level as physics-limited convergence.
+	defaultOvershootLimit = 30
+
+	// defaultPulseDuration is the default pulse duration in simulation time units.
+	defaultPulseDuration = 0.15
+
+	// defaultLogBaseStep is the logarithmic ISPP base step (fraction of Ec).
+	// Larger values give faster initial convergence but risk overshoot.
+	defaultLogBaseStep = 0.05
+
+	// stuckAcceptThreshold is the number of verify cycles with no level change
+	// before accepting ±1 error as converged.
+	stuckAcceptThreshold = 8
+
+	// stuckFailThreshold is the number of verify cycles with no level change
+	// before declaring the target unreachable.
+	stuckFailThreshold = 20
+
+	// overshootAcceptThreshold is the number of overshoots after which ±1
+	// error is accepted (physics-limited convergence for Preisach mid-range targets).
+	overshootAcceptThreshold = 8
+
+	// minBracketWidthFrac is the minimum bisection bracket width (fraction of Ec)
+	// to prevent collapsed-bracket stalls.
+	minBracketWidthFrac = 0.04
+
+	// nearSatLevelCount defines how many levels from each end are considered
+	// "near saturation" (levels 1..N or NumLevels-N+1..NumLevels).
+	nearSatLevelCount = 3
+
+	// nearSatBoostFrac is the minimum initial field for near-saturation targets
+	// (fraction of Ec). Higher than Ec to overcome K_dep feedback.
+	nearSatBoostFrac = 1.5
+
+	// nearSatMinStepFrac is the minimum step size for saturation targets.
+	nearSatMinStepFrac = 0.06
+)
+
 // WriteState represents the sub-state of the writing process
 type WriteState int
 
@@ -154,7 +201,7 @@ type WriteController struct {
 }
 
 func NewWriteController(numLevels int, ec, emax float64, calib *algo.CalibrationManager) *WriteController {
-	minStep := 0.04 * ec
+	minStep := defaultMinStepFrac * ec
 	if emax > 0 && minStep > emax {
 		minStep = emax
 	}
@@ -162,17 +209,17 @@ func NewWriteController(numLevels int, ec, emax float64, calib *algo.Calibration
 		NumLevels:                numLevels,
 		EcField:                  ec,
 		MaxField:                 emax,
-		MinStep:                  minStep, // Avoid overly tiny steps near target
-		MaxRetries:               0,       // Unlimited pulses per attempt (no forced reset)
-		ForceResetLimit:          0,       // Unlimited resets by default (never give up)
-		OvershootLimit:           30,      // Terminate ping-pong after 30 overshoots
-		PulseDuration:            0.15,    // Default safe value
+		MinStep:                  minStep,
+		MaxRetries:               0,
+		ForceResetLimit:          0,
+		OvershootLimit:           defaultOvershootLimit,
+		PulseDuration:            defaultPulseDuration,
 		CalibManager:             calib,
 		State:                    StateIdle,
 		EnableLKMidOptimizations: false,
 		WaitSettleScale:          1.0,
 		StepMode:                 "logarithmic",
-		LogBaseStep:              0.05,
+		LogBaseStep:              defaultLogBaseStep,
 	}
 }
 
@@ -491,7 +538,7 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			// Stuck termination: if the level hasn't changed for many consecutive
 			// verifies, the controller is trapped (e.g. at MaxField saturation
 			// or an unreachable mid-range state). Accept ±1 if close, else fail.
-			if wc.StuckCount >= 8 && absErr <= 1 {
+			if wc.StuckCount >= stuckAcceptThreshold && absErr <= 1 {
 				log.Printf("ISPP ACCEPT ±1 (stuck): level=%d target=%d stuck=%d",
 					currentLevel, wc.TargetLevel, wc.StuckCount)
 				wc.LastVerifyLevel = currentLevel
@@ -499,7 +546,7 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 				wc.SuccessCount++
 				return 0, true
 			}
-			if wc.StuckCount >= 20 {
+			if wc.StuckCount >= stuckFailThreshold {
 				log.Printf("ISPP STUCK LIMIT: level=%d target=%d stuck=%d absErr=%d — giving up",
 					currentLevel, wc.TargetLevel, wc.StuckCount, absErr)
 				wc.FailureCount++
@@ -525,7 +572,7 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			// convergence takes ~5 overshoots.
 			// Skip when guardActive: the actual level IS the target (absErr was
 			// artificially set to 1 by guard logic).
-			if wc.OvershootCount >= 8 && absErr <= 1 && !guardActive {
+			if wc.OvershootCount >= overshootAcceptThreshold && absErr <= 1 && !guardActive {
 				log.Printf("ISPP ACCEPT ±1: level=%d target=%d (within ±1 after %d overshoots)",
 					currentLevel, wc.TargetLevel, wc.OvershootCount)
 				wc.LastVerifyLevel = currentLevel
@@ -585,7 +632,7 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 			// If bounds collapse or invert, widen the bracket minimally
 			// instead of discarding all convergence progress.
 			if wc.VMinSet && wc.VMaxSet && wc.VMin >= wc.VMax {
-				minSep := 0.04 * wc.EcField // Minimum bracket width
+				minSep := minBracketWidthFrac * wc.EcField
 				if wc.stepFloor > minSep {
 					minSep = wc.stepFloor
 				}
@@ -777,10 +824,10 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 		}
 	}
 
-	// Near saturation levels (1-3 or 28-30), use larger steps due to K_dep feedback
-	if targetLevel <= 3 || targetLevel >= (wc.NumLevels-2) {
-		if stepSize < 0.06*wc.EcField {
-			stepSize = 0.06 * wc.EcField // Larger step for saturation targets
+	// Near saturation levels, use larger steps due to K_dep feedback
+	if targetLevel <= nearSatLevelCount || targetLevel >= (wc.NumLevels-nearSatLevelCount+1) {
+		if stepSize < nearSatMinStepFrac*wc.EcField {
+			stepSize = nearSatMinStepFrac * wc.EcField
 		}
 	}
 
@@ -799,8 +846,8 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 
 		// Use calibration as initial hint if available
 		wrdTargetIdx := targetLevel - 1
-		atNegativeSat := currentLevel <= 3
-		atPositiveSat := currentLevel >= (wc.NumLevels - 2)
+		atNegativeSat := currentLevel <= nearSatLevelCount
+		atPositiveSat := currentLevel >= (wc.NumLevels - nearSatLevelCount + 1)
 
 		var initialField float64
 		if wc.FromSaturation && wc.CalibManager != nil && wrdTargetIdx >= 0 && wrdTargetIdx < len(wc.CalibManager.CalibrationUp) {
@@ -831,10 +878,10 @@ func (wc *WriteController) calculateNextField(currentLevel int) {
 			log.Printf("ISPP INIT FALLBACK: calib was 0, using Ec=%.3f×Ec", initialField/wc.EcField)
 		}
 
-		// For targets near saturation (levels 1-3 or 28-30), use stronger starting field
-		if targetLevel <= 3 || targetLevel >= (wc.NumLevels-2) {
-			if initialField < 1.5*wc.EcField {
-				initialField = 1.5 * wc.EcField
+		// For targets near saturation, use stronger starting field
+		if targetLevel <= nearSatLevelCount || targetLevel >= (wc.NumLevels-nearSatLevelCount+1) {
+			if initialField < nearSatBoostFrac*wc.EcField {
+				initialField = nearSatBoostFrac * wc.EcField
 				log.Printf("ISPP INIT: near-saturation target %d, boosting to %.3f×Ec", targetLevel, initialField/wc.EcField)
 			}
 		}

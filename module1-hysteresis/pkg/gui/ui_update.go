@@ -235,9 +235,13 @@ func (a *App) updateUI() {
 
 const wrdPhaseBoundaryLogMinInterval = 400 * time.Millisecond
 
+// defaultISPPPulseLimit is the fallback ISPP pulse budget when not configured.
+// This limits the number of write-verify cycles per target to prevent infinite loops.
+const defaultISPPPulseLimit = 30
+
 func isppPulseLimit(maxPulses int) int {
 	if maxPulses <= 0 {
-		return 30
+		return defaultISPPPulseLimit
 	}
 	return maxPulses * 3
 }
@@ -547,7 +551,7 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 			if snapshot.wrdPhase == 2 && snapshot.controllerState != controller.StateIdle {
 				pulseLimit := snapshot.isppPulseLimit
 				if pulseLimit <= 0 {
-					pulseLimit = 30
+					pulseLimit = defaultISPPPulseLimit
 				}
 				state := snapshot.controllerState.String()
 				best := snapshot.controllerBestLevel
@@ -633,7 +637,7 @@ func (a *App) refreshGUI(snapshot uiSnapshot) {
 					if snapshot.controllerState != controller.StateIdle {
 						pulseLimit := snapshot.isppPulseLimit
 						if pulseLimit <= 0 {
-							pulseLimit = 30
+							pulseLimit = defaultISPPPulseLimit
 						}
 						state := snapshot.controllerState.String()
 						best := snapshot.controllerBestLevel

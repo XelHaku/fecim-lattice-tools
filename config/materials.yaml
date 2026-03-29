@@ -163,8 +163,10 @@ materials:
     activation_energy_ev: 0.7   # Activation energy for switching
     kai_exponent: 2.0           # KAI model exponent (2D domain growth)
 
-    # Temperature properties (Curie-Weiss form aligned to Materlik et al. 2015 LK baseline)
-    curie_temp_k: 598           # Curie temperature (K)
+    # Temperature properties (empirical Preisach temperature-scaling fit)
+    # NOTE: 723K is the empirical tuned value used in Go presets for DefaultHZO Preisach
+    # temperature scaling. Materlik 2015 LGD value (598K) is used in MaterlikHfO2() preset.
+    curie_temp_k: 723           # Curie temperature (K) — empirical fit for Preisach T-scaling
     temp_coeff_ec: -2.0e5       # dEc/dT (V/m/K)
     temp_coeff_pr: -5.0e-5      # dPr/dT (C/m²/K)
 

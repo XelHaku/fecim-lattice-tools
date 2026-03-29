@@ -39,6 +39,13 @@ func (a *App) simulationLoop() {
 		dtNominal     = 1e-4  // 0.1ms nominal physics step (good for standard loop)
 		dtMin         = 1e-6  // 1µs minimum step near critical field (Ec)
 		lkMaxSubSteps = 400
+
+		// ecProximityFrac is the fraction of Ec used as the switching-region threshold.
+		// When |E - Ec| < ecProximityFrac*Ec, the solver uses dtMin to capture sharp
+		// switching dynamics. 0.1 means ±10% of Ec (≈0.1 MV/cm for typical HZO).
+		// Material-relative scaling ensures correct behavior for high-Ec materials
+		// like AlScN (Ec ≈ 5 MV/cm) where a fixed 1e7 V/m threshold is too narrow.
+		ecProximityFrac = 0.1
 	)
 
 	resetPerfWindow := func(now time.Time) {
@@ -206,14 +213,9 @@ func (a *App) simulationLoop() {
 					distMinus := math.Abs(a.electricField + matEc)
 					minDist := math.Min(distPlus, distMinus)
 
-					// User requirement: If |E - Ec| < 0.1 MV/cm: dt = dt_min
-					// 0.1 MV/cm = 0.1e6 V/cm = 1e5 V/m (Units in material are V/m? Wait.
-					// Ec is ~1 MV/cm = 1e8 V/m. 0.1 MV/cm = 1e7 V/m.
-					// User said: "0.1 MV/cm". 1 MV/cm = 10^6 V/cm = 10^8 V/m.
-					// So 0.1 MV/cm = 10^7 V/m.
-					// Let's use 10 MV/m (1e7) as threshold.
-
-					threshold := 1e7 // 0.1 MV/cm
+					// Use material-relative threshold: ecProximityFrac × Ec.
+					// This scales correctly for any ferroelectric (HZO, AlScN, PZT, etc.).
+					threshold := ecProximityFrac * matEc
 					if minDist < threshold {
 						currentStep = dtMin
 					}
@@ -658,7 +660,11 @@ func (a *App) updatePhysics(dt float64, perfEnabled bool) time.Duration {
 						}
 					}
 				}
-				targetField, done := a.writeController.Update(dt, a.electricField, currentLevel, guardSign)
+				var targetField float64
+				var done bool
+				if a.writeController != nil {
+					targetField, done = a.writeController.Update(dt, a.electricField, currentLevel, guardSign)
+				}
 
 				if a.writeController != nil && (a.wrdLastControllerState != a.writeController.State || a.wrdLastControllerPulse != a.writeController.PulseCount) {
 					if logging.IsVerbose(logging.VerbosityDebug) {

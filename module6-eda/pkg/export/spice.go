@@ -22,13 +22,16 @@ type FeFETMaterial struct {
 	CoerciveFieldVM      float64 // Ec (V/m)
 }
 
-// DefaultHzoFeFETMaterial returns default HZO values used by Module 6 SPICE export.
+// DefaultHzoFeFETMaterial returns default HZO values for Module 6 SPICE export.
+// Uses FeCIMMaterial() which has the realistic 45nm×45nm cell area for EDA
+// generation, rather than DefaultHZO()'s larger test capacitor area.
 func DefaultHzoFeFETMaterial() FeFETMaterial {
+	mat := sharedphysics.FeCIMMaterial()
 	return FeFETMaterial{
-		RelativePermittivity: 25.0,
-		ThicknessM:           10e-9,
-		AreaM2:               2.025e-15,
-		CoerciveFieldVM:      1e8,
+		RelativePermittivity: mat.Epsilon,
+		ThicknessM:           mat.Thickness,
+		AreaM2:               mat.Area,
+		CoerciveFieldVM:      mat.Ec,
 	}
 }
 
@@ -40,14 +43,16 @@ func generateSky130NMOSModelCard() string {
 
 // GenerateFeFETSubcircuit creates the FeFET primitive using shared LK FeCap export.
 func GenerateFeFETSubcircuit(mat FeFETMaterial) string {
+	// Fall back to DefaultHZO values from shared physics if fields are unset.
+	defaults := DefaultHzoFeFETMaterial()
 	if mat.RelativePermittivity <= 0 {
-		mat.RelativePermittivity = 25.0
+		mat.RelativePermittivity = defaults.RelativePermittivity
 	}
 	if mat.ThicknessM <= 0 {
-		mat.ThicknessM = 10e-9
+		mat.ThicknessM = defaults.ThicknessM
 	}
 	if mat.AreaM2 <= 0 {
-		mat.AreaM2 = 2.025e-15
+		mat.AreaM2 = defaults.AreaM2
 	}
 
 	params := sharedexport.DefaultMaterlikFECapParams()

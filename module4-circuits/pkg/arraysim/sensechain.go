@@ -110,6 +110,9 @@ func (s SenseChain) ConvertCurrentWithNoise(currentA float64, rng *rand.Rand) Se
 	if rng == nil {
 		return s.ConvertCurrent(currentA)
 	}
+	if s.TIA.Rf <= 0 {
+		return s.ConvertCurrent(currentA)
+	}
 	kT := 1.38e-23 * 300.0
 	bw := 100e6
 	noiseSigma := math.Sqrt(4 * kT * bw / s.TIA.Rf)

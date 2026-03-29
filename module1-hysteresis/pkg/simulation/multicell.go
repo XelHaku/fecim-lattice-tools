@@ -116,7 +116,10 @@ func (m *MultiCellArray) Reset() {
 }
 
 func (m *MultiCellArray) stepCellLocked(row, col int, voltage float64) CellState {
-	field := voltage / m.material.Thickness
+	var field float64
+	if m.material.Thickness > 0 {
+		field = voltage / m.material.Thickness
+	}
 	p := m.models[row][col].Update(field)
 	s := CellState{Voltage: voltage, ElectricField: field, Polarization: p, NormPol: m.models[row][col].NormalizedPolarization()}
 	m.states[row][col] = s

@@ -7,6 +7,25 @@ import (
 	sharedphysics "fecim-lattice-tools/shared/physics"
 )
 
+// Calibration EMA (Exponential Moving Average) tuning constants.
+const (
+	// relaxAdjustRate is the per-retry relaxation compensation adjustment (2% of Ec).
+	// Controls how quickly the calibration adapts to systematic read-back bias.
+	relaxAdjustRate = 0.02
+
+	// emaRetainFrac is the retain fraction for the EMA filter (70% old value).
+	// Higher values → smoother but slower convergence; lower → faster but noisier.
+	emaRetainFrac = 0.7
+
+	// emaUpdateFrac is the update fraction (1 - emaRetainFrac = 30% new value).
+	emaUpdateFrac = 1.0 - emaRetainFrac
+
+	// relaxCompMin/Max are the clamp bounds for relaxation compensation.
+	// Prevents runaway drift if calibration oscillates.
+	relaxCompMin = -0.05
+	relaxCompMax = 0.25
+)
+
 // calibrateLevelsAtTemperature performs calibration at a specific temperature.
 // Sets Preisach temperature before calibrating, stores result in cache.
 // MUST be called with a.mu held.
@@ -753,23 +772,20 @@ func (a *App) updateCalibrationUp(targetIdx int, levelError int, Ec float64) {
 
 	// Update relaxation compensation based on error direction (exponential moving average for smooth convergence)
 	if targetIdx < len(a.relaxCompUp) {
-		relaxAdjust := 0.02 // 2% target adjustment per retry (more aggressive for faster convergence)
 		oldRelaxComp := a.relaxCompUp[targetIdx]
 		var targetRelax float64
 		if levelError > 0 {
 			// Overshot: read level > target, reduce compensation (we overshot too much)
-			targetRelax = oldRelaxComp - relaxAdjust*float64(levelError) // Scale by error magnitude
+			targetRelax = oldRelaxComp - relaxAdjustRate*float64(levelError)
 		} else {
 			// Undershot: read level < target, increase compensation (need more overshoot)
-			targetRelax = oldRelaxComp - relaxAdjust*float64(levelError) // levelError is negative, so this adds
+			targetRelax = oldRelaxComp - relaxAdjustRate*float64(levelError) // levelError is negative, so this adds
 		}
-		// Exponential moving average: 70% old + 30% new for smooth convergence
-		a.relaxCompUp[targetIdx] = 0.7*oldRelaxComp + 0.3*targetRelax
-		// Clamp to reasonable bounds [-0.05, 0.25]
-		if a.relaxCompUp[targetIdx] < -0.05 {
-			a.relaxCompUp[targetIdx] = -0.05
-		} else if a.relaxCompUp[targetIdx] > 0.25 {
-			a.relaxCompUp[targetIdx] = 0.25
+		a.relaxCompUp[targetIdx] = emaRetainFrac*oldRelaxComp + emaUpdateFrac*targetRelax
+		if a.relaxCompUp[targetIdx] < relaxCompMin {
+			a.relaxCompUp[targetIdx] = relaxCompMin
+		} else if a.relaxCompUp[targetIdx] > relaxCompMax {
+			a.relaxCompUp[targetIdx] = relaxCompMax
 		}
 		if a.relaxCompUp[targetIdx] != oldRelaxComp {
 			log.Printf("RELAX_UP[%d]: %.4f → %.4f (err=%+d)", targetIdx, oldRelaxComp, a.relaxCompUp[targetIdx], levelError)
@@ -880,23 +896,20 @@ func (a *App) updateCalibrationDown(targetIdx int, levelError int, Ec float64) {
 
 	// Update relaxation compensation based on error direction (exponential moving average for smooth convergence)
 	if targetIdx < len(a.relaxCompDown) {
-		relaxAdjust := 0.02 // 2% target adjustment per retry (more aggressive for faster convergence)
 		oldRelaxComp := a.relaxCompDown[targetIdx]
 		var targetRelax float64
 		if levelError < 0 {
 			// Went too far down (error < 0), reduce compensation
-			targetRelax = oldRelaxComp + relaxAdjust*float64(levelError) // levelError is negative, so this subtracts
+			targetRelax = oldRelaxComp + relaxAdjustRate*float64(levelError) // levelError is negative, so this subtracts
 		} else {
 			// Didn't go down enough (error > 0), increase compensation
-			targetRelax = oldRelaxComp + relaxAdjust*float64(levelError) // Scale by error magnitude
+			targetRelax = oldRelaxComp + relaxAdjustRate*float64(levelError)
 		}
-		// Exponential moving average: 70% old + 30% new for smooth convergence
-		a.relaxCompDown[targetIdx] = 0.7*oldRelaxComp + 0.3*targetRelax
-		// Clamp to reasonable bounds [-0.05, 0.25]
-		if a.relaxCompDown[targetIdx] < -0.05 {
-			a.relaxCompDown[targetIdx] = -0.05
-		} else if a.relaxCompDown[targetIdx] > 0.25 {
-			a.relaxCompDown[targetIdx] = 0.25
+		a.relaxCompDown[targetIdx] = emaRetainFrac*oldRelaxComp + emaUpdateFrac*targetRelax
+		if a.relaxCompDown[targetIdx] < relaxCompMin {
+			a.relaxCompDown[targetIdx] = relaxCompMin
+		} else if a.relaxCompDown[targetIdx] > relaxCompMax {
+			a.relaxCompDown[targetIdx] = relaxCompMax
 		}
 		if a.relaxCompDown[targetIdx] != oldRelaxComp {
 			log.Printf("RELAX_DOWN[%d]: %.4f → %.4f (err=%+d)", targetIdx, oldRelaxComp, a.relaxCompDown[targetIdx], levelError)

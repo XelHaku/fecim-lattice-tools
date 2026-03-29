@@ -13,6 +13,22 @@ import (
 // Package-level logger
 var log *logging.Logger
 
+// Engine default constants
+const (
+	// defaultDt is the default simulation timestep (1 ns).
+	defaultDt = 1e-9
+
+	// defaultFrequencyHz is the default waveform frequency (1 MHz).
+	defaultFrequencyHz = 1e6
+
+	// defaultMaxHistory is the number of simulation steps retained for plotting.
+	defaultMaxHistory = 1000
+
+	// amplitudeEcMultiplier is the factor applied to coercive voltage for the
+	// default waveform amplitude (2x ensures full saturation on each half-cycle).
+	amplitudeEcMultiplier = 2.0
+)
+
 func init() {
 	log = logging.NewLogger("hysteresis-sim")
 }
@@ -68,11 +84,11 @@ func NewEngine(material *ferroelectric.HZOMaterial) *Engine {
 	e := &Engine{
 		model:     model,
 		material:  material,
-		state:     newState(1000),
-		dt:        1e-9, // 1 ns time step
+		state:     newState(defaultMaxHistory),
+		dt:        defaultDt,
 		waveform:  WaveformSine,
-		frequency: 1e6, // 1 MHz default
-		amplitude: material.CoerciveVoltage() * 2,
+		frequency: defaultFrequencyHz,
+		amplitude: material.CoerciveVoltage() * amplitudeEcMultiplier,
 	}
 
 	log.Debug("NewEngine: material=%s, dt=%.0f ns, freq=%.0f MHz, amplitude=%.2f V",
@@ -145,8 +161,12 @@ func (e *Engine) Step() {
 	// Generate voltage based on waveform
 	e.state.Voltage = e.generateVoltage(e.state.Time)
 
-	// Convert voltage to electric field
-	e.state.ElectricField = e.state.Voltage / e.material.Thickness
+	// Convert voltage to electric field (guard against zero thickness)
+	if e.material.Thickness > 0 {
+		e.state.ElectricField = e.state.Voltage / e.material.Thickness
+	} else {
+		e.state.ElectricField = 0
+	}
 
 	// Update polarization via Preisach model
 	e.state.Polarization = e.model.Update(e.state.ElectricField)

@@ -598,6 +598,11 @@ func (a *App) onTemperatureChanged(newTemp float64) {
 	}
 	if a.lkSolver != nil {
 		a.lkSolver.Temperature = newTemp
+		// Recalculate Alpha from updated temperature via Curie-Weiss + electrostriction.
+		// Without this, temperature slider changes have no effect on LK dynamics.
+		if !a.lkSolver.UseMaterialAlpha {
+			a.lkSolver.UpdateParams()
+		}
 	}
 
 	// Check if we need new calibration or can use existing/interpolated

@@ -53,33 +53,46 @@ PHYSICS = [
 
 # ── Phase 2: Crossbar Array (core compute-in-memory) ──
 CROSSBAR = [
+    "shared/crossbar/core.go",
     "shared/crossbar/array.go",
-    "shared/crossbar/array_test.go",
-    "shared/crossbar/mvm.go",
-    "shared/crossbar/mvm_test.go",
-    "shared/crossbar/quantize.go",
-    "shared/crossbar/quantize_test.go",
+    "shared/crossbar/enhanced.go",
+    "shared/crossbar/solver.go",
+    "shared/crossbar/solver_optimized.go",
     "shared/crossbar/nonidealities.go",
-    "shared/crossbar/nonidealities_test.go",
     "shared/crossbar/irdrop.go",
-    "shared/crossbar/sneak.go",
+    "shared/crossbar/sneakpath.go",
+    "shared/crossbar/sneak_multihop.go",
     "shared/crossbar/drift.go",
-    "shared/crossbar/conductance.go",
-    "shared/crossbar/types.go",
-    "shared/crossbar/config.go",
-    "shared/crossbar/preset.go",
+    "shared/crossbar/drift_calibration.go",
+    "shared/crossbar/device_errors.go",
+    "shared/crossbar/uncertainty.go",
+    "shared/crossbar/fecap.go",
+    "shared/crossbar/thermal.go",
+    "shared/crossbar/temperature.go",
+    "shared/crossbar/temperature_profile.go",
+    "shared/crossbar/nonlinear_iv.go",
+    "shared/crossbar/write_disturb.go",
+    "shared/crossbar/tiling.go",
+    "shared/crossbar/gpu_mvm.go",
+    "shared/crossbar/variation_import.go",
+    "shared/crossbar/memtorch_export.go",
 ]
 
 # ── Phase 3: Module1 - Hysteresis ──
 HYSTERESIS = [
     "module1-hysteresis/pkg/ferroelectric/material.go",
-    "module1-hysteresis/pkg/ferroelectric/material_test.go",
-    "module1-hysteresis/pkg/ferroelectric/hysteresis.go",
-    "module1-hysteresis/pkg/ferroelectric/types.go",
-    "module1-hysteresis/pkg/controller/controller.go",
-    "module1-hysteresis/pkg/controller/modes.go",
+    "module1-hysteresis/pkg/ferroelectric/preisach.go",
+    "module1-hysteresis/pkg/ferroelectric/level_bins.go",
+    "module1-hysteresis/pkg/ferroelectric/render.go",
+    "module1-hysteresis/pkg/ferroelectric/ferroelectric_test.go",
+    "module1-hysteresis/pkg/controller/writer.go",
+    "module1-hysteresis/pkg/simulation/engine.go",
+    "module1-hysteresis/pkg/simulation/multicell.go",
     "module1-hysteresis/pkg/gui/embedded.go",
-    "module1-hysteresis/pkg/gui/app.go",
+    "module1-hysteresis/pkg/gui/gui.go",
+    "module1-hysteresis/pkg/gui/controls.go",
+    "module1-hysteresis/pkg/gui/sim_loop.go",
+    "module1-hysteresis/pkg/algo/calibration.go",
 ]
 
 # ── Phase 4: Module2 - Crossbar GUI ──
@@ -88,6 +101,13 @@ CROSSBAR_GUI = [
     "module2-crossbar/pkg/gui/app.go",
     "module2-crossbar/pkg/gui/heatmap.go",
     "module2-crossbar/pkg/gui/controls.go",
+    "module2-crossbar/pkg/gui/app_enhanced.go",
+    "module2-crossbar/pkg/gui/tabbed_app.go",
+    "module2-crossbar/pkg/gui/widgets.go",
+    "module2-crossbar/pkg/gui/animation.go",
+    "module2-crossbar/pkg/gui/keyboard.go",
+    "module2-crossbar/pkg/network/network.go",
+    "module2-crossbar/pkg/weights/weights.go",
 ]
 
 # ── Phase 5: Module3 - MNIST Neural Network ──
@@ -107,15 +127,22 @@ MNIST = [
 
 # ── Phase 6: Module4 - Circuits/Peripherals ──
 CIRCUITS = [
-    "module4-circuits/pkg/peripherals/dac.go",
-    "module4-circuits/pkg/peripherals/adc.go",
-    "module4-circuits/pkg/peripherals/tia.go",
-    "module4-circuits/pkg/peripherals/types.go",
-    "module4-circuits/pkg/peripherals/pipeline.go",
-    "module4-circuits/pkg/peripherals/sense_chain.go",
+    "module4-circuits/pkg/arraysim/types.go",
+    "module4-circuits/pkg/arraysim/tier_a.go",
+    "module4-circuits/pkg/arraysim/tier_b.go",
+    "module4-circuits/pkg/arraysim/sensechain.go",
+    "module4-circuits/pkg/arraysim/transient.go",
+    "module4-circuits/pkg/arraysim/array_config.go",
+    "module4-circuits/pkg/arraysim/array_ispp.go",
+    "module4-circuits/pkg/arraysim/refsolve_dense.go",
+    "module4-circuits/pkg/arraysim/endurance_accuracy.go",
+    "module4-circuits/pkg/arraysim/read_margin_analysis.go",
+    "module4-circuits/pkg/arraysim/process_variation_mc.go",
+    "module4-circuits/pkg/arraysim/design_space_exploration.go",
+    "module4-circuits/pkg/arraysim/spice_export.go",
     "module4-circuits/pkg/gui/embedded.go",
     "module4-circuits/pkg/gui/app.go",
-    "module4-circuits/pkg/solver/solver.go",
+    "module4-circuits/pkg/gui/tab_unified.go",
 ]
 
 # ── Phase 7: Module5 - Technology Comparison ──
@@ -128,13 +155,25 @@ COMPARISON = [
 # ── Phase 8: Module6 - EDA Pipeline ──
 EDA = [
     "module6-eda/pkg/config/types.go",
+    "module6-eda/pkg/compiler/types.go",
+    "module6-eda/pkg/compiler/compiler.go",
+    "module6-eda/pkg/export/def.go",
+    "module6-eda/pkg/export/lef.go",
+    "module6-eda/pkg/export/liberty.go",
+    "module6-eda/pkg/export/spice.go",
+    "module6-eda/pkg/export/verilog.go",
+    "module6-eda/pkg/export/csv.go",
+    "module6-eda/pkg/export/json.go",
+    "module6-eda/pkg/export/svg.go",
+    "module6-eda/pkg/export/openlane_config.go",
+    "module6-eda/pkg/layout/def_generator.go",
+    "module6-eda/pkg/layout/verilog_generator.go",
+    "module6-eda/pkg/openlane/runner.go",
+    "module6-eda/pkg/validate/pdk_bridge.go",
+    "module6-eda/pkg/validation/cross_check.go",
+    "module6-eda/pkg/validation/def_validator.go",
     "module6-eda/pkg/gui/embedded.go",
     "module6-eda/pkg/gui/app.go",
-    "module6-eda/pkg/gui/pipeline.go",
-    "module6-eda/pkg/synthesis/synthesis.go",
-    "module6-eda/pkg/place/place.go",
-    "module6-eda/pkg/route/route.go",
-    "module6-eda/pkg/drc/drc.go",
 ]
 
 # ── Phase 9: Shared Infrastructure ──

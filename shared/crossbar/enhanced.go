@@ -653,8 +653,10 @@ func (r *MVMResult) computeErrorMetrics() {
 	}
 
 	n := float64(len(r.IdealOutput))
-	r.RMSE = math.Sqrt(sumSqError / n)
-	r.MeanError = sumAbsError / n
+	if n > 0 {
+		r.RMSE = math.Sqrt(sumSqError / n)
+		r.MeanError = sumAbsError / n
+	}
 	r.MaxError = maxError
 
 	// Estimate accuracy loss (empirical relationship)
@@ -683,7 +685,9 @@ func (r *MVMResult) computeEnergyMetrics(rows, cols, adcBits int) {
 	// GPU comparison: ~10 pJ per MAC operation (including memory access)
 	gpuEnergyPerMAC := 10.0
 	r.GPUEquivalentEnergy = float64(r.MACOperations) * gpuEnergyPerMAC
-	r.EnergyEfficiency = r.GPUEquivalentEnergy / r.TotalEnergy
+	if r.TotalEnergy > 0 {
+		r.EnergyEfficiency = r.GPUEquivalentEnergy / r.TotalEnergy
+	}
 
 	// Latency: ~10 ns for analog MVM
 	r.Latency = 10.0

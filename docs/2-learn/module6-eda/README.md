@@ -39,7 +39,7 @@ module6-eda/
 │   └── lef.go                # LEF macro export
 ├── pkg/validation/
 │   └── drc.go                # Design rule checks
-└── cmd/fecim-eda/
+└── cmd/eda-cli/
     └── main.go               # CLI entry point
 ```
 

@@ -233,7 +233,11 @@ func (d *DriftSimulator) SimulateTimeStep(dt float64) {
 	kB := 1.38e-23 // Boltzmann constant (J/K)
 	Ea := 0.5      // Activation energy (eV) - typical order for FeFET retention physics
 	eV := 1.6e-19  // eV to J
-	thermalFactor := math.Exp(-Ea * eV / (kB * d.Temperature))
+	temp := d.Temperature
+	if temp <= 0 {
+		temp = 300.0 // Fallback to room temperature to avoid div-by-zero
+	}
+	thermalFactor := math.Exp(-Ea * eV / (kB * temp))
 
 	// Compute ensemble mean of the INITIAL conductances.
 	// Drift direction is modeled as regression toward the mean.
@@ -298,7 +302,12 @@ func (d *DriftSimulator) RecordSnapshot() {
 	numLevelChanges := 0
 	worstRow, worstCol := 0, 0
 
-	levelWidth := (d.GMax - d.GMin) / float64(d.Levels-1)
+	var levelWidth float64
+	if d.Levels > 1 {
+		levelWidth = (d.GMax - d.GMin) / float64(d.Levels-1)
+	} else {
+		levelWidth = d.GMax - d.GMin // Single level: full range
+	}
 
 	for i := 0; i < d.Rows; i++ {
 		for j := 0; j < d.Cols; j++ {
@@ -380,7 +389,12 @@ func (d *DriftSimulator) GetStats() DriftStats {
 	avgDrift := 0.0
 	maxDrift := 0.0
 	numLevelErrors := 0
-	levelWidth := (d.GMax - d.GMin) / float64(d.Levels-1)
+	var levelWidth float64
+	if d.Levels > 1 {
+		levelWidth = (d.GMax - d.GMin) / float64(d.Levels-1)
+	} else {
+		levelWidth = d.GMax - d.GMin // Single level: full range
+	}
 
 	for i := 0; i < d.Rows; i++ {
 		for j := 0; j < d.Cols; j++ {
@@ -400,8 +414,11 @@ func (d *DriftSimulator) GetStats() DriftStats {
 	avgDrift /= float64(d.Rows * d.Cols)
 
 	avgGMid := (d.GMax + d.GMin) / 2
-	avgDriftPercent := avgDrift / avgGMid * 100
-	maxDriftPercent := maxDrift / avgGMid * 100
+	var avgDriftPercent, maxDriftPercent float64
+	if avgGMid > 0 {
+		avgDriftPercent = avgDrift / avgGMid * 100
+		maxDriftPercent = maxDrift / avgGMid * 100
+	}
 
 	levelErrorRate := float64(numLevelErrors) / float64(d.Rows*d.Cols) * 100
 
@@ -411,7 +428,11 @@ func (d *DriftSimulator) GetStats() DriftStats {
 	kB := 1.38e-23
 	Ea := 0.5
 	eV := 1.6e-19
-	thermalFactor := math.Exp(-Ea * eV / (kB * d.Temperature))
+	temp := d.Temperature
+	if temp <= 0 {
+		temp = 300.0 // Fallback to room temperature to avoid div-by-zero
+	}
+	thermalFactor := math.Exp(-Ea * eV / (kB * temp))
 	const tref = 1.0
 	predictedLoss := d.DriftCoeff * math.Pow(tenYearSeconds/tref, d.DriftExponent) * thermalFactor
 	retention := (1 - predictedLoss) * 100

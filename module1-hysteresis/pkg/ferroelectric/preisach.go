@@ -11,6 +11,38 @@ import (
 // Package-level logger
 var log *logging.Logger
 
+// Preisach model constants
+const (
+	// defaultDeltaFrac is the initial Tanh Everett Delta/Ec ratio before calibration.
+	// Tuned via tuneDeltaForPr in updateReversibleParams.
+	defaultDeltaFrac = 0.25
+
+	// saturationFieldMultiplier is the factor applied to Ec to determine the
+	// saturation field used by the Preisach stack. Typical 3-5x; we use 5x to
+	// ensure full saturation coverage across all minor loops.
+	saturationFieldMultiplier = 5.0
+
+	// defaultStressGPa is the default in-plane stress for Preisach simulation.
+	// Typical TiN-capped HZO stack, ~1 GPa compressive.
+	defaultStressGPa = 1.0
+
+	// nlsEaEcRatio is the heuristic ratio for NLS activation field from Ec.
+	// NLS Ea ≈ 10*Ec is an empirical approximation for HZO-class ferroelectrics.
+	nlsEaEcRatio = 10.0
+
+	// quasiStaticDt is the effective dt (seconds) used in Update() to approximate
+	// infinite-time (quasi-static) switching via NLS relaxation.
+	quasiStaticDt = 1.0
+
+	// roomTemperatureK is the default operating temperature.
+	roomTemperatureK = 300.0
+
+	// defaultQ12HZO is the transverse electrostriction coefficient for HZO.
+	// Ref: Park et al., J. Appl. Phys. 117, 074103 (2015).
+	// See material.go Q12 field comment for calibration note vs DFT values.
+	defaultQ12HZO = -0.026
+)
+
 func init() {
 	log = logging.NewLogger("preisach")
 }
@@ -26,12 +58,12 @@ func tuneDeltaForPr(ec, saturationE, psIrrev, targetPr float64) float64 {
 		return 0
 	}
 	if psIrrev <= 0 || targetPr <= 0 {
-		return ec * 0.25
+		return ec * defaultDeltaFrac
 	}
 
 	satE := math.Abs(saturationE)
 	if satE <= 0 {
-		satE = ec * 5.0
+		satE = ec * saturationFieldMultiplier
 	}
 
 	targetRatio := targetPr / psIrrev
@@ -168,18 +200,18 @@ func NewPreisachModel(material *HZOMaterial) *PreisachModel {
 	everett := &TanhEverett{
 		Ps:    material.Ps,
 		Ec:    material.Ec,
-		Delta: material.Ec * 0.25, // Initial guess; tuned to match Pr in updateReversibleParams
+		Delta: material.Ec * defaultDeltaFrac, // Initial guess; tuned to match Pr in updateReversibleParams
 	}
 
 	// E_saturation should be > Ec. typically 3-5x Ec.
-	E_sat := material.Ec * 5.0
+	E_sat := material.Ec * saturationFieldMultiplier
 
 	model := &PreisachModel{
 		material:    material,
 		stack:       physics.NewPreisachStack(E_sat, everett),
 		everett:     everett,
-		Temperature: 300.0,
-		Stress:      1.0, // Default 1 GPa
+		Temperature: roomTemperatureK,
+		Stress:      defaultStressGPa,
 		effectivePs: material.Ps,
 		nls:         physics.NewNLSKinetics(),
 	}
@@ -190,7 +222,7 @@ func NewPreisachModel(material *HZOMaterial) *PreisachModel {
 	// But NLSKinetics has a default Ea=8e8 (8 MV/cm).
 	// Let's adjust it if Ec is significantly different from typical 1 MV/cm.
 	if material.Ec > 0 {
-		model.nls.Ea = material.Ec * 10.0
+		model.nls.Ea = material.Ec * nlsEaEcRatio
 	}
 
 	return model
@@ -227,7 +259,7 @@ func (p *PreisachModel) DiscreteStates(n int) []DiscreteState {
 // (including the reversible dielectric contribution at -E_sat).
 func (p *PreisachModel) Reset() {
 	// Re-initialize stack
-	E_sat := p.material.Ec * 5.0
+	E_sat := p.material.Ec * saturationFieldMultiplier
 	everett := p.stack.Everett
 	p.stack = physics.NewPreisachStack(E_sat, everett)
 }
@@ -252,7 +284,7 @@ func (p *PreisachModel) Update(E float64) float64 {
 	if p.nls == nil {
 		p.nls = physics.NewNLSKinetics()
 	}
-	P_final := p.nls.Relax(P_start, P_target, E, 1.0)
+	P_final := p.nls.Relax(P_start, P_target, E, quasiStaticDt)
 	if !p.lockDynamic {
 		p.dynamicP = P_final
 		p.hasDynamicP = true
@@ -393,7 +425,7 @@ func (p *PreisachModel) updateReversibleParams() {
 	p.everett.Ps = psIrrev
 
 	// Tune Delta so that remanent polarization matches material Pr.
-	satE := p.everett.Ec * 5.0
+	satE := p.everett.Ec * saturationFieldMultiplier
 	if p.stack != nil && p.stack.SaturationE > 0 {
 		satE = p.stack.SaturationE
 	}
@@ -482,16 +514,16 @@ func (p *PreisachModel) updateEffectiveParameters() {
 	const epsilon0 = 8.854e-12
 
 	newEc := p.material.Ec
-	newPs := p.material.Ps + p.material.TempCoeffPr*(p.Temperature-300.0)
+	newPs := p.material.Ps + p.material.TempCoeffPr*(p.Temperature-roomTemperatureK)
 
 	if p.material.CurieConst != 0 {
 		alphaT := (p.Temperature - p.material.CurieTemp) / (2 * epsilon0 * p.material.CurieConst)
-		alphaRef := (300.0 - p.material.CurieTemp) / (2 * epsilon0 * p.material.CurieConst)
+		alphaRef := (roomTemperatureK - p.material.CurieTemp) / (2 * epsilon0 * p.material.CurieConst)
 
 		if alphaRef != 0 {
 			q12 := p.material.Q12
 			if q12 == 0 {
-				q12 = -0.026 // HZO default from LK material params
+				q12 = defaultQ12HZO
 			}
 			alphaStress := alphaT - 2*q12*p.Stress*1e9 // alpha(σ) = alpha(T) - 2*Q12*σ
 			ecRatio := math.Pow(math.Abs(alphaStress/alphaRef), 1.5)
