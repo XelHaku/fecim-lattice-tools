@@ -149,7 +149,11 @@ CIRCUITS = [
 COMPARISON = [
     "module5-comparison/pkg/gui/embedded.go",
     "module5-comparison/pkg/gui/app.go",
-    "module5-comparison/pkg/gui/comparison_data.go",
+    "module5-comparison/pkg/gui/evidence_model.go",
+    "module5-comparison/pkg/gui/fabrication_reality.go",
+    "module5-comparison/pkg/gui/scenario_profiles.go",
+    "module5-comparison/pkg/comparison/architecture.go",
+    "module5-comparison/pkg/comparison/cacti_baseline.go",
 ]
 
 # ── Phase 8: Module6 - EDA Pipeline ──
@@ -179,10 +183,13 @@ EDA = [
 # ── Phase 9: Shared Infrastructure ──
 SHARED = [
     "shared/widgets/embedded_base.go",
-    "shared/widgets/heatmap.go",
-    "shared/widgets/plot.go",
+    "shared/widgets/embedded_app.go",
+    "shared/widgets/material_picker.go",
+    "shared/widgets/preset_selector.go",
+    "shared/widgets/confidence_badge.go",
     "shared/theme/theme.go",
-    "shared/logging/logger.go",
+    "shared/logging/logging.go",
+    "shared/logging/manager.go",
 ]
 
 # ── Phase 10: Validation & Benchmarks ──

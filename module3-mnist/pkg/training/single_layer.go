@@ -143,6 +143,9 @@ func (n *SingleLayerNetwork) TrainEpoch(images [][]float64, labels []int, learni
 		}
 	}
 
+	if len(images) == 0 {
+		return 0
+	}
 	return totalLoss / float64(len(images))
 }
 
@@ -154,6 +157,9 @@ func (n *SingleLayerNetwork) Evaluate(images [][]float64, labels []int) float64 
 		if pred == labels[i] {
 			correct++
 		}
+	}
+	if len(images) == 0 {
+		return 0
 	}
 	return float64(correct) / float64(len(images))
 }
