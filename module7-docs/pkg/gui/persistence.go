@@ -196,7 +196,7 @@ func getHistoryPath() string {
 	if _, err := os.Stat(".omc"); err == nil {
 		return filepath.Join(".omc", "docs-history.json")
 	}
-	// Create .omc if needed
-	os.MkdirAll(".omc", 0755)
+	// Create .omc if needed (error is non-fatal; caller handles write failure)
+	_ = os.MkdirAll(".omc", 0755)
 	return filepath.Join(".omc", "docs-history.json")
 }
