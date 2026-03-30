@@ -21,6 +21,17 @@ This repository is **simulation-only**. External scientific claims must be expli
    - **Scope note:** This is an external device-paper benchmark, not a result produced by this simulator.
    - **Boundary note:** Treat it as evidence that current limiting can materially change inference quality in FeFET crossbars, not as a blanket accuracy claim for all FeCIM arrays.
 
+3. **96.64% MNIST accuracy (4-state FeFET, sigma=40mV)** reported for **28nm HKMG multi-level FeFET crossbar** in *Nature Communications* 14, 6348 (2023), DOI: `10.1038/s41467-023-42110-y`.
+   - **Scope note:** 32x32 array, 2-bit MAC, 885 TOPS/W. External benchmark — not this simulator.
+   - **Key detail:** Vth sigma=38mV, 4 conductance states, <1 fJ write energy.
+
+4. **90 conductance states, 99.8% tracking accuracy** reported for **2D ferroelectric-gated hybrid CIM** in *Science Advances* (2024), DOI: `10.1126/sciadv.adp0174`.
+   - **Scope note:** HZO 20nm + MoS2 channel, 2Pr=49.5 µC/cm², ON/OFF >10^7, C2C variation 0.3%.
+   - **Key detail:** 26.3 TOPS/W, >10^12 endurance cycles, 3 fJ/bit programming.
+
+5. **Automated Preisach parameter extraction** for fluorite ferroelectrics validated against experimental HZO P-E data in *Scientific Reports* (2021), DOI: `10.1038/s41598-021-91492-w`.
+   - **Scope note:** Methodology paper for calibrating Preisach models to measured hysteresis loops.
+
 ---
 
 ## Unverified or Assumed Claims (Do Not Present as Facts)

@@ -154,5 +154,11 @@ func defaultClaims() []ClaimStatus { //nolint:funlen // data table
 		c("ISPP convergence", "All target levels reached", Calibrated, "TestISPPConverges_*", ClaimPass, "all levels"),
 		c("Literature RMSE", "RMSE vs experimental datasets", Measured, "TestExperimentalDataValidation", ClaimPass, "RMSE thresh"),
 		c("Array ISPP disturb", "Array ISPP with disturb tracking", Calibrated, "TestArrayISPP", ClaimPass, "MaxDisturb<0.3"),
+
+		// Literature benchmarks (external, peer-reviewed) — NOT this simulator's claims
+		c("[LIT] 96.64% MNIST (28nm FeFET)", "Soliman et al., Nature Commun. 2023, 32x32 4-state crossbar", Measured, "External benchmark", ClaimUntested, "DOI:10.1038/s41467-023-42110-y"),
+		c("[LIT] 90 states, 0.3% C2C", "2D FE-gated hybrid CIM, Science Advances 2024", Measured, "External benchmark", ClaimUntested, "DOI:10.1126/sciadv.adp0174"),
+		c("[LIT] 885 TOPS/W", "28nm HKMG FeFET, <1 fJ write", Measured, "External benchmark", ClaimUntested, "DOI:10.1038/s41467-023-42110-y"),
+		c("[LIT] >10^12 endurance", "HZO+MoS2 hybrid, 30ns pulse", Measured, "External benchmark", ClaimUntested, "DOI:10.1126/sciadv.adp0174"),
 	}
 }

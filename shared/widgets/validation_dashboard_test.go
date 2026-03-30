@@ -23,9 +23,9 @@ func TestValidationDashboard_ClaimCount(t *testing.T) {
 	if len(vd.Claims) == 0 {
 		t.Fatal("expected at least one claim")
 	}
-	// CLAIMS-MATRIX has 16 entries
-	if len(vd.Claims) != 16 {
-		t.Fatalf("expected 16 claims, got %d", len(vd.Claims))
+	// CLAIMS-MATRIX (16 internal) + literature benchmarks (4 external)
+	if len(vd.Claims) != 20 {
+		t.Fatalf("expected 20 claims, got %d", len(vd.Claims))
 	}
 }
 
