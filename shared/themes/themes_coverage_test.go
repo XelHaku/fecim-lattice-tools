@@ -40,7 +40,7 @@ func TestManagerAppAndCycleFallback(t *testing.T) {
 }
 
 func TestThemeColorSwitchCoverageAcrossVariants(t *testing.T) {
-	themes := []fyne.Theme{&DarkTheme{}, &LightTheme{}, &HighContrastTheme{}}
+	themes := []fyne.Theme{&DarkTheme{}, &LightTheme{}, &HighContrastTheme{}, &PresentationTheme{}}
 	colorNames := []fyne.ThemeColorName{
 		theme.ColorNameBackground,
 		theme.ColorNameForeground,

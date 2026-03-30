@@ -26,8 +26,9 @@ const (
 	ActionStepBack      Action = "step_back"    // [: Step backward (animations)
 	ActionIncrease      Action = "increase"     // +/=: Increase value
 	ActionDecrease      Action = "decrease"     // -: Decrease value
-	ActionNextTab       Action = "next_tab"     // Tab: Next tab
-	ActionPrevTab       Action = "prev_tab"     // Shift+Tab: Previous tab
+	ActionNextTab              Action = "next_tab"              // Tab: Next tab
+	ActionPrevTab              Action = "prev_tab"              // Shift+Tab: Previous tab
+	ActionPresentationToggle   Action = "presentation_toggle"   // Ctrl+P: Toggle presentation mode
 )
 
 // Handler is a function called when a keyboard action is triggered.
@@ -59,6 +60,7 @@ func DefaultShortcuts() []Shortcut {
 		{ActionDecrease, fyne.KeyMinus, 0, "Decrease value"},
 		{ActionNextTab, fyne.KeyTab, 0, "Next tab"},
 		{ActionPrevTab, fyne.KeyTab, fyne.KeyModifierShift, "Previous tab"},
+		{ActionPresentationToggle, fyne.KeyP, fyne.KeyModifierControl, "Toggle presentation mode"},
 	}
 }
 

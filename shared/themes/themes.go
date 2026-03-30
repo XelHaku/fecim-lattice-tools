@@ -30,11 +30,13 @@ const (
 	ThemeLight ThemeType = "light"
 	// ThemeHighContrast is a high-contrast theme for accessibility
 	ThemeHighContrast ThemeType = "high-contrast"
+	// ThemePresentation is optimized for conference projection (dark, 1.3x text)
+	ThemePresentation ThemeType = "presentation"
 )
 
 // AllThemes returns all available theme types
 func AllThemes() []ThemeType {
-	return []ThemeType{ThemeDark, ThemeLight, ThemeHighContrast}
+	return []ThemeType{ThemeDark, ThemeLight, ThemeHighContrast, ThemePresentation}
 }
 
 // ThemeDisplayName returns a human-readable name for the theme
@@ -46,6 +48,8 @@ func ThemeDisplayName(t ThemeType) string {
 		return "Light"
 	case ThemeHighContrast:
 		return "High Contrast"
+	case ThemePresentation:
+		return "Presentation"
 	default:
 		return string(t)
 	}
@@ -58,6 +62,8 @@ func GetTheme(t ThemeType) fyne.Theme {
 		return &LightTheme{}
 	case ThemeHighContrast:
 		return &HighContrastTheme{}
+	case ThemePresentation:
+		return &PresentationTheme{}
 	case ThemeDark:
 		fallthrough
 	default:
@@ -401,6 +407,111 @@ func (t *HighContrastTheme) Size(name fyne.ThemeSizeName) float32 {
 		return theme.DefaultTheme().Size(name) * 1.1
 	case theme.SizeNameCaptionText:
 		return theme.DefaultTheme().Size(name) * 1.1
+	default:
+		return theme.DefaultTheme().Size(name)
+	}
+}
+
+// ============================================================================
+// Presentation Theme (Conference / Projection)
+// ============================================================================
+
+// PresentationTheme is optimized for conference projection: dark background,
+// high-contrast colors, and 1.3x enlarged text for readability at a distance.
+type PresentationTheme struct{}
+
+// Presentation theme color palette — high-contrast on dark, slightly warmer
+// than the accessibility HC theme to remain easy on the eyes during talks.
+var (
+	PresBackground = color.RGBA{10, 10, 18, 255}     // Near-black #0A0A12
+	PresSurface    = color.RGBA{24, 24, 36, 255}     // Dark surface #181824
+	PresSurfaceAlt = color.RGBA{40, 40, 56, 255}     // Hover #282838
+	PresInput      = color.RGBA{18, 18, 28, 255}     // Input bg #12121C
+	PresPrimary    = color.RGBA{80, 200, 255, 255}   // Bright sky blue #50C8FF
+	PresSecondary  = color.RGBA{255, 120, 120, 255}  // Soft red #FF7878
+	PresSuccess    = color.RGBA{100, 230, 160, 255}  // Bright green #64E6A0
+	PresWarning    = color.RGBA{255, 220, 80, 255}   // Bright amber #FFDC50
+	PresError      = color.RGBA{255, 90, 90, 255}    // Bright red #FF5A5A
+	PresText       = color.RGBA{248, 248, 255, 255}  // Almost-white #F8F8FF
+	PresTextDim    = color.RGBA{180, 185, 200, 255}  // Dim text #B4B9C8
+	PresSeparator  = color.RGBA{60, 60, 80, 255}     // Subtle separator #3C3C50
+	PresShadow     = color.RGBA{0, 0, 0, 180}        // Strong shadow
+)
+
+func (t *PresentationTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
+	switch name {
+	case theme.ColorNameBackground:
+		return PresBackground
+	case theme.ColorNameForeground:
+		return PresText
+	case theme.ColorNamePrimary:
+		return PresPrimary
+	case theme.ColorNameButton:
+		return PresSurface
+	case theme.ColorNameHover:
+		return PresSurfaceAlt
+	case theme.ColorNamePressed:
+		return PresSurfaceAlt
+	case theme.ColorNameDisabledButton:
+		return color.RGBA{30, 30, 40, 128}
+	case theme.ColorNameInputBackground:
+		return PresInput
+	case theme.ColorNameInputBorder:
+		return PresSeparator
+	case theme.ColorNameDisabled:
+		return color.RGBA{30, 30, 40, 128}
+	case theme.ColorNamePlaceHolder:
+		return PresTextDim
+	case theme.ColorNameSuccess:
+		return PresSuccess
+	case theme.ColorNameError:
+		return PresError
+	case theme.ColorNameWarning:
+		return PresWarning
+	case theme.ColorNameSeparator:
+		return PresSeparator
+	case theme.ColorNameShadow:
+		return PresShadow
+	case theme.ColorNameOverlayBackground:
+		return withAlpha(PresBackground, 235)
+	case theme.ColorNameMenuBackground:
+		return PresSurface
+	case theme.ColorNameHeaderBackground:
+		return PresSurface
+	case theme.ColorNameSelection:
+		return withAlpha(PresPrimary, 90)
+	case theme.ColorNameFocus:
+		return PresPrimary
+	case theme.ColorNameHyperlink:
+		return PresPrimary
+	case theme.ColorNameForegroundOnPrimary:
+		return PresBackground
+	case theme.ColorNameForegroundOnSuccess:
+		return PresBackground
+	case theme.ColorNameForegroundOnWarning:
+		return PresBackground
+	case theme.ColorNameForegroundOnError:
+		return PresText
+	case theme.ColorNameScrollBar:
+		return PresSeparator
+	default:
+		return theme.DefaultTheme().Color(name, variant)
+	}
+}
+
+func (t *PresentationTheme) Font(style fyne.TextStyle) fyne.Resource {
+	return theme.DefaultTheme().Font(style)
+}
+
+func (t *PresentationTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
+	return theme.DefaultTheme().Icon(name)
+}
+
+func (t *PresentationTheme) Size(name fyne.ThemeSizeName) float32 {
+	// 1.3x text for projection readability; other sizes unchanged
+	switch name {
+	case theme.SizeNameText, theme.SizeNameCaptionText, theme.SizeNameSubHeadingText, theme.SizeNameHeadingText:
+		return theme.DefaultTheme().Size(name) * 1.3
 	default:
 		return theme.DefaultTheme().Size(name)
 	}

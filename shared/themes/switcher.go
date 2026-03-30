@@ -120,6 +120,8 @@ func (cts *CompactThemeSwitcher) getIcon() string {
 		return "☀"
 	case ThemeHighContrast:
 		return "◐"
+	case ThemePresentation:
+		return "▣"
 	default:
 		return "☾"
 	}
@@ -288,6 +290,8 @@ func CreateQuickToggle(manager *Manager) *widget.Button {
 			return "☀ Light"
 		case ThemeHighContrast:
 			return "◐ High Contrast"
+		case ThemePresentation:
+			return "▣ Presentation"
 		default:
 			return "☾ Dark"
 		}

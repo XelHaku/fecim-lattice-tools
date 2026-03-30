@@ -27,6 +27,7 @@ const (
 	FormatHTML ExportFormat = "html"
 	FormatJSON ExportFormat = "json"
 	FormatPNG  ExportFormat = "png"
+	FormatSVG  ExportFormat = "svg"
 )
 
 // ExportMetadata contains common metadata for all exports

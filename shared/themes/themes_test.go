@@ -15,11 +15,11 @@ func init() {
 
 func TestAllThemes(t *testing.T) {
 	themes := AllThemes()
-	if len(themes) != 3 {
-		t.Errorf("Expected 3 themes, got %d", len(themes))
+	if len(themes) != 4 {
+		t.Errorf("Expected 4 themes, got %d", len(themes))
 	}
 
-	expected := []ThemeType{ThemeDark, ThemeLight, ThemeHighContrast}
+	expected := []ThemeType{ThemeDark, ThemeLight, ThemeHighContrast, ThemePresentation}
 	for i, th := range themes {
 		if th != expected[i] {
 			t.Errorf("Theme %d: expected %s, got %s", i, expected[i], th)
@@ -35,6 +35,7 @@ func TestThemeDisplayName(t *testing.T) {
 		{ThemeDark, "Dark (FeCIM)"},
 		{ThemeLight, "Light"},
 		{ThemeHighContrast, "High Contrast"},
+		{ThemePresentation, "Presentation"},
 		{ThemeType("unknown"), "unknown"},
 	}
 
@@ -54,6 +55,7 @@ func TestGetTheme(t *testing.T) {
 		{ThemeDark, "*themes.DarkTheme"},
 		{ThemeLight, "*themes.LightTheme"},
 		{ThemeHighContrast, "*themes.HighContrastTheme"},
+		{ThemePresentation, "*themes.PresentationTheme"},
 		{ThemeType("unknown"), "*themes.DarkTheme"}, // Falls back to dark
 	}
 
@@ -74,6 +76,8 @@ func getTypeName(v interface{}) string {
 		return "*themes.LightTheme"
 	case *HighContrastTheme:
 		return "*themes.HighContrastTheme"
+	case *PresentationTheme:
+		return "*themes.PresentationTheme"
 	default:
 		return "unknown"
 	}
@@ -225,7 +229,7 @@ func TestGetThemedColor(t *testing.T) {
 }
 
 func TestThemeFallbackToDefault(t *testing.T) {
-	themes := []fyne.Theme{&DarkTheme{}, &LightTheme{}, &HighContrastTheme{}}
+	themes := []fyne.Theme{&DarkTheme{}, &LightTheme{}, &HighContrastTheme{}, &PresentationTheme{}}
 	unknownColor := fyne.ThemeColorName("unknown_color_xyz")
 
 	for _, th := range themes {
@@ -238,7 +242,7 @@ func TestThemeFallbackToDefault(t *testing.T) {
 }
 
 func TestThemeFont(t *testing.T) {
-	themes := []fyne.Theme{&DarkTheme{}, &LightTheme{}, &HighContrastTheme{}}
+	themes := []fyne.Theme{&DarkTheme{}, &LightTheme{}, &HighContrastTheme{}, &PresentationTheme{}}
 	defaultFont := theme.DefaultTheme().Font(fyne.TextStyle{})
 
 	for _, th := range themes {
@@ -250,7 +254,7 @@ func TestThemeFont(t *testing.T) {
 }
 
 func TestThemeIcon(t *testing.T) {
-	themes := []fyne.Theme{&DarkTheme{}, &LightTheme{}, &HighContrastTheme{}}
+	themes := []fyne.Theme{&DarkTheme{}, &LightTheme{}, &HighContrastTheme{}, &PresentationTheme{}}
 	iconName := fyne.ThemeIconName("home")
 	defaultIcon := theme.DefaultTheme().Icon(iconName)
 

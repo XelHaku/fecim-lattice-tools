@@ -113,7 +113,7 @@ func TestManagerCycleTheme(t *testing.T) {
 	manager.SetTheme(ThemeDark)
 
 	// Cycle through all themes
-	expected := []ThemeType{ThemeLight, ThemeHighContrast, ThemeDark}
+	expected := []ThemeType{ThemeLight, ThemeHighContrast, ThemePresentation, ThemeDark}
 	for _, exp := range expected {
 		got := manager.CycleTheme()
 		if got != exp {

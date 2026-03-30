@@ -42,7 +42,7 @@ func (m *Manager) LoadPreference() {
 	// Validate the saved theme
 	themeType := ThemeType(saved)
 	switch themeType {
-	case ThemeDark, ThemeLight, ThemeHighContrast:
+	case ThemeDark, ThemeLight, ThemeHighContrast, ThemePresentation:
 		m.currentTheme = themeType
 	default:
 		m.currentTheme = ThemeDark
@@ -200,6 +200,16 @@ func GetThemeColors(t ThemeType) ThemeColors {
 			Success:    ColorSet{Main: "#00FF00", Light: "#80FF80", Dark: "#00CC00", Contrast: "#000000"},
 			Warning:    ColorSet{Main: "#FFFF00", Light: "#FFFF80", Dark: "#CCCC00", Contrast: "#000000"},
 			Error:      ColorSet{Main: "#FF0000", Light: "#FF8080", Dark: "#CC0000", Contrast: "#FFFFFF"},
+		}
+	case ThemePresentation:
+		return ThemeColors{
+			Primary:    ColorSet{Main: "#50C8FF", Light: "#80DDFF", Dark: "#30A0DD", Contrast: "#0A0A12"},
+			Background: ColorSet{Main: "#0A0A12", Light: "#181824", Dark: "#000000", Contrast: "#F8F8FF"},
+			Surface:    ColorSet{Main: "#181824", Light: "#282838", Dark: "#0A0A12", Contrast: "#F8F8FF"},
+			Text:       ColorSet{Main: "#F8F8FF", Light: "#FFFFFF", Dark: "#B4B9C8", Contrast: "#0A0A12"},
+			Success:    ColorSet{Main: "#64E6A0", Light: "#90F0C0", Dark: "#40C080", Contrast: "#0A0A12"},
+			Warning:    ColorSet{Main: "#FFDC50", Light: "#FFE880", Dark: "#DDB830", Contrast: "#0A0A12"},
+			Error:      ColorSet{Main: "#FF5A5A", Light: "#FF8080", Dark: "#DD4040", Contrast: "#F8F8FF"},
 		}
 	default: // ThemeDark
 		return ThemeColors{
