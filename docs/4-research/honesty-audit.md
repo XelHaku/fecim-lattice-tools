@@ -76,6 +76,47 @@ Legacy paths (archived, do not use):
 
 ---
 
+## Validation Bridge (Internal <-> External)
+
+This section documents which internal simulator parameters have been systematically compared against published measured data, and which still lack such comparison.
+
+### Validated Against External Data
+
+| Parameter | Preset | Our Value | Literature Range | Source DOI | Method |
+|-----------|--------|-----------|-----------------|------------|--------|
+| Pr | DefaultHZO | 24.5 uC/cm^2 | 15--34 uC/cm^2 | 10.1002/adma.201404531 | Range check |
+| Ec | DefaultHZO | 1.2 MV/cm | 0.8--1.5 MV/cm | 10.1002/adma.201404531 | Range check |
+| Pr | FeCIMMaterial | 30 uC/cm^2 | 15--40 uC/cm^2 | 10.1002/adma.201404531 | Range check |
+| Endurance | DefaultHZO | 10^10 | 10^9--10^12 | 10.1109/IEDM.2013.6724605 | Range check |
+| C2C sigma | DefaultHZO | 3% | 1--8% | 10.1038/s41467-023-42110-y | Range check |
+| beta (LGD) | DefaultHZO | -6.72e8 | -6.72e8 (exact) | 10.1063/1.4916229 | Exact match |
+| gamma (LGD) | DefaultHZO | 1.95e10 | 1.95e10 (exact) | 10.1063/1.4916229 | Exact match |
+| Pr | MaterlikHfO2 | 20 uC/cm^2 | 10--30 uC/cm^2 | 10.1063/1.4916229 | Range check |
+
+Test suite: `validation/literature/external_benchmarks_test.go`
+
+### Still Lacking External Validation
+
+| Parameter | Preset | Current Value | Gap Reason |
+|-----------|--------|---------------|------------|
+| Retention time | DefaultHZO | 3.15e9 s (100 yr) | Extrapolated; no single paper covers this timescale |
+| Imprint field | All | 1 MV/m | Educational default; device-specific |
+| NLS Tau0, Ea | DefaultHZO | 1e-10, 12e8 | Typical values, not calibrated to a specific device |
+| Viscosity (rho) | DefaultHZO | 0.05 | Within Alessandri 2018 range but not validated against specific device |
+| Q12 | DefaultHZO | -0.026 | Known DFT discrepancy |
+| NumLevels | FeCIMMaterial | 30 | Conference claim (COSM 2025); pending peer review |
+| Switching time | FeCIMMaterial | 10 ns | Conference claim; not published in literature |
+
+### Methodology
+
+- **Range check**: Simulator value must fall within the minimum--maximum spread reported in the cited paper. This is the weakest form of validation but confirms non-divergence.
+- **Exact match**: Simulator value must match the published value within floating-point tolerance (relative error < 1e-6). Used for coefficients taken directly from a paper.
+- **RMSE**: Root mean squared error against digitized experimental curves (used by existing `TestExperimentalDataValidation`).
+
+Full benchmark reference: `docs/4-research/validation/EXTERNAL-BENCHMARKS.md`
+
+---
+
 ## Notes
 
 If additional claims are verified in the future, update this file first, then update downstream documentation to match.

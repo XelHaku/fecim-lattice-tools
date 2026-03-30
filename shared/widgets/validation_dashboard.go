@@ -155,6 +155,11 @@ func defaultClaims() []ClaimStatus { //nolint:funlen // data table
 		c("Literature RMSE", "RMSE vs experimental datasets", Measured, "TestExperimentalDataValidation", ClaimPass, "RMSE thresh"),
 		c("Array ISPP disturb", "Array ISPP with disturb tracking", Calibrated, "TestArrayISPP", ClaimPass, "MaxDisturb<0.3"),
 
+		// Literature comparisons — internal defaults vs. external measured data
+		c("[CHECK] Pr within Park 2015 range", "DefaultHZO Pr=24.5 vs 15-34 uC/cm^2", Measured, "TestDefaultHZO_Pr_Park2015", ClaimPass, "15-34 uC/cm^2"),
+		c("[CHECK] Ec within Park 2015 range", "DefaultHZO Ec=1.2 vs 0.8-1.5 MV/cm", Measured, "TestDefaultHZO_Ec_Park2015", ClaimPass, "0.8-1.5 MV/cm"),
+		c("[CHECK] Endurance within literature range", "DefaultHZO 10^10 vs 10^9-10^12 cycles", Measured, "TestDefaultHZO_Endurance_LiteratureRange", ClaimPass, "10^9-10^12 cycles"),
+
 		// Literature benchmarks (external, peer-reviewed) — NOT this simulator's claims
 		c("[LIT] 96.64% MNIST (28nm FeFET)", "Soliman et al., Nature Commun. 2023, 32x32 4-state crossbar", Measured, "External benchmark", ClaimUntested, "DOI:10.1038/s41467-023-42110-y"),
 		c("[LIT] 90 states, 0.3% C2C", "2D FE-gated hybrid CIM, Science Advances 2024", Measured, "External benchmark", ClaimUntested, "DOI:10.1126/sciadv.adp0174"),
