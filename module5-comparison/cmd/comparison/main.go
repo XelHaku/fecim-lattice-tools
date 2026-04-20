@@ -179,7 +179,7 @@ func printHeader() {
 	fmt.Println("║  ⚠️  MODEL INPUTS ONLY - NOT VALIDATED ⚠️               ║")
 	fmt.Println("╠══════════════════════════════════════════════════════════════╣")
 	fmt.Println("║  FeCIM is at TRL 4 (lab validation only).             ║")
-	fmt.Println("║  Dr. Tour did NOT disclose chip-level specs (TDP, TOPS).    ║")
+	fmt.Println("║  Chip-level specs are not disclosed in the source material. ║")
 	fmt.Println("║                                                              ║")
 	fmt.Println("║  All CPU/GPU/FeCIM values below are model inputs for  ║")
 	fmt.Println("║  visualization only. Do NOT use for investment decisions.   ║")
@@ -364,12 +364,9 @@ func printSummary(comp comparison.ComparisonResult, adv comparison.FeCIMAdvantag
 	fmt.Println("  ✓ Low Voltage: Minimal energy per operation (assumption)")
 	fmt.Println()
 
-	// Dr. Tour quote
 	fmt.Println("─────────────────────────────────────────────────────────────")
-	fmt.Println("  \"This could lower the requirements in a data center")
-	fmt.Println("   by 80 to 90%.\" - Dr. external research group (claim, unverified)")
-	fmt.Println()
 	fmt.Printf("  Model output: %.0f%% reduction in this comparison\n", percentSavings)
+	fmt.Println("  Interpretation: simulation result under the current assumptions")
 	fmt.Println("─────────────────────────────────────────────────────────────")
 	fmt.Println()
 }

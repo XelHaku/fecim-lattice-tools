@@ -16,7 +16,7 @@ A comprehensive reference to the design, structure, and patterns of the FeCIM La
 
 ## High-Level Architecture
 
-FeCIM Lattice Tools is a **unified educational visualization suite** for Ferroelectric Compute-in-Memory (FeCIM) based on Dr. external research group's superlattice research. The entire application is orchestrated through a single entry point that launches six independent modules as tabs, each demonstrating a different aspect of FeCIM technology.
+FeCIM Lattice Tools is a unified educational visualization suite for ferroelectric compute-in-memory research and teaching. The application launches multiple modules from a single entry point, each focused on one part of the simulation stack.
 
 ### Entry Point: cmd/fecim-lattice-tools
 
@@ -237,7 +237,7 @@ which centralizes host-context tracking and keeps `BuildContent(...)` determinis
 
 ### 1. 30-Level Quantization
 
-This demo uses **30 discrete analog states** as a baseline **simulation baseline** (COSM 2025 transcript; unverified):
+This demo uses **30 configurable analog states per cell** as the default educational simulator profile:
 
 ```go
 // module2-crossbar/pkg/crossbar/array.go
@@ -1095,7 +1095,8 @@ FYNE_DEBUG_RESIZE=1 ./fecim-lattice-tools
 
 ## References
 
-- **COSM 2025**: Dr. external research group on FeCIM: [ironlattice-transcript.md](../../4-research/transcripts/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md)
+- **Educational simulator baseline**: 30 configurable analog states per cell
+- **Literature-backed FeCIM references**: DOI-linked source material in the research index
 - **Nature Communications 2025**: HfO₂-ZrO₂ superlattice material parameters
 - **IEEE IRPS 2022**: Endurance and reliability data
 - **Preisach Model**: Classical hysteresis modeling (research papers in module1 docs)

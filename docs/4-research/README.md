@@ -22,10 +22,8 @@ See the full policy: [honesty-audit.md](honesty-audit.md)
 | [physics-validation.md](physics-validation.md) | Physics model accuracy | Researchers |
 | [papers/](papers/) | 230+ indexed research papers | Researchers |
 | [literature-review/](literature-review/) | Synthesized literature reviews | All |
-| [internal-analysis/](internal-analysis/) | Internal technical analysis | Developers |
 | [opensource-tools/](opensource-tools/) | Related open-source tools | Developers |
 | [validation/](validation/) | Model validation data | Researchers |
-| [transcripts/](transcripts/) | Conference video transcripts | All |
 
 ---
 
@@ -171,20 +169,6 @@ Full report: [physics-validation.md](physics-validation.md)
 
 ---
 
-## 🔍 Internal Analysis Documents
-
-Technical analyses produced during development:
-
-| Document | Topic |
-|----------|-------|
-| [internal-analysis/crossbar-arrays.md](internal-analysis/) | Crossbar non-ideality deep-dive |
-| [internal-analysis/hysteresis-physics.md](internal-analysis/) | Hysteresis model comparison |
-| [internal-analysis/cim-circuits.md](internal-analysis/) | Circuit integration analysis |
-| [internal-analysis/eda-chip-design.md](internal-analysis/) | EDA workflow analysis |
-| [internal-analysis/module2-vs-module4-physics.md](internal-analysis/) | Module physics comparison |
-
----
-
 ## 🛠️ Open-Source Tools Survey
 
 Analysis of related open-source simulation tools:
@@ -199,26 +183,7 @@ Key finding: No existing open-source tool covers the full FeCIM design flow from
 
 ---
 
-## 🎬 Conference Transcripts
-
-| Transcript | Event | Status |
-|------------|-------|--------|
-| [transcripts/COSM_2025_AI_Hardware_Breakthrough/](transcripts/) | COSM 2025 | Conference only - not peer reviewed |
-
-**Important:** Conference presentations are not peer-reviewed literature. Claims from transcripts are classified as **unverified** until independently published.
-
----
-
 ## 🔎 Material-Specific Research
-
-### Tour Lab / IronLattice Research
-
-Documentation on external research institution Tour group research:
-
-- [transcripts/external-research/](transcripts/) - Research notes
-- [transcripts/external-research/In2Se3_Landau_Coefficients.md](transcripts/) - L-K parameters for In₂Se₃
-
-**Note:** This is conference/preprint material. Not peer-reviewed. Do not cite as verified hardware performance.
 
 ### Superlattice Materials
 

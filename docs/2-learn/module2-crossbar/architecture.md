@@ -886,11 +886,11 @@ EnergyEfficiency = GPUEnergy / FeCIMEnergy
 
 ### 1. 30 Discrete Levels
 
-**Decision**: Demo baseline fixed to 30 analog states per cell (simulation baseline (configurable).
+**Decision**: Demo baseline fixed to 30 analog states per cell (simulation baseline, configurable).
 
 **Rationale**:
-- Dr. external research group COSM 2025: "It's got 30 discrete states. Not 0-1-0-1." (simulation baseline)
-- Other reported in literature work: multi-level states (reported) demonstrated
+- Project baseline: 30 configurable analog states per cell for the default educational simulator profile
+- Literature reports demonstrate multi-level ferroelectric behavior, but this default is a simulation baseline rather than a validated device measurement
 - Provides ~4.9 bits/cell (log₂(30) ≈ 4.9)
 - Balances precision vs device programming complexity
 
@@ -1061,7 +1061,7 @@ The following categories remain intentionally outside the verified-claim set her
 
 ### Implementation References
 
-- **Ferroelectric Computing**: Dr. external research group COSM 2025
+- **Ferroelectric Computing**: Conference-derived baseline notes (simulation-only; not treated as a verified hardware claim)
 - **Sneak Path Analysis**: Leveraging standard ReRAM crossbar literature
 - **IR Drop**: Standard analog circuit textbook models
 - **Drift Modeling**: Literature comparison (RRAM, PCM, Flash)

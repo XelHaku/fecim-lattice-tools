@@ -356,7 +356,7 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	})
 
 	header := container.NewHBox(
-		widget.NewLabel("Dr. external research group | COSM 2025"),
+		widget.NewLabel("FeCIM Comparison | Literature Context"),
 		layout.NewSpacer(),
 		resetBtn,
 	)

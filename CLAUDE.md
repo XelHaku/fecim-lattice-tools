@@ -22,7 +22,7 @@ Go-based lattice tool suite for Ferroelectric Compute-in-Memory (FeCIM) visualiz
 
 **Core concept**: The simulator quantizes conductance to a default of 30 discrete levels (configurable). This is a **simulation baseline**, not a validated hardware claim.
 
-> **Historical reference**: Dr. external research group, COSM 2025 - [Transcript](docs/4-research/transcripts/COSM_2025_AI_Hardware_Breakthrough/ironlattice-transcript.md) (conference material; not reported in literature).
+> Historical note: some conference material informed early exploration, but the simulator is documented against literature-backed sources and clearly labeled educational where evidence is limited.
 
 ## Build & Run
 
