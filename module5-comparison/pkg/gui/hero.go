@@ -29,8 +29,8 @@ var (
 	heroMutedColor = color.RGBA{160, 180, 200, 255} // Secondary text
 )
 
-// Energy values in picojoules per MAC (model inputs from docs/videos/ironlattice-youtube-script.md)
-// "CPU plus DRAM: 1000 picojoules. GPU plus HBM: 100 picojoules. FeCIM: under 1 picojoule."
+// Energy values in picojoules per MAC follow the current honesty audit in
+// docs/4-research/honesty-audit.md.
 const (
 	cpuEnergyPJ   = 1000.0 // 1000 pJ/MAC
 	gpuEnergyPJ   = 100.0  // 100 pJ/MAC

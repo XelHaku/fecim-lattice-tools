@@ -93,7 +93,7 @@ func GPUAccelerator() *Architecture {
 //   - Peer-reviewed ranges for analog states / MNIST accuracy exist, but are
 //     not used here as verified device specifications.
 //
-// See docs/comparison/HONESTY_AUDIT.md for full analysis.
+// See docs/4-research/honesty-audit.md for full analysis.
 func FeCIMChip() *Architecture {
 	return &Architecture{
 		Name:            "FeCIM CIM",

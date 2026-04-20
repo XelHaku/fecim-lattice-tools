@@ -26,8 +26,8 @@ func init() {
 	debug = logging.NewLogger("comparison-app")
 }
 
-// Energy specs (model inputs) derived from docs/videos/ironlattice-youtube-script.md line 205:
-// "CPU plus DRAM: 1000 picojoules. GPU plus HBM: 100 picojoules. FeCIM: under 1 picojoule."
+// Energy specs (model inputs) follow the current honesty audit in
+// docs/4-research/honesty-audit.md.
 const (
 	cpuEnergyPJPerMAC   = 1000.0 // 1000 pJ/MAC
 	gpuEnergyPJPerMAC   = 100.0  // 100 pJ/MAC
