@@ -4,6 +4,13 @@ docs/4-research/transcripts/COSM_2025_AI_Hardware_Breakthrough/
 docs/4-research/transcripts/ironlattice-youtube-script.md
 docs/4-research/tour-group-ironlattice-research.md
 docs/4-research/superlattice-material-analysis.md
+bin/
+build_errors.txt
+commit-push.log
+compute_log.json
+crossbar-gui
+crossbar_mvm
+docs/2-learn/module2-crossbar/eli5.md.bak
 docs/4-research/papers/_corrupted/IEEE_CIM_Survey_2023.pdf
 docs/4-research/papers/_corrupted/Mayergoyz_IEEE_1986.pdf
 docs/4-research/papers/_corrupted/Tour_In2Se3_ChemRxiv.pdf
@@ -281,5 +288,18 @@ docs/archive/research-papers/by-topic/23-cryogenic-operation/fesquid_cryo_cam_20
 docs/archive/research-papers/external-research/Adv Elect Materials - 2024 - Shin - In2Se3 Synthesized by the FWF Method for Neuromorphic Computing.pdf
 docs/archive/research-papers/external-research/in2se3_silicon_compatible_2025.pdf
 docs/archive/research-papers/external-research/urban_mining_fjh_2021.pdf
+eda-cli
+exports/
+fecim-screenshotter
+fecim-visualizer
+fecim-web
+hysteresis_demo
+launcher
+mnist_inference
+module2-crossbar/pkg/crossbar/device_errors.go.bak
+module2-crossbar/pkg/crossbar/irdrop.go.bak
+module2-crossbar/pkg/crossbar/solver.go.bak
+module2-crossbar/pkg/crossbar/solver_test.go.bak
+output/
 validation/literature/_incoming/alscn_pmc9607415.pdf
 validation/literature/_incoming/pzt_nano14050432.pdf

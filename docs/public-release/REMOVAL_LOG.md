@@ -7,6 +7,8 @@
 - `docs/4-research/transcripts/ironlattice-youtube-script.md` removed as audience-specific outreach material
 - `docs/4-research/tour-group-ironlattice-research.md` removed as research planning material
 - `docs/4-research/superlattice-material-analysis.md` removed as speculative proprietary-material analysis
+- Generated binaries and output trees were removed from the public candidate and added to the history rewrite list.
+- Backup `.bak` files were removed from the public candidate and added to the history rewrite list.
 
 ## History Rewrite Targets
 - all paths listed in FILTER_REPO_PATHS.txt
