@@ -77,7 +77,7 @@ Scientific accuracy over marketing claims. Full audit: `docs/4-research/honesty-
 
 ### Unverified/Removed Claims (Do Not Present as Facts)
 
-- 30 analog states for Tour device (conference-only reference)
+- 30 analog states for the educational simulator baseline (conference-only reference)
 - 87% MNIST accuracy (conference-only reference)
 - Energy multipliers vs NAND or GPUs without reported in literature measurement evidence
 

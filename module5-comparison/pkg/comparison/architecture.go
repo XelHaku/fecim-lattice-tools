@@ -78,7 +78,7 @@ func GPUAccelerator() *Architecture {
 //
 // ⚠️ MODEL INPUTS ONLY (NOT VALIDATED) ⚠️
 //
-// FeCIM is at TRL 4 (lab validation only). Dr. Tour did NOT disclose:
+// FeCIM is at TRL 4 (lab validation only). Project materials do not disclose:
 //   - TDP (power consumption)
 //   - TOPS (performance)
 //   - TOPS/W (efficiency)

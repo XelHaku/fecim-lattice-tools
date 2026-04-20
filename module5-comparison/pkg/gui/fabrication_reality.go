@@ -13,7 +13,7 @@ import (
 )
 
 // FabricationReality shows realistic chip development expectations.
-// Per Dr. Tour critique - provide honest timeline and cost expectations.
+// Provide honest timeline and cost expectations for the model inputs.
 type FabricationReality struct {
 	widget.BaseWidget
 }

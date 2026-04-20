@@ -333,7 +333,7 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	ca.statusBar = sharedwidgets.NewStatusBarWithLabel(ca.statusLabel, "Status: ")
 
 	// === SIMULATION WARNING BANNER ===
-	// CRITICAL: Per Dr. Tour critique - must prominently display TRL status
+	// CRITICAL: Must prominently display TRL status for the model inputs
 	warningBanner := widget.NewLabelWithStyle(
 		"SIMULATION ONLY - NOT VALIDATED | TRL 4 Lab Prototype | All values are model inputs",
 		fyne.TextAlignCenter,
@@ -463,7 +463,7 @@ func (ca *ComparisonApp) createMainLayout() fyne.CanvasObject {
 	)
 
 	// SECTION 4: FABRICATION REALITY (H08)
-	// Per Dr. Tour critique - show honest development expectations
+	// Show honest development expectations for the model inputs
 	fabricationReality := NewFabricationReality()
 	sectionFabHeader := widget.NewLabelWithStyle(
 		"FABRICATION REALITY",
@@ -581,12 +581,12 @@ func (ca *ComparisonApp) createScenarioDiffPanel() fyne.CanvasObject {
 }
 
 // createVerifiedClaimsWidget creates a compact model input / scenario input section.
-// Dr. Tour recommendation: Show explicit energy numbers with units and citations (as model inputs)
+// Show explicit energy numbers with units and citations (as model inputs)
 func (ca *ComparisonApp) createVerifiedClaimsWidget() fyne.CanvasObject {
 	verifiedLabel := widget.NewLabelWithStyle("MODEL INPUT REFERENCES:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	verifiedItems := widget.NewLabel("• Analog levels (literature ranges; not validated here)\n• MNIST accuracy (literature ranges; not validated here)\n• CMOS compatibility (assumed)")
 
-	// Explicit energy numbers with units (Dr. Tour recommendation)
+	// Explicit energy numbers with units and citations
 	energyLabel := widget.NewLabelWithStyle("ENERGY/MAC (pJ, MODEL INPUTS):", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	energyItems := widget.NewLabel(fmt.Sprintf(
 		"• CPU+DRAM: %d pJ (model input)\n• GPU+HBM: %d pJ (model input)\n• FeCIM: ~%.1f pJ (model input; TRL 4)",

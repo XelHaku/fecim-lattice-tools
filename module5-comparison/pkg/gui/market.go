@@ -1,6 +1,6 @@
 // Package gui provides Fyne-based GUI components for architecture comparison.
 // This file contains market analysis visualizations.
-// TECHNICAL BRIEFING DESIGN: Based on Dr. Tour's COSM 2025 presentation messaging.
+// TECHNICAL BRIEFING DESIGN: Based on project literature review and model-input messaging.
 package gui
 
 import (

@@ -1,6 +1,6 @@
 // Package gui provides Fyne-based GUI components for architecture comparison.
 // This file contains hero visualizations for the comparison demo.
-// TECHNICAL BRIEFING DESIGN: Based on Dr. Tour's COSM 2025 presentation messaging.
+// TECHNICAL BRIEFING DESIGN: Based on project literature review and model-input messaging.
 package gui
 
 import (
@@ -207,7 +207,7 @@ func (e *AnimatedEnergyRace) CreateRenderer() fyne.WidgetRenderer {
 	e.statStrip.TextStyle = fyne.TextStyle{Bold: true}
 	e.statStrip.Alignment = fyne.TextAlignCenter
 
-	// === SYSTEM POWER BREAKDOWN (C10: Per Dr. Tour critique) ===
+	// === SYSTEM POWER BREAKDOWN (C10: Project review note) ===
 	// Use widget.Label so it wraps at narrow widths instead of overflowing.
 	powerBreakdown := widget.NewLabel("Model assumption: System Power = Array ~45% | ADC/DAC ~40% | Peripherals ~15%")
 	powerBreakdown.TextStyle = fyne.TextStyle{Italic: true}
