@@ -8,8 +8,8 @@
 - Third-party PDFs only when THIRD_PARTY_PDF_AUDIT.csv records keep or keep-with-conditions
 
 ## Disallowed
-- docs/archive/**
-- docs/4-research/internal-analysis/**
+- docs/archive/
+- docs/4-research/internal-analysis/
 - docs/4-research/transcripts/COSM_2025_AI_Hardware_Breakthrough/**
 - docs/4-research/transcripts/ironlattice-youtube-script.md
 - docs/4-research/tour-group-ironlattice-research.md
