@@ -11,6 +11,7 @@ compute_log.json
 crossbar-gui
 crossbar_mvm
 docs/2-learn/module2-crossbar/eli5.md.bak
+docs/2-learn/module2-crossbar/eli5.md.existing
 docs/4-research/papers/_corrupted/IEEE_CIM_Survey_2023.pdf
 docs/4-research/papers/_corrupted/Mayergoyz_IEEE_1986.pdf
 docs/4-research/papers/_corrupted/Tour_In2Se3_ChemRxiv.pdf
@@ -303,4 +304,7 @@ module2-crossbar/pkg/crossbar/solver_test.go.bak
 output/ui_screenshots/
 output/validation/.gitkeep
 validation/literature/_incoming/alscn_pmc9607415.pdf
+validation/literature/_incoming/debug_crop.png
+validation/literature/_incoming/pzt_fig2_crop.png
+validation/literature/_incoming/pzt_pe_loop_crop.png
 validation/literature/_incoming/pzt_nano14050432.pdf
