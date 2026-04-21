@@ -103,7 +103,7 @@ func Run(args []string) error {
 	fmt.Println()
 	fmt.Println("=== COMPILATION SUCCESSFUL ===")
 	fmt.Printf("Total cells: %d\n", len(cells))
-	fmt.Printf("Levels used: 30 (demo baseline; simulation baseline)\n")
+	fmt.Printf("Levels used: 30 (demo baseline; simulation baseline model input)\n")
 	fmt.Printf("Conductance range: 10.0 - 100.0 μS\n")
 	return nil
 }

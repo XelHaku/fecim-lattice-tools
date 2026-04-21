@@ -136,9 +136,9 @@ func NewComparisonApp() *ComparisonApp {
 	ca.fecimSpec = EnergySpec{
 		Name:          "FeCIM",
 		EnergyFJ:      fecimEnergyPJPerMAC * 1000, // 1,000 fJ/MAC
-		Source:        "Model input (project baseline)",
+		Source:        "Model input (assumed simulation baseline)",
 		Verified:      false,
-		SourceDetails: "Model input: under 1 picojoule per MAC (simulation baseline).",
+		SourceDetails: "Model input: 1.0 picojoule per MAC (assumed simulation baseline).",
 	}
 
 	// Register with global preset manager
