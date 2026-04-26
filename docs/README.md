@@ -83,6 +83,8 @@ Perfect for: Researchers, academics, verification
 | [API Reference](3-develop/api-reference.md) | Package APIs | Developers |
 | [Physics Validation](4-research/physics-validation.md) | Scientific accuracy | Researchers |
 | [Honesty Audit](4-research/honesty-audit.md) | Claims verification | All users |
+| [Trust Boundaries](TRUST.md) | What is validated, educational, planned, or not validated | All users |
+| [The Crucible](../crucible/README.md) | Prover/Disprover/Builder validation protocol | Researchers, contributors |
 | [GLOSSARY](GLOSSARY.md) | Technical terms | All users |
 
 ---
@@ -118,9 +120,10 @@ Perfect for: Researchers, academics, verification
 ```
 1. Status: 4-research/honesty-audit.md
 2. Physics: 4-research/physics-validation.md
-3. Literature: 4-research/papers/
-4. Analysis: 4-research/internal-analysis/
-5. Tools: 4-research/opensource-tools/
+3. Trust: TRUST.md
+4. Crucible: ../crucible/README.md
+5. Literature: 4-research/papers/
+6. Tools: 4-research/opensource-tools/
 ```
 
 ---

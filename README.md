@@ -45,6 +45,7 @@ Built on published physics -- Materlik 2015, Park 2015, Alessandri 2018, Guo 201
 - [Technical Architecture](#technical-architecture)
 - [Development Standard](#development-standard)
 - [Validation](#validation)
+- [Trust Boundaries](#trust-boundaries)
 - [Repository Layout](#repository-layout)
 - [Documentation](#documentation)
 - [Contributing and Support](#contributing-and-support)
@@ -224,6 +225,10 @@ The validation layer checks internal model behavior and selected literature-back
 
 Validation does not turn educational defaults into measured device claims. If a parameter is not validated against a specific paper or dataset, it must remain labeled as an assumption or default.
 
+## Trust Boundaries
+
+Use [docs/TRUST.md](./docs/TRUST.md) to decide which outputs are highly validated, literature-backed, educational, planned, or not validated. Use [docs/HOW_TO_BREAK_THIS.md](./docs/HOW_TO_BREAK_THIS.md) and [docs/PREDICTIONS.md](./docs/PREDICTIONS.md) to review adversarial stress cases and pre-registered validation targets.
+
 ## Repository Layout
 
 ```text
@@ -248,6 +253,7 @@ fecim-lattice-tools/
 - [Technical Architecture](./docs/3-develop/architecture/ARCHITECTURE.md)
 - [Configuration Reference](./docs/3-develop/config-reference.md)
 - [Testing Guide](./docs/3-develop/testing/TESTING.md)
+- [Trust Boundaries](./docs/TRUST.md)
 - [Scientific Honesty Audit](./docs/4-research/honesty-audit.md)
 - [Contributing](./CONTRIBUTING.md)
 - [Changelog](./CHANGELOG.md)
