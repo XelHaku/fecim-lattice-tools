@@ -29,7 +29,10 @@ Deterministic validation fixtures that support tests may be tracked only under `
 - `docs/4-research/tour-group-ironlattice-research.md`
 - `docs/4-research/superlattice-material-analysis.md`
 - `docs/superpowers/**`
+- `docs/research-papers/external-research/**`
 - `docs/4-research/papers/external-research/**`
+- `demo2-crossbar/pkg/_layers_experimental/kvcache_fjh.go`
+- `module2-crossbar/pkg/_layers_experimental/kvcache_fjh.go`
 - `docs/4-research/papers/DOWNLOAD_PLAN.md`
 - `docs/4-research/opensource-tools/research_notes_final.md`
 - `validation/literature/_incoming/**`
