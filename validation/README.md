@@ -1,82 +1,97 @@
-# Validation Package
+# Validation
 
-Statistical validation, literature comparison, and configuration verification for FeCIM simulation outputs. Ensures simulation results stay within tolerance of published experimental data and that configuration files are well-formed.
+## Audience
 
-## Overview
+This folder is for researchers, graduate students, reviewers, and contributors who need to see how FeCIM Lattice Tools checks its simulation claims. It is not a replacement for silicon measurements. It is the evidence layer for a public educational and research simulator.
 
-The `validation/` package provides two layers of quality assurance: (1) statistical comparison of simulation outputs against literature datasets, and (2) structural validation of YAML/JSON configuration files used across all modules. It supports regression testing to catch physics drift between releases.
+## What Validation Means Here
+
+Unit tests show that code paths run. Validation shows whether the modeled behavior respects physics, numerical conservation laws, external tools, or published reference data.
+
+Every strong project claim should map to:
+
+- a command someone can run
+- a pass/fail threshold
+- a generated artifact or fixture
+- a limitation statement when the evidence is partial
+
+Generated validation artifacts are written under `output/validation/` and are intentionally not tracked in git unless they are promoted to a curated fixture under `validation/testdata/`.
+
+## One-Command Reproduction
+
+```bash
+bash scripts/reproduce_validation.sh
+```
+
+For the public Module 2 conservation gate only:
+
+```bash
+go test -v ./validation/module2/... -run TestModule2KCLConservation_PublicValidation
+```
+
+That test writes:
+
+```text
+output/validation/module2/kcl_conservation.json
+```
+
+## Current Executable Validation
+
+| Area | Evidence | Command |
+|---|---|---|
+| Module 1 hysteresis | Literature-backed P-E loop checks against digitized datasets, including Park 2015 HZO | `go test -v ./validation/literature/...` |
+| Module 2 crossbar | Kirchhoff current conservation over 100 deterministic random parasitic arrays | `go test -v ./validation/module2/...` |
+| Module 2 external comparison | NumPy/SciPy and ngspice comparison harnesses where external tools are installed | `go test -v ./validation/external/...` |
+| Module 4 circuits | KCL/KVL and sense-chain regression checks | `go test -v ./validation/... -run 'Module4|SenseChain'` |
+| Module 6 EDA | Verilog sanity/lint and OpenLane smoke tests where tools are installed | `go test -v ./validation/external/... -run 'Verilog|OpenLane'` |
+| Configuration | YAML/JSON validation for array, calibration, Preisach, weight, and OpenLane configs | `go test -v ./validation/configvalidator/...` |
+
+External tool checks are optional by design. If `ngspice`, Yosys, OpenLane, or Python scientific packages are not installed, those tests skip the external execution while keeping structural checks active.
+
+## Module 2 KCL Gate
+
+`validation/module2/kcl_conservation_test.go` checks the Module 2 parasitic crossbar solver against Kirchhoff's Current Law.
+
+The test:
+
+- builds 100 deterministic random arrays
+- varies array shape, conductance, wire parasitics, and applied voltages
+- solves each parasitic matrix-vector multiply
+- reconstructs cumulative row and column currents
+- checks that every node conserves current
+- requires maximum KCL residual below `1e-9 A`
+- emits a JSON report with seed, threshold, maximum residual, and worst case
+
+This proves current conservation inside the solver. It does not prove agreement with fabricated devices or SPICE by itself; those are separate validation layers.
 
 ## Package Structure
 
-### Root — Statistical Validation
+| Path | Purpose |
+|---|---|
+| `literature/` | Digitized reference data and literature-backed physics validation |
+| `module2/` | Public Module 2 conservation and crossbar validation gates |
+| `external/` | Optional external-tool comparisons, including ngspice and OpenLane checks |
+| `integration/` | Cross-module validation between physics, crossbar, inference, and EDA paths |
+| `configvalidator/` | Rule-based config validation engine and CLI |
+| `testdata/` | Curated fixtures and golden references |
+| `output/` | Generated local artifacts, ignored by git |
 
-- **literature.go** — Literature dataset loading and parsing (published P-E curves, endurance data, retention measurements)
-- **statistics.go** — Statistical comparison functions: Kolmogorov-Smirnov test, chi-square test, RMSE, MAE, relative error, correlation coefficients
-- **interfaces.go** — Shared interfaces for validation backends
+Core statistical helpers live in the root validation package:
 
-### `configvalidator/` — Configuration Validation
+- `literature.go` loads published experimental datasets
+- `statistics.go` provides KS, chi-square, RMSE, MAE, and correlation metrics
+- `interfaces.go` defines shared validation interfaces
+- `readiness_report.go` generates release-readiness summaries
 
-- **validator.go** — Core validation engine with rule registration
-- **preisach.go** — Preisach model config validation (hysteron count, distribution bounds)
-- **calibration.go** — Calibration config validation (field ranges, temperature limits)
-- **weight_matrix.go** — Weight matrix validation (dimensions, value ranges, NaN/Inf checks)
-- **array_design.go** — Array design config validation (rows/cols, architecture, PDK)
-- **openlane.go** — OpenLane flow config validation (paths, required fields)
-- **cmd/validate/main.go** — Standalone CLI validation tool
+## Trust Boundaries
 
-## Key Types and Functions
+The repository is currently an educational simulation toolkit. A passing validation suite means the simulator is internally consistent and matches selected external references within declared tolerances. It does not mean the repository reports new silicon measurements.
 
-| Type / Function | Package | Description |
-|---|---|---|
-| `LiteratureDataset` | `validation` | Parsed experimental data from publications |
-| `KSTest` | `validation` | Kolmogorov-Smirnov two-sample test |
-| `ChiSquare` | `validation` | Chi-square goodness-of-fit test |
-| `RMSE`, `MAE` | `validation` | Root-mean-square and mean-absolute error |
-| `Validator` | `configvalidator` | Rule-based config validation engine |
-| `ValidatePreisach` | `configvalidator` | Preisach config rules |
-| `ValidateWeightMatrix` | `configvalidator` | Weight matrix integrity checks |
-| `ValidateArrayDesign` | `configvalidator` | Array config rules |
+Known public-facing limits:
 
-## Testing
+- Some literature datasets are digitized from figures and carry digitization uncertainty.
+- External comparisons depend on installed local tools and versions.
+- MNIST results are pipeline demonstrations unless accompanied by a full training/inference artifact and confusion matrix.
+- EDA export validity is staged: syntax and smoke tests are not the same as a clean full physical implementation.
 
-```bash
-# Run all validation tests
-go test ./validation/...
-
-# With race detector
-go test -race ./validation/...
-
-# Specific suites
-go test -v ./validation/ -run TestStatistics
-go test -v ./validation/ -run TestPhysicsRegression
-go test -v ./validation/ -run TestIntegration
-go test -v ./validation/configvalidator/...
-
-# Standalone config validator CLI
-go run ./validation/configvalidator/cmd/validate/ -config path/to/config.yaml
-```
-
-Key test suites:
-- `validation_test.go` — Core statistical functions
-- `physics_regression_test.go` — Physics output regression against golden values
-- `integration_test.go` — End-to-end validation pipelines
-- `integration/` — Cross-module integration tests (crossbar + hysteresis)
-- `configvalidator/` — Config rule coverage
-
-## Physics Context
-
-**Regression baselines:** Golden P-E loops and key metrics (P_r, E_c, 2P_r) are stored in `testdata/` directories. Each release must reproduce these within defined tolerances (typically ≤5% relative error for P_r and E_c).
-
-**Literature comparison:** Published experimental data from HZO and AlScN papers are parsed and compared against simulation output using KS tests (p > 0.05 threshold) and RMSE metrics.
-
-**Statistical tests:**
-- **Kolmogorov-Smirnov:** Distribution shape comparison between simulated and experimental P-E curves
-- **Chi-square:** Goodness-of-fit for discrete level distributions
-- **RMSE/MAE:** Point-by-point error quantification
-
-## Related Documentation
-
-- `docs/4-research/validation/` — Validation results and boundary docs
-- `docs/4-research/physics-validation.md` — Physics validation criteria
-- `docs/3-develop/testing/TESTING.md` — Testing conventions
-- `docs/4-research/honesty-audit.md` — Claims verification
+See `validation/PLANNED.md` for the remaining validation roadmap.
