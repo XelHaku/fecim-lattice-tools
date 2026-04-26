@@ -59,7 +59,7 @@ Requirements:
 
 - arXiv-style methods paper
 - published validation methodology
-- citation metadata
+- citation metadata and source records
 - external users
 - peer feedback incorporated
 - versioned releases
@@ -73,6 +73,16 @@ Long-term indicators:
 - course adoption
 - reproducible reports
 - no unretracted major overclaims
+
+## Citation Integration
+
+The Crucible treats citations as part of validation, not as formatting.
+
+- Prover must fail or mark partial any external claim that lacks a citation record or validation artifact.
+- Disprover must check whether cited records actually support the claim being made.
+- Builder must add source comments, citation records, or wording changes when a claim is missing support.
+- Weak evidence such as preprints, conference material, or project assumptions must stay labeled as weak evidence.
+- Contested claims belong in `citations/disputed.md` until resolved by stronger sources or project validation.
 
 ## Agent 1: Prover
 
@@ -426,4 +436,3 @@ A module is done for a release when:
 - Disprover findings above the release threshold are resolved or explicitly accepted.
 - Documentation is complete enough for a new user.
 - Trust status is recorded in `docs/TRUST.md`.
-

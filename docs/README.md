@@ -84,6 +84,7 @@ Perfect for: Researchers, academics, verification
 | [Physics Validation](4-research/physics-validation.md) | Scientific accuracy | Researchers |
 | [Honesty Audit](4-research/honesty-audit.md) | Claims verification | All users |
 | [Trust Boundaries](TRUST.md) | What is validated, educational, planned, or not validated | All users |
+| [Citation System](../citations/README.md) | Source records, citable facts, and citation workflow | Researchers, contributors |
 | [The Crucible](../crucible/README.md) | Prover/Disprover/Builder validation protocol | Researchers, contributors |
 | [GLOSSARY](GLOSSARY.md) | Technical terms | All users |
 
@@ -122,8 +123,9 @@ Perfect for: Researchers, academics, verification
 2. Physics: 4-research/physics-validation.md
 3. Trust: TRUST.md
 4. Crucible: ../crucible/README.md
-5. Literature: 4-research/papers/
-6. Tools: 4-research/opensource-tools/
+5. Citations: ../citations/README.md
+6. Literature: 4-research/papers/
+7. Tools: 4-research/opensource-tools/
 ```
 
 ---
