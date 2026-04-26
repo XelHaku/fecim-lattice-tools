@@ -33,6 +33,13 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-too
 
 ## Key Rules
 
+### TDD Hard Rule
+- No production-code behavior change without a failing automated test first.
+- Applies to features, bug fixes, refactors, public API changes, physics model changes, GUI workflow changes, and validation logic changes.
+- Required cycle: RED (write/update focused failing test and confirm the expected failure), GREEN (minimal code to pass), REFACTOR (cleanup while tests stay green).
+- Every PR, commit summary, and agent handoff must include the RED command/output summary, GREEN command/output summary, and final verification command(s).
+- If a change cannot reasonably be test-first, stop and explain the blocker before coding. Documentation-only, comments-only, formatting-only, generated files, and release metadata may use `TDD: N/A` with a short reason.
+
 ### Do
 - Use `fyne.Do(func() { ... })` for all UI updates from goroutines
 - Quantize to 30 levels: `crossbar.QuantizeTo30Levels(value)`

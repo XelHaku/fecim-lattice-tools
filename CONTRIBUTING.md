@@ -26,14 +26,21 @@ Thank you for your interest in contributing to **FeCIM Lattice Tools**! This pro
     git checkout -b feature/my-new-feature
     ```
 
-2.  **Make changes**. conform to the existing code style (standard Go formatting).
-3.  **Run tests** to ensure no regressions:
+2.  **Start with TDD** for any behavior change:
+    - RED: write or update the focused automated test first.
+    - Run the targeted test and confirm it fails for the expected reason.
+    - GREEN: make the smallest implementation change needed to pass.
+    - REFACTOR: clean up only while the targeted test stays green.
+
+    Documentation-only, comments-only, formatting-only, generated files, and release metadata changes may use `TDD: N/A`, but the pull request must say why no behavior can change.
+3.  **Make changes**. Conform to the existing code style (standard Go formatting).
+4.  **Run tests** to ensure no regressions:
 
     ```bash
     make test
     make test-hys   # If working on Module 1
     ```
-4.  **Verify build**:
+5.  **Verify build**:
     ```bash
     make build
     ```
@@ -50,7 +57,12 @@ Thank you for your interest in contributing to **FeCIM Lattice Tools**! This pro
 1.  Push your branch to your fork.
 2.  Open a Pull Request against the `main` branch.
 3.  Describe your changes clearly.
-4.  Wait for review.
+4.  Include TDD evidence:
+    - RED command and expected failure summary.
+    - GREEN command and passing summary.
+    - Final verification command(s).
+    - Or `TDD: N/A` with a reason for non-behavior changes.
+5.  Wait for review.
 
 ## License
 

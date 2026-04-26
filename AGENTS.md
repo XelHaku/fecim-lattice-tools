@@ -91,16 +91,21 @@ go test ./module2-crossbar/...          # Module-scoped testing
 **From CLAUDE.md:**
 - **Simulation baseline, not hardware claim:** The 30-level quantization and all material presets are for education and visualization. Not validated device measurements.
 - **Accuracy-first policy:** See `docs/4-research/honesty-audit.md` for verified claims and removed/unverified claims.
+- **TDD hard rule:** Any behavior change, bug fix, refactor, public API change, physics model change, GUI workflow change, or validation logic change must start with a failing automated test. Record the RED failure, make the minimum change to pass, then record GREEN verification.
 - **No blocking UI operations:** Never use `time.Sleep()` or blocking I/O on the Fyne main thread.
 - **Commit before pushing:** `go test ./...` must pass.
 
 ### Testing Requirements
 
+- **TDD first:** Write or update the focused `*_test.go` before touching production code. Run the targeted test and confirm it fails for the expected reason.
+- **Implementation second:** Make the smallest production-code change needed to pass the focused test.
+- **Evidence required:** PRs and agent summaries must include RED command/output summary, GREEN command/output summary, and final verification command(s).
 - **Unit tests:** Each package should have corresponding `*_test.go` files
 - **Physics regression golden files:** `validation/testdata/physics_regression/` — compare against existing golden data
 - **Integration tests:** Module interaction tests in `cmd/fecim-lattice-tools/mode_*_test.go`
 - **Test frameworks:** `testing` (standard), `stretchr/testify` for assertions
 - **CI status:** See `.github/workflows/` or latest test run
+- **Narrow exceptions:** Documentation-only, comments-only, formatting-only, generated files, and release metadata changes may mark `TDD: N/A`, but must state why no behavior can change.
 
 ### Common Debugging Patterns
 
@@ -258,10 +263,11 @@ FECIM_UPDATE_PHYSICS_GOLDEN=1 go test ./...  # Regenerate golden
 
 ### Add a New Feature
 1. **Plan:** Read `docs/3-develop/api-reference.md` and the target module docs
-2. **Implement:** Follow module pattern; use `fyne.Do()` for UI updates
-3. **Test:** Add `*_test.go` with unit and integration tests
-4. **Verify:** `go test ./...` passes, `go test -race ./...` passes
-5. **Commit:** `type: description` with test evidence
+2. **RED:** Add or update the focused failing test first and record the expected failure
+3. **GREEN:** Implement the smallest change needed; use `fyne.Do()` for UI updates
+4. **REFACTOR:** Clean up only while targeted tests stay green
+5. **Verify:** `go test ./...` passes, `go test -race ./...` passes when the change touches concurrency or shared behavior
+6. **Commit:** `type: description` with RED/GREEN/verification evidence
 
 ### Debug a GUI Freeze
 1. Check `shared/physics/` and module `pkg/gui/` for blocking operations

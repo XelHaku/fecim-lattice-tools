@@ -73,6 +73,33 @@ go test ./... -run ^$ -bench . -benchmem
 go test -race ./...
 ```
 
+## TDD Hard Rule
+
+All behavior-changing work must use test-driven development.
+
+### Required Cycle
+
+1. **RED:** Write or update the focused automated test before touching production code.
+2. **Verify RED:** Run the targeted test and confirm it fails for the expected reason.
+3. **GREEN:** Make the smallest production-code change needed to pass.
+4. **Verify GREEN:** Run the targeted test and confirm it passes.
+5. **REFACTOR:** Clean up only while tests remain green.
+6. **Final verification:** Run the relevant package tests and, before merge, the project-level verification required by the change.
+
+### Scope
+
+The rule applies to new features, bug fixes, refactors, public API changes, physics model changes, GUI workflow changes, validation logic changes, and concurrency changes.
+
+### Evidence Required
+
+Pull requests and agent handoffs must include:
+
+- RED command and expected failure summary.
+- GREEN command and passing summary.
+- Final verification command(s).
+
+For documentation-only, comments-only, formatting-only, generated files, or release metadata changes, write `TDD: N/A` and explain why no behavior can change.
+
 ## Test Categories
 
 ### 1. Physics Tests
