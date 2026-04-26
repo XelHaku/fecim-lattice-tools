@@ -23,6 +23,7 @@ DISALLOWED_PATHS = (
     "docs/4-research/papers/DOWNLOAD_PLAN.md",
     "docs/4-research/opensource-tools/research_notes_final.md",
     "demo2-crossbar/pkg/_layers_experimental/kvcache_fjh.go",
+    "demo2-crossbar/pkg/layers/kvcache_fjh.go",
     "module2-crossbar/pkg/_layers_experimental/kvcache_fjh.go",
     "validation/literature/_incoming/",
 )

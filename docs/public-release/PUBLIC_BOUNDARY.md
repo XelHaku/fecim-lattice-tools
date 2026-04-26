@@ -32,6 +32,7 @@ Deterministic validation fixtures that support tests may be tracked only under `
 - `docs/research-papers/tourlab/**`
 - `docs/4-research/papers/tourlab/**`
 - `demo2-crossbar/pkg/_layers_experimental/kvcache_fjh.go`
+- `demo2-crossbar/pkg/layers/kvcache_fjh.go`
 - `module2-crossbar/pkg/_layers_experimental/kvcache_fjh.go`
 - `docs/4-research/papers/DOWNLOAD_PLAN.md`
 - `docs/4-research/opensource-tools/research_notes_final.md`

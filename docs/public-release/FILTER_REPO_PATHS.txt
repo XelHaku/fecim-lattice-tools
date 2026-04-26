@@ -336,6 +336,7 @@ docs/4-research/papers/tourlab/
 docs/4-research/papers/DOWNLOAD_PLAN.md
 docs/4-research/opensource-tools/research_notes_final.md
 demo2-crossbar/pkg/_layers_experimental/kvcache_fjh.go
+demo2-crossbar/pkg/layers/kvcache_fjh.go
 module2-crossbar/pkg/_layers_experimental/kvcache_fjh.go
 module1-hysteresis/test_output.txt
 module1-hysteresis/test_output_final.txt
