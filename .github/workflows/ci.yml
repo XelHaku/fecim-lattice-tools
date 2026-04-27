@@ -22,11 +22,14 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: '1.25'
           cache: true
 
       - name: Run make ci
         run: make ci
+
+      - name: Future gogpu UI shell tests
+        run: make test-next-ui
 
       - name: Architecture check
         run: make arch-check
@@ -70,7 +73,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: '1.25'
           cache: true
 
       - name: Detect optional external tools

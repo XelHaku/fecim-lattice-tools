@@ -439,4 +439,4 @@ chmod 755 screenshots recordings output logs
 
 ---
 
-**Last Updated:** 2026-01-29 | **Go Version:** 1.24+ (toolchain go1.24.12) | **Fyne Version:** 2.7.2
+**Last Updated:** 2026-04-27 | **Go Version:** 1.25+ (toolchain go1.25.x) | **Fyne Version:** 2.7.2

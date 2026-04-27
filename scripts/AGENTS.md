@@ -266,6 +266,5 @@ CI compares new results to baseline for regressions.
 All scripts work in headless environments (no X11 needed):
 ```bash
 # Works in Docker
-docker run --rm golang:1.24 /bin/bash scripts/run_full_validation.sh
+docker run --rm golang:1.25 /bin/bash scripts/run_full_validation.sh
 ```
-

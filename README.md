@@ -18,7 +18,7 @@ Built on published physics -- Materlik 2015, Park 2015, Alessandri 2018, Guo 201
 ---
 
 [![CI](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/workflows/ci.yml)
-[![Go](https://img.shields.io/badge/Go-1.24%2B-00ADD8?logo=go)](https://go.dev)
+[![Go](https://img.shields.io/badge/Go-1.25%2B-00ADD8?logo=go)](https://go.dev)
 [![Fyne](https://img.shields.io/badge/Fyne-2.7.2-5f5fff)](https://fyne.io)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 
@@ -45,6 +45,8 @@ Built on published physics -- Materlik 2015, Park 2015, Alessandri 2018, Guo 201
 - [Technical Architecture](#technical-architecture)
 - [Development Standard](#development-standard)
 - [Validation](#validation)
+- [Trust Boundaries](#trust-boundaries)
+- [Citation System](#citation-system)
 - [Repository Layout](#repository-layout)
 - [Documentation](#documentation)
 - [Contributing and Support](#contributing-and-support)
@@ -70,6 +72,7 @@ This repository follows an accuracy-first documentation policy:
 - Simulation defaults must be described as defaults, placeholders, assumptions, or range-checked parameters.
 - Unverified conference, marketing, or talk claims must not be presented as technical facts.
 - Testable behavior should be covered by automated tests before implementation changes are accepted.
+- Source-backed facts should be recorded in the Markdown-native [citation system](./citations/README.md).
 
 For current verified claims, known gaps, and removed or restricted claims, read [Scientific Honesty Audit](./docs/4-research/honesty-audit.md).
 
@@ -91,7 +94,7 @@ Shared infrastructure lives in [`shared/`](./shared), and validation suites live
 
 ### Prerequisites
 
-- Go 1.24 or newer.
+- Go 1.25 or newer.
 - A desktop environment for the GUI.
 - On Ubuntu or other minimal Linux environments, the OpenGL/X11 headers used by Fyne:
 
@@ -102,11 +105,21 @@ sudo apt-get install -y libgl1-mesa-dev xorg-dev
 
 ### Install and Run
 
+The current default desktop app remains the Fyne shell:
+
 ```bash
 git clone https://github.com/TrebuchetDynamics/fecim-lattice-tools.git
 cd fecim-lattice-tools
 go run ./cmd/fecim-lattice-tools
 ```
+
+The future zero-CGO `gogpu/ui` shell is available as a placeholder path:
+
+```bash
+CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools-next
+```
+
+The `next` shell is intended to become the default after it reaches parity. Current module parity remains in the Fyne app.
 
 ### Build
 
@@ -119,6 +132,7 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 
 ```bash
 go test ./...
+make test-next-ui
 bash scripts/reproduce_validation.sh
 ```
 
@@ -168,15 +182,16 @@ For the full schema and loading behavior, read [Configuration Reference](./docs/
 
 Tech stack:
 
-- **Language:** Go 1.24+
-- **Desktop UI:** Fyne 2.7
+- **Language:** Go 1.25+
+- **Desktop UI:** Fyne 2.7 remains the current default; `gogpu/ui` is the future zero-CGO shell path.
 - **Validation:** Go tests, golden data, literature range checks, and reproducibility scripts
 - **Exports:** SPICE, Verilog, Liberty, DEF, and LEF-oriented outputs
 
 High-level flow:
 
 ```text
-cmd/fecim-lattice-tools
+cmd/fecim-lattice-tools       current Fyne shell
+cmd/fecim-lattice-tools-next  future zero-CGO gogpu/ui shell
         |
         v
 shared/ theme, widgets, physics, logging, utilities
@@ -207,6 +222,7 @@ Common checks:
 ```bash
 gofmt -w .
 go test ./...
+make test-next-ui
 go test -race -short ./shared/... ./validation/...
 ```
 
@@ -224,11 +240,22 @@ The validation layer checks internal model behavior and selected literature-back
 
 Validation does not turn educational defaults into measured device claims. If a parameter is not validated against a specific paper or dataset, it must remain labeled as an assumption or default.
 
+## Trust Boundaries
+
+Use [docs/TRUST.md](./docs/TRUST.md) to decide which outputs are highly validated, literature-backed, educational, planned, or not validated. Use [docs/HOW_TO_BREAK_THIS.md](./docs/HOW_TO_BREAK_THIS.md) and [docs/PREDICTIONS.md](./docs/PREDICTIONS.md) to review adversarial stress cases and pre-registered validation targets.
+
+## Citation System
+
+Citations live in plain Markdown under [citations/](./citations). Each source gets a reviewable paper record, verified facts are promoted into [citations/facts.md](./citations/facts.md), and unresolved conflicts are tracked in [citations/disputed.md](./citations/disputed.md).
+
+Use the citation system before adding external scientific claims to code, documentation, validation reports, or the paper draft.
+
 ## Repository Layout
 
 ```text
 fecim-lattice-tools/
 ├── cmd/                    # GUI and utility entrypoints
+├── citations/              # Markdown-native source records and facts database
 ├── module1-hysteresis/     # Ferroelectric hysteresis and switching models
 ├── module2-crossbar/       # Crossbar simulation and non-idealities
 ├── module3-mnist/          # Example inference pipeline
@@ -248,6 +275,8 @@ fecim-lattice-tools/
 - [Technical Architecture](./docs/3-develop/architecture/ARCHITECTURE.md)
 - [Configuration Reference](./docs/3-develop/config-reference.md)
 - [Testing Guide](./docs/3-develop/testing/TESTING.md)
+- [Trust Boundaries](./docs/TRUST.md)
+- [Citation System](./citations/README.md)
 - [Scientific Honesty Audit](./docs/4-research/honesty-audit.md)
 - [Contributing](./CONTRIBUTING.md)
 - [Changelog](./CHANGELOG.md)

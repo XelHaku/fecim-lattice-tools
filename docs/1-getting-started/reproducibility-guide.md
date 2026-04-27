@@ -9,7 +9,7 @@ How to create, share, and verify reproducibility packs for FeCIM simulations.
 | `config.yaml` | Full simulation configuration snapshot |
 | `random_seeds.json` | All RNG seeds (including `lk_solver` key) |
 | `git_commit.txt` | Source code version hash |
-| `go_version.txt` | Go toolchain version (e.g., `go1.24.12`) |
+| `go_version.txt` | Go toolchain version (e.g., `go1.25.x`) |
 | `config_version.txt` | Config schema version (e.g., `1.0.0`) |
 | `DISCLAIMER.txt` | Simulation-only disclaimer (auto-generated) |
 | `test_results.txt` | Test suite status at export time |
@@ -59,7 +59,7 @@ Install the exact Go version from `go_version.txt` and clone the repo at the
 commit recorded in `git_commit.txt`:
 
 ```bash
-cat repro-pack/go_version.txt   # e.g., go1.24.12
+cat repro-pack/go_version.txt   # e.g., go1.25.x
 cat repro-pack/git_commit.txt   # e.g., a1b2c3d
 git checkout $(cat repro-pack/git_commit.txt)
 ```

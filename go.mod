@@ -1,8 +1,6 @@
 module fecim-lattice-tools
 
-go 1.24.0
-
-toolchain go1.24.12
+go 1.25.0
 
 require (
 	fyne.io/fyne/v2 v2.7.2
@@ -10,6 +8,9 @@ require (
 	github.com/charmbracelet/bubbletea v1.2.4
 	github.com/charmbracelet/lipgloss v1.0.0
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20250301202403-da16c1255728
+	github.com/gogpu/gg v0.43.2
+	github.com/gogpu/gogpu v0.29.4
+	github.com/gogpu/ui v0.1.13
 	github.com/vulkan-go/vulkan v0.0.0-20221209234627-c0a353ae26c8
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -20,6 +21,7 @@ require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/x/ansi v0.4.5 // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
+	github.com/coregx/signals v0.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
 	github.com/fredbi/uri v1.1.1 // indirect
@@ -30,8 +32,14 @@ require (
 	github.com/fyne-io/oksvg v0.2.0 // indirect
 	github.com/go-gl/gl v0.0.0-20231021071112-07e5d0ea2e71 // indirect
 	github.com/go-text/render v0.2.0 // indirect
-	github.com/go-text/typesetting v0.2.1 // indirect
+	github.com/go-text/typesetting v0.3.4 // indirect
+	github.com/go-webgpu/goffi v0.5.0 // indirect
+	github.com/go-webgpu/webgpu v0.4.3 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
+	github.com/gogpu/gpucontext v0.15.0 // indirect
+	github.com/gogpu/gputypes v0.5.0 // indirect
+	github.com/gogpu/naga v0.17.6 // indirect
+	github.com/gogpu/wgpu v0.26.6 // indirect
 	github.com/hack-pad/go-indexeddb v0.3.2 // indirect
 	github.com/hack-pad/safejs v0.1.0 // indirect
 	github.com/jeandeaual/go-locale v0.0.0-20250612000132-0ef82f21eade // indirect
@@ -53,9 +61,9 @@ require (
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef // indirect
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/yuin/goldmark v1.7.8 // indirect
-	golang.org/x/image v0.25.0 // indirect
+	golang.org/x/image v0.39.0 // indirect
 	golang.org/x/net v0.35.0 // indirect
-	golang.org/x/sync v0.12.0 // indirect
-	golang.org/x/sys v0.30.0 // indirect
-	golang.org/x/text v0.23.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
+	golang.org/x/text v0.36.0 // indirect
 )

@@ -6,7 +6,7 @@ This document lists required prerequisites and optional dependencies for specifi
 
 ## Prerequisites
 
-- **Go 1.24+** — https://go.dev/dl/
+- **Go 1.25+** — https://go.dev/dl/
 - **C compiler** (gcc/clang) for CGO
 - **OpenGL libraries**
 

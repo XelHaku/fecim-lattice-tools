@@ -157,7 +157,7 @@ This guide is organized into 6 modules plus an overview. Each module builds on t
 ## Running the Demos
 
 All demos are interactive and runnable. You need:
-- Go 1.21+
+- Go 1.25+
 - Fyne GUI library (for modules 1-3)
 - Standard libraries (for modules 4-6)
 

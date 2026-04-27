@@ -1,7 +1,7 @@
 ### Build Instructions
 
 **Prerequisites (all platforms):**
-- Go 1.24+ (https://go.dev/dl/)
+- Go 1.25+ (https://go.dev/dl/)
 - Git
 
 **Linux additional deps:**

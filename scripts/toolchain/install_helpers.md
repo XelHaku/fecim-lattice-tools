@@ -4,11 +4,11 @@ Reproducible install steps for FeCIM external validation tools.
 
 ## Required Tools
 
-### Go (1.24+)
+### Go (1.25+)
 ```bash
 # Linux (via official installer)
-curl -LO https://go.dev/dl/go1.24.12.linux-amd64.tar.gz
-sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.24.12.linux-amd64.tar.gz
+curl -LO https://go.dev/dl/go1.25.0.linux-amd64.tar.gz
+sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go1.25.0.linux-amd64.tar.gz
 export PATH=$PATH:/usr/local/go/bin
 
 # macOS (via Homebrew)

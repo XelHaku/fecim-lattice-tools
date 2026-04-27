@@ -1,7 +1,7 @@
 # Reviewer Quick Start (5 minutes)
 
 ## Prerequisites
-- Go 1.24+ installed
+- Go 1.25+ installed
 - Clone: `git clone https://github.com/your-org/fecim-lattice-tools.git`
 
 ## Verify
