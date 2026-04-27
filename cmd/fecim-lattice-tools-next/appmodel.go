@@ -2,6 +2,9 @@ package main
 
 import "fecim-lattice-tools/shared/viewmodel"
 
+// main keeps this command package buildable until the gogpu/ui shell lands.
+func main() {}
+
 type AppSpec struct {
 	Title   string
 	Command string
