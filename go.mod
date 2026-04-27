@@ -8,6 +8,9 @@ require (
 	github.com/charmbracelet/bubbletea v1.2.4
 	github.com/charmbracelet/lipgloss v1.0.0
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20250301202403-da16c1255728
+	github.com/gogpu/gg v0.43.2
+	github.com/gogpu/gogpu v0.29.4
+	github.com/gogpu/ui v0.1.13
 	github.com/vulkan-go/vulkan v0.0.0-20221209234627-c0a353ae26c8
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -18,6 +21,7 @@ require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/charmbracelet/x/ansi v0.4.5 // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
+	github.com/coregx/signals v0.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
 	github.com/fredbi/uri v1.1.1 // indirect
@@ -32,12 +36,9 @@ require (
 	github.com/go-webgpu/goffi v0.5.0 // indirect
 	github.com/go-webgpu/webgpu v0.4.3 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
-	github.com/gogpu/gg v0.43.2 // indirect
-	github.com/gogpu/gogpu v0.29.4 // indirect
 	github.com/gogpu/gpucontext v0.15.0 // indirect
 	github.com/gogpu/gputypes v0.5.0 // indirect
 	github.com/gogpu/naga v0.17.6 // indirect
-	github.com/gogpu/ui v0.1.13 // indirect
 	github.com/gogpu/wgpu v0.26.6 // indirect
 	github.com/hack-pad/go-indexeddb v0.3.2 // indirect
 	github.com/hack-pad/safejs v0.1.0 // indirect
@@ -65,10 +66,4 @@ require (
 	golang.org/x/sync v0.20.0 // indirect
 	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/text v0.36.0 // indirect
-)
-
-tool (
-	github.com/gogpu/gg
-	github.com/gogpu/gogpu
-	github.com/gogpu/ui
 )
