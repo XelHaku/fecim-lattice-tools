@@ -11,7 +11,7 @@ Go monorepo for ferroelectric compute-in-memory (FeCIM) simulation and visualiza
 | File | Description |
 |------|-------------|
 | `CLAUDE.md` | AI agent instructions, project conventions, and accuracy policy |
-| `go.mod` | Go 1.24.0+ module definition with Fyne v2, charmbracelet, Vulkan, GLFW |
+| `go.mod` | Go 1.25.0+ module definition with Fyne v2, gogpu/ui, charmbracelet, Vulkan, GLFW |
 | `go.sum` | Dependency hash verification |
 | `launch.sh` | Build and run script |
 | `README.md` | Project overview, features, physics models, and quick start |
@@ -22,7 +22,7 @@ Go monorepo for ferroelectric compute-in-memory (FeCIM) simulation and visualiza
 
 | Directory | Purpose |
 |-----------|---------|
-| `cmd/` | CLI entry points: `fecim-lattice-tools` (main GUI), `fecim-screenshotter` (headless testing), `latex-svg` (doc rendering) |
+| `cmd/` | CLI entry points: `fecim-lattice-tools` (current Fyne GUI), `fecim-lattice-tools-next` (future zero-CGO gogpu/ui shell), `fecim-screenshotter` (headless testing), `latex-svg` (doc rendering) |
 | `module1-hysteresis/` | P-E curves, Preisach model, Landau-Khalatnikov solver, ISPP write controller, material presets (HZO, BTO, PZT) |
 | `module2-crossbar/` | Crossbar array MVM (matrix-vector multiply), non-idealities (IR drop, sneak paths, conductance drift), device models |
 | `module3-mnist/` | End-to-end MNIST inference through CIM pipeline, 80% accuracy baseline, cross-validation with external benchmarks |
@@ -69,12 +69,14 @@ If `qmd` emits CUDA build output or starts model downloads, stop using it for th
 **Build:**
 ```bash
 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
+CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools-next
 ./launch.sh
 ```
 
 **Test:**
 ```bash
 go test ./...                           # Full test suite
+make test-next-ui                       # Future zero-CGO gogpu/ui shell tests
 go test -race ./...                     # Race condition detection
 go test ./module2-crossbar/...          # Module-scoped testing
 ```
@@ -83,6 +85,7 @@ go test ./module2-crossbar/...          # Module-scoped testing
 - **All UI updates from goroutines:** Use `fyne.Do(func() { ... })` (non-blocking, thread-safe)
 - **Conductance quantization:** Call `crossbar.QuantizeTo30Levels(value)` for simulation baseline (30 discrete levels, configurable)
 - **Module interface:** Every module implements `BuildContent()`, `Start()`, `Stop()` for embedded app integration
+- **UI boundary:** Physics, validation, export, simulation, and view-model code must not import Fyne or `gogpu/ui`; use `shared/viewmodel` as the UI-neutral bridge. Fyne and `gogpu/ui` imports belong only in shell/UI packages.
 - **Physics simulation:** Material presets in `module1-hysteresis/pkg/ferroelectric/material.go`; crossbar defaults in `module2-crossbar/pkg/crossbar/array.go`
 - **Write control:** Module 1 and 4 both provide ISPP (In-Situ Pulse Programming) engines; see `MEMORY.md` for architecture
 
@@ -142,10 +145,11 @@ threshold interaction with guard-band logic.
 ## Dependencies
 
 ### Go Version
-- **Go 1.24.0+** (toolchain 1.24.12)
+- **Go 1.25.0+** (toolchain 1.25.x)
 
 ### External (Direct)
 - **fyne.io/fyne/v2** v2.7.2 — Cross-platform GUI framework (OpenGL rendering)
+- **github.com/gogpu/ui** — Future zero-CGO UI shell path
 - **github.com/charmbracelet/bubbles** v0.20.0 — TUI component library
 - **github.com/charmbracelet/bubbletea** v1.2.4 — TUI framework (CLI support)
 - **github.com/charmbracelet/lipgloss** v1.0.0 — TUI styling
@@ -162,7 +166,8 @@ threshold interaction with guard-band logic.
 ### Internal Relationships
 
 ```
-cmd/fecim-lattice-tools (main entrypoint)
+cmd/fecim-lattice-tools (current Fyne entrypoint)
+cmd/fecim-lattice-tools-next (future zero-CGO gogpu/ui shell)
   ↓
 shared/ (theme, widgets, physics, logging, utilities)
   ↑

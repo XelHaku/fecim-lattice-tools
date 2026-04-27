@@ -18,7 +18,7 @@ Built on published physics -- Materlik 2015, Park 2015, Alessandri 2018, Guo 201
 ---
 
 [![CI](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/TrebuchetDynamics/fecim-lattice-tools/actions/workflows/ci.yml)
-[![Go](https://img.shields.io/badge/Go-1.24%2B-00ADD8?logo=go)](https://go.dev)
+[![Go](https://img.shields.io/badge/Go-1.25%2B-00ADD8?logo=go)](https://go.dev)
 [![Fyne](https://img.shields.io/badge/Fyne-2.7.2-5f5fff)](https://fyne.io)
 [![License](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 
@@ -94,7 +94,7 @@ Shared infrastructure lives in [`shared/`](./shared), and validation suites live
 
 ### Prerequisites
 
-- Go 1.24 or newer.
+- Go 1.25 or newer.
 - A desktop environment for the GUI.
 - On Ubuntu or other minimal Linux environments, the OpenGL/X11 headers used by Fyne:
 
@@ -105,11 +105,21 @@ sudo apt-get install -y libgl1-mesa-dev xorg-dev
 
 ### Install and Run
 
+The current default desktop app remains the Fyne shell:
+
 ```bash
 git clone https://github.com/TrebuchetDynamics/fecim-lattice-tools.git
 cd fecim-lattice-tools
 go run ./cmd/fecim-lattice-tools
 ```
+
+The future zero-CGO `gogpu/ui` shell is available as a placeholder path:
+
+```bash
+CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools-next
+```
+
+The `next` shell is intended to become the default after it reaches parity. Current module parity remains in the Fyne app.
 
 ### Build
 
@@ -122,6 +132,7 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 
 ```bash
 go test ./...
+make test-next-ui
 bash scripts/reproduce_validation.sh
 ```
 
@@ -171,15 +182,16 @@ For the full schema and loading behavior, read [Configuration Reference](./docs/
 
 Tech stack:
 
-- **Language:** Go 1.24+
-- **Desktop UI:** Fyne 2.7
+- **Language:** Go 1.25+
+- **Desktop UI:** Fyne 2.7 remains the current default; `gogpu/ui` is the future zero-CGO shell path.
 - **Validation:** Go tests, golden data, literature range checks, and reproducibility scripts
 - **Exports:** SPICE, Verilog, Liberty, DEF, and LEF-oriented outputs
 
 High-level flow:
 
 ```text
-cmd/fecim-lattice-tools
+cmd/fecim-lattice-tools       current Fyne shell
+cmd/fecim-lattice-tools-next  future zero-CGO gogpu/ui shell
         |
         v
 shared/ theme, widgets, physics, logging, utilities
@@ -210,6 +222,7 @@ Common checks:
 ```bash
 gofmt -w .
 go test ./...
+make test-next-ui
 go test -race -short ./shared/... ./validation/...
 ```
 

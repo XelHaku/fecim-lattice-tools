@@ -13,10 +13,24 @@ Thank you for your interest in contributing to **FeCIM Lattice Tools**! This pro
     ```
 
 3.  **Install prerequisites**:
-    - Go 1.24+
+    - Go 1.25+
     - Fyne prerequisites (for standard GUI): [https://docs.fyne.io/started/](https://docs.fyne.io/started/)
     - Vulkan SDK (optional, for high-performance rendering).
     - FFmpeg (optional, for recording).
+
+4.  **Run the desktop shells**:
+
+    The current default desktop app remains the Fyne shell:
+
+    ```bash
+    go run ./cmd/fecim-lattice-tools
+    ```
+
+    The future zero-CGO `gogpu/ui` shell is a placeholder path until it reaches module parity:
+
+    ```bash
+    CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools-next
+    ```
 
 ## Development Workflow
 
@@ -39,6 +53,7 @@ Thank you for your interest in contributing to **FeCIM Lattice Tools**! This pro
     ```bash
     make test
     make test-hys   # If working on Module 1
+    make test-next-ui   # If touching the UI bridge or future gogpu/ui shell
     ```
 5.  **Verify build**:
     ```bash
