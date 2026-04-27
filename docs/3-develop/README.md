@@ -490,5 +490,5 @@ Full contribution guide: [../../CONTRIBUTING.md](../../CONTRIBUTING.md)
 ---
 
 **Last Updated:** 2026-02-16
-**Go Version:** 1.24+
+**Go Version:** 1.25+
 **Fyne Version:** 2.7.2

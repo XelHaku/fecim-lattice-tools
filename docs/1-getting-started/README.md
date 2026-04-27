@@ -15,7 +15,7 @@
 
 ### Required Software
 
-- **Go:** Version 1.24 or later ([download](https://go.dev/dl/))
+- **Go:** Version 1.25 or later ([download](https://go.dev/dl/))
 - **GCC:** C compiler (for Fyne GUI)
 - **Git:** For cloning the repository
 
@@ -292,7 +292,7 @@ Full troubleshooting: [runbook.md#common-issues](runbook.md#common-issues)
 
 Use this to verify your setup:
 
-- [ ] Go 1.24+ installed (`go version`)
+- [ ] Go 1.25+ installed (`go version`)
 - [ ] GCC installed (`gcc --version`)
 - [ ] Repository cloned
 - [ ] Dependencies downloaded (`go mod download`)

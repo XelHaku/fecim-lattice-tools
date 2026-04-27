@@ -219,7 +219,7 @@ go run ./cmd/demo-frames -out /tmp/fecim-demo-frames
 
 ## 🛠️ Technology Stack
 
-- **Language:** Go 1.24+
+- **Language:** Go 1.25+
 - **GUI:** Fyne 2.7.2
 - **Build:** Standard Go toolchain
 - **Platform:** Linux, macOS, Windows

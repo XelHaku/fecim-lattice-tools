@@ -1,4 +1,4 @@
-<!-- Generated: 2026-02-13 | Updated: 2026-02-13 -->
+<!-- Generated: 2026-02-13 | Updated: 2026-04-27 -->
 
 # FeCIM Lattice Tools
 
@@ -85,7 +85,7 @@ go test ./module2-crossbar/...          # Module-scoped testing
 - **All UI updates from goroutines:** Use `fyne.Do(func() { ... })` (non-blocking, thread-safe)
 - **Conductance quantization:** Call `crossbar.QuantizeTo30Levels(value)` for simulation baseline (30 discrete levels, configurable)
 - **Module interface:** Every module implements `BuildContent()`, `Start()`, `Stop()` for embedded app integration
-- **UI boundary:** Physics, validation, export, simulation, and view-model code must not import Fyne or `gogpu/ui`; use `shared/viewmodel` as the UI-neutral bridge. Fyne and `gogpu/ui` imports belong only in shell/UI packages.
+- **UI boundary:** New UI-neutral, physics, simulation, validation, and export work must not add Fyne or `gogpu/ui` imports. Use `shared/viewmodel` as the UI-neutral bridge; Fyne and `gogpu/ui` imports belong in shell/UI packages. Existing legacy Fyne-coupled export or validation code should not be expanded.
 - **Physics simulation:** Material presets in `module1-hysteresis/pkg/ferroelectric/material.go`; crossbar defaults in `module2-crossbar/pkg/crossbar/array.go`
 - **Write control:** Module 1 and 4 both provide ISPP (In-Situ Pulse Programming) engines; see `MEMORY.md` for architecture
 
