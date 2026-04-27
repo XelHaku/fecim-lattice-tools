@@ -8,7 +8,7 @@ The current Fyne application remains the stable release path until the successor
 
 ## Current State
 
-The repository currently targets Go 1.24 with `toolchain go1.24.12` and depends on Fyne v2.7.2. The main Fyne shell lives in `cmd/fecim-lattice-tools/main.go`.
+Before the migration foundation work, the repository targeted Go 1.24 with `toolchain go1.24.12` and depended on Fyne v2.7.2. The repository now requires Go 1.25 or newer. The main Fyne shell lives in `cmd/fecim-lattice-tools/main.go`.
 
 Module embedding is centralized through `shared/widgets/embedded_app.go`:
 
@@ -205,7 +205,7 @@ After the Go 1.25 upgrade is complete and stable, the broader zero-CGO path can 
 
 ## Go And Dependency Plan
 
-`gogpu/ui` requires Go 1.25 or newer. The migration starts by moving this repository from Go 1.24 to Go 1.25.
+`gogpu/ui` requires Go 1.25 or newer. The migration foundation moved this repository from its previous Go 1.24 baseline to Go 1.25.
 
 The dependency change must be isolated:
 

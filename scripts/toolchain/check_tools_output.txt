@@ -1,4 +1,4 @@
-go                   FOUND    go version go1.24.12 linux/amd64
+go                   FOUND    go version go1.25.0 linux/amd64
 ngspice              NOT FOUND (required)
 heracles             NOT FOUND (optional)
 crosssim             NOT FOUND (optional)
