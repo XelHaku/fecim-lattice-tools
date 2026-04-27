@@ -1,6 +1,6 @@
 export PATH := /usr/local/go/bin:$(PATH)
 
-.PHONY: build test test-race test-short bench vet fmt lint coverage clean ci qa-a0 help test-hys test-xbar test-mnist test-circuits test-shared
+.PHONY: build test test-race test-short test-next-ui bench vet fmt lint coverage clean ci qa-a0 help test-hys test-xbar test-mnist test-circuits test-shared
 # Help target - self-documenting Makefile
 help:
 	@echo "FeCIM Lattice Tools Makefile"
@@ -10,6 +10,7 @@ help:
 	@echo "  make test           Run all tests"
 	@echo "  make test-race      Run tests with race detector"
 	@echo "  make test-short     Run only short tests"
+	@echo "  make test-next-ui   Run zero-CGO tests for future gogpu/ui shell"
 	@echo "  make test-shared    Run tests for shared packages"
 	@echo "  make test-hys       Run tests for Module 1 (Hysteresis)"
 	@echo "  make test-xbar      Run tests for Module 2 (Crossbar)"
@@ -70,6 +71,9 @@ test-race:
 
 test-short:
 	$(GO) test -short ./...
+
+test-next-ui:
+	CGO_ENABLED=0 $(GO) test ./shared/viewmodel/... ./cmd/fecim-lattice-tools-next/...
 
 bench:
 	$(GO) test ./... -run '^$$' -bench '$(BENCH)' -benchmem -count=$(BENCH_COUNT)

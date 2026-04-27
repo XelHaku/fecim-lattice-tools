@@ -26,11 +26,14 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.24'
+          go-version: '1.25'
           cache: true
 
       - name: Build & vet
         run: go build ./... && go vet ./...
+
+      - name: Future gogpu UI shell tests
+        run: make test-next-ui
 
       - name: Full test suite (no -short)
         run: go test -count=1 ./...
