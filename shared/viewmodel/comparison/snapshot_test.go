@@ -98,3 +98,46 @@ func TestBuildSnapshot_EmptyInputProducesNoSections(t *testing.T) {
 		t.Errorf("nil input: count metric = %q, want 0", snap.Metrics[0].Value)
 	}
 }
+
+func TestBuildSnapshot_FeCIMMemoryLineRendersInSitu(t *testing.T) {
+	snap := buildSnapshot(pkg.Architectures())
+	fecim := snap.Sections[2]
+	if fecim.Title != "FeCIM CIM" {
+		t.Fatalf("Sections[2].Title = %q, want FeCIM CIM", fecim.Title)
+	}
+	if strings.Contains(fecim.Body, "@ 0 GB/s") {
+		t.Errorf("FeCIM body still shows misleading '@ 0 GB/s' (compute-in-memory should be rendered as in-situ)\nbody: %s", fecim.Body)
+	}
+	if !strings.Contains(strings.ToLower(fecim.Body), "in-situ") {
+		t.Errorf("FeCIM body must indicate in-situ compute-in-memory when MemoryBW==0\nbody: %s", fecim.Body)
+	}
+}
+
+func TestBuildSnapshot_NonZeroMemoryBWRendersBandwidth(t *testing.T) {
+	snap := buildSnapshot(pkg.Architectures())
+	cpu := snap.Sections[0].Body
+	if !strings.Contains(cpu, "GB/s") {
+		t.Errorf("CPU body should render bandwidth (MemoryBW != 0)\nbody: %s", cpu)
+	}
+	gpu := snap.Sections[1].Body
+	if !strings.Contains(gpu, "GB/s") {
+		t.Errorf("GPU body should render bandwidth (MemoryBW != 0)\nbody: %s", gpu)
+	}
+}
+
+func TestSectionID_ProducesExpectedSlugs(t *testing.T) {
+	cases := []struct {
+		name string
+		want string
+	}{
+		{"Traditional CPU+DRAM", "traditional-cpu-dram"},
+		{"GPU Accelerator", "gpu-accelerator"},
+		{"FeCIM CIM", "fecim-cim"},
+	}
+	for _, tc := range cases {
+		got := sectionID(tc.name)
+		if got != tc.want {
+			t.Errorf("sectionID(%q) = %q, want %q", tc.name, got, tc.want)
+		}
+	}
+}

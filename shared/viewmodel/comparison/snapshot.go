@@ -61,14 +61,18 @@ func architectureBody(a *pkg.Architecture) string {
 	if a.IsEstimated {
 		estimated = " (estimated; not validated)"
 	}
+	memory := fmt.Sprintf("Memory: %.0f GB @ %.0f GB/s", a.MemorySize, a.MemoryBW)
+	if a.MemoryBW == 0 {
+		memory = fmt.Sprintf("Memory: %.0f GB (in-situ; compute-in-memory)", a.MemorySize)
+	}
 	return fmt.Sprintf(
-		"Technology: %s%s\nProcess node: %.0f nm\nChip area: %.0f mm²\nTDP: %.1f W\nPeak TOPS: %.2f\nTOPS/W: %.3f\nMemory: %.0f GB @ %.0f GB/s",
+		"Technology: %s%s\nProcess node: %.0f nm\nChip area: %.0f mm²\nTDP: %.1f W\nPeak TOPS: %.2f\nTOPS/W: %.3f\n%s",
 		a.Technology, estimated,
 		a.ProcessNode,
 		a.ChipArea,
 		a.TDP,
 		a.PeakTOPS,
 		a.TOPSPerWatt,
-		a.MemorySize, a.MemoryBW,
+		memory,
 	)
 }
