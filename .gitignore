@@ -126,5 +126,7 @@ opensource/**
 .mcp.json
 2026-02-18_15-48.png
 
-.claude/
+.claude/*
+!.claude/skills/
+!.claude/skills/**
 .worktrees/
