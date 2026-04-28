@@ -50,6 +50,18 @@ run_test "fresh install creates all three adapter targets" '
   test -f .opencode/command/sample-skill.md
 '
 
+run_test "second install produces no diff against first install" '
+  fixture_one_skill
+  ./install.sh
+  cp -r .claude .claude.bak
+  cp -r .codex .codex.bak
+  cp -r .opencode .opencode.bak
+  ./install.sh
+  diff -r .claude .claude.bak
+  diff -r .codex .codex.bak
+  diff -r .opencode .opencode.bak
+'
+
 # ---------- Summary ----------
 echo
 echo "Passed: $PASS  Failed: $FAIL"
