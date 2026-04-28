@@ -1,0 +1,1 @@
+../../../tools/fecim-skills/fecim-fyne-thread-check/SKILL.md

@@ -39,6 +39,7 @@ go test -race ./...
 | [automation/](automation/) | Build and CI automation | DevOps |
 | [gui/](gui/) | GUI development guides | GUI developers |
 | [testing/](testing/) | Testing methodology | All developers |
+| [**FeCIM Skills**](../../tools/fecim-skills/README.md) | Agent skills for Claude Code, Codex, opencode | All developers |
 
 ---
 

@@ -1,0 +1,1 @@
+../../../tools/fecim-skills/fecim-honesty-audit/SKILL.md

@@ -61,6 +61,7 @@ Go monorepo for ferroelectric compute-in-memory (FeCIM) simulation and visualiza
 | Review UI analysis | `docs/3-develop/HYPER_ANALYSIS_REPORT.md` |
 | Use EDA pipeline | `docs/eda/README.md` and `docs/eda/guides/integration.md` |
 | Access EDA CLI | `docs/eda/references/cli-reference.md` |
+| Use a FeCIM skill (researcher, builder, etc.) | `tools/fecim-skills/README.md` |
 
 If `qmd` emits CUDA build output or starts model downloads, stop using it for that cycle and fall back to `rg`/direct doc reads. Do not stall active validation on local-search bootstrap.
 

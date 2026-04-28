@@ -1,0 +1,1 @@
+../../../tools/fecim-skills/fecim-builder/SKILL.md
