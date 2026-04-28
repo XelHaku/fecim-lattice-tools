@@ -101,7 +101,12 @@ func buildRoot(spec AppSpec, ports []viewmodel.ModulePort, theme *material3.Them
 
 	for _, port := range ports {
 		snapshot := port.Snapshot()
-		children = append(children, moduleCard(snapshot, theme))
+		switch snapshot.Descriptor.ID {
+		case viewmodel.ModuleComparison:
+			children = append(children, buildComparisonView(snapshot, theme))
+		default:
+			children = append(children, moduleCard(snapshot, theme))
+		}
 	}
 
 	return primitives.Box(children...).
