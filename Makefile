@@ -1,6 +1,6 @@
 export PATH := $(PATH):/usr/local/go/bin
 
-.PHONY: build test test-race test-short test-next-ui bench vet fmt lint coverage clean ci qa-a0 help test-hys test-xbar test-mnist test-circuits test-shared
+.PHONY: build test test-race test-short test-next-ui bench vet fmt lint coverage clean ci qa-a0 help test-hys test-xbar test-mnist test-circuits test-shared install-skills test-skills
 # Help target - self-documenting Makefile
 help:
 	@echo "FeCIM Lattice Tools Makefile"
@@ -103,3 +103,10 @@ arch-check:
 	@bash scripts/check-architecture.sh
 
 ci: fmt vet test-short arch-check
+
+# Skills (FeCIM agent skills)
+install-skills:
+	scripts/install-fecim-skills.sh
+
+test-skills:
+	scripts/test-install-fecim-skills.sh
