@@ -8,6 +8,8 @@ import (
 	uiapp "github.com/gogpu/ui/app"
 	"github.com/gogpu/ui/theme/material3"
 	"github.com/gogpu/ui/widget"
+
+	"fecim-lattice-tools/shared/viewmodel"
 )
 
 func TestBuildRootInstallsInHeadlessApp(t *testing.T) {
@@ -30,7 +32,7 @@ func TestBuildRoot_RendersWithRealComparisonPort(t *testing.T) {
 
 	var foundComparison bool
 	for _, p := range ports {
-		if p.Descriptor().ID == "comparison" {
+		if p.Descriptor().ID == viewmodel.ModuleComparison {
 			foundComparison = true
 			break
 		}
