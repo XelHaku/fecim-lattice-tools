@@ -49,3 +49,28 @@ func TestBuildPlaceholderPortsCoversAllKnownDescriptors(t *testing.T) {
 		}
 	}
 }
+
+func TestBuildPlaceholderPorts_ComparisonIsFunctional(t *testing.T) {
+	ports := BuildPlaceholderPorts()
+	var got viewmodel.ModulePort
+	for _, p := range ports {
+		if p.Descriptor().ID == viewmodel.ModuleComparison {
+			got = p
+			break
+		}
+	}
+	if got == nil {
+		t.Fatal("no port found for ModuleComparison")
+	}
+	if got.Descriptor().Status != viewmodel.StatusFunctional {
+		t.Errorf("comparison port Status = %q, want %q (no longer placeholder)",
+			got.Descriptor().Status, viewmodel.StatusFunctional)
+	}
+	snap := got.Snapshot()
+	if len(snap.Sections) < 3 {
+		t.Errorf("comparison snapshot has %d sections, want >= 3 (one per canonical architecture)", len(snap.Sections))
+	}
+	if len(snap.Metrics) == 0 {
+		t.Error("comparison snapshot has no metrics")
+	}
+}

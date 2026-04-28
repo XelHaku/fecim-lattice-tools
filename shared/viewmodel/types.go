@@ -78,7 +78,7 @@ func KnownDescriptors() []ModuleDescriptor {
 		{ID: ModuleCrossbar, Title: "FeCIM Crossbar Array Visualization", Description: "Matrix-vector multiply, IR drop, sneak paths, drift, and conductance quantization.", Status: StatusPlaceholder},
 		{ID: ModuleMNIST, Title: "FeCIM MNIST Neural Network", Description: "Educational CIM inference pipeline with quantized weights and reproducible metrics.", Status: StatusPlaceholder},
 		{ID: ModuleCircuits, Title: "FeCIM Peripheral Circuits Visualizer", Description: "DAC, ADC, TIA, read path, write path, and ISPP circuit behavior.", Status: StatusPlaceholder},
-		{ID: ModuleComparison, Title: "FeCIM Comparison", Description: "Evidence-first technology comparison and scenario analysis.", Status: StatusPlaceholder},
+		{ID: ModuleComparison, Title: "FeCIM Comparison", Description: "Evidence-first technology comparison and scenario analysis.", Status: StatusFunctional},
 		{ID: ModuleEDA, Title: "FeCIM EDA Design Suite", Description: "SPICE, Verilog, Liberty, DEF, LEF, and OpenLane-oriented export workflows.", Status: StatusPlaceholder},
 		{ID: ModuleDocs, Title: "Documentation", Description: "Curriculum, validation references, trust boundaries, and research notes.", Status: StatusPlaceholder},
 	}

@@ -1,6 +1,9 @@
 package main
 
-import "fecim-lattice-tools/shared/viewmodel"
+import (
+	"fecim-lattice-tools/shared/viewmodel"
+	comparisonvm "fecim-lattice-tools/shared/viewmodel/comparison"
+)
 
 type AppSpec struct {
 	Title   string
@@ -22,6 +25,10 @@ func BuildPlaceholderPorts() []viewmodel.ModulePort {
 	descriptors := viewmodel.KnownDescriptors()
 	ports := make([]viewmodel.ModulePort, 0, len(descriptors))
 	for _, descriptor := range descriptors {
+		if descriptor.ID == viewmodel.ModuleComparison {
+			ports = append(ports, comparisonvm.New())
+			continue
+		}
 		ports = append(ports, viewmodel.NewStaticModule(descriptor, []viewmodel.Section{
 			{
 				ID:    "migration-status",
