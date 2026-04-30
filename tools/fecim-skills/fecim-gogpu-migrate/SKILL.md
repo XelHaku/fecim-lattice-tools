@@ -33,6 +33,7 @@ Port a Fyne tab/component to the future zero-CGO `gogpu/ui` shell. The viewmodel
    ```bash
    go test ./shared/viewmodel/... && go test ./module*/pkg/gui/... && make test-next-ui
    go build ./cmd/fecim-lattice-tools && CGO_ENABLED=0 go build ./cmd/fecim-lattice-tools-next
+   git diff --check
    ```
 
 7. **Output the TDD evidence block** per `tools/fecim-skills/_shared/tdd-evidence-template.md`.

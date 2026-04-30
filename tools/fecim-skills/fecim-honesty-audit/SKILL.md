@@ -10,7 +10,7 @@ Scan a diff, README, or PR description for the project's removed/unverified clai
 ## Workflow
 
 1. **Take input.** Either:
-   - PR diff: `git diff main...HEAD -- '*.md' README.md`
+   - PR diff: `git diff main...HEAD -- '*.md' README.md docs/`
    - Specific file(s).
    - Free-text the user pastes.
 
@@ -38,7 +38,7 @@ Scan a diff, README, or PR description for the project's removed/unverified clai
    Suggested change: <wording or DELETE>
    ```
 
-   Exit `0` if all clean, exit `1` (or print `CHANGES REQUESTED`) if any `removed-unverified`.
+   Exit `0` if all clean, exit `1` (or print `CHANGES REQUESTED`) if any `removed-unverified`. Report exact file:line hits, counts by status, and whether the scan used `rg` or `grep` fallback.
 
 ## Verification
 

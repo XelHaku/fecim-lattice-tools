@@ -11,7 +11,7 @@ Validate any quantitative or device-physics claim before it lands in code, docs,
 
 1. **Parse the claim.** Extract: subject (e.g., HZO coercive field), value (e.g., 1.0 MV/cm), context (educational vs validated).
 
-2. **Match to canonical sources** (`tools/fecim-skills/_shared/fecim-context.md` table). If the claim corresponds to a published source, format as:
+2. **Match to canonical sources** (`tools/fecim-skills/_shared/fecim-context.md` table) and the current source/audit files (`docs/4-research/honesty-audit.md`, `references/`, and `citations/` if present). If the claim corresponds to a published source, format as:
    ```
    <claim text> (Materlik 2015)
    ```
@@ -31,7 +31,8 @@ Validate any quantitative or device-physics claim before it lands in code, docs,
    Claim: <as written>
    Status: verified | educational-default | removed-unverified | needs-source
    Suggested wording: <if change needed>
-   Citation: <short form, if applicable>
+   Citation: <short form, DOI or source path if applicable>
+   Evidence boundary: <what the source verifies and what it does not verify>
    ```
 
 ## Verification

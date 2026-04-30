@@ -16,7 +16,7 @@ See `tools/fecim-skills/_shared/fecim-context.md` (Build target matrix) for the 
    - Next gogpu/ui shell: `cmd/fecim-lattice-tools-next`
 
 2. **Set the build environment:**
-   - Legacy: leave `CGO_ENABLED` at its default (`1`); ensure GLFW/X11 deps installed (`sudo apt-get install -y libgl1-mesa-dev xorg-dev` on Linux).
+   - Legacy: leave `CGO_ENABLED` at its default (`1`); if GLFW/X11 headers are missing, report the exact blocker. Do **not** install host packages yourself.
    - Next: `export CGO_ENABLED=0`.
 
 3. **Run the build:**
@@ -24,14 +24,15 @@ See `tools/fecim-skills/_shared/fecim-context.md` (Build target matrix) for the 
    - Legacy launch: `./launch.sh`
    - Next: `CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools-next`
    - Whole repo: `go build ./...`
+   - Preflight first: verify repo path, `go`, `git`, and `rg`/fallback using `_shared/fecim-context.md`.
 
 4. **On failure, triage:**
 
    | Symptom | Cause | Fix |
    |---|---|---|
-   | `fatal error: GL/gl.h: No such file` | Missing OpenGL headers | `sudo apt-get install -y libgl1-mesa-dev xorg-dev` |
-   | `cannot find -lvulkan` | Vulkan loader missing | `sudo apt-get install -y libvulkan-dev` (optional dep, can be omitted) |
-   | `gcc not found` | CGO toolchain missing | `sudo apt-get install -y gcc` |
+   | `fatal error: GL/gl.h: No such file` | Missing OpenGL headers | Report blocker with command output; operator/admin installs packages. |
+   | `cannot find -lvulkan` | Vulkan loader missing | Report blocker for legacy/Vulkan path; optional dep may be omitted when not required. |
+   | `gcc not found` | CGO toolchain missing | Report blocker with `command -v gcc` evidence; operator/admin installs packages. |
    | `package github.com/gogpu/ui: cannot find module` | gogpu/ui import in non-shell pkg | UI-boundary violation; move logic to `shared/viewmodel/` per AGENTS.md |
    | `imports fyne.io/fyne/v2` from `viewmodel` | UI-boundary violation | Same — strip Fyne import, use viewmodel pure types |
 

@@ -17,7 +17,7 @@ Survey FeCIM literature and project knowledge to ground a design decision or ans
    - `citations/` (project's citation registry, if present)
    - `experimental-data/` (HZO, HfO2, crossbar characterization)
 
-   Use `rg` with focused patterns (e.g., `rg -i "preisach" docs/4-research/ references/`).
+   Use `rg` with focused patterns when available (e.g., `rg -i "preisach" docs/4-research/ references/`). If `rg` is missing, use `grep -RIn` or the file-search tool and state the fallback.
 
 3. **If Cognee is configured locally** (`.env` has `LLM_API_KEY`, `.cognee_system/` exists), query the KG:
    ```bash
@@ -32,7 +32,7 @@ Survey FeCIM literature and project knowledge to ground a design decision or ans
    asyncio.run(main())
    PY
    ```
-   Otherwise skip silently.
+   Otherwise skip it explicitly in the evidence log; do not install Cognee or start long bootstrap/download flows during active validation.
 
 4. **Cite findings** using the canonical short forms from `tools/fecim-skills/_shared/fecim-context.md`. Never invent a citation; if no source supports a claim, label it "no source found, requires verification".
 

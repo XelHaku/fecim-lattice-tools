@@ -11,12 +11,13 @@ Find places where a goroutine touches a Fyne widget without `fyne.Do(...)` wrapp
 
 1. **Define audit scope.** Default: `module*/pkg/gui/`, `cmd/fecim-lattice-tools/`. Narrow to changed files for PR review:
    ```bash
-   git diff --name-only main...HEAD | rg '\.go$' | rg 'pkg/gui|cmd/fecim'
+   git diff --name-only main...HEAD | grep '\.go$' | grep -E 'pkg/gui|cmd/fecim'
    ```
+   Use `rg` if available; on this host it may be missing, so `grep` is the default-safe fallback.
 
 2. **Find goroutine launches:**
    ```bash
-   rg -nU 'go func\(' <scope>
+   rg -nU 'go func\(' <scope> 2>/dev/null || grep -RIn 'go func(' <scope>
    ```
 
 3. **For each match, examine the body** for direct mutation of:

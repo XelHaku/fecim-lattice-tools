@@ -9,7 +9,7 @@ Domain-specific design grill. Differs from generic grill skills: every branch ti
 
 ## Workflow
 
-Ask each question one at a time. Do not move on until the user answers. Mark each branch RESOLVED before exit.
+Use this only when Juan explicitly wants design interrogation or when a non-trivial change is ambiguous enough that coding would risk unsupported physics. Otherwise prefer autonomous execution with documented assumptions. Ask each question one at a time. Do not move on until the user answers. Mark each branch RESOLVED before exit.
 
 1. **What changes, behaviorally?** One sentence. If the answer references a UI element, ask which goroutine/main thread.
 
