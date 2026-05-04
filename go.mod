@@ -8,9 +8,9 @@ require (
 	github.com/charmbracelet/bubbletea v1.2.4
 	github.com/charmbracelet/lipgloss v1.0.0
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20250301202403-da16c1255728
-	github.com/gogpu/gg v0.43.2
-	github.com/gogpu/gogpu v0.29.4
-	github.com/gogpu/ui v0.1.13
+	github.com/gogpu/gg v0.44.1
+	github.com/gogpu/gogpu v0.31.0
+	github.com/gogpu/ui v0.1.18
 	github.com/vulkan-go/vulkan v0.0.0-20221209234627-c0a353ae26c8
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -36,10 +36,10 @@ require (
 	github.com/go-webgpu/goffi v0.5.0 // indirect
 	github.com/go-webgpu/webgpu v0.4.3 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
-	github.com/gogpu/gpucontext v0.15.0 // indirect
+	github.com/gogpu/gpucontext v0.16.0 // indirect
 	github.com/gogpu/gputypes v0.5.0 // indirect
-	github.com/gogpu/naga v0.17.6 // indirect
-	github.com/gogpu/wgpu v0.26.6 // indirect
+	github.com/gogpu/naga v0.17.10 // indirect
+	github.com/gogpu/wgpu v0.26.12 // indirect
 	github.com/hack-pad/go-indexeddb v0.3.2 // indirect
 	github.com/hack-pad/safejs v0.1.0 // indirect
 	github.com/jeandeaual/go-locale v0.0.0-20250612000132-0ef82f21eade // indirect

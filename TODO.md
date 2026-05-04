@@ -2,29 +2,35 @@
 
 **Mission**: Educational FeCIM visualization and simulation tool based on HfO2-ZrO2 superlattice research.
 
-**Last Updated**: 2026-03-06
-
-**Phase**: Education (simulation-only). All pending items cleared. Eight world-class features deferred pending prerequisites.
-
----
+**Last Updated**: 2026-05-03 | **gogpu/ui**: All 7 modules ported and functional
 
 ## Progress Summary
 
 | Bucket | Count | Notes |
 |--------|-------|-------|
-| Pending | 0 | — |
+| Pending | 9 | gogpu/ui integration + UX + screenshots |
 | Open Issues | 2 | qmd cold-start blocker + MNIST layout-audit hang |
 | Scheduled | 1 | Quarterly Literature Review — April 2026 |
 | Deferred | 8 | Blocked on prerequisites (see below) |
-| Completed | ~260+ | All items done including L09, L10 |
+| Completed | ~260+ | All items done including gogpu/ui full migration |
 
 ---
 
 ## Active Items
 
-### Pending
+### Pending — gogpu/ui Integration & Polish
 
-None.
+| # | Task | Priority | Est. |
+|---|------|----------|------|
+| 1 | **Live simulation data** — Wire `shared/physics/` Preisach/LK solvers and `module2-crossbar/pkg/network/` into viewmodels. Replace `defaultHysteresisLoop()` stub and `(i*cols+j)%30` fake heatmap data with real physics engine outputs. | High | 2-3h |
+| 2 | **Interactive ApplyAction** — Implement action handlers for all 7 modules (material switch, array resize, MVM run, export, etc.). Currently all return `ErrUnsupportedAction`. | High | 3-4h |
+| 3 | **Cross-module design composition** — "Design Snapshot" flowing M1 material → M2 array → M4 circuits → M6 export. Unified config across modules. | Medium | 2-3h |
+| 4 | **Generate screenshots** — Use `render.CaptureAndSave()` to create `screenshots/` with real plots/heatmaps per module. | Medium | 30m |
+| 5 | **Interactive canvas events** — Hover/click on P-E plot points and heatmap cells. Wire `gogpu.App` pointer events → gg.Context invalidation. Tooltips showing data values. | Medium | 3-4h |
+| 6 | **Dependency upgrades** — gg v0.43.2→v0.44.1, gogpu/ui v0.1.13→v0.1.18, gogpu v0.29.4→v0.31.0, plus transitive (wgpu, naga, gpucontext). Newer versions already in module cache. | Low | 15m |
+| 7 | **gogpu/ui Screenshotter CLI** — Extend `cmd/fecim-screenshotter/` for headless gogpu/ui captures. Currently Fyne-only. | Low | 1-2h |
+| 8 | **Remaining UX fixes** — Circuits toolbar layout (30-40% wasted sidebar), health dashboard regeneration, literature placeholder digitization, citation debt clearance. From HYPER_ANALYSIS_REPORT.md. | Low | 2-3h |
+| 9 | **Race & performance audit** — `go test -race ./...` for new packages, gg.Context canvas caching, OnDraw rate-limiting. | Low | 1h |
 
 ### Open Issues
 
