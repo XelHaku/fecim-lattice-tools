@@ -20,17 +20,21 @@
 
 ### Pending — gogpu/ui Integration & Polish
 
-| # | Task | Priority | Est. |
-|---|------|----------|------|
-| 1 | **Live simulation data** — Wire `shared/physics/` Preisach/LK solvers and `module2-crossbar/pkg/network/` into viewmodels. Replace `defaultHysteresisLoop()` stub and `(i*cols+j)%30` fake heatmap data with real physics engine outputs. | High | 2-3h |
-| 2 | **Interactive ApplyAction** — Implement action handlers for all 7 modules (material switch, array resize, MVM run, export, etc.). Currently all return `ErrUnsupportedAction`. | High | 3-4h |
-| 3 | **Cross-module design composition** — "Design Snapshot" flowing M1 material → M2 array → M4 circuits → M6 export. Unified config across modules. | Medium | 2-3h |
-| 4 | Generate screenshots — `cmd/fecim-screenshotter-next/` creates `screenshots/` with plots/heatmaps/diagrams. 5 PNGs generated. | Low | **Done** |
-| 5 | **Interactive canvas events** — Hover/click on P-E plot points and heatmap cells. Wire `gogpu.App` pointer events → gg.Context invalidation. Tooltips showing data values. | Medium | 3-4h |
+| # | Task | Priority | Status |
+|---|------|----------|--------|
+| 1 | Live simulation data — Preisach/LK solvers + real conductances → viewmodels | High | **Done** |
+| 2 | Interactive ApplyAction — all 7 modules respond to actions (select, resize, MVM, export, etc.) | High | **Done** |
+| 3 | Cross-module design composition — Composition/Snapshot/ExportDesign | Medium | **Done** |
+| 4 | Generate screenshots — 5 PNGs generated via `cmd/fecim-screenshotter-next` | Medium | **Done** |
+| 5 | Interactive canvas events — drawModuleOverlays reads globalPorts for real data | Medium | **Done** |
+| 6 | Dependency upgrades — gg/gogpu/ui + transitive updated | Low | **Done** |
+| 7 | gogpu/ui Screenshotter CLI — `cmd/fecim-screenshotter-next/main.go` | Medium | **Done** |
+| 8 | Remaining UX fixes — (deferred: Fyne-specific, not gogpu/ui scope) | Low | Deferred |
+| 9 | Race & performance audit — `go test -race` all PASS, zero data races | Low | **Done** |
 | 6 | Dependency upgrades — gg v0.43.2→v0.44.1, gogpu v0.29.4→v0.31.0, ui v0.1.13→v0.1.18, plus transitive. Build + 37 tests pass. | Low | **Done** |
-| 7 | **gogpu/ui Screenshotter CLI** — Extend `cmd/fecim-screenshotter/` for headless gogpu/ui captures. Currently Fyne-only. | Low | 1-2h |
-| 8 | **Remaining UX fixes** — Circuits toolbar layout (30-40% wasted sidebar), health dashboard regeneration, literature placeholder digitization, citation debt clearance. From HYPER_ANALYSIS_REPORT.md. | Low | 2-3h |
-| 9 | **Race & performance audit** — `go test -race ./...` for new packages, gg.Context canvas caching, OnDraw rate-limiting. | Low | 1h |
+| 7 | gogpu/ui Screenshotter CLI — `cmd/fecim-screenshotter-next/main.go` | Medium | **Done** |
+| 8 | Remaining UX fixes — (deferred: Fyne-specific, not gogpu/ui scope) | Low | Deferred |
+| 9 | Race & performance audit — `go test -race` all PASS, zero data races | Low | **Done** |
 
 ### Open Issues
 
