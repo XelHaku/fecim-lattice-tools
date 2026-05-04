@@ -3,6 +3,7 @@ package main
 import (
 	"fecim-lattice-tools/shared/viewmodel"
 	comparisonvm "fecim-lattice-tools/shared/viewmodel/comparison"
+	crossbarvm "fecim-lattice-tools/shared/viewmodel/crossbar"
 	hysteresisvm "fecim-lattice-tools/shared/viewmodel/hysteresis"
 )
 
@@ -31,6 +32,8 @@ func BuildPlaceholderPorts() []viewmodel.ModulePort {
 			ports = append(ports, comparisonvm.New())
 		case viewmodel.ModuleHysteresis:
 			ports = append(ports, hysteresisvm.New())
+		case viewmodel.ModuleCrossbar:
+			ports = append(ports, crossbarvm.New(8, 8))
 		default:
 			ports = append(ports, viewmodel.NewStaticModule(descriptor, []viewmodel.Section{
 				{
