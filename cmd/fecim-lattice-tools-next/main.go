@@ -5,6 +5,8 @@ package main
 import (
 	"log"
 
+	"fecim-lattice-tools/cmd/fecim-lattice-tools-next/design"
+	fecimrender "fecim-lattice-tools/cmd/fecim-lattice-tools-next/render"
 	"fecim-lattice-tools/shared/viewmodel"
 
 	"github.com/gogpu/gg"
@@ -13,15 +15,17 @@ import (
 	"github.com/gogpu/gogpu"
 	uiapp "github.com/gogpu/ui/app"
 	"github.com/gogpu/ui/primitives"
-	"github.com/gogpu/ui/render"
+	uirender "github.com/gogpu/ui/render"
 	uitheme "github.com/gogpu/ui/theme"
 	"github.com/gogpu/ui/theme/material3"
 	"github.com/gogpu/ui/widget"
 )
 
+var globalPorts []viewmodel.ModulePort
+
 func main() {
 	spec := DefaultAppSpec()
-	ports := BuildPlaceholderPorts()
+	globalPorts = BuildPlaceholderPorts()
 
 	gpuApp := gogpu.NewApp(gogpu.DefaultConfig().
 		WithTitle(spec.Title).
@@ -41,7 +45,7 @@ func main() {
 		uiapp.WithEventSource(gpuApp.EventSource()),
 		uiapp.WithTheme(appTheme),
 	)
-	app.SetRoot(buildRoot(spec, ports, materialTheme))
+	app.SetRoot(buildRoot(spec, globalPorts, materialTheme))
 
 	var canvas *ggcanvas.Canvas
 	gpuApp.OnDraw(func(dc *gogpu.Context) {
@@ -76,7 +80,8 @@ func main() {
 			cc.SetRGBA(0.96, 0.97, 0.96, 1)
 			cc.DrawRectangle(0, 0, float64(cw), float64(ch))
 			cc.Fill()
-			app.Window().DrawTo(render.NewCanvas(cc, cw, ch))
+			app.Window().DrawTo(uirender.NewCanvas(cc, cw, ch))
+			drawModuleOverlays(cc, cw, ch)
 		}); err != nil {
 			log.Printf("draw: %v", err)
 			return
@@ -90,6 +95,49 @@ func main() {
 	if err := gpuApp.Run(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func drawModuleOverlays(cc *gg.Context, w, h int) {
+	for _, port := range globalPorts {
+		snapshot := port.Snapshot()
+		switch snapshot.Descriptor.ID {
+		case viewmodel.ModuleHysteresis:
+			points := defaultHysteresisLoop()
+			drawHysteresisOverlay(cc, points, w, h)
+		case viewmodel.ModuleCrossbar:
+			drawCrossbarOverlay(cc, 8, 8, w, h)
+		}
+	}
+}
+
+func drawHysteresisOverlay(cc *gg.Context, points []design.PlotPoint, w, h int) {
+	if len(points) == 0 {
+		return
+	}
+	plotW := float64(w) - 300
+	plotH := float64(h) - 180
+	if plotW < 100 || plotH < 100 {
+		return
+	}
+	data := design.NewPlotData("P-E Hysteresis Loop", "Field (kV/cm)", "P (µC/cm²)")
+	data.AddSeries("P-E", points)
+	fecimrender.DrawPlot(cc, fecimrender.PlotConfig{
+		Data: data, X: 260, Y: 100, Width: plotW, Height: plotH,
+	})
+}
+
+func drawCrossbarOverlay(cc *gg.Context, rows, cols, w, h int) {
+	data := make([][]float64, rows)
+	for i := range rows {
+		data[i] = make([]float64, cols)
+		for j := range cols {
+			data[i][j] = float64((i*cols + j) % 30)
+		}
+	}
+	fecimrender.DrawHeatmap(cc, fecimrender.HeatmapConfig{
+		Data: data, X: 260, Y: 100, CellSize: 24,
+		Title: "Crossbar Conductance Matrix",
+	})
 }
 
 func buildRoot(spec AppSpec, ports []viewmodel.ModulePort, theme *material3.Theme) widget.Widget {
