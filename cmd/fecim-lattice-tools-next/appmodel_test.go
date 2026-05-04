@@ -34,12 +34,18 @@ func TestBuildPlaceholderPortsCoversAllKnownDescriptors(t *testing.T) {
 	for i, port := range ports {
 		got := port.Descriptor()
 		want := descriptors[i]
-		if got != want {
-			t.Fatalf("port[%d] descriptor = %#v, want %#v", i, got, want)
+		if got.ID != want.ID {
+			t.Fatalf("port[%d] descriptor.ID = %#v, want %#v", i, got.ID, want.ID)
+		}
+		if got.Title != want.Title {
+			t.Fatalf("port[%d] descriptor.Title = %#v, want %#v", i, got.Title, want.Title)
+		}
+		if got.Status == "" {
+			t.Fatalf("port[%d] descriptor.Status is empty", i)
 		}
 		snapshot := port.Snapshot()
-		if snapshot.Descriptor != want {
-			t.Fatalf("port[%d] snapshot descriptor = %#v, want %#v", i, snapshot.Descriptor, want)
+		if snapshot.Descriptor.ID != want.ID {
+			t.Fatalf("port[%d] snapshot descriptor.ID = %#v, want %#v", i, snapshot.Descriptor.ID, want.ID)
 		}
 		if len(snapshot.Sections) == 0 {
 			t.Fatalf("port[%d] snapshot has no sections", i)

@@ -109,6 +109,8 @@ func buildRoot(spec AppSpec, ports []viewmodel.ModulePort, theme *material3.Them
 		switch snapshot.Descriptor.ID {
 		case viewmodel.ModuleComparison:
 			children = append(children, buildComparisonView(snapshot, theme))
+		case viewmodel.ModuleHysteresis:
+			children = append(children, buildHysteresisView(snapshot, theme))
 		default:
 			children = append(children, moduleCardEnhanced(snapshot, theme))
 		}

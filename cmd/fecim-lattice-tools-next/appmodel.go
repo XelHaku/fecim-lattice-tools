@@ -3,6 +3,7 @@ package main
 import (
 	"fecim-lattice-tools/shared/viewmodel"
 	comparisonvm "fecim-lattice-tools/shared/viewmodel/comparison"
+	hysteresisvm "fecim-lattice-tools/shared/viewmodel/hysteresis"
 )
 
 type AppSpec struct {
@@ -25,17 +26,20 @@ func BuildPlaceholderPorts() []viewmodel.ModulePort {
 	descriptors := viewmodel.KnownDescriptors()
 	ports := make([]viewmodel.ModulePort, 0, len(descriptors))
 	for _, descriptor := range descriptors {
-		if descriptor.ID == viewmodel.ModuleComparison {
+		switch descriptor.ID {
+		case viewmodel.ModuleComparison:
 			ports = append(ports, comparisonvm.New())
-			continue
+		case viewmodel.ModuleHysteresis:
+			ports = append(ports, hysteresisvm.New())
+		default:
+			ports = append(ports, viewmodel.NewStaticModule(descriptor, []viewmodel.Section{
+				{
+					ID:    "migration-status",
+					Title: "Migration Status",
+					Body:  "This module is represented by a UI-neutral placeholder while the gogpu/ui shell reaches parity with the current Fyne implementation.",
+				},
+			}))
 		}
-		ports = append(ports, viewmodel.NewStaticModule(descriptor, []viewmodel.Section{
-			{
-				ID:    "migration-status",
-				Title: "Migration Status",
-				Body:  "This module is represented by a UI-neutral placeholder while the gogpu/ui shell reaches parity with the current Fyne implementation.",
-			},
-		}))
 	}
 	return ports
 }
