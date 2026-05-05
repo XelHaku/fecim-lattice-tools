@@ -14,6 +14,12 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		{ID: "ispp", Label: "ISPP", Value: fmt.Sprintf("%v", state.ISPPEnabled)},
 		{ID: "supply", Label: "Vdd", Value: fmt.Sprintf("%.1f V", state.SupplyVoltage)},
 	}
+	if state.ISPPExecuted {
+		metrics = append(metrics,
+			viewmodel.Metric{ID: "ispp_conv", Label: "ISPP Converged", Value: fmt.Sprintf("%d/%d levels", state.ISPPConvergedCount, 30)},
+			viewmodel.Metric{ID: "ispp_avg", Label: "Avg Attempts/Level", Value: fmt.Sprintf("%.1f", state.ISPPAvgAttempts)},
+		)
+	}
 	sections := []viewmodel.Section{
 		{ID: "read_path", Title: "Read Path", Body: fmt.Sprintf("TIA (%.0f kΩ) → %d-bit SAR ADC. Latency: ~%.1f µs.", state.TIAGain/1e3, state.ADCResolution, float64(state.ADCResolution)*0.5), Category: "research"},
 		{ID: "write_path", Title: "Write Path (ISPP)", Body: fmt.Sprintf("%d-stage charge pump → %d-bit DAC → ISPP pulse train.", state.ChargePumpStages, state.DACResolution), Category: "research"},
@@ -50,5 +56,23 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 			BoundaryNotice: "SIMULATION OUTPUT — Educational circuit models. ADC/DAC/TIA are behavioral abstractions, not calibrated against silicon measurements.",
 		},
 		Metrics: metrics, Sections: sections, Actions: actions,
+		Plots: buildISPPPlots(state),
 	}
+}
+
+func buildISPPPlots(state CircuitsState) []viewmodel.PlotData {
+	if !state.ISPPExecuted || len(state.ISPPAttempts) == 0 {
+		return nil
+	}
+	pts := make([]viewmodel.PlotPoint, len(state.ISPPAttempts))
+	for i, a := range state.ISPPAttempts {
+		pts[i] = viewmodel.PlotPoint{X: float64(i), Y: float64(a)}
+	}
+	return []viewmodel.PlotData{{
+		ID:     "ispp_convergence",
+		Title:  "ISPP Write-Verify Convergence",
+		XLabel: "Target Level (0-29)",
+		YLabel: "Attempts to Converge",
+		Series: []viewmodel.PlotSeries{{Name: "attempts", Points: pts}},
+	}}
 }
