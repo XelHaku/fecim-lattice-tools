@@ -102,8 +102,15 @@ func drawModuleOverlays(cc *gg.Context, w, h int) {
 		snapshot := port.Snapshot()
 		switch snapshot.Descriptor.ID {
 		case viewmodel.ModuleHysteresis:
-			points := defaultHysteresisLoop()
-			drawHysteresisOverlay(cc, points, w, h)
+			for _, plot := range snapshot.Plots {
+				if plot.ID == "pe_loop" && len(plot.Series) > 0 {
+					pts := make([]design.PlotPoint, len(plot.Series[0].Points))
+					for i, p := range plot.Series[0].Points {
+						pts[i] = design.PlotPoint{X: p.X, Y: p.Y}
+					}
+					drawHysteresisOverlay(cc, pts, w, h)
+				}
+			}
 		case viewmodel.ModuleCrossbar:
 			drawCrossbarOverlay(cc, 8, 8, w, h)
 		}
@@ -154,7 +161,10 @@ func buildRoot(spec AppSpec, ports []viewmodel.ModulePort, theme *material3.Them
 
 	children := []widget.Widget{
 		primitives.Text(spec.Title).FontSize(22).Bold(),
-		primitives.Text("Simulation-first FeCIM design workspace").FontSize(14),
+		primitives.Text("Simulation-first FeCIM design workspace — educational tool, not a validated device measurement platform").FontSize(12).Color(widget.Hex(0x5C3B00)),
+		primitives.Box(
+			primitives.Text("EDUCATIONAL SIMULATION — Results are model estimates based on published physics (Materlik 2015, Park 2015). Not validated against silicon measurements. See per-module boundary notices for source citations and limitations.").FontSize(11).Color(widget.Hex(0x5C3B00)),
+		).Padding(10).Background(widget.Hex(0xFFF4D8)).Rounded(6).BorderStyle(1, widget.Hex(0xE7C66A)),
 	}
 
 	for _, port := range ports {

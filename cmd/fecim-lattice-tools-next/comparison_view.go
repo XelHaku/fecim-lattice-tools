@@ -10,37 +10,32 @@ import (
 	"fecim-lattice-tools/shared/viewmodel"
 )
 
-// buildComparisonView renders a comparison ModuleSnapshot into a gogpu/ui
-// widget tree. Pure: same input → same widget tree, no side effects.
 func buildComparisonView(snapshot viewmodel.ModuleSnapshot, theme *material3.Theme) widget.Widget {
 	descriptor := snapshot.Descriptor
 
 	children := []widget.Widget{
-		primitives.Text(descriptor.Title).FontSize(20).Bold(),
-		primitives.Text(descriptor.Description).FontSize(13),
-		primitives.Text(string(descriptor.ID) + " | " + descriptor.Status).FontSize(11),
+		primitives.Text(descriptor.Title).FontSize(22).Bold(),
+		primitives.Text(descriptor.Description).FontSize(13).Color(theme.Colors.OnSurfaceVariant),
+		primitives.Text(string(descriptor.ID) + " | " + descriptor.Status).FontSize(11).Color(theme.Colors.OnSurfaceVariant),
+	}
+	if descriptor.BoundaryNotice != "" {
+		children = append(children, boundaryNotice(descriptor.BoundaryNotice))
 	}
 
 	for _, m := range snapshot.Metrics {
-		children = append(children, primitives.Text(m.Label+": "+m.Value).FontSize(12))
+		children = append(children, primitives.Box(
+			primitives.Text(m.Label).FontSize(11).Color(theme.Colors.OnSurfaceVariant),
+			primitives.Text(m.Value).FontSize(14).Bold(),
+		).Padding(10).Gap(4).Background(theme.Colors.SurfaceContainer).Rounded(6))
 	}
 
-	for _, section := range snapshot.Sections {
-		children = append(children, comparisonCard(section, theme))
-	}
+	eSections, rSections, dSections := partitionSections(snapshot.Sections)
+	children = appendSectionGroup(children, "Technology Comparison", rSections, widget.Hex(0xEBF5F0), theme)
+	children = appendSectionGroup(children, "Education", eSections, widget.Hex(0xE8EEF0), theme)
+	children = appendSectionGroup(children, "Design", dSections, widget.Hex(0xF5EEE8), theme)
 
 	return primitives.Box(children...).
 		Padding(20).
 		Gap(12).
 		Background(theme.Colors.Surface)
-}
-
-func comparisonCard(section viewmodel.Section, theme *material3.Theme) widget.Widget {
-	return primitives.Box(
-		primitives.Text(section.Title).FontSize(16).Bold(),
-		primitives.Text(section.Body).FontSize(13),
-	).
-		Padding(14).
-		Gap(6).
-		Background(theme.Colors.SurfaceContainer)
 }

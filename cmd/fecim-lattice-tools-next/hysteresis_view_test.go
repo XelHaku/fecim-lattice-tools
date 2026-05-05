@@ -30,8 +30,44 @@ func TestBuildHysteresisViewContainsMaterialSections(t *testing.T) {
 }
 
 func TestDefaultHysteresisLoop(t *testing.T) {
-	points := defaultHysteresisLoop()
+	vm := hysteresisvm.New()
+	snapshot := vm.Snapshot()
+	if len(snapshot.Plots) == 0 {
+		t.Error("No plots in hysteresis snapshot")
+		return
+	}
+	plot := snapshot.Plots[0]
+	if len(plot.Series) == 0 {
+		t.Error("No series in hysteresis plot")
+		return
+	}
+	points := plot.Series[0].Points
 	if len(points) != 200 {
-		t.Errorf("defaultHysteresisLoop len = %d, want 200", len(points))
+		t.Errorf("Loop points len = %d, want 200", len(points))
+	}
+}
+
+func TestHysteresisBoundaryNotice(t *testing.T) {
+	vm := hysteresisvm.New()
+	snapshot := vm.Snapshot()
+	if snapshot.Descriptor.BoundaryNotice == "" {
+		t.Error("Expected boundary notice in hysteresis descriptor")
+	}
+}
+
+func TestHysteresisPlotData(t *testing.T) {
+	vm := hysteresisvm.New()
+	snapshot := vm.Snapshot()
+	found := false
+	for _, plot := range snapshot.Plots {
+		if plot.ID == "pe_loop" {
+			found = true
+			if plot.XLabel == "" || plot.YLabel == "" {
+				t.Error("Plot axis labels missing")
+			}
+		}
+	}
+	if !found {
+		t.Error("No pe_loop plot found in hysteresis snapshot")
 	}
 }
