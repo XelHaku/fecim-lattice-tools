@@ -13,6 +13,15 @@ func buildSnapshot(state HysteresisState) viewmodel.ModuleSnapshot {
 		{ID: "field_max", Label: "Max Field", Value: fmt.Sprintf("%.0f kV/cm", state.FieldRange.MaxField)},
 		{ID: "waveform", Label: "Waveform", Value: state.Waveform},
 	}
+	if state.Pr > 0 {
+		metrics = append(metrics,
+			viewmodel.Metric{ID: "pr", Label: "Pr (P at E=0)", Value: fmt.Sprintf("%.1f µC/cm²", state.Pr)},
+			viewmodel.Metric{ID: "ec_plus", Label: "+Ec", Value: fmt.Sprintf("%.0f kV/cm", state.EcPlus)},
+			viewmodel.Metric{ID: "ec_minus", Label: "−Ec", Value: fmt.Sprintf("%.0f kV/cm", state.EcMinus)},
+			viewmodel.Metric{ID: "psat", Label: "Psat", Value: fmt.Sprintf("%.1f µC/cm²", state.Psat)},
+			viewmodel.Metric{ID: "loop_area", Label: "Loop Area", Value: fmt.Sprintf("%.1f J/m³", state.LoopArea)},
+		)
+	}
 
 	sections := []viewmodel.Section{}
 	for _, mat := range state.Materials {

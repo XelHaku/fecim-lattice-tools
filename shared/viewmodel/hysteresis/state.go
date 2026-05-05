@@ -13,6 +13,12 @@ type HysteresisState struct {
 	LoopPoints       []LoopPoint           `json:"loop_points"`
 	Waveform         string                `json:"waveform"`
 	IsRunning        bool                  `json:"is_running"`
+	Pr               float64               `json:"pr"`
+	EcPlus           float64               `json:"ec_plus"`
+	EcMinus          float64               `json:"ec_minus"`
+	Psat             float64               `json:"psat"`
+	PsatNeg          float64               `json:"psat_neg"`
+	LoopArea         float64               `json:"loop_area"`
 }
 
 type FieldRange struct {

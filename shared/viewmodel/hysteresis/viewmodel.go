@@ -118,4 +118,60 @@ func (m *Module) computeLoopForCurrentMaterial() {
 		}
 	}
 	m.state.LoopPoints = pts
+	m.computeLoopMetrics()
+}
+
+func (m *Module) computeLoopMetrics() {
+	pts := m.state.LoopPoints
+	if len(pts) < 4 {
+		return
+	}
+
+	minP, maxP := pts[0].Polarization, pts[0].Polarization
+	for _, p := range pts {
+		if p.Polarization < minP {
+			minP = p.Polarization
+		}
+		if p.Polarization > maxP {
+			maxP = p.Polarization
+		}
+	}
+	m.state.Psat = maxP
+	m.state.PsatNeg = minP
+
+	prPos, prNeg := 0.0, 0.0
+	ecPos, ecNeg := 0.0, 0.0
+	for i := 1; i < len(pts); i++ {
+		if (pts[i-1].Field < 0 && pts[i].Field >= 0) || (pts[i-1].Field > 0 && pts[i].Field <= 0) {
+			interp := pts[i-1].Polarization + (0.0-pts[i-1].Field)*(pts[i].Polarization-pts[i-1].Polarization)/(pts[i].Field-pts[i-1].Field+1e-12)
+			if interp > 0 {
+				prPos = interp
+			} else {
+				prNeg = interp
+			}
+		}
+		if (pts[i-1].Polarization < 0 && pts[i].Polarization >= 0) || (pts[i-1].Polarization > 0 && pts[i].Polarization <= 0) {
+			interp := pts[i-1].Field + (0.0-pts[i-1].Polarization)*(pts[i].Field-pts[i-1].Field)/(pts[i].Polarization-pts[i-1].Polarization+1e-12)
+			if pts[i-1].Polarization < 0 || (pts[i-1].Polarization == 0 && pts[i].Polarization > 0 && interp > 0) {
+				ecPos = math.Abs(interp)
+			} else {
+				ecNeg = math.Abs(interp)
+			}
+		}
+	}
+	if math.Abs(prNeg) > math.Abs(prPos) {
+		m.state.Pr = math.Abs(prNeg)
+	} else {
+		m.state.Pr = prPos
+	}
+	m.state.EcPlus = ecPos
+	m.state.EcMinus = ecNeg
+
+	area := 0.0
+	for i := 0; i < len(pts); i++ {
+		j := (i + 1) % len(pts)
+		area += pts[i].Field * pts[j].Polarization
+		area -= pts[j].Field * pts[i].Polarization
+	}
+	m.state.LoopArea = math.Abs(area) * 0.5
 }
