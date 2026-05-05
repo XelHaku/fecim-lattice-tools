@@ -20,6 +20,14 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 			viewmodel.Metric{ID: "ispp_avg", Label: "Avg Attempts/Level", Value: fmt.Sprintf("%.1f", state.ISPPAvgAttempts)},
 		)
 	}
+	if state.ENOBtt > 0 {
+		metrics = append(metrics,
+			viewmodel.Metric{ID: "enob_tt", Label: "ENOB (TT)", Value: fmt.Sprintf("%.2f bits", state.ENOBtt)},
+			viewmodel.Metric{ID: "enob_ff", Label: "ENOB (FF)", Value: fmt.Sprintf("%.2f bits", state.ENOBff)},
+			viewmodel.Metric{ID: "enob_ss", Label: "ENOB (SS)", Value: fmt.Sprintf("%.2f bits", state.ENOBss)},
+			viewmodel.Metric{ID: "snr", Label: "Ideal SNR", Value: fmt.Sprintf("%.1f dB", state.SNRdB)},
+		)
+	}
 	sections := []viewmodel.Section{
 		{ID: "read_path", Title: "Read Path", Body: fmt.Sprintf("TIA (%.0f kΩ) → %d-bit SAR ADC. Latency: ~%.1f µs.", state.TIAGain/1e3, state.ADCResolution, float64(state.ADCResolution)*0.5), Category: "research"},
 		{ID: "write_path", Title: "Write Path (ISPP)", Body: fmt.Sprintf("%d-stage charge pump → %d-bit DAC → ISPP pulse train.", state.ChargePumpStages, state.DACResolution), Category: "research"},

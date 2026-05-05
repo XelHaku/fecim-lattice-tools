@@ -1,6 +1,8 @@
 package circuits
 
 import (
+	"math"
+
 	"fecim-lattice-tools/shared/physics"
 	"fecim-lattice-tools/shared/viewmodel"
 )
@@ -74,4 +76,24 @@ func (m *Module) runISPPSimulation() {
 		m.state.ISPPAvgAttempts = float64(totalAttempts) / float64(numLevels)
 	}
 	m.state.ISPPExecuted = true
+
+	m.computePVTCorners()
+}
+
+func (m *Module) computePVTCorners() {
+	vref := m.state.SupplyVoltage
+	bits := m.state.ADCResolution
+	lsb := vref / float64(int(1)<<bits)
+
+	enobForINL := func(inlLSB float64) float64 {
+		return math.Max(float64(bits)-math.Log2(inlLSB+1.0), 1.0)
+	}
+	m.state.ENOBtt = enobForINL(0.5)
+	m.state.ENOBff = enobForINL(0.5 * 0.80)
+	m.state.ENOBss = enobForINL(0.5 * 1.25)
+	m.state.ADCNoiseLSB = math.Sqrt(lsb * lsb / 12.0)
+	m.state.SNRdB = 6.02*float64(bits) + 1.76
+
+	_ = lsb
+	_ = vref
 }
