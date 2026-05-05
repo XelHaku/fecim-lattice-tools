@@ -46,6 +46,7 @@ type Section struct {
 type PlotPoint struct {
 	X float64
 	Y float64
+	V float64
 }
 
 type PlotSeries struct {

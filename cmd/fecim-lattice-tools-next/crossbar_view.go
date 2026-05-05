@@ -35,9 +35,10 @@ func buildCrossbarView(snapshot viewmodel.ModuleSnapshot, theme *material3.Theme
 	children = append(children, primitives.Box(metricBoxes...).Gap(8))
 
 	rows, cols := parseDimensions(snapshot)
+	heatmapSummary := buildConductanceSummary(snapshot, rows, cols)
 	children = append(children, primitives.Box(
 		primitives.Text(fmt.Sprintf("Crossbar Array (%d×%d)", rows, cols)).FontSize(16).Bold(),
-		primitives.Text("Conductance matrix visualized as heatmap grid overlay.").FontSize(12).Color(theme.Colors.OnSurfaceVariant),
+		primitives.Text(heatmapSummary).FontSize(12).Color(theme.Colors.OnSurfaceVariant),
 	).Padding(20).Gap(8).Background(widget.Hex(0xF6FAF7)).Rounded(8).BorderStyle(1, widget.Hex(0xD4DED8)))
 
 	eSections, rSections, dSections := partitionSections(snapshot.Sections)
@@ -56,6 +57,33 @@ func buildCrossbarView(snapshot viewmodel.ModuleSnapshot, theme *material3.Theme
 	}
 
 	return primitives.Box(children...).Padding(24).Gap(14).Background(theme.Colors.Surface)
+}
+
+func buildConductanceSummary(snapshot viewmodel.ModuleSnapshot, rows, cols int) string {
+	var minG, maxG float64
+	var count int
+	minG = 1e9
+	for _, plot := range snapshot.Plots {
+		if plot.ID != "conductance_matrix" {
+			continue
+		}
+		for _, s := range plot.Series {
+			for _, p := range s.Points {
+				if p.V < minG {
+					minG = p.V
+				}
+				if p.V > maxG {
+					maxG = p.V
+				}
+				count++
+			}
+		}
+	}
+	if count == 0 {
+		return fmt.Sprintf("Conductance matrix visualized as colored heatmap overlay. %d cells, 30 quantized levels.", rows*cols)
+	}
+	return fmt.Sprintf("Conductance matrix: %d cells, 30 quantized levels. G_range: %.0f–%.0f µS. Colored heatmap: blue=low G, red=high G.",
+		rows*cols, minG, maxG)
 }
 
 func parseDimensions(snapshot viewmodel.ModuleSnapshot) (int, int) {

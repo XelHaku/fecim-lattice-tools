@@ -76,5 +76,49 @@ func buildSnapshot(state CrossbarState) viewmodel.ModuleSnapshot {
 		Metrics:  metrics,
 		Sections: sections,
 		Actions:  actions,
+		Plots:    buildHeatmapPlots(state),
 	}
+}
+
+func buildHeatmapPlots(state CrossbarState) []viewmodel.PlotData {
+	if len(state.Conductances) == 0 || len(state.Conductances[0]) == 0 {
+		return nil
+	}
+	return []viewmodel.PlotData{{
+		ID:     "conductance_matrix",
+		Title:  fmt.Sprintf("%d×%d Conductance Matrix", state.Rows, state.Cols),
+		XLabel: "Column",
+		YLabel: "Row",
+		Series: []viewmodel.PlotSeries{{
+			Name:   "G (µS)",
+			Points: flattenConductances(state.Conductances),
+		}},
+	}, {
+		ID:     "mvm_result",
+		Title:  "MVM Output Vector",
+		XLabel: "Row Index",
+		YLabel: "I_out (µA)",
+		Series: []viewmodel.PlotSeries{{
+			Name:   "output",
+			Points: vectorToPoints(state.OutputVector),
+		}},
+	}}
+}
+
+func flattenConductances(g [][]float64) []viewmodel.PlotPoint {
+	pts := make([]viewmodel.PlotPoint, 0, len(g)*len(g[0]))
+	for i, row := range g {
+		for j, val := range row {
+			pts = append(pts, viewmodel.PlotPoint{X: float64(j), Y: float64(i), V: val})
+		}
+	}
+	return pts
+}
+
+func vectorToPoints(v []float64) []viewmodel.PlotPoint {
+	pts := make([]viewmodel.PlotPoint, len(v))
+	for i, val := range v {
+		pts[i] = viewmodel.PlotPoint{X: float64(i), Y: val}
+	}
+	return pts
 }
