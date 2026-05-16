@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	fmt.Fprintln(os.Stderr, "fecim-lattice-tools-next uses gogpu/ui through the zero-CGO WebGPU stack.")
-	fmt.Fprintln(os.Stderr, "Run with: CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools-next")
+	fmt.Fprintln(os.Stderr, "fecim-lattice-tools-next is a compatibility wrapper for the zero-CGO gogpu/ui shell.")
+	fmt.Fprintln(os.Stderr, "Run with: CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools")
 	os.Exit(2)
 }

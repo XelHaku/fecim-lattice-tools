@@ -1,5 +1,5 @@
-//go:build !js
-// +build !js
+//go:build cgo && !js
+// +build cgo,!js
 
 // Package crossbar provides GPU-accelerated Matrix-Vector Multiplication for crossbar arrays.
 package crossbar

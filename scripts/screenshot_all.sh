@@ -39,8 +39,8 @@ rm -rf "$SCREENSHOT_DIR"
 mkdir -p "$SCREENSHOT_DIR"
 mkdir -p "$(dirname "$APP_BIN")"
 
-echo "Building GUI binary ($APP_BIN)..."
-go build -o "$APP_BIN" ./cmd/fecim-lattice-tools
+echo "Building gogpu/ui GUI binary ($APP_BIN)..."
+CGO_ENABLED=0 go build -o "$APP_BIN" ./cmd/fecim-lattice-tools
 
 CAPTURED=0
 
@@ -58,7 +58,7 @@ fi
 echo "Xvfb running (PID: $XVFB_PID)"
 
 export DISPLAY=":${DISPLAY_NUM}"
-# Force UTF-8 locale to avoid Fyne locale parser errors in headless runs.
+# Force UTF-8 locale for stable headless runs.
 export LANG="C.UTF-8"
 export LC_ALL="C.UTF-8"
 export LANGUAGE="C.UTF-8"

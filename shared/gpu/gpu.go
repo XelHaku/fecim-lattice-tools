@@ -1,3 +1,5 @@
+//go:build cgo
+
 // Package gpu provides GPU-accelerated neural network operations using Vulkan compute shaders.
 package gpu
 

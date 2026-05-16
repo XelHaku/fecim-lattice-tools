@@ -25,8 +25,8 @@ if $CLEAR_FLAG; then
     rm -rf logs/ screenshots/
 fi
 rm -f fecim-lattice-tools
-echo "Building fecim-lattice-tools..."
-if go build -v ./cmd/fecim-lattice-tools 2>&1; then
+echo "Building fecim-lattice-tools (gogpu/ui, zero-CGO)..."
+if CGO_ENABLED=0 go build -v -o fecim-lattice-tools ./cmd/fecim-lattice-tools 2>&1; then
     echo "Build successful, launching..."
     ./fecim-lattice-tools "${ARGS[@]}"
 else

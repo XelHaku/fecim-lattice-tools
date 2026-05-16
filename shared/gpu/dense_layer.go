@@ -1,3 +1,5 @@
+//go:build cgo
+
 // Package gpu provides GPU-accelerated dense layer operations using Vulkan compute.
 package gpu
 

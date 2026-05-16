@@ -10,7 +10,7 @@ help:
 	@echo "  make test           Run all tests"
 	@echo "  make test-race      Run tests with race detector"
 	@echo "  make test-short     Run only short tests"
-	@echo "  make test-next-ui   Run zero-CGO tests for future gogpu/ui shell"
+	@echo "  make test-next-ui   Run zero-CGO tests for the gogpu/ui shell"
 	@echo "  make test-shared    Run tests for shared packages"
 	@echo "  make test-hys       Run tests for Module 1 (Hysteresis)"
 	@echo "  make test-xbar      Run tests for Module 2 (Crossbar)"
@@ -73,7 +73,7 @@ test-short:
 	$(GO) test -short ./...
 
 test-next-ui:
-	CGO_ENABLED=0 $(GO) test ./shared/viewmodel/... ./cmd/fecim-lattice-tools-next/...
+	CGO_ENABLED=0 $(GO) test ./shared/viewmodel/... ./internal/gogpuapp/... ./cmd/fecim-lattice-tools ./cmd/fecim-lattice-tools-next
 
 bench:
 	$(GO) test ./... -run '^$$' -bench '$(BENCH)' -benchmem -count=$(BENCH_COUNT)

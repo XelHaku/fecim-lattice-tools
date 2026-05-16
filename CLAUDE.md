@@ -27,7 +27,7 @@ Go-based lattice tool suite for Ferroelectric Compute-in-Memory (FeCIM) visualiz
 ## Build & Run
 
 ```bash
-go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-tools
+CGO_ENABLED=0 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-tools
 # Or: ./launch.sh
 ```
 
@@ -41,7 +41,8 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-too
 - If a change cannot reasonably be test-first, stop and explain the blocker before coding. Documentation-only, comments-only, formatting-only, generated files, and release metadata may use `TDD: N/A` with a short reason.
 
 ### Do
-- Use `fyne.Do(func() { ... })` for all UI updates from goroutines
+- Keep the default app on `gogpu/ui`; Fyne belongs only in the legacy `cmd/fecim-lattice-tools-fyne` path
+- Use `fyne.Do(func() { ... })` for legacy Fyne UI updates from goroutines
 - Quantize to 30 levels: `crossbar.QuantizeTo30Levels(value)`
 - Follow embedded app interface: `BuildContent()`, `Start()`, `Stop()`
 - Run `go test ./...` before committing
@@ -54,7 +55,8 @@ go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-too
 ## Project Structure
 
 ```
-cmd/fecim-lattice-tools/     # Main unified app entry point
+cmd/fecim-lattice-tools/     # Default gogpu/ui app entry point
+cmd/fecim-lattice-tools-fyne/ # Legacy Fyne app entry point
 module1-hysteresis/       # P-E curve, Preisach model
 module2-crossbar/         # Crossbar GUI (pkg/gui/)
 module3-mnist/            # Neural network digit recognition
