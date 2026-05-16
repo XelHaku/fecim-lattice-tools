@@ -152,8 +152,10 @@ go run ./cmd/fecim-lattice-tools --help
 Generate fresh README-style screenshots:
 
 ```bash
-go run ./cmd/fecim-screenshotter -out docs/assets -only hysteresis -tag readme -w 1280 -h 820
+CGO_ENABLED=0 go run ./cmd/fecim-screenshotter -out docs/assets -only hysteresis -tag readme -w 1280 -h 820
 ```
+
+The default screenshotter uses the gogpu rendering path. The old Fyne screenshot harness is kept as `cmd/fecim-screenshotter-fyne` for temporary parity checks.
 
 See [CLI Reference](./docs/1-getting-started/cli-reference.md) for the full launcher and module command reference.
 

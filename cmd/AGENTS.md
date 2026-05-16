@@ -7,9 +7,11 @@
 
 The `cmd/` directory contains all executable entry points for FeCIM Lattice Tools:
 
-1. **fecim-lattice-tools** - Main unified GUI application (all 7 modules)
-2. **fecim-screenshotter** - Screenshot capture tool for documentation and testing
-3. **latex-svg** - LaTeX equation to SVG converter utility
+1. **fecim-lattice-tools** - Main gogpu/ui application (all 7 modules)
+2. **fecim-lattice-tools-fyne** - Legacy Fyne GUI application for temporary parity checks
+3. **fecim-screenshotter** - Zero-CGO gogpu screenshot capture tool for documentation and testing
+4. **fecim-screenshotter-fyne** - Legacy Fyne screenshot harness
+5. **latex-svg** - LaTeX equation to SVG converter utility
 
 Each is a standalone executable that can be built and run independently.
 
@@ -17,13 +19,15 @@ Each is a standalone executable that can be built and run independently.
 
 ```
 cmd/
-├── fecim-lattice-tools/         # Main unified GUI app (7 modules + orchestration)
+├── fecim-lattice-tools/         # Main gogpu/ui GUI app (7 modules + orchestration)
 │   ├── main.go
 │   ├── mode_*.go                # CLI mode handlers (eda, preisach, etc)
 │   ├── *_test.go                # Integration and headless tests
 │   └── testdata/                # Test fixtures and golden outputs
-├── fecim-screenshotter/         # Screenshot automation tool
+├── fecim-lattice-tools-fyne/    # Legacy Fyne GUI app
+├── fecim-screenshotter/         # gogpu screenshot automation tool
 │   └── main.go
+├── fecim-screenshotter-fyne/    # Legacy Fyne screenshot harness
 ├── latex-svg/                   # LaTeX to SVG converter
 │   ├── main.go
 │   └── main_test.go
@@ -34,7 +38,7 @@ cmd/
 
 ### fecim-lattice-tools
 
-**Purpose:** Main application entry point. Provides unified GUI with tab-based navigation across 7 simulation and design modules.
+**Purpose:** Main application entry point. Provides the gogpu/ui GUI with navigation across 7 simulation and design modules.
 
 **Key Files:**
 - `cmd/fecim-lattice-tools/main.go` - App initialization, window setup, module loading
@@ -43,26 +47,23 @@ cmd/
 
 **Usage:**
 ```bash
-go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
+CGO_ENABLED=0 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 ./fecim-lattice-tools                           # Launch GUI with all modules
 
 # CLI modes (for headless testing/validation)
-./fecim-lattice-tools eda gui                   # EDA GUI (Module 6)
+./fecim-lattice-tools eda gui                   # EDA GUI route (Module 6)
 ./fecim-lattice-tools eda cli                   # EDA CLI with sample design
 
 # Flags
 ./fecim-lattice-tools -h                        # Show help
-./fecim-lattice-tools -verbose=2                # Debug logging
-./fecim-lattice-tools -record                   # Record video (FFmpeg)
-./fecim-lattice-tools -screenshot               # Capture screenshots
+./fecim-lattice-tools --module hysteresis       # Start on a specific module
+./fecim-lattice-tools --logger debug            # Debug logging
 ```
 
 **Architecture:**
-- Module orchestration: Loads all 7 modules as embedded apps
-- Tab interface: User can switch between modules
-- Undo/redo: Shared across modules via global UndoManager
-- Recording: Canvas capture with FFmpeg output
-- Accessibility: WCAG compliance checks, screen reader support
+- Shell: `internal/gogpuapp`
+- View-model boundary: `shared/viewmodel`
+- Legacy Fyne parity path: `cmd/fecim-lattice-tools-fyne`
 
 **State Management:**
 - Global UndoManager for parameter changes
@@ -92,57 +93,52 @@ Key test patterns:
 
 ### fecim-screenshotter
 
-**Purpose:** Automated screenshot capture tool for documentation. Captures each module at different states to build visual documentation and regression test suite.
+**Purpose:** Automated screenshot capture tool for documentation. Uses the gogpu render path by default and does not depend on Fyne.
 
 **Key Files:**
-- `cmd/fecim-screenshotter/main.go` - Screenshot logic, module iteration, file output
+- `cmd/fecim-screenshotter/main.go` - Thin wrapper for the gogpu screenshot generator
+- `internal/gogpuscreenshot/` - Shared screenshot rendering, option parsing, and file output
+- `cmd/fecim-screenshotter-fyne/` - Legacy Fyne screenshot harness
 
 **Usage:**
 ```bash
-go run ./cmd/fecim-screenshotter \
+CGO_ENABLED=0 go run ./cmd/fecim-screenshotter \
   -out docs/screenshots \
   -w 1200 -h 800 \
   -tag initial
 
 # Capture single module
-go run ./cmd/fecim-screenshotter \
+CGO_ENABLED=0 go run ./cmd/fecim-screenshotter \
   -only hysteresis \
   -tag after_fix
-
-# Different physics engine
-go run ./cmd/fecim-screenshotter \
-  -hys-engine lk \
-  -tag landau-khalatnikov
 ```
 
 **Flags:**
-- `-out DIR` - Output directory (default: cmd/fecim-lattice-tools/testdata/screenshots)
-- `-w WIDTH` - Window width (default: 1200)
-- `-h HEIGHT` - Window height (default: 800)
+- `-out DIR` - Output directory (default: screenshots)
+- `-w WIDTH` - Output image width (default: 1400)
+- `-h HEIGHT` - Output image height (default: 900)
 - `-only MODULE` - Capture single module (hysteresis|crossbar|mnist|circuits|comparison|eda|docs)
-- `-tag SUFFIX` - Filename suffix (default: initial)
-- `-hys-engine ENGINE` - Physics engine for hysteresis (preisach|lk)
+- `-tag SUFFIX` - Filename suffix
 
 **Output:**
-Generates PNG files named: `{module}-{tag}.png`
+Generates PNG files named for each rendered view, with optional `_{tag}` suffix.
 
 Examples:
 ```
-hysteresis-initial.png
-crossbar-initial.png
-mnist-initial.png
-circuits-initial.png
-comparison-initial.png
-eda-initial.png
-docs-initial.png
+hysteresis-p-e-loop_initial.png
+crossbar-heatmap-8x8_initial.png
+mnist-accuracy-sweep_initial.png
+circuits-ispp-convergence_initial.png
+comparison-architecture-bars_initial.png
+eda-design-overview_initial.png
+docs-overview_initial.png
 ```
 
 **Implementation:**
-- Creates minimal Fyne window (no OS integration)
-- Loads each module via moduleLifecycle interface
-- Builds content, calls Start() for initialization
-- Captures canvas to image
-- Saves as PNG with metadata
+- Renders via gogpu/gg drawing helpers
+- Avoids Xvfb, OpenGL Fyne capture, and window-manager dependencies
+- Resizes output images when `-w` or `-h` differ from the design canvas
+- Saves deterministic PNG files for docs and visual review
 
 **Integration:**
 - Used in CI/CD for regression detection
@@ -154,10 +150,10 @@ docs-initial.png
 Visual regression testing is manual but can be automated:
 ```bash
 # Generate baseline
-go run ./cmd/fecim-screenshotter -tag baseline
+CGO_ENABLED=0 go run ./cmd/fecim-screenshotter -tag baseline
 
 # After changes, generate new screenshots
-go run ./cmd/fecim-screenshotter -tag current
+CGO_ENABLED=0 go run ./cmd/fecim-screenshotter -tag current
 
 # Compare (diff tools, perceptual hashing, etc)
 ```
@@ -265,8 +261,8 @@ Used in:
 
 **From Root:**
 ```bash
-go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
-go build -o fecim-screenshotter ./cmd/fecim-screenshotter
+CGO_ENABLED=0 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
+CGO_ENABLED=0 go build -o fecim-screenshotter ./cmd/fecim-screenshotter
 go build -o latex-svg ./cmd/latex-svg
 
 # Or via ./launch.sh
@@ -276,10 +272,10 @@ go build -o latex-svg ./cmd/latex-svg
 **Build Tags & Flags:**
 ```bash
 # Optimize for size
-go build -ldflags="-s -w" -o fecim-lattice-tools ./cmd/fecim-lattice-tools
+CGO_ENABLED=0 go build -ldflags="-s -w" -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 
 # Include debug symbols
-go build -gcflags="all=-N -l" -o fecim-lattice-tools ./cmd/fecim-lattice-tools
+CGO_ENABLED=0 go build -gcflags="all=-N -l" -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 ```
 
 ## Testing Command Entry Points
@@ -288,6 +284,7 @@ go build -gcflags="all=-N -l" -o fecim-lattice-tools ./cmd/fecim-lattice-tools
 ```bash
 go test ./cmd/...                           # All cmd tests
 go test ./cmd/fecim-lattice-tools/...      # Main app tests
+go test ./cmd/fecim-screenshotter/...      # Screenshotter tests
 go test ./cmd/latex-svg/...                # LaTeX converter tests
 ```
 

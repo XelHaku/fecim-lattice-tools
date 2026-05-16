@@ -73,7 +73,7 @@ test-short:
 	$(GO) test -short ./...
 
 test-next-ui:
-	CGO_ENABLED=0 $(GO) test ./shared/viewmodel/... ./internal/gogpuapp/... ./cmd/fecim-lattice-tools ./cmd/fecim-lattice-tools-next
+	CGO_ENABLED=0 $(GO) test ./shared/viewmodel/... ./internal/gogpuapp/... ./internal/gogpuscreenshot/... ./cmd/fecim-lattice-tools ./cmd/fecim-lattice-tools-next ./cmd/fecim-screenshotter ./cmd/fecim-screenshotter-next
 
 bench:
 	$(GO) test ./... -run '^$$' -bench '$(BENCH)' -benchmem -count=$(BENCH_COUNT)

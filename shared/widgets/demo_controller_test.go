@@ -266,7 +266,10 @@ func TestTickerDemoControllerGetStep(t *testing.T) {
 	}
 
 	tc.Start()
-	time.Sleep(25 * time.Millisecond)
+	deadline := time.Now().Add(250 * time.Millisecond)
+	for tc.GetStep() < 1 && time.Now().Before(deadline) {
+		time.Sleep(5 * time.Millisecond)
+	}
 	tc.Stop()
 
 	step := tc.GetStep()
