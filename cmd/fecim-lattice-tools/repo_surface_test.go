@@ -257,6 +257,44 @@ func TestDeveloperDocsPresentGogpuArchitectureAsDefault(t *testing.T) {
 	}
 }
 
+func TestArchitectureGuideScopesLegacyFyneThreading(t *testing.T) {
+	root := repoRootForRepoSurface()
+	file := "docs/3-develop/architecture/ARCHITECTURE.md"
+	body, err := os.ReadFile(filepath.Join(root, file))
+	if err != nil {
+		t.Fatalf("read %s: %v", file, err)
+	}
+	text := string(body)
+	mustContain := []string{
+		"### Main Thread (Default gogpu/ui Shell)",
+		"Default shell code should publish state through `shared/viewmodel`",
+		"### Legacy Fyne Event Loop (`-tags legacy_fyne`)",
+		"Use `shared/viewmodel` for new UI state",
+		"Keep Fyne-specific theme/widget work behind `-tags legacy_fyne`",
+	}
+	stale := []string{
+		"### Main Thread (Fyne Event Loop)",
+		"The Fyne runtime manages a single main thread that:",
+		"2. UI updates batched and dispatched via `fyne.Do()`",
+		"### 2. Why EmbeddedApp Interface?",
+		"**Use EmbeddedApp pattern**",
+		"**Follow theme**: Use `shared/theme` colors, not hardcoded colors",
+		"**Thread safety**: Always use `fyne.Do()` for UI updates from goroutines",
+		"- **Fyne Documentation**: https://fyne.io/",
+		"**Fyne Wayland**",
+	}
+	for _, phrase := range mustContain {
+		if !strings.Contains(text, phrase) {
+			t.Errorf("%s must present %q", file, phrase)
+		}
+	}
+	for _, phrase := range stale {
+		if strings.Contains(text, phrase) {
+			t.Errorf("%s presents legacy Fyne threading/widgets as general architecture %q", file, phrase)
+		}
+	}
+}
+
 func listRepoPackages(t *testing.T, root string) []string {
 	t.Helper()
 	cmd := exec.Command("go", "list", "-e", "./...")

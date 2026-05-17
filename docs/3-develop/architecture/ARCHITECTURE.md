@@ -750,12 +750,14 @@ This is the acceptance gate for physics fidelity; the GUI path is not used for e
 
 ## Threading Model
 
-### Main Thread (Fyne Event Loop)
+### Main Thread (Default gogpu/ui Shell)
 
-The Fyne runtime manages a single main thread that:
-1. Processes user input (mouse, keyboard, window events)
-2. Executes all `fyne.Do()` callbacks
-3. Renders frames to screen
+The default `gogpu/ui` shell owns input handling and rendering. It should:
+1. Process user input and shell-level navigation
+2. Dispatch typed actions into `shared/viewmodel`
+3. Render immutable viewmodel snapshots
+
+Default shell code should publish state through `shared/viewmodel` instead of mutating module UI objects directly.
 
 ### Background Goroutines (Per Module)
 
@@ -763,52 +765,62 @@ Each module typically runs 1-2 goroutines:
 
 ```go
 // Module 1: Hysteresis
-type App struct {
-    running bool  // Controlled by Start()/Stop()
+type Model struct {
+    mu    sync.RWMutex
+    state State
 }
 
-func (a *App) Start() {
-    a.running = true
-    go a.simulationLoop()  // Runs until a.running = false
+func (m *Model) Run(ctx context.Context) {
+    go m.simulationLoop(ctx)
 }
 
-func (a *App) simulationLoop() {
+func (m *Model) simulationLoop(ctx context.Context) {
     ticker := time.NewTicker(50 * time.Millisecond)  // 20 Hz
     defer ticker.Stop()
 
     for {
-        if !a.running {
-            return  // Clean exit when Stop() called
-        }
-
         select {
+        case <-ctx.Done():
+            return
         case <-ticker.C:
-            // Do physics simulation
-            result := a.preisach.SimulateStep(eField)
-
-            // Update UI from main thread
-            fyne.Do(func() {
-                a.updatePEPlot(result)
-                a.updateLevelWidget(result)
-            })
+            result := m.stepPhysics()
+            m.publish(result)
         }
     }
 }
 
-func (a *App) Stop() {
-    a.running = false  // Loop will exit naturally
+func (m *Model) Snapshot() State {
+    m.mu.RLock()
+    defer m.mu.RUnlock()
+    return m.state
 }
 ```
 
 **Design principles**:
 1. Physics simulation runs on background goroutine (non-blocking)
-2. UI updates batched and dispatched via `fyne.Do()`
-3. Clean shutdown via flag + `Stop()` method
-4. No blocking operations on main thread
+2. State is published as viewmodel snapshots
+3. Clean shutdown uses context cancellation
+4. No blocking operations on the shell render path
+
+### Legacy Fyne Event Loop (`-tags legacy_fyne`)
+
+Tagged legacy Fyne adapters have their own event loop. If a legacy goroutine updates a Fyne widget, the mutation must be scheduled with `fyne.Do()`:
+
+```go
+// Legacy Fyne adapter only
+go func() {
+    result := computeHeavyWork()
+    fyne.Do(func() {
+        label.SetText(result)
+    })
+}()
+```
+
+New default UI work should use `shared/viewmodel` snapshots instead.
 
 ### Recording Goroutine (FFmpeg)
 
-The main app can optionally record video:
+The app can optionally record video by capturing shell frames and streaming them to FFmpeg from a background writer:
 
 ```go
 // cmd/fecim-lattice-tools/main.go
@@ -828,16 +840,7 @@ func (rs *RecordingState) captureLoop(width, height int) {
         case <-rs.stopChan:
             return  // Stop signal received
         case <-ticker.C:
-            // Capture frame on main thread
-            var img image.Image
-            done := make(chan struct{})
-            fyne.Do(func() {
-                img = window.Canvas().Capture()
-                close(done)
-            })
-            <-done
-
-            // Convert and write to FFmpeg (background)
+            frameBytes := captureShellFrame()
             rs.stdin.Write(frameBytes)
         }
     }
@@ -848,29 +851,22 @@ func (rs *RecordingState) captureLoop(width, height int) {
 
 ## Concurrency Patterns
 
-### Pattern 1: Simulation Loop
+### Pattern 1: Viewmodel Tick Loop
 
 Used by Module 1 (Hysteresis), Module 3 (MNIST), Module 5 (Comparison):
 
 ```go
-func (a *App) simulationLoop() {
+func (m *Model) simulationLoop(ctx context.Context) {
     ticker := time.NewTicker(interval)
     defer ticker.Stop()
 
     for {
-        if !a.running {
-            return
-        }
-
         select {
+        case <-ctx.Done():
+            return
         case <-ticker.C:
-            // Compute (background)
-            state := a.compute()
-
-            // Update UI (main thread)
-            fyne.Do(func() {
-                a.refresh(state)
-            })
+            state := m.compute()
+            m.publish(state)
         }
     }
 }
@@ -878,7 +874,7 @@ func (a *App) simulationLoop() {
 
 **Advantages**:
 - Predictable timing
-- Non-blocking UI
+- Non-blocking shell rendering
 - Easy to start/stop
 
 ### Pattern 2: On-Demand Computation
@@ -886,17 +882,15 @@ func (a *App) simulationLoop() {
 Used by Module 2 (Crossbar), Module 4 (Circuits):
 
 ```go
-// Button handler
-func onRunMVM() {
+func (m *Model) Dispatch(action Action) error {
+    if action.Type != RunMVM {
+        return nil
+    }
     go func() {
-        // Compute on background thread
         result := computeIntensive()
-
-        // Update UI
-        fyne.Do(func() {
-            displayResult(result)
-        })
+        m.publishResult(result)
     }()
+    return nil
 }
 ```
 
@@ -917,13 +911,13 @@ Originally, each module was standalone. The unified launcher was introduced to:
 - Reduce startup time (load all modules once)
 - Enable smooth transitions between concepts
 
-### 2. Why EmbeddedApp Interface?
+### 2. Why Viewmodel Boundary?
 
-Modules could use different patterns (tabbed apps, separate windows, etc.), but the interface enforces:
-- Consistent API: `BuildContent()`, `Start()`, `Stop()`
-- Lifecycle management: modules only consume resources when active
-- Testability: each module can be tested in isolation
-- Reusability: modules could be embedded in other applications
+Modules could render directly from shell packages, but the viewmodel boundary enforces:
+- Consistent state flow: `Snapshot()` and `Dispatch(...)`
+- Shell independence: physics and simulation packages do not import UI frameworks
+- Testability: each module state transition can be tested without a renderer
+- Reusability: the same state can feed `gogpu/ui`, screenshot generation, and tagged legacy adapters
 
 ### 3. Why Preisach Model for Hysteresis?
 
@@ -1007,8 +1001,8 @@ go test -race ./...                      # Race condition detection
 # Verbose logging (3 levels: 1=info, 2=debug, 3=trace)
 ./fecim-lattice-tools -verbosity=2
 
-# Resize debugging (if FYNE_DEBUG_RESIZE=1)
-FYNE_DEBUG_RESIZE=1 ./fecim-lattice-tools
+# Default shell module debugging
+./fecim-lattice-tools --module docs --verbosity=2
 ```
 
 ---
@@ -1045,7 +1039,7 @@ FYNE_DEBUG_RESIZE=1 ./fecim-lattice-tools
 1. **Module 6 (EDA)**: Work in progress—placement algorithm incomplete
 2. **Recording**: Requires FFmpeg installed on system
 3. **No persistence**: Simulation state not saved between sessions
-4. **Fyne Wayland**: Minor window resize oscillation on some Wayland compositors (mitigated)
+4. **Legacy Fyne parity**: Kept for comparison while the default shell remains `gogpu/ui`
 
 ### Future Improvements
 
@@ -1065,7 +1059,7 @@ FYNE_DEBUG_RESIZE=1 ./fecim-lattice-tools
 - **Nature Communications 2025**: HfO₂-ZrO₂ superlattice material parameters
 - **IEEE IRPS 2022**: Endurance and reliability data
 - **Preisach Model**: Classical hysteresis modeling (research papers in module1 docs)
-- **Fyne Documentation**: https://fyne.io/
+- **gogpu/ui source**: Go module dependency used by the default shell
 
 ---
 
@@ -1073,10 +1067,10 @@ FYNE_DEBUG_RESIZE=1 ./fecim-lattice-tools
 
 When adding new features to the architecture:
 
-1. **Respect module independence**: No cross-module imports in physics/gui code
-2. **Use EmbeddedApp pattern**: New modules must implement `BuildContent()`, `Start()`, `Stop()`
-3. **Follow theme**: Use `shared/theme` colors, not hardcoded colors
-4. **Thread safety**: Always use `fyne.Do()` for UI updates from goroutines
+1. **Respect module independence**: No cross-module imports in physics or viewmodel code
+2. **Use `shared/viewmodel` for new UI state**: add snapshots and actions before shell rendering
+3. **Keep Fyne-specific theme/widget work behind `-tags legacy_fyne`**
+4. **Thread safety**: keep long-running work off the default shell render path; use legacy `fyne.Do()` only in tagged Fyne adapters
 5. **Document physics**: Physics models should have references to literature or first-principles
 6. **Test concurrency**: Run `go test -race` to catch data races
 
