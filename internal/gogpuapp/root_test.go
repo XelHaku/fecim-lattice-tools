@@ -3,11 +3,18 @@
 package gogpuapp
 
 import (
+	"encoding/binary"
+	"hash/fnv"
+	"image"
 	"os"
 	"strings"
 	"testing"
 
+	"github.com/gogpu/gg"
 	uiapp "github.com/gogpu/ui/app"
+	"github.com/gogpu/ui/event"
+	"github.com/gogpu/ui/geometry"
+	uirender "github.com/gogpu/ui/render"
 	"github.com/gogpu/ui/theme/material3"
 	"github.com/gogpu/ui/widget"
 
@@ -64,6 +71,128 @@ func TestBuildRootUsesRequestedActiveModule(t *testing.T) {
 	if root == nil {
 		t.Fatal("buildRoot returned nil")
 	}
+}
+
+func TestHeadlessRootClickingSidebarSwitchesRenderedModule(t *testing.T) {
+	harness := newHeadlessModuleSwitchHarness(t, viewmodel.ModuleDocs)
+	previousSignature := harness.renderSignature()
+	seen := map[uint64]viewmodel.ModuleID{}
+
+	for _, descriptor := range viewmodel.KnownDescriptors() {
+		signature := harness.clickSidebarModule(descriptor.ID)
+
+		if got := harness.activeModuleID(); got != descriptor.ID {
+			t.Fatalf("active module after click = %q, want %q", got, descriptor.ID)
+		}
+		if signature == previousSignature {
+			t.Fatalf("render signature did not change after clicking %q", descriptor.ID)
+		}
+		if prior, exists := seen[signature]; exists {
+			t.Fatalf("render signature for %q matched %q", descriptor.ID, prior)
+		}
+		seen[signature] = descriptor.ID
+		previousSignature = signature
+	}
+}
+
+type headlessModuleSwitchHarness struct {
+	t      *testing.T
+	app    *uiapp.App
+	model  AppModel
+	theme  *material3.Theme
+	width  int
+	height int
+}
+
+func newHeadlessModuleSwitchHarness(t *testing.T, active viewmodel.ModuleID) *headlessModuleSwitchHarness {
+	t.Helper()
+
+	h := &headlessModuleSwitchHarness{
+		t:      t,
+		app:    uiapp.New(),
+		model:  NewAppModel(active),
+		theme:  material3.New(widget.Hex(0x2F5D50)),
+		width:  1200,
+		height: 760,
+	}
+	h.app.Window().HandleResize(h.width, h.height)
+	h.rebuildRoot()
+	return h
+}
+
+func (h *headlessModuleSwitchHarness) rebuildRoot() {
+	h.app.SetRoot(buildRootWithSelect(h.model, h.theme, func(id viewmodel.ModuleID) {
+		if !h.model.SelectModule(id) {
+			h.t.Fatalf("select module %q returned false", id)
+		}
+		h.rebuildRoot()
+	}))
+}
+
+func (h *headlessModuleSwitchHarness) activeModuleID() viewmodel.ModuleID {
+	return h.model.ActiveModuleID
+}
+
+func (h *headlessModuleSwitchHarness) clickSidebarModule(id viewmodel.ModuleID) uint64 {
+	h.t.Helper()
+
+	buttons := collectSidebarButtons(h.app.Window().Root())
+	descriptors := viewmodel.KnownDescriptors()
+	if len(buttons) != len(descriptors) {
+		h.t.Fatalf("sidebar button count = %d, want %d", len(buttons), len(descriptors))
+	}
+
+	buttonIndex := -1
+	for i, descriptor := range descriptors {
+		if descriptor.ID == id {
+			buttonIndex = i
+			break
+		}
+	}
+	if buttonIndex < 0 {
+		h.t.Fatalf("unknown module %q", id)
+	}
+
+	bounds := buttons[buttonIndex].ScreenBounds()
+	center := geometry.Pt(bounds.Min.X+bounds.Width()/2, bounds.Min.Y+bounds.Height()/2)
+	h.app.HandleEvent(event.NewMouseEvent(event.MousePress, event.ButtonLeft, event.ButtonStateLeft, center, center, event.ModNone))
+	h.app.HandleEvent(event.NewMouseEvent(event.MouseRelease, event.ButtonLeft, 0, center, center, event.ModNone))
+	return h.renderSignature()
+}
+
+func (h *headlessModuleSwitchHarness) renderSignature() uint64 {
+	h.t.Helper()
+
+	h.app.Frame()
+	dc := gg.NewContext(h.width, h.height)
+	defer dc.Close()
+	dc.ClearWithColor(gg.RGBA{R: 0.96, G: 0.97, B: 0.96, A: 1})
+	h.app.Window().DrawTo(uirender.NewCanvas(dc, h.width, h.height))
+	if err := dc.FlushGPU(); err != nil {
+		h.t.Fatalf("flush rendered root: %v", err)
+	}
+	return imageSignature(dc.Image())
+}
+
+func imageSignature(img image.Image) uint64 {
+	bounds := img.Bounds()
+	hash := fnv.New64a()
+	var buf [8]byte
+	binary.LittleEndian.PutUint32(buf[0:4], uint32(bounds.Dx()))
+	binary.LittleEndian.PutUint32(buf[4:8], uint32(bounds.Dy()))
+	_, _ = hash.Write(buf[:])
+
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			r, g, b, a := img.At(x, y).RGBA()
+			binary.LittleEndian.PutUint16(buf[0:2], uint16(r))
+			binary.LittleEndian.PutUint16(buf[2:4], uint16(g))
+			binary.LittleEndian.PutUint16(buf[4:6], uint16(b))
+			binary.LittleEndian.PutUint16(buf[6:8], uint16(a))
+			_, _ = hash.Write(buf[:])
+		}
+	}
+	return hash.Sum64()
 }
 
 func TestOverlayRenderingUsesActiveModuleSnapshot(t *testing.T) {
