@@ -1,12 +1,17 @@
 ---
 Module: module4-circuits
 Name: Peripheral Circuits Visualizer
+Scope: Legacy Fyne adapter documentation
+Default UI Path: `internal/gogpuapp` with `shared/viewmodel` snapshots
+Legacy Build Tag: `legacy_fyne`
 Entry: ../../cmd/fecim-lattice-tools --module circuits
 Package: fecim-lattice-tools/module4-circuits/pkg/gui
 Theme: FeCIMTheme
 Architecture: Unified 3-view design with embedded interface
 Last Updated: 2026-02-11
 ---
+
+These notes describe tagged legacy Fyne adapters; default UI work belongs in `internal/gogpuapp` and `shared/viewmodel`.
 
 Conventions:
   - File paths are relative to module4-circuits unless noted

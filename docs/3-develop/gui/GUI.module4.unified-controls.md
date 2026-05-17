@@ -1,11 +1,16 @@
 ---
 Module: module4-circuits
 Name: Unified GUI Controls — Semantics, Units, and Physics Meaning
+Scope: Legacy Fyne adapter documentation
+Default UI Path: `internal/gogpuapp` with `shared/viewmodel` snapshots
+Legacy Build Tag: `legacy_fyne`
 Package: fecim-lattice-tools/module4-circuits/pkg/gui
 Primary UI File: module4-circuits/pkg/gui/tab_unified.go
 State Layer: module4-circuits/pkg/gui/device_state.go
 Last Updated: 2026-02-05
 ---
+
+These notes describe tagged legacy Fyne adapters; default UI work belongs in `internal/gogpuapp` and `shared/viewmodel`.
 
 # Module 4 Unified GUI — Control Semantics & Units (READ/WRITE/COMPUTE)
 

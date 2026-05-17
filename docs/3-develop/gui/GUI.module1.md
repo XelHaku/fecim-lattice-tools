@@ -1,10 +1,15 @@
 ---
 Module: module1-hysteresis
 Name: Hysteresis Visualizer
+Scope: Legacy Fyne adapter documentation
+Default UI Path: `internal/gogpuapp` with `shared/viewmodel` snapshots
+Legacy Build Tag: `legacy_fyne`
 Entry: cmd/hysteresis/main.go
 Package: fecim-lattice-tools/module1-hysteresis/pkg/gui
 Last Updated: 2026-02-04
 ---
+
+These notes describe tagged legacy Fyne adapters; default UI work belongs in `internal/gogpuapp` and `shared/viewmodel`.
 
 Conventions:
   - File paths are relative to module1-hysteresis unless noted

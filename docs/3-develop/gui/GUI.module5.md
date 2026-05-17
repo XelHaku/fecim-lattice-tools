@@ -1,6 +1,9 @@
 ---
 Module: module5-comparison
 Name: Technology Comparison & Technical Briefing
+Scope: Legacy Fyne adapter documentation
+Default UI Path: `internal/gogpuapp` with `shared/viewmodel` snapshots
+Legacy Build Tag: `legacy_fyne`
 Entry: ../../cmd/fecim-lattice-tools --module comparison
 Package: fecim-lattice-tools/module5-comparison/pkg/gui
 Last Updated: 2026-02-02
@@ -12,6 +15,8 @@ Description: |
   All values are model inputs for visualization and are **not** measured
   hardware specs.
 ---
+
+These notes describe tagged legacy Fyne adapters; default UI work belongs in `internal/gogpuapp` and `shared/viewmodel`.
 
 Conventions:
   - File paths are relative to module5-comparison unless noted

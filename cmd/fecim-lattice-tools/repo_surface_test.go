@@ -409,6 +409,39 @@ func TestActiveFyneDocsAreScopedToLegacyAdapters(t *testing.T) {
 	}
 }
 
+func TestModuleGuiDocsAreScopedToLegacyAdapters(t *testing.T) {
+	root := repoRootForRepoSurface()
+	files, err := filepath.Glob(filepath.Join(root, "docs/3-develop/gui/GUI.module*.md"))
+	if err != nil {
+		t.Fatalf("glob module GUI docs: %v", err)
+	}
+	if len(files) == 0 {
+		t.Fatal("expected module GUI docs to exist")
+	}
+	mustContain := []string{
+		"Scope: Legacy Fyne adapter documentation",
+		"Default UI Path: `internal/gogpuapp` with `shared/viewmodel` snapshots",
+		"Legacy Build Tag: `legacy_fyne`",
+		"These notes describe tagged legacy Fyne adapters; default UI work belongs in `internal/gogpuapp` and `shared/viewmodel`.",
+	}
+	for _, file := range files {
+		rel, err := filepath.Rel(root, file)
+		if err != nil {
+			t.Fatalf("rel %s: %v", file, err)
+		}
+		body, err := os.ReadFile(file)
+		if err != nil {
+			t.Fatalf("read %s: %v", rel, err)
+		}
+		text := string(body)
+		for _, phrase := range mustContain {
+			if !strings.Contains(text, phrase) {
+				t.Errorf("%s must present %q", rel, phrase)
+			}
+		}
+	}
+}
+
 func listRepoPackages(t *testing.T, root string) []string {
 	t.Helper()
 	cmd := exec.Command("go", "list", "-e", "./...")

@@ -1,6 +1,9 @@
 ---
 Module: module7-docs
 Name: FeCIM Documentation Viewer
+Scope: Legacy Fyne adapter documentation
+Default UI Path: `internal/gogpuapp` with `shared/viewmodel` snapshots
+Legacy Build Tag: `legacy_fyne`
 Entry: N/A (embedded only, accessed via toolbar icon)
 Package: fecim-lattice-tools/module7-docs/pkg/gui
 Last Updated: 2026-02-02
@@ -14,6 +17,8 @@ Description: |
   Category detection provides visual indicators via icons and metadata badges.
   No physics simulation - utility module only.
 ---
+
+These notes describe tagged legacy Fyne adapters; default UI work belongs in `internal/gogpuapp` and `shared/viewmodel`.
 
 Conventions:
   - File paths are relative to module7-docs unless noted
