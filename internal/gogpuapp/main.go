@@ -21,8 +21,6 @@ import (
 	"github.com/gogpu/ui/widget"
 )
 
-var globalPorts []viewmodel.ModulePort
-
 type Options struct {
 	ActiveModuleID viewmodel.ModuleID
 }
@@ -30,7 +28,7 @@ type Options struct {
 func Run(options Options) error {
 	model := NewAppModel(options.ActiveModuleID)
 	spec := model.Spec
-	globalPorts = model.Ports
+	activePort := model.ActivePort()
 
 	gpuApp := gogpu.NewApp(gogpu.DefaultConfig().
 		WithTitle(spec.Title).
@@ -86,7 +84,9 @@ func Run(options Options) error {
 			cc.DrawRectangle(0, 0, float64(cw), float64(ch))
 			cc.Fill()
 			app.Window().DrawTo(uirender.NewCanvas(cc, cw, ch))
-			drawModuleOverlays(cc, cw, ch)
+			if activePort != nil {
+				drawModuleOverlays(cc, activePort.Snapshot(), cw, ch)
+			}
 		}); err != nil {
 			log.Printf("draw: %v", err)
 			return
@@ -100,23 +100,20 @@ func Run(options Options) error {
 	return gpuApp.Run()
 }
 
-func drawModuleOverlays(cc *gg.Context, w, h int) {
-	for _, port := range globalPorts {
-		snapshot := port.Snapshot()
-		switch snapshot.Descriptor.ID {
-		case viewmodel.ModuleHysteresis:
-			for _, plot := range snapshot.Plots {
-				if plot.ID == "pe_loop" && len(plot.Series) > 0 {
-					pts := make([]design.PlotPoint, len(plot.Series[0].Points))
-					for i, p := range plot.Series[0].Points {
-						pts[i] = design.PlotPoint{X: p.X, Y: p.Y}
-					}
-					drawHysteresisOverlay(cc, pts, w, h)
+func drawModuleOverlays(cc *gg.Context, snapshot viewmodel.ModuleSnapshot, w, h int) {
+	switch snapshot.Descriptor.ID {
+	case viewmodel.ModuleHysteresis:
+		for _, plot := range snapshot.Plots {
+			if plot.ID == "pe_loop" && len(plot.Series) > 0 {
+				pts := make([]design.PlotPoint, len(plot.Series[0].Points))
+				for i, p := range plot.Series[0].Points {
+					pts[i] = design.PlotPoint{X: p.X, Y: p.Y}
 				}
+				drawHysteresisOverlay(cc, pts, w, h)
 			}
-		case viewmodel.ModuleCrossbar:
-			drawCrossbarOverlay(cc, 8, 8, w, h)
 		}
+	case viewmodel.ModuleCrossbar:
+		drawCrossbarOverlay(cc, snapshot, 8, 8, w, h)
 	}
 }
 
@@ -136,34 +133,17 @@ func drawHysteresisOverlay(cc *gg.Context, points []design.PlotPoint, w, h int) 
 	})
 }
 
-func drawCrossbarOverlay(cc *gg.Context, rows, cols, w, h int) {
-	for _, port := range globalPorts {
-		if port.Descriptor().ID == viewmodel.ModuleCrossbar {
-			snapshot := port.Snapshot()
-			for _, plot := range snapshot.Plots {
-				if plot.ID == "conductance_matrix" && len(plot.Series) > 0 {
-					data := make([][]float64, rows)
-					for i := range rows {
-						data[i] = make([]float64, cols)
-					}
-					for _, p := range plot.Series[0].Points {
-						r, c := int(p.Y), int(p.X)
-						if r >= 0 && r < rows && c >= 0 && c < cols {
-							data[r][c] = p.V
-						}
-					}
-					fecimrender.DrawHeatmap(cc, fecimrender.HeatmapConfig{
-						Data: data, X: 260, Y: 100, CellSize: 24,
-						Title: "Crossbar Conductance Matrix",
-					})
-					return
-				}
-			}
+func drawCrossbarOverlay(cc *gg.Context, snapshot viewmodel.ModuleSnapshot, rows, cols, w, h int) {
+	for _, plot := range snapshot.Plots {
+		if plot.ID == "conductance_matrix" && len(plot.Series) > 0 {
 			data := make([][]float64, rows)
 			for i := range rows {
 				data[i] = make([]float64, cols)
-				for j := range cols {
-					data[i][j] = float64(30 - ((i*cols + j) % 30) + i)
+			}
+			for _, p := range plot.Series[0].Points {
+				r, c := int(p.Y), int(p.X)
+				if r >= 0 && r < rows && c >= 0 && c < cols {
+					data[r][c] = p.V
 				}
 			}
 			fecimrender.DrawHeatmap(cc, fecimrender.HeatmapConfig{
@@ -173,6 +153,17 @@ func drawCrossbarOverlay(cc *gg.Context, rows, cols, w, h int) {
 			return
 		}
 	}
+	data := make([][]float64, rows)
+	for i := range rows {
+		data[i] = make([]float64, cols)
+		for j := range cols {
+			data[i][j] = float64(30 - ((i*cols + j) % 30) + i)
+		}
+	}
+	fecimrender.DrawHeatmap(cc, fecimrender.HeatmapConfig{
+		Data: data, X: 260, Y: 100, CellSize: 24,
+		Title: "Crossbar Conductance Matrix",
+	})
 }
 
 func buildRoot(model AppModel, theme *material3.Theme) widget.Widget {

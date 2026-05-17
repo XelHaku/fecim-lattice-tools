@@ -3,6 +3,8 @@
 package gogpuapp
 
 import (
+	"os"
+	"strings"
 	"testing"
 
 	uiapp "github.com/gogpu/ui/app"
@@ -61,5 +63,36 @@ func TestBuildRootUsesRequestedActiveModule(t *testing.T) {
 	root := buildRoot(model, material3.New(widget.Hex(0x2F5D50)))
 	if root == nil {
 		t.Fatal("buildRoot returned nil")
+	}
+}
+
+func TestOverlayRenderingUsesActiveModuleSnapshot(t *testing.T) {
+	body, err := os.ReadFile("main.go")
+	if err != nil {
+		t.Fatalf("read main.go: %v", err)
+	}
+	text := string(body)
+
+	forbidden := []string{
+		"var globalPorts",
+		"globalPorts = model.Ports",
+		"for _, port := range globalPorts",
+	}
+	for _, phrase := range forbidden {
+		if strings.Contains(text, phrase) {
+			t.Errorf("overlay rendering must not use package-global module ports: found %q", phrase)
+		}
+	}
+
+	required := []string{
+		"activePort := model.ActivePort()",
+		"drawModuleOverlays(cc, activePort.Snapshot(), cw, ch)",
+		"func drawModuleOverlays(cc *gg.Context, snapshot viewmodel.ModuleSnapshot, w, h int)",
+		"func drawCrossbarOverlay(cc *gg.Context, snapshot viewmodel.ModuleSnapshot, rows, cols, w, h int)",
+	}
+	for _, phrase := range required {
+		if !strings.Contains(text, phrase) {
+			t.Errorf("overlay rendering must be active-snapshot scoped: missing %q", phrase)
+		}
 	}
 }
