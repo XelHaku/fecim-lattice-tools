@@ -55,11 +55,11 @@ type PlotSeries struct {
 }
 
 type PlotData struct {
-	ID       string
-	Title    string
-	XLabel   string
-	YLabel   string
-	Series   []PlotSeries
+	ID     string
+	Title  string
+	XLabel string
+	YLabel string
+	Series []PlotSeries
 }
 
 type EvidenceClass string
@@ -106,12 +106,12 @@ type ModulePort interface {
 
 func KnownDescriptors() []ModuleDescriptor {
 	return []ModuleDescriptor{
-		{ID: ModuleHysteresis, Title: "FeCIM Hysteresis Simulation", Description: "P-E curves, Preisach model, Landau-Khalatnikov solver, and material presets.", Status: StatusPlaceholder},
-		{ID: ModuleCrossbar, Title: "FeCIM Crossbar Array Visualization", Description: "Matrix-vector multiply, IR drop, sneak paths, drift, and conductance quantization.", Status: StatusPlaceholder},
-		{ID: ModuleMNIST, Title: "FeCIM MNIST Neural Network", Description: "Educational CIM inference pipeline with quantized weights and reproducible metrics.", Status: StatusPlaceholder},
-		{ID: ModuleCircuits, Title: "FeCIM Peripheral Circuits Visualizer", Description: "DAC, ADC, TIA, read path, write path, and ISPP circuit behavior.", Status: StatusPlaceholder},
+		{ID: ModuleHysteresis, Title: "FeCIM Hysteresis Simulation", Description: "P-E curves, Preisach model, Landau-Khalatnikov solver, and material presets.", Status: StatusFunctional},
+		{ID: ModuleCrossbar, Title: "FeCIM Crossbar Array Visualization", Description: "Matrix-vector multiply, IR drop, sneak paths, drift, and conductance quantization.", Status: StatusFunctional},
+		{ID: ModuleMNIST, Title: "FeCIM MNIST Neural Network", Description: "Educational CIM inference pipeline with quantized weights and reproducible metrics.", Status: StatusFunctional},
+		{ID: ModuleCircuits, Title: "FeCIM Peripheral Circuits Visualizer", Description: "DAC, ADC, TIA, read path, write path, and ISPP circuit behavior.", Status: StatusFunctional},
 		{ID: ModuleComparison, Title: "FeCIM Comparison", Description: "Evidence-first technology comparison and scenario analysis.", Status: StatusFunctional},
-		{ID: ModuleEDA, Title: "FeCIM EDA Design Suite", Description: "SPICE, Verilog, Liberty, DEF, LEF, and OpenLane-oriented export workflows.", Status: StatusPlaceholder},
-		{ID: ModuleDocs, Title: "Documentation", Description: "Curriculum, validation references, trust boundaries, and research notes.", Status: StatusPlaceholder},
+		{ID: ModuleEDA, Title: "FeCIM EDA Design Suite", Description: "SPICE, Verilog, Liberty, DEF, LEF, and OpenLane-oriented export workflows.", Status: StatusFunctional},
+		{ID: ModuleDocs, Title: "Documentation", Description: "Curriculum, validation references, trust boundaries, and research notes.", Status: StatusFunctional},
 	}
 }

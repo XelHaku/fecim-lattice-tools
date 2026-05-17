@@ -35,7 +35,7 @@ func DefaultAppSpec() AppSpec {
 }
 
 func NewAppModel(active viewmodel.ModuleID) AppModel {
-	ports := BuildPlaceholderPorts()
+	ports := BuildAppPorts()
 	activeIndex := 0
 	if active != "" {
 		for i, p := range ports {
@@ -63,7 +63,7 @@ func (m AppModel) ActivePort() viewmodel.ModulePort {
 	return m.Ports[0]
 }
 
-func BuildPlaceholderPorts() []viewmodel.ModulePort {
+func BuildAppPorts() []viewmodel.ModulePort {
 	descriptors := viewmodel.KnownDescriptors()
 	ports := make([]viewmodel.ModulePort, 0, len(descriptors))
 	for _, descriptor := range descriptors {
@@ -82,14 +82,6 @@ func BuildPlaceholderPorts() []viewmodel.ModulePort {
 			ports = append(ports, mnistvm.New())
 		case viewmodel.ModuleDocs:
 			ports = append(ports, docsvm.New())
-		default:
-			ports = append(ports, viewmodel.NewStaticModule(descriptor, []viewmodel.Section{
-				{
-					ID:    "migration-status",
-					Title: "Migration Status",
-					Body:  "This module is represented by a UI-neutral placeholder while the gogpu/ui shell reaches parity with the current Fyne implementation.",
-				},
-			}))
 		}
 	}
 	return ports

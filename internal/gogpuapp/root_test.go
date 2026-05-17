@@ -36,7 +36,7 @@ func TestBuildRoot_RendersWithRealComparisonPort(t *testing.T) {
 		}
 	}
 	if !foundComparison {
-		t.Fatal("BuildPlaceholderPorts did not include a comparison port")
+		t.Fatal("BuildAppPorts did not include a comparison port")
 	}
 
 	root := buildRoot(model, material3.New(widget.Hex(0x2F5D50)))

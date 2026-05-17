@@ -34,6 +34,14 @@ func TestKnownDescriptorsCoverSevenModules(t *testing.T) {
 	}
 }
 
+func TestKnownDescriptorsAreFunctionalForReleasedGogpuShell(t *testing.T) {
+	for _, descriptor := range KnownDescriptors() {
+		if descriptor.Status != StatusFunctional {
+			t.Errorf("descriptor %s Status = %q, want %q", descriptor.ID, descriptor.Status, StatusFunctional)
+		}
+	}
+}
+
 func TestStaticModuleSnapshotIsDeterministic(t *testing.T) {
 	descriptor := ModuleDescriptor{
 		ID:          ModuleDocs,

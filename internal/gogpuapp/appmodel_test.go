@@ -34,8 +34,8 @@ func TestAppModelSelectsRequestedModule(t *testing.T) {
 	}
 }
 
-func TestBuildPlaceholderPortsCoversAllKnownDescriptors(t *testing.T) {
-	ports := BuildPlaceholderPorts()
+func TestBuildAppPortsCoversAllKnownDescriptors(t *testing.T) {
+	ports := BuildAppPorts()
 	descriptors := viewmodel.KnownDescriptors()
 
 	if len(ports) != len(descriptors) {
@@ -67,27 +67,19 @@ func TestBuildPlaceholderPortsCoversAllKnownDescriptors(t *testing.T) {
 	}
 }
 
-func TestBuildPlaceholderPorts_ComparisonIsFunctional(t *testing.T) {
-	ports := BuildPlaceholderPorts()
-	var got viewmodel.ModulePort
+func TestBuildAppPortsAllReleasedModulesAreFunctional(t *testing.T) {
+	ports := BuildAppPorts()
+	if len(ports) == 0 {
+		t.Fatal("BuildAppPorts returned no ports")
+	}
 	for _, p := range ports {
-		if p.Descriptor().ID == viewmodel.ModuleComparison {
-			got = p
-			break
+		desc := p.Descriptor()
+		if desc.Status != viewmodel.StatusFunctional {
+			t.Errorf("port %s Status = %q, want %q", desc.ID, desc.Status, viewmodel.StatusFunctional)
 		}
-	}
-	if got == nil {
-		t.Fatal("no port found for ModuleComparison")
-	}
-	if got.Descriptor().Status != viewmodel.StatusFunctional {
-		t.Errorf("comparison port Status = %q, want %q (no longer placeholder)",
-			got.Descriptor().Status, viewmodel.StatusFunctional)
-	}
-	snap := got.Snapshot()
-	if len(snap.Sections) < 3 {
-		t.Errorf("comparison snapshot has %d sections, want >= 3 (one per canonical architecture)", len(snap.Sections))
-	}
-	if len(snap.Metrics) == 0 {
-		t.Error("comparison snapshot has no metrics")
+		snap := p.Snapshot()
+		if snap.Descriptor.Status != viewmodel.StatusFunctional {
+			t.Errorf("port %s snapshot Status = %q, want %q", desc.ID, snap.Descriptor.Status, viewmodel.StatusFunctional)
+		}
 	}
 }
