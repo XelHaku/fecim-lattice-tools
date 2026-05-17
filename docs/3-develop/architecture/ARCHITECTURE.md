@@ -26,9 +26,9 @@ The main application (`cmd/fecim-lattice-tools/main.go`) implements a **unified 
 ┌─────────────────────────────────────────────┐
 │  FeCIM Lattice Tools (main.go)              │
 │  ────────────────────────────────────────   │
-│  Fyne App                                   │
-│  ├─ Window (1400x900 default, resizable)   │
-│  └─ ContentStack (8 views)                  │
+│  gogpu/ui App                               │
+│  ├─ Shell (zero-CGO default)                │
+│  └─ Module views (8 views)                  │
 │     ├─ View 0: Home/Launcher               │
 │     ├─ View 1: Module 1 (Hysteresis)       │
 │     ├─ View 2: Module 2 (Crossbar)         │
@@ -49,13 +49,17 @@ The main application (`cmd/fecim-lattice-tools/main.go`) implements a **unified 
 
 The launcher dynamically loads demo cards and manages lifecycle—modules only run when their tab is active.
 
+Default shell: `gogpu/ui`.
+UI-neutral state: `shared/viewmodel`.
+Legacy Fyne shell: `cmd/fecim-lattice-tools-fyne` with `-tags legacy_fyne`.
+
 ### The 7-Module Story
 
 Each module demonstrates a layer in the FeCIM stack:
 
-| Module | Purpose | Physics | GUI Framework | Status |
+| Module | Purpose | Physics | Default UI Surface | Status |
 |--------|---------|---------|---------------|--------|
-| **1. Hysteresis** | Memory cell physics | Preisach (GUI) + Landau‑Khalatnikov (headless) | Real-time P-E curve + ISPP demo | Stable |
+| **1. Hysteresis** | Memory cell physics | Preisach (interactive) + Landau‑Khalatnikov (headless) | Real-time P-E curve + ISPP demo | Stable |
 | **2. Crossbar** | Matrix-vector multiply | Ohm's law, IR drop, sneak paths, drift | Heatmap with MVM operations | Stable |
 | **3. MNIST** | Neural network application | Network inference with quantized weights | Digit drawing + recognition | Stable |
 | **4. Circuits** | Peripheral electronics | DAC/ADC/TIA circuit modeling | Schematic diagrams, waveforms | Stable |
@@ -142,27 +146,18 @@ Each module demonstrates a layer in the FeCIM stack:
 
 ## Core Abstractions
 
-### 1. EmbeddedApp Interface
+### 1. Viewmodel Interface
 
-All modules implement the same interface for seamless integration:
+Default UI integration flows through UI-neutral viewmodel state. Shell packages render snapshots and dispatch actions; simulation packages do not import either `gogpu/ui` or Fyne.
 
 ```go
-// Pseudo-interface (Go doesn't formalize this, but all modules follow it)
-type EmbeddedApp interface {
-    // BuildContent returns the module UI for the current host app/window.
-    // Implementations must be idempotent for the same embedding context and
-    // may rebuild when the host context changes.
-    BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject
-
-    // Start begins the module's main loop (called when tab becomes active)
-    Start()
-
-    // Stop ends the module's main loop (called when navigating away)
-    Stop()
+type ModuleViewModel interface {
+    Snapshot() ModuleState
+    Dispatch(action ModuleAction) error
 }
 ```
 
-Each module has a concrete implementation:
+Tagged legacy Fyne adapters keep the older embedded app lifecycle behind `-tags legacy_fyne` for parity checks:
 
 | Module | Type | Location |
 |--------|------|----------|
@@ -181,45 +176,26 @@ curriculum overview, module index, and research index.
 
 ### 2. Application Composition
 
-The main app creates all modules and manages their lifecycle:
+The default app creates viewmodels and binds them to `gogpu/ui` renderers:
 
 ```go
 // cmd/fecim-lattice-tools/main.go (simplified)
 
 type DemoApp struct {
-    demo1 *demo1gui.EmbeddedApp           // Hysteresis
-    demo2 *demo2gui.EmbeddedCrossbarApp   // Crossbar
-    demo3 *demo3gui.EmbeddedDualModeApp   // MNIST
-    demo4 *demo4gui.EmbeddedCircuitsApp   // Circuits
-    demo5 *demo5gui.EmbeddedComparisonApp // Comparison
-    demo6 *demo6gui.EmbeddedEDAApp        // EDA
+    hysteresis *hysteresis.Model
+    crossbar   *crossbar.Model
+    mnist      *mnist.Model
 }
 
 // Usage
 demos := &DemoApp{
-    demo1: demo1gui.NewEmbeddedApp(),
-    demo2: demo2gui.NewEmbeddedCrossbarApp(),
+    hysteresis: hysteresis.NewModel(),
+    crossbar:   crossbar.NewModel(),
     // ...
 }
 
-// Bind each module to the current host app/window
-views := []fyne.CanvasObject{
-    launcherContent,
-    container.NewMax(demos.demo1.BuildContent(fyneApp, window)),
-    container.NewMax(demos.demo2.BuildContent(fyneApp, window)),
-    // ...
-}
-
-// Create stack
-contentStack := container.NewStack(views...)
-
-// Lifecycle management
-onViewChange = func(index int) {
-    // Stop old demo
-    demos.demo1.Stop() // if was running
-    // Start new demo
-    demos.demo1.Start() // if now active
-}
+// The shell renders snapshots and dispatches typed actions.
+app.Run(demos.hysteresis, demos.crossbar, demos.mnist)
 ```
 
 This pattern ensures:
@@ -228,8 +204,8 @@ This pattern ensures:
 - **Lazy execution**: Only active modules consume CPU
 - **Clean transitions**: Proper cleanup when switching tabs
 
-Most embedded modules implement this through `shared/widgets/EmbeddedAppBase.BuildOrReuseContent(...)`,
-which centralizes host-context tracking and keeps `BuildContent(...)` deterministic across repeated calls.
+Legacy Fyne modules implement similar lifecycle semantics through `shared/widgets/EmbeddedAppBase`,
+but that adapter layer is not the canonical UI boundary for new work.
 
 ---
 
@@ -534,19 +510,18 @@ func (a *Array) ComputeMVM(input []float64) []float64 {
 
 ## GUI Layer
 
-### 1. Fyne Framework
+### 1. gogpu/ui Default Shell
 
-All modules use **Fyne**, a modern Go GUI framework with these characteristics:
+The canonical UI shell uses `gogpu/ui` and UI-neutral viewmodels:
 
-- **Cross-platform**: Windows, macOS, Linux, iOS, Android
-- **Canvas-based**: Raw drawing with pixel-level control
-- **Widget-based**: Pre-built components (buttons, sliders, containers)
-- **Responsive**: Scales to different screen sizes
-- **Thread-safe**: All UI updates via `fyne.Do()`
+- **Zero-CGO default**: `CGO_ENABLED=0 go build ./cmd/fecim-lattice-tools`
+- **Viewmodel-driven**: shell reads `shared/viewmodel` snapshots and dispatches actions
+- **Thin rendering layer**: physics, validation, and export packages remain UI-neutral
+- **Legacy boundary**: Fyne code stays behind `-tags legacy_fyne`
 
-### 2. Thread Safety Pattern
+### 2. Legacy Fyne Thread Safety Pattern
 
-Every goroutine that updates the UI must use `fyne.Do()`:
+Tagged legacy Fyne adapters must use `fyne.Do()` when a goroutine updates a widget:
 
 ```go
 // ✓ CORRECT: Update from goroutine
@@ -564,30 +539,19 @@ go func() {
 }()
 ```
 
-All modules follow this pattern religiously.
+Default `gogpu/ui` work should avoid direct widget mutation from simulation code; pass state through viewmodels instead.
 
-### 3. Shared Theme
+### 3. Shared Presentation State
 
-The `shared/theme` package provides consistent branding across all modules:
+Default presentation state lives in `shared/viewmodel`; legacy Fyne-specific colors remain in `shared/theme`:
 
 ```go
-// shared/theme/theme.go
+// shared/viewmodel/<module>/state.go
 
-var (
-    ColorPrimary = color.RGBA{0, 212, 255, 255}   // Cyan accent
-    ColorBackground = color.RGBA{0, 50, 100, 255} // Dark blue
-    ColorText = color.RGBA{240, 244, 248, 255}    // Off-white
-    ColorSuccess = color.RGBA{87, 204, 153, 255}  // Green
-    ColorError = color.RGBA{255, 107, 107, 255}   // Red
-    // ...
-)
-
-// Implements fyne.Theme
-type FeCIMTheme struct{}
-
-func (t *FeCIMTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
-    // Maps Fyne theme requests to FeCIM colors
-    // Result: Consistent dark blue + cyan theme across all tabs
+type State struct {
+    Title   string
+    Metrics []Metric
+    Status  Status
 }
 ```
 
@@ -597,7 +561,7 @@ func (t *FeCIMTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) 
 
 ### 4. Adaptive Layout for Responsive UI
 
-The `shared/widgets/AdaptiveLayout` class enables responsive design:
+Default responsive behavior belongs in `internal/gogpuapp`; the old `shared/widgets/AdaptiveLayout` remains tagged legacy Fyne code:
 
 ```go
 // shared/widgets/adaptive_layout.go
@@ -971,7 +935,7 @@ The Preisach model (vs. simpler Tanh-based models) provides:
 
 ### 4. Why Canvas-Based Rendering?
 
-Fyne provides both high-level widgets and low-level canvas. Modules use canvas for:
+The UI shell needs both high-level controls and low-level drawing. Modules use canvas-like rendering for:
 - **High-level**: Lists, text, buttons (fast to code)
 - **Low-level**: Heatmaps, plots, custom shapes (custom widgets)
 
@@ -992,7 +956,8 @@ The application doesn't save/restore simulation state between sessions because:
 ### Go Modules (go.mod)
 
 ```
-fyne v2              - GUI framework
+gogpu/ui             - Default zero-CGO UI shell
+fyne v2              - Tagged legacy Fyne parity shell
 image/* (stdlib)     - Image processing
 math (stdlib)        - Numerics
 sync (stdlib)        - Concurrency primitives

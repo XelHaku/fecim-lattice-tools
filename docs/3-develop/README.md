@@ -12,7 +12,7 @@ git clone https://github.com/[your-repo]/fecim-lattice-tools.git
 cd fecim-lattice-tools
 
 # Install dev dependencies (Linux)
-sudo apt-get install -y gcc libgl1-mesa-dev xorg-dev
+sudo apt-get install -y git
 
 # Build
 go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools
@@ -23,6 +23,10 @@ go test ./...
 # Run with race detection
 go test -race ./...
 ```
+
+Default UI shell: `gogpu/ui`. The canonical app builds with `CGO_ENABLED=0` and routes UI state through `shared/viewmodel`.
+
+Legacy Fyne shell: `cmd/fecim-lattice-tools-fyne` with `-tags legacy_fyne`. Use it only for temporary parity checks or legacy GUI maintenance.
 
 ---
 
@@ -50,13 +54,14 @@ go test -race ./...
 ```
 fecim-lattice-tools/
 ├── cmd/
-│   ├── fecim-lattice-tools/    # Main unified entry point
+│   ├── fecim-lattice-tools/    # Default zero-CGO gogpu/ui entry point
+│   ├── fecim-lattice-tools-fyne/ # Tagged legacy Fyne entry point
 │   └── latex-svg/              # LaTeX-to-SVG utility
 ├── module1-hysteresis/         # P-E curves, Preisach model
 │   └── pkg/
 │       ├── ferroelectric/      # Physics engine
 │       ├── controller/         # ISPP write controller
-│       └── gui/                # Module GUI
+│       └── gui/                # Tagged legacy Fyne adapter
 ├── module2-crossbar/           # MVM and non-idealities
 │   └── pkg/crossbar/           # Crossbar array simulation
 ├── module3-mnist/              # Neural network inference
@@ -64,15 +69,16 @@ fecim-lattice-tools/
 ├── module4-circuits/           # Peripheral circuits
 │   └── pkg/
 │       ├── arraysim/           # Array simulation
-│       └── gui/                # Circuits GUI
+│       └── gui/                # Tagged legacy Fyne adapter
 ├── module5-comparison/         # Technology comparison
 ├── module6-eda/                # EDA tools
 ├── shared/
 │   ├── physics/                # Core physics models
 │   ├── peripherals/            # DAC, ADC, TIA models
+│   ├── viewmodel/              # UI-neutral state bridge
 │   ├── io/                     # File I/O utilities
-│   ├── widgets/                # Reusable GUI components
-│   ├── theme/                  # Color and style system
+│   ├── widgets/                # Tagged legacy Fyne components
+│   ├── theme/                  # Tagged legacy Fyne styling
 │   └── logging/                # Structured logging
 └── data/
     └── calibrations/           # Material calibration data
@@ -80,24 +86,25 @@ fecim-lattice-tools/
 
 ### Key Design Patterns
 
-**Embedded App Interface**
+**UI Boundary**
 
-Every module implements this interface to plug into the unified app:
+Every module exposes UI-neutral state through `shared/viewmodel`. The default `gogpu/ui` shell renders those state snapshots and dispatches actions back to the viewmodel layer:
 
 ```go
-type EmbeddedApp interface {
-    BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject
-    Start()
-    Stop()
+type ModuleViewModel interface {
+    Snapshot() ModuleState
+    Dispatch(action ModuleAction) error
 }
 ```
 
-**Thread-Safe UI Updates**
+Tagged legacy Fyne adapters may still use `BuildContent`, `Start`, and `Stop`, but that API is not the canonical module contract for new UI work.
 
-All UI updates from goroutines must use `fyne.Do()`:
+**Thread-Safe UI State**
+
+Default UI work should move data through viewmodel snapshots instead of mutating widgets from simulation goroutines. Tagged legacy Fyne adapters still need `fyne.Do()` when a goroutine touches a Fyne widget:
 
 ```go
-// CORRECT
+// Legacy Fyne adapter only
 go func() {
     result := heavyComputation()
     fyne.Do(func() {
@@ -134,7 +141,8 @@ This is configurable per material. See [api-reference.md#quantization-functions]
 | `shared/physics` | `fecim-lattice-tools/shared/physics` | Material models, L-K solver, WriteController |
 | `shared/peripherals` | `fecim-lattice-tools/shared/peripherals` | DAC, ADC, TIA, charge pump |
 | `shared/io` | `fecim-lattice-tools/shared/io` | JSON and file utilities |
-| `shared/widgets` | `fecim-lattice-tools/shared/widgets` | Fyne GUI components |
+| `shared/viewmodel` | `fecim-lattice-tools/shared/viewmodel` | UI-neutral state and actions |
+| `shared/widgets` | `fecim-lattice-tools/shared/widgets` | Tagged legacy Fyne components |
 | `ferroelectric` | `fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric` | Hysteresis, Preisach model |
 | `crossbar` | `fecim-lattice-tools/module2-crossbar/pkg/crossbar` | Crossbar array simulation |
 | `core` (MNIST) | `fecim-lattice-tools/module3-mnist/pkg/core` | Neural network inference |
@@ -234,10 +242,10 @@ go test -race ./...
 
 ### Key Rules
 
-1. **UI from goroutines:** Always wrap in `fyne.Do(func() { ... })`
+1. **UI boundary:** Keep simulation and viewmodel packages free of Fyne and `gogpu/ui` imports
 2. **30-level quantization:** Use `crossbar.QuantizeTo30Levels(value)` for canonical form
-3. **Embedded interface:** Implement `BuildContent()`, `Start()`, `Stop()` for all modules
-4. **No blocking on main thread:** Use goroutines for computation, `fyne.Do()` for results
+3. **Default shell:** Implement new UI behavior in `internal/gogpuapp` using `shared/viewmodel`
+4. **Legacy Fyne:** Use `fyne.Do(func() { ... })` only in `-tags legacy_fyne` adapters
 5. **No binaries committed:** Never commit compiled binaries
 
 ### Commit Format
@@ -257,11 +265,15 @@ Full standards: [code-quality.md](code-quality.md)
 
 ---
 
-## 🖥️ GUI Development
+## 🖥️ UI Development
 
-### Fyne Rules
+### Default gogpu/ui Rules
 
-The Fyne GUI toolkit requires all widget operations from goroutines to go through `fyne.Do()`. This is the most common source of bugs:
+The canonical shell lives under `internal/gogpuapp` and renders state from `shared/viewmodel`. New UI work should keep business logic and simulation state out of shell packages.
+
+### Legacy Fyne Rules
+
+Tagged legacy Fyne adapters require all widget operations from goroutines to go through `fyne.Do()`:
 
 ```go
 // The safe pattern for long-running goroutines:
@@ -277,36 +289,31 @@ go func() {
 }()
 ```
 
-### Module GUI Pattern
+### Module Viewmodel Pattern
 
-Each module's GUI is in `module*/pkg/gui/`. The standard pattern:
+Each module's canonical UI state belongs in `shared/viewmodel/<module>/`. The standard shape is:
 
 ```go
-type App struct {
-    widgets.EmbeddedAppBase
-    // module-specific fields
+type State struct {
+    // renderable fields for the shell
 }
 
-func (a *App) BuildContent(fyneApp fyne.App, w fyne.Window) fyne.CanvasObject {
-    return a.EmbeddedAppBase.BuildOrReuseContent(fyneApp, w, func() fyne.CanvasObject {
-        // build and return content
-    })
+type Model struct {
+    // module-specific state and services
 }
 
-func (a *App) Start() {
-    a.EmbeddedAppBase.Start()
-    // start background goroutines
+func (m *Model) Snapshot() State {
+    // return immutable render state
 }
 
-func (a *App) Stop() {
-    a.EmbeddedAppBase.Stop()
-    // signal goroutines to exit
+func (m *Model) Dispatch(action Action) error {
+    // update model state from shell events
 }
 ```
 
 GUI development guide: [gui/](gui/)
 
-Fyne-specific notes: [gui/FYNE_NOTES.md](gui/FYNE_NOTES.md)
+Fyne-specific notes for tagged legacy adapters: [gui/FYNE_NOTES.md](gui/FYNE_NOTES.md)
 
 ---
 
@@ -323,8 +330,8 @@ Fyne-specific notes: [gui/FYNE_NOTES.md](gui/FYNE_NOTES.md)
 ### Add a New Module
 
 1. Create `moduleN-name/` directory with standard structure
-2. Implement `EmbeddedApp` interface in `pkg/gui/app.go`
-3. Register in `cmd/fecim-lattice-tools/main.go`
+2. Add a UI-neutral viewmodel under `shared/viewmodel/<module>/`
+3. Register the default shell view in `internal/gogpuapp`
 4. Add package docs in `pkg/*/doc.go` files
 5. Write tests covering core functionality
 6. Document in `docs/2-learn/moduleN-name/`
@@ -381,10 +388,9 @@ go tool pprof http://localhost:6060/debug/pprof/profile?seconds=30
 
 | Error | Cause | Fix |
 |-------|-------|-----|
-| Random panics on tab switch | UI update outside `fyne.Do()` | Wrap in `fyne.Do(func() {...})` |
-| Window resize loop | Wayland/Sway tiling WM | Use `GDK_BACKEND=x11` |
-| Black screen | Missing OpenGL | Try `FYNE_NO_GL=1` |
-| Build fails with CGO error | Missing GCC/libs | Install build dependencies |
+| Default app build unexpectedly needs CGO | A default package imported legacy Fyne | Move the import behind `-tags legacy_fyne` |
+| Stale UI state | Viewmodel snapshot not refreshed after action | Update the model action and focused viewmodel test |
+| Legacy Fyne tab panic | Widget update outside `fyne.Do()` | Wrap the legacy adapter mutation in `fyne.Do(func() {...})` |
 
 ---
 
@@ -432,7 +438,8 @@ Key dependencies (see `go.mod`):
 
 | Dependency | Version | Purpose |
 |------------|---------|---------|
-| `fyne.io/fyne/v2` | 2.7.2 | GUI framework |
+| `github.com/gogpu/ui` | current module pin | Default zero-CGO UI shell |
+| `fyne.io/fyne/v2` | 2.7.2 | Tagged legacy Fyne parity shell |
 | `golang.org/x/image` | latest | Image processing |
 
 Dependency management:
@@ -441,8 +448,7 @@ Dependency management:
 go get -u ./...
 go mod tidy
 
-# Downgrade a dependency
-go get fyne.io/fyne/v2@v2.7.0
+# Legacy Fyne dependency changes should stay behind -tags legacy_fyne
 ```
 
 ---
@@ -462,7 +468,7 @@ go get fyne.io/fyne/v2@v2.7.0
 
 - Additional ferroelectric material parameters
 - Physics model improvements
-- GUI accessibility enhancements
+- UI accessibility enhancements
 - Research paper indexing
 - Documentation improvements
 
@@ -476,7 +482,7 @@ Full contribution guide: [../../CONTRIBUTING.md](../../CONTRIBUTING.md)
 - [API Reference](api-reference.md) - Complete package APIs
 - [Architecture](architecture/) - System design
 - [Testing](testing/) - Testing guide
-- [GUI Notes](gui/FYNE_NOTES.md) - Fyne tips
+- [GUI Notes](gui/FYNE_NOTES.md) - tagged legacy Fyne tips
 
 **Standards:**
 - [Code Quality](code-quality.md) - Style guide
@@ -492,4 +498,4 @@ Full contribution guide: [../../CONTRIBUTING.md](../../CONTRIBUTING.md)
 
 **Last Updated:** 2026-02-16
 **Go Version:** 1.25+
-**Fyne Version:** 2.7.2
+**Default UI:** `gogpu/ui`

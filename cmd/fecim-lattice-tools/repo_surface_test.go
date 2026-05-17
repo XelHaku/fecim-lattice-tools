@@ -204,6 +204,59 @@ func TestInstallationGuideScopesCgoToLegacyFyne(t *testing.T) {
 	}
 }
 
+func TestDeveloperDocsPresentGogpuArchitectureAsDefault(t *testing.T) {
+	root := repoRootForRepoSurface()
+	cases := map[string]struct {
+		mustContain []string
+		stale       []string
+	}{
+		"docs/3-develop/README.md": {
+			mustContain: []string{
+				"Default UI shell: `gogpu/ui`",
+				"Legacy Fyne shell: `cmd/fecim-lattice-tools-fyne` with `-tags legacy_fyne`",
+				"`shared/viewmodel`",
+			},
+			stale: []string{
+				"sudo apt-get install -y gcc libgl1-mesa-dev xorg-dev",
+				"BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject",
+				"All UI updates from goroutines must use `fyne.Do()`",
+				"| `shared/widgets` | `fecim-lattice-tools/shared/widgets` | Fyne GUI components |",
+				"**Fyne Version:** 2.7.2",
+			},
+		},
+		"docs/3-develop/architecture/ARCHITECTURE.md": {
+			mustContain: []string{
+				"Default shell: `gogpu/ui`",
+				"UI-neutral state: `shared/viewmodel`",
+				"Legacy Fyne shell: `cmd/fecim-lattice-tools-fyne` with `-tags legacy_fyne`",
+			},
+			stale: []string{
+				"│  Fyne App",
+				"All modules use **Fyne**",
+				"BuildContent(fyneApp fyne.App, parentWindow fyne.Window) fyne.CanvasObject",
+				"Fyne provides both high-level widgets and low-level canvas",
+			},
+		},
+	}
+	for file, tc := range cases {
+		body, err := os.ReadFile(filepath.Join(root, file))
+		if err != nil {
+			t.Fatalf("read %s: %v", file, err)
+		}
+		text := string(body)
+		for _, phrase := range tc.mustContain {
+			if !strings.Contains(text, phrase) {
+				t.Errorf("%s must present %q", file, phrase)
+			}
+		}
+		for _, phrase := range tc.stale {
+			if strings.Contains(text, phrase) {
+				t.Errorf("%s presents stale Fyne-default architecture guidance %q", file, phrase)
+			}
+		}
+	}
+}
+
 func listRepoPackages(t *testing.T, root string) []string {
 	t.Helper()
 	cmd := exec.Command("go", "list", "-e", "./...")
