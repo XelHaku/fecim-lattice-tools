@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui — device_state_dac.go
 // DAC/ADC voltage configuration, WL/BL mode selection, passive-mode control,
 // DAC presets, output-state getters, operation-mode management, and array resize.

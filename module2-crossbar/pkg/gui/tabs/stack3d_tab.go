@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package tabs - 3D multi-layer stack visualization tab.
 //
 // L10: Renders stacked crossbar layers with isometric projection using a
@@ -218,4 +220,3 @@ func (t *Stack3DTab) updateInfo() {
 			t.numLayers*t.cellsPerLayer*t.cellsPerLayer))
 	})
 }
-

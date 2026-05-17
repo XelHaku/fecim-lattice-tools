@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // pkg/gui/embedded.go
 // Embeddable documentation viewer for the unified visualizer
 package gui

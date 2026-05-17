@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui provides Fyne-based GUI components for MNIST visualization.
 package gui
 
@@ -398,7 +400,6 @@ func (dc *DigitCanvas) notifyChange() {
 func (dc *DigitCanvas) LastInputSource() InputSource {
 	return dc.lastInputSource
 }
-
 
 // ACCESSIBILITY: Keyboard navigation support
 // Arrow keys move cursor, Space/Enter draws, Delete clears

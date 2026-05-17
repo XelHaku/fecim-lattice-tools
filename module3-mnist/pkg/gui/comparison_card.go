@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui provides Fyne-based GUI components for MNIST visualization.
 // comparison_card.go implements P1.2: Enhanced FP vs CIM Comparison Card
 package gui

@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui provides the documentation viewer with search capabilities.
 package gui
 
@@ -569,8 +571,8 @@ func editDistance(a, b string) int {
 				cost = 0
 			}
 			matrix[i][j] = min(min(
-				matrix[i-1][j]+1,     // deletion
-				matrix[i][j-1]+1),    // insertion
+				matrix[i-1][j]+1,  // deletion
+				matrix[i][j-1]+1), // insertion
 				matrix[i-1][j-1]+cost, // substitution
 			)
 		}

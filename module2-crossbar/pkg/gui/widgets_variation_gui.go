@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui provides custom widgets for crossbar visualization.
 // M15: Device-to-device variation modeling GUI with yield prediction.
 package gui

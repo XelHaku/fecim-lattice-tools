@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 package gui
 
 func sharedPolarization(g, gmin, gmax, ps float64) float64 {

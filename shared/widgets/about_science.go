@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package widgets provides reusable UI components.
 // L05: "About the Science" unified Learn More section.
 package widgets

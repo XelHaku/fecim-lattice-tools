@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 package gui
 
 // History management uses a ring buffer to avoid slice churn.

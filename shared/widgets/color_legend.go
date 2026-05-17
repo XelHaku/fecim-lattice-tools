@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package widgets provides reusable UI components.
 package widgets
 
@@ -326,7 +328,6 @@ func ErrorColor(t float64) color.RGBA {
 		A: 255,
 	}
 }
-
 
 // GetColormapFunc returns the colormap function for a given name.
 func GetColormapFunc(name string) func(float64) color.RGBA {

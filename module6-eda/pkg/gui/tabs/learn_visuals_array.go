@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // pkg/gui/tabs/learn_visuals_array.go
 // Crossbar array layout and isometric visualizations
 

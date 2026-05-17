@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui — device_state_ispp.go
 // ISPP (Incremental Step Pulse Programming) state machine with overshoot handling,
 // and column-write (half-select) visualization overlay for DeviceState.

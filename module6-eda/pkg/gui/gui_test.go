@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // pkg/gui/gui_test.go
 package gui
 

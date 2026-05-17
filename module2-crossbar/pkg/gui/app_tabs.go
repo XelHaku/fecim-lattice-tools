@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui - Tab creation and management for enhanced crossbar app
 package gui
 

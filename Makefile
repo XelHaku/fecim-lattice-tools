@@ -11,7 +11,7 @@ help:
 	@echo "  make test-race      Run tests with race detector"
 	@echo "  make test-short     Run only short tests"
 	@echo "  make test-gogpu-ui  Run zero-CGO tests for the gogpu/ui shell"
-	@echo "  make test-legacy-fyne Run opt-in legacy Fyne command tests"
+	@echo "  make test-legacy-fyne Run opt-in legacy Fyne package tests"
 	@echo "  make test-shared    Run tests for shared packages"
 	@echo "  make test-hys       Run tests for Module 1 (Hysteresis)"
 	@echo "  make test-xbar      Run tests for Module 2 (Crossbar)"
@@ -77,18 +77,7 @@ test-gogpu-ui:
 	CGO_ENABLED=0 $(GO) test ./shared/viewmodel/... ./internal/gogpuapp/... ./internal/gogpuscreenshot/... ./cmd/fecim-lattice-tools ./cmd/fecim-screenshotter
 
 test-legacy-fyne:
-	$(GO) test -tags legacy_fyne \
-		./cmd/demo-frames-fyne \
-		./cmd/fecim-lattice-tools-fyne \
-		./cmd/fecim-screenshotter-fyne \
-		./cmd/fecim-web-fyne \
-		./cmd/write-proof-fyne \
-		./module1-hysteresis/cmd/hysteresis-fyne \
-		./module2-crossbar/cmd/crossbar-gui-fyne \
-		./module3-mnist/cmd/mnist-gui-fyne \
-		./module4-circuits/cmd/circuits-gui-fyne \
-		./module5-comparison/cmd/comparison-gui-fyne \
-		./module6-eda/cmd/eda-gui-fyne
+	$(GO) test -tags legacy_fyne ./...
 
 bench:
 	$(GO) test ./... -run '^$$' -bench '$(BENCH)' -benchmem -count=$(BENCH_COUNT)

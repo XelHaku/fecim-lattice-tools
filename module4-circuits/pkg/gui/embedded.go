@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui provides Fyne-based GUI components for peripheral circuit visualization.
 // This file provides BuildContent for embedding in the unified visualizer.
 package gui

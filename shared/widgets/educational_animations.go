@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package widgets provides shared UI components for FeCIM visualizers.
 // educational_animations.go provides pre-built educational animation sequences
 // for demonstrating core FeCIM concepts.

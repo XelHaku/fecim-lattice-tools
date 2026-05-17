@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 package gui
 
 import (
@@ -86,7 +88,6 @@ func BuildScenarioRun(profile ScenarioProfile, cfg ScenarioConfig) ScenarioRun {
 func uncertainty(value, confidence float64) float64 {
 	return math.Abs(value) * (1 - mathutil.Clamp01(confidence))
 }
-
 
 func SensitivityRanking(run ScenarioRun, outputName string) []SensitivityImpact {
 	base, ok := run.Outputs[outputName]

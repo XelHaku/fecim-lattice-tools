@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // pkg/gui/tabs/learn_tab.go
 // Learning Center tab for FeCIM Design Suite
 // Explains OpenLane flow and where the FeCIM Array Builder fits in

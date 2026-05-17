@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 package gui
 
 import (
@@ -40,7 +42,7 @@ func computeComparisonMetrics(arraySize int) (comparisonMetricRow, comparisonMet
 
 func metricLatency(v float64) string { return fmt.Sprintf("%.0f ns", v) }
 func metricEnergy(v float64) string  { return fmt.Sprintf("%.1f pJ", v) }
-func metricGOPS(v float64) string     { return fmt.Sprintf("%.3f GOPS", v) }
+func metricGOPS(v float64) string    { return fmt.Sprintf("%.3f GOPS", v) }
 
 // DesignSweepPoint is one design-space point for quick Pareto-style exploration.
 type DesignSweepPoint struct {

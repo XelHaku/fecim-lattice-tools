@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 package widgets
 
 // SafeDo executes fn in the Fyne runtime context (when available) and

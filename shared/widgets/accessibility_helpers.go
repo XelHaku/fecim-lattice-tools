@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package widgets provides accessibility helper functions.
 // This file contains concrete implementations for improving GUI accessibility.
 package widgets

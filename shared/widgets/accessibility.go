@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package widgets provides reusable UI components.
 // L06: Accessibility utilities for keyboard navigation and high-contrast mode.
 package widgets

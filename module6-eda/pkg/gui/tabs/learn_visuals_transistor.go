@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // pkg/gui/tabs/learn_visuals_transistor.go
 // Transistor and FeFET structure visualizations
 

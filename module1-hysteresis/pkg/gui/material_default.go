@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 package gui
 
 import "fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"

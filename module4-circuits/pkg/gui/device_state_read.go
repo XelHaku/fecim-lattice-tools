@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui — device_state_read.go
 // Read-path helpers for DeviceState: conductance mapping, effective cell voltage
 // resolution, DAC write-voltage quantization, and DAC nonlinearity application.

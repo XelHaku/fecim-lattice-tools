@@ -22,6 +22,15 @@ func TestNonLegacyPackagesDoNotDependOnLegacyGraphics(t *testing.T) {
 	}
 }
 
+func TestDefaultRepoGraphDoesNotExposeLegacyFynePackages(t *testing.T) {
+	root := repoRootForRepoSurface()
+	for _, pkg := range listRepoPackages(t, root) {
+		if isLegacyGraphicsPackage(pkg) {
+			t.Fatalf("default repo graph must not expose legacy Fyne package %s", pkg)
+		}
+	}
+}
+
 func listRepoPackages(t *testing.T, root string) []string {
 	t.Helper()
 	cmd := exec.Command("go", "list", "-e", "./...")

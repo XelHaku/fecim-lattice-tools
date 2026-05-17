@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 package tabs
 
 // LIT-P2-05: FeCAP-specific GUI visualizations.

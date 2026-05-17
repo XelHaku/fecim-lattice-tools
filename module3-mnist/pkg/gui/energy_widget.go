@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui provides Fyne-based GUI components for MNIST visualization.
 // energy_widget.go implements P1.3: Energy Efficiency Live Visualization
 package gui

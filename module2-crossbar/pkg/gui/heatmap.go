@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui provides Fyne-based GUI components for crossbar visualization.
 package gui
 
@@ -746,7 +748,6 @@ func fecimColor(t float64) color.RGBA {
 		A: 255,
 	}
 }
-
 
 // selectionColor returns a contrasting selection border color based on the current colormap.
 func (h *CrossbarHeatmap) selectionColor() color.RGBA {

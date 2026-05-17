@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 package gui
 
 import "testing"
@@ -7,9 +9,9 @@ func TestDetectGlossaryTerms_CommonAliasesMapToCanonicalTerms(t *testing.T) {
 	terms := DetectGlossaryTerms(content)
 
 	required := map[string]bool{
-		"FeCIM":                 false,
-		"Hysteresis Loop":       false,
-		"Remnant Polarization":  false,
+		"FeCIM":                false,
+		"Hysteresis Loop":      false,
+		"Remnant Polarization": false,
 	}
 
 	for _, term := range terms {

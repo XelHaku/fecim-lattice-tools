@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui provides Fyne-based GUI components for MNIST visualization.
 // dualmode.go provides the dual-mode (FP vs CIM) comparison GUI.
 package gui

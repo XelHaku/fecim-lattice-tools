@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui provides info panel creation and management for the hysteresis demo.
 package gui
 

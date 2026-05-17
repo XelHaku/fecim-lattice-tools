@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui provides Fyne-based GUI components for MNIST visualization.
 // dualmode_controls.go provides control panel creation and preset functionality.
 package gui

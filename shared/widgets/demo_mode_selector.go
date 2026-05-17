@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package widgets provides shared UI components for FeCIM visualizers.
 // demo_mode_selector.go provides a UI for selecting and managing different
 // demo modes including tutorials, animations, and quick demos.

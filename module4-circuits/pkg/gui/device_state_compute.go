@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui — device_state_compute.go
 // Compute (MVM) path for DeviceState: ideal and coupled-array simulation,
 // TIA/ADC sense-chain conversion, and coupled-voltage level programming.

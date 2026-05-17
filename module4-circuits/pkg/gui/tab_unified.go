@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui provides Fyne-based GUI components for peripheral circuit visualization.
 // This file contains the unified device simulation view that replaces separate WRITE/READ/COMPUTE modes.
 package gui

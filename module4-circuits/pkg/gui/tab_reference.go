@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui provides Fyne-based GUI components for peripheral circuit visualization.
 // This file contains the main REFERENCE tab that combines TIMING and SPECS sections.
 package gui

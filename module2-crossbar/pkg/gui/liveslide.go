@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui provides Fyne-based GUI components for crossbar visualization.
 // This file implements the "Live Slide" pattern components for Demo 2.
 package gui

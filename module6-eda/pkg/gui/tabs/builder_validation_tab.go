@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // pkg/gui/tabs/builder_validation_tab.go
 // Unified Builder & Validation Tab - consolidates Cell Builder, Array Builder,
 // Verilog Export, DEF Export, Validation, and Export All functionality
@@ -28,7 +30,6 @@ import (
 	"fecim-lattice-tools/shared/logging"
 	sharedwidgets "fecim-lattice-tools/shared/widgets"
 )
-
 
 // MakeBuilderValidationTab creates a unified tab combining cell/array configuration,
 // preview (Verilog/DEF/Layout), validation, and export functionality

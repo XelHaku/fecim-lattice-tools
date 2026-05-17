@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 package gui
 
 // e2e_accuracy_test.go - Research-grade end-to-end accuracy tests for the circuits module.
@@ -28,6 +30,7 @@ import (
 //   - Log: level, expected_G, actual_G, ADC_code
 //   - Assert: conductance monotonicity (higher level = higher G)
 //   - Measure: distinct ADC codes produced across 30 levels
+//
 // ─────────────────────────────────────────────────────────────────────────────
 func TestE2E_WriteReadRoundTrip_AllLevels(t *testing.T) {
 	const quantLevels = 30
@@ -161,7 +164,9 @@ func TestE2E_WriteReadRoundTrip_AllLevels(t *testing.T) {
 //
 // 4x4 array with known weight pattern and input vector.
 // Compare row currents against hand-calculated reference:
-//   I_row[r] = SUM(DiscreteLevel(w[r][c]) * V[c] * 1e6)
+//
+//	I_row[r] = SUM(DiscreteLevel(w[r][c]) * V[c] * 1e6)
+//
 // ─────────────────────────────────────────────────────────────────────────────
 func TestE2E_MVMComputeAccuracy_IdealVsCoupled(t *testing.T) {
 	const N = 4
@@ -285,6 +290,7 @@ func TestE2E_MVMComputeAccuracy_IdealVsCoupled(t *testing.T) {
 //   - Compare: analog row current vs ADC-quantized output
 //   - Measure quantization loss in bits
 //   - Log the full error budget: DAC → array → TIA → ADC
+//
 // ─────────────────────────────────────────────────────────────────────────────
 func TestE2E_SignalChainErrorBudget(t *testing.T) {
 	const N = 4
@@ -487,6 +493,7 @@ func TestE2E_SignalChainErrorBudget(t *testing.T) {
 //   - 1T1R (active):  selected WLs only, no sneak paths
 //   - In COMPUTE mode (all WLs active): both should produce same result
 //   - In READ mode (single WL): 1T1R reads single row, 0T1R has all rows active
+//
 // ─────────────────────────────────────────────────────────────────────────────
 func TestE2E_ArchitectureComparison_0T1R_1T1R(t *testing.T) {
 	const N = 4

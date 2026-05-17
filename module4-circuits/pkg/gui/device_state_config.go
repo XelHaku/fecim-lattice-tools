@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui — device_state_config.go
 // Configuration setters and getters for DeviceState: material, coupling,
 // peripheral (PVT, DAC/ADC bits), cell geometry, wire params, and ISPP engine.

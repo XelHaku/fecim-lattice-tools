@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui provides Fyne-based GUI components for crossbar visualization.
 // tabbed_app.go provides the enhanced 4-tab interface combining MVM and non-idealities.
 package gui

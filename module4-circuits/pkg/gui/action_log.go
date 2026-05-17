@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui provides logging helpers for module 4 UI actions and inputs.
 package gui
 

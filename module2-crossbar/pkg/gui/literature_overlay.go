@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui - Literature overlay for crossbar MVM benchmarks
 package gui
 
@@ -13,10 +15,10 @@ import (
 
 // CrossbarBenchmark holds a single published crossbar accuracy result.
 type CrossbarBenchmark struct {
-	Reference  string  // Short citation, e.g. "IEEE TED 2022"
-	Metric     string  // What was measured, e.g. "MNIST accuracy (%)"
-	Condition  string  // Experimental condition
-	Published  float64 // Reported value
+	Reference string  // Short citation, e.g. "IEEE TED 2022"
+	Metric    string  // What was measured, e.g. "MNIST accuracy (%)"
+	Condition string  // Experimental condition
+	Published float64 // Reported value
 }
 
 // CrossbarLitComparison pairs a benchmark with a simulated value for display.

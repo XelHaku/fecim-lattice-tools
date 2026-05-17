@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 package gui
 
 // readModeMetricLabels returns the canonical READ-mode metric labels shown in UI/docs.

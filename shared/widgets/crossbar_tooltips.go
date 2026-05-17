@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package widgets provides reusable UI components.
 // crossbar_tooltips.go provides tooltip string generators for crossbar GUI elements.
 // These functions produce progressive-disclosure tooltip text for cell-level analysis.

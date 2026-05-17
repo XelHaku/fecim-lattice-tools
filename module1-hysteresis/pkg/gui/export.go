@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 package gui
 
 import (
@@ -11,8 +13,8 @@ import (
 
 	"fyne.io/fyne/v2"
 
-	sharedio "fecim-lattice-tools/shared/io"
 	sharedexport "fecim-lattice-tools/shared/export"
+	sharedio "fecim-lattice-tools/shared/io"
 	sharedphysics "fecim-lattice-tools/shared/physics"
 )
 

@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui provides Fyne-based GUI components for architecture comparison.
 // This file contains hero visualizations for the comparison demo.
 // Technical briefing design based on project literature review and model-input messaging.

@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package widgets provides tests for GUI widget logic.
 // These tests focus on state management and logic that can run without a display.
 package widgets

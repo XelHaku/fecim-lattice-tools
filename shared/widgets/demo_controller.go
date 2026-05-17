@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package widgets provides shared UI components for FeCIM visualizers.
 package widgets
 

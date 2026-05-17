@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui — device_state_write.go
 // Write-path logic for DeviceState: DAC-only column drive (passive 0T1R),
 // voltage reset, per-level voltage calibration, hysteresis direction tracking,

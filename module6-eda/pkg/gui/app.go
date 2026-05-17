@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // pkg/gui/app.go
 package gui
 

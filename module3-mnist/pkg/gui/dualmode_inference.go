@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui provides Fyne-based GUI components for MNIST visualization.
 // dualmode_inference.go provides inference execution and result display functionality.
 package gui

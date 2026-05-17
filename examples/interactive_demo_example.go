@@ -1,4 +1,4 @@
-//go:build ignore
+//go:build legacy_fyne && ignore
 
 // interactive_demo_example.go - Example of integrating interactive demos
 //

@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package widgets provides shared UI components for FeCIM visualizers.
 //
 // simulation_banner.go provides a thin amber banner reminding users that

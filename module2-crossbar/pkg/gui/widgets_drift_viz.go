@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui provides custom widgets for crossbar visualization.
 // M14: Conductance drift time-dependent visualization.
 package gui

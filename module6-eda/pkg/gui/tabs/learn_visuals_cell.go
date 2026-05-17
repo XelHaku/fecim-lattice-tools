@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // pkg/gui/tabs/learn_visuals_cell.go
 // Cell structure visualization and comparison tables
 

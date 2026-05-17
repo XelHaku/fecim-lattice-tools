@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package themes provides multiple theme options (light, dark, high-contrast)
 // for the FeCIM Lattice Tools Fyne GUI applications.
 //
@@ -423,19 +425,19 @@ type PresentationTheme struct{}
 // Presentation theme color palette — high-contrast on dark, slightly warmer
 // than the accessibility HC theme to remain easy on the eyes during talks.
 var (
-	PresBackground = color.RGBA{10, 10, 18, 255}     // Near-black #0A0A12
-	PresSurface    = color.RGBA{24, 24, 36, 255}     // Dark surface #181824
-	PresSurfaceAlt = color.RGBA{40, 40, 56, 255}     // Hover #282838
-	PresInput      = color.RGBA{18, 18, 28, 255}     // Input bg #12121C
-	PresPrimary    = color.RGBA{80, 200, 255, 255}   // Bright sky blue #50C8FF
-	PresSecondary  = color.RGBA{255, 120, 120, 255}  // Soft red #FF7878
-	PresSuccess    = color.RGBA{100, 230, 160, 255}  // Bright green #64E6A0
-	PresWarning    = color.RGBA{255, 220, 80, 255}   // Bright amber #FFDC50
-	PresError      = color.RGBA{255, 90, 90, 255}    // Bright red #FF5A5A
-	PresText       = color.RGBA{248, 248, 255, 255}  // Almost-white #F8F8FF
-	PresTextDim    = color.RGBA{180, 185, 200, 255}  // Dim text #B4B9C8
-	PresSeparator  = color.RGBA{60, 60, 80, 255}     // Subtle separator #3C3C50
-	PresShadow     = color.RGBA{0, 0, 0, 180}        // Strong shadow
+	PresBackground = color.RGBA{10, 10, 18, 255}    // Near-black #0A0A12
+	PresSurface    = color.RGBA{24, 24, 36, 255}    // Dark surface #181824
+	PresSurfaceAlt = color.RGBA{40, 40, 56, 255}    // Hover #282838
+	PresInput      = color.RGBA{18, 18, 28, 255}    // Input bg #12121C
+	PresPrimary    = color.RGBA{80, 200, 255, 255}  // Bright sky blue #50C8FF
+	PresSecondary  = color.RGBA{255, 120, 120, 255} // Soft red #FF7878
+	PresSuccess    = color.RGBA{100, 230, 160, 255} // Bright green #64E6A0
+	PresWarning    = color.RGBA{255, 220, 80, 255}  // Bright amber #FFDC50
+	PresError      = color.RGBA{255, 90, 90, 255}   // Bright red #FF5A5A
+	PresText       = color.RGBA{248, 248, 255, 255} // Almost-white #F8F8FF
+	PresTextDim    = color.RGBA{180, 185, 200, 255} // Dim text #B4B9C8
+	PresSeparator  = color.RGBA{60, 60, 80, 255}    // Subtle separator #3C3C50
+	PresShadow     = color.RGBA{0, 0, 0, 180}       // Strong shadow
 )
 
 func (t *PresentationTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {

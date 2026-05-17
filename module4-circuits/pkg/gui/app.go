@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui provides Fyne-based GUI components for peripheral circuit visualization.
 // Module 4: Peripheral Circuits - Unified 3-view design
 // OPERATIONS (Write/Read/Compute modes), COMPARISON (benchmarks), REFERENCE (timing diagrams + specs)

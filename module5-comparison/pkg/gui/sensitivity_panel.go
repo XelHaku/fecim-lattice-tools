@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // This file implements an interactive sensitivity analysis panel showing
 // which input parameters have the largest impact on the comparison output.
 package gui

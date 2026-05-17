@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 package ispp
 
 // ClampTargetLevel keeps write target within valid quantized range.

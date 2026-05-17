@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package widgets provides reusable UI components.
 // tooltips.go provides comprehensive educational tooltips for FeCIM GUI elements.
 package widgets

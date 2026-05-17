@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui provides Fyne-based GUI components for crossbar visualization.
 // animation.go contains MVM animation and auto-demo loop functions.
 package gui

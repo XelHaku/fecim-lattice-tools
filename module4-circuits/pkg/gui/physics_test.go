@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui provides Fyne-based GUI components for peripheral circuit visualization.
 // This file contains physics validation tests for device_state.go
 package gui
@@ -164,7 +166,7 @@ func TestADCQuantization(t *testing.T) {
 		t.Errorf("6-bit ADC should have 64 levels, got %d", adc.Levels())
 	}
 
-	maxLevel := adc.Levels() - 1 // 63
+	maxLevel := adc.Levels() - 1                 // 63
 	midLevel := int(0.5*float64(maxLevel) + 0.5) // round(0.5 * 63) = 32
 
 	testCases := []struct {

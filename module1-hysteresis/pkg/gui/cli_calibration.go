@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui provides CLI calibration functionality for hysteresis module.
 package gui
 

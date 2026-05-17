@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package widgets provides shared UI components for FeCIM visualizers.
 // interactive_tutorials.go provides pre-built interactive tutorial sequences
 // with quizzes, user prompts, and hands-on exercises for each module.

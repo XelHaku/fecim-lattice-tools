@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package theme provides the shared FeCIM theme for consistent branding across all demos.
 //
 // Color Contrast Ratios (WCAG AA requires 4.5:1 for normal text, 3:1 for large text):

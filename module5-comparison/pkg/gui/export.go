@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui provides Fyne-based GUI components for architecture comparison.
 // export.go provides data export functionality for comparison results.
 package gui

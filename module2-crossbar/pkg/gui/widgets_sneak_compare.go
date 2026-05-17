@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui provides custom widgets for crossbar visualization.
 // M08: Side-by-side sneak path comparison (PASSIVE vs 1T1R).
 package gui

@@ -1,3 +1,5 @@
+//go:build legacy_fyne
+
 // Package gui provides Fyne-based GUI components for MNIST visualization.
 package gui
 
@@ -198,4 +200,3 @@ func resizeBilinear(src [][]float64, newH, newW int) [][]float64 {
 
 	return dst
 }
-
