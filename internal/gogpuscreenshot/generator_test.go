@@ -65,6 +65,34 @@ func TestRunHonorsCLIScreenshotFlags(t *testing.T) {
 	assertTaggedCLIScreenshot(t, outputDir, "docs-overview_cli-smoke.png", 512, 320)
 }
 
+func TestScreenshotManifestDerivesFromKnownDescriptors(t *testing.T) {
+	descriptors := viewmodel.KnownDescriptors()
+	screenshots, err := buildAppFrameScreenshots(descriptors)
+	if err != nil {
+		t.Fatalf("buildAppFrameScreenshots error: %v", err)
+	}
+	if len(screenshots) != len(descriptors) {
+		t.Fatalf("screenshot count = %d, want %d", len(screenshots), len(descriptors))
+	}
+	for i, descriptor := range descriptors {
+		screenshot := screenshots[i]
+		if screenshot.id != descriptor.ID {
+			t.Fatalf("screenshot[%d].id = %q, want %q", i, screenshot.id, descriptor.ID)
+		}
+		if screenshot.module != string(descriptor.ID) {
+			t.Fatalf("screenshot[%d].module = %q, want %q", i, screenshot.module, descriptor.ID)
+		}
+		if screenshot.filename == "" {
+			t.Fatalf("screenshot[%d] for %q has empty filename", i, descriptor.ID)
+		}
+	}
+
+	_, err = buildAppFrameScreenshots(append(descriptors, viewmodel.ModuleDescriptor{ID: viewmodel.ModuleID("future-module")}))
+	if err == nil {
+		t.Fatal("buildAppFrameScreenshots returned nil error for unmapped future module")
+	}
+}
+
 func assertTaggedCLIScreenshot(t *testing.T, outputDir, filename string, width, height int) {
 	t.Helper()
 
@@ -93,16 +121,21 @@ func assertTaggedCLIScreenshot(t *testing.T, outputDir, filename string, width, 
 func assertAllModuleScreenshotsValid(t *testing.T, opts Options) {
 	t.Helper()
 
+	screenshots, err := appFrameScreenshots()
+	if err != nil {
+		t.Fatalf("appFrameScreenshots error: %v", err)
+	}
+
 	entries, err := os.ReadDir(opts.OutputDir)
 	if err != nil {
 		t.Fatalf("read output dir %s: %v", opts.OutputDir, err)
 	}
-	if len(entries) != len(appFrameScreenshots) {
-		t.Fatalf("generated file count = %d, want %d", len(entries), len(appFrameScreenshots))
+	if len(entries) != len(screenshots) {
+		t.Fatalf("generated file count = %d, want %d", len(entries), len(screenshots))
 	}
 
 	signatures := map[uint64]string{}
-	for _, screenshot := range appFrameScreenshots {
+	for _, screenshot := range screenshots {
 		img := readPNG(t, opts.OutputPath(screenshot.filename))
 		bounds := img.Bounds()
 		if bounds.Dx() != opts.Width || bounds.Dy() != opts.Height {

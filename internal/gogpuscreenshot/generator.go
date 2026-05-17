@@ -20,14 +20,14 @@ type appFrameScreenshot struct {
 	filename string
 }
 
-var appFrameScreenshots = []appFrameScreenshot{
-	{module: "hysteresis", id: viewmodel.ModuleHysteresis, filename: "hysteresis-p-e-loop.png"},
-	{module: "crossbar", id: viewmodel.ModuleCrossbar, filename: "crossbar-heatmap-8x8.png"},
-	{module: "mnist", id: viewmodel.ModuleMNIST, filename: "mnist-accuracy-sweep.png"},
-	{module: "circuits", id: viewmodel.ModuleCircuits, filename: "circuits-ispp-convergence.png"},
-	{module: "comparison", id: viewmodel.ModuleComparison, filename: "comparison-architecture-bars.png"},
-	{module: "eda", id: viewmodel.ModuleEDA, filename: "eda-design-overview.png"},
-	{module: "docs", id: viewmodel.ModuleDocs, filename: "docs-overview.png"},
+var screenshotFilenamesByModule = map[viewmodel.ModuleID]string{
+	viewmodel.ModuleHysteresis: "hysteresis-p-e-loop.png",
+	viewmodel.ModuleCrossbar:   "crossbar-heatmap-8x8.png",
+	viewmodel.ModuleMNIST:      "mnist-accuracy-sweep.png",
+	viewmodel.ModuleCircuits:   "circuits-ispp-convergence.png",
+	viewmodel.ModuleComparison: "comparison-architecture-bars.png",
+	viewmodel.ModuleEDA:        "eda-design-overview.png",
+	viewmodel.ModuleDocs:       "docs-overview.png",
 }
 
 func Run(args []string) error {
@@ -46,9 +46,14 @@ func Generate(opts Options) error {
 		opts.OutputDir = DefaultOptions().OutputDir
 	}
 
+	screenshots, err := appFrameScreenshots()
+	if err != nil {
+		return err
+	}
+
 	count := 0
-	total := matchedScreenshotCount(opts)
-	for _, screenshot := range appFrameScreenshots {
+	total := matchedScreenshotCount(opts, screenshots)
+	for _, screenshot := range screenshots {
 		if !opts.Matches(screenshot.module) {
 			continue
 		}
@@ -66,9 +71,29 @@ func Generate(opts Options) error {
 	return nil
 }
 
-func matchedScreenshotCount(opts Options) int {
+func appFrameScreenshots() ([]appFrameScreenshot, error) {
+	return buildAppFrameScreenshots(viewmodel.KnownDescriptors())
+}
+
+func buildAppFrameScreenshots(descriptors []viewmodel.ModuleDescriptor) ([]appFrameScreenshot, error) {
+	screenshots := make([]appFrameScreenshot, 0, len(descriptors))
+	for _, descriptor := range descriptors {
+		filename, ok := screenshotFilenamesByModule[descriptor.ID]
+		if !ok {
+			return nil, fmt.Errorf("no screenshot filename mapped for module %q", descriptor.ID)
+		}
+		screenshots = append(screenshots, appFrameScreenshot{
+			module:   string(descriptor.ID),
+			id:       descriptor.ID,
+			filename: filename,
+		})
+	}
+	return screenshots, nil
+}
+
+func matchedScreenshotCount(opts Options, screenshots []appFrameScreenshot) int {
 	count := 0
-	for _, screenshot := range appFrameScreenshots {
+	for _, screenshot := range screenshots {
 		if opts.Matches(screenshot.module) {
 			count++
 		}
