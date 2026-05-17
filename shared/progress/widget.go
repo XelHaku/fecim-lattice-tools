@@ -1,4 +1,4 @@
-//go:build cgo
+//go:build legacy_fyne
 
 // Package progress provides Fyne widgets for progress display.
 package progress
