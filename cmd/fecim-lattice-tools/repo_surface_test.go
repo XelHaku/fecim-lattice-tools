@@ -360,6 +360,55 @@ func TestArchitectureGraphShowsGogpuDefaultPath(t *testing.T) {
 	}
 }
 
+func TestActiveFyneDocsAreScopedToLegacyAdapters(t *testing.T) {
+	root := repoRootForRepoSurface()
+	cases := map[string]struct {
+		mustContain []string
+		stale       []string
+	}{
+		"docs/3-develop/accessibility.md": {
+			mustContain: []string{
+				"**Default UI:** `gogpu/ui`",
+				"**Legacy Fyne audit:** applies to tagged adapters built with `-tags legacy_fyne`",
+				"Findings below apply to legacy Fyne adapters unless a section explicitly calls out the default shell.",
+			},
+			stale: []string{
+				"**Framework:** Fyne v2 GUI Toolkit",
+			},
+		},
+		"docs/3-develop/gui/README.md": {
+			mustContain: []string{
+				"# FeCIM Lattice Tools - Legacy Fyne GUI Documentation",
+				"Default UI work belongs in `internal/gogpuapp` and `shared/viewmodel`.",
+				"Legacy Fyne work requires `-tags legacy_fyne`.",
+			},
+			stale: []string{
+				"Welcome to the GUI module documentation.",
+				"Assumes familiarity with Fyne, module code structure, and Go conventions",
+				"All GUI modules follow this strict pattern:",
+				"### Before Making GUI Changes",
+			},
+		},
+	}
+	for file, tc := range cases {
+		body, err := os.ReadFile(filepath.Join(root, file))
+		if err != nil {
+			t.Fatalf("read %s: %v", file, err)
+		}
+		text := string(body)
+		for _, phrase := range tc.mustContain {
+			if !strings.Contains(text, phrase) {
+				t.Errorf("%s must present %q", file, phrase)
+			}
+		}
+		for _, phrase := range tc.stale {
+			if strings.Contains(text, phrase) {
+				t.Errorf("%s presents Fyne as unscoped default guidance %q", file, phrase)
+			}
+		}
+	}
+}
+
 func listRepoPackages(t *testing.T, root string) []string {
 	t.Helper()
 	cmd := exec.Command("go", "list", "-e", "./...")

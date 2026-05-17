@@ -1,11 +1,12 @@
-# FeCIM Lattice Tools - GUI Documentation
+# FeCIM Lattice Tools - Legacy Fyne GUI Documentation
 
-Welcome to the GUI module documentation. This directory contains specifications, architecture guides, and troubleshooting information for all interactive visualizations in the FeCIM Lattice Tools project.
+This directory contains specifications, architecture guides, and troubleshooting information for tagged legacy Fyne visualizations in FeCIM Lattice Tools.
 
 ## Scope & Audience
 
-- Internal development reference for engineers working on GUI modules
-- Assumes familiarity with Fyne, module code structure, and Go conventions
+- Internal development reference for engineers maintaining legacy Fyne modules
+- Default UI work belongs in `internal/gogpuapp` and `shared/viewmodel`.
+- Legacy Fyne work requires `-tags legacy_fyne`.
 - File paths are repo-relative unless a module root is explicitly called out
 
 ## Conventions Used in This Folder
@@ -82,9 +83,9 @@ Example: BUG-M1-004 = Module 1, Bug #4
 
 ## Common Patterns & Best Practices
 
-### Thread Safety (CRITICAL)
+### Legacy Fyne Thread Safety (CRITICAL)
 
-All GUI modules follow this strict pattern:
+Tagged legacy Fyne modules follow this strict pattern:
 
 ```go
 // ✅ CORRECT: Goroutine updating UI
@@ -182,12 +183,12 @@ Defaults used across modules are defined in `config/physics.yaml` and `shared/ph
 
 ## Development Workflow
 
-### Before Making GUI Changes
+### Before Maintaining Legacy Fyne Docs
 
-1. **Read the module document** - Understand the existing component hierarchy and data flow
+1. **Confirm the change is legacy Fyne-only** - Default shell work belongs in `internal/gogpuapp` and `shared/viewmodel`
 2. **Check the bug tracker** - Know which issues are already identified
-3. **Review FYNE_NOTES.md** - Refresh thread safety and layout patterns
-4. **Run tests** - Ensure baseline functionality works
+3. **Review FYNE_NOTES.md** - Refresh legacy Fyne thread safety and layout patterns
+4. **Run tagged tests** - Use `make test-legacy-fyne` when legacy adapters change
 
 ### When Adding a New Component
 
@@ -206,16 +207,19 @@ Defaults used across modules are defined in `config/physics.yaml` and `shared/ph
 ### Before Committing
 
 ```bash
-# 1. Run all tests
+# 1. Run all default tests
 go test ./...
 
-# 2. Update any module documentation that changed
+# 2. Run legacy Fyne tests when tagged adapters changed
+make test-legacy-fyne
+
+# 3. Update any legacy module documentation that changed
 # Edit docs/3-develop/gui/GUI.moduleX.md
 
-# 3. Run the module to verify visually
-go build -o fecim-lattice-tools ./cmd/fecim-lattice-tools && ./fecim-lattice-tools
+# 4. Run the default shell to verify visually
+CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools --module docs
 
-# 4. Commit with clear message
+# 5. Commit with clear message
 git commit -m "feat(module-X): description of change"
 ```
 

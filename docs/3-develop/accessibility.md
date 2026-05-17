@@ -4,14 +4,17 @@
 
 **Date:** 2026-02-07  
 **Auditor:** OpenClaw Accessibility Audit  
-**Framework:** Fyne v2 GUI Toolkit  
+**Default UI:** `gogpu/ui`
+**Legacy Fyne audit:** applies to tagged adapters built with `-tags legacy_fyne`
 **Standards:** WCAG 2.1 AA, Section 508
+
+Findings below apply to legacy Fyne adapters unless a section explicitly calls out the default shell.
 
 ---
 
 ## Executive Summary
 
-The FeCIM Lattice Tools GUI has a solid accessibility foundation in `shared/widgets/accessibility.go` but the features are **underutilized** across the application. Key issues include:
+The legacy Fyne GUI has a solid accessibility foundation in `shared/widgets/accessibility.go` but the features are **underutilized** across the legacy adapters. Key issues include:
 
 - **Color Contrast:** Multiple color combinations fail WCAG AA (4.5:1 ratio)
 - **Font Sizes:** Several components use text below 14px minimum
