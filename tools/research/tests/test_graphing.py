@@ -1,3 +1,4 @@
+import hashlib
 import json
 import tempfile
 import unittest
@@ -68,6 +69,37 @@ class GraphingTest(unittest.TestCase):
             self.assertEqual(report["edges"], len(graph["edges"]))
             self.assertEqual(report["claims"], 1)
             self.assertEqual(report["sources"], 1)
+
+    def test_run_graph_writes_content_addressed_history_graph(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_paper(root, "park2015_advmat_hzo")
+            self._write_claim(
+                root,
+                "hzo-remanent-polarization-range",
+                sources=["park2015_advmat_hzo"],
+                used_in=["docs/TRUST.md"],
+            )
+            docs = root / "docs"
+            docs.mkdir()
+            (docs / "TRUST.md").write_text("[claim: hzo-remanent-polarization-range]\n", encoding="utf-8")
+
+            code = run_graph(root)
+
+            self.assertEqual(code, 0)
+            graph_path = root / "research" / "graphs" / "provenance-graph.json"
+            latest = json.loads(graph_path.read_text(encoding="utf-8"))
+            self.assertIn("run_id", latest)
+            self.assertIn("history_path", latest)
+            graph_body = {key: value for key, value in latest.items() if key not in {"run_id", "history_path"}}
+            expected_run_id = hashlib.sha256(
+                json.dumps(graph_body, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            ).hexdigest()[:16]
+            self.assertEqual(latest["run_id"], expected_run_id)
+            self.assertEqual(latest["history_path"], f"research/graphs/history/{latest['run_id']}.json")
+            history_path = root / latest["history_path"]
+            self.assertTrue(history_path.exists())
+            self.assertEqual(json.loads(history_path.read_text(encoding="utf-8")), latest)
 
     def _write_paper(self, root: Path, key: str):
         path = root / "citations" / "papers" / f"{key}.md"

@@ -2,6 +2,8 @@
   "claims": 2,
   "edges": 14,
   "files": 3,
+  "graph_history_path": "research/graphs/history/faa230c27845d725.json",
+  "graph_run_id": "faa230c27845d725",
   "nodes": 81,
   "sources": 76
 }

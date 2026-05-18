@@ -150,7 +150,9 @@ Graph export:
 
 - `fecim-lattice-tools research graph` writes the file-first provenance graph to
   `graphs/provenance-graph.json` and a small summary to
-  `reports/graph-latest.json`.
+  `reports/graph-latest.json`. The graph also gets a content-addressed history
+  copy under `graphs/history/RUN_ID.json`, and the summary records that history
+  path.
 - The graph is an export over committed claim/source files, not an authority.
   Rebuild it after changing `citations/papers`, `citations/claims`, or
   `[claim: id]` references.

@@ -5,14 +5,20 @@ import json
 
 from .claims import CLAIM_REF_RE, load_claim_records
 from .citations import load_citation_records
+from .reporting import write_content_addressed_report
 
 
 def run_graph(root: Path) -> int:
     graph = build_provenance_graph(root)
-    graph_path = root / "research" / "graphs" / "provenance-graph.json"
-    graph_path.parent.mkdir(parents=True, exist_ok=True)
-    graph_path.write_text(json.dumps(graph, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     report = _graph_report(graph)
+    addressed_graph = write_content_addressed_report(
+        root,
+        "research/graphs/provenance-graph.json",
+        "research/graphs/history",
+        graph,
+    )
+    report["graph_run_id"] = str(addressed_graph["run_id"])
+    report["graph_history_path"] = str(addressed_graph["history_path"])
     report_path = root / "research" / "reports" / "graph-latest.json"
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
