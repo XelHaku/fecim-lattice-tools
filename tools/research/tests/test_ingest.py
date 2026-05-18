@@ -79,6 +79,47 @@ class IngestTest(unittest.TestCase):
             self.assertIn("Canonical evidence", chunk_text)
             self.assertNotIn("Duplicate evidence", chunk_text)
 
+    def test_duplicate_canonical_prefers_matched_pdf_over_first_sorted_path(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            citation = root / "citations" / "papers" / "park2015_advmat_hzo.md"
+            citation.parent.mkdir(parents=True)
+            citation.write_text("**Key:** `park2015_advmat_hzo`\n", encoding="utf-8")
+
+            papers = root / "research" / "papers"
+            papers.mkdir(parents=True)
+            unmatched = papers / "a_scan.pdf"
+            matched = papers / "park2015_advmat_hzo.pdf"
+            unmatched.write_bytes(b"%PDF same scan")
+            matched.write_bytes(b"%PDF same scan")
+            matched.with_suffix(".md").write_text("## Results\n\nMatched sidecar evidence.", encoding="utf-8")
+
+            code = run_ingest(root=root, extra_paths=[])
+            self.assertEqual(code, 0)
+
+            manifest = json.loads((root / "research" / "manifests" / "ingest-latest.json").read_text(encoding="utf-8"))
+            self.assertEqual(manifest["processed"], 1)
+            self.assertEqual(manifest["unmatched"], 0)
+            self.assertEqual(manifest["duplicates"], 1)
+
+            chunk_text = (root / "research" / "chunks" / "park2015_advmat_hzo.jsonl").read_text(encoding="utf-8")
+            self.assertIn("Matched sidecar evidence", chunk_text)
+
+            duplicate_report = json.loads(
+                (root / "research" / "reports" / "duplicate-pdfs.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(len(duplicate_report["duplicates"]), 1)
+            self.assertEqual(duplicate_report["duplicates"][0]["path"], "research/papers/a_scan.pdf")
+            self.assertEqual(
+                duplicate_report["duplicates"][0]["duplicate_of"],
+                "research/papers/park2015_advmat_hzo.pdf",
+            )
+
+            unmatched_report = json.loads(
+                (root / "research" / "reports" / "unmatched-pdfs.json").read_text(encoding="utf-8")
+            )
+            self.assertEqual(unmatched_report["unmatched"], [])
+
     def test_parse_manifest_uses_repo_relative_paths_and_messages(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
