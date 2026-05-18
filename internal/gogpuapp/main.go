@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image"
 	"log"
+	"sort"
 
 	"fecim-lattice-tools/internal/gogpuapp/design"
 	fecimrender "fecim-lattice-tools/internal/gogpuapp/render"
@@ -165,19 +166,27 @@ func drawAppFrame(cc *gg.Context, app *uiapp.App, activePort viewmodel.ModulePor
 func drawModuleOverlays(cc *gg.Context, snapshot viewmodel.ModuleSnapshot, w, h int) {
 	switch snapshot.Descriptor.ID {
 	case viewmodel.ModuleHysteresis:
-		for _, plot := range snapshot.Plots {
-			if plot.ID == "pe_loop" && len(plot.Series) > 0 {
-				pts := make([]design.PlotPoint, len(plot.Series[0].Points))
-				for i, p := range plot.Series[0].Points {
-					pts[i] = design.PlotPoint{X: p.X, Y: p.Y}
-				}
-				drawHysteresisOverlay(cc, pts, w, h)
-			}
-		}
+		drawHysteresisOverlayFromSnapshot(cc, snapshot, w, h)
 	case viewmodel.ModuleCrossbar:
 		drawCrossbarOverlay(cc, snapshot, 8, 8, w, h)
 	case viewmodel.ModuleCircuits:
 		drawCircuitsOverlay(cc, snapshot, w, h)
+	}
+}
+
+func drawHysteresisOverlayFromSnapshot(cc *gg.Context, snapshot viewmodel.ModuleSnapshot, w, h int) {
+	if plot := snapshotPlotByID(snapshot, "pe_loop"); len(plot.Series) > 0 {
+		pts := make([]design.PlotPoint, len(plot.Series[0].Points))
+		for i, p := range plot.Series[0].Points {
+			pts[i] = design.PlotPoint{X: p.X, Y: p.Y}
+		}
+		drawHysteresisOverlay(cc, pts, w, h)
+	}
+	if plot := snapshotPlotByID(snapshot, "pund_current_waveforms"); len(plot.Series) > 0 {
+		drawPUNDWaveformOverlay(cc, plot, w, h)
+	}
+	if plot := snapshotPlotByID(snapshot, "forc_density_heatmap"); len(plot.Series) > 0 {
+		drawFORCDensityOverlay(cc, plot, w, h)
 	}
 }
 
@@ -194,6 +203,47 @@ func drawHysteresisOverlay(cc *gg.Context, points []design.PlotPoint, w, h int) 
 	data.AddSeries("P-E", points)
 	fecimrender.DrawPlot(cc, fecimrender.PlotConfig{
 		Data: data, X: 260, Y: 100, Width: plotW, Height: plotH,
+	})
+}
+
+func drawPUNDWaveformOverlay(cc *gg.Context, plot viewmodel.PlotData, w, h int) {
+	data := designPlotFromSnapshotPlot(plot)
+	if data == nil || len(data.Series) == 0 {
+		return
+	}
+	width := minFloat(520, float64(w)-320)
+	height := 165.0
+	if width < 220 || float64(h) < 360 {
+		return
+	}
+	fecimrender.DrawPlot(cc, fecimrender.PlotConfig{
+		Data:       data,
+		X:          280,
+		Y:          float64(h) - height - 44,
+		Width:      width,
+		Height:     height,
+		Background: "#14141E",
+		GridColor:  "#32323C",
+	})
+}
+
+func drawFORCDensityOverlay(cc *gg.Context, plot viewmodel.PlotData, w, h int) {
+	matrix := densityMatrixFromPlot(plot)
+	if len(matrix) == 0 || len(matrix[0]) == 0 {
+		return
+	}
+	cell := clampFloat((float64(h)-240)/float64(len(matrix)), 6, 16)
+	width := float64(len(matrix[0])) * cell
+	x := float64(w) - width - 52
+	if x < 300 {
+		x = 300
+	}
+	fecimrender.DrawHeatmap(cc, fecimrender.HeatmapConfig{
+		Data:     matrix,
+		X:        x,
+		Y:        130,
+		CellSize: cell,
+		Title:    plot.Title,
 	})
 }
 
@@ -228,6 +278,74 @@ func drawCrossbarOverlay(cc *gg.Context, snapshot viewmodel.ModuleSnapshot, rows
 		Data: data, X: 260, Y: 100, CellSize: 24,
 		Title: "Crossbar Conductance Matrix",
 	})
+}
+
+func snapshotPlotByID(snapshot viewmodel.ModuleSnapshot, id string) viewmodel.PlotData {
+	for _, plot := range snapshot.Plots {
+		if plot.ID == id {
+			return plot
+		}
+	}
+	return viewmodel.PlotData{}
+}
+
+func designPlotFromSnapshotPlot(plot viewmodel.PlotData) *design.PlotData {
+	data := design.NewPlotData(plot.Title, plot.XLabel, plot.YLabel)
+	for _, series := range plot.Series {
+		points := make([]design.PlotPoint, len(series.Points))
+		for i, point := range series.Points {
+			points[i] = design.PlotPoint{X: point.X, Y: point.Y}
+		}
+		data.AddSeries(series.Name, points)
+	}
+	if len(data.Series) == 0 {
+		return nil
+	}
+	return data
+}
+
+func densityMatrixFromPlot(plot viewmodel.PlotData) [][]float64 {
+	if len(plot.Series) == 0 || len(plot.Series[0].Points) == 0 {
+		return nil
+	}
+	xs := sortedUniquePlotValues(plot.Series[0].Points, func(point viewmodel.PlotPoint) float64 { return point.X })
+	ys := sortedUniquePlotValues(plot.Series[0].Points, func(point viewmodel.PlotPoint) float64 { return point.Y })
+	if len(xs) == 0 || len(ys) == 0 {
+		return nil
+	}
+	xIndex := make(map[float64]int, len(xs))
+	for i, x := range xs {
+		xIndex[x] = i
+	}
+	yIndex := make(map[float64]int, len(ys))
+	for i, y := range ys {
+		yIndex[y] = i
+	}
+	matrix := make([][]float64, len(ys))
+	for i := range matrix {
+		matrix[i] = make([]float64, len(xs))
+	}
+	for _, point := range plot.Series[0].Points {
+		row, rowOK := yIndex[point.Y]
+		col, colOK := xIndex[point.X]
+		if rowOK && colOK {
+			matrix[row][col] = point.V
+		}
+	}
+	return matrix
+}
+
+func sortedUniquePlotValues(points []viewmodel.PlotPoint, value func(viewmodel.PlotPoint) float64) []float64 {
+	seen := map[float64]struct{}{}
+	for _, point := range points {
+		seen[value(point)] = struct{}{}
+	}
+	values := make([]float64, 0, len(seen))
+	for value := range seen {
+		values = append(values, value)
+	}
+	sort.Float64s(values)
+	return values
 }
 
 func buildRoot(model AppModel, theme *material3.Theme) widget.Widget {

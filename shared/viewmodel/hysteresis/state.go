@@ -50,10 +50,19 @@ type PUNDSummary struct {
 	SwitchingRatio    float64 `json:"switching_ratio"`
 	SamplesPerPulse   int     `json:"samples_per_pulse"`
 	Summary           string  `json:"summary"`
-	ExportStatus      string  `json:"export_status"`
-	ExportPath        string  `json:"export_path"`
-	ExportBytes       int     `json:"export_bytes"`
-	ExportContent     string  `json:"export_content,omitempty"`
+
+	TraceSamples []PUNDTraceSample `json:"trace_samples,omitempty"`
+
+	ExportStatus  string `json:"export_status"`
+	ExportPath    string `json:"export_path"`
+	ExportBytes   int    `json:"export_bytes"`
+	ExportContent string `json:"export_content,omitempty"`
+}
+
+type PUNDTraceSample struct {
+	Pulse    string  `json:"pulse"`
+	TimeS    float64 `json:"time_s"`
+	CurrentA float64 `json:"current_a"`
 }
 
 type FORCSummary struct {

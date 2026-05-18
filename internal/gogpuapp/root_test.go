@@ -401,6 +401,32 @@ func TestDrawModuleOverlaysDrawsHysteresisCanvas(t *testing.T) {
 	}
 }
 
+func TestHysteresisOverlayRespondsToDiagnosticVisuals(t *testing.T) {
+	harness := newHeadlessModuleSwitchHarness(t, viewmodel.ModuleHysteresis)
+	port := harness.portFor(viewmodel.ModuleHysteresis)
+
+	before := harness.renderActiveFrameSignature()
+	if err := port.ApplyAction(viewmodel.Action{ID: hysteresisvm.EventRunPUND, Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("run PUND: %v", err)
+	}
+	afterPUND := harness.renderActiveFrameSignature()
+	if afterPUND == before {
+		t.Fatal("hysteresis overlay did not change after PUND waveform data became available")
+	}
+
+	if err := port.ApplyAction(viewmodel.Action{
+		ID:      hysteresisvm.EventRunFORC,
+		Kind:    viewmodel.ActionCommand,
+		Payload: map[string]string{"reversals": "13"},
+	}); err != nil {
+		t.Fatalf("run FORC: %v", err)
+	}
+	afterFORC := harness.renderActiveFrameSignature()
+	if afterFORC == afterPUND {
+		t.Fatal("hysteresis overlay did not change after FORC heatmap data became available")
+	}
+}
+
 func TestCircuitsOverlayRespondsToViewmodelState(t *testing.T) {
 	harness := newHeadlessModuleSwitchHarness(t, viewmodel.ModuleCircuits)
 	port := harness.portFor(viewmodel.ModuleCircuits)

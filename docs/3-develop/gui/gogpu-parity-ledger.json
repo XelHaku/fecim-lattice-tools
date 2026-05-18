@@ -73,7 +73,7 @@
       "evidence": [
         "go test ./shared/viewmodel/hysteresis ./internal/gogpuapp -run Hysteresis"
       ],
-      "notes": "Core material selection, waveform selection, field-range presets, P-E loop state, retention state, P-E CSV export, summary-level PUND/FORC diagnostics, PUND summary CSV export, and FORC sweep/matrix/metadata exports exist in gogpu. Calibration dialogs, literature overlays, PUND waveform raster, FORC heatmap raster, and several educational widgets need explicit gogpu parity or a better replacement."
+      "notes": "Core material selection, waveform selection, field-range presets, P-E loop state, retention state, P-E CSV export, summary-level PUND/FORC diagnostics, PUND current waveform rendering, FORC density heatmap rendering, PUND summary CSV export, and FORC sweep/matrix/metadata exports exist in gogpu. Calibration dialogs, literature overlays, and several educational widgets need explicit gogpu parity or a better replacement."
     },
     {
       "module": "hysteresis",
@@ -141,6 +141,27 @@
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'TestHysteresisViewDiagnosticExportButtonsDispatchActions|TestHysteresisViewActionButtonsDispatchActions' -count=1"
       ],
       "notes": "This ports diagnostic artifact exports as buffered artifacts or validated-path files. PUND gets a gogpu-only summary CSV because the legacy PUND panel had no export; FORC ports the legacy sweep CSV, density matrix CSV, and metadata JSON export affordances. It does not claim PUND waveform raster or FORC heatmap raster parity."
+    },
+    {
+      "module": "hysteresis",
+      "feature": "PUND current waveform raster and FORC density heatmap",
+      "status": "ported",
+      "legacy_sources": [
+        "module1-hysteresis/pkg/gui/pund_panel.go",
+        "module1-hysteresis/pkg/gui/forc_panel.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/hysteresis/state.go",
+        "shared/viewmodel/hysteresis/viewmodel.go",
+        "shared/viewmodel/hysteresis/snapshot.go",
+        "internal/gogpuapp/hysteresis_view.go",
+        "internal/gogpuapp/main.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/hysteresis -run 'TestApplyActionRun(PUNDExposesCurrentWaveformPlot|FORCExposesDensityHeatmapPlot)' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'TestHysteresisOverlayRespondsToDiagnosticVisuals|TestDrawModuleOverlaysDrawsHysteresisCanvas' -count=1"
+      ],
+      "notes": "PUND stores the P/U/N/D pulse current traces as UI-neutral plot series and the gogpu overlay renders them with the existing plot renderer. FORC stores the density grid as V-valued plot points and the gogpu overlay renders it with the existing heatmap renderer."
     },
     {
       "module": "crossbar",

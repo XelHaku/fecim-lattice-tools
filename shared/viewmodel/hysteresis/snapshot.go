@@ -175,6 +175,12 @@ func buildSnapshot(state HysteresisState) viewmodel.ModuleSnapshot {
 			Series: []viewmodel.PlotSeries{{Name: "retention", Points: pts}},
 		})
 	}
+	if plot, ok := buildPUNDWaveformPlot(state.PUND); ok {
+		plots = append(plots, plot)
+	}
+	if plot, ok := buildFORCDensityHeatmapPlot(state.FORC); ok {
+		plots = append(plots, plot)
+	}
 
 	return viewmodel.ModuleSnapshot{
 		Descriptor: viewmodel.ModuleDescriptor{
@@ -189,4 +195,65 @@ func buildSnapshot(state HysteresisState) viewmodel.ModuleSnapshot {
 		Actions:  actions,
 		Plots:    plots,
 	}
+}
+
+func buildPUNDWaveformPlot(summary PUNDSummary) (viewmodel.PlotData, bool) {
+	if !summary.Available || len(summary.TraceSamples) == 0 {
+		return viewmodel.PlotData{}, false
+	}
+	pointsByPulse := map[string][]viewmodel.PlotPoint{
+		"P": {},
+		"U": {},
+		"N": {},
+		"D": {},
+	}
+	for _, sample := range summary.TraceSamples {
+		if _, ok := pointsByPulse[sample.Pulse]; !ok {
+			continue
+		}
+		pointsByPulse[sample.Pulse] = append(pointsByPulse[sample.Pulse], viewmodel.PlotPoint{
+			X: sample.TimeS * 1e9,
+			Y: sample.CurrentA,
+		})
+	}
+
+	series := make([]viewmodel.PlotSeries, 0, 4)
+	for _, pulse := range []string{"P", "U", "N", "D"} {
+		points := pointsByPulse[pulse]
+		if len(points) == 0 {
+			continue
+		}
+		series = append(series, viewmodel.PlotSeries{Name: pulse, Points: points})
+	}
+	if len(series) == 0 {
+		return viewmodel.PlotData{}, false
+	}
+	return viewmodel.PlotData{
+		ID:     "pund_current_waveforms",
+		Title:  "PUND Current Waveforms",
+		XLabel: "Time (ns)",
+		YLabel: "Current (A)",
+		Series: series,
+	}, true
+}
+
+func buildFORCDensityHeatmapPlot(summary FORCSummary) (viewmodel.PlotData, bool) {
+	if !summary.Available || len(summary.DensitySamples) == 0 {
+		return viewmodel.PlotData{}, false
+	}
+	points := make([]viewmodel.PlotPoint, len(summary.DensitySamples))
+	for i, sample := range summary.DensitySamples {
+		points[i] = viewmodel.PlotPoint{
+			X: sample.Ea_Vm,
+			Y: sample.Eb_Vm,
+			V: sample.Density,
+		}
+	}
+	return viewmodel.PlotData{
+		ID:     "forc_density_heatmap",
+		Title:  "FORC Density Heatmap",
+		XLabel: "Ea (V/m)",
+		YLabel: "Eb (V/m)",
+		Series: []viewmodel.PlotSeries{{Name: "rho(Ea,Eb)", Points: points}},
+	}, true
 }

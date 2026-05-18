@@ -238,6 +238,34 @@ func TestApplyActionRunPUNDPopulatesDiagnosticSummary(t *testing.T) {
 	}
 }
 
+func TestApplyActionRunPUNDExposesCurrentWaveformPlot(t *testing.T) {
+	m := New()
+
+	if err := m.ApplyAction(viewmodel.Action{ID: "run_pund", Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("ApplyAction run_pund: %v", err)
+	}
+
+	plot := snapshotPlotByID(m.Snapshot(), "pund_current_waveforms")
+	if plot.ID == "" {
+		t.Fatal("missing pund_current_waveforms plot")
+	}
+	if plot.XLabel != "Time (ns)" || plot.YLabel != "Current (A)" {
+		t.Fatalf("PUND plot labels = %q/%q, want Time (ns)/Current (A)", plot.XLabel, plot.YLabel)
+	}
+	if len(plot.Series) != 4 {
+		t.Fatalf("PUND plot series count = %d, want P/U/N/D", len(plot.Series))
+	}
+	for _, wantName := range []string{"P", "U", "N", "D"} {
+		series := plotSeriesByName(plot, wantName)
+		if len(series.Points) < 2 {
+			t.Fatalf("PUND %s series point count = %d, want at least 2", wantName, len(series.Points))
+		}
+		if series.Points[1].X <= series.Points[0].X {
+			t.Fatalf("PUND %s series time did not increase: %+v", wantName, series.Points[:2])
+		}
+	}
+}
+
 func TestApplyActionRunFORCPopulatesDensitySummary(t *testing.T) {
 	m := New()
 
@@ -259,6 +287,43 @@ func TestApplyActionRunFORCPopulatesDensitySummary(t *testing.T) {
 	section := snapshotSectionBody(s, "diagnostic_forc")
 	if !strings.Contains(section, "peak_density=") || !strings.Contains(section, "density_range=") {
 		t.Fatalf("FORC diagnostic section = %q, want density summary", section)
+	}
+}
+
+func TestApplyActionRunFORCExposesDensityHeatmapPlot(t *testing.T) {
+	m := New()
+
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      "run_forc",
+		Kind:    viewmodel.ActionCommand,
+		Payload: map[string]string{"reversals": "13"},
+	}); err != nil {
+		t.Fatalf("ApplyAction run_forc: %v", err)
+	}
+
+	plot := snapshotPlotByID(m.Snapshot(), "forc_density_heatmap")
+	if plot.ID == "" {
+		t.Fatal("missing forc_density_heatmap plot")
+	}
+	if plot.XLabel != "Ea (V/m)" || plot.YLabel != "Eb (V/m)" {
+		t.Fatalf("FORC plot labels = %q/%q, want Ea (V/m)/Eb (V/m)", plot.XLabel, plot.YLabel)
+	}
+	if len(plot.Series) != 1 {
+		t.Fatalf("FORC plot series count = %d, want one density series", len(plot.Series))
+	}
+	points := plot.Series[0].Points
+	if len(points) != 13*13 {
+		t.Fatalf("FORC density point count = %d, want 169", len(points))
+	}
+	foundDensity := false
+	for _, point := range points {
+		if point.V != 0 {
+			foundDensity = true
+			break
+		}
+	}
+	if !foundDensity {
+		t.Fatal("FORC density heatmap plot has no non-zero density values")
 	}
 }
 
@@ -374,4 +439,22 @@ func snapshotSectionBody(snapshot viewmodel.ModuleSnapshot, id string) string {
 		}
 	}
 	return ""
+}
+
+func snapshotPlotByID(snapshot viewmodel.ModuleSnapshot, id string) viewmodel.PlotData {
+	for _, plot := range snapshot.Plots {
+		if plot.ID == id {
+			return plot
+		}
+	}
+	return viewmodel.PlotData{}
+}
+
+func plotSeriesByName(plot viewmodel.PlotData, name string) viewmodel.PlotSeries {
+	for _, series := range plot.Series {
+		if series.Name == name {
+			return series
+		}
+	}
+	return viewmodel.PlotSeries{}
 }

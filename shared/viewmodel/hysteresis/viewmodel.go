@@ -219,6 +219,7 @@ func (m *Module) runPUND() error {
 		SwitchingNegative: result.SwitchingNegative_C,
 		SwitchingRatio:    ratio,
 		SamplesPerPulse:   samplesPerPulse,
+		TraceSamples:      makePUNDTraceSamples(traces),
 		Summary: fmt.Sprintf(
 			"QP=%.3e C, QU=%.3e C, QN=%.3e C, QD=%.3e C; Qsw+=%.3e C, Qsw-=%.3e C; Switching ratio |Qsw+/Qsw-|=%.3f; samples_per_pulse=%d",
 			result.QP_C, result.QU_C, result.QN_C, result.QD_C,
@@ -226,6 +227,29 @@ func (m *Module) runPUND() error {
 		),
 	}
 	return nil
+}
+
+func makePUNDTraceSamples(traces [4][]physics.PulseSample) []PUNDTraceSample {
+	labels := [4]string{"P", "U", "N", "D"}
+	totalSamples := 0
+	for _, trace := range traces {
+		totalSamples += len(trace)
+	}
+	samples := make([]PUNDTraceSample, 0, totalSamples)
+	offset := 0.0
+	for i, trace := range traces {
+		for _, sample := range trace {
+			samples = append(samples, PUNDTraceSample{
+				Pulse:    labels[i],
+				TimeS:    offset + sample.TimeS,
+				CurrentA: sample.CurrentA,
+			})
+		}
+		if len(trace) > 0 {
+			offset += trace[len(trace)-1].TimeS
+		}
+	}
+	return samples
 }
 
 func (m *Module) exportPUNDCSV(path string) error {
