@@ -326,6 +326,53 @@ class ClaimsTest(unittest.TestCase):
                 "\n".join(report.errors),
             )
 
+    def test_audit_fails_when_openalex_doi_does_not_match_citation(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_paper(root, "park2015_advmat_hzo", doi="10.1002/adma.201404531")
+            self._write_openalex_ledger(
+                root,
+                "park2015_advmat_hzo",
+                doi="https://doi.org/10.9999/wrong",
+                openalex_id="https://openalex.org/W123",
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "research/sources/park2015_advmat_hzo.openalex.json doi https://doi.org/10.9999/wrong does not match citation DOI 10.1002/adma.201404531",
+                "\n".join(report.errors),
+            )
+
+    def test_audit_fails_when_openalex_id_does_not_match_acquisition_ledger(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_paper(root, "park2015_advmat_hzo", doi="10.1002/adma.201404531")
+            self._write_openalex_ledger(
+                root,
+                "park2015_advmat_hzo",
+                doi="https://doi.org/10.1002/adma.201404531",
+                openalex_id="https://openalex.org/W123",
+            )
+            self._write_acquisition_ledger(
+                root,
+                filename_key="park2015_advmat_hzo",
+                paper_key="park2015_advmat_hzo",
+                status="planned",
+                pdf_path="research/papers/park2015_advmat_hzo.pdf",
+                sha256="",
+                openalex_id="https://openalex.org/W999",
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "research/sources/park2015_advmat_hzo.openalex.json id https://openalex.org/W123 does not match acquisition openalex_id https://openalex.org/W999",
+                "\n".join(report.errors),
+            )
+
     def test_audit_validates_pdf_promotion_review_ledgers(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -612,10 +659,11 @@ class ClaimsTest(unittest.TestCase):
             self.assertTrue(history_path.exists())
             self.assertEqual(json.loads(history_path.read_text(encoding="utf-8")), latest)
 
-    def _write_paper(self, root: Path, key: str, pdf: str = "not stored"):
+    def _write_paper(self, root: Path, key: str, pdf: str = "not stored", doi: str = ""):
         path = root / "citations" / "papers" / f"{key}.md"
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(f"**Key:** `{key}`\n**PDF:** `{pdf}`\n", encoding="utf-8")
+        doi_line = f"**DOI:** `{doi}`\n" if doi else ""
+        path.write_text(f"**Key:** `{key}`\n{doi_line}**PDF:** `{pdf}`\n", encoding="utf-8")
 
     def _write_claim(
         self,
@@ -734,16 +782,35 @@ class ClaimsTest(unittest.TestCase):
         status: str,
         pdf_path: str,
         sha256: str,
+        openalex_id: str = "https://openalex.org/W123",
     ):
         path = root / "research" / "sources" / f"{filename_key}.acquisition.yaml"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
             f"citation_path: citations/papers/{filename_key}.md\n"
             "doi: 10.1002/adma.201404531\n"
+            f"openalex_id: {openalex_id}\n"
             f"paper_key: {paper_key}\n"
             f"pdf_path: {pdf_path}\n"
             f"sha256: {sha256}\n"
             f"status: {status}\n",
+            encoding="utf-8",
+        )
+
+    def _write_openalex_ledger(self, root: Path, paper_key: str, doi: str, openalex_id: str):
+        path = root / "research" / "sources" / f"{paper_key}.openalex.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps(
+                {
+                    "id": openalex_id,
+                    "doi": doi,
+                    "display_name": "Ferroelectric HZO",
+                },
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
             encoding="utf-8",
         )
 

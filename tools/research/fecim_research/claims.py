@@ -102,6 +102,7 @@ def audit_claim_registry(root: Path) -> ClaimAuditReport:
     _audit_citation_pdf_paths(root, errors, pdf_review_backlog)
     _audit_citation_record_identity(root, errors)
     _audit_source_ledgers(root, errors)
+    _audit_openalex_ledgers(root, errors)
     _audit_acquisition_ledgers(root, errors)
     _audit_promotion_ledgers(root, errors)
     _audit_pdf_review_backlog(root, pdf_review_backlog, errors)
@@ -297,6 +298,51 @@ def _audit_source_ledgers(root: Path, errors: list[str]) -> None:
             actual_sha = _sha256_file(pdf_file)
             if expected_sha != actual_sha:
                 errors.append(f"{rel_path} pdf sha256 {expected_sha} does not match actual {actual_sha}")
+
+
+def _audit_openalex_ledgers(root: Path, errors: list[str]) -> None:
+    sources_dir = root / "research" / "sources"
+    if not sources_dir.exists():
+        return
+    for path in sorted(sources_dir.glob("*.openalex.json")):
+        rel_path = _rel(root, path)
+        expected_key = path.name.removesuffix(".openalex.json")
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            errors.append(f"{rel_path} invalid JSON: {exc}")
+            continue
+        if not isinstance(data, dict):
+            errors.append(f"{rel_path} must contain a JSON object")
+            continue
+
+        openalex_id = str(data.get("id", "")).strip()
+        openalex_doi = str(data.get("doi", "")).strip()
+        if not openalex_id:
+            errors.append(f"{rel_path} missing id")
+        elif not openalex_id.startswith("https://openalex.org/"):
+            errors.append(f"{rel_path} id must be an OpenAlex URL")
+        if not str(data.get("display_name", "")).strip():
+            errors.append(f"{rel_path} missing display_name")
+
+        citation_path = root / "citations" / "papers" / f"{expected_key}.md"
+        if citation_path.is_file():
+            citation_doi = _parse_markdown_fields(citation_path).get("doi", "").strip()
+            if citation_doi and openalex_doi and _normalize_doi(openalex_doi) != _normalize_doi(citation_doi):
+                errors.append(f"{rel_path} doi {openalex_doi} does not match citation DOI {citation_doi}")
+
+        acquisition_path = sources_dir / f"{expected_key}.acquisition.yaml"
+        if acquisition_path.is_file():
+            acquisition = _parse_mapping_yaml(acquisition_path)
+            acquisition_openalex_id = str(acquisition.get("openalex_id", "")).strip()
+            if acquisition_openalex_id and openalex_id and openalex_id != acquisition_openalex_id:
+                errors.append(
+                    f"{rel_path} id {openalex_id} "
+                    f"does not match acquisition openalex_id {acquisition_openalex_id}"
+                )
+            acquisition_doi = str(acquisition.get("doi", "")).strip()
+            if acquisition_doi and openalex_doi and _normalize_doi(openalex_doi) != _normalize_doi(acquisition_doi):
+                errors.append(f"{rel_path} doi {openalex_doi} does not match acquisition DOI {acquisition_doi}")
 
 
 def _audit_acquisition_ledgers(root: Path, errors: list[str]) -> None:
@@ -652,6 +698,17 @@ def _parse_mapping_yaml(path: Path) -> dict[str, object]:
 def _is_repo_relative_path(value: str) -> bool:
     path = Path(value)
     return not path.is_absolute() and ".." not in path.parts
+
+
+def _normalize_doi(value: str) -> str:
+    doi = value.strip().lower()
+    if doi.startswith("https://doi.org/"):
+        doi = doi.removeprefix("https://doi.org/")
+    elif doi.startswith("http://doi.org/"):
+        doi = doi.removeprefix("http://doi.org/")
+    elif doi.startswith("doi:"):
+        doi = doi.removeprefix("doi:")
+    return doi
 
 
 def _sha256_file(path: Path) -> str:
