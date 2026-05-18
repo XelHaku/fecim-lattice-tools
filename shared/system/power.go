@@ -43,7 +43,7 @@ func (p *PowerModel) LeakagePowerUW() float64 {
 // where α = 0.5 (average activity factor), C_load is estimated as 10 fF per cell,
 // and f is the operating frequency in MHz.
 func (p *PowerModel) SwitchingPowerUW(freqMHz float64) float64 {
-	const alpha = 0.5     // average switching activity factor
+	const alpha = 0.5        // average switching activity factor
 	const cPerCellF = 10e-15 // 10 fF per cell (parasitic + gate capacitance)
 
 	cells := float64(p.Rows * p.Cols)

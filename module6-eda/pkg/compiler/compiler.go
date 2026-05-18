@@ -295,4 +295,3 @@ func Compile(weights [][]float64, legacyConfig CompileConfig) (*CrossbarMapping,
 
 	return GenerateDesign(config)
 }
-

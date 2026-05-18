@@ -108,10 +108,12 @@ func TestFeCIMMaterial_Pr_Range(t *testing.T) {
 // endurance value is within the experimentally demonstrated range for HZO.
 //
 // Lower bound: 10^9 cycles (conservative baseline for thin-film HZO).
-//   Source: Mueller et al., IEEE IEDM 2013, DOI: 10.1109/IEDM.2013.6724605
+//
+//	Source: Mueller et al., IEEE IEDM 2013, DOI: 10.1109/IEDM.2013.6724605
 //
 // Upper bound: 10^12 cycles (best-in-class HZO+MoS2 hybrid).
-//   Source: Science Advances 2024, DOI: 10.1126/sciadv.adp0174
+//
+//	Source: Science Advances 2024, DOI: 10.1126/sciadv.adp0174
 func TestDefaultHZO_Endurance_LiteratureRange(t *testing.T) {
 	mat := physics.DefaultHZO()
 	if mat == nil {
@@ -156,9 +158,12 @@ func TestDefaultHZO_C2C_Soliman2023(t *testing.T) {
 // demonstrated endurance (10^9) is within the broader literature range.
 //
 // Source: Mueller et al., IEEE IEDM 2013 (lower bound 10^9)
-//   DOI: 10.1109/IEDM.2013.6724605
+//
+//	DOI: 10.1109/IEDM.2013.6724605
+//
 // Source: Science Advances 2024 (upper bound 10^12)
-//   DOI: 10.1126/sciadv.adp0174
+//
+//	DOI: 10.1126/sciadv.adp0174
 func TestFeCIMMaterial_Endurance_Demonstrated(t *testing.T) {
 	mat := physics.FeCIMMaterial()
 	if mat == nil {

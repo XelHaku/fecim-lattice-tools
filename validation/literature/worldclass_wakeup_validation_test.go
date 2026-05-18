@@ -23,11 +23,11 @@ import (
 // of HZO wake-up behavior from Pesic et al. 2016 (doi:10.1002/adfm.201603182).
 func defaultWakeUpConfig() physics.WakeUpModelConfig {
 	return physics.WakeUpModelConfig{
-		PrInitial_Cm2:      0.15,   // 15 uC/cm^2 initial (pre-wake-up, lower end)
-		WakeUpGainFraction: 0.40,   // 40% Pr gain during wake-up (literature: 20-50%)
-		WakeUpTauCycles:    1e3,    // characteristic wake-up at ~10^3 cycles
-		FatigueOnsetCycles: 1e6,    // fatigue begins after ~10^6 cycles
-		FatigueTauCycles:   1e7,    // fatigue decay time constant
+		PrInitial_Cm2:      0.15, // 15 uC/cm^2 initial (pre-wake-up, lower end)
+		WakeUpGainFraction: 0.40, // 40% Pr gain during wake-up (literature: 20-50%)
+		WakeUpTauCycles:    1e3,  // characteristic wake-up at ~10^3 cycles
+		FatigueOnsetCycles: 1e6,  // fatigue begins after ~10^6 cycles
+		FatigueTauCycles:   1e7,  // fatigue decay time constant
 	}
 }
 

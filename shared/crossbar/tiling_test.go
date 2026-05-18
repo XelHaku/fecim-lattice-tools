@@ -356,4 +356,3 @@ func TestTileWeightMatrix_ValidationErrors(t *testing.T) {
 		t.Error("expected error for invalid padding")
 	}
 }
-

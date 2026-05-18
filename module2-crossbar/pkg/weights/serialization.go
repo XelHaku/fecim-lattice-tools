@@ -529,4 +529,3 @@ func GenerateCrossbarMapping(layer *SerializedLayer, tileRows, tileCols int) *Cr
 
 	return mapping
 }
-

@@ -7,20 +7,20 @@ import (
 )
 
 type HysteresisState struct {
-	SelectedMaterial string                `json:"selected_material"`
+	SelectedMaterial string                 `json:"selected_material"`
 	Materials        []*physics.HZOMaterial `json:"materials"`
-	FieldRange       FieldRange            `json:"field_range"`
-	LoopPoints       []LoopPoint           `json:"loop_points"`
-	Waveform         string                `json:"waveform"`
-	IsRunning        bool                  `json:"is_running"`
-	Pr               float64               `json:"pr"`
-	EcPlus           float64               `json:"ec_plus"`
-	EcMinus          float64               `json:"ec_minus"`
-	Psat             float64               `json:"psat"`
-	PsatNeg          float64               `json:"psat_neg"`
-	LoopArea         float64               `json:"loop_area"`
-	RetentionTimes   []float64             `json:"retention_times"`
-	RetentionPr      []float64             `json:"retention_pr"`
+	FieldRange       FieldRange             `json:"field_range"`
+	LoopPoints       []LoopPoint            `json:"loop_points"`
+	Waveform         string                 `json:"waveform"`
+	IsRunning        bool                   `json:"is_running"`
+	Pr               float64                `json:"pr"`
+	EcPlus           float64                `json:"ec_plus"`
+	EcMinus          float64                `json:"ec_minus"`
+	Psat             float64                `json:"psat"`
+	PsatNeg          float64                `json:"psat_neg"`
+	LoopArea         float64                `json:"loop_area"`
+	RetentionTimes   []float64              `json:"retention_times"`
+	RetentionPr      []float64              `json:"retention_pr"`
 }
 
 type FieldRange struct {

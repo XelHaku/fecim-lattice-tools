@@ -36,15 +36,15 @@ func TestGeneratePELoopSVG_ContainsExpectedElements(t *testing.T) {
 		"<svg",
 		"</svg>",
 		"<polyline",
-		"HZO P-E Loop",             // title
-		"E [MV/cm]",                // x-axis label
-		"\u00b5C/cm\u00b2",         // y-axis label (µC/cm²)
-		"HZO",                      // citation
-		"abc1234",                   // commit in citation
-		"class=\"loop\"",           // polyline class
-		"class=\"axis\"",           // axis lines
-		"class=\"tick\"",           // tick marks
-		"P-E Loop",                 // legend text
+		"HZO P-E Loop",     // title
+		"E [MV/cm]",        // x-axis label
+		"\u00b5C/cm\u00b2", // y-axis label (µC/cm²)
+		"HZO",              // citation
+		"abc1234",          // commit in citation
+		"class=\"loop\"",   // polyline class
+		"class=\"axis\"",   // axis lines
+		"class=\"tick\"",   // tick marks
+		"P-E Loop",         // legend text
 	} {
 		if !strings.Contains(svg, want) {
 			t.Errorf("SVG missing expected content: %q", want)
@@ -162,8 +162,8 @@ func TestNiceStep(t *testing.T) {
 		{10, 2},
 		{100, 20},
 		{0.5, 0.1},
-		{0, 1},   // edge case: zero range
-		{-5, 1},  // edge case: negative range
+		{0, 1},  // edge case: zero range
+		{-5, 1}, // edge case: negative range
 	}
 	for _, tc := range tests {
 		got := niceStep(tc.dataRange)

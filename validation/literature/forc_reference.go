@@ -76,8 +76,8 @@ func HZO10nm_FORCReference() FORCReferenceData {
 		DensityFWHM_Hc_MVcm: 0.4,
 		SymmetryRatio:       1.0,
 		SymmetryTolerance:   0.5,
-		ExpectedPr_uCcm2:   15.8,
-		ExpectedEc_MVcm:    0.93,
+		ExpectedPr_uCcm2:    15.8,
+		ExpectedEc_MVcm:     0.93,
 		Notes: "Calibrated to Park 2015 Fig 2a digitized loop. " +
 			"FWHM and symmetry are qualitative expectations from " +
 			"Preisach density theory for polycrystalline HZO. " +
@@ -105,8 +105,8 @@ func BTO_FORCReference() FORCReferenceData {
 		DensityFWHM_Hc_MVcm: 0.02,
 		SymmetryRatio:       1.0,
 		SymmetryTolerance:   0.3,
-		ExpectedPr_uCcm2:   20.0,
-		ExpectedEc_MVcm:    0.03,
+		ExpectedPr_uCcm2:    20.0,
+		ExpectedEc_MVcm:     0.03,
 		Notes: "BTO has much lower Ec than HZO, so peak Hc should be " +
 			"correspondingly lower. Educational placeholder values.",
 	}

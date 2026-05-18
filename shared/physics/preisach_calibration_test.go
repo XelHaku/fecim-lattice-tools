@@ -68,8 +68,8 @@ func TestCalibratePreisachToData_TooFewPoints(t *testing.T) {
 // known TanhEverett, calibrates back, and checks that parameters are recovered.
 func TestCalibratePreisachToData_SyntheticRoundTrip(t *testing.T) {
 	// Generate synthetic data with known parameters.
-	truePs := 0.20    // C/m^2
-	trueEc := 1.0e8   // V/m
+	truePs := 0.20     // C/m^2
+	trueEc := 1.0e8    // V/m
 	trueDelta := 0.4e8 // V/m
 
 	ev := &TanhEverett{Ps: truePs, Ec: trueEc, Delta: trueDelta}

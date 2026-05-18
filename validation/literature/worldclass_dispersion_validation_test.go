@@ -24,11 +24,11 @@ import (
 // of HZO log-linear frequency dependence from Schenk et al. 2015.
 func defaultDispersionConfig() physics.FrequencyDispersionConfig {
 	return physics.FrequencyDispersionConfig{
-		ReferenceHz:        1e3,  // 1 kHz reference
-		EcLogSlope:         0.05, // Ec increases ~5% per ln(f/f0)
+		ReferenceHz:        1e3,   // 1 kHz reference
+		EcLogSlope:         0.05,  // Ec increases ~5% per ln(f/f0)
 		PrLogSlope:         -0.01, // Pr decreases slightly with frequency
-		LoopAreaLogSlope:   0.03, // Loop area increases slightly
-		MinMultiplierClamp: 0.1,  // Physical lower bound
+		LoopAreaLogSlope:   0.03,  // Loop area increases slightly
+		MinMultiplierClamp: 0.1,   // Physical lower bound
 	}
 }
 
@@ -36,9 +36,9 @@ func defaultDispersionConfig() physics.FrequencyDispersionConfig {
 func baselineMetrics() physics.HysteresisMetrics {
 	return physics.HysteresisMetrics{
 		FrequencyHz:  1e3,
-		Pr_Cm2:       0.245,    // 24.5 uC/cm^2
-		Ec_Vm:        1.0e8,    // 1.0 MV/cm
-		LoopArea_Jm3: 4.9e7,   // approximate
+		Pr_Cm2:       0.245, // 24.5 uC/cm^2
+		Ec_Vm:        1.0e8, // 1.0 MV/cm
+		LoopArea_Jm3: 4.9e7, // approximate
 	}
 }
 

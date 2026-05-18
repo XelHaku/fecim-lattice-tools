@@ -1,6 +1,5 @@
 package compact
 
-
 // FeFET is a compact model for a ferroelectric field-effect transistor.
 //
 // It embeds a *FeCap to track the ferroelectric polarisation history, and
@@ -84,4 +83,3 @@ func (f *FeFET) DrainCurrentA(vgs, vds float64) float64 {
 	// Saturation region
 	return f.K * vov * vov
 }
-

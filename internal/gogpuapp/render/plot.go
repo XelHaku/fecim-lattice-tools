@@ -12,11 +12,11 @@ import (
 
 // PlotConfig describes how to render a 2D plot into a gg.Context region.
 type PlotConfig struct {
-	Data      *design.PlotData
-	X         float64
-	Y         float64
-	Width     float64
-	Height    float64
+	Data       *design.PlotData
+	X          float64
+	Y          float64
+	Width      float64
+	Height     float64
 	Background string
 	GridColor  string
 }
@@ -122,8 +122,8 @@ func DrawPlot(dc *gg.Context, cfg PlotConfig) {
 		// Data points as small circles
 		dc.SetHexColor(seriesColor)
 		for _, pt := range series.Points {
-			px := plotW*(pt.X-cfg.Data.XMin)/xRange
-			py := plotH*(cfg.Data.YMax-pt.Y)/yRange
+			px := plotW * (pt.X - cfg.Data.XMin) / xRange
+			py := plotH * (cfg.Data.YMax - pt.Y) / yRange
 			dc.DrawCircle(px, py, 2)
 			dc.Fill()
 		}

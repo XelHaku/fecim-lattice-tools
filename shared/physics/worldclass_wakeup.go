@@ -25,10 +25,10 @@ type WakeUpModelConfig struct {
 func DefaultWakeUpModelConfig(prInitial float64) WakeUpModelConfig {
 	return WakeUpModelConfig{
 		PrInitial_Cm2:      prInitial,
-		WakeUpGainFraction: 0.30,   // 30% increase during wake-up (conservative vs 2.3x observed)
-		WakeUpTauCycles:    200,    // Characteristic wake-up time constant
-		FatigueOnsetCycles: 1e4,    // Fatigue onset after ~10^4 cycles
-		FatigueTauCycles:   5e5,    // Gradual fatigue decay
+		WakeUpGainFraction: 0.30, // 30% increase during wake-up (conservative vs 2.3x observed)
+		WakeUpTauCycles:    200,  // Characteristic wake-up time constant
+		FatigueOnsetCycles: 1e4,  // Fatigue onset after ~10^4 cycles
+		FatigueTauCycles:   5e5,  // Gradual fatigue decay
 	}
 }
 
@@ -68,12 +68,12 @@ func WakeUpPolarization(cycles float64, cfg WakeUpModelConfig) (float64, error) 
 //   - PMC11789571 (2025): 90-degree UCDW -> 180-degree DW transition
 //   - Physics Realism Audit Addendum 2026-02, Section 3.2
 type NonMonotonicEnduranceConfig struct {
-	Pr0       float64 // Pristine Pr (post-wakeup peak, C/m^2)
-	NWakeup   float64 // Wake-up characteristic cycle count (~10^3)
-	AlphaW    float64 // Wake-up stretching exponent (0 < alpha_w <= 1)
-	NFatigue  float64 // Fatigue characteristic cycle count (~10^8)
-	BetaF     float64 // Maximum fatigue fractional loss (0 < beta_f < 1)
-	GammaF    float64 // Fatigue stretching exponent
+	Pr0      float64 // Pristine Pr (post-wakeup peak, C/m^2)
+	NWakeup  float64 // Wake-up characteristic cycle count (~10^3)
+	AlphaW   float64 // Wake-up stretching exponent (0 < alpha_w <= 1)
+	NFatigue float64 // Fatigue characteristic cycle count (~10^8)
+	BetaF    float64 // Maximum fatigue fractional loss (0 < beta_f < 1)
+	GammaF   float64 // Fatigue stretching exponent
 }
 
 // DefaultNonMonotonicEnduranceConfig returns literature-derived defaults for
@@ -86,11 +86,11 @@ type NonMonotonicEnduranceConfig struct {
 func DefaultNonMonotonicEnduranceConfig(prPeak float64) NonMonotonicEnduranceConfig {
 	return NonMonotonicEnduranceConfig{
 		Pr0:      prPeak,
-		NWakeup:  1e3,  // Wake-up completes around 10^3 cycles
-		AlphaW:   0.3,  // Stretched rise; shallow initial slope
-		NFatigue: 1e8,  // Fatigue onset at ~10^8 cycles
-		BetaF:    0.5,  // 50% maximum Pr loss at extreme cycling
-		GammaF:   0.2,  // Gradual fatigue (stretched power law)
+		NWakeup:  1e3, // Wake-up completes around 10^3 cycles
+		AlphaW:   0.3, // Stretched rise; shallow initial slope
+		NFatigue: 1e8, // Fatigue onset at ~10^8 cycles
+		BetaF:    0.5, // 50% maximum Pr loss at extreme cycling
+		GammaF:   0.2, // Gradual fatigue (stretched power law)
 	}
 }
 

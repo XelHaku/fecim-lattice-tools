@@ -144,7 +144,9 @@ func tuneDeltaForPr(ec, saturationE, psIrrev, targetPr float64) float64 {
 // ferroelectric materials, wrapping shared/physics.PreisachStack.
 //
 // The total polarization has two contributions:
-//   P_total(E) = P_irrev(E) + P_rev(E)
+//
+//	P_total(E) = P_irrev(E) + P_rev(E)
+//
 // where P_irrev comes from the Preisach stack (irreversible domain switching)
 // and P_rev = P_sat_rev * tanh(E/Ec) is a nonlinear reversible (dielectric)
 // contribution derived from the material's low-frequency permittivity.
@@ -503,8 +505,10 @@ func (p *PreisachModel) SetStress(stressGPa float64) {
 //
 // Temperature: Ps(T) = Ps(300K) + TempCoeffPr * (T - 300)
 // Coercive field: Ec(T,sigma) scales as |alpha(T,sigma)/alpha_ref|^1.5
-//   where alpha(T) = (T - T_C) / (2*eps0*C)    (Curie-Weiss)
-//   and   alpha(T,sigma) = alpha(T) - 2*Q12*sigma  (electrostriction)
+//
+//	where alpha(T) = (T - T_C) / (2*eps0*C)    (Curie-Weiss)
+//	and   alpha(T,sigma) = alpha(T) - 2*Q12*sigma  (electrostriction)
+//
 // Q12 is the transverse electrostriction coefficient (default -0.026 for HZO).
 func (p *PreisachModel) updateEffectiveParameters() {
 	if p.material == nil || p.everett == nil {

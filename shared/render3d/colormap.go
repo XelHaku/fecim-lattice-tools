@@ -72,4 +72,3 @@ func CoolwarmColor(t float64) color.RGBA {
 		A: 255,
 	}
 }
-

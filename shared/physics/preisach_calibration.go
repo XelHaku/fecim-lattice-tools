@@ -178,7 +178,7 @@ func computeLoopRMSE(data []PEPoint, ps, ec, delta float64) float64 {
 // search. Returns (xMin, fMin). maxIter controls precision.
 func goldenSectionMinimize(a, b float64, f func(float64) float64, maxIter int) (float64, float64) {
 	phi := (math.Sqrt(5) - 1) / 2 // ~0.618
-	resphi := 1.0 - phi            // ~0.382
+	resphi := 1.0 - phi           // ~0.382
 
 	x1 := a + resphi*(b-a)
 	x2 := a + phi*(b-a)

@@ -12,9 +12,9 @@ func TestRunPUNDSimulation_Basic(t *testing.T) {
 	stack := NewPreisachStack(ec, &TanhEverett{Ec: ec, Ps: ps, Delta: ec * 0.3})
 
 	amplitude := 5 * ec
-	pulseWidth := 100e-9  // 100 ns
+	pulseWidth := 100e-9   // 100 ns
 	sampleInterval := 5e-9 // 5 ns
-	area := 1e-12 // 1 µm²
+	area := 1e-12          // 1 µm²
 
 	result, traces, err := RunPUNDSimulation(stack, amplitude, pulseWidth, sampleInterval, area)
 	if err != nil {

@@ -142,18 +142,18 @@ func TestBrevitasQATComparison(t *testing.T) {
 	os.MkdirAll(artifactDir, 0755)
 
 	artifact := map[string]interface{}{
-		"test":              "brevitas_qat_comparison",
-		"fp_accuracy":       result.FPAccuracy,
-		"ptq_accuracy":      result.PTQAccuracy,
-		"qat_accuracy":      result.QATAccuracy,
-		"ptq_levels":        result.PTQLevels,
-		"qat_bit_width":     result.QATBitWidth,
-		"delta_qat_vs_ptq":  result.DeltaQATvsPTQ,
-		"delta_ptq_vs_fp":   result.DeltaPTQvsFP,
-		"ptq_drop_ok":       ptqDrop <= 0.05,
-		"qat_ge_ptq":        result.QATAccuracy >= result.PTQAccuracy,
-		"fp_above_90":       result.FPAccuracy >= 0.90,
-		"max_ptq_drop_pct":  math.Round(ptqDrop*10000) / 100,
+		"test":             "brevitas_qat_comparison",
+		"fp_accuracy":      result.FPAccuracy,
+		"ptq_accuracy":     result.PTQAccuracy,
+		"qat_accuracy":     result.QATAccuracy,
+		"ptq_levels":       result.PTQLevels,
+		"qat_bit_width":    result.QATBitWidth,
+		"delta_qat_vs_ptq": result.DeltaQATvsPTQ,
+		"delta_ptq_vs_fp":  result.DeltaPTQvsFP,
+		"ptq_drop_ok":      ptqDrop <= 0.05,
+		"qat_ge_ptq":       result.QATAccuracy >= result.PTQAccuracy,
+		"fp_above_90":      result.FPAccuracy >= 0.90,
+		"max_ptq_drop_pct": math.Round(ptqDrop*10000) / 100,
 	}
 	artifactJSON, _ := json.MarshalIndent(artifact, "", "  ")
 	artifactPath := filepath.Join(artifactDir, "brevitas_qat_comparison.json")

@@ -16,8 +16,9 @@ import (
 // Row output = sum_j(G[i][j] * V[j])
 //
 // G = | 0.5  0.2  0.8 |    V = | 1.0 |
-//     | 0.3  0.7  0.1 |        | 0.5 |
-//                               | 0.0 |
+//
+//	| 0.3  0.7  0.1 |        | 0.5 |
+//	                          | 0.0 |
 //
 // Row 0: 0.5*1.0 + 0.2*0.5 + 0.8*0.0 = 0.5 + 0.1 + 0.0 = 0.600
 // Row 1: 0.3*1.0 + 0.7*0.5 + 0.1*0.0 = 0.3 + 0.35 + 0.0 = 0.650
@@ -114,10 +115,11 @@ func TestMathAudit_IdealMVM_HandCalculation(t *testing.T) {
 // Then 2x1 array with wire resistance: hand-solve Kirchhoff.
 //
 // For a 1x1 array:
-//   G = 0.5, V_applied = 1.0
-//   No wire resistance → device voltage = 1.0
-//   I_device = 0.5 * 1.0 = 0.5
-//   Output current = 0.5
+//
+//	G = 0.5, V_applied = 1.0
+//	No wire resistance → device voltage = 1.0
+//	I_device = 0.5 * 1.0 = 0.5
+//	Output current = 0.5
 func TestMathAudit_SORSolver_1x1_NoParasitics(t *testing.T) {
 	solver, err := NewParasiticSolver(1, 1, nil)
 	if err != nil {
@@ -147,15 +149,17 @@ func TestMathAudit_SORSolver_1x1_NoParasitics(t *testing.T) {
 // Two devices in a column with bit line resistance.
 //
 // Circuit:
-//   V_applied ──[Rp]──●──[Rp]──●──GND
-//                      |         |
-//                     G[1]      G[0]
+//
+//	V_applied ──[Rp]──●──[Rp]──●──GND
+//	                   |         |
+//	                  G[1]      G[0]
 //
 // With G[0]=0.5, G[1]=0.5, Rp_col=0.1 (normalized), V=1.0:
 //
 // Node voltages at bit line (measured from ground):
-//   V_BL[0] = 0 (ground reference)
-//   V_BL[1] = Rp * I_through_segment
+//
+//	V_BL[0] = 0 (ground reference)
+//	V_BL[1] = Rp * I_through_segment
 //
 // Device 0 (row 0, near ground): V_device[0] = V_applied - V_BL[0] = ~V_applied
 // Device 1 (row 1, farther):     V_device[1] = V_applied - V_BL[1] < V_applied
@@ -261,10 +265,11 @@ func TestMathAudit_SneakPath_SeriesConductance(t *testing.T) {
 // Resolution = 1.0 / 15 = 0.06667 V/LSB
 //
 // Test specific voltages:
-//   0.0   → level 0
-//   0.5   → level 7 or 8 (0.5 * 15 = 7.5, rounds to 8)
-//   1.0   → level 15
-//   0.333 → 0.333 * 15 = 4.995, rounds to 5
+//
+//	0.0   → level 0
+//	0.5   → level 7 or 8 (0.5 * 15 = 7.5, rounds to 8)
+//	1.0   → level 15
+//	0.333 → 0.333 * 15 = 4.995, rounds to 5
 func TestMathAudit_ADCQuantization(t *testing.T) {
 	t.Logf("=== ADC QUANTIZATION MATH ===")
 
@@ -313,9 +318,10 @@ func TestMathAudit_ADCQuantization(t *testing.T) {
 // At 300K with C = 1 pF:
 // kB = 1.380649e-23 J/K
 // V_rms = sqrt(1.380649e-23 * 300 / 1e-12)
-//       = sqrt(4.141947e-9)
-//       = 6.4358e-5 V
-//       = 64.36 µV
+//
+//	= sqrt(4.141947e-9)
+//	= 6.4358e-5 V
+//	= 64.36 µV
 func TestMathAudit_kTC_ThermalNoise(t *testing.T) {
 	const kB = 1.380649e-23
 	T := 300.0

@@ -25,8 +25,8 @@ type sensitivityPoint struct {
 	ParamValue float64 `json:"param_value"`
 	Pr         float64 `json:"Pr_C_m2"`
 	Ec         float64 `json:"Ec_V_m"`
-	PrUCcm2   float64 `json:"Pr_uC_cm2"`
-	EcMVcm    float64 `json:"Ec_MV_cm"`
+	PrUCcm2    float64 `json:"Pr_uC_cm2"`
+	EcMVcm     float64 `json:"Ec_MV_cm"`
 }
 
 // sensitivityResult holds the full sweep result for a single parameter.
@@ -164,8 +164,8 @@ func TestLKSolver_MaxAbsRateSensitivity(t *testing.T) {
 			ParamValue: rate,
 			Pr:         pr,
 			Ec:         ec,
-			PrUCcm2:   prUC,
-			EcMVcm:    ecMV,
+			PrUCcm2:    prUC,
+			EcMVcm:     ecMV,
 		})
 	}
 
@@ -236,8 +236,8 @@ func TestLKSolver_StiffThresholdSensitivity(t *testing.T) {
 			ParamValue: threshold,
 			Pr:         pr,
 			Ec:         ec,
-			PrUCcm2:   prUC,
-			EcMVcm:    ecMV,
+			PrUCcm2:    prUC,
+			EcMVcm:     ecMV,
 		})
 	}
 
@@ -314,8 +314,8 @@ func TestLKSolver_ImplicitMaxIterSensitivity(t *testing.T) {
 			ParamValue: float64(maxIter),
 			Pr:         pr,
 			Ec:         ec,
-			PrUCcm2:   prUC,
-			EcMVcm:    ecMV,
+			PrUCcm2:    prUC,
+			EcMVcm:     ecMV,
 		})
 	}
 
@@ -387,8 +387,8 @@ func TestLKSolver_PClampSensitivity(t *testing.T) {
 			ParamValue: factor,
 			Pr:         pr,
 			Ec:         ec,
-			PrUCcm2:   prUC,
-			EcMVcm:    ecMV,
+			PrUCcm2:    prUC,
+			EcMVcm:     ecMV,
 		})
 	}
 

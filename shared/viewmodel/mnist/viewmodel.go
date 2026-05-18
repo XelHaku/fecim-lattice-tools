@@ -17,7 +17,7 @@ func (m *Module) Descriptor() viewmodel.ModuleDescriptor {
 	return viewmodel.ModuleDescriptor{
 		ID: viewmodel.ModuleMNIST, Title: "FeCIM MNIST Neural Network",
 		Description: "Educational CIM inference pipeline with quantized weights and reproducible metrics.",
-		Status: viewmodel.StatusFunctional,
+		Status:      viewmodel.StatusFunctional,
 	}
 }
 func (m *Module) Snapshot() viewmodel.ModuleSnapshot { return buildSnapshot(m.state) }

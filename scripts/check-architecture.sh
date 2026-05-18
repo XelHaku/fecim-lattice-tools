@@ -33,10 +33,11 @@ done
 
 echo ""
 echo "=== Rule 3: Single go.mod ==="
-count=$(find . -name 'go.mod' -not -path './.git/*' | wc -l | tr -d ' ')
+go_mod_files=$(find . -name 'go.mod' -not -path './.git/*' -not -path './.worktrees/*')
+count=$(printf '%s\n' "$go_mod_files" | sed '/^$/d' | wc -l | tr -d ' ')
 if [[ "$count" -ne 1 ]]; then
     echo "  ❌ RULE 3: found $count go.mod files (expected 1)"
-    find . -name 'go.mod' -not -path './.git/*' | sed 's/^/    /'
+    printf '%s\n' "$go_mod_files" | sed '/^$/d; s/^/    /'
     FAIL=1
 else
     echo "  ✅ Rule 3 passed (1 go.mod)"

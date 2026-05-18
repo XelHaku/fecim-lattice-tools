@@ -12,10 +12,10 @@ import (
 
 func descriptor() viewmodel.ModuleDescriptor {
 	return viewmodel.ModuleDescriptor{
-		ID:          viewmodel.ModuleComparison,
-		Title:       "FeCIM Comparison",
-		Description: "Evidence-first technology comparison and scenario analysis.",
-		Status:      viewmodel.StatusFunctional,
+		ID:             viewmodel.ModuleComparison,
+		Title:          "FeCIM Comparison",
+		Description:    "Evidence-first technology comparison and scenario analysis.",
+		Status:         viewmodel.StatusFunctional,
 		BoundaryNotice: "ESTIMATED DATA — Comparison benchmarks are educational estimates based on published architecture analyses. Not validated against production silicon measurements.",
 	}
 }

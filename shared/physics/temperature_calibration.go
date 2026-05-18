@@ -81,7 +81,7 @@ func HZO10nmTemperatureCalibration() TemperatureCalibrationSet {
 			Pr_Cm2:       ref.pr,
 			Ec_Vm:        ref.ec,
 			LoopArea_Jm3: loopArea,
-			Source:        "Materlik et al., J. Appl. Phys. 117, 134109 (2015), LGD dynamical extraction",
+			Source:       "Materlik et al., J. Appl. Phys. 117, 134109 (2015), LGD dynamical extraction",
 		}
 	}
 

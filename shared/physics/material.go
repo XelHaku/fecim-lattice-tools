@@ -460,6 +460,7 @@ func (m *HZOMaterial) DiscreteLevel(level int, totalLevels int) float64 {
 //   - At HRS (G=Gmin): sigma = C2CSigmaBase * Gmin  (base variation)
 //   - At LRS (G=Gmax): sigma = C2CSigmaBase * Gmin * (Gmax/Gmin)^0.5  (sqrt scaling)
 //   - Exponent 0.5 means weaker relative variation at high conductance states
+//
 // NOTE: numerical defaults are educational; treat as [CALIBRATION NEEDED].
 //
 // If C2CSigmaBase is zero, returns 0 (no C2C variation modeled).

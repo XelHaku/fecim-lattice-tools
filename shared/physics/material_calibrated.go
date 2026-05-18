@@ -83,10 +83,10 @@ func Nanomaterials2024Fig2PZTThinFilm() *HZOMaterial {
 	// saturation envelope Ps~56 uC/cm2 from data max.
 	// Pr_param tuned so that a ±3 MV/cm Preisach sweep produces Pr_sim≈21.5.
 	// EpsilonLF overridden to minimize reversible distortion of loop shape.
-	m.Pr = 15.0e-2       // tuned: produces Pr_sim≈21.3 under ±3 MV/cm sweep
-	m.Ps = 56.0e-2       // 56.0 uC/cm2 (from data saturation at ±3 MV/cm)
-	m.Ec = 0.30e8        // 0.30 MV/cm (from digitized zero-crossing)
-	m.EpsilonLF = 30     // reduced to keep reversible P small vs irreversible Preisach
+	m.Pr = 15.0e-2   // tuned: produces Pr_sim≈21.3 under ±3 MV/cm sweep
+	m.Ps = 56.0e-2   // 56.0 uC/cm2 (from data saturation at ±3 MV/cm)
+	m.Ec = 0.30e8    // 0.30 MV/cm (from digitized zero-crossing)
+	m.EpsilonLF = 30 // reduced to keep reversible P small vs irreversible Preisach
 	m.Epsilon = 30
 	m.Thickness = 100e-9 // ~100 nm class film
 	return m
@@ -101,10 +101,10 @@ func Crystals2021FigFerroelectricBTOTrilayer() *HZOMaterial {
 	// saturation Ps~10 uC/cm2 from data max.
 	// Pr_param tuned so that the data-driven Preisach sweep produces Pr_sim≈4.6.
 	// EpsilonLF overridden to minimize reversible distortion of loop shape.
-	m.Pr = 2.25e-2       // tuned: produces Pr_sim≈4.6 under data-driven ±2 MV/cm sweep
-	m.Ps = 10.0e-2       // 10.0 uC/cm2 (from data saturation at ±2 MV/cm)
-	m.Ec = 0.131e8       // 0.131 MV/cm (from digitized zero-crossing)
-	m.EpsilonLF = 30     // reduced to keep reversible P small vs irreversible Preisach
+	m.Pr = 2.25e-2   // tuned: produces Pr_sim≈4.6 under data-driven ±2 MV/cm sweep
+	m.Ps = 10.0e-2   // 10.0 uC/cm2 (from data saturation at ±2 MV/cm)
+	m.Ec = 0.131e8   // 0.131 MV/cm (from digitized zero-crossing)
+	m.EpsilonLF = 30 // reduced to keep reversible P small vs irreversible Preisach
 	m.Epsilon = 30
 	m.Thickness = 100e-9 // nominal thin-film class for conversion consistency
 	return m

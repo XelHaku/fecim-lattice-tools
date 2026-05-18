@@ -139,10 +139,10 @@ func (s *StackRenderer) Render() image.Image {
 		yPos := float64(stackPos) * (1.0 + s.LayerGap)
 
 		// Four corners of the layer in world space
-		c0 := Vec3{0, yPos, 0}                             // top-left
-		c1 := Vec3{float64(ld.Cols), yPos, 0}              // top-right
+		c0 := Vec3{0, yPos, 0}                               // top-left
+		c1 := Vec3{float64(ld.Cols), yPos, 0}                // top-right
 		c2 := Vec3{float64(ld.Cols), yPos, float64(ld.Rows)} // bottom-right
-		c3 := Vec3{0, yPos, float64(ld.Rows)}              // bottom-left
+		c3 := Vec3{0, yPos, float64(ld.Rows)}                // bottom-left
 
 		// Project corners
 		var corners [4][2]float64

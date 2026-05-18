@@ -21,9 +21,9 @@ func New() *Module {
 	}
 
 	m := &Module{state: EDAState{
-		DesignName:    "fecim_crossbar_8x8",
-		ProcessNode:   "sky130",
-		ArrayRows:     rows, ArrayCols: cols,
+		DesignName:  "fecim_crossbar_8x8",
+		ProcessNode: "sky130",
+		ArrayRows:   rows, ArrayCols: cols,
 		ExportFormats: []string{"spice", "verilog", "liberty", "def", "lef"},
 	}}
 

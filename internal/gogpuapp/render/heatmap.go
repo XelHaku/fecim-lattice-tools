@@ -11,13 +11,13 @@ import (
 
 // HeatmapConfig describes a 2D heatmap to render.
 type HeatmapConfig struct {
-	Data      [][]float64
-	X         float64
-	Y         float64
-	CellSize  float64
-	MinVal    float64
-	MaxVal    float64
-	Title     string
+	Data     [][]float64
+	X        float64
+	Y        float64
+	CellSize float64
+	MinVal   float64
+	MaxVal   float64
+	Title    string
 }
 
 // DrawHeatmap renders a 2D heatmap into the gg.Context.

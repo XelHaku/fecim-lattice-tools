@@ -13,9 +13,9 @@ type Module struct {
 }
 
 func New() *Module {
-		materials := physics.AllMaterials()
-		defaultMat := "HZO (Si-doped, Park 2015 midpoint)"
-		if len(materials) > 0 && materials[0] != nil {
+	materials := physics.AllMaterials()
+	defaultMat := "HZO (Si-doped, Park 2015 midpoint)"
+	if len(materials) > 0 && materials[0] != nil {
 		defaultMat = materials[0].Name
 	}
 	m := &Module{

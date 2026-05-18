@@ -54,7 +54,7 @@ func TestImportCrossSimVariation_RoundTrip(t *testing.T) {
 
 	// Total imported sigma should approximately match total exported sigma.
 	importedTotal := pvConfig.DeviceSigma
-	exportedD2D := math.Sqrt(exported.D2DSigmaHRS*exported.D2DSigmaHRS + exported.D2DSigmaLRS*exported.D2DSigmaLRS) / math.Sqrt(2)
+	exportedD2D := math.Sqrt(exported.D2DSigmaHRS*exported.D2DSigmaHRS+exported.D2DSigmaLRS*exported.D2DSigmaLRS) / math.Sqrt(2)
 	exportedTotal := math.Sqrt(exportedD2D*exportedD2D + exported.ProgramNoiseSigma*exported.ProgramNoiseSigma)
 
 	relDiff := math.Abs(importedTotal-exportedTotal) / importedTotal

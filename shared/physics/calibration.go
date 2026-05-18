@@ -288,5 +288,3 @@ func (c *Calibrator) CheckVerify(targetLevel, readLevel, retryCount int) VerifyR
 		ShouldRetry: shouldRetry,
 	}
 }
-
-

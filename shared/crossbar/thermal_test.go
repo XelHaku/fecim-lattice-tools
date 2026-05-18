@@ -386,8 +386,8 @@ func TestThermalModel_Checkerboard_Analytical(t *testing.T) {
 	cfg := DefaultThermalConfig()
 	tm := NewThermalModel(rows, cols, cfg)
 
-	pHigh := 5e-3   // 5 mW
-	pLow := 0.5e-3  // 0.5 mW
+	pHigh := 5e-3  // 5 mW
+	pLow := 0.5e-3 // 0.5 mW
 
 	powerMap := make([][]float64, rows)
 	for i := range powerMap {

@@ -288,4 +288,3 @@ func (s *LKSolver) EnableEnsemble(numDomains int, mat *HZOMaterial, seed uint64)
 	}
 	s.SetState(initP)
 }
-

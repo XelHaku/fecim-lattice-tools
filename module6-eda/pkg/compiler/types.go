@@ -103,10 +103,10 @@ const (
 // SKY130 physical constants for cell layout.
 // Ref: SkyWater SKY130 PDK — unithd standard cell site.
 const (
-	sky130CellPitch  = 0.46 // µm — met1 pitch / unithd site width
-	sky130RowHeight  = 2.72 // µm — standard cell row height
-	sky130VDD        = 1.8  // V — nominal supply voltage
-	sky130ClockMHz   = 100.0 // MHz — default operating frequency
+	sky130CellPitch = 0.46  // µm — met1 pitch / unithd site width
+	sky130RowHeight = 2.72  // µm — standard cell row height
+	sky130VDD       = 1.8   // V — nominal supply voltage
+	sky130ClockMHz  = 100.0 // MHz — default operating frequency
 
 	// 1T1R cell dimensions (wider for transistor)
 	cell1T1RPitch  = 0.92 // µm — ~2x passive for selector transistor
@@ -196,12 +196,12 @@ func NewArrayConfig(mode OperationMode, rows, cols int) *ArrayConfig {
 		Architecture: ArchPassive,
 		CellPitch:    sky130CellPitch,
 		RowHeight:    sky130RowHeight,
-		Levels:       30,     // FeCIM standard (conference claim, DefaultLevels)
-		GMin:         10.0,   // µS
-		GMax:         100.0,  // µS
-		VProgMin:     2.0,    // V
-		VProgMax:     5.0,    // V
-		TPulse:       50.0,   // ns
+		Levels:       30,    // FeCIM standard (conference claim, DefaultLevels)
+		GMin:         10.0,  // µS
+		GMax:         100.0, // µS
+		VProgMin:     2.0,   // V
+		VProgMax:     5.0,   // V
+		TPulse:       50.0,  // ns
 		Peripherals: PeripheralConfig{
 			DACBits:   8,
 			ADCBits:   8,

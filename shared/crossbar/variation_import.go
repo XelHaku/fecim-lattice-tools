@@ -49,13 +49,13 @@ type CrossSimVariationConfig struct {
 // for quantitative hardware claims.
 func DefaultCrossSimHZO() CrossSimVariationConfig {
 	return CrossSimVariationConfig{
-		ProgramNoiseSigma: 0.03,  // 3% programming noise
-		ReadNoiseSigma:    0.01,  // 1% read noise
-		DriftCoeff:        0.05,  // Mild power-law drift (v=0.05)
-		DriftT0:           1.0,   // 1 second reference time
-		D2DSigmaHRS:       0.05,  // 5% D2D at HRS
-		D2DSigmaLRS:       0.03,  // 3% D2D at LRS
-		C2CSigma:          0.03,  // 3% cycle-to-cycle variation
+		ProgramNoiseSigma: 0.03, // 3% programming noise
+		ReadNoiseSigma:    0.01, // 1% read noise
+		DriftCoeff:        0.05, // Mild power-law drift (v=0.05)
+		DriftT0:           1.0,  // 1 second reference time
+		D2DSigmaHRS:       0.05, // 5% D2D at HRS
+		D2DSigmaLRS:       0.03, // 3% D2D at LRS
+		C2CSigma:          0.03, // 3% cycle-to-cycle variation
 	}
 }
 
@@ -132,7 +132,7 @@ func ExportToCrossSimFormat(config *ProcessVariationConfig) CrossSimVariationCon
 		DriftT0:           1.0,  // Default reference time
 		D2DSigmaHRS:       d2dHRS,
 		D2DSigmaLRS:       d2dLRS,
-		C2CSigma:          progContrib,                           // C2C ≈ programming noise for compact mapping
+		C2CSigma:          progContrib, // C2C ≈ programming noise for compact mapping
 		Disclaimer:        export.SimulationDisclaimer(),
 	}
 }

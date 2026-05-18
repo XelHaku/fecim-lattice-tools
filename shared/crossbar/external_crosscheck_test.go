@@ -247,20 +247,22 @@ for j in range(cols):
 // This can be solved analytically for small N.
 //
 // For N=3, G=1, Rp=R, V_applied=V:
-//   Node 0 (ground): V_BL = 0
-//   I0 = G * V_d0
-//   V_BL1 = R * I0 = R * G * V_d0
-//   V_d1 = V - V_BL1 = V - R*G*V_d0
-//   I1 = G * V_d1
-//   V_BL2 = V_BL1 + R*(I0+I1) = R*I0 + R*(I0+I1) -- wait, let me be precise.
+//
+//	Node 0 (ground): V_BL = 0
+//	I0 = G * V_d0
+//	V_BL1 = R * I0 = R * G * V_d0
+//	V_d1 = V - V_BL1 = V - R*G*V_d0
+//	I1 = G * V_d1
+//	V_BL2 = V_BL1 + R*(I0+I1) = R*I0 + R*(I0+I1) -- wait, let me be precise.
 //
 // Actually, with the Go solver convention:
-//   BL source at row 0 side. Wire current between rows i-1 and i is the
-//   remaining current (total - consumed by rows 0..i-1).
-//   V_drop[0] = 0
-//   V_drop[i] = V_drop[i-1] + Rp * (I_total - Isum[i-1])
-//   V_device[i] = V_applied - V_drop[i]
-//   I[i] = G * V_device[i]
+//
+//	BL source at row 0 side. Wire current between rows i-1 and i is the
+//	remaining current (total - consumed by rows 0..i-1).
+//	V_drop[0] = 0
+//	V_drop[i] = V_drop[i-1] + Rp * (I_total - Isum[i-1])
+//	V_device[i] = V_applied - V_drop[i]
+//	I[i] = G * V_device[i]
 func TestExternalCrosscheck_SeriesResistance_Analytic(t *testing.T) {
 	N := 3
 	G_val := 1.0

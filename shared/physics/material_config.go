@@ -28,12 +28,12 @@ import (
 // Example file: configs/materials/hfo2.yaml
 type MaterialConfig struct {
 	// Identity
-	Name        string `yaml:"name"`         // e.g. "HfO2", "BaTiO3"
-	Description string `yaml:"description"`  // free-text summary
-	Source      string `yaml:"source"`       // literature citation
+	Name        string `yaml:"name"`        // e.g. "HfO2", "BaTiO3"
+	Description string `yaml:"description"` // free-text summary
+	Source      string `yaml:"source"`      // literature citation
 
 	// Polarization (µC/cm²) — converted to C/m² internally (* 1e-2)
-	RemnantPolarization   float64 `yaml:"remnant_polarization_uc_cm2"` // Pr
+	RemnantPolarization    float64 `yaml:"remnant_polarization_uc_cm2"`    // Pr
 	SaturationPolarization float64 `yaml:"saturation_polarization_uc_cm2"` // Ps
 
 	// Coercive field (kV/cm) — converted to V/m internally (* 1e5)
@@ -57,13 +57,13 @@ type MaterialConfig struct {
 	DepolarizationCoeff float64 `yaml:"depolarization_coeff"` // k_dep (V·m/C)
 
 	// Dynamics (Merz / KAI model)
-	Tau0NLS  float64 `yaml:"tau0_nls_s"`       // attempt time (s)
-	EaNLS    float64 `yaml:"ea_nls_v_per_m"`   // activation field (V/m)
-	NLSSigma float64 `yaml:"nls_sigma"`        // log-normal sigma
+	Tau0NLS  float64 `yaml:"tau0_nls_s"`     // attempt time (s)
+	EaNLS    float64 `yaml:"ea_nls_v_per_m"` // activation field (V/m)
+	NLSSigma float64 `yaml:"nls_sigma"`      // log-normal sigma
 
 	// Temperature
-	CurieTempK  float64 `yaml:"curie_temp_k"`  // Tc (K)
-	CurieConst  float64 `yaml:"curie_const_k"` // C0 (K)
+	CurieTempK float64 `yaml:"curie_temp_k"`  // Tc (K)
+	CurieConst float64 `yaml:"curie_const_k"` // C0 (K)
 
 	// Conductance window (for FeFET/RRAM models, Siemens)
 	Gmin float64 `yaml:"g_min_s"` // off-state conductance
@@ -101,7 +101,7 @@ func (c *MaterialConfig) ToHZOMaterial() *HZOMaterial {
 	Pr := c.RemnantPolarization * 1e-2    // µC/cm² → C/m²
 	Ps := c.SaturationPolarization * 1e-2 // µC/cm² → C/m²
 	Ec := c.CoerciveField * 1e5           // kV/cm  → V/m
-	t  := c.FilmThicknessNM * 1e-9       // nm     → m
+	t := c.FilmThicknessNM * 1e-9         // nm     → m
 
 	epsLF := c.DielectricConstantLF
 	if epsLF == 0 {

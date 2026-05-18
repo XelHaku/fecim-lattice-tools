@@ -248,7 +248,6 @@ func (e *DeviceErrorEngine) generateNoise(model ErrorModel, sigma, gValue float6
 	}
 }
 
-
 // ApplyProgrammingErrorToMatrix applies programming error to an entire conductance matrix.
 // Returns a new matrix with noisy values (original is not modified).
 func (e *DeviceErrorEngine) ApplyProgrammingErrorToMatrix(g [][]float64) [][]float64 {

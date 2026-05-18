@@ -39,11 +39,11 @@ type TIA struct {
 func DefaultTIA() *TIA {
 	tia := &TIA{
 		Gain:             defaultTIAGainOhm,     // 10 kOhm transimpedance (heuristic baseline)
-		Bandwidth:        defaultTIABandwidthHz,  // 100 MHz bandwidth (heuristic baseline)
-		InputNoiseRMS:    defaultTIANoiseAPrtHz,  // 1 pA/sqrt(Hz) placeholder input-referred noise
-		OutputOffset:     defaultTIAOffsetV,      // 5 mV output offset
-		MaxInputCurrent:  defaultTIAMaxCurrentA,  // 100 uA max input
-		MaxOutputVoltage: defaultTIAMaxOutputV,   // 1V max output (aligned with ADC VrefHigh)
+		Bandwidth:        defaultTIABandwidthHz, // 100 MHz bandwidth (heuristic baseline)
+		InputNoiseRMS:    defaultTIANoiseAPrtHz, // 1 pA/sqrt(Hz) placeholder input-referred noise
+		OutputOffset:     defaultTIAOffsetV,     // 5 mV output offset
+		MaxInputCurrent:  defaultTIAMaxCurrentA, // 100 uA max input
+		MaxOutputVoltage: defaultTIAMaxOutputV,  // 1V max output (aligned with ADC VrefHigh)
 	}
 	log.Calculation("DefaultTIA", map[string]interface{}{
 		"gain":               tia.Gain,

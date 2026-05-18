@@ -729,8 +729,8 @@ func TestConductanceRangeConsistency(t *testing.T) {
 	}
 
 	// Verify range is physically reasonable (matches shared physics constants)
-	expectedGMin := physics.GMin  // 1 µS
-	expectedGMax := physics.GMax  // 100 µS
+	expectedGMin := physics.GMin // 1 µS
+	expectedGMax := physics.GMax // 100 µS
 
 	if math.Abs(crossbarGMin-expectedGMin) > 1e-9 {
 		t.Errorf("GMin %.0f µS outside expected 1 µS", crossbarGMin*1e6)

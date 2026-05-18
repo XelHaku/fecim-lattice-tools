@@ -1,8 +1,8 @@
 package mnist
 
 import (
-	"fmt"
 	"fecim-lattice-tools/shared/viewmodel"
+	"fmt"
 )
 
 func buildSnapshot(state MNISTState) viewmodel.ModuleSnapshot {
@@ -17,17 +17,17 @@ func buildSnapshot(state MNISTState) viewmodel.ModuleSnapshot {
 	}
 	sections = append(sections, viewmodel.Section{
 		ID: "edu_pipeline", Title: "CIM Inference Pipeline",
-		Body: "Image pixels → quantize to voltage levels → apply to crossbar rows → currents sum at columns (MVM) → softmax activation → digit prediction. The crossbar performs the matrix multiplication in O(1) analog time instead of O(n³) digital.",
+		Body:     "Image pixels → quantize to voltage levels → apply to crossbar rows → currents sum at columns (MVM) → softmax activation → digit prediction. The crossbar performs the matrix multiplication in O(1) analog time instead of O(n³) digital.",
 		Category: "education",
 	})
 	sections = append(sections, viewmodel.Section{
 		ID: "research_benchmark", Title: "Benchmark Reference",
-		Body: "80% baseline on MNIST test set (10,000 images). Educational, not validated device claim. Compare against: HZO FTJ reservoir computing (98.24%, J. Alloys Compounds 2025) — note that this is a different architecture, not FeCIM. Crossbar non-idealities reduce accuracy from ideal baseline.",
+		Body:     "80% baseline on MNIST test set (10,000 images). Educational, not validated device claim. Compare against: HZO FTJ reservoir computing (98.24%, J. Alloys Compounds 2025) — note that this is a different architecture, not FeCIM. Crossbar non-idealities reduce accuracy from ideal baseline.",
 		Category: "research",
 	})
 	sections = append(sections, viewmodel.Section{
 		ID: "design_tradeoff", Title: "Accuracy vs. Quantization",
-		Body: fmt.Sprintf("Design sweep: vary quantization levels (8–128). More levels = higher accuracy but harder to program. At %d levels, expect ~%.0f%% accuracy. At 64 levels, expect ~85-90%% (projected, not validated). Cross-reference: Module 2 for array sizing vs. accuracy.", state.NumLevels, state.Accuracy*100),
+		Body:     fmt.Sprintf("Design sweep: vary quantization levels (8–128). More levels = higher accuracy but harder to program. At %d levels, expect ~%.0f%% accuracy. At 64 levels, expect ~85-90%% (projected, not validated). Cross-reference: Module 2 for array sizing vs. accuracy.", state.NumLevels, state.Accuracy*100),
 		Category: "design",
 	})
 	actions := []viewmodel.Action{

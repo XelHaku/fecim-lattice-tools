@@ -94,4 +94,3 @@ func FilterByCondition(dataset *LiteratureDataset, conditionKey string, conditio
 	}
 	return filtered
 }
-

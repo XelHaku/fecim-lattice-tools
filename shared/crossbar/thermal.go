@@ -15,7 +15,7 @@ import (
 //   - Cai et al., "Thermal Design of Resistive Crossbar Arrays", IEEE TED (2020)
 //   - Li et al., "Thermal Effects in RRAM Crossbar Arrays", DATE (2019)
 type ThermalConfig struct {
-	AmbientTempK      float64 // Ambient temperature (K), default 300
+	AmbientTempK       float64 // Ambient temperature (K), default 300
 	ThermalResistance  float64 // Theta_JA: junction-to-ambient (K/W), default 20
 	ThermalCapacitance float64 // C_th: thermal capacitance (J/K), default 1e-6
 	SubstrateTempK     float64 // Substrate temperature (K), default 300
@@ -28,10 +28,10 @@ type ThermalConfig struct {
 // specific technology nodes and packaging.
 func DefaultThermalConfig() ThermalConfig {
 	return ThermalConfig{
-		AmbientTempK:      300,   // Room temperature
-		ThermalResistance:  20,    // 20 K/W typical for thin-film devices
-		ThermalCapacitance: 1e-6,  // 1 uJ/K typical for nanoscale devices
-		SubstrateTempK:     300,   // Room temperature substrate
+		AmbientTempK:       300,  // Room temperature
+		ThermalResistance:  20,   // 20 K/W typical for thin-film devices
+		ThermalCapacitance: 1e-6, // 1 uJ/K typical for nanoscale devices
+		SubstrateTempK:     300,  // Room temperature substrate
 	}
 }
 

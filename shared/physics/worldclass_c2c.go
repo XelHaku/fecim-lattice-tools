@@ -89,4 +89,3 @@ func SweepC2CRelativeNoise(G_values []float64, cfg StateDepC2CConfig) ([]float64
 	}
 	return out, nil
 }
-

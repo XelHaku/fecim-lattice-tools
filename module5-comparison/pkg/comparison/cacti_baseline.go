@@ -55,11 +55,11 @@ func DefaultCACTIBaselines() []CACTIBaseline {
 			Technology:    "45nm",
 			MemoryType:    "SRAM",
 			Capacity:      "256KB",
-			ReadEnergyPJ:  120.0,  // ~120 pJ per read (CACTI 7.0, 256KB, 45nm)
-			WriteEnergyPJ: 130.0,  // ~130 pJ per write
-			AreaMm2:       0.48,   // ~0.48 mm²
-			AccessTimeNs:  1.8,    // ~1.8 ns access time
-			LeakageMW:     45.0,   // ~45 mW leakage
+			ReadEnergyPJ:  120.0, // ~120 pJ per read (CACTI 7.0, 256KB, 45nm)
+			WriteEnergyPJ: 130.0, // ~130 pJ per write
+			AreaMm2:       0.48,  // ~0.48 mm²
+			AccessTimeNs:  1.8,   // ~1.8 ns access time
+			LeakageMW:     45.0,  // ~45 mW leakage
 			Source:        "CACTI 7.0, 45nm, 256KB SRAM",
 		},
 		// 45nm DRAM — CACTI 7.0 typical configuration
@@ -67,11 +67,11 @@ func DefaultCACTIBaselines() []CACTIBaseline {
 			Technology:    "45nm",
 			MemoryType:    "DRAM",
 			Capacity:      "256KB",
-			ReadEnergyPJ:  250.0,  // ~250 pJ per read (includes row buffer)
-			WriteEnergyPJ: 280.0,  // ~280 pJ per write
-			AreaMm2:       0.12,   // ~0.12 mm² (denser than SRAM)
-			AccessTimeNs:  8.0,    // ~8 ns access time (slower)
-			LeakageMW:     15.0,   // ~15 mW leakage (needs refresh)
+			ReadEnergyPJ:  250.0, // ~250 pJ per read (includes row buffer)
+			WriteEnergyPJ: 280.0, // ~280 pJ per write
+			AreaMm2:       0.12,  // ~0.12 mm² (denser than SRAM)
+			AccessTimeNs:  8.0,   // ~8 ns access time (slower)
+			LeakageMW:     15.0,  // ~15 mW leakage (needs refresh)
 			Source:        "CACTI 7.0, 45nm, 256KB DRAM",
 		},
 		// 28nm SRAM — CACTI 7.0 scaled configuration
@@ -79,11 +79,11 @@ func DefaultCACTIBaselines() []CACTIBaseline {
 			Technology:    "28nm",
 			MemoryType:    "SRAM",
 			Capacity:      "256KB",
-			ReadEnergyPJ:  65.0,   // ~65 pJ per read (28nm scaling)
-			WriteEnergyPJ: 72.0,   // ~72 pJ per write
-			AreaMm2:       0.22,   // ~0.22 mm²
-			AccessTimeNs:  1.2,    // ~1.2 ns access time
-			LeakageMW:     60.0,   // ~60 mW leakage (increases with scaling)
+			ReadEnergyPJ:  65.0, // ~65 pJ per read (28nm scaling)
+			WriteEnergyPJ: 72.0, // ~72 pJ per write
+			AreaMm2:       0.22, // ~0.22 mm²
+			AccessTimeNs:  1.2,  // ~1.2 ns access time
+			LeakageMW:     60.0, // ~60 mW leakage (increases with scaling)
 			Source:        "CACTI 7.0, 28nm, 256KB SRAM",
 		},
 		// 28nm DRAM — CACTI 7.0 scaled configuration
@@ -91,11 +91,11 @@ func DefaultCACTIBaselines() []CACTIBaseline {
 			Technology:    "28nm",
 			MemoryType:    "DRAM",
 			Capacity:      "256KB",
-			ReadEnergyPJ:  140.0,  // ~140 pJ per read
-			WriteEnergyPJ: 160.0,  // ~160 pJ per write
-			AreaMm2:       0.06,   // ~0.06 mm²
-			AccessTimeNs:  6.5,    // ~6.5 ns access time
-			LeakageMW:     20.0,   // ~20 mW leakage
+			ReadEnergyPJ:  140.0, // ~140 pJ per read
+			WriteEnergyPJ: 160.0, // ~160 pJ per write
+			AreaMm2:       0.06,  // ~0.06 mm²
+			AccessTimeNs:  6.5,   // ~6.5 ns access time
+			LeakageMW:     20.0,  // ~20 mW leakage
 			Source:        "CACTI 7.0, 28nm, 256KB DRAM",
 		},
 		// 45nm SRAM — 1MB configuration for larger arrays
@@ -103,11 +103,11 @@ func DefaultCACTIBaselines() []CACTIBaseline {
 			Technology:    "45nm",
 			MemoryType:    "SRAM",
 			Capacity:      "1MB",
-			ReadEnergyPJ:  180.0,  // ~180 pJ per read
-			WriteEnergyPJ: 200.0,  // ~200 pJ per write
-			AreaMm2:       1.85,   // ~1.85 mm²
-			AccessTimeNs:  2.5,    // ~2.5 ns access time
-			LeakageMW:     170.0,  // ~170 mW leakage
+			ReadEnergyPJ:  180.0, // ~180 pJ per read
+			WriteEnergyPJ: 200.0, // ~200 pJ per write
+			AreaMm2:       1.85,  // ~1.85 mm²
+			AccessTimeNs:  2.5,   // ~2.5 ns access time
+			LeakageMW:     170.0, // ~170 mW leakage
 			Source:        "CACTI 7.0, 45nm, 1MB SRAM",
 		},
 	}

@@ -27,11 +27,11 @@ import (
 // Pesic et al., Adv. Funct. Mater. 2016 (doi:10.1002/adfm.201603182) confirm
 // comparable retention behavior in Si-doped HfO2 films.
 func TestRetentionPowerLaw_HZO_85C_10Year(t *testing.T) {
-	P0 := 0.245     // C/m^2 (24.5 uC/cm^2, DefaultHZO Pr)
-	t0 := 1.0        // reference time 1 s
-	beta := 0.012    // HZO decay exponent calibrated for 10-year retention
-	                 // (literature range 0.01-0.05; lower end for well-optimized films)
-	tenYears := 1e8  // 10^8 seconds
+	P0 := 0.245   // C/m^2 (24.5 uC/cm^2, DefaultHZO Pr)
+	t0 := 1.0     // reference time 1 s
+	beta := 0.012 // HZO decay exponent calibrated for 10-year retention
+	// (literature range 0.01-0.05; lower end for well-optimized films)
+	tenYears := 1e8 // 10^8 seconds
 
 	times := []float64{tenYears}
 	pts, err := physics.SimulateRetentionPowerLaw(P0, t0, beta, times)
@@ -55,7 +55,7 @@ func TestRetentionPowerLaw_HZO_85C_10Year(t *testing.T) {
 // Literature basis: Mueller et al., IEEE TED 2013 (doi:10.1109/TED.2013.2283465)
 // show Arrhenius-type acceleration of retention loss with temperature.
 func TestRetentionPowerLaw_TemperatureOrdering(t *testing.T) {
-	P0 := 0.245    // C/m^2
+	P0 := 0.245 // C/m^2
 	t0 := 1.0
 	tenYears := 1e8
 
@@ -101,10 +101,10 @@ func TestRetentionPowerLaw_TemperatureOrdering(t *testing.T) {
 //
 // Reference: Mueller et al., IEEE TED 2013, doi:10.1109/TED.2013.2283465
 func TestRetentionExponential_HZO_85C(t *testing.T) {
-	P0 := 0.245         // C/m^2
-	Pinf := 0.80 * P0   // asymptotic Pr (20% max loss at infinite time)
-	tau := 1e8           // characteristic decay time ~10^8 s, calibrated so retention
-	                     // at 10^8 s matches literature 10-20% loss range
+	P0 := 0.245       // C/m^2
+	Pinf := 0.80 * P0 // asymptotic Pr (20% max loss at infinite time)
+	tau := 1e8        // characteristic decay time ~10^8 s, calibrated so retention
+	// at 10^8 s matches literature 10-20% loss range
 	tenYears := 1e8
 
 	times := []float64{tenYears}
@@ -132,7 +132,7 @@ func TestRetentionExponential_TemperatureOrdering(t *testing.T) {
 
 	// Arrhenius-scaled tau: tau(T) = tau_ref * exp(Ea/kB * (1/T - 1/Tref))
 	// Higher T -> shorter tau -> more decay
-	Ea := 1.0    // eV
+	Ea := 1.0      // eV
 	kB := 8.617e-5 // eV/K
 	Tref := 358.0  // 85 C
 	tauRef := 1e8  // calibrated for 85 C reference

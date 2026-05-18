@@ -185,6 +185,10 @@ func (l *HysteresisDataLogger) Record(snapshot HysteresisSnapshot) {
 	defer func() {
 		_ = recover()
 	}()
+	if isCriticalHysteresisSnapshot(snapshot) {
+		l.rows <- snapshot
+		return
+	}
 	select {
 	case l.rows <- snapshot:
 		return
@@ -200,6 +204,12 @@ func (l *HysteresisDataLogger) Record(snapshot HysteresisSnapshot) {
 			logging.Printf("Hysteresis data log backlog: dropped %d samples", dropped)
 		}
 	}
+}
+
+func isCriticalHysteresisSnapshot(snapshot HysteresisSnapshot) bool {
+	return snapshot.Waveform == "ISPP" &&
+		snapshot.WrdTargetLevel > 0 &&
+		snapshot.WrdPhaseTimer == 0
 }
 
 func (l *HysteresisDataLogger) Close() error {

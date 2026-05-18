@@ -72,4 +72,3 @@ type TaggedPhysicsValue struct {
 	Value     float64       `json:"value"`
 	Tag       ConfidenceTag `json:"tag"`
 }
-

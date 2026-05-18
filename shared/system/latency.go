@@ -1,6 +1,5 @@
 package system
 
-
 // LatencyModel estimates the pipeline latency for one MVM cycle on a crossbar array.
 //
 // The model accounts for three serial stages:
@@ -91,4 +90,3 @@ func max(a, b int) int {
 	}
 	return b
 }
-

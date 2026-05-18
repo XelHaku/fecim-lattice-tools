@@ -160,10 +160,10 @@ func TestCompareFeCIMvsCACTI_BetterThanSRAM(t *testing.T) {
 // within a physically plausible range (0.001x to 10x).
 func TestCompareFeCIMvsCACTI_ReasonableRatios(t *testing.T) {
 	testCases := []struct {
-		name       string
-		fecimPJ    float64
-		minRatio   float64
-		maxRatio   float64
+		name     string
+		fecimPJ  float64
+		minRatio float64
+		maxRatio float64
 	}{
 		{"typical CIM (0.1 pJ)", 0.1, 0.0001, 1.0},
 		{"pessimistic CIM (10 pJ)", 10.0, 0.01, 10.0},

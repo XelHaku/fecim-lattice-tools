@@ -224,7 +224,7 @@ func TestDACToADCRoundTrip(t *testing.T) {
 
 		// Map recovered ADC code back to DAC-equivalent level for comparison.
 		// ADC code is in [0, adc.Levels()-1]; scale to [0, dac.Levels()-1].
-		scaledLevel := int(float64(recoveredCode) * float64(dac.Levels()-1) / float64(adc.Levels()-1) + 0.5)
+		scaledLevel := int(float64(recoveredCode)*float64(dac.Levels()-1)/float64(adc.Levels()-1) + 0.5)
 
 		// Allow +-1 DAC level due to quantization mismatch
 		if abs(scaledLevel-level) > 1 {

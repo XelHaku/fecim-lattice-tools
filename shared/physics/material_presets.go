@@ -9,7 +9,7 @@ package physics
 // Based on 10nm ALD films. Ref: Park et al., Adv. Mater. 27, 1811 (2015)
 func DefaultHZO() *HZOMaterial {
 	return &HZOMaterial{
-		Name:            "HZO (Si-doped, Park 2015 midpoint)",
+		Name:      "HZO (Si-doped, Park 2015 midpoint)",
 		Pr:        24.5e-2, // 24.5 μC/cm² (Park 2015: 15-34 range)
 		Ps:        30e-2,   // 30 μC/cm²
 		Ec:        1.2e8,   // 1.2 MV/cm
@@ -29,23 +29,23 @@ func DefaultHZO() *HZOMaterial {
 		// are tuned for the phenomenological Curie-Weiss Ec(T)/Pr(T) scaling in
 		// updateEffectiveParameters() and should not be substituted without
 		// re-validating the temperature sweep behavior.
-		CurieTemp:  723,   // Empirical — differs from Materlik 2015 (Tc=598 K for o-HfO2)
-		CurieConst: 1.5e5, // Empirical — differs from Materlik 2015 (C0=5.3e5 K for o-HfO2)
-		TempCoeffEc:     -2e5,
-		TempCoeffPr:     -5e-5,
-		EnduranceCycles: 1e10,   // 10^10 cycles
-		RetentionTime:   3.15e9, // 100 years at 85°C
-		ImrintField:     1e6,
-		NumLevels:       30,     // Conference claim; pending peer review
-		TargetRangeFrac: 0.90,
-		Tau0NLS:         1e-10,  // 100 ps (HfO2 typical)
-		EaNLS:           12e8,   // 12 MV/cm
-		NLSSigma:        1.5,    // Guo et al., APL 2018
-		Gmin:            1e-6,   // 1 µS HRS
-		Gmax:            100e-6, // 100 µS LRS, ~100x on/off
-		C2CSigmaBase:        0.03,    // 3% base C2C (Soliman 2023 / Reis 2023)
-		C2CExponent:         0.5,     // sqrt(G/Gmin) scaling
-		BetaLandau:          -6.720e8,  // Materlik 2015 LGD baseline
+		CurieTemp:           723,   // Empirical — differs from Materlik 2015 (Tc=598 K for o-HfO2)
+		CurieConst:          1.5e5, // Empirical — differs from Materlik 2015 (C0=5.3e5 K for o-HfO2)
+		TempCoeffEc:         -2e5,
+		TempCoeffPr:         -5e-5,
+		EnduranceCycles:     1e10,   // 10^10 cycles
+		RetentionTime:       3.15e9, // 100 years at 85°C
+		ImrintField:         1e6,
+		NumLevels:           30, // Conference claim; pending peer review
+		TargetRangeFrac:     0.90,
+		Tau0NLS:             1e-10,    // 100 ps (HfO2 typical)
+		EaNLS:               12e8,     // 12 MV/cm
+		NLSSigma:            1.5,      // Guo et al., APL 2018
+		Gmin:                1e-6,     // 1 µS HRS
+		Gmax:                100e-6,   // 100 µS LRS, ~100x on/off
+		C2CSigmaBase:        0.03,     // 3% base C2C (Soliman 2023 / Reis 2023)
+		C2CExponent:         0.5,      // sqrt(G/Gmin) scaling
+		BetaLandau:          -6.720e8, // Materlik 2015 LGD baseline
 		GammaLandau:         1.950e10,
 		RhoViscosity:        0.05,
 		SeriesResistanceOhm: 50.0,
@@ -107,31 +107,31 @@ func MaterlikHfO2() *HZOMaterial {
 // Best-in-class HZO/ZrO₂ nanolaminate (1nm layers); PMC 12254504; RSC Nanoscale 2025.
 func LiteratureSuperlattice() *HZOMaterial {
 	return &HZOMaterial{
-		Name:            "Literature Superlattice (HZO nanolaminate 2025)",
-		Pr:              22e-2,  // 22 µC/cm² (HZO/ZrO₂ 1nm nanolaminate, 2025); revised from Cheema 2020 (50 µC/cm²)
-		Ps:              27e-2,  // 27 µC/cm² (≈1.2×Pr)
-		Ec:              0.85e8, // 0.85 MV/cm (Nature Commun. 2025) [3]
-		Epsilon:         35,
-		EpsilonLF:       50,
-		LossAngle:       0.015,
-		Thickness:       10e-9,
-		Area:            100e-12,
-		Tau:             0.36e-9, // 360 ps RECORD (Purdue sub-µm arrays) [8]
-		Tau0:            1e-13,
-		Ea:              0.5, // Lower activation energy
-		Alpha:           2.5,
-		CurieTemp:       773, // Higher Tc
-		CurieConst:      1.5e5,
-		TempCoeffEc:     -1.5e5,
-		TempCoeffPr:     -3e-5,
-		EnduranceCycles: 1e10,   // 10^10 verified; 10^12 (La-doped, ACS AMI 2024)
-		RetentionTime:   3.15e8, // 10y at 85°C verified
-		ImrintField:     0.5e6,
-		NumLevels:       64,      // Enhanced superlattice
-		TargetRangeFrac: 0.90,
-		Tau0NLS:         0.5e-10, // 50 ps
-		EaNLS:           10e8,    // 10 MV/cm
-		NLSSigma:        1.5,
+		Name:                "Literature Superlattice (HZO nanolaminate 2025)",
+		Pr:                  22e-2,  // 22 µC/cm² (HZO/ZrO₂ 1nm nanolaminate, 2025); revised from Cheema 2020 (50 µC/cm²)
+		Ps:                  27e-2,  // 27 µC/cm² (≈1.2×Pr)
+		Ec:                  0.85e8, // 0.85 MV/cm (Nature Commun. 2025) [3]
+		Epsilon:             35,
+		EpsilonLF:           50,
+		LossAngle:           0.015,
+		Thickness:           10e-9,
+		Area:                100e-12,
+		Tau:                 0.36e-9, // 360 ps RECORD (Purdue sub-µm arrays) [8]
+		Tau0:                1e-13,
+		Ea:                  0.5, // Lower activation energy
+		Alpha:               2.5,
+		CurieTemp:           773, // Higher Tc
+		CurieConst:          1.5e5,
+		TempCoeffEc:         -1.5e5,
+		TempCoeffPr:         -3e-5,
+		EnduranceCycles:     1e10,   // 10^10 verified; 10^12 (La-doped, ACS AMI 2024)
+		RetentionTime:       3.15e8, // 10y at 85°C verified
+		ImrintField:         0.5e6,
+		NumLevels:           64, // Enhanced superlattice
+		TargetRangeFrac:     0.90,
+		Tau0NLS:             0.5e-10, // 50 ps
+		EaNLS:               10e8,    // 10 MV/cm
+		NLSSigma:            1.5,
 		Gmin:                0.5e-6, // 0.5 µS HRS
 		Gmax:                150e-6, // 150 µS LRS
 		BetaLandau:          -3.8e8, // Superlattice-enhanced LGD
@@ -153,31 +153,31 @@ func LiteratureSuperlattice() *HZOMaterial {
 // See: opensource/papers/08_Documentation/HONESTY_AUDIT.md
 func FeCIMMaterial() *HZOMaterial {
 	return &HZOMaterial{
-		Name:            "FeCIM HZO",
-		Pr:        30e-2,         // ESTIMATED
-		Ps:        35e-2,         // ESTIMATED
-		Ec:        1.0e8,         // ESTIMATED
-		Epsilon:   32,            // ESTIMATED
-		EpsilonLF: 40,            // ESTIMATED
-		LossAngle: 0.01,          // ESTIMATED
-		Thickness: 10e-9,         // ESTIMATED
-		Area:      45e-9 * 45e-9, // 45nm pitch - ESTIMATED
-		Tau:       10e-9,         // 10 ns (conference slide estimate, not 1ns)
-		Tau0:            1e-13,
-		Ea:              0.6,
-		Alpha:           2.0,
-		CurieTemp:       723,
-		CurieConst:      1.5e5,
-		TempCoeffEc:     -1.8e5,
-		TempCoeffPr:     -4e-5,
-		EnduranceCycles: 1e9, // DEMONSTRATED (10^12 is TARGET)
-		RetentionTime:   1e7, // DEMONSTRATED (~116 days)
-		ImrintField:     1e6,
-		NumLevels:       30,    // Conference claim; pending peer review
-		TargetRangeFrac: 0.90,
-		Tau0NLS:         1e-10,
-		EaNLS:           12e8,
-		NLSSigma:        1.5,
+		Name:                "FeCIM HZO",
+		Pr:                  30e-2,         // ESTIMATED
+		Ps:                  35e-2,         // ESTIMATED
+		Ec:                  1.0e8,         // ESTIMATED
+		Epsilon:             32,            // ESTIMATED
+		EpsilonLF:           40,            // ESTIMATED
+		LossAngle:           0.01,          // ESTIMATED
+		Thickness:           10e-9,         // ESTIMATED
+		Area:                45e-9 * 45e-9, // 45nm pitch - ESTIMATED
+		Tau:                 10e-9,         // 10 ns (conference slide estimate, not 1ns)
+		Tau0:                1e-13,
+		Ea:                  0.6,
+		Alpha:               2.0,
+		CurieTemp:           723,
+		CurieConst:          1.5e5,
+		TempCoeffEc:         -1.8e5,
+		TempCoeffPr:         -4e-5,
+		EnduranceCycles:     1e9, // DEMONSTRATED (10^12 is TARGET)
+		RetentionTime:       1e7, // DEMONSTRATED (~116 days)
+		ImrintField:         1e6,
+		NumLevels:           30, // Conference claim; pending peer review
+		TargetRangeFrac:     0.90,
+		Tau0NLS:             1e-10,
+		EaNLS:               12e8,
+		NLSSigma:            1.5,
 		Gmin:                1e-6,   // 1 µS HRS
 		Gmax:                100e-6, // 100 µS LRS, ~100x on/off
 		C2CSigmaBase:        0.03,   // 3% base C2C (Soliman 2023)
@@ -211,32 +211,32 @@ func FeCIMMaterialTarget() *HZOMaterial {
 // Refs: Adv. Electron. Mater. 2024 (doi:10.1002/aelm.202300879), 2025 (202400840).
 func CryogenicHZO() *HZOMaterial {
 	return &HZOMaterial{
-		Name:            "Cryogenic HZO (4K)",
-		Pr:        75e-2, // 75 µC/cm² at 4K - RECORD
-		Ps:        80e-2,
-		Ec:        1.5e8, // Higher Ec at cryo
-		Epsilon:   28,
-		EpsilonLF:       35,
-		LossAngle: 0.008, // Lower loss at cryo
-		Thickness:       10e-9,
-		Area:            100e-12,
-		Tau:       1e-9, // ~1 ns maintained
-		Tau0:            1e-13,
-		Ea:              0.7,
-		Alpha:           2.0,
-		CurieTemp:       723,
-		TempCoeffEc:     -2e5,
-		TempCoeffPr:     -5e-5,
-		EnduranceCycles: 1e9,     // Verified at cryo
-		RetentionTime:   3.15e10, // >10y at cryo
-		ImrintField:     0.3e6,
-		NumLevels:       48,      // Enhanced Pr allows more levels
-		TargetRangeFrac: 0.90,
-		Tau0NLS:         2e-10,   // 200 ps (slower at cryo)
-		EaNLS:           15e8,    // Higher barrier at cryo
-		NLSSigma:        1.5,
-		Gmin:                0.5e-6, // 0.5 µS HRS (lower leakage at cryo)
-		Gmax:                200e-6, // 200 µS LRS
+		Name:                "Cryogenic HZO (4K)",
+		Pr:                  75e-2, // 75 µC/cm² at 4K - RECORD
+		Ps:                  80e-2,
+		Ec:                  1.5e8, // Higher Ec at cryo
+		Epsilon:             28,
+		EpsilonLF:           35,
+		LossAngle:           0.008, // Lower loss at cryo
+		Thickness:           10e-9,
+		Area:                100e-12,
+		Tau:                 1e-9, // ~1 ns maintained
+		Tau0:                1e-13,
+		Ea:                  0.7,
+		Alpha:               2.0,
+		CurieTemp:           723,
+		TempCoeffEc:         -2e5,
+		TempCoeffPr:         -5e-5,
+		EnduranceCycles:     1e9,     // Verified at cryo
+		RetentionTime:       3.15e10, // >10y at cryo
+		ImrintField:         0.3e6,
+		NumLevels:           48, // Enhanced Pr allows more levels
+		TargetRangeFrac:     0.90,
+		Tau0NLS:             2e-10, // 200 ps (slower at cryo)
+		EaNLS:               15e8,  // Higher barrier at cryo
+		NLSSigma:            1.5,
+		Gmin:                0.5e-6,   // 0.5 µS HRS (lower leakage at cryo)
+		Gmax:                200e-6,   // 200 µS LRS
 		BetaLandau:          -6.720e8, // Materlik 2015 LGD baseline; cryo-specific not widely published
 		GammaLandau:         1.950e10,
 		RhoViscosity:        0.05,
@@ -253,32 +253,32 @@ func CryogenicHZO() *HZOMaterial {
 // Ref: Oh et al., IEEE EDL 38(6), 732 (2017)
 func HZOStandard32() *HZOMaterial {
 	return &HZOMaterial{
-		Name:            "HZO Standard (32 states)",
-		Pr:              20e-2, // 20 µC/cm²
-		Ps:              25e-2, // 25 µC/cm²
-		Ec:              1.0e8, // 1.0 MV/cm
-		Epsilon:         28,
-		EpsilonLF:       35,
-		LossAngle:       0.02,
-		Thickness:       10e-9,
-		Area:            100e-12,
-		Tau:             10e-9, // 10 ns
-		Tau0:            1e-13,
-		Ea:              0.7,
-		Alpha:           2.0,
-		CurieTemp:       723,
-		TempCoeffEc:     -2e5,
-		TempCoeffPr:     -5e-5,
-		EnduranceCycles: 1e8,    // 10^8 cycles (2017 era)
-		RetentionTime:   3.15e8, // 10 years projected
-		ImrintField:     1e6,
-		NumLevels:       32,   // VERIFIED (Oh et al. 2017)
-		TargetRangeFrac: 0.90,
-		Tau0NLS:         1e-10,
-		EaNLS:           12e8,
-		NLSSigma:        1.5,
+		Name:                "HZO Standard (32 states)",
+		Pr:                  20e-2, // 20 µC/cm²
+		Ps:                  25e-2, // 25 µC/cm²
+		Ec:                  1.0e8, // 1.0 MV/cm
+		Epsilon:             28,
+		EpsilonLF:           35,
+		LossAngle:           0.02,
+		Thickness:           10e-9,
+		Area:                100e-12,
+		Tau:                 10e-9, // 10 ns
+		Tau0:                1e-13,
+		Ea:                  0.7,
+		Alpha:               2.0,
+		CurieTemp:           723,
+		TempCoeffEc:         -2e5,
+		TempCoeffPr:         -5e-5,
+		EnduranceCycles:     1e8,    // 10^8 cycles (2017 era)
+		RetentionTime:       3.15e8, // 10 years projected
+		ImrintField:         1e6,
+		NumLevels:           32, // VERIFIED (Oh et al. 2017)
+		TargetRangeFrac:     0.90,
+		Tau0NLS:             1e-10,
+		EaNLS:               12e8,
+		NLSSigma:            1.5,
 		Gmin:                2e-6,     // 2 µS HRS (2017 era device)
-		Gmax:                80e-6,   // 80 µS LRS, ~40x on/off
+		Gmax:                80e-6,    // 80 µS LRS, ~40x on/off
 		BetaLandau:          -6.720e8, // Materlik 2015 LGD baseline
 		GammaLandau:         1.950e10,
 		RhoViscosity:        0.05,
@@ -295,30 +295,30 @@ func HZOStandard32() *HZOMaterial {
 // Refs: Song et al., Adv. Science 2024; ACS AMI 2022.
 func HZOFJT140() *HZOMaterial {
 	return &HZOMaterial{
-		Name:            "HZO FTJ (140 states)",
-		Pr:              25e-2, // 25 µC/cm²
-		Ps:              30e-2, // 30 µC/cm²
-		Ec:              1.2e8, // 1.2 MV/cm
-		Epsilon:         30,
-		EpsilonLF:       40,
-		LossAngle:       0.015,
-		Thickness:       4.5e-9, // 4.5 nm - ULTRATHIN for tunneling
-		Area:            100e-12,
-		Tau:             20e-9, // 20 ns switching
-		Tau0:            1e-13,
-		Ea:              0.5, // Lower barrier for tunneling
-		Alpha:           2.0,
-		CurieTemp:       723,
-		TempCoeffEc:     -2e5,
-		TempCoeffPr:     -5e-5,
-		EnduranceCycles: 1e7,    // 10^7 cycles demonstrated
-		RetentionTime:   3.15e8, // 10 years extrapolated
-		ImrintField:     1e6,
-		NumLevels:       140,  // VERIFIED (Song et al. 2024)
-		TargetRangeFrac: 0.90,
-		Tau0NLS:         2e-10,
-		EaNLS:           10e8,
-		NLSSigma:        1.5,
+		Name:                "HZO FTJ (140 states)",
+		Pr:                  25e-2, // 25 µC/cm²
+		Ps:                  30e-2, // 30 µC/cm²
+		Ec:                  1.2e8, // 1.2 MV/cm
+		Epsilon:             30,
+		EpsilonLF:           40,
+		LossAngle:           0.015,
+		Thickness:           4.5e-9, // 4.5 nm - ULTRATHIN for tunneling
+		Area:                100e-12,
+		Tau:                 20e-9, // 20 ns switching
+		Tau0:                1e-13,
+		Ea:                  0.5, // Lower barrier for tunneling
+		Alpha:               2.0,
+		CurieTemp:           723,
+		TempCoeffEc:         -2e5,
+		TempCoeffPr:         -5e-5,
+		EnduranceCycles:     1e7,    // 10^7 cycles demonstrated
+		RetentionTime:       3.15e8, // 10 years extrapolated
+		ImrintField:         1e6,
+		NumLevels:           140, // VERIFIED (Song et al. 2024)
+		TargetRangeFrac:     0.90,
+		Tau0NLS:             2e-10,
+		EaNLS:               10e8,
+		NLSSigma:            1.5,
 		Gmin:                0.1e-6,   // 0.1 µS HRS (FTJ tunneling)
 		Gmax:                10e-6,    // 10 µS LRS (~100x on/off)
 		BetaLandau:          -6.720e8, // Materlik 2015 LGD baseline
@@ -338,30 +338,30 @@ func HZOFJT140() *HZOMaterial {
 // 14 levels = 3.81 bits/cell
 func HZOCustom14() *HZOMaterial {
 	return &HZOMaterial{
-		Name:            "HZO Custom (14 states)",
-		Pr:              25e-2, // 25 µC/cm²
-		Ps:              30e-2, // 30 µC/cm²
-		Ec:              1.1e8, // 1.1 MV/cm
-		Epsilon:         30,
-		EpsilonLF:       38,
-		LossAngle:       0.02,
-		Thickness:       10e-9,
-		Area:            100e-12,
-		Tau:             5e-9, // 5 ns
-		Tau0:            1e-13,
-		Ea:              0.65,
-		Alpha:           2.0,
-		CurieTemp:       723,
-		TempCoeffEc:     -2e5,
-		TempCoeffPr:     -5e-5,
-		EnduranceCycles: 1e10,
-		RetentionTime:   3.15e9,
-		ImrintField:     1e6,
-		NumLevels:       14, // 14 discrete levels (3.81 bits/cell)
-		TargetRangeFrac: 0.90,
-		Tau0NLS:         1e-10,
-		EaNLS:           12e8,
-		NLSSigma:        1.5,
+		Name:                "HZO Custom (14 states)",
+		Pr:                  25e-2, // 25 µC/cm²
+		Ps:                  30e-2, // 30 µC/cm²
+		Ec:                  1.1e8, // 1.1 MV/cm
+		Epsilon:             30,
+		EpsilonLF:           38,
+		LossAngle:           0.02,
+		Thickness:           10e-9,
+		Area:                100e-12,
+		Tau:                 5e-9, // 5 ns
+		Tau0:                1e-13,
+		Ea:                  0.65,
+		Alpha:               2.0,
+		CurieTemp:           723,
+		TempCoeffEc:         -2e5,
+		TempCoeffPr:         -5e-5,
+		EnduranceCycles:     1e10,
+		RetentionTime:       3.15e9,
+		ImrintField:         1e6,
+		NumLevels:           14, // 14 discrete levels (3.81 bits/cell)
+		TargetRangeFrac:     0.90,
+		Tau0NLS:             1e-10,
+		EaNLS:               12e8,
+		NLSSigma:            1.5,
 		Gmin:                1e-6,
 		Gmax:                100e-6,
 		BetaLandau:          -6.720e8, // Materlik 2015 LGD baseline
@@ -407,8 +407,8 @@ func PZT() *HZOMaterial {
 		NLSSigma:            1.5,
 		Gmin:                1e-6,
 		Gmax:                120e-6,
-		BetaLandau:          -2.0e8,  // Educational placeholder — not PZT-calibrated (see func comment)
-		GammaLandau:         1.0e10,  // Educational placeholder — not PZT-calibrated (see func comment)
+		BetaLandau:          -2.0e8, // Educational placeholder — not PZT-calibrated (see func comment)
+		GammaLandau:         1.0e10, // Educational placeholder — not PZT-calibrated (see func comment)
 		RhoViscosity:        0.05,
 		CurieConst:          1.0e5,
 		SeriesResistanceOhm: 50.0,
@@ -450,8 +450,8 @@ func BTO() *HZOMaterial {
 		NLSSigma:            1.5,
 		Gmin:                1e-6,
 		Gmax:                100e-6,
-		BetaLandau:          -2.0e8,  // Educational placeholder — not BTO-calibrated (see func comment)
-		GammaLandau:         1.0e10,  // Educational placeholder — not BTO-calibrated (see func comment)
+		BetaLandau:          -2.0e8, // Educational placeholder — not BTO-calibrated (see func comment)
+		GammaLandau:         1.0e10, // Educational placeholder — not BTO-calibrated (see func comment)
 		RhoViscosity:        0.05,
 		CurieConst:          1.0e5,
 		SeriesResistanceOhm: 50.0,

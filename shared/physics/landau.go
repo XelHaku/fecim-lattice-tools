@@ -152,9 +152,9 @@ func NewLKSolver() *LKSolver {
 		K_dep: 2.5e8, // V*m/C - Default value (matches physics.yaml, within recommended 1-5×10⁸ range)
 
 		UseNLS:          true,
-		ActivationField: 1.9e9, // 19 MV/cm (Merz activation field)
+		ActivationField: 1.9e9,   // 19 MV/cm (Merz activation field)
 		TauInf:          1.0e-10, // 100 ps intrinsic attempt time; Guo et al. APL 112, 262903 (2018)
-		NLSSigma:        1.5, // HfO2 default (Guo et al., APL 112, 262903, 2018)
+		NLSSigma:        1.5,     // HfO2 default (Guo et al., APL 112, 262903, 2018)
 
 		CurieTemp:  723.0,
 		CurieConst: 1.5e5,
