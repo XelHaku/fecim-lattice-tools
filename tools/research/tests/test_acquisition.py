@@ -155,6 +155,10 @@ class AcquisitionTest(unittest.TestCase):
             self.assertEqual(report["downloaded"], 1)
             self.assertEqual(report["results"][0]["paper_key"], paper_key)
             self.assertEqual(report["results"][0]["citation_path"], f"citations/papers/{paper_key}.md")
+            missing_report = json.loads((root / "research" / "reports" / "missing-papers-latest.json").read_text())
+            self.assertEqual(missing_report["total_records"], 1)
+            self.assertEqual(missing_report["stored"], 1)
+            self.assertEqual(missing_report["missing"], 0)
             self.assertIn("api.openalex.org/works/https://doi.org/10.5555/New.Paper", calls[0])
 
     def test_acquire_does_not_download_closed_or_missing_pdf_records(self):

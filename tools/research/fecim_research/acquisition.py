@@ -76,6 +76,7 @@ def run_acquire(
         _write_acquisition_record(root, result)
 
     _write_report(root, results)
+    _refresh_missing_report(root)
     planned = sum(1 for result in results if result.status in {"planned", "downloaded"})
     downloaded = sum(1 for result in results if result.status == "downloaded")
     print(f"acquire complete: planned={planned} downloaded={downloaded} checked={len(results)}")
@@ -328,6 +329,12 @@ def _write_report(root: Path, results: list[AcquisitionResult]) -> None:
         "results": [asdict(result) for result in sorted(results, key=lambda item: item.paper_key)],
     }
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _refresh_missing_report(root: Path) -> None:
+    from .missing import run_missing
+
+    run_missing(root=root)
 
 
 def _is_http_url(url: str) -> bool:

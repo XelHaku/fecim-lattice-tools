@@ -42,6 +42,8 @@ Paper acquisition:
 - `fecim-lattice-tools research acquire` checks citation records that do not
   have a matching local PDF and records any legal OpenAlex open-access PDF
   location it finds.
+- Acquisition also refreshes `reports/missing-papers-latest.json`, so planned,
+  failed, and downloaded papers are reflected in the git-reviewable queue.
 - `fecim-lattice-tools research acquire --download` also downloads those
   open-access PDFs into `papers/`.
 - `fecim-lattice-tools research acquire --doi DOI --download` acquires a new
