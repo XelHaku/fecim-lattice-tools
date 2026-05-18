@@ -29,8 +29,38 @@ func buildSnapshot(state HysteresisState) viewmodel.ModuleSnapshot {
 			viewmodel.Metric{ID: "csv_export_bytes", Label: "CSV Export Bytes", Value: fmt.Sprintf("%d bytes", state.CSVExportBytes)},
 		)
 	}
+	if state.PUND.Available {
+		metrics = append(metrics,
+			viewmodel.Metric{ID: "pund_switching_positive", Label: "PUND Qsw+", Value: fmt.Sprintf("%.3e C", state.PUND.SwitchingPositive)},
+			viewmodel.Metric{ID: "pund_switching_negative", Label: "PUND Qsw-", Value: fmt.Sprintf("%.3e C", state.PUND.SwitchingNegative)},
+			viewmodel.Metric{ID: "pund_switching_ratio", Label: "PUND Ratio", Value: fmt.Sprintf("%.3f", state.PUND.SwitchingRatio)},
+		)
+	}
+	if state.FORC.Available {
+		metrics = append(metrics,
+			viewmodel.Metric{ID: "forc_curves", Label: "FORC Curves", Value: fmt.Sprintf("%d", state.FORC.Curves)},
+			viewmodel.Metric{ID: "forc_density_peak", Label: "FORC Peak Density", Value: fmt.Sprintf("%.3e", state.FORC.PeakDensity)},
+			viewmodel.Metric{ID: "forc_density_location", Label: "FORC Peak Location", Value: fmt.Sprintf("Ea %.3e V/m, Eb %.3e V/m", state.FORC.PeakEa_Vm, state.FORC.PeakEb_Vm)},
+		)
+	}
 
 	sections := []viewmodel.Section{}
+	if state.PUND.Available {
+		sections = append(sections, viewmodel.Section{
+			ID:       "diagnostic_pund",
+			Title:    "PUND Measurement Summary",
+			Body:     state.PUND.Summary,
+			Category: "research",
+		})
+	}
+	if state.FORC.Available {
+		sections = append(sections, viewmodel.Section{
+			ID:       "diagnostic_forc",
+			Title:    "FORC Density Summary",
+			Body:     state.FORC.Summary,
+			Category: "research",
+		})
+	}
 	for _, mat := range state.Materials {
 		if mat == nil {
 			continue
@@ -82,6 +112,8 @@ func buildSnapshot(state HysteresisState) viewmodel.ModuleSnapshot {
 		{ID: EventSetWaveform, Label: "Set Waveform", Kind: viewmodel.ActionSelect, Payload: map[string]string{"waveform": state.Waveform}},
 		{ID: EventToggleSimulation, Label: "Run/Pause", Kind: viewmodel.ActionToggle},
 		{ID: EventExportCSV, Label: "Export CSV", Kind: viewmodel.ActionCommand},
+		{ID: EventRunPUND, Label: "Run PUND", Kind: viewmodel.ActionCommand},
+		{ID: EventRunFORC, Label: "Run FORC", Kind: viewmodel.ActionCommand},
 	}
 
 	plots := []viewmodel.PlotData{}

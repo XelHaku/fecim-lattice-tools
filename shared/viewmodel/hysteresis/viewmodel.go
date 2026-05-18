@@ -77,6 +77,10 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 		return m.setWaveform(action.Payload["waveform"])
 	case EventExportCSV:
 		return m.exportCSV(action.Payload["path"])
+	case EventRunPUND:
+		return m.runPUND()
+	case EventRunFORC:
+		return m.runFORC(action.Payload)
 	default:
 		return viewmodel.ErrUnsupportedAction
 	}
@@ -160,14 +164,159 @@ func writeTextArtifact(path, content string) error {
 	return os.WriteFile(path, []byte(content), 0644)
 }
 
-func (m *Module) computeLoopForCurrentMaterial() {
-	var mat *physics.HZOMaterial
-	for _, candidate := range m.state.Materials {
-		if candidate != nil && candidate.Name == m.state.SelectedMaterial {
-			mat = candidate
-			break
+func (m *Module) runPUND() error {
+	mat := m.currentMaterial()
+	ec, ps, area := materialPUNDFORCParameters(mat)
+	stack := physics.NewPreisachStack(ec, &physics.TanhEverett{Ec: ec, Ps: ps, Delta: ec * 0.3})
+	if stack == nil {
+		return fmt.Errorf("hysteresis: could not initialize PUND Preisach stack")
+	}
+	result, traces, err := physics.RunPUNDSimulation(stack, 5*ec, 100e-9, 5e-9, area)
+	if err != nil {
+		return fmt.Errorf("hysteresis: run PUND: %w", err)
+	}
+	ratio := 0.0
+	if result.SwitchingNegative_C != 0 {
+		ratio = math.Abs(result.SwitchingPositive_C / result.SwitchingNegative_C)
+	}
+	samplesPerPulse := 0
+	if len(traces) > 0 {
+		samplesPerPulse = len(traces[0])
+	}
+	m.state.PUND = PUNDSummary{
+		Available:         true,
+		QP_C:              result.QP_C,
+		QU_C:              result.QU_C,
+		QN_C:              result.QN_C,
+		QD_C:              result.QD_C,
+		SwitchingPositive: result.SwitchingPositive_C,
+		SwitchingNegative: result.SwitchingNegative_C,
+		SwitchingRatio:    ratio,
+		SamplesPerPulse:   samplesPerPulse,
+		Summary: fmt.Sprintf(
+			"QP=%.3e C, QU=%.3e C, QN=%.3e C, QD=%.3e C; Qsw+=%.3e C, Qsw-=%.3e C; Switching ratio |Qsw+/Qsw-|=%.3f; samples_per_pulse=%d",
+			result.QP_C, result.QU_C, result.QN_C, result.QD_C,
+			result.SwitchingPositive_C, result.SwitchingNegative_C, ratio, samplesPerPulse,
+		),
+	}
+	return nil
+}
+
+func (m *Module) runFORC(payload map[string]string) error {
+	mat := m.currentMaterial()
+	ec, ps, _ := materialPUNDFORCParameters(mat)
+	emax := math.Max(math.Abs(m.state.FieldRange.MinField), math.Abs(m.state.FieldRange.MaxField)) * 1e5
+	if emax < 2*ec {
+		emax = 2 * ec
+	}
+	reversals := 21
+	if raw := strings.TrimSpace(payload["reversals"]); raw != "" {
+		parsed, err := strconv.Atoi(raw)
+		if err != nil {
+			return fmt.Errorf("hysteresis: invalid FORC reversals %q", raw)
+		}
+		reversals = parsed
+	}
+	if reversals < 3 {
+		return fmt.Errorf("hysteresis: FORC reversals must be >= 3")
+	}
+
+	stack := physics.NewPreisachStack(emax, &physics.TanhEverett{Ec: ec, Ps: ps, Delta: ec * 0.3})
+	if stack == nil {
+		return fmt.Errorf("hysteresis: could not initialize FORC Preisach stack")
+	}
+	result, err := physics.RunFORCSweep(stack, emax, reversals)
+	if err != nil {
+		return fmt.Errorf("hysteresis: run FORC: %w", err)
+	}
+	m.state.FORC = summarizeFORCResult(result)
+	return nil
+}
+
+func materialPUNDFORCParameters(mat *physics.HZOMaterial) (ec, ps, area float64) {
+	ec = 3e7
+	ps = 0.25
+	area = 1e-12
+	if mat == nil {
+		return ec, ps, area
+	}
+	if mat.Ec > 0 {
+		ec = mat.Ec
+	}
+	if mat.Ps > 0 {
+		ps = mat.Ps
+	}
+	if mat.Area > 0 {
+		area = mat.Area
+	}
+	return ec, ps, area
+}
+
+func summarizeFORCResult(result physics.FORCResult) FORCSummary {
+	rows := len(result.PreisachDensity)
+	cols := 0
+	if rows > 0 {
+		cols = len(result.PreisachDensity[0])
+	}
+	minD, maxD := math.Inf(1), math.Inf(-1)
+	peak := 0.0
+	peakI, peakJ := 0, 0
+	visited := false
+	for i := 0; i < rows; i++ {
+		for j := 0; j < len(result.PreisachDensity[i]); j++ {
+			v := result.PreisachDensity[i][j]
+			visited = true
+			if v < minD {
+				minD = v
+			}
+			if v > maxD {
+				maxD = v
+			}
+			if math.Abs(v) > math.Abs(peak) {
+				peak = v
+				peakI, peakJ = i, j
+			}
 		}
 	}
+	if !visited {
+		minD, maxD = 0, 0
+	}
+	peakEa, peakEb := 0.0, 0.0
+	if peakJ >= 0 && peakJ < len(result.ReversalFields_Vm) {
+		peakEa = result.ReversalFields_Vm[peakJ]
+	}
+	if peakI >= 0 && peakI < len(result.ReversalFields_Vm) {
+		peakEb = result.ReversalFields_Vm[peakI]
+	}
+	summary := fmt.Sprintf(
+		"curves=%d, density_grid=%dx%d, peak_density=%.3e at (Ea=%.3e V/m, Eb=%.3e V/m), density_range=[%.3e, %.3e]",
+		len(result.Curves), rows, cols, peak, peakEa, peakEb, minD, maxD,
+	)
+	return FORCSummary{
+		Available:   true,
+		Curves:      len(result.Curves),
+		DensityRows: rows,
+		DensityCols: cols,
+		PeakDensity: peak,
+		PeakEa_Vm:   peakEa,
+		PeakEb_Vm:   peakEb,
+		MinDensity:  minD,
+		MaxDensity:  maxD,
+		Summary:     summary,
+	}
+}
+
+func (m *Module) currentMaterial() *physics.HZOMaterial {
+	for _, candidate := range m.state.Materials {
+		if candidate != nil && candidate.Name == m.state.SelectedMaterial {
+			return candidate
+		}
+	}
+	return nil
+}
+
+func (m *Module) computeLoopForCurrentMaterial() {
+	mat := m.currentMaterial()
 	if mat == nil {
 		return
 	}

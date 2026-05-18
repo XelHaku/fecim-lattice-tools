@@ -98,6 +98,18 @@ func TestSnapshotExposesWaveformAndCSVExportActions(t *testing.T) {
 	}
 }
 
+func TestSnapshotExposesPUNDAndFORCActions(t *testing.T) {
+	m := New()
+	actions := snapshotActionsByID(m.Snapshot())
+
+	if _, ok := actions["run_pund"]; !ok {
+		t.Fatalf("snapshot actions missing run_pund")
+	}
+	if _, ok := actions["run_forc"]; !ok {
+		t.Fatalf("snapshot actions missing run_forc")
+	}
+}
+
 func TestApplyActionSetWaveformUpdatesSnapshotAndLoop(t *testing.T) {
 	m := New()
 	before := m.Snapshot()
@@ -198,6 +210,53 @@ func TestApplyActionExportCSVRejectsTraversalPath(t *testing.T) {
 	}
 }
 
+func TestApplyActionRunPUNDPopulatesDiagnosticSummary(t *testing.T) {
+	m := New()
+
+	if err := m.ApplyAction(viewmodel.Action{ID: "run_pund", Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("ApplyAction run_pund: %v", err)
+	}
+
+	s := m.Snapshot()
+	if got := snapshotMetricValue(s, "pund_switching_positive"); got == "" || got == "0.000e+00 C" {
+		t.Fatalf("pund_switching_positive = %q, want non-zero charge", got)
+	}
+	if got := snapshotMetricValue(s, "pund_switching_negative"); got == "" || got == "0.000e+00 C" {
+		t.Fatalf("pund_switching_negative = %q, want non-zero charge", got)
+	}
+	if got := snapshotMetricValue(s, "pund_switching_ratio"); got == "" {
+		t.Fatal("missing pund_switching_ratio metric")
+	}
+	section := snapshotSectionBody(s, "diagnostic_pund")
+	if !strings.Contains(section, "QP=") || !strings.Contains(section, "Switching ratio") {
+		t.Fatalf("PUND diagnostic section = %q, want charge and ratio summary", section)
+	}
+}
+
+func TestApplyActionRunFORCPopulatesDensitySummary(t *testing.T) {
+	m := New()
+
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      "run_forc",
+		Kind:    viewmodel.ActionCommand,
+		Payload: map[string]string{"reversals": "13"},
+	}); err != nil {
+		t.Fatalf("ApplyAction run_forc: %v", err)
+	}
+
+	s := m.Snapshot()
+	if got := snapshotMetricValue(s, "forc_curves"); got != "13" {
+		t.Fatalf("forc_curves = %q, want 13", got)
+	}
+	if got := snapshotMetricValue(s, "forc_density_peak"); got == "" || got == "0.000e+00" {
+		t.Fatalf("forc_density_peak = %q, want non-zero density peak", got)
+	}
+	section := snapshotSectionBody(s, "diagnostic_forc")
+	if !strings.Contains(section, "peak_density=") || !strings.Contains(section, "density_range=") {
+		t.Fatalf("FORC diagnostic section = %q, want density summary", section)
+	}
+}
+
 func TestMaterialSummary(t *testing.T) {
 	summary := materialSummary(nil)
 	if summary != "N/A" {
@@ -235,6 +294,15 @@ func snapshotMetricValue(snapshot viewmodel.ModuleSnapshot, id string) string {
 	for _, metric := range snapshot.Metrics {
 		if metric.ID == id {
 			return metric.Value
+		}
+	}
+	return ""
+}
+
+func snapshotSectionBody(snapshot viewmodel.ModuleSnapshot, id string) string {
+	for _, section := range snapshot.Sections {
+		if section.ID == id {
+			return section.Body
 		}
 	}
 	return ""

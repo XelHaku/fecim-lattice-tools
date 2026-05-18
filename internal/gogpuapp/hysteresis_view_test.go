@@ -3,6 +3,7 @@
 package gogpuapp
 
 import (
+	"strings"
 	"testing"
 
 	"fecim-lattice-tools/shared/viewmodel"
@@ -140,5 +141,33 @@ func TestHysteresisViewActionButtonsDispatchActions(t *testing.T) {
 	}
 	if got := actions[2]; got.ID != hysteresisvm.EventSetWaveform || got.Payload["waveform"] != "triangle" {
 		t.Fatalf("action[2] = %#v, want triangle waveform action", got)
+	}
+}
+
+func TestHysteresisDiagnosticPanelStateFollowsPUNDAndFORC(t *testing.T) {
+	vm := hysteresisvm.New()
+	if err := vm.ApplyAction(viewmodel.Action{ID: "run_pund", Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("run_pund: %v", err)
+	}
+	if err := vm.ApplyAction(viewmodel.Action{
+		ID:      "run_forc",
+		Kind:    viewmodel.ActionCommand,
+		Payload: map[string]string{"reversals": "13"},
+	}); err != nil {
+		t.Fatalf("run_forc: %v", err)
+	}
+
+	state := hysteresisDiagnosticPanelStateFromSnapshot(vm.Snapshot())
+	if !state.pundAvailable {
+		t.Fatal("PUND diagnostic state unavailable")
+	}
+	if !state.forcAvailable {
+		t.Fatal("FORC diagnostic state unavailable")
+	}
+	if !strings.Contains(state.pundSummary, "Switching ratio") {
+		t.Fatalf("PUND summary = %q, want switching ratio", state.pundSummary)
+	}
+	if !strings.Contains(state.forcSummary, "peak_density=") {
+		t.Fatalf("FORC summary = %q, want peak density", state.forcSummary)
 	}
 }

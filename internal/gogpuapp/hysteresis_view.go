@@ -44,6 +44,9 @@ func buildHysteresisViewWithActions(snapshot viewmodel.ModuleSnapshot, theme *ma
 	}
 	children = append(children, primitives.Box(metricBoxes...).Gap(8))
 	children = append(children, buildHysteresisControls(snapshot, theme, onAction))
+	if panel := buildHysteresisDiagnosticPanels(snapshot, theme); panel != nil {
+		children = append(children, panel)
+	}
 
 	for _, plot := range snapshot.Plots {
 		plotData := design.NewPlotData(plot.Title, plot.XLabel, plot.YLabel)
@@ -86,13 +89,69 @@ func buildHysteresisControls(snapshot viewmodel.ModuleSnapshot, theme *material3
 		circuitButton("+/-3000", false, fieldRangeAction("-3000", "3000"), theme, onAction),
 		circuitButton("+/-6000", false, fieldRangeAction("-6000", "6000"), theme, onAction),
 	}
+	diagnosticButtons := []widget.Widget{
+		circuitButton("Run PUND", false, actionOrDefault(actions, hysteresisvm.EventRunPUND, viewmodel.ActionCommand), theme, onAction),
+		circuitButton("Run FORC", false, actionOrDefault(actions, hysteresisvm.EventRunFORC, viewmodel.ActionCommand), theme, onAction),
+	}
 
 	return primitives.Box(
 		primitives.Text("Hysteresis Controls").FontSize(14).Bold(),
 		primitives.Box(commandButtons...).Gap(8),
 		controlRow("Waveform", waveformButtons, theme),
 		controlRow("Field", fieldButtons, theme),
+		controlRow("Diagnostics", diagnosticButtons, theme),
 	).Padding(12).Gap(8).Background(theme.Colors.SurfaceContainer).Rounded(6)
+}
+
+type hysteresisDiagnosticPanelState struct {
+	pundAvailable bool
+	pundSummary   string
+	forcAvailable bool
+	forcSummary   string
+}
+
+func hysteresisDiagnosticPanelStateFromSnapshot(snapshot viewmodel.ModuleSnapshot) hysteresisDiagnosticPanelState {
+	var state hysteresisDiagnosticPanelState
+	for _, section := range snapshot.Sections {
+		switch section.ID {
+		case "diagnostic_pund":
+			state.pundAvailable = true
+			state.pundSummary = section.Body
+		case "diagnostic_forc":
+			state.forcAvailable = true
+			state.forcSummary = section.Body
+		}
+	}
+	return state
+}
+
+func buildHysteresisDiagnosticPanels(snapshot viewmodel.ModuleSnapshot, theme *material3.Theme) widget.Widget {
+	state := hysteresisDiagnosticPanelStateFromSnapshot(snapshot)
+	if !state.pundAvailable && !state.forcAvailable {
+		return nil
+	}
+	rows := []widget.Widget{
+		primitives.Text("Diagnostic Summaries").FontSize(14).Bold(),
+	}
+	if state.pundAvailable {
+		rows = append(rows, diagnosticSummaryCard("PUND Measurement", state.pundSummary, theme))
+	}
+	if state.forcAvailable {
+		rows = append(rows, diagnosticSummaryCard("FORC Density", state.forcSummary, theme))
+	}
+	return primitives.Box(rows...).
+		Padding(12).
+		Gap(8).
+		Background(widget.Hex(0xF6FAF7)).
+		Rounded(8).
+		BorderStyle(1, widget.Hex(0xD4DED8))
+}
+
+func diagnosticSummaryCard(title, body string, theme *material3.Theme) widget.Widget {
+	return primitives.Box(
+		primitives.Text(title).FontSize(13).Bold().Color(widget.Hex(0x183D34)),
+		primitives.Text(body).FontSize(11).Color(theme.Colors.OnSurfaceVariant),
+	).Padding(10).Gap(6).Background(theme.Colors.SurfaceContainer).Rounded(6)
 }
 
 func fieldRangeAction(min, max string) viewmodel.Action {

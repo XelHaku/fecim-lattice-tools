@@ -73,7 +73,7 @@
       "evidence": [
         "go test ./shared/viewmodel/hysteresis ./internal/gogpuapp -run Hysteresis"
       ],
-      "notes": "Core material selection, waveform selection, field-range presets, P-E loop state, retention state, and P-E CSV export exist in gogpu. PUND, FORC, calibration dialogs, literature overlays, and several educational widgets need explicit gogpu parity or a better replacement."
+      "notes": "Core material selection, waveform selection, field-range presets, P-E loop state, retention state, P-E CSV export, and summary-level PUND/FORC diagnostics exist in gogpu. Calibration dialogs, literature overlays, full PUND/FORC raster/export workflows, and several educational widgets need explicit gogpu parity or a better replacement."
     },
     {
       "module": "hysteresis",
@@ -97,6 +97,28 @@
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'TestHysteresisViewActionButtonsDispatchActions|TestHeadlessRootClickingHysteresisControlAppliesAction' -count=1"
       ],
       "notes": "This ports the control/export action contract into the gogpu shell with buffered or validated-path CSV artifacts. It does not claim parity for PUND, FORC, calibration dialogs, literature overlays, or custom educational widgets tracked by the broader hysteresis gap entry."
+    },
+    {
+      "module": "hysteresis",
+      "feature": "PUND and FORC diagnostic summary actions",
+      "status": "ported",
+      "legacy_sources": [
+        "module1-hysteresis/pkg/gui/pund_panel.go",
+        "module1-hysteresis/pkg/gui/forc_panel.go",
+        "module1-hysteresis/pkg/gui/forc_panel_test.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/hysteresis/events.go",
+        "shared/viewmodel/hysteresis/state.go",
+        "shared/viewmodel/hysteresis/viewmodel.go",
+        "shared/viewmodel/hysteresis/snapshot.go",
+        "internal/gogpuapp/hysteresis_view.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/hysteresis -run 'Test(SnapshotExposesPUNDAndFORCActions|ApplyActionRunPUND|ApplyActionRunFORC)' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'TestHysteresisDiagnosticPanelStateFollowsPUNDAndFORC|TestHysteresisViewActionButtonsDispatchActions' -count=1"
+      ],
+      "notes": "This ports UI-neutral PUND switching-charge summaries and FORC density summaries into gogpu actions and diagnostic panels. It does not claim raster waveform parity, FORC heatmap parity, FORC CSV/metadata export parity, or legacy dialog parity."
     },
     {
       "module": "crossbar",
