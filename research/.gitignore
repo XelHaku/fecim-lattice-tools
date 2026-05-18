@@ -1,0 +1,8 @@
+/index/pyserini/
+/index/lancedb/
+/index/models/
+/.cache/
+
+!/index/
+!/index/.gitkeep
+!/index/README.md
