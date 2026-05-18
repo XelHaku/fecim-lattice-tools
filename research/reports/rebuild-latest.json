@@ -27,6 +27,14 @@
     },
     {
       "artifacts": [
+        "research/reports/cache-latest.json"
+      ],
+      "exit_code": 1,
+      "stage": "cache",
+      "status": "warning"
+    },
+    {
+      "artifacts": [
         "research/reports/claim-audit-latest.json"
       ],
       "exit_code": 0,
@@ -42,5 +50,6 @@
       "stage": "graph",
       "status": "ok"
     }
-  ]
+  ],
+  "warnings": 1
 }

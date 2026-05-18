@@ -10,6 +10,7 @@ import json
 class RebuildStages:
     ingest: Callable[[], int]
     index: Callable[[], int]
+    cache: Callable[[], int]
     audit: Callable[[], int]
     graph: Callable[[], int]
 
@@ -31,13 +32,16 @@ def run_rebuild(
         stage_results.append(_skipped_stage("index"))
     else:
         stage_results.append(_run_stage("index", stages.index))
+    stage_results.append(_run_stage("cache", stages.cache, warning_only=True))
     stage_results.append(_run_stage("audit", stages.audit))
     stage_results.append(_run_stage("graph", stages.graph))
 
     failed = sum(1 for result in stage_results if result["status"] == "failed")
+    warnings = sum(1 for result in stage_results if result["status"] == "warning")
     report = {
         "ok": failed == 0,
         "failed": failed,
+        "warnings": warnings,
         "skipped": sum(1 for result in stage_results if result["status"] == "skipped"),
         "semantic": semantic,
         "embedding_model": embedding_model,
@@ -50,7 +54,8 @@ def run_rebuild(
 
     print(
         "research rebuild complete: "
-        f"stages={len(stage_results)} failed={report['failed']} skipped={report['skipped']}"
+        f"stages={len(stage_results)} failed={report['failed']} "
+        f"warnings={report['warnings']} skipped={report['skipped']}"
     )
     if failed == 0:
         return 0
@@ -61,6 +66,7 @@ def run_rebuild(
 
 
 def _default_stages(root: Path, extra_paths: list[Path], semantic: bool, embedding_model: str) -> RebuildStages:
+    from .cache import run_cache
     from .claims import run_audit
     from .graphing import run_graph
     from .indexing import run_index
@@ -69,16 +75,21 @@ def _default_stages(root: Path, extra_paths: list[Path], semantic: bool, embeddi
     return RebuildStages(
         ingest=lambda: run_ingest(root=root, extra_paths=extra_paths),
         index=lambda: run_index(root=root, semantic=semantic, embedding_model=embedding_model),
+        cache=lambda: run_cache(root=root),
         audit=lambda: run_audit(root=root),
         graph=lambda: run_graph(root=root),
     )
 
 
-def _run_stage(stage: str, runner: Callable[[], int]) -> dict[str, object]:
+def _run_stage(stage: str, runner: Callable[[], int], warning_only: bool = False) -> dict[str, object]:
     code = runner()
+    if warning_only and code != 0:
+        status = "warning"
+    else:
+        status = "ok" if code == 0 else "failed"
     return {
         "stage": stage,
-        "status": "ok" if code == 0 else "failed",
+        "status": status,
         "exit_code": code,
         "artifacts": _stage_artifacts(stage),
     }
@@ -103,6 +114,9 @@ def _stage_artifacts(stage: str) -> list[str]:
         "index": [
             "research/manifests/index-latest.json",
             "research/index/pyserini",
+        ],
+        "cache": [
+            "research/reports/cache-latest.json",
         ],
         "audit": [
             "research/reports/claim-audit-latest.json",

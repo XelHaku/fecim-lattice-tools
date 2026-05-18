@@ -14,6 +14,9 @@ Local-only input:
 - `fecim-lattice-tools research rebuild` runs the local ingestion, index,
   claim-audit, and provenance-graph stages as the one-command corpus refresh.
   It writes `reports/rebuild-latest.json` so each refresh is reviewable in git.
+- Rebuild also emits the cache status report. Cache warnings are recorded in
+  `reports/rebuild-latest.json` without turning a file-only refresh into a
+  failed rebuild.
 - Use `fecim-lattice-tools research rebuild --skip-index` for file-only CI
   checks or repositories that do not currently have chunk files.
 - `fecim-lattice-tools research cache` writes
