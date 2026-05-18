@@ -238,6 +238,13 @@ def _audit_source_ledgers(root: Path, errors: list[str]) -> None:
         if not isinstance(pdf, dict):
             errors.append(f"{rel_path} missing pdf metadata")
             continue
+        source_pdf_path = str(pdf.get("path", "")).strip()
+        if _is_ignored_pdf_inbox_path(source_pdf_path):
+            errors.append(
+                f"{rel_path} pdf path {source_pdf_path} points at ignored local inbox; "
+                "promote it before writing source ledgers"
+            )
+            continue
         pdf_file = _audit_source_file_reference(root, rel_path, "pdf path", pdf.get("path"), errors)
         expected_sha = str(pdf.get("sha256", "")).strip()
         if not expected_sha:

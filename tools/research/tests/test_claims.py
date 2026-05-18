@@ -173,6 +173,27 @@ class ClaimsTest(unittest.TestCase):
             root = Path(td)
             pdf_bytes = b"%PDF-1.7\nsource ledger\n"
             digest = hashlib.sha256(pdf_bytes).hexdigest()
+            pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(pdf_bytes)
+            self._write_paper(root, "park2015_advmat_hzo", pdf="docs/4-research/papers/park2015_advmat_hzo.pdf")
+            self._write_source_ledger(
+                root,
+                "park2015_advmat_hzo",
+                citation_path="citations/papers/park2015_advmat_hzo.md",
+                pdf_path="docs/4-research/papers/park2015_advmat_hzo.pdf",
+                sha256=digest,
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertTrue(report.ok, report.errors)
+
+    def test_audit_fails_when_source_ledger_pdf_points_at_ignored_research_inbox(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_bytes = b"%PDF-1.7\nsource ledger\n"
+            digest = hashlib.sha256(pdf_bytes).hexdigest()
             pdf_path = root / "research" / "papers" / "park2015_advmat_hzo.pdf"
             pdf_path.parent.mkdir(parents=True)
             pdf_path.write_bytes(pdf_bytes)
@@ -187,20 +208,24 @@ class ClaimsTest(unittest.TestCase):
 
             report = audit_claim_registry(root)
 
-            self.assertTrue(report.ok, report.errors)
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "research/sources/park2015_advmat_hzo.yaml pdf path research/papers/park2015_advmat_hzo.pdf points at ignored local inbox; promote it before writing source ledgers",
+                "\n".join(report.errors),
+            )
 
     def test_audit_fails_when_source_ledger_pdf_digest_does_not_match(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
-            pdf_path = root / "research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
             pdf_path.parent.mkdir(parents=True)
             pdf_path.write_bytes(b"%PDF-1.7\nsource ledger\n")
-            self._write_paper(root, "park2015_advmat_hzo")
+            self._write_paper(root, "park2015_advmat_hzo", pdf="docs/4-research/papers/park2015_advmat_hzo.pdf")
             self._write_source_ledger(
                 root,
                 "park2015_advmat_hzo",
                 citation_path="citations/papers/park2015_advmat_hzo.md",
-                pdf_path="research/papers/park2015_advmat_hzo.pdf",
+                pdf_path="docs/4-research/papers/park2015_advmat_hzo.pdf",
                 sha256="stale-digest",
             )
 
@@ -217,14 +242,14 @@ class ClaimsTest(unittest.TestCase):
             root = Path(td)
             pdf_bytes = b"%PDF-1.7\nsource ledger\n"
             digest = hashlib.sha256(pdf_bytes).hexdigest()
-            pdf_path = root / "research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
             pdf_path.parent.mkdir(parents=True)
             pdf_path.write_bytes(pdf_bytes)
             self._write_source_ledger(
                 root,
                 "park2015_advmat_hzo",
                 citation_path="citations/papers/missing.md",
-                pdf_path="research/papers/park2015_advmat_hzo.pdf",
+                pdf_path="docs/4-research/papers/park2015_advmat_hzo.pdf",
                 sha256=digest,
             )
 
