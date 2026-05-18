@@ -1,4 +1,5 @@
 import io
+import hashlib
 import json
 import tempfile
 import unittest
@@ -69,6 +70,39 @@ class CiteTest(unittest.TestCase):
             self.assertEqual(emitted["claim"]["id"], "hzo-remanent-polarization-range")
             self.assertEqual(report["claim"]["id"], "hzo-remanent-polarization-range")
             self.assertEqual(report["sources"][0]["key"], "park2015_advmat_hzo")
+
+    def test_run_cite_writes_content_addressed_history_report(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_paper(root, "park2015_advmat_hzo")
+            self._write_claim(
+                root,
+                "hzo-remanent-polarization-range",
+                sources=["park2015_advmat_hzo"],
+                used_in=["docs/TRUST.md"],
+            )
+            trust = root / "docs" / "TRUST.md"
+            trust.parent.mkdir(parents=True)
+            trust.write_text("[claim: hzo-remanent-polarization-range]\n", encoding="utf-8")
+
+            out = io.StringIO()
+            with redirect_stdout(out):
+                code = run_cite(root, "hzo-remanent-polarization-range", json_output=True)
+
+            self.assertEqual(code, 0)
+            latest_path = root / "research" / "reports" / "cite-latest.json"
+            latest = json.loads(latest_path.read_text(encoding="utf-8"))
+            self.assertIn("run_id", latest)
+            self.assertIn("history_path", latest)
+            report_body = {key: value for key, value in latest.items() if key not in {"run_id", "history_path"}}
+            expected_run_id = hashlib.sha256(
+                json.dumps(report_body, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            ).hexdigest()[:16]
+            self.assertEqual(latest["run_id"], expected_run_id)
+            self.assertEqual(latest["history_path"], f"research/reports/cites/{latest['run_id']}.json")
+            history_path = root / latest["history_path"]
+            self.assertTrue(history_path.exists())
+            self.assertEqual(json.loads(history_path.read_text(encoding="utf-8")), latest)
 
     def test_run_cite_returns_nonzero_for_unknown_claim(self):
         with tempfile.TemporaryDirectory() as td:

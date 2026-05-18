@@ -5,6 +5,7 @@ import json
 
 from .claims import load_claim_records
 from .citations import CitationRecord, load_citation_records
+from .reporting import write_content_addressed_report
 
 
 def run_cite(root: Path, claim_id: str, json_output: bool = False) -> int:
@@ -13,9 +14,12 @@ def run_cite(root: Path, claim_id: str, json_output: bool = False) -> int:
         print(f"unknown claim id {claim_id}")
         return 1
 
-    report_path = root / "research" / "reports" / "cite-latest.json"
-    report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text(json.dumps(packet, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    write_content_addressed_report(
+        root,
+        "research/reports/cite-latest.json",
+        "research/reports/cites",
+        packet,
+    )
 
     if json_output:
         print(json.dumps(packet, indent=2, sort_keys=True))

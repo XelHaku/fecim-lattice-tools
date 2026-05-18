@@ -98,8 +98,8 @@ Tracked ledger outputs:
 - `manifests/`
 - `reports/` includes latest acquisition, rebuild, ingestion, cache,
   claim-audit, claim-scan, cite, graph, missing-paper, and search JSON reports
-  plus content-addressed acquisition, missing-paper, search, and claim-audit
-  history reports
+  plus content-addressed acquisition, missing-paper, search, claim-audit, and
+  cite history reports
 - `index/` stores rebuildable cache manifests and lightweight placeholders;
   bulky cache contents are ignored.
 
@@ -121,7 +121,9 @@ Claim audit:
   PDFs should use `promote-pdf` instead of expanding the backlog.
 - `fecim-lattice-tools research cite CLAIM_ID` writes a deterministic citation
   packet to `reports/cite-latest.json`, resolving sources from
-  `citations/papers` first and tracked OpenAlex ledgers second.
+  `citations/papers` first and tracked OpenAlex ledgers second. It also writes
+  a content-addressed copy under `reports/cites/RUN_ID.json` so citation
+  packets can be reviewed over time.
 - `fecim-lattice-tools research evidence CLAIM_ID` saves the latest
   claim-linked search results to `evidence/CLAIM_ID.json` as candidate evidence
   that still needs review before promotion.
