@@ -432,3 +432,22 @@ func TestCircuitsOverlayRespondsToReferenceSpecState(t *testing.T) {
 		t.Fatal("circuits overlay did not change after reference spec compliance changed")
 	}
 }
+
+func TestCircuitsOverlayRespondsToReferenceTimingState(t *testing.T) {
+	harness := newHeadlessModuleSwitchHarness(t, viewmodel.ModuleCircuits)
+	port := harness.portFor(viewmodel.ModuleCircuits)
+
+	before := harness.renderActiveFrameSignature()
+	if err := port.ApplyAction(viewmodel.Action{
+		ID:      circuitsvm.ActionSetOperationMode,
+		Kind:    viewmodel.ActionSelect,
+		Payload: map[string]string{"mode": circuitsvm.OperationWrite},
+	}); err != nil {
+		t.Fatalf("set write mode: %v", err)
+	}
+	after := harness.renderActiveFrameSignature()
+
+	if after == before {
+		t.Fatal("circuits overlay did not change after reference timing state changed")
+	}
+}

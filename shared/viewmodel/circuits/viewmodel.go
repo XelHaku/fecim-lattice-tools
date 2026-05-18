@@ -28,6 +28,7 @@ func New() *Module {
 	m.runISPPSimulation()
 	m.computeHalfSelectStress()
 	m.computeReferenceSpecs()
+	m.computeReferenceTiming()
 	return m
 }
 
@@ -48,17 +49,20 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 		m.state.OperationMode = OperationRead
 		m.state.LastOperationStatus = fmt.Sprintf("READ cell [%d,%d] through %s", m.state.SelectedRow, m.state.SelectedCol, m.state.Architecture)
 		m.computeHalfSelectStress()
+		m.computeReferenceTiming()
 		return nil
 	case ActionRunWrite:
 		m.state.OperationMode = OperationWrite
 		m.runISPPSimulation()
 		m.state.LastOperationStatus = fmt.Sprintf("WRITE level %d to cell [%d,%d] using %s", m.state.WriteTargetLevel, m.state.SelectedRow, m.state.SelectedCol, m.state.ISPPEngine)
 		m.computeHalfSelectStress()
+		m.computeReferenceTiming()
 		return nil
 	case ActionRunCompute:
 		m.state.OperationMode = OperationCompute
 		m.state.LastOperationStatus = fmt.Sprintf("COMPUTE on %dx%d %s array", m.state.Rows, m.state.Cols, m.state.Architecture)
 		m.computeHalfSelectStress()
+		m.computeReferenceTiming()
 		return nil
 	case ActionToggleISPP:
 		m.state.ISPPEnabled = !m.state.ISPPEnabled
@@ -135,6 +139,7 @@ func (m *Module) setOperationMode(payload map[string]string) error {
 	m.state.OperationMode = mode
 	m.state.LastOperationStatus = fmt.Sprintf("Operation mode set to %s", mode)
 	m.computeHalfSelectStress()
+	m.computeReferenceTiming()
 	return nil
 }
 
@@ -465,6 +470,32 @@ func referenceSpecCompliance(dacCodes, adcCodes, quantLevels int) string {
 		return fmt.Sprintf("CHECK: ADC %d codes < %d levels", adcCodes, quantLevels)
 	}
 	return fmt.Sprintf("OK: DAC/ADC cover %d levels", quantLevels)
+}
+
+func (m *Module) computeReferenceTiming() {
+	const (
+		writeTotalNS   = 203
+		readTotalNS    = 76
+		computeTotalNS = 76
+	)
+	m.state.TimingWriteTotalNS = writeTotalNS
+	m.state.TimingReadTotalNS = readTotalNS
+	m.state.TimingComputeTotalNS = computeTotalNS
+
+	switch m.state.OperationMode {
+	case OperationWrite:
+		m.state.TimingActiveOp = "WRITE"
+		m.state.TimingActiveTotalNS = writeTotalNS
+		m.state.TimingActivePhases = "DAC 10 / Pump 88 / Pulse 100 / Array 5 ns"
+	case OperationCompute:
+		m.state.TimingActiveOp = "COMPUTE"
+		m.state.TimingActiveTotalNS = computeTotalNS
+		m.state.TimingActivePhases = "DAC 10 / Array 5 / TIA+ADC 61 ns"
+	default:
+		m.state.TimingActiveOp = "READ"
+		m.state.TimingActiveTotalNS = readTotalNS
+		m.state.TimingActivePhases = "DAC 10 / Array 5 / TIA 11 / ADC 50 ns"
+	}
 }
 
 func pvtTemperatureSweepStatus(mat *physics.HZOMaterial) string {

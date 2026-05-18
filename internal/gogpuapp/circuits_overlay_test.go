@@ -63,3 +63,15 @@ func TestCircuitsOverlayStateIncludesReferenceSpecSummaries(t *testing.T) {
 		t.Fatalf("specCompliance = %q, want compliance summary", state.specCompliance)
 	}
 }
+
+func TestCircuitsOverlayStateIncludesReferenceTimingSummaries(t *testing.T) {
+	vm := circuitsvm.New()
+	state := circuitsOverlayStateFromSnapshot(vm.Snapshot())
+
+	if state.timingActive != "READ 76 ns total" {
+		t.Fatalf("timingActive = %q, want READ timing summary", state.timingActive)
+	}
+	if state.timingActivePhases != "DAC 10 / Array 5 / TIA 11 / ADC 50 ns" {
+		t.Fatalf("timingActivePhases = %q, want read timing phases", state.timingActivePhases)
+	}
+}

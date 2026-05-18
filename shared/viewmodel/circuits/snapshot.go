@@ -38,6 +38,11 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		{ID: "spec_throughput", Label: "Spec Throughput", Value: specThroughputValue(state)},
 		{ID: "spec_resolution", Label: "Spec Resolution", Value: specResolutionValue(state, quantLevels)},
 		{ID: "spec_compliance", Label: "Spec Compliance", Value: specComplianceValue(state)},
+		{ID: "timing_write", Label: "Write Timing", Value: timingTotalValue(state.TimingWriteTotalNS)},
+		{ID: "timing_read", Label: "Read Timing", Value: timingTotalValue(state.TimingReadTotalNS)},
+		{ID: "timing_compute", Label: "Compute Timing", Value: timingTotalValue(state.TimingComputeTotalNS)},
+		{ID: "timing_active", Label: "Active Timing", Value: timingActiveValue(state)},
+		{ID: "timing_active_phases", Label: "Timing Phases", Value: timingActivePhasesValue(state)},
 	}
 	if state.LastOperationStatus != "" {
 		metrics = append(metrics, viewmodel.Metric{ID: "last_operation", Label: "Last Operation", Value: state.LastOperationStatus})
@@ -101,6 +106,12 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		ID: "reference_specs", Title: "Reference Spec / Compliance Summary",
 		Body: fmt.Sprintf("%s. %s. %s. %s. %s. Summary-level port of the legacy reference specs; power, area, and latency values are educational estimates.",
 			specStorageValue(state), specComponentsValue(state), specPowerLatencyValue(state), specThroughputValue(state), specComplianceValue(state)),
+		Category: "design",
+	})
+	sections = append(sections, viewmodel.Section{
+		ID: "reference_timing", Title: "Reference Timing Summary",
+		Body: fmt.Sprintf("Write: %s. Read: %s. Compute: %s. Active %s phases: %s. Summary-level port of the legacy timing diagrams; no waveform animation or SVG export is claimed.",
+			timingTotalValue(state.TimingWriteTotalNS), timingTotalValue(state.TimingReadTotalNS), timingTotalValue(state.TimingComputeTotalNS), timingActiveValue(state), timingActivePhasesValue(state)),
 		Category: "design",
 	})
 	sections = append(sections, viewmodel.Section{
@@ -261,6 +272,27 @@ func specComplianceValue(state CircuitsState) string {
 		return "not evaluated"
 	}
 	return state.SpecCompliance
+}
+
+func timingTotalValue(totalNS int) string {
+	if totalNS <= 0 {
+		return "not evaluated"
+	}
+	return fmt.Sprintf("%d ns total", totalNS)
+}
+
+func timingActiveValue(state CircuitsState) string {
+	if state.TimingActiveOp == "" || state.TimingActiveTotalNS <= 0 {
+		return "not evaluated"
+	}
+	return fmt.Sprintf("%s %d ns total", state.TimingActiveOp, state.TimingActiveTotalNS)
+}
+
+func timingActivePhasesValue(state CircuitsState) string {
+	if state.TimingActivePhases == "" {
+		return "not evaluated"
+	}
+	return state.TimingActivePhases
 }
 
 func buildISPPPlots(state CircuitsState) []viewmodel.PlotData {

@@ -281,6 +281,57 @@ func TestReferenceSpecSummaryFollowsArrayAndDACBits(t *testing.T) {
 	}
 }
 
+func TestSnapshotContainsReferenceTimingSummaries(t *testing.T) {
+	s := New().Snapshot()
+
+	wantMetrics := map[string]string{
+		"timing_write":         "203 ns total",
+		"timing_read":          "76 ns total",
+		"timing_compute":       "76 ns total",
+		"timing_active":        "READ 76 ns total",
+		"timing_active_phases": "DAC 10 / Array 5 / TIA 11 / ADC 50 ns",
+	}
+	for id, want := range wantMetrics {
+		if got := metricValue(s, id); got != want {
+			t.Errorf("%s metric = %q, want %q", id, got, want)
+		}
+	}
+	if !hasSection(s, "reference_timing") {
+		t.Fatal("missing reference timing section")
+	}
+}
+
+func TestReferenceTimingSummaryFollowsOperationMode(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionSetOperationMode,
+		Payload: map[string]string{"mode": OperationWrite},
+	}); err != nil {
+		t.Fatalf("set write mode: %v", err)
+	}
+	write := m.Snapshot()
+	if got := metricValue(write, "timing_active"); got != "WRITE 203 ns total" {
+		t.Fatalf("write timing active = %q, want WRITE total", got)
+	}
+	if got := metricValue(write, "timing_active_phases"); got != "DAC 10 / Pump 88 / Pulse 100 / Array 5 ns" {
+		t.Fatalf("write timing phases = %q, want write phase summary", got)
+	}
+
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionSetOperationMode,
+		Payload: map[string]string{"mode": OperationCompute},
+	}); err != nil {
+		t.Fatalf("set compute mode: %v", err)
+	}
+	compute := m.Snapshot()
+	if got := metricValue(compute, "timing_active"); got != "COMPUTE 76 ns total" {
+		t.Fatalf("compute timing active = %q, want COMPUTE total", got)
+	}
+	if got := metricValue(compute, "timing_active_phases"); got != "DAC 10 / Array 5 / TIA+ADC 61 ns" {
+		t.Fatalf("compute timing phases = %q, want compute phase summary", got)
+	}
+}
+
 func metricValue(s viewmodel.ModuleSnapshot, id string) string {
 	for _, metric := range s.Metrics {
 		if metric.ID == id {

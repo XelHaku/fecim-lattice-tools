@@ -125,7 +125,7 @@
         "go test ./shared/viewmodel/circuits -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run Circuits -count=1"
       ],
-      "notes": "Gogpu exposes circuit metrics, sections, unified controls, a state-responsive unified canvas overlay, half-select/stress budget state, PVT investigation summaries, and reference-spec/compliance summaries. Logs, reference export workflows, reference timing diagrams, deep investigation panels, and detailed visual interactions need parity decisions."
+      "notes": "Gogpu exposes circuit metrics, sections, unified controls, a state-responsive unified canvas overlay, half-select/stress budget state, PVT investigation summaries, reference-spec/compliance summaries, and reference timing summaries. Logs, reference export workflows, animated timing diagrams, deep investigation panels, and detailed visual interactions need parity decisions."
     },
     {
       "module": "circuits",
@@ -172,7 +172,7 @@
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'DrawModuleOverlaysDrawsCircuitsCanvas|CircuitsOverlayRespondsToViewmodelState|DrawAppFrameDrawsCircuitsOverlay' -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -count=1"
       ],
-      "notes": "This ports a gogpu-rendered operational canvas fed by snapshot metrics. It does not claim parity for all legacy overlay submodes, logs, deep investigation panels, or reference timing/export panels."
+      "notes": "This ports a gogpu-rendered operational canvas fed by snapshot metrics. It does not claim parity for all legacy overlay submodes, logs, deep investigation panels, or reference animation/export panels."
     },
     {
       "module": "circuits",
@@ -241,7 +241,26 @@
         "go test ./shared/viewmodel/circuits -run 'ReferenceSpec' -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesReferenceSpecSummaries|CircuitsOverlayRespondsToReferenceSpecState' -count=1"
       ],
-      "notes": "This ports summary-level reference specs into the gogpu snapshot and overlay. It does not claim full legacy reference tab parity, spec export, reference timing diagrams, editable spec-only controls, or calibrated hardware compliance."
+      "notes": "This ports summary-level reference specs into the gogpu snapshot and overlay. It does not claim full legacy reference tab parity, spec export, editable spec-only controls, or calibrated hardware compliance."
+    },
+    {
+      "module": "circuits",
+      "feature": "Reference timing summaries for write/read/compute totals and active phase durations",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/tab_reference_timing.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/state.go",
+        "shared/viewmodel/circuits/viewmodel.go",
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'ReferenceTiming' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesReferenceTimingSummaries|CircuitsOverlayRespondsToReferenceTimingState' -count=1"
+      ],
+      "notes": "This ports summary-level timing totals and active operation phase durations into the gogpu snapshot and overlay. It does not claim waveform drawing parity, animation controls, SVG/PNG timing export, or a dedicated reference timing panel."
     },
     {
       "module": "comparison",

@@ -14,28 +14,30 @@ import (
 )
 
 type circuitsOverlayState struct {
-	rows             int
-	cols             int
-	mode             string
-	architecture     string
-	selectedRow      int
-	selectedCol      int
-	writeTarget      int
-	coupling         string
-	isppEngine       string
-	lastOperation    string
-	halfSelectState  string
-	halfSelectCells  int
-	disturbVoltage   string
-	stressBudget     string
-	stressPerPulse   string
-	pvtTempSweep     string
-	pvtProcessYield  string
-	pvtCornerENOB    string
-	pvtNoiseCeiling  string
-	specPowerLatency string
-	specThroughput   string
-	specCompliance   string
+	rows               int
+	cols               int
+	mode               string
+	architecture       string
+	selectedRow        int
+	selectedCol        int
+	writeTarget        int
+	coupling           string
+	isppEngine         string
+	lastOperation      string
+	halfSelectState    string
+	halfSelectCells    int
+	disturbVoltage     string
+	stressBudget       string
+	stressPerPulse     string
+	pvtTempSweep       string
+	pvtProcessYield    string
+	pvtCornerENOB      string
+	pvtNoiseCeiling    string
+	specPowerLatency   string
+	specThroughput     string
+	specCompliance     string
+	timingActive       string
+	timingActivePhases string
 }
 
 func drawCircuitsOverlay(cc *gg.Context, snapshot viewmodel.ModuleSnapshot, w, h int) {
@@ -89,28 +91,30 @@ func circuitsOverlayStateFromSnapshot(snapshot viewmodel.ModuleSnapshot) circuit
 		mode = "READ"
 	}
 	return circuitsOverlayState{
-		rows:             rows,
-		cols:             cols,
-		mode:             mode,
-		architecture:     valueOr(metrics["architecture"], "0T1R (Passive)"),
-		selectedRow:      clampInt(selectedRow, 0, rows-1),
-		selectedCol:      clampInt(selectedCol, 0, cols-1),
-		writeTarget:      target,
-		coupling:         valueOr(metrics["coupling"], "Tier-A"),
-		isppEngine:       valueOr(metrics["ispp_engine"], "Preisach (Level-based)"),
-		lastOperation:    lastOperation,
-		halfSelectState:  valueOr(metrics["half_select_state"], "inactive"),
-		halfSelectCells:  parseLeadingInt(metrics["half_select_cells"]),
-		disturbVoltage:   valueOr(metrics["disturb_voltage"], "0.00 V"),
-		stressBudget:     valueOr(metrics["stress_budget"], "inactive"),
-		stressPerPulse:   valueOr(metrics["stress_per_pulse"], "0.000000 level/pulse"),
-		pvtTempSweep:     valueOr(metrics["pvt_temperature_sweep"], "not evaluated"),
-		pvtProcessYield:  valueOr(metrics["pvt_process_yield"], "not evaluated"),
-		pvtCornerENOB:    valueOr(metrics["pvt_corner_enob"], "not evaluated"),
-		pvtNoiseCeiling:  valueOr(metrics["pvt_noise_ceiling"], "not evaluated"),
-		specPowerLatency: valueOr(metrics["spec_power_latency"], "not evaluated"),
-		specThroughput:   valueOr(metrics["spec_throughput"], "not evaluated"),
-		specCompliance:   valueOr(metrics["spec_compliance"], "not evaluated"),
+		rows:               rows,
+		cols:               cols,
+		mode:               mode,
+		architecture:       valueOr(metrics["architecture"], "0T1R (Passive)"),
+		selectedRow:        clampInt(selectedRow, 0, rows-1),
+		selectedCol:        clampInt(selectedCol, 0, cols-1),
+		writeTarget:        target,
+		coupling:           valueOr(metrics["coupling"], "Tier-A"),
+		isppEngine:         valueOr(metrics["ispp_engine"], "Preisach (Level-based)"),
+		lastOperation:      lastOperation,
+		halfSelectState:    valueOr(metrics["half_select_state"], "inactive"),
+		halfSelectCells:    parseLeadingInt(metrics["half_select_cells"]),
+		disturbVoltage:     valueOr(metrics["disturb_voltage"], "0.00 V"),
+		stressBudget:       valueOr(metrics["stress_budget"], "inactive"),
+		stressPerPulse:     valueOr(metrics["stress_per_pulse"], "0.000000 level/pulse"),
+		pvtTempSweep:       valueOr(metrics["pvt_temperature_sweep"], "not evaluated"),
+		pvtProcessYield:    valueOr(metrics["pvt_process_yield"], "not evaluated"),
+		pvtCornerENOB:      valueOr(metrics["pvt_corner_enob"], "not evaluated"),
+		pvtNoiseCeiling:    valueOr(metrics["pvt_noise_ceiling"], "not evaluated"),
+		specPowerLatency:   valueOr(metrics["spec_power_latency"], "not evaluated"),
+		specThroughput:     valueOr(metrics["spec_throughput"], "not evaluated"),
+		specCompliance:     valueOr(metrics["spec_compliance"], "not evaluated"),
+		timingActive:       valueOr(metrics["timing_active"], "not evaluated"),
+		timingActivePhases: valueOr(metrics["timing_active_phases"], "not evaluated"),
 	}
 }
 
@@ -270,11 +274,13 @@ func drawCircuitsDetails(cc *gg.Context, state circuitsOverlayState, x, y, width
 		"Spec: " + state.specPowerLatency,
 		"Perf: " + state.specThroughput,
 		"Rule: " + compactSpecCompliance(state.specCompliance),
+		"Time: " + state.timingActive,
+		"Phase: " + compactTimingPhases(state.timingActivePhases),
 	}
 	cc.SetRGBA(0.84, 0.91, 0.87, 1)
 	cc.DrawStringAnchored("State", x+14, y+22, 0, 0.5)
 	cc.SetRGBA(0.67, 0.76, 0.72, 1)
-	lineStep := 20.0
+	lineStep := 18.0
 	statusY := y + height - 76
 	maxLines := int((statusY - (y + 44)) / lineStep)
 	if maxLines < 1 {
@@ -398,6 +404,11 @@ func compactPVTENOB(value string) string {
 
 func compactSpecCompliance(value string) string {
 	return strings.TrimPrefix(value, "OK: ")
+}
+
+func compactTimingPhases(value string) string {
+	value = strings.TrimSuffix(value, " ns")
+	return strings.ReplaceAll(value, " / ", " ")
 }
 
 func elideCircuitStatus(status string, limit int) string {
