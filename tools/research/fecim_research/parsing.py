@@ -5,6 +5,7 @@ from pathlib import Path
 import shutil
 import shlex
 import subprocess
+import urllib.request
 
 
 @dataclass(frozen=True)
@@ -68,3 +69,32 @@ def copy_sidecar_markdown_if_present(pdf: Path, out_md: Path) -> ParseResult:
         output_path=str(out_md),
         message=f"copied {sidecar}",
     )
+
+
+def run_grobid_if_available(pdf: Path, out_tei: Path) -> ParseResult:
+    raw_url = os.environ.get("FECIM_GROBID_URL", "").strip()
+    if not raw_url:
+        return ParseResult("", "grobid", "skipped", str(out_tei), "FECIM_GROBID_URL is not set")
+    url = raw_url.rstrip("/")
+    endpoint = f"{url}/api/processFulltextDocument"
+    try:
+        boundary = "----fecimresearchboundary"
+        data = pdf.read_bytes()
+        body = (
+            f"--{boundary}\r\n"
+            f'Content-Disposition: form-data; name="input"; filename="{pdf.name}"\r\n'
+            "Content-Type: application/pdf\r\n\r\n"
+        ).encode("utf-8") + data + f"\r\n--{boundary}--\r\n".encode("utf-8")
+        request = urllib.request.Request(
+            endpoint,
+            data=body,
+            headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+            method="POST",
+        )
+        with urllib.request.urlopen(request, timeout=20) as response:
+            text = response.read().decode("utf-8", errors="replace")
+    except Exception as exc:
+        return ParseResult("", "grobid", "failed", str(out_tei), str(exc))
+    out_tei.parent.mkdir(parents=True, exist_ok=True)
+    out_tei.write_text(text, encoding="utf-8")
+    return ParseResult("", "grobid", "ok", str(out_tei), "grobid completed")
