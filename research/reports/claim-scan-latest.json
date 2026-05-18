@@ -1,0 +1,906 @@
+{
+  "findings": [
+    {
+      "line": 27,
+      "path": "citations/facts.md",
+      "reason": "numeric-unit",
+      "text": "### HZO (Si-doped, 10nm, Park 2015)"
+    },
+    {
+      "line": 35,
+      "path": "citations/facts.md",
+      "reason": "numeric-unit",
+      "text": "- **Ec** = `1.0` `MV/cm`"
+    },
+    {
+      "line": 39,
+      "path": "citations/facts.md",
+      "reason": "numeric-unit",
+      "text": "- Literature range: 0.8-1.5 MV/cm"
+    },
+    {
+      "line": 57,
+      "path": "citations/facts.md",
+      "reason": "numeric-unit",
+      "text": "- **Tc (Curie Temperature)** = `598` `K` (computational) / `723` `K` (experimental)"
+    },
+    {
+      "line": 58,
+      "path": "citations/facts.md",
+      "reason": "numeric-unit",
+      "text": "- Source: Materlik 2015 (598K), FeCIM uses 723K from Park 2015"
+    },
+    {
+      "line": 63,
+      "path": "citations/facts.md",
+      "reason": "numeric-unit",
+      "text": "- **Activation Field (Ea)** = `1.9` `MV/cm`"
+    },
+    {
+      "line": 68,
+      "path": "citations/facts.md",
+      "reason": "numeric-unit",
+      "text": "- **Intrinsic Switching Time (\u03c4_inf)** = `100` `ps` (1.0e-10 s)"
+    },
+    {
+      "line": 80,
+      "path": "citations/facts.md",
+      "reason": "doi",
+      "text": "- Source: Jerry et al., IEEE IEDM 2017, DOI 10.1109/IEDM.2017.8268338"
+    },
+    {
+      "line": 87,
+      "path": "citations/facts.md",
+      "reason": "doi",
+      "text": "- Source: Mueller et al., IEEE IEDM 2013, DOI 10.1109/IEDM.2013.6724605"
+    },
+    {
+      "line": 92,
+      "path": "citations/facts.md",
+      "reason": "numeric-unit",
+      "text": "- **Pr (superlattice)** = `22` `\u00b5C/cm\u00b2` at 5 nm"
+    },
+    {
+      "line": 94,
+      "path": "citations/facts.md",
+      "reason": "numeric-unit",
+      "text": "- Conditions: HZO/ZrO2 nanolaminate, 5 nm total"
+    },
+    {
+      "line": 99,
+      "path": "citations/facts.md",
+      "reason": "numeric-unit",
+      "text": "- **Pr (Pt electrode, 200nm)** = `~80` `\u00b5C/cm\u00b2`"
+    },
+    {
+      "line": 100,
+      "path": "citations/facts.md",
+      "reason": "doi",
+      "text": "- Source: micromachines 13, 1629 (2022), Fig 6a, DOI 10.3390/mi13101629"
+    },
+    {
+      "line": 101,
+      "path": "citations/facts.md",
+      "reason": "numeric-unit",
+      "text": "- Conditions: AlScN, Pt electrode, 200 nm"
+    },
+    {
+      "line": 104,
+      "path": "citations/facts.md",
+      "reason": "numeric-unit",
+      "text": "- **Ec (Pt electrode, 200nm)** = `~3.5` `MV/cm`"
+    },
+    {
+      "line": 108,
+      "path": "citations/facts.md",
+      "reason": "numeric-unit",
+      "text": "- **Pr (Mo electrode, 200nm)** = `~60` `\u00b5C/cm\u00b2`"
+    },
+    {
+      "line": 114,
+      "path": "citations/facts.md",
+      "reason": "numeric-unit",
+      "text": "- **Pr (trace A)** = `~35` `\u00b5C/cm\u00b2`"
+    },
+    {
+      "line": 115,
+      "path": "citations/facts.md",
+      "reason": "doi",
+      "text": "- Source: Bi et al., Nanomaterials 14, 50432 (2024), Fig 2, DOI 10.3390/nano14050432"
+    },
+    {
+      "line": 120,
+      "path": "citations/facts.md",
+      "reason": "numeric-unit",
+      "text": "- **Pr (trilayer)** = `~15` `\u00b5C/cm\u00b2`"
+    },
+    {
+      "line": 121,
+      "path": "citations/facts.md",
+      "reason": "doi",
+      "text": "- Source: Jaiswal et al., Crystals 11, 1192 (2021), DOI 10.3390/cryst11101192"
+    },
+    {
+      "line": 127,
+      "path": "citations/facts.md",
+      "reason": "doi",
+      "text": "- Source: Kim et al., Materials 13, 2968 (2020), Fig 3a, DOI 10.3390/ma13132968"
+    },
+    {
+      "line": 133,
+      "path": "citations/facts.md",
+      "reason": "doi",
+      "text": "- Source: Pesic et al., Adv. Funct. Mater. 2016, DOI 10.1002/adfm.201603182"
+    },
+    {
+      "line": 141,
+      "path": "citations/facts.md",
+      "reason": "doi",
+      "text": "- Source: CrossSim SAND2024-05171C, DOI 10.2172/2563881"
+    },
+    {
+      "line": 148,
+      "path": "citations/facts.md",
+      "reason": "doi",
+      "text": "- Source: Joksas et al., SoftwareX 2020, DOI 10.1016/j.softx.2020.100617"
+    },
+    {
+      "line": 154,
+      "path": "citations/facts.md",
+      "reason": "doi",
+      "text": "- Source: Soliman et al., Nature Comms 14, 6348 (2023), DOI 10.1038/s41467-023-42110-y"
+    },
+    {
+      "line": 162,
+      "path": "citations/facts.md",
+      "reason": "doi",
+      "text": "- [VERIFY] 90-state claim from Science Advances 2024, DOI 10.1126/sciadv.adp0174"
+    },
+    {
+      "line": 167,
+      "path": "citations/facts.md",
+      "reason": "doi",
+      "text": "- Source: J. Alloys Compounds 2025, DOI 10.1016/j.jallcom.2025.181869"
+    },
+    {
+      "line": 187,
+      "path": "citations/facts.md",
+      "reason": "doi",
+      "text": "- **97%** current-limited FeFET (IEEE TED 2022, DOI 10.1109/TED.2022.3216973)"
+    },
+    {
+      "line": 57,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [3] Nature Commun. 2025, doi:10.1038/s41467-025-61758-2 - Epitaxial superlattice stability"
+    },
+    {
+      "line": 58,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [4] ACS Nano 2024, doi:10.1021/acsnano.4c01992 - 4nm HZO, 10^10 endurance at 1.2V"
+    },
+    {
+      "line": 59,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [5] ACS Appl. Nano Mater. 2024, doi:10.1021/acsanm.4c04974 - 50\u00b5C/cm\u00b2 Pr, 10^10 endurance"
+    },
+    {
+      "line": 60,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [6] ACS Omega 2025, doi:10.1021/acsomega.4c10603 - Multilayer reduced wake-up"
+    },
+    {
+      "line": 61,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [7] APL Materials 2023, doi:10.1063/5.0148068 - HZO roadmap"
+    },
+    {
+      "line": 64,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "#   [8] Purdue Thesis 2024 - Sub-ns switching (925ps), 360ps record in sub-\u00b5m arrays"
+    },
+    {
+      "line": 65,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [9] Nature Commun. 2025, doi:10.1038/s41467-025-66807-4 - Domain switching holography"
+    },
+    {
+      "line": 68,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [10] Adv. Electron. Mater. 2024, doi:10.1002/aelm.202300879 - 75\u00b5C/cm\u00b2 Pr at 4K"
+    },
+    {
+      "line": 69,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [11] Adv. Electron. Mater. 2025, doi:10.1002/aelm.202400840 - Compact model to 4K"
+    },
+    {
+      "line": 73,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [13] Nature Electron. 2025, doi:10.1038/s41928-025-01477-0 - Analog matrix solving"
+    },
+    {
+      "line": 74,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [14] DAC 2024, doi:10.1145/3649329.3658472 - 160 GOPS/mm\u00b2, 25.5 TOPS/W"
+    },
+    {
+      "line": 77,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [15] Nature Commun. 2023, doi:10.1038/s41467-023-42110-y - MLC FeFET crossbar demo"
+    },
+    {
+      "line": 78,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [16] IEEE TED 2022, doi:10.1109/TED.2022.3216973 - 28nm current-limited FeFET crossbar, 97% MNIST with limiter vs 9.8% without"
+    },
+    {
+      "line": 82,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [18] Adv. Electron. Mater. 2024, doi:10.1002/aelm.202400603 - In2Se3 FWF synthesis"
+    },
+    {
+      "line": 85,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "#   [19] IEEE IRPS 2022 - 10^9 cycle endurance verified"
+    },
+    {
+      "line": 90,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [22] Song et al., Adv. Science 2024, doi:10.1002/advs.202308588 - 2D FeFET >7-bit (140 states)"
+    },
+    {
+      "line": 91,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [23] ACS Appl. Mater. Interfaces 2022, doi:10.1021/acsami.2c04441 - High-speed FTJ multilevel"
+    },
+    {
+      "line": 94,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [24] Nature Commun. 2025, doi:10.1038/s41467-025-62904-6 - AlScN decoupled Pr/Ec, 15V window"
+    },
+    {
+      "line": 95,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [25] APL Materials 2023, doi:10.1063/5.0148068 - AlScN 100-170 \u00b5C/cm\u00b2 Pr, 2-6 MV/cm Ec"
+    },
+    {
+      "line": 98,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [26] Nature Commun. 2017, doi:10.1038/ncomms14956 - In2Se3 intrinsic 2D ferroelectricity (0.11 e\u00c5 dipole)"
+    },
+    {
+      "line": 99,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [27] InfoMat 2022, doi:10.1002/inf2.12341 - In2Se3 for ferroelectric data storage"
+    },
+    {
+      "line": 100,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [28] AIP Appl. Phys. Rev. 2024, doi:10.1063/5.0190692 - In2Se3 phase transitions & devices"
+    },
+    {
+      "line": 101,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [39] Nature Commun. 2024, doi:10.1038/s41467-024-54841-7 - Stacking-selected polarization switching"
+    },
+    {
+      "line": 102,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [40] Nano Research 2020, doi:10.1007/s12274-020-2640-0 - Thickness-dependent Ec, CVD \u03b1-In2Se3"
+    },
+    {
+      "line": 103,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [41] Science Advances 2022, doi:10.1126/sciadv.abo0773 - Phase/polarization modulation TEM"
+    },
+    {
+      "line": 104,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [42] JAP 137, 124102 (2025), doi:10.1063/5.0236192 - AI-assisted phase field, PSO-fitted Landau (PAYWALLED)"
+    },
+    {
+      "line": 110,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [29] Hoffmann et al., J. Appl. Phys. 118, 072006 (2015). DOI: 10.1063/1.4927805"
+    },
+    {
+      "line": 111,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [30] Starschich et al., Appl. Phys. Lett. 108, 032903 (2016). DOI: 10.1063/1.4940370"
+    },
+    {
+      "line": 115,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [32] Siannas et al., Commun. Phys. 5, 178 (2022). DOI: 10.1038/s42005-022-00951-x"
+    },
+    {
+      "line": 116,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [33] Zhou et al., Sci. Adv. 8, eadd5953 (2022). DOI: 10.1126/sciadv.add5953"
+    },
+    {
+      "line": 117,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [34] Salahuddin & Datta, Nano Lett. 8, 405\u2013410 (2008). DOI: 10.1021/nl071804g"
+    },
+    {
+      "line": 122,
+      "path": "config/materials.yaml",
+      "reason": "doi",
+      "text": "#   [37] Tung et al., IEEE Trans. Electron Devices 69, 4761\u20134764 (2022). DOI: 10.1109/TED.2022.3181573"
+    },
+    {
+      "line": 145,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "pr_c_m2: 0.245              # Remanent polarization (C/m\u00b2) = 24.5 \u00b5C/cm\u00b2 midpoint of Park et al. 2015 range"
+    },
+    {
+      "line": 146,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "ps_c_m2: 0.30               # Saturation polarization (C/m\u00b2) = 30 \u00b5C/cm\u00b2"
+    },
+    {
+      "line": 149,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "ec_v_m: 1.2e8               # Coercive field (V/m) = 1.2 MV/cm"
+    },
+    {
+      "line": 157,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "thickness_m: 10.0e-9        # Film thickness = 10 nm"
+    },
+    {
+      "line": 158,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "area_m2: 100.0e-12          # Cell area = 100 nm\u00b2 (10nm x 10nm)"
+    },
+    {
+      "line": 161,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "tau_s: 1.0e-9               # Switching time constant = 1 ns"
+    },
+    {
+      "line": 167,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "# NOTE: 723K is the empirical tuned value used in Go presets for DefaultHZO Preisach"
+    },
+    {
+      "line": 168,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "# temperature scaling. Materlik 2015 LGD value (598K) is used in MaterlikHfO2() preset."
+    },
+    {
+      "line": 187,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "rho_viscosity: 0.05       # Damping/Viscosity (Ohm\u00b7m), tuned for ~1ns switching"
+    },
+    {
+      "line": 203,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "activation_field_v_m: 1.2e9  # 12 MV/cm (model default)"
+    },
+    {
+      "line": 204,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "tau_inf_s: 1.0e-10           # 100 ps attempt time (model default)"
+    },
+    {
+      "line": 223,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "pr_c_m2: 0.30               # 30 \u00b5C/cm\u00b2 (estimated from In2Se3 work)"
+    },
+    {
+      "line": 224,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "ps_c_m2: 0.35               # 35 \u00b5C/cm\u00b2 (estimated)"
+    },
+    {
+      "line": 227,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "ec_v_m: 1.0e8               # 1.0 MV/cm (estimated)"
+    },
+    {
+      "line": 235,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "thickness_m: 10.0e-9        # 10 nm"
+    },
+    {
+      "line": 236,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "area_m2: 2.025e-15          # 45nm pitch = 45nm x 45nm"
+    },
+    {
+      "line": 240,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "tau_s: 10.0e-9              # 10 ns (conference slide estimate, not 1ns)"
+    },
+    {
+      "line": 261,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "rho_viscosity: 0.05         # Damping/Viscosity (Ohm\u00b7m), tuned for ~1ns switching"
+    },
+    {
+      "line": 275,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "activation_field_v_m: 1.2e9  # 12 MV/cm (within 13\u201319 MV/cm HZO range)"
+    },
+    {
+      "line": 276,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "tau_inf_s: 1.0e-10           # 100 ps attempt time (HZO typical)"
+    },
+    {
+      "line": 294,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "pr_c_m2: 0.30  # Remanent polarization Pr in C/m\u00b2 (typ. HZO ~0.2\u20130.8 C/m\u00b2)."
+    },
+    {
+      "line": 296,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "ec_v_m: 1.0e8  # Coercive field Ec in V/m (typ. 0.8e8\u20136e8 V/m by material)."
+    },
+    {
+      "line": 303,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "tau_s: 1.0e-9               # TARGET: 1ns (demonstrated ~10ns)"
+    },
+    {
+      "line": 320,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "rho_viscosity: 0.05       # Damping/Viscosity (Ohm\u00b7m), tuned for ~1ns switching"
+    },
+    {
+      "line": 334,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "activation_field_v_m: 1.0e9  # 10 MV/cm target (lower barrier than demonstrated 12 MV/cm)"
+    },
+    {
+      "line": 335,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "tau_inf_s: 0.5e-10           # 50 ps target (faster than demonstrated 100 ps)"
+    },
+    {
+      "line": 353,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "# Enhanced polarization \u2014 IEEE 10787441 2024: 2Pr=43.32; revised from Cheema 2020 (50 \u00b5C/cm\u00b2)"
+    },
+    {
+      "line": 354,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "pr_c_m2: 0.22               # 22 \u00b5C/cm\u00b2 (IEEE 10787441 2024; PMC 12254504 2025)"
+    },
+    {
+      "line": 355,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "ps_c_m2: 0.27               # 27 \u00b5C/cm\u00b2"
+    },
+    {
+      "line": 358,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "ec_v_m: 0.85e8              # 0.85 MV/cm (Nature Commun. 2025)"
+    },
+    {
+      "line": 370,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "tau_s: 0.36e-9              # 360 ps RECORD (Purdue sub-\u00b5m arrays)"
+    },
+    {
+      "line": 391,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "rho_viscosity: 0.02         # Lower viscosity (faster switching: 360ps)"
+    },
+    {
+      "line": 405,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "activation_field_v_m: 1.0e9  # 10 MV/cm (superlattice lower barrier)"
+    },
+    {
+      "line": 406,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "tau_inf_s: 0.5e-10           # 50 ps attempt time (faster switching)"
+    },
+    {
+      "line": 416,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "description: \"HZO performance at 4K for quantum computing\"  # Short physical context and intended use-case."
+    },
+    {
+      "line": 425,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "pr_c_m2: 0.75               # 75 \u00b5C/cm\u00b2 at 4K (RECORD - improved from RT!)"
+    },
+    {
+      "line": 426,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "ps_c_m2: 0.80               # 80 \u00b5C/cm\u00b2"
+    },
+    {
+      "line": 428,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "# Field parameters at 4K [10][11]"
+    },
+    {
+      "line": 429,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "ec_v_m: 1.5e8               # Higher Ec at cryo (~1.5 MV/cm)"
+    },
+    {
+      "line": 442,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "tau_s: 1.0e-9               # ~1 ns maintained"
+    },
+    {
+      "line": 452,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "linearity_improvement: true # Better linearity below 100K"
+    },
+    {
+      "line": 461,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "# Cryo-specific LGD coefficients are not widely published; defaults match 10nm HZO [29][30]"
+    },
+    {
+      "line": 480,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "activation_field_v_m: 1.5e9  # 15 MV/cm (higher barrier at cryo)"
+    },
+    {
+      "line": 481,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "tau_inf_s: 2.0e-10           # 200 ps attempt time (slower at cryo)"
+    },
+    {
+      "line": 503,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "pr_c_m2: 0.20               # 20 \u00b5C/cm\u00b2"
+    },
+    {
+      "line": 504,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "ps_c_m2: 0.25               # 25 \u00b5C/cm\u00b2"
+    },
+    {
+      "line": 507,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "ec_v_m: 1.0e8               # 1.0 MV/cm"
+    },
+    {
+      "line": 515,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "thickness_m: 10.0e-9        # 10 nm"
+    },
+    {
+      "line": 519,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "tau_s: 10.0e-9              # 10 ns"
+    },
+    {
+      "line": 530,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "endurance_cycles: 1.0e8     # 10^8 cycles (2017 era)"
+    },
+    {
+      "line": 540,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "rho_viscosity: 0.05       # Damping/Viscosity (Ohm\u00b7m), tuned for ~1ns switching"
+    },
+    {
+      "line": 554,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "activation_field_v_m: 1.2e9  # 12 MV/cm (within 13\u201319 MV/cm HZO range)"
+    },
+    {
+      "line": 555,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "tau_inf_s: 1.0e-10           # 100 ps attempt time (HZO typical)"
+    },
+    {
+      "line": 573,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "pr_c_m2: 0.25               # 25 \u00b5C/cm\u00b2"
+    },
+    {
+      "line": 574,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "ps_c_m2: 0.30               # 30 \u00b5C/cm\u00b2"
+    },
+    {
+      "line": 577,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "ec_v_m: 1.2e8               # 1.2 MV/cm"
+    },
+    {
+      "line": 585,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "thickness_m: 4.5e-9         # 4.5 nm (tunnel barrier)"
+    },
+    {
+      "line": 589,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "tau_s: 20.0e-9              # 20 ns switching"
+    },
+    {
+      "line": 604,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "endurance_cycles: 1.0e7     # 10^7 cycles demonstrated"
+    },
+    {
+      "line": 614,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "rho_viscosity: 0.05       # Damping/Viscosity (Ohm\u00b7m), tuned for ~1ns switching"
+    },
+    {
+      "line": 628,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "activation_field_v_m: 1.0e9  # 10 MV/cm (lower barrier for FTJ)"
+    },
+    {
+      "line": 629,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "tau_inf_s: 2.0e-10           # 200 ps attempt time (FTJ tunneling)"
+    },
+    {
+      "line": 649,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "pr_c_m2: 1.20               # 120 \u00b5C/cm\u00b2 (range: 100-172 \u00b5C/cm\u00b2)"
+    },
+    {
+      "line": 650,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "ps_c_m2: 1.50               # 150 \u00b5C/cm\u00b2"
+    },
+    {
+      "line": 653,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "ec_v_m: 5.0e8               # 5.0 MV/cm (range: 2-6 MV/cm)"
+    },
+    {
+      "line": 662,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "thickness_m: 20.0e-9        # 20 nm typical"
+    },
+    {
+      "line": 666,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "tau_s: 10.0e-9              # ~10 ns"
+    },
+    {
+      "line": 678,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "endurance_cycles: 1.0e9     # 10^9 cycles"
+    },
+    {
+      "line": 687,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "# - High Ec (5 MV/cm) requires high voltages, limits analog granularity"
+    },
+    {
+      "line": 709,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "# Calculated dipole: 0.11 e\u00c5/unit cell \u2192 ~3-5 \u00b5C/cm\u00b2"
+    },
+    {
+      "line": 710,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "pr_c_m2: 0.04               # Remanent polarization = 4 \u00b5C/cm\u00b2 (typical for 2D FE)"
+    },
+    {
+      "line": 711,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "ps_c_m2: 0.06               # Saturation polarization = 6 \u00b5C/cm\u00b2"
+    },
+    {
+      "line": 714,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "pr_inplane_c_m2: 0.02       # In-plane Pr ~2 \u00b5C/cm\u00b2"
+    },
+    {
+      "line": 720,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "ec_v_m: 3.0e8               # Coercive field = 3.0 MV/cm (thin film, >3 MV/cm reported)"
+    },
+    {
+      "line": 721,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "ec_thin_v_m: 5.0e8          # Ec for ultrathin (<5nm): ~5 MV/cm"
+    },
+    {
+      "line": 722,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "ec_thick_v_m: 1.0e8         # Ec for thicker films (>20nm): ~1 MV/cm"
+    },
+    {
+      "line": 736,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "# Each QL is ~1nm thick (Se-In-Se-In-Se)"
+    },
+    {
+      "line": 738,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "thickness_m: 10.0e-9        # 10 nm (~10 quintuple layers)"
+    },
+    {
+      "line": 740,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "quintuple_layer_nm: 1.0     # Each QL ~1 nm"
+    },
+    {
+      "line": 747,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "tau_s: 10.0e-9              # Switching time ~10 ns (conference demo estimate)"
+    },
+    {
+      "line": 756,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "curie_temp_k: 700           # Tc ~700K (verified, room-temp stable) [26][28]"
+    },
+    {
+      "line": 764,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "endurance_cycles: 1.0e8     # Estimated ~10^8 cycles (research stage)"
+    },
+    {
+      "line": 830,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "# DERIVED: \u03b2 \u2248 4\u00b7Pr\u00b3/(27\u00b7Ec\u00b2\u00b7\u03b5\u2080) with Pr=0.04 C/m\u00b2, Ec=3\u00d710\u2078 V/m"
+    },
+    {
+      "line": 838,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "rho_viscosity: 0.05       # DERIVED [44]: Damping (Ohm\u00b7m), \u22640.1 for 10ns switching"
+    },
+    {
+      "line": 840,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "# DERIVED: estimated from Tc=700K, no Curie-Weiss analysis published"
+    },
+    {
+      "line": 860,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "# Ea \u2248 66 meV \u2192 Ea/kT at 300K \u2248 2.5; Ea_field \u2248 Ea/(q\u00b7d) \u2248 6.6\u00d710\u2077 V/m"
+    },
+    {
+      "line": 863,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "tau_inf_s: 1.0e-12           # ESTIMATED: Attempt period (~1 ps)"
+    },
+    {
+      "line": 872,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "# - High Tc (700K) - room temperature stable"
+    },
+    {
+      "line": 876,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "# - Lower Pr than HZO (~4 \u00b5C/cm\u00b2 vs 25-50 \u00b5C/cm\u00b2)"
+    },
+    {
+      "line": 877,
+      "path": "config/materials.yaml",
+      "reason": "numeric-unit",
+      "text": "# - High Ec for thin films (>3 MV/cm)"
+    }
+  ],
+  "findings_count": 150,
+  "scanned_files": 3
+}

@@ -45,6 +45,11 @@ Claim audit:
 - Files listed in each record's `used_in` field must contain `[claim: id]`.
 - Run `make research-audit` before promoting literature-backed statements into
   facts, config defaults, or trust documentation.
+- `fecim-lattice-tools research claim-scan docs/ README.md` writes a
+  report-first list of likely uncited scientific claims to
+  `reports/claim-scan-latest.json`.
+- Add `--fail-on-findings` only for narrow paths that have already been cleaned
+  up; broad legacy scans are expected to produce review queues first.
 
 Ignored rebuildable caches:
 

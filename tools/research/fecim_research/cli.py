@@ -16,6 +16,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("audit", help="validate reviewed claim registry and claim references")
 
+    claim_scan = sub.add_parser("claim-scan", help="report likely uncited scientific claims")
+    claim_scan.add_argument("paths", nargs="*", help="files or directories to scan")
+    claim_scan.add_argument("--fail-on-findings", action="store_true", help="return nonzero when findings exist")
+
     ingest = sub.add_parser("ingest", help="discover, parse, and chunk local papers")
     ingest.add_argument("paths", nargs="*", help="optional extra PDF roots")
 
@@ -44,6 +48,10 @@ def main(argv: list[str] | None = None) -> int:
         from .claims import run_audit
 
         return run_audit(root=root)
+    if args.command == "claim-scan":
+        from .claimscan import run_claim_scan
+
+        return run_claim_scan(root=root, paths=args.paths, fail_on_findings=args.fail_on_findings)
     if args.command == "ingest":
         from .ingest import run_ingest
 

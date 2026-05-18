@@ -14,6 +14,7 @@ class CLITest(unittest.TestCase):
         text = out.getvalue()
         self.assertIn("acquire", text)
         self.assertIn("audit", text)
+        self.assertIn("claim-scan", text)
         self.assertIn("ingest", text)
         self.assertIn("index", text)
         self.assertIn("search", text)
@@ -33,12 +34,14 @@ class CLITest(unittest.TestCase):
     def test_core_commands_import_without_optional_dependencies(self):
         import fecim_research.acquisition
         import fecim_research.claims
+        import fecim_research.claimscan
         import fecim_research.ingest
         import fecim_research.indexing
         import fecim_research.searching
 
         self.assertTrue(hasattr(fecim_research.acquisition, "run_acquire"))
         self.assertTrue(hasattr(fecim_research.claims, "run_audit"))
+        self.assertTrue(hasattr(fecim_research.claimscan, "run_claim_scan"))
         self.assertTrue(hasattr(fecim_research.ingest, "run_ingest"))
         self.assertTrue(hasattr(fecim_research.indexing, "run_index"))
         self.assertTrue(hasattr(fecim_research.searching, "run_search"))
