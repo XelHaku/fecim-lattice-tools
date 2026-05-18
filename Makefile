@@ -1,6 +1,6 @@
 export PATH := $(PATH):/usr/local/go/bin
 
-.PHONY: build test test-race test-short test-gogpu-ui test-legacy-fyne bench vet fmt lint coverage clean ci qa-a0 help test-hys test-xbar test-mnist test-circuits test-shared install-skills test-skills
+.PHONY: build test test-race test-short test-gogpu-ui test-legacy-fyne bench vet fmt lint coverage clean ci qa-a0 help test-hys test-xbar test-mnist test-circuits test-shared test-research install-skills test-skills
 # Help target - self-documenting Makefile
 help:
 	@echo "FeCIM Lattice Tools Makefile"
@@ -40,6 +40,10 @@ test-mnist:
 
 test-circuits:
 	$(GO) test ./module4-circuits/...
+
+test-research:
+	PYTHONPATH=tools/research python3 -m unittest discover -s tools/research/tests -v
+	CGO_ENABLED=0 $(GO) test ./cmd/fecim-lattice-tools -run 'TestResearch|TestDispatchResearch|TestRootUsageListsResearch' -count=1
 
 qa-a0:
 	./scripts/qa_a0.sh
