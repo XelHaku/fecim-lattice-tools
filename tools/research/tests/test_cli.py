@@ -21,6 +21,15 @@ class CLITest(unittest.TestCase):
             main(["unknown"])
         self.assertNotEqual(ctx.exception.code, 0)
 
+    def test_core_commands_import_without_optional_dependencies(self):
+        import fecim_research.ingest
+        import fecim_research.indexing
+        import fecim_research.searching
+
+        self.assertTrue(hasattr(fecim_research.ingest, "run_ingest"))
+        self.assertTrue(hasattr(fecim_research.indexing, "run_index"))
+        self.assertTrue(hasattr(fecim_research.searching, "run_search"))
+
 
 if __name__ == "__main__":
     unittest.main()
