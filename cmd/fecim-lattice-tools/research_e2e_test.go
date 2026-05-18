@@ -1,6 +1,9 @@
 package main
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func TestResearchCommandsForwardExpectedArguments(t *testing.T) {
 	var calls [][]string
@@ -21,10 +24,12 @@ func TestResearchCommandsForwardExpectedArguments(t *testing.T) {
 			t.Fatalf("dispatch %v: %v", cmd, err)
 		}
 	}
-	if len(calls) != 3 {
-		t.Fatalf("calls=%d want 3", len(calls))
+	want := [][]string{
+		{"ingest"},
+		{"index"},
+		{"search", "HZO coercive field Preisach"},
 	}
-	if calls[0][0] != "ingest" || calls[1][0] != "index" || calls[2][0] != "search" {
-		t.Fatalf("unexpected forwarded calls: %#v", calls)
+	if !reflect.DeepEqual(calls, want) {
+		t.Fatalf("forwarded calls = %#v, want %#v", calls, want)
 	}
 }
