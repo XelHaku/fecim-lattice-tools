@@ -114,6 +114,8 @@ def _write_stub(root: Path, row: dict[str, object]) -> None:
     path = root / str(row["stub_path"])
     path.parent.mkdir(parents=True, exist_ok=True)
     title = _title_from_key(key)
+    pdf_path = str(row["path"])
+    canonical_pdf = "not stored" if _is_ignored_pdf_inbox_path(pdf_path) else pdf_path
     text = (
         f"# {title}\n\n"
         f"**Key:** `{key}`\n"
@@ -124,7 +126,8 @@ def _write_stub(root: Path, row: dict[str, object]) -> None:
         "**Authors:** `needs-review`\n"
         "**Tags:** `#needs-review`\n"
         "**Status:** `needs-review`\n"
-        f"**PDF:** `{row['path']}`\n"
+        f"**PDF:** `{canonical_pdf}`\n"
+        f"**Local PDF:** `{pdf_path}`\n"
         f"**SHA256:** `{row['sha256']}`\n"
         f"**Size:** `{row['size']}`\n"
         "\n---\n\n"
@@ -157,6 +160,10 @@ def _rel(root: Path, path: Path) -> str:
 
 def _path_text(path: Path) -> str:
     return path.as_posix()
+
+
+def _is_ignored_pdf_inbox_path(path: str) -> bool:
+    return path == "research/papers" or path.startswith("research/papers/")
 
 
 def _refresh_missing_report(root: Path) -> None:

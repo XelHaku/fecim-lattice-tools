@@ -11,6 +11,9 @@ Local-only input:
 
 - `papers/` stores source PDFs before parsing. PDF files are ignored so the
   repository does not accidentally commit paper artifacts.
+- Citation records must not use `research/papers/...` in their canonical
+  `**PDF:**` field. Use `not stored` for inbox PDFs, and promote only
+  licensing-reviewed PDFs into tracked paper paths.
 - `fecim-lattice-tools research rebuild` runs local ingestion, missing-paper
   inventory, index, claim-audit, and provenance-graph stages as the
   one-command corpus refresh.
@@ -30,6 +33,8 @@ Local-only input:
   of local PDFs that still need canonical paper records.
 - Add `--write-stubs` to create `needs-review` records under
   `citations/papers/` for unmatched, non-duplicate PDFs.
+- Stubs generated from ignored inbox PDFs keep `**PDF:**` as `not stored` and
+  record the local inbox path separately.
 - Registration refreshes `reports/missing-papers-latest.json` so new stubs and
   matched local PDFs are reflected in the acquisition queue immediately.
 

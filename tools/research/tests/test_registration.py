@@ -46,7 +46,9 @@ class RegistrationTest(unittest.TestCase):
             text = stub.read_text(encoding="utf-8")
             self.assertIn("**Key:** `new_hzo_device`", text)
             self.assertIn("**Status:** `needs-review`", text)
-            self.assertIn("**PDF:** `research/papers/new_hzo_device.pdf`", text)
+            self.assertIn("**PDF:** `not stored`", text)
+            self.assertIn("**Local PDF:** `research/papers/new_hzo_device.pdf`", text)
+            self.assertIn("**SHA256:**", text)
             self.assertIn("Confirm bibliographic metadata", text)
 
             records = load_citation_records(root)

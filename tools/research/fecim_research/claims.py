@@ -196,6 +196,12 @@ def _audit_citation_pdf_paths(root: Path, errors: list[str]) -> None:
         if not _is_repo_relative_path(pdf_path):
             errors.append(f"{rel_path} PDF path must be repo-relative")
             continue
+        if _is_ignored_pdf_inbox_path(pdf_path):
+            errors.append(
+                f"{rel_path} PDF path {pdf_path} points at ignored local inbox; "
+                "use not stored until promoted"
+            )
+            continue
         if not (root / pdf_path).is_file():
             errors.append(f"{rel_path} PDF path {pdf_path} does not exist")
 
@@ -205,6 +211,10 @@ def _citation_pdf_path(path: Path) -> str:
     if match is None:
         return ""
     return match.group(1).strip()
+
+
+def _is_ignored_pdf_inbox_path(path: str) -> bool:
+    return path == "research/papers" or path.startswith("research/papers/")
 
 
 def _audit_source_ledgers(root: Path, errors: list[str]) -> None:

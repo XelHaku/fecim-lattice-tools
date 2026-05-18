@@ -126,13 +126,29 @@ class ClaimsTest(unittest.TestCase):
     def test_audit_fails_when_citation_record_pdf_path_is_missing(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
-            self._write_paper(root, "park2015_advmat_hzo", pdf="research/papers/missing.pdf")
+            self._write_paper(root, "park2015_advmat_hzo", pdf="docs/4-research/papers/missing.pdf")
 
             report = audit_claim_registry(root)
 
             self.assertFalse(report.ok)
             self.assertIn(
-                "citations/papers/park2015_advmat_hzo.md PDF path research/papers/missing.pdf does not exist",
+                "citations/papers/park2015_advmat_hzo.md PDF path docs/4-research/papers/missing.pdf does not exist",
+                "\n".join(report.errors),
+            )
+
+    def test_audit_fails_when_citation_pdf_points_at_ignored_research_inbox(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_path = root / "research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(b"%PDF-1.7\n")
+            self._write_paper(root, "park2015_advmat_hzo", pdf="research/papers/park2015_advmat_hzo.pdf")
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "citations/papers/park2015_advmat_hzo.md PDF path research/papers/park2015_advmat_hzo.pdf points at ignored local inbox; use not stored until promoted",
                 "\n".join(report.errors),
             )
 
@@ -160,7 +176,7 @@ class ClaimsTest(unittest.TestCase):
             pdf_path = root / "research" / "papers" / "park2015_advmat_hzo.pdf"
             pdf_path.parent.mkdir(parents=True)
             pdf_path.write_bytes(pdf_bytes)
-            self._write_paper(root, "park2015_advmat_hzo", pdf="research/papers/park2015_advmat_hzo.pdf")
+            self._write_paper(root, "park2015_advmat_hzo")
             self._write_source_ledger(
                 root,
                 "park2015_advmat_hzo",
@@ -179,7 +195,7 @@ class ClaimsTest(unittest.TestCase):
             pdf_path = root / "research" / "papers" / "park2015_advmat_hzo.pdf"
             pdf_path.parent.mkdir(parents=True)
             pdf_path.write_bytes(b"%PDF-1.7\nsource ledger\n")
-            self._write_paper(root, "park2015_advmat_hzo", pdf="research/papers/park2015_advmat_hzo.pdf")
+            self._write_paper(root, "park2015_advmat_hzo")
             self._write_source_ledger(
                 root,
                 "park2015_advmat_hzo",
