@@ -46,6 +46,13 @@ class CLITest(unittest.TestCase):
         self.assertEqual(ctx.exception.code, 0)
         self.assertIn("--skip-index", out.getvalue())
 
+    def test_search_help_lists_local_option(self):
+        out = io.StringIO()
+        with self.assertRaises(SystemExit) as ctx, redirect_stdout(out):
+            main(["search", "--help"])
+        self.assertEqual(ctx.exception.code, 0)
+        self.assertIn("--local", out.getvalue())
+
     def test_register_pdfs_help_lists_write_stubs_option(self):
         out = io.StringIO()
         with self.assertRaises(SystemExit) as ctx, redirect_stdout(out):

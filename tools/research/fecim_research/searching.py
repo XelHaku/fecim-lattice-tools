@@ -1,6 +1,7 @@
 import json
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -81,6 +82,24 @@ def _snippet(text: str, limit: int = 240) -> str:
     return compact[: max(0, limit - 3)].rstrip() + "..."
 
 
+def _tokens(text: str) -> list[str]:
+    return re.findall(r"[a-z0-9]+", text.lower())
+
+
+def _local_score(query_terms: list[str], record: dict[str, object]) -> float:
+    text = " ".join(
+        str(record.get(key, ""))
+        for key in ["paper_key", "section", "contents"]
+    )
+    counts = Counter(_tokens(text))
+    unique_terms = sorted(set(query_terms))
+    hits = sum(counts[term] for term in unique_terms)
+    if hits == 0:
+        return 0.0
+    coverage = sum(1 for term in unique_terms if counts[term] > 0)
+    return float((coverage * 10) + hits)
+
+
 def _row(rank: int, score: float, docid: str, record: dict[str, Any]) -> dict[str, object]:
     contents = str(record.get("contents", ""))
     return {
@@ -104,7 +123,47 @@ def _row(rank: int, score: float, docid: str, record: dict[str, Any]) -> dict[st
     }
 
 
-def run_search(root: Path, query: str, limit: int, json_output: bool) -> int:
+def search_chunks_locally(root: Path, query: str, limit: int) -> list[dict[str, object]]:
+    query_terms = _tokens(query)
+    if not query_terms:
+        return []
+
+    lookup = load_chunk_lookup(root)
+    scored: list[tuple[float, str, dict[str, Any]]] = []
+    for docid in sorted(lookup):
+        record = lookup[docid]
+        score = _local_score(query_terms, record)
+        if score > 0:
+            scored.append((score, docid, record))
+
+    scored.sort(key=lambda item: (-item[0], str(item[2].get("paper_key", "")), item[1]))
+    return [_row(rank, score, docid, record) for rank, (score, docid, record) in enumerate(scored[:limit], start=1)]
+
+
+def write_search_report(root: Path, query: str, backend: str, rows: list[dict[str, object]]) -> Path:
+    report_path = root / "research" / "reports" / "search-latest.json"
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report = {
+        "ok": True,
+        "backend": backend,
+        "query": query,
+        "result_count": len(rows),
+        "results": rows,
+    }
+    report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return report_path
+
+
+def run_search(root: Path, query: str, limit: int, json_output: bool, local: bool = False) -> int:
+    if local:
+        rows = search_chunks_locally(root, query, limit)
+        write_search_report(root, query, "local-jsonl", rows)
+        if json_output:
+            print(json.dumps(rows, indent=2, sort_keys=True))
+        else:
+            sys.stdout.write(render_text_results(rows))
+        return 0
+
     index_dir = root / "research" / "index" / "pyserini"
     if not index_dir.is_dir():
         print("missing BM25 index; run `fecim research index` first", file=sys.stderr)
@@ -128,6 +187,7 @@ def run_search(root: Path, query: str, limit: int, json_output: bool) -> int:
         record = lookup.get(docid, {"id": docid, "contents": ""})
         rows.append(_row(rank, hit.score, docid, record))
 
+    write_search_report(root, query, "pyserini", rows)
     if json_output:
         print(json.dumps(rows, indent=2, sort_keys=True))
     else:

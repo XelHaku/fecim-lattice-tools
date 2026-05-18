@@ -54,7 +54,7 @@ Tracked ledger outputs:
 - `graphs/`
 - `manifests/`
 - `reports/` includes latest acquisition, rebuild, ingestion, cache,
-  claim-audit, claim-scan, cite, and graph JSON reports
+  claim-audit, claim-scan, cite, graph, and search JSON reports
 - `index/` stores rebuildable cache manifests and lightweight placeholders;
   bulky cache contents are ignored.
 
@@ -81,6 +81,15 @@ Graph export:
 - The graph is an export over committed claim/source files, not an authority.
   Rebuild it after changing `citations/papers`, `citations/claims`, or
   `[claim: id]` references.
+
+Search:
+
+- `fecim-lattice-tools research search --local "HZO coercive field"` searches
+  tracked JSONL chunks without Pyserini, Java, or rebuildable index caches.
+- `fecim-lattice-tools research search "HZO coercive field"` uses the Pyserini
+  BM25 cache built by `fecim-lattice-tools research index`.
+- Search writes `reports/search-latest.json` so query output is reviewable in
+  git when a search result becomes part of research work.
 
 Ignored rebuildable caches:
 

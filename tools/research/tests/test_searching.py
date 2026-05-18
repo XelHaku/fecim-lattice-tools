@@ -1,11 +1,11 @@
 import json
 import tempfile
 import unittest
-from contextlib import redirect_stderr
+from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 from pathlib import Path
 
-from fecim_research.searching import _row, load_chunk_lookup, render_text_results, run_search
+from fecim_research.searching import _row, load_chunk_lookup, render_text_results, run_search, search_chunks_locally
 
 
 class SearchingTest(unittest.TestCase):
@@ -70,6 +70,71 @@ class SearchingTest(unittest.TestCase):
 
             self.assertEqual(code, 1)
             self.assertIn("BM25 index is stale; rerun `fecim research index`", err.getvalue())
+
+    def test_search_chunks_locally_ranks_jsonl_chunks_without_index(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            chunk = root / "research" / "chunks" / "papers.jsonl"
+            chunk.parent.mkdir(parents=True)
+            records = [
+                {
+                    "id": "materlik::sec-01::chunk-001",
+                    "paper_key": "materlik",
+                    "section": "Background",
+                    "contents": "HZO ferroelectric phase discussion.",
+                },
+                {
+                    "id": "park::sec-02::chunk-001",
+                    "paper_key": "park",
+                    "section": "Results",
+                    "contents": "HZO coercive field and Preisach switching evidence.",
+                },
+                {
+                    "id": "control::sec-01::chunk-001",
+                    "paper_key": "control",
+                    "section": "Methods",
+                    "contents": "Silicon capacitor baseline.",
+                },
+            ]
+            chunk.write_text("\n".join(json.dumps(record) for record in records) + "\n", encoding="utf-8")
+
+            rows = search_chunks_locally(root, "HZO coercive Preisach", 5)
+
+            self.assertEqual([row["docid"] for row in rows], ["park::sec-02::chunk-001", "materlik::sec-01::chunk-001"])
+            self.assertGreater(rows[0]["score"], rows[1]["score"])
+
+    def test_run_search_local_writes_git_trackable_report_without_pyserini_index(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            chunk = root / "research" / "chunks" / "park.jsonl"
+            chunk.parent.mkdir(parents=True)
+            chunk.write_text(
+                json.dumps(
+                    {
+                        "id": "park::sec-02::chunk-001",
+                        "paper_key": "park",
+                        "section": "Results",
+                        "contents": "HZO coercive field and Preisach switching evidence.",
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            out = StringIO()
+            with redirect_stdout(out):
+                code = run_search(root, "HZO coercive", 3, json_output=True, local=True)
+
+            self.assertEqual(code, 0)
+            printed = json.loads(out.getvalue())
+            self.assertEqual(printed[0]["docid"], "park::sec-02::chunk-001")
+            report_path = root / "research" / "reports" / "search-latest.json"
+            self.assertTrue(report_path.exists())
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            self.assertTrue(report["ok"])
+            self.assertEqual(report["backend"], "local-jsonl")
+            self.assertEqual(report["query"], "HZO coercive")
+            self.assertEqual(report["results"][0]["docid"], "park::sec-02::chunk-001")
 
     def test_row_copies_source_and_span_fields(self):
         record = {

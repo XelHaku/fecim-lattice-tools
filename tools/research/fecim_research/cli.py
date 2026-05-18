@@ -53,6 +53,7 @@ def build_parser() -> argparse.ArgumentParser:
     search = sub.add_parser("search", help="search evidence chunks")
     search.add_argument("query", help="search query")
     search.add_argument("--json", action="store_true", help="emit JSON results")
+    search.add_argument("--local", action="store_true", help="search tracked JSONL chunks without a rebuildable BM25 cache")
     search.add_argument("--limit", type=int, default=10)
 
     return parser
@@ -116,6 +117,6 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "search":
         from .searching import run_search
 
-        return run_search(root=root, query=args.query, limit=args.limit, json_output=args.json)
+        return run_search(root=root, query=args.query, limit=args.limit, json_output=args.json, local=args.local)
     parser.error(f"unknown command {args.command}")
     return 2
