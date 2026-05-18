@@ -121,9 +121,35 @@
         "internal/gogpuapp/circuits_view.go"
       ],
       "evidence": [
-        "go test ./shared/viewmodel/circuits ./internal/gogpuapp -run Circuits"
+        "go test ./shared/viewmodel/circuits -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run Circuits -count=1"
       ],
-      "notes": "Gogpu exposes circuit metrics and sections. The full interactive unified canvas, ISPP controls, stress/PVT investigations, overlays, logs, and reference-spec workflows need parity decisions."
+      "notes": "Gogpu exposes circuit metrics, sections, and the unified control contract. The full interactive unified canvas, circuit path overlays, half-select/stress/PVT investigations, logs, reference-spec workflows, and detailed visual interactions need parity decisions."
+    },
+    {
+      "module": "circuits",
+      "feature": "Unified controls action contract for array size, operation mode, architecture, selected cell, write target, DAC/ADC/TIA, coupling tier, and ISPP engine",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/tab_unified.go",
+        "module4-circuits/pkg/gui/tab_unified_actions.go",
+        "module4-circuits/pkg/gui/device_state.go",
+        "module4-circuits/pkg/gui/device_state_config.go",
+        "module4-circuits/pkg/gui/device_state_dac.go",
+        "module4-circuits/pkg/gui/device_state_ispp.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/state.go",
+        "shared/viewmodel/circuits/viewmodel.go",
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_view.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'TestSnapshotContainsUnifiedCircuitControls|TestApplyActionUpdatesUnifiedCircuitControls' -count=1",
+        "go test ./shared/viewmodel/circuits -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run Circuits -count=1"
+      ],
+      "notes": "This ports the shared gogpu/viewmodel control vocabulary and state transitions. It does not claim parity for the animated circuit canvas, overlays, logs, or deep investigation panels tracked by the broader circuits gap entry."
     },
     {
       "module": "comparison",
