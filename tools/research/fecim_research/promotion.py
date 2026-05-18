@@ -8,6 +8,7 @@ import re
 import shutil
 
 from .citations import load_citation_records
+from .yamlio import dumps_yaml
 
 
 @dataclass(frozen=True)
@@ -19,10 +20,26 @@ class PromotionResult:
     destination_path: str = ""
     sha256: str = ""
     size: int = 0
+    license: str = ""
+    license_url: str = ""
+    review_note: str = ""
+    promotion_ledger_path: str = ""
     message: str = ""
 
 
-def run_promote_pdf(root: Path, key: str, destination: str, source: str) -> int:
+def run_promote_pdf(
+    root: Path,
+    key: str,
+    destination: str,
+    source: str,
+    license_name: str = "",
+    license_url: str = "",
+    review_note: str = "",
+) -> int:
+    license_name = license_name.strip()
+    license_url = license_url.strip()
+    review_note = review_note.strip()
+
     records = load_citation_records(root)
     record = records.get(key)
     if record is None:
@@ -41,6 +58,23 @@ def run_promote_pdf(root: Path, key: str, destination: str, source: str) -> int:
             source_path=source_path,
             destination_path=destination,
             message=validation_error,
+        )
+        _write_report(root, result)
+        print(f"pdf promotion failed: {result.message}")
+        return 1
+
+    metadata_error = _validate_review_metadata(license_name, license_url, review_note)
+    if metadata_error:
+        result = PromotionResult(
+            key,
+            "failed",
+            citation_path=_rel(root, record.path),
+            source_path=source_path,
+            destination_path=destination,
+            license=license_name,
+            license_url=license_url,
+            review_note=review_note,
+            message=metadata_error,
         )
         _write_report(root, result)
         print(f"pdf promotion failed: {result.message}")
@@ -72,6 +106,9 @@ def run_promote_pdf(root: Path, key: str, destination: str, source: str) -> int:
             destination_path=destination,
             sha256=digest,
             size=size,
+            license=license_name,
+            license_url=license_url,
+            review_note=review_note,
             message=f"destination PDF already exists with different content: {destination}",
         )
         _write_report(root, result)
@@ -83,6 +120,7 @@ def run_promote_pdf(root: Path, key: str, destination: str, source: str) -> int:
         shutil.copy2(source_file, destination_file)
     _update_citation(record.path, destination, digest, size)
 
+    promotion_ledger_path = f"research/sources/{key}.promotion.yaml"
     result = PromotionResult(
         key,
         "promoted",
@@ -91,8 +129,13 @@ def run_promote_pdf(root: Path, key: str, destination: str, source: str) -> int:
         destination_path=destination,
         sha256=digest,
         size=size,
+        license=license_name,
+        license_url=license_url,
+        review_note=review_note,
+        promotion_ledger_path=promotion_ledger_path,
         message="promoted reviewed PDF to tracked canonical path",
     )
+    _write_promotion_ledger(root, result)
     _write_report(root, result)
     _refresh_missing_report(root)
     print(f"pdf promotion complete: paper_key={key} destination={destination}")
@@ -114,6 +157,14 @@ def _validate_paths(source: str, destination: str) -> str:
         return "destination must be a tracked canonical path, not ignored research/papers"
     if not _is_tracked_pdf_collection(destination):
         return "destination must be under a tracked canonical PDF collection"
+    return ""
+
+
+def _validate_review_metadata(license_name: str, license_url: str, review_note: str) -> str:
+    if not license_name or not license_url or not review_note:
+        return "license, license_url, and review_note are required before promotion"
+    if not license_url.startswith(("http://", "https://")):
+        return "license_url must be an http or https URL"
     return ""
 
 
@@ -153,6 +204,12 @@ def _write_report(root: Path, result: PromotionResult) -> None:
     path = root / "research" / "reports" / "pdf-promotion-latest.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(asdict(result), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _write_promotion_ledger(root: Path, result: PromotionResult) -> None:
+    path = root / result.promotion_ledger_path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(dumps_yaml(asdict(result)), encoding="utf-8")
 
 
 def _refresh_missing_report(root: Path) -> None:

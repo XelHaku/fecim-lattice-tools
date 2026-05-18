@@ -64,12 +64,16 @@ class CLITest(unittest.TestCase):
         self.assertEqual(ctx.exception.code, 0)
         self.assertIn("--write-stubs", out.getvalue())
 
-    def test_promote_pdf_help_lists_destination_option(self):
+    def test_promote_pdf_help_lists_review_metadata_options(self):
         out = io.StringIO()
         with self.assertRaises(SystemExit) as ctx, redirect_stdout(out):
             main(["promote-pdf", "--help"])
         self.assertEqual(ctx.exception.code, 0)
-        self.assertIn("--to", out.getvalue())
+        help_text = out.getvalue()
+        self.assertIn("--to", help_text)
+        self.assertIn("--license", help_text)
+        self.assertIn("--license-url", help_text)
+        self.assertIn("--review-note", help_text)
 
     def test_unknown_command_fails(self):
         with self.assertRaises(SystemExit) as ctx:

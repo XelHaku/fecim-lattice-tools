@@ -40,10 +40,11 @@ Local-only input:
   `citations/papers/` for unmatched, non-duplicate PDFs.
 - Stubs generated from ignored inbox PDFs keep `**PDF:**` as `not stored` and
   record the local inbox path separately.
-- `fecim-lattice-tools research promote-pdf KEY --to docs/4-research/papers/.../KEY.pdf`
+- `fecim-lattice-tools research promote-pdf KEY --to docs/4-research/papers/.../KEY.pdf --license LICENSE --license-url URL --review-note NOTE`
   copies a reviewed inbox PDF into a tracked canonical PDF path, updates the
   citation record's canonical `**PDF:**`, `**SHA256:**`, and `**Size:**`
-  fields, and writes `reports/pdf-promotion-latest.json`.
+  fields, and writes `reports/pdf-promotion-latest.json` plus
+  `sources/KEY.promotion.yaml` as git-trackable review evidence.
 - Registration refreshes `reports/missing-papers-latest.json` so new stubs and
   matched local PDFs are reflected in the acquisition queue immediately.
 
@@ -70,7 +71,9 @@ Paper acquisition:
   the paper is moved into a tracked PDF collection.
 - Promotion is explicit: downloads remain in ignored `papers/` until review,
   then `promote-pdf` copies them into `docs/4-research/papers/` or
-  `citations/pdfs/` and refreshes the missing-paper report.
+  `citations/pdfs/` and refreshes the missing-paper report. Promotion requires
+  license metadata and a human review note before any PDF is copied into a
+  tracked path.
 - PDF files remain local and ignored. The OpenAlex response, acquisition YAML,
   SHA-256 digest, and latest acquisition report are written under tracked
   ledger paths so changes can be reviewed in git.
@@ -100,6 +103,9 @@ Claim audit:
   citation path, PDF path, and PDF SHA-256 digest in sync with the repository.
 - Source ledgers must not point at ignored `research/papers/...` inbox files;
   promote reviewed PDFs before treating them as canonical evidence inputs.
+- PDF promotion ledgers in `sources/*.promotion.yaml` are review evidence:
+  audit checks their license metadata, citation path, destination PDF path, and
+  SHA-256 digest.
 - `fecim-lattice-tools research cite CLAIM_ID` writes a deterministic citation
   packet to `reports/cite-latest.json`, resolving sources from
   `citations/papers` first and tracked OpenAlex ledgers second.

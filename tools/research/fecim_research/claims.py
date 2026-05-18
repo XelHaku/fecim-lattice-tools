@@ -94,6 +94,7 @@ def audit_claim_registry(root: Path) -> ClaimAuditReport:
 
     _audit_citation_pdf_paths(root, errors)
     _audit_source_ledgers(root, errors)
+    _audit_promotion_ledgers(root, errors)
     _audit_evidence_ledgers(root, claims, errors)
 
     return ClaimAuditReport(
@@ -222,7 +223,7 @@ def _audit_source_ledgers(root: Path, errors: list[str]) -> None:
     if not sources_dir.exists():
         return
     for path in sorted(sources_dir.glob("*.yaml")):
-        if path.name.endswith(".acquisition.yaml"):
+        if path.name.endswith(".acquisition.yaml") or path.name.endswith(".promotion.yaml"):
             continue
         rel_path = _rel(root, path)
         data = _parse_mapping_yaml(path)
@@ -253,6 +254,67 @@ def _audit_source_ledgers(root: Path, errors: list[str]) -> None:
             actual_sha = _sha256_file(pdf_file)
             if expected_sha != actual_sha:
                 errors.append(f"{rel_path} pdf sha256 {expected_sha} does not match actual {actual_sha}")
+
+
+def _audit_promotion_ledgers(root: Path, errors: list[str]) -> None:
+    sources_dir = root / "research" / "sources"
+    if not sources_dir.exists():
+        return
+    for path in sorted(sources_dir.glob("*.promotion.yaml")):
+        rel_path = _rel(root, path)
+        data = _parse_mapping_yaml(path)
+        paper_key = str(data.get("paper_key", "")).strip()
+        expected_key = path.name.removesuffix(".promotion.yaml")
+        if not paper_key:
+            errors.append(f"{rel_path} missing paper_key")
+        elif paper_key != expected_key:
+            errors.append(f"{rel_path} paper_key {paper_key} must match filename {expected_key}")
+
+        if str(data.get("status", "")).strip() != "promoted":
+            errors.append(f"{rel_path} status must be promoted")
+
+        license_url = str(data.get("license_url", "")).strip()
+        for field in ["license", "license_url", "review_note", "source_path"]:
+            if not str(data.get(field, "")).strip():
+                errors.append(f"{rel_path} missing {field}")
+        if license_url and not license_url.startswith(("http://", "https://")):
+            errors.append(f"{rel_path} license_url must be an http or https URL")
+
+        citation_file = _audit_source_file_reference(root, rel_path, "citation_path", data.get("citation_path"), errors)
+        destination_path = str(data.get("destination_path", "")).strip()
+        if _is_ignored_pdf_inbox_path(destination_path):
+            errors.append(f"{rel_path} destination_path {destination_path} points at ignored local inbox")
+            destination_file = None
+        else:
+            destination_file = _audit_source_file_reference(
+                root,
+                rel_path,
+                "destination_path",
+                data.get("destination_path"),
+                errors,
+            )
+
+        if citation_file is not None and destination_path:
+            citation_pdf = _citation_pdf_path(citation_file)
+            if citation_pdf != destination_path:
+                errors.append(
+                    f"{rel_path} citation PDF path {citation_pdf or 'not stored'} "
+                    f"does not match destination_path {destination_path}"
+                )
+
+        source_path = str(data.get("source_path", "")).strip()
+        if source_path and not _is_repo_relative_path(source_path):
+            errors.append(f"{rel_path} source_path must be repo-relative")
+        elif source_path and not source_path.lower().endswith(".pdf"):
+            errors.append(f"{rel_path} source_path must end with .pdf")
+
+        expected_sha = str(data.get("sha256", "")).strip()
+        if not expected_sha:
+            errors.append(f"{rel_path} missing sha256")
+        elif destination_file is not None:
+            actual_sha = _sha256_file(destination_file)
+            if expected_sha != actual_sha:
+                errors.append(f"{rel_path} promotion sha256 {expected_sha} does not match actual {actual_sha}")
 
 
 def _audit_source_file_reference(

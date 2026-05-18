@@ -49,6 +49,9 @@ def build_parser() -> argparse.ArgumentParser:
     promote.add_argument("key", help="citation key from citations/papers")
     promote.add_argument("--to", required=True, help="tracked repo-relative PDF destination")
     promote.add_argument("--source", default="", help="optional repo-relative source PDF; defaults to Local PDF")
+    promote.add_argument("--license", dest="license_name", required=True, help="reviewed PDF redistribution license")
+    promote.add_argument("--license-url", required=True, help="source URL documenting the reviewed license")
+    promote.add_argument("--review-note", required=True, help="human review note for the PDF promotion")
 
     register = sub.add_parser("register-pdfs", help="report or create reviewed stubs for local PDFs")
     register.add_argument("paths", nargs="*", help="optional extra PDF roots")
@@ -118,7 +121,15 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "promote-pdf":
         from .promotion import run_promote_pdf
 
-        return run_promote_pdf(root=root, key=args.key, destination=args.to, source=args.source)
+        return run_promote_pdf(
+            root=root,
+            key=args.key,
+            destination=args.to,
+            source=args.source,
+            license_name=args.license_name,
+            license_url=args.license_url,
+            review_note=args.review_note,
+        )
     if args.command == "register-pdfs":
         from .registration import run_register_pdfs
 

@@ -214,6 +214,63 @@ class ClaimsTest(unittest.TestCase):
                 "\n".join(report.errors),
             )
 
+    def test_audit_validates_pdf_promotion_review_ledgers(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_bytes = b"%PDF-1.7\npromoted ledger\n"
+            digest = hashlib.sha256(pdf_bytes).hexdigest()
+            pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(pdf_bytes)
+            self._write_paper(root, "park2015_advmat_hzo", pdf="docs/4-research/papers/park2015_advmat_hzo.pdf")
+            ledger = root / "research" / "sources" / "park2015_advmat_hzo.promotion.yaml"
+            ledger.parent.mkdir(parents=True)
+            ledger.write_text(
+                "citation_path: citations/papers/park2015_advmat_hzo.md\n"
+                "destination_path: docs/4-research/papers/park2015_advmat_hzo.pdf\n"
+                "license: CC BY 4.0\n"
+                "license_url: https://example.org/license\n"
+                "paper_key: park2015_advmat_hzo\n"
+                "review_note: Publisher page shows redistribution-compatible license.\n"
+                f"sha256: {digest}\n"
+                "source_path: research/papers/park2015_advmat_hzo.pdf\n"
+                "status: promoted\n",
+                encoding="utf-8",
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertTrue(report.ok, report.errors)
+
+    def test_audit_fails_for_incomplete_or_stale_pdf_promotion_ledger(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(b"%PDF-1.7\npromoted ledger\n")
+            self._write_paper(root, "park2015_advmat_hzo", pdf="docs/4-research/papers/park2015_advmat_hzo.pdf")
+            ledger = root / "research" / "sources" / "park2015_advmat_hzo.promotion.yaml"
+            ledger.parent.mkdir(parents=True)
+            ledger.write_text(
+                "citation_path: citations/papers/park2015_advmat_hzo.md\n"
+                "destination_path: docs/4-research/papers/park2015_advmat_hzo.pdf\n"
+                "license: CC BY 4.0\n"
+                "license_url: ftp://example.org/license\n"
+                "paper_key: park2015_advmat_hzo\n"
+                "sha256: stale-digest\n"
+                "source_path: research/papers/park2015_advmat_hzo.pdf\n"
+                "status: promoted\n",
+                encoding="utf-8",
+            )
+
+            report = audit_claim_registry(root)
+
+            errors = "\n".join(report.errors)
+            self.assertFalse(report.ok)
+            self.assertIn("research/sources/park2015_advmat_hzo.promotion.yaml missing review_note", errors)
+            self.assertIn("license_url must be an http or https URL", errors)
+            self.assertIn("promotion sha256 stale-digest does not match actual", errors)
+
     def test_audit_fails_when_source_ledger_pdf_digest_does_not_match(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
