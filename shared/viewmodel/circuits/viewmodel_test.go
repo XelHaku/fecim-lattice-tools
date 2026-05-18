@@ -502,6 +502,83 @@ func TestReferenceTimingSummaryFollowsOperationMode(t *testing.T) {
 	}
 }
 
+func TestReferenceTimingWaveformMetadataFollowsLegacySignals(t *testing.T) {
+	m := New()
+	s := m.Snapshot()
+
+	wantMetrics := map[string]string{
+		"timing_waveform_signals": "READ: CLK, V_READ, I_SENSE, ADC_EN, DATA_OUT",
+		"timing_waveform_markers": "READ markers: 0ns, 19ns, 38ns, 57ns, 76ns",
+		"timing_waveform_phases":  "READ phases: DAC 10ns, Array 5ns, TIA 11ns, ADC 50ns",
+	}
+	for id, want := range wantMetrics {
+		if got := metricValue(s, id); got != want {
+			t.Errorf("%s metric = %q, want %q", id, got, want)
+		}
+	}
+
+	if len(m.state.TimingWaveforms) != 3 {
+		t.Fatalf("timing waveform count = %d, want 3", len(m.state.TimingWaveforms))
+	}
+	read := referenceTimingWaveformByOperation(t, m.state.TimingWaveforms, "READ")
+	if read.TotalNS != 76 {
+		t.Fatalf("read waveform total = %d, want 76", read.TotalNS)
+	}
+	if len(read.Signals) != 5 {
+		t.Fatalf("read signal count = %d, want 5", len(read.Signals))
+	}
+	if read.Signals[0].Name != "CLK" || len(read.Signals[0].HighWindows) != 5 {
+		t.Fatalf("read CLK signal = %+v, want 5 clock windows", read.Signals[0])
+	}
+	if read.Signals[1].Name != "V_READ" || read.Signals[1].HighWindows[0].StartPct != 10 || read.Signals[1].HighWindows[0].EndPct != 70 {
+		t.Fatalf("read V_READ windows = %+v, want 10-70%% high", read.Signals[1].HighWindows)
+	}
+	if len(read.TimeMarkers) != 5 || read.TimeMarkers[4].Label != "76ns" || read.TimeMarkers[4].Percent != 100 {
+		t.Fatalf("read time markers = %+v, want 76ns marker at 100%%", read.TimeMarkers)
+	}
+	if len(read.PhaseMarkers) != 4 || read.PhaseMarkers[3].Label != "ADC" || read.PhaseMarkers[3].DurationNS != 50 {
+		t.Fatalf("read phase markers = %+v, want ADC 50ns phase", read.PhaseMarkers)
+	}
+}
+
+func TestReferenceTimingWaveformMetadataFollowsOperationMode(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionSetOperationMode,
+		Payload: map[string]string{"mode": OperationWrite},
+	}); err != nil {
+		t.Fatalf("set write mode: %v", err)
+	}
+	write := m.Snapshot()
+	if got := metricValue(write, "timing_waveform_signals"); got != "WRITE: CLK, ROW_SEL, COL_SEL, DAC_EN, V_PROG, DONE" {
+		t.Fatalf("write waveform signals = %q, want write signals", got)
+	}
+	if got := metricValue(write, "timing_waveform_markers"); got != "WRITE markers: 0ns, 51ns, 102ns, 152ns, 203ns" {
+		t.Fatalf("write waveform markers = %q, want write time markers", got)
+	}
+	if got := metricValue(write, "timing_waveform_phases"); got != "WRITE phases: DAC 10ns, Pump 88ns, Pulse 100ns, Array 5ns" {
+		t.Fatalf("write waveform phases = %q, want write phases", got)
+	}
+
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionSetOperationMode,
+		Payload: map[string]string{"mode": OperationCompute},
+	}); err != nil {
+		t.Fatalf("set compute mode: %v", err)
+	}
+	compute := m.Snapshot()
+	if got := metricValue(compute, "timing_waveform_signals"); got != "COMPUTE: CLK, INPUT_VALID, DAC_ALL, ARRAY_SETTLE, ADC_ALL, OUTPUT_VALID" {
+		t.Fatalf("compute waveform signals = %q, want compute signals", got)
+	}
+	if got := metricValue(compute, "timing_waveform_phases"); got != "COMPUTE phases: DAC 10ns, Array 5ns, TIA+ADC 61ns" {
+		t.Fatalf("compute waveform phases = %q, want compute phases", got)
+	}
+	computeWaveform := referenceTimingWaveformByOperation(t, m.state.TimingWaveforms, "COMPUTE")
+	if computeWaveform.Signals[5].Name != "OUTPUT_VALID" || computeWaveform.Signals[5].HighWindows[0].StartPct != 90 {
+		t.Fatalf("compute OUTPUT_VALID signal = %+v, want high from 90%%", computeWaveform.Signals[5])
+	}
+}
+
 func TestReferenceTimingExportBuffersJSONArtifact(t *testing.T) {
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{
@@ -1006,6 +1083,17 @@ func hasAction(s viewmodel.ModuleSnapshot, id string) bool {
 		}
 	}
 	return false
+}
+
+func referenceTimingWaveformByOperation(t *testing.T, waveforms []ReferenceTimingWaveform, operation string) ReferenceTimingWaveform {
+	t.Helper()
+	for _, waveform := range waveforms {
+		if waveform.Operation == operation {
+			return waveform
+		}
+	}
+	t.Fatalf("missing %s timing waveform in %+v", operation, waveforms)
+	return ReferenceTimingWaveform{}
 }
 
 func contains(value, needle string) bool {

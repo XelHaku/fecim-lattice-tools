@@ -76,6 +76,28 @@ func TestCircuitsOverlayStateIncludesReferenceTimingSummaries(t *testing.T) {
 	}
 }
 
+func TestCircuitsOverlayStateIncludesReferenceTimingWaveformMetadata(t *testing.T) {
+	vm := circuitsvm.New()
+	if err := vm.ApplyAction(viewmodel.Action{
+		ID:      circuitsvm.ActionSetOperationMode,
+		Kind:    viewmodel.ActionSelect,
+		Payload: map[string]string{"mode": circuitsvm.OperationCompute},
+	}); err != nil {
+		t.Fatalf("set compute mode: %v", err)
+	}
+
+	state := circuitsOverlayStateFromSnapshot(vm.Snapshot())
+	if state.timingWaveformSignals != "COMPUTE: CLK, INPUT_VALID, DAC_ALL, ARRAY_SETTLE, ADC_ALL, OUTPUT_VALID" {
+		t.Fatalf("timingWaveformSignals = %q, want compute signal list", state.timingWaveformSignals)
+	}
+	if state.timingWaveformMarkers != "COMPUTE markers: 0ns, 19ns, 38ns, 57ns, 76ns" {
+		t.Fatalf("timingWaveformMarkers = %q, want compute time markers", state.timingWaveformMarkers)
+	}
+	if state.timingWaveformPhases != "COMPUTE phases: DAC 10ns, Array 5ns, TIA+ADC 61ns" {
+		t.Fatalf("timingWaveformPhases = %q, want compute phase markers", state.timingWaveformPhases)
+	}
+}
+
 func TestCircuitsOverlayStateIncludesOperationLogSummaries(t *testing.T) {
 	vm := circuitsvm.New()
 	if err := vm.ApplyAction(viewmodel.Action{

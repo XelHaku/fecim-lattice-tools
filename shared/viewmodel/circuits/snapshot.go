@@ -48,6 +48,9 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		{ID: "timing_compute", Label: "Compute Timing", Value: timingTotalValue(state.TimingComputeTotalNS)},
 		{ID: "timing_active", Label: "Active Timing", Value: timingActiveValue(state)},
 		{ID: "timing_active_phases", Label: "Timing Phases", Value: timingActivePhasesValue(state)},
+		{ID: "timing_waveform_signals", Label: "Timing Waveform Signals", Value: timingWaveformSignalsValue(state)},
+		{ID: "timing_waveform_markers", Label: "Timing Waveform Markers", Value: timingWaveformMarkersValue(state)},
+		{ID: "timing_waveform_phases", Label: "Timing Waveform Phases", Value: timingWaveformPhasesValue(state)},
 		{ID: "reference_timing_export", Label: "Reference Timing Export", Value: referenceTimingExportStatusValue(state)},
 		{ID: "reference_timing_export_path", Label: "Reference Timing Export Target", Value: referenceTimingExportPathValue(state)},
 		{ID: "reference_timing_export_bytes", Label: "Reference Timing Export Size", Value: fmt.Sprintf("%d bytes", state.ReferenceTimingExportBytes)},
@@ -130,8 +133,9 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 	})
 	sections = append(sections, viewmodel.Section{
 		ID: "reference_timing", Title: "Reference Timing Summary",
-		Body: fmt.Sprintf("Write: %s. Read: %s. Compute: %s. Active %s phases: %s. Summary-level port of the legacy timing diagrams; no waveform animation or SVG export is claimed.",
-			timingTotalValue(state.TimingWriteTotalNS), timingTotalValue(state.TimingReadTotalNS), timingTotalValue(state.TimingComputeTotalNS), timingActiveValue(state), timingActivePhasesValue(state)),
+		Body: fmt.Sprintf("Write: %s. Read: %s. Compute: %s. Active %s phases: %s. Waveform metadata: %s; %s; %s. Summary-level port of the legacy timing diagrams; no raster/SVG export or timed playback loop is claimed.",
+			timingTotalValue(state.TimingWriteTotalNS), timingTotalValue(state.TimingReadTotalNS), timingTotalValue(state.TimingComputeTotalNS), timingActiveValue(state), timingActivePhasesValue(state),
+			timingWaveformSignalsValue(state), timingWaveformMarkersValue(state), timingWaveformPhasesValue(state)),
 		Category: "design",
 	})
 	sections = append(sections, viewmodel.Section{
@@ -364,6 +368,55 @@ func timingActivePhasesValue(state CircuitsState) string {
 		return "not evaluated"
 	}
 	return state.TimingActivePhases
+}
+
+func timingWaveformSignalsValue(state CircuitsState) string {
+	waveform, ok := activeTimingWaveform(state)
+	if !ok || len(waveform.Signals) == 0 {
+		return "not evaluated"
+	}
+	names := make([]string, 0, len(waveform.Signals))
+	for _, signal := range waveform.Signals {
+		names = append(names, signal.Name)
+	}
+	return fmt.Sprintf("%s: %s", waveform.Operation, strings.Join(names, ", "))
+}
+
+func timingWaveformMarkersValue(state CircuitsState) string {
+	waveform, ok := activeTimingWaveform(state)
+	if !ok || len(waveform.TimeMarkers) == 0 {
+		return "not evaluated"
+	}
+	labels := make([]string, 0, len(waveform.TimeMarkers))
+	for _, marker := range waveform.TimeMarkers {
+		labels = append(labels, marker.Label)
+	}
+	return fmt.Sprintf("%s markers: %s", waveform.Operation, strings.Join(labels, ", "))
+}
+
+func timingWaveformPhasesValue(state CircuitsState) string {
+	waveform, ok := activeTimingWaveform(state)
+	if !ok || len(waveform.PhaseMarkers) == 0 {
+		return "not evaluated"
+	}
+	phases := make([]string, 0, len(waveform.PhaseMarkers))
+	for _, marker := range waveform.PhaseMarkers {
+		phases = append(phases, fmt.Sprintf("%s %dns", marker.Label, marker.DurationNS))
+	}
+	return fmt.Sprintf("%s phases: %s", waveform.Operation, strings.Join(phases, ", "))
+}
+
+func activeTimingWaveform(state CircuitsState) (ReferenceTimingWaveform, bool) {
+	operation := state.TimingActiveOp
+	if operation == "" {
+		operation = strings.ToUpper(state.OperationMode)
+	}
+	for _, waveform := range state.TimingWaveforms {
+		if waveform.Operation == operation {
+			return waveform, true
+		}
+	}
+	return ReferenceTimingWaveform{}, false
 }
 
 func referenceTimingExportStatusValue(state CircuitsState) string {

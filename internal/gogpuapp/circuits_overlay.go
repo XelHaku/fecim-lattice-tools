@@ -43,6 +43,9 @@ type circuitsOverlayState struct {
 	referenceTimingAnimation string
 	timingActive             string
 	timingActivePhases       string
+	timingWaveformSignals    string
+	timingWaveformMarkers    string
+	timingWaveformPhases     string
 	operationLogLatest       string
 	operationLogRecent       string
 	operationLogExport       string
@@ -134,6 +137,9 @@ func circuitsOverlayStateFromSnapshot(snapshot viewmodel.ModuleSnapshot) circuit
 		referenceTimingAnimation: valueOr(metrics["reference_timing_animation"], "not animated"),
 		timingActive:             valueOr(metrics["timing_active"], "not evaluated"),
 		timingActivePhases:       valueOr(metrics["timing_active_phases"], "not evaluated"),
+		timingWaveformSignals:    valueOr(metrics["timing_waveform_signals"], "not evaluated"),
+		timingWaveformMarkers:    valueOr(metrics["timing_waveform_markers"], "not evaluated"),
+		timingWaveformPhases:     valueOr(metrics["timing_waveform_phases"], "not evaluated"),
 		operationLogLatest:       operationLogLatest,
 		operationLogRecent:       valueOr(metrics["operation_log_recent"], "none"),
 		operationLogExport:       valueOr(metrics["operation_log_export"], "not exported"),
@@ -302,6 +308,8 @@ func drawCircuitsDetails(cc *gg.Context, state circuitsOverlayState, x, y, width
 		"SpecX: " + state.referenceSpecExport,
 		"Time: " + state.timingActive,
 		"Phase: " + compactTimingPhases(state.timingActivePhases),
+		"Wave: " + compactTimingWaveform(state.timingWaveformSignals),
+		"Mark: " + compactTimingWaveform(state.timingWaveformMarkers),
 		"Anim: " + state.referenceTimingAnimation,
 		"TimeX: " + state.referenceTimingExport,
 		"Log: " + compactOperationLogEntry(state.operationLogLatest),
@@ -441,6 +449,13 @@ func compactSpecCompliance(value string) string {
 func compactTimingPhases(value string) string {
 	value = strings.TrimSuffix(value, " ns")
 	return strings.ReplaceAll(value, " / ", " ")
+}
+
+func compactTimingWaveform(value string) string {
+	value = strings.ReplaceAll(value, ", ", " ")
+	value = strings.ReplaceAll(value, " markers:", ":")
+	value = strings.ReplaceAll(value, " phases:", ":")
+	return value
 }
 
 func compactOperationLogEntry(value string) string {

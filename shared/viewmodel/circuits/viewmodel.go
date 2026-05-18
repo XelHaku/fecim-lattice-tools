@@ -930,6 +930,7 @@ func (m *Module) computeReferenceTiming() {
 	m.state.TimingWriteTotalNS = writeTotalNS
 	m.state.TimingReadTotalNS = readTotalNS
 	m.state.TimingComputeTotalNS = computeTotalNS
+	m.state.TimingWaveforms = referenceTimingWaveforms()
 
 	switch m.state.OperationMode {
 	case OperationWrite:
@@ -945,6 +946,92 @@ func (m *Module) computeReferenceTiming() {
 		m.state.TimingActiveTotalNS = readTotalNS
 		m.state.TimingActivePhases = "DAC 10 / Array 5 / TIA 11 / ADC 50 ns"
 	}
+}
+
+func referenceTimingWaveforms() []ReferenceTimingWaveform {
+	return []ReferenceTimingWaveform{
+		{
+			Operation: "WRITE",
+			TotalNS:   203,
+			Signals: []ReferenceTimingSignal{
+				{Name: "CLK", HighWindows: timingWindows(0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95)},
+				{Name: "ROW_SEL", HighWindows: timingWindows(10, 80)},
+				{Name: "COL_SEL", HighWindows: timingWindows(10, 80)},
+				{Name: "DAC_EN", HighWindows: timingWindows(15, 75)},
+				{Name: "V_PROG", HighWindows: timingWindows(20, 70)},
+				{Name: "DONE", HighWindows: timingWindows(85, 95)},
+			},
+			TimeMarkers: []ReferenceTimingTimeMarker{
+				{Percent: 0, Label: "0ns", TimeNS: 0},
+				{Percent: 25, Label: "51ns", TimeNS: 51},
+				{Percent: 50, Label: "102ns", TimeNS: 102},
+				{Percent: 75, Label: "152ns", TimeNS: 152},
+				{Percent: 100, Label: "203ns", TimeNS: 203},
+			},
+			PhaseMarkers: []ReferenceTimingPhaseMarker{
+				{Label: "DAC", StartPct: 0, EndPct: 5, DurationNS: 10},
+				{Label: "Pump", StartPct: 5, EndPct: 48, DurationNS: 88},
+				{Label: "Pulse", StartPct: 48, EndPct: 98, DurationNS: 100},
+				{Label: "Array", StartPct: 98, EndPct: 100, DurationNS: 5},
+			},
+		},
+		{
+			Operation: "READ",
+			TotalNS:   76,
+			Signals: []ReferenceTimingSignal{
+				{Name: "CLK", HighWindows: timingWindows(0, 10, 20, 30, 40, 50, 60, 70, 80, 90)},
+				{Name: "V_READ", HighWindows: timingWindows(10, 70)},
+				{Name: "I_SENSE", HighWindows: timingWindows(15, 75)},
+				{Name: "ADC_EN", HighWindows: timingWindows(40, 70)},
+				{Name: "DATA_OUT", HighWindows: timingWindows(75, 100)},
+			},
+			TimeMarkers: []ReferenceTimingTimeMarker{
+				{Percent: 0, Label: "0ns", TimeNS: 0},
+				{Percent: 25, Label: "19ns", TimeNS: 19},
+				{Percent: 50, Label: "38ns", TimeNS: 38},
+				{Percent: 75, Label: "57ns", TimeNS: 57},
+				{Percent: 100, Label: "76ns", TimeNS: 76},
+			},
+			PhaseMarkers: []ReferenceTimingPhaseMarker{
+				{Label: "DAC", StartPct: 0, EndPct: 13, DurationNS: 10},
+				{Label: "Array", StartPct: 13, EndPct: 20, DurationNS: 5},
+				{Label: "TIA", StartPct: 20, EndPct: 34, DurationNS: 11},
+				{Label: "ADC", StartPct: 34, EndPct: 100, DurationNS: 50},
+			},
+		},
+		{
+			Operation: "COMPUTE",
+			TotalNS:   76,
+			Signals: []ReferenceTimingSignal{
+				{Name: "CLK", HighWindows: timingWindows(0, 8, 16, 24, 32, 40, 48, 56, 64, 72, 80, 88)},
+				{Name: "INPUT_VALID", HighWindows: timingWindows(5, 85)},
+				{Name: "DAC_ALL", HighWindows: timingWindows(10, 35)},
+				{Name: "ARRAY_SETTLE", HighWindows: timingWindows(35, 60)},
+				{Name: "ADC_ALL", HighWindows: timingWindows(55, 90)},
+				{Name: "OUTPUT_VALID", HighWindows: timingWindows(90, 100)},
+			},
+			TimeMarkers: []ReferenceTimingTimeMarker{
+				{Percent: 0, Label: "0ns", TimeNS: 0},
+				{Percent: 25, Label: "19ns", TimeNS: 19},
+				{Percent: 50, Label: "38ns", TimeNS: 38},
+				{Percent: 75, Label: "57ns", TimeNS: 57},
+				{Percent: 100, Label: "76ns", TimeNS: 76},
+			},
+			PhaseMarkers: []ReferenceTimingPhaseMarker{
+				{Label: "DAC", StartPct: 10, EndPct: 35, DurationNS: 10},
+				{Label: "Array", StartPct: 35, EndPct: 60, DurationNS: 5},
+				{Label: "TIA+ADC", StartPct: 55, EndPct: 90, DurationNS: 61},
+			},
+		},
+	}
+}
+
+func timingWindows(pcts ...int) []ReferenceTimingWindow {
+	windows := make([]ReferenceTimingWindow, 0, len(pcts)/2)
+	for i := 0; i+1 < len(pcts); i += 2 {
+		windows = append(windows, ReferenceTimingWindow{StartPct: pcts[i], EndPct: pcts[i+1]})
+	}
+	return windows
 }
 
 func pvtTemperatureSweepStatus(mat *physics.HZOMaterial) string {
