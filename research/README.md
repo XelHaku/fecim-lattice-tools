@@ -63,6 +63,9 @@ Claim audit:
 
 - Reviewed claim records live in `citations/claims/*.yaml`.
 - Files listed in each record's `used_in` field must contain `[claim: id]`.
+- Citation paper records with stored `**PDF:**` paths must point at existing
+  repo-relative files, and source ledgers in `sources/*.yaml` must keep their
+  citation path, PDF path, and PDF SHA-256 digest in sync with the repository.
 - `fecim-lattice-tools research cite CLAIM_ID` writes a deterministic citation
   packet to `reports/cite-latest.json`, resolving sources from
   `citations/papers` first and tracked OpenAlex ledgers second.

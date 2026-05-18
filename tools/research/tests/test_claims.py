@@ -1,4 +1,5 @@
 import json
+import hashlib
 import tempfile
 import unittest
 from pathlib import Path
@@ -121,6 +122,103 @@ class ClaimsTest(unittest.TestCase):
 
             self.assertFalse(report.ok)
             self.assertIn("disputed claim unstable-hzo-range is referenced from citations/facts.md", "\n".join(report.errors))
+
+    def test_audit_fails_when_citation_record_pdf_path_is_missing(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_paper(root, "park2015_advmat_hzo", pdf="research/papers/missing.pdf")
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "citations/papers/park2015_advmat_hzo.md PDF path research/papers/missing.pdf does not exist",
+                "\n".join(report.errors),
+            )
+
+    def test_audit_fails_when_citation_record_pdf_path_is_not_repo_relative(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_path = root / "research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(b"%PDF-1.7\n")
+            self._write_paper(root, "park2015_advmat_hzo", pdf=str(pdf_path))
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "citations/papers/park2015_advmat_hzo.md PDF path must be repo-relative",
+                "\n".join(report.errors),
+            )
+
+    def test_audit_passes_for_source_ledger_with_existing_pdf_digest(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_bytes = b"%PDF-1.7\nsource ledger\n"
+            digest = hashlib.sha256(pdf_bytes).hexdigest()
+            pdf_path = root / "research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(pdf_bytes)
+            self._write_paper(root, "park2015_advmat_hzo", pdf="research/papers/park2015_advmat_hzo.pdf")
+            self._write_source_ledger(
+                root,
+                "park2015_advmat_hzo",
+                citation_path="citations/papers/park2015_advmat_hzo.md",
+                pdf_path="research/papers/park2015_advmat_hzo.pdf",
+                sha256=digest,
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertTrue(report.ok, report.errors)
+
+    def test_audit_fails_when_source_ledger_pdf_digest_does_not_match(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_path = root / "research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(b"%PDF-1.7\nsource ledger\n")
+            self._write_paper(root, "park2015_advmat_hzo", pdf="research/papers/park2015_advmat_hzo.pdf")
+            self._write_source_ledger(
+                root,
+                "park2015_advmat_hzo",
+                citation_path="citations/papers/park2015_advmat_hzo.md",
+                pdf_path="research/papers/park2015_advmat_hzo.pdf",
+                sha256="stale-digest",
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "research/sources/park2015_advmat_hzo.yaml pdf sha256 stale-digest does not match actual",
+                "\n".join(report.errors),
+            )
+
+    def test_audit_fails_when_source_ledger_citation_path_is_missing(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_bytes = b"%PDF-1.7\nsource ledger\n"
+            digest = hashlib.sha256(pdf_bytes).hexdigest()
+            pdf_path = root / "research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(pdf_bytes)
+            self._write_source_ledger(
+                root,
+                "park2015_advmat_hzo",
+                citation_path="citations/papers/missing.md",
+                pdf_path="research/papers/park2015_advmat_hzo.pdf",
+                sha256=digest,
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "research/sources/park2015_advmat_hzo.yaml citation_path citations/papers/missing.md does not exist",
+                "\n".join(report.errors),
+            )
 
     def test_audit_passes_for_candidate_evidence_with_existing_claim_and_chunk(self):
         with tempfile.TemporaryDirectory() as td:
@@ -274,10 +372,10 @@ class ClaimsTest(unittest.TestCase):
             self.assertTrue(payload["ok"])
             self.assertEqual(payload["claims_checked"], 1)
 
-    def _write_paper(self, root: Path, key: str):
+    def _write_paper(self, root: Path, key: str, pdf: str = "not stored"):
         path = root / "citations" / "papers" / f"{key}.md"
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(f"**Key:** `{key}`\n", encoding="utf-8")
+        path.write_text(f"**Key:** `{key}`\n**PDF:** `{pdf}`\n", encoding="utf-8")
 
     def _write_claim(
         self,
@@ -334,6 +432,32 @@ class ClaimsTest(unittest.TestCase):
                 sort_keys=True,
             )
             + "\n",
+            encoding="utf-8",
+        )
+
+    def _write_source_ledger(
+        self,
+        root: Path,
+        paper_key: str,
+        citation_path: str,
+        pdf_path: str,
+        sha256: str,
+    ):
+        path = root / "research" / "sources" / f"{paper_key}.yaml"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            f"citation_path: {citation_path}\n"
+            "doi: needs-review\n"
+            "match:\n"
+            "  confidence: 0.95\n"
+            "  method: filename\n"
+            "  status: matched\n"
+            f"paper_key: {paper_key}\n"
+            "pdf:\n"
+            f"  path: {pdf_path}\n"
+            f"  sha256: {sha256}\n"
+            "  size: 24\n"
+            "title: Park HZO\n",
             encoding="utf-8",
         )
 

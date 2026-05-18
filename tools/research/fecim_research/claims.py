@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from pathlib import Path
+import hashlib
 import json
 import re
 
 
 CLAIM_REF_RE = re.compile(r"\[claim:\s*([a-z0-9][a-z0-9-]*)\]")
+PAPER_PDF_RE = re.compile(r"^\*\*PDF:\*\*\s*`([^`]+)`", re.MULTILINE)
 ALLOWED_STATUS = {
     "literature-backed",
     "validation-backed",
@@ -90,6 +92,8 @@ def audit_claim_registry(root: Path) -> ClaimAuditReport:
             if rel_path == "citations/facts.md" and record.status == "disputed":
                 errors.append(f"disputed claim {claim_id} is referenced from citations/facts.md")
 
+    _audit_citation_pdf_paths(root, errors)
+    _audit_source_ledgers(root, errors)
     _audit_evidence_ledgers(root, claims, errors)
 
     return ClaimAuditReport(
@@ -178,6 +182,81 @@ def _claim_reference_files(root: Path) -> list[str]:
 
 def _claim_refs(path: Path) -> list[str]:
     return CLAIM_REF_RE.findall(path.read_text(encoding="utf-8", errors="replace"))
+
+
+def _audit_citation_pdf_paths(root: Path, errors: list[str]) -> None:
+    papers_dir = root / "citations" / "papers"
+    if not papers_dir.exists():
+        return
+    for path in sorted(papers_dir.glob("*.md")):
+        rel_path = _rel(root, path)
+        pdf_path = _citation_pdf_path(path)
+        if not pdf_path or pdf_path.lower() == "not stored":
+            continue
+        if not _is_repo_relative_path(pdf_path):
+            errors.append(f"{rel_path} PDF path must be repo-relative")
+            continue
+        if not (root / pdf_path).is_file():
+            errors.append(f"{rel_path} PDF path {pdf_path} does not exist")
+
+
+def _citation_pdf_path(path: Path) -> str:
+    match = PAPER_PDF_RE.search(path.read_text(encoding="utf-8", errors="replace"))
+    if match is None:
+        return ""
+    return match.group(1).strip()
+
+
+def _audit_source_ledgers(root: Path, errors: list[str]) -> None:
+    sources_dir = root / "research" / "sources"
+    if not sources_dir.exists():
+        return
+    for path in sorted(sources_dir.glob("*.yaml")):
+        if path.name.endswith(".acquisition.yaml"):
+            continue
+        rel_path = _rel(root, path)
+        data = _parse_mapping_yaml(path)
+        paper_key = str(data.get("paper_key", "")).strip()
+        if not paper_key:
+            errors.append(f"{rel_path} missing paper_key")
+        elif paper_key != path.stem:
+            errors.append(f"{rel_path} paper_key {paper_key} must match filename {path.stem}")
+
+        _audit_source_file_reference(root, rel_path, "citation_path", data.get("citation_path"), errors)
+
+        pdf = data.get("pdf")
+        if not isinstance(pdf, dict):
+            errors.append(f"{rel_path} missing pdf metadata")
+            continue
+        pdf_file = _audit_source_file_reference(root, rel_path, "pdf path", pdf.get("path"), errors)
+        expected_sha = str(pdf.get("sha256", "")).strip()
+        if not expected_sha:
+            errors.append(f"{rel_path} missing pdf sha256")
+        elif pdf_file is not None:
+            actual_sha = _sha256_file(pdf_file)
+            if expected_sha != actual_sha:
+                errors.append(f"{rel_path} pdf sha256 {expected_sha} does not match actual {actual_sha}")
+
+
+def _audit_source_file_reference(
+    root: Path,
+    owner: str,
+    label: str,
+    value: object,
+    errors: list[str],
+) -> Path | None:
+    rel_path = str(value or "").strip()
+    if not rel_path:
+        errors.append(f"{owner} missing {label}")
+        return None
+    if not _is_repo_relative_path(rel_path):
+        errors.append(f"{owner} {label} must be repo-relative")
+        return None
+    full_path = root / rel_path
+    if not full_path.is_file():
+        errors.append(f"{owner} {label} {rel_path} does not exist")
+        return None
+    return full_path
 
 
 def _audit_evidence_ledgers(
@@ -295,6 +374,43 @@ def _find_chunk_record(path: Path, docid: str) -> dict[str, object] | None:
         if isinstance(data, dict) and data.get("id") == docid:
             return data
     return None
+
+
+def _parse_mapping_yaml(path: Path) -> dict[str, object]:
+    root: dict[str, object] = {}
+    stack: list[tuple[int, dict[str, object]]] = [(-1, root)]
+    for raw_line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        if not raw_line.strip() or raw_line.lstrip().startswith("#"):
+            continue
+        if ":" not in raw_line:
+            continue
+        indent = len(raw_line) - len(raw_line.lstrip())
+        stripped = raw_line.strip()
+        key, value = stripped.split(":", 1)
+        while stack and indent <= stack[-1][0]:
+            stack.pop()
+        parent = stack[-1][1] if stack else root
+        value = value.strip()
+        if value == "":
+            child: dict[str, object] = {}
+            parent[key.strip()] = child
+            stack.append((indent, child))
+        else:
+            parent[key.strip()] = _unquote(value)
+    return root
+
+
+def _is_repo_relative_path(value: str) -> bool:
+    path = Path(value)
+    return not path.is_absolute() and ".." not in path.parts
+
+
+def _sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
 
 
 def _write_report(root: Path, report: ClaimAuditReport) -> None:
