@@ -1,7 +1,17 @@
 {
   "backend": "local-jsonl",
+  "claim": {
+    "claim": "Park 2015 reports Si-doped 10 nm HZO remanent polarization near 24 uC/cm2 and supports the project HZO Pr/Ec literature range.",
+    "confidence": "medium",
+    "id": "hzo-remanent-polarization-range",
+    "path": "citations/claims/hzo-remanent-polarization-range.yaml",
+    "sources": [
+      "park2015_advmat_hzo"
+    ],
+    "status": "literature-backed"
+  },
   "ok": true,
-  "query": "HZO coercive field Preisach",
+  "query": "Park 2015 reports Si-doped 10 nm HZO remanent polarization near 24 uC/cm2 and supports the project HZO Pr/Ec literature range.",
   "result_count": 0,
   "results": []
 }

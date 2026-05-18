@@ -136,6 +136,57 @@ class SearchingTest(unittest.TestCase):
             self.assertEqual(report["query"], "HZO coercive")
             self.assertEqual(report["results"][0]["docid"], "park::sec-02::chunk-001")
 
+    def test_run_search_claim_uses_claim_text_and_records_claim_context(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_claim(root, "hzo-remanent-polarization-range")
+            chunk = root / "research" / "chunks" / "park.jsonl"
+            chunk.parent.mkdir(parents=True)
+            chunk.write_text(
+                json.dumps(
+                    {
+                        "id": "park::sec-02::chunk-001",
+                        "paper_key": "park",
+                        "section": "Results",
+                        "contents": "Park reports Si-doped HZO remanent polarization near 24 uC/cm2.",
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            out = StringIO()
+            with redirect_stdout(out):
+                code = run_search(
+                    root,
+                    "",
+                    3,
+                    json_output=True,
+                    local=True,
+                    claim_id="hzo-remanent-polarization-range",
+                )
+
+            self.assertEqual(code, 0)
+            printed = json.loads(out.getvalue())
+            self.assertEqual(printed[0]["docid"], "park::sec-02::chunk-001")
+            report = json.loads((root / "research" / "reports" / "search-latest.json").read_text(encoding="utf-8"))
+            self.assertEqual(report["claim"]["id"], "hzo-remanent-polarization-range")
+            self.assertEqual(report["claim"]["status"], "literature-backed")
+            self.assertEqual(report["claim"]["sources"], ["park2015_advmat_hzo"])
+            self.assertEqual(report["query"], "Park reports Si-doped HZO remanent polarization near 24 uC/cm2.")
+
+    def test_run_search_claim_returns_nonzero_for_unknown_claim(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+
+            err = StringIO()
+            with redirect_stderr(err):
+                code = run_search(root, "", 3, json_output=False, local=True, claim_id="missing-claim")
+
+            self.assertEqual(code, 1)
+            self.assertIn("unknown claim id missing-claim", err.getvalue())
+            self.assertFalse((root / "research" / "reports" / "search-latest.json").exists())
+
     def test_row_copies_source_and_span_fields(self):
         record = {
             "paper_key": "park",
@@ -163,6 +214,21 @@ class SearchingTest(unittest.TestCase):
         self.assertEqual(row["char_start"], 100)
         self.assertEqual(row["char_end"], 220)
         self.assertEqual(row["sha256"], "abc123")
+
+    def _write_claim(self, root: Path, claim_id: str) -> None:
+        path = root / "citations" / "claims" / f"{claim_id}.yaml"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            f"id: {claim_id}\n"
+            "claim: Park reports Si-doped HZO remanent polarization near 24 uC/cm2.\n"
+            "status: literature-backed\n"
+            "sources:\n"
+            "  - park2015_advmat_hzo\n"
+            "used_in:\n"
+            "  - docs/TRUST.md\n"
+            "confidence: medium\n",
+            encoding="utf-8",
+        )
 
 
 if __name__ == "__main__":

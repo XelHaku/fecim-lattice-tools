@@ -86,6 +86,9 @@ Search:
 
 - `fecim-lattice-tools research search --local "HZO coercive field"` searches
   tracked JSONL chunks without Pyserini, Java, or rebuildable index caches.
+- `fecim-lattice-tools research search --claim CLAIM_ID --local` uses the
+  reviewed claim text as the query and records claim metadata in
+  `reports/search-latest.json`.
 - `fecim-lattice-tools research search "HZO coercive field"` uses the Pyserini
   BM25 cache built by `fecim-lattice-tools research index`.
 - Search writes `reports/search-latest.json` so query output is reviewable in

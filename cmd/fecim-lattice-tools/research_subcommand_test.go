@@ -88,6 +88,9 @@ func TestRootUsageListsResearchSubcommand(t *testing.T) {
 	if !strings.Contains(text, "research search --local") {
 		t.Fatalf("root usage must include research local search example:\n%s", text)
 	}
+	if !strings.Contains(text, "research search --claim") {
+		t.Fatalf("root usage must include research claim search example:\n%s", text)
+	}
 }
 
 func TestRunResearchToolFindsRepoRootWhenCalledOutsideRepo(t *testing.T) {

@@ -5,6 +5,7 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from .claims import ClaimRecord, load_claim_records
 from .indexing import _sha, collect_chunk_files
 
 
@@ -140,7 +141,26 @@ def search_chunks_locally(root: Path, query: str, limit: int) -> list[dict[str, 
     return [_row(rank, score, docid, record) for rank, (score, docid, record) in enumerate(scored[:limit], start=1)]
 
 
-def write_search_report(root: Path, query: str, backend: str, rows: list[dict[str, object]]) -> Path:
+def _claim_context(root: Path, record: ClaimRecord | None) -> dict[str, object] | None:
+    if record is None:
+        return None
+    return {
+        "id": record.id,
+        "claim": record.claim,
+        "status": record.status,
+        "confidence": record.confidence,
+        "sources": record.sources,
+        "path": _repo_relative(root, record.path),
+    }
+
+
+def write_search_report(
+    root: Path,
+    query: str,
+    backend: str,
+    rows: list[dict[str, object]],
+    claim: dict[str, object] | None = None,
+) -> Path:
     report_path = root / "research" / "reports" / "search-latest.json"
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report = {
@@ -150,14 +170,32 @@ def write_search_report(root: Path, query: str, backend: str, rows: list[dict[st
         "result_count": len(rows),
         "results": rows,
     }
+    if claim is not None:
+        report["claim"] = claim
     report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return report_path
 
 
-def run_search(root: Path, query: str, limit: int, json_output: bool, local: bool = False) -> int:
+def run_search(
+    root: Path,
+    query: str,
+    limit: int,
+    json_output: bool,
+    local: bool = False,
+    claim_id: str = "",
+) -> int:
+    claim: dict[str, object] | None = None
+    if claim_id:
+        record = load_claim_records(root).get(claim_id)
+        if record is None:
+            print(f"unknown claim id {claim_id}", file=sys.stderr)
+            return 1
+        query = record.claim
+        claim = _claim_context(root, record)
+
     if local:
         rows = search_chunks_locally(root, query, limit)
-        write_search_report(root, query, "local-jsonl", rows)
+        write_search_report(root, query, "local-jsonl", rows, claim=claim)
         if json_output:
             print(json.dumps(rows, indent=2, sort_keys=True))
         else:
@@ -187,7 +225,7 @@ def run_search(root: Path, query: str, limit: int, json_output: bool, local: boo
         record = lookup.get(docid, {"id": docid, "contents": ""})
         rows.append(_row(rank, hit.score, docid, record))
 
-    write_search_report(root, query, "pyserini", rows)
+    write_search_report(root, query, "pyserini", rows, claim=claim)
     if json_output:
         print(json.dumps(rows, indent=2, sort_keys=True))
     else:
