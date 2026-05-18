@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -93,6 +95,8 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 		return m.exportReferenceSpecs(action.Payload)
 	case ActionExportReferenceTiming:
 		return m.exportReferenceTiming(action.Payload)
+	case ActionExportReferenceTimingSVG:
+		return m.exportReferenceTimingSVG(action.Payload)
 	case ActionAnimateReferenceTiming:
 		return m.animateReferenceTiming()
 	case ActionToggleISPP:
@@ -488,6 +492,37 @@ func (m *Module) exportReferenceTiming(payload map[string]string) error {
 	return nil
 }
 
+func (m *Module) exportReferenceTimingSVG(payload map[string]string) error {
+	exportPath := "artifact buffer"
+	path := strings.TrimSpace(payload["path"])
+	if path != "" {
+		cleanPath, err := sharedio.ValidatePath(path)
+		if err != nil {
+			return fmt.Errorf("circuits: invalid reference timing SVG export path: %w", err)
+		}
+		exportPath = cleanPath
+	}
+
+	m.computeReferenceTiming()
+	waveform, ok := activeTimingWaveform(m.state)
+	if !ok {
+		return fmt.Errorf("circuits: no active timing waveform for %q", m.state.TimingActiveOp)
+	}
+	svg := buildReferenceTimingSVG(waveform)
+	if path != "" {
+		if err := writeTextArtifact(exportPath, svg); err != nil {
+			return fmt.Errorf("circuits: write reference timing SVG export: %w", err)
+		}
+		m.state.ReferenceTimingSVGExportStatus = fmt.Sprintf("wrote %s waveform", waveform.Operation)
+	} else {
+		m.state.ReferenceTimingSVGExportStatus = fmt.Sprintf("buffered %s waveform", waveform.Operation)
+	}
+	m.state.ReferenceTimingSVGExportPath = exportPath
+	m.state.ReferenceTimingSVGExportBytes = len(svg)
+	m.state.ReferenceTimingSVGExport = svg
+	return nil
+}
+
 func (m *Module) referenceTimingExportPayload() ReferenceTimingExport {
 	m.computeReferenceTiming()
 	return ReferenceTimingExport{
@@ -531,8 +566,100 @@ func (m *Module) referenceTimingExportPayload() ReferenceTimingExport {
 				},
 			},
 		},
-		BoundaryNotice: "educational reference timing summary; phase durations are behavioral estimates, not calibrated silicon measurements or waveform/SVG output.",
+		BoundaryNotice: "educational reference timing summary; phase durations are behavioral estimates, not calibrated silicon measurements.",
 	}
+}
+
+func buildReferenceTimingSVG(waveform ReferenceTimingWaveform) string {
+	const (
+		width     = 920
+		left      = 150.0
+		right     = 40.0
+		top       = 82.0
+		rowGap    = 46.0
+		rowHeight = 22.0
+	)
+	signalRows := maxInt(1, len(waveform.Signals))
+	height := 178 + signalRows*46
+	plotWidth := float64(width) - left - right
+	axisY := top + float64(signalRows)*rowGap + 6
+
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" width="%d" height="%d" font-family="Inter, Helvetica, Arial, sans-serif">
+  <title>%s Timing Waveform</title>
+  <defs>
+    <style>
+      .bg { fill: #ffffff; }
+      .panel { fill: #f7faf8; stroke: #c8d7d0; stroke-width: 1; }
+      .title { fill: #10251f; font-size: 22px; font-weight: 700; }
+      .meta { fill: #52645e; font-size: 12px; }
+      .label { fill: #233a33; font-size: 13px; font-weight: 600; }
+      .base { stroke: #aebdb7; stroke-width: 1.2; }
+      .high { fill: #2f7d68; opacity: 0.78; }
+      .marker { stroke: #70847b; stroke-width: 1; stroke-dasharray: 4 4; }
+      .phase { fill: #dfeae5; stroke: #aabbb3; stroke-width: 0.8; }
+      .phase-label { fill: #40584f; font-size: 11px; }
+      .notice { fill: #65756f; font-size: 11px; }
+    </style>
+  </defs>
+  <rect class="bg" width="100%%" height="100%%"/>
+  <rect class="panel" x="24" y="24" width="%d" height="%d" rx="8"/>
+  <text class="title" x="44" y="58">%s Timing Waveform</text>
+  <text class="meta" x="44" y="78">Total %d ns; generated from gogpu/ui-neutral Module 4 timing state.</text>
+`, width, height, width, height, svgEscape(waveform.Operation), width-48, height-48, svgEscape(waveform.Operation), waveform.TotalNS))
+
+	for _, marker := range waveform.TimeMarkers {
+		x := left + float64(clampTimingPercent(marker.Percent, 0, 100))/100*plotWidth
+		sb.WriteString(fmt.Sprintf("  <line class=\"marker\" x1=\"%.1f\" y1=\"%.1f\" x2=\"%.1f\" y2=\"%.1f\"/>\n", x, top-12, x, axisY+8))
+		sb.WriteString(fmt.Sprintf("  <text class=\"meta\" x=\"%.1f\" y=\"%.1f\" text-anchor=\"middle\">%s</text>\n", x, axisY+26, svgEscape(marker.Label)))
+	}
+
+	for i, signal := range waveform.Signals {
+		y := top + float64(i)*rowGap
+		sb.WriteString(fmt.Sprintf("  <text class=\"label\" x=\"44\" y=\"%.1f\">%s</text>\n", y+14, svgEscape(signal.Name)))
+		sb.WriteString(fmt.Sprintf("  <line class=\"base\" x1=\"%.1f\" y1=\"%.1f\" x2=\"%.1f\" y2=\"%.1f\"/>\n", left, y+rowHeight, left+plotWidth, y+rowHeight))
+		for _, window := range signal.HighWindows {
+			start := clampTimingPercent(window.StartPct, 0, 100)
+			end := clampTimingPercent(window.EndPct, start, 100)
+			if end <= start {
+				continue
+			}
+			x := left + float64(start)/100*plotWidth
+			w := float64(end-start) / 100 * plotWidth
+			sb.WriteString(fmt.Sprintf("  <rect class=\"high\" x=\"%.1f\" y=\"%.1f\" width=\"%.1f\" height=\"%.1f\" rx=\"2\"/>\n", x, y, w, rowHeight))
+		}
+	}
+
+	phaseY := axisY + 44
+	for _, phase := range waveform.PhaseMarkers {
+		start := clampTimingPercent(phase.StartPct, 0, 100)
+		end := clampTimingPercent(phase.EndPct, start, 100)
+		if end <= start {
+			continue
+		}
+		x := left + float64(start)/100*plotWidth
+		w := float64(end-start) / 100 * plotWidth
+		sb.WriteString(fmt.Sprintf("  <rect class=\"phase\" x=\"%.1f\" y=\"%.1f\" width=\"%.1f\" height=\"24\" rx=\"3\"/>\n", x, phaseY, w))
+		sb.WriteString(fmt.Sprintf("  <text class=\"phase-label\" x=\"%.1f\" y=\"%.1f\" text-anchor=\"middle\">%s %dns</text>\n", x+w/2, phaseY+16, svgEscape(phase.Label), phase.DurationNS))
+	}
+
+	sb.WriteString(fmt.Sprintf("  <text class=\"notice\" x=\"44\" y=\"%d\">educational reference timing waveform; behavioral estimates, not calibrated silicon timing.</text>\n", height-34))
+	sb.WriteString("</svg>\n")
+	return sb.String()
+}
+
+func writeTextArtifact(path, text string) error {
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+	return os.WriteFile(path, []byte(text), 0644)
+}
+
+func svgEscape(s string) string {
+	replacer := strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;", `"`, "&quot;", "'", "&apos;")
+	return replacer.Replace(s)
 }
 
 func (m *Module) animateReferenceTiming() error {

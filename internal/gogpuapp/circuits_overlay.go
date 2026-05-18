@@ -40,6 +40,7 @@ type circuitsOverlayState struct {
 	specCompliance           string
 	referenceSpecExport      string
 	referenceTimingExport    string
+	referenceTimingSVGExport string
 	referenceTimingAnimation string
 	timingActive             string
 	timingActivePhases       string
@@ -154,6 +155,7 @@ func circuitsOverlayStateFromSnapshot(snapshot viewmodel.ModuleSnapshot) circuit
 		specCompliance:           valueOr(metrics["spec_compliance"], "not evaluated"),
 		referenceSpecExport:      valueOr(metrics["reference_spec_export"], "not exported"),
 		referenceTimingExport:    valueOr(metrics["reference_timing_export"], "not exported"),
+		referenceTimingSVGExport: valueOr(metrics["reference_timing_svg_export"], "not exported"),
 		referenceTimingAnimation: valueOr(metrics["reference_timing_animation"], "not animated"),
 		timingActive:             valueOr(metrics["timing_active"], "not evaluated"),
 		timingActivePhases:       valueOr(metrics["timing_active_phases"], "not evaluated"),
@@ -406,6 +408,7 @@ func drawCircuitsDetails(cc *gg.Context, state circuitsOverlayState, x, y, width
 		"Mark: " + compactTimingWaveform(state.timingWaveformMarkers),
 		"Anim: " + state.referenceTimingAnimation,
 		"TimeX: " + state.referenceTimingExport,
+		"SvgX: " + state.referenceTimingSVGExport,
 		"Log: " + compactOperationLogEntry(state.operationLogLatest),
 		"Export: " + state.operationLogExport,
 		"MVM: " + state.computeRun,

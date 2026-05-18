@@ -84,6 +84,7 @@ func TestSnapshotContainsUnifiedCircuitControls(t *testing.T) {
 		"export_operation_log",
 		"export_reference_specs",
 		"export_reference_timing",
+		"export_reference_timing_svg",
 		"animate_reference_timing",
 		"toggle_ispp",
 	} {
@@ -789,6 +790,91 @@ func TestReferenceTimingExportRejectsTraversalPath(t *testing.T) {
 	}
 	if m.state.ReferenceTimingExportJSON != "" {
 		t.Fatal("reference timing export artifact should not be buffered after path validation failure")
+	}
+}
+
+func TestReferenceTimingSVGExportBuffersActiveWaveform(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionSetTimingOperation,
+		Payload: map[string]string{"operation": "COMPUTE"},
+	}); err != nil {
+		t.Fatalf("set compute timing operation: %v", err)
+	}
+	if err := m.ApplyAction(viewmodel.Action{ID: ActionExportReferenceTimingSVG}); err != nil {
+		t.Fatalf("export reference timing SVG: %v", err)
+	}
+
+	if m.state.ReferenceTimingSVGExport == "" {
+		t.Fatal("expected buffered reference timing SVG export")
+	}
+	for _, want := range []string{
+		`<svg xmlns="http://www.w3.org/2000/svg"`,
+		`<title>COMPUTE Timing Waveform</title>`,
+		"INPUT_VALID",
+		"OUTPUT_VALID",
+		"educational reference timing waveform",
+	} {
+		if !contains(m.state.ReferenceTimingSVGExport, want) {
+			t.Fatalf("reference timing SVG missing %q:\n%s", want, m.state.ReferenceTimingSVGExport)
+		}
+	}
+	if contains(m.state.ReferenceTimingSVGExport, "READ Timing Waveform") {
+		t.Fatalf("reference timing SVG should follow active timing operation, got READ waveform")
+	}
+
+	s := m.Snapshot()
+	wantMetrics := map[string]string{
+		"reference_timing_svg_export":       "buffered COMPUTE waveform",
+		"reference_timing_svg_export_path":  "artifact buffer",
+		"reference_timing_svg_export_bytes": fmt.Sprintf("%d bytes", len(m.state.ReferenceTimingSVGExport)),
+	}
+	for id, want := range wantMetrics {
+		if got := metricValue(s, id); got != want {
+			t.Errorf("%s metric = %q, want %q", id, got, want)
+		}
+	}
+}
+
+func TestReferenceTimingSVGExportWritesValidatedPath(t *testing.T) {
+	m := New()
+	path := filepath.Join(t.TempDir(), "circuits-reference-timing.svg")
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionExportReferenceTimingSVG,
+		Payload: map[string]string{"path": path},
+	}); err != nil {
+		t.Fatalf("export reference timing SVG to path: %v", err)
+	}
+
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read exported reference timing SVG: %v", err)
+	}
+	if string(raw) != m.state.ReferenceTimingSVGExport {
+		t.Fatalf("file export differs from buffered reference timing SVG artifact")
+	}
+	if got := metricValue(m.Snapshot(), "reference_timing_svg_export"); got != "wrote READ waveform" {
+		t.Fatalf("reference_timing_svg_export metric = %q, want file-write status", got)
+	}
+	if got := metricValue(m.Snapshot(), "reference_timing_svg_export_path"); got != filepath.Clean(path) {
+		t.Fatalf("reference_timing_svg_export_path = %q, want cleaned path", got)
+	}
+}
+
+func TestReferenceTimingSVGExportRejectsTraversalPath(t *testing.T) {
+	m := New()
+	err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionExportReferenceTimingSVG,
+		Payload: map[string]string{"path": "../escape.svg"},
+	})
+	if err == nil {
+		t.Fatal("expected traversal timing SVG export path to fail")
+	}
+	if !contains(err.Error(), "path traversal") {
+		t.Fatalf("reference timing SVG export path error = %v, want traversal rejection", err)
+	}
+	if m.state.ReferenceTimingSVGExport != "" {
+		t.Fatal("reference timing SVG artifact should not be buffered after path validation failure")
 	}
 }
 

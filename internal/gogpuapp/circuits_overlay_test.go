@@ -229,6 +229,25 @@ func TestCircuitsOverlayStateIncludesReferenceTimingExportStatus(t *testing.T) {
 	}
 }
 
+func TestCircuitsOverlayStateIncludesReferenceTimingSVGExportStatus(t *testing.T) {
+	vm := circuitsvm.New()
+	if err := vm.ApplyAction(viewmodel.Action{
+		ID:      circuitsvm.ActionSetTimingOperation,
+		Kind:    viewmodel.ActionSelect,
+		Payload: map[string]string{"operation": "WRITE"},
+	}); err != nil {
+		t.Fatalf("set write timing operation: %v", err)
+	}
+	if err := vm.ApplyAction(viewmodel.Action{ID: circuitsvm.ActionExportReferenceTimingSVG, Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("export reference timing SVG: %v", err)
+	}
+
+	state := circuitsOverlayStateFromSnapshot(vm.Snapshot())
+	if state.referenceTimingSVGExport != "buffered WRITE waveform" {
+		t.Fatalf("referenceTimingSVGExport = %q, want buffered SVG export status", state.referenceTimingSVGExport)
+	}
+}
+
 func TestCircuitsOverlayStateIncludesReferenceTimingAnimationStatus(t *testing.T) {
 	vm := circuitsvm.New()
 	if err := vm.ApplyAction(viewmodel.Action{

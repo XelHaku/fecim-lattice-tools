@@ -72,6 +72,7 @@ func buildCircuitControls(snapshot viewmodel.ModuleSnapshot, theme *material3.Th
 		circuitButton("Export Log", false, actionOrDefault(actions, circuitsvm.ActionExportOperationLog, viewmodel.ActionCommand), theme, onAction),
 		circuitButton("Export Specs", false, actionOrDefault(actions, circuitsvm.ActionExportReferenceSpecs, viewmodel.ActionCommand), theme, onAction),
 		circuitButton("Export Timing", false, actionOrDefault(actions, circuitsvm.ActionExportReferenceTiming, viewmodel.ActionCommand), theme, onAction),
+		circuitButton("Export Timing SVG", false, actionOrDefault(actions, circuitsvm.ActionExportReferenceTimingSVG, viewmodel.ActionCommand), theme, onAction),
 		circuitButton("Animate Timing", false, actionOrDefault(actions, circuitsvm.ActionAnimateReferenceTiming, viewmodel.ActionCommand), theme, onAction),
 	}
 

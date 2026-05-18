@@ -55,6 +55,9 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		{ID: "reference_timing_export", Label: "Reference Timing Export", Value: referenceTimingExportStatusValue(state)},
 		{ID: "reference_timing_export_path", Label: "Reference Timing Export Target", Value: referenceTimingExportPathValue(state)},
 		{ID: "reference_timing_export_bytes", Label: "Reference Timing Export Size", Value: fmt.Sprintf("%d bytes", state.ReferenceTimingExportBytes)},
+		{ID: "reference_timing_svg_export", Label: "Reference Timing SVG Export", Value: referenceTimingSVGExportStatusValue(state)},
+		{ID: "reference_timing_svg_export_path", Label: "Reference Timing SVG Export Target", Value: referenceTimingSVGExportPathValue(state)},
+		{ID: "reference_timing_svg_export_bytes", Label: "Reference Timing SVG Export Size", Value: fmt.Sprintf("%d bytes", state.ReferenceTimingSVGExportBytes)},
 		{ID: "reference_timing_animation", Label: "Reference Timing Animation", Value: referenceTimingAnimationStatusValue(state)},
 		{ID: "reference_timing_animation_step", Label: "Reference Timing Animation Step", Value: referenceTimingAnimationStepValue(state)},
 		{ID: "reference_timing_animation_steps", Label: "Reference Timing Animation Steps", Value: referenceTimingAnimationStepsValue(state)},
@@ -134,9 +137,9 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 	})
 	sections = append(sections, viewmodel.Section{
 		ID: "reference_timing", Title: "Reference Timing Summary",
-		Body: fmt.Sprintf("Write: %s. Read: %s. Compute: %s. Active %s phases: %s. Waveform metadata: %s; %s; %s. Summary-level port of the legacy timing diagrams; no raster/SVG export or timed playback loop is claimed.",
+		Body: fmt.Sprintf("Write: %s. Read: %s. Compute: %s. Active %s phases: %s. Waveform metadata: %s; %s; %s. Active waveform SVG export: %s. Summary-level port of the legacy timing diagrams; no timed playback loop is claimed.",
 			timingTotalValue(state.TimingWriteTotalNS), timingTotalValue(state.TimingReadTotalNS), timingTotalValue(state.TimingComputeTotalNS), timingActiveValue(state), timingActivePhasesValue(state),
-			timingWaveformSignalsValue(state), timingWaveformMarkersValue(state), timingWaveformPhasesValue(state)),
+			timingWaveformSignalsValue(state), timingWaveformMarkersValue(state), timingWaveformPhasesValue(state), referenceTimingSVGExportStatusValue(state)),
 		Category: "design",
 	})
 	sections = append(sections, viewmodel.Section{
@@ -178,6 +181,7 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		{ID: ActionExportOperationLog, Label: "Export Operation Log", Kind: viewmodel.ActionCommand},
 		{ID: ActionExportReferenceSpecs, Label: "Export Reference Specs", Kind: viewmodel.ActionCommand},
 		{ID: ActionExportReferenceTiming, Label: "Export Reference Timing", Kind: viewmodel.ActionCommand},
+		{ID: ActionExportReferenceTimingSVG, Label: "Export Reference Timing SVG", Kind: viewmodel.ActionCommand},
 		{ID: ActionAnimateReferenceTiming, Label: "Animate Reference Timing", Kind: viewmodel.ActionCommand},
 		{ID: ActionToggleISPP, Label: "Toggle ISPP", Kind: viewmodel.ActionToggle, Payload: map[string]string{"enabled": fmt.Sprintf("%v", state.ISPPEnabled)}},
 		{ID: ActionResizeArray, Label: "Array Size", Kind: viewmodel.ActionSelect, Payload: map[string]string{"rows": fmt.Sprintf("%d", state.Rows), "cols": fmt.Sprintf("%d", state.Cols)}},
@@ -448,6 +452,20 @@ func referenceTimingExportPathValue(state CircuitsState) string {
 		return "none"
 	}
 	return state.ReferenceTimingExportPath
+}
+
+func referenceTimingSVGExportStatusValue(state CircuitsState) string {
+	if state.ReferenceTimingSVGExportStatus == "" {
+		return "not exported"
+	}
+	return state.ReferenceTimingSVGExportStatus
+}
+
+func referenceTimingSVGExportPathValue(state CircuitsState) string {
+	if state.ReferenceTimingSVGExportPath == "" {
+		return "none"
+	}
+	return state.ReferenceTimingSVGExportPath
 }
 
 func referenceTimingAnimationStatusValue(state CircuitsState) string {
