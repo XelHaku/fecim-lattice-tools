@@ -74,7 +74,7 @@ class SearchingTest(unittest.TestCase):
     def test_row_copies_source_and_span_fields(self):
         record = {
             "paper_key": "park",
-            "contents": "HZO coercive field evidence",
+            "contents": "HZO coercive field evidence with enough detail for audit linkage.",
             "source_parser": "marker",
             "source_path": "research/parsed/park/marker.md",
             "section": "Results",
@@ -89,6 +89,7 @@ class SearchingTest(unittest.TestCase):
 
         row = _row(1, 7.5, "park::sec-02::chunk-003", record)
 
+        self.assertEqual(row["contents"], "HZO coercive field evidence with enough detail for audit linkage.")
         self.assertEqual(row["source_path"], "research/parsed/park/marker.md")
         self.assertEqual(row["section_number"], 2)
         self.assertEqual(row["chunk_number"], 3)

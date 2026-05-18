@@ -1,8 +1,14 @@
+/papers/*.pdf
+/papers/**/*.pdf
+/papers/*.PDF
+/papers/**/*.PDF
 /index/pyserini/
 /index/lancedb/
 /index/models/
 /.cache/
 
+!/papers/
+!/papers/.gitkeep
 !/index/
 !/index/.gitkeep
 !/index/README.md

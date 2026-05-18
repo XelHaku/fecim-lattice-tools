@@ -7,9 +7,13 @@ This directory stores the retrieval ledger: normalized source metadata,
 parser outputs, chunks, manifests, reports, and rebuildable search cache
 manifests.
 
-Tracked:
+Local-only input:
 
-- `papers/` stores source PDFs and downloaded paper files before parsing.
+- `papers/` stores source PDFs before parsing. PDF files are ignored so the
+  repository does not accidentally commit paper artifacts.
+
+Tracked ledger outputs:
+
 - `sources/`
 - `parsed/`
 - `chunks/`

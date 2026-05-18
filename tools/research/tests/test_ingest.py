@@ -143,6 +143,29 @@ class IngestTest(unittest.TestCase):
             output_paths = [result["output_path"] for result in manifest["results"]]
             self.assertIn("research/parsed/park2015_advmat_hzo/marker.md", output_paths)
 
+    def test_parse_manifest_uses_citation_key_for_substring_matched_pdf(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            citation = root / "citations" / "papers" / "park2015_advmat_hzo.md"
+            citation.parent.mkdir(parents=True)
+            citation.write_text("**Key:** `park2015_advmat_hzo`\n", encoding="utf-8")
+
+            pdf = root / "research" / "papers" / "scan_park2015_advmat_hzo.pdf"
+            pdf.parent.mkdir(parents=True)
+            pdf.write_bytes(b"%PDF fixture")
+            pdf.with_suffix(".md").write_text("## Results\n\nHZO evidence.", encoding="utf-8")
+
+            code = run_ingest(root=root, extra_paths=[])
+            self.assertEqual(code, 0)
+
+            manifest = json.loads(
+                (root / "research" / "parsed" / "park2015_advmat_hzo" / "manifest.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertTrue(manifest["results"])
+            self.assertEqual({result["paper_key"] for result in manifest["results"]}, {"park2015_advmat_hzo"})
+
     def test_existing_marker_reuse_is_explicit(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

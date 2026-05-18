@@ -62,7 +62,7 @@ def run_ingest(root: Path, extra_paths: list[Path]) -> int:
 
         write_parse_manifest(
             parsed_dir / "manifest.json",
-            [_normalize_parse_result(root, result) for result in parse_results],
+            [_normalize_parse_result(root, result, paper_key) for result in parse_results],
         )
 
         if chunkable and marker_md.exists():
@@ -168,10 +168,10 @@ def _match_rank(match: PDFMatch, pdf: DiscoveredPDF) -> tuple[int, int]:
     return (0, 0 if exact else 1)
 
 
-def _normalize_parse_result(root: Path, result: ParseResult) -> ParseResult:
+def _normalize_parse_result(root: Path, result: ParseResult, paper_key: str) -> ParseResult:
     output_path = _display_path(root, Path(result.output_path))
     return ParseResult(
-        paper_key=result.paper_key,
+        paper_key=paper_key,
         parser=result.parser,
         status=result.status,
         output_path=output_path,

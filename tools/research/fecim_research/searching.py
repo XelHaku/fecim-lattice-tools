@@ -89,6 +89,7 @@ def _row(rank: int, score: float, docid: str, record: dict[str, Any]) -> dict[st
         "docid": docid,
         "paper_key": record.get("paper_key", ""),
         "section": record.get("section", ""),
+        "contents": contents,
         "snippet": _snippet(contents),
         "chunk_file": record.get("chunk_file", ""),
         "source_parser": record.get("source_parser", ""),

@@ -40,6 +40,8 @@ func TestResearchGitignoreKeepsLedgerAndIgnoresCaches(t *testing.T) {
 	}
 	text := string(body)
 	required := []string{
+		"/papers/**/*.pdf",
+		"!/papers/.gitkeep",
 		"/index/pyserini/",
 		"/index/lancedb/",
 		"/index/models/",
