@@ -41,6 +41,8 @@ type circuitsOverlayState struct {
 	operationLogLatest string
 	operationLogRecent string
 	operationLogExport string
+	computeRun         string
+	computeRunPeak     string
 }
 
 func drawCircuitsOverlay(cc *gg.Context, snapshot viewmodel.ModuleSnapshot, w, h int) {
@@ -125,6 +127,8 @@ func circuitsOverlayStateFromSnapshot(snapshot viewmodel.ModuleSnapshot) circuit
 		operationLogLatest: operationLogLatest,
 		operationLogRecent: valueOr(metrics["operation_log_recent"], "none"),
 		operationLogExport: valueOr(metrics["operation_log_export"], "not exported"),
+		computeRun:         valueOr(metrics["compute_run"], "not evaluated"),
+		computeRunPeak:     valueOr(metrics["compute_run_peak"], "not evaluated"),
 	}
 }
 
@@ -288,6 +292,8 @@ func drawCircuitsDetails(cc *gg.Context, state circuitsOverlayState, x, y, width
 		"Phase: " + compactTimingPhases(state.timingActivePhases),
 		"Log: " + compactOperationLogEntry(state.operationLogLatest),
 		"Export: " + state.operationLogExport,
+		"MVM: " + state.computeRun,
+		"Peak: " + state.computeRunPeak,
 	}
 	cc.SetRGBA(0.84, 0.91, 0.87, 1)
 	cc.DrawStringAnchored("State", x+14, y+22, 0, 0.5)

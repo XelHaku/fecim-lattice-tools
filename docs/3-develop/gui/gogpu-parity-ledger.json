@@ -125,7 +125,7 @@
         "go test ./shared/viewmodel/circuits -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run Circuits -count=1"
       ],
-      "notes": "Gogpu exposes circuit metrics, sections, unified controls, a state-responsive unified canvas overlay, half-select/stress budget state, PVT investigation summaries, reference-spec/compliance summaries, reference timing summaries, operation-log summaries, and summary-level operation-log export. Detailed per-row compute JSON logs, reference export workflows, animated timing diagrams, deep investigation panels, and detailed visual interactions need parity decisions."
+      "notes": "Gogpu exposes circuit metrics, sections, unified controls, a state-responsive unified canvas overlay, half-select/stress budget state, PVT investigation summaries, reference-spec/compliance summaries, reference timing summaries, operation-log summaries, summary-level operation-log export, and detailed deterministic compute-run logs. Logger verbosity controls, reference export workflows, animated timing diagrams, deep investigation panels, and detailed visual interactions need parity decisions."
     },
     {
       "module": "circuits",
@@ -172,7 +172,7 @@
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'DrawModuleOverlaysDrawsCircuitsCanvas|CircuitsOverlayRespondsToViewmodelState|DrawAppFrameDrawsCircuitsOverlay' -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -count=1"
       ],
-      "notes": "This ports a gogpu-rendered operational canvas fed by snapshot metrics. It does not claim parity for all legacy overlay submodes, detailed per-row compute-log export, deep investigation panels, or reference animation/export panels."
+      "notes": "This ports a gogpu-rendered operational canvas fed by snapshot metrics. It does not claim parity for all legacy overlay submodes, logger verbosity controls, deep investigation panels, or reference animation/export panels."
     },
     {
       "module": "circuits",
@@ -282,7 +282,7 @@
         "go test ./shared/viewmodel/circuits -run 'OperationLog' -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesOperationLogSummaries' -count=1"
       ],
-      "notes": "This ports deterministic UI-neutral operation-log summaries with retained recent entries and a compact gogpu overlay surface. It does not claim detailed per-row compute JSON logs, logger verbosity toggles, or export parity."
+      "notes": "This ports deterministic UI-neutral operation-log summaries with retained recent entries and a compact gogpu overlay surface. It does not claim compute-run detail payloads, logger verbosity toggles, or export parity."
     },
     {
       "module": "circuits",
@@ -304,7 +304,27 @@
         "go test ./shared/viewmodel/circuits -run 'OperationLogExport|SnapshotContainsUnifiedCircuitControls' -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesOperationLogExportStatus|CircuitsViewActionButtonsDispatchActions|CircuitsViewSelectorButtonsDispatchPayloads' -count=1"
       ],
-      "notes": "This ports a summary-level export for retained operation-log entries. The gogpu action buffers JSON by default and writes the same JSON to a validated path when supplied. It does not claim full legacy per-row MVM compute_log.json parity or logger verbosity controls."
+      "notes": "This ports export for retained operation-log entries. The gogpu action buffers JSON by default and writes the same JSON to a validated path when supplied. Detailed compute-run payloads are tracked separately; logger verbosity controls remain out of scope."
+    },
+    {
+      "module": "circuits",
+      "feature": "Detailed compute-run MVM log payload with input vector, weights, conductances, row ADC/TIA results, saturation flags, and per-cell current terms",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/compute_log.go",
+        "module4-circuits/pkg/gui/tab_unified_actions.go"
+      ],
+      "gogpu_surfaces": [
+        "shared/viewmodel/circuits/state.go",
+        "shared/viewmodel/circuits/viewmodel.go",
+        "shared/viewmodel/circuits/snapshot.go",
+        "internal/gogpuapp/circuits_overlay.go"
+      ],
+      "evidence": [
+        "go test ./shared/viewmodel/circuits -run 'ComputeRun|OperationLogExport' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'CircuitsOverlayStateIncludesComputeRunSummary|CircuitsOverlayStateIncludesOperationLogExportStatus' -count=1"
+      ],
+      "notes": "This ports deterministic UI-neutral compute-run detail into gogpu snapshots and operation-log export when the latest operation is compute. It uses current viewmodel state and deterministic educational MVM terms; it does not claim legacy logger toggles, timestamps, or hardware-calibrated trace parity."
     },
     {
       "module": "comparison",

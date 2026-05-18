@@ -49,6 +49,9 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		{ID: "operation_log_export", Label: "Operation Log Export", Value: operationLogExportStatusValue(state)},
 		{ID: "operation_log_export_path", Label: "Export Target", Value: operationLogExportPathValue(state)},
 		{ID: "operation_log_export_bytes", Label: "Export Size", Value: fmt.Sprintf("%d bytes", state.OperationLogExportBytes)},
+		{ID: "compute_run", Label: "Compute Run", Value: computeRunValue(state.ComputeRunLog)},
+		{ID: "compute_run_peak", Label: "Compute Peak", Value: computeRunPeakValue(state.ComputeRunLog)},
+		{ID: "compute_run_input", Label: "Compute Input", Value: computeRunInputValue(state.ComputeRunLog)},
 	}
 	if state.LastOperationStatus != "" {
 		metrics = append(metrics, viewmodel.Metric{ID: "last_operation", Label: "Last Operation", Value: state.LastOperationStatus})
@@ -124,6 +127,12 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		ID:       "operation_log",
 		Title:    "Operation Log",
 		Body:     operationLogSectionBody(state),
+		Category: "design",
+	})
+	sections = append(sections, viewmodel.Section{
+		ID:       "compute_run_log",
+		Title:    "Compute Run Log",
+		Body:     computeRunSectionBody(state.ComputeRunLog),
 		Category: "design",
 	})
 	sections = append(sections, viewmodel.Section{
@@ -365,6 +374,49 @@ func operationLogExportPathValue(state CircuitsState) string {
 		return "none"
 	}
 	return state.OperationLogExportPath
+}
+
+func computeRunValue(log *ComputeRunLog) string {
+	if log == nil {
+		return "not evaluated"
+	}
+	return fmt.Sprintf("%s / %d rows / %d cells", log.ArraySize, len(log.RowResults), log.ExportedCells)
+}
+
+func computeRunPeakValue(log *ComputeRunLog) string {
+	if log == nil || len(log.RowResults) == 0 {
+		return "not evaluated"
+	}
+	row, current := computeRunPeak(log)
+	return fmt.Sprintf("%.3f uA row %d", current, row)
+}
+
+func computeRunInputValue(log *ComputeRunLog) string {
+	if log == nil || len(log.InputVector) == 0 {
+		return "not evaluated"
+	}
+	return fmt.Sprintf("%.3f..%.3f V", log.InputVector[0], log.InputVector[len(log.InputVector)-1])
+}
+
+func computeRunSectionBody(log *ComputeRunLog) string {
+	if log == nil {
+		return "No compute run recorded. Run compute to populate deterministic MVM row and cell summaries."
+	}
+	row, current := computeRunPeak(log)
+	return fmt.Sprintf("Rows: %d. Cells: %d. Peak current: %.3f uA at row %d. Input vector: %s. Summary-level deterministic MVM log; not a calibrated hardware trace.",
+		len(log.RowResults), log.ExportedCells, current, row, computeRunInputValue(log))
+}
+
+func computeRunPeak(log *ComputeRunLog) (int, float64) {
+	peakRow := 0
+	peakCurrent := log.RowResults[0].CurrentUA
+	for _, row := range log.RowResults[1:] {
+		if row.CurrentUA > peakCurrent {
+			peakRow = row.Row
+			peakCurrent = row.CurrentUA
+		}
+	}
+	return peakRow, peakCurrent
 }
 
 func buildISPPPlots(state CircuitsState) []viewmodel.PlotData {

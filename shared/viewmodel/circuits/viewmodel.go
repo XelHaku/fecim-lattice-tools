@@ -30,6 +30,7 @@ type OperationLogExport struct {
 	OperationLogTotal   int                 `json:"operation_log_total"`
 	ExportedEntries     int                 `json:"exported_entries"`
 	Entries             []OperationLogEntry `json:"entries"`
+	ComputeRun          *ComputeRunLog      `json:"compute_run,omitempty"`
 }
 
 func New() *Module {
@@ -79,6 +80,7 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 		return nil
 	case ActionRunCompute:
 		m.state.OperationMode = OperationCompute
+		m.state.ComputeRunLog = m.buildComputeRunLog()
 		m.recordStatus("operation", "COMPUTE on %dx%d %s array", m.state.Rows, m.state.Cols, m.state.Architecture)
 		m.computeHalfSelectStress()
 		m.computeReferenceTiming()
@@ -336,7 +338,7 @@ func (m *Module) exportOperationLog(payload map[string]string) error {
 func (m *Module) operationLogExportPayload() OperationLogExport {
 	entries := make([]OperationLogEntry, len(m.state.OperationLog))
 	copy(entries, m.state.OperationLog)
-	return OperationLogExport{
+	export := OperationLogExport{
 		Schema:              "fecim.circuits.operation_log.v1",
 		Module:              string(viewmodel.ModuleCircuits),
 		OperationMode:       m.state.OperationMode,
@@ -351,6 +353,142 @@ func (m *Module) operationLogExportPayload() OperationLogExport {
 		ExportedEntries:     len(entries),
 		Entries:             entries,
 	}
+	if m.latestOperationLogIsCompute() && m.state.ComputeRunLog != nil {
+		export.ComputeRun = cloneComputeRunLog(m.state.ComputeRunLog)
+	}
+	return export
+}
+
+func (m *Module) latestOperationLogIsCompute() bool {
+	if len(m.state.OperationLog) == 0 {
+		return false
+	}
+	latest := m.state.OperationLog[len(m.state.OperationLog)-1]
+	return latest.Kind == "operation" && strings.HasPrefix(latest.Message, "COMPUTE ")
+}
+
+func (m *Module) buildComputeRunLog() *ComputeRunLog {
+	rows := maxInt(1, m.state.Rows)
+	cols := maxInt(1, m.state.Cols)
+	quantLevels := m.state.QuantLevels
+	if quantLevels <= 1 {
+		quantLevels = DefaultQuantLevels
+	}
+	input := deterministicComputeInputVector(cols)
+	weights := make([][]int, rows)
+	conductances := make([][]float64, rows)
+	rowResults := make([]ComputeRowResult, rows)
+	for r := 0; r < rows; r++ {
+		weights[r] = make([]int, cols)
+		conductances[r] = make([]float64, cols)
+		cells := make([]ComputeCellContribution, cols)
+		rowCurrentUA := 0.0
+		for c := 0; c < cols; c++ {
+			weight := (r*cols + c) % quantLevels
+			conductanceUS := conductanceForLevelUS(weight, quantLevels)
+			currentUA := conductanceUS * input[c]
+			weights[r][c] = weight
+			conductances[r][c] = conductanceUS
+			cells[c] = ComputeCellContribution{
+				Col:           c,
+				Weight:        weight,
+				ConductanceUS: conductanceUS,
+				VoltageV:      input[c],
+				CurrentUA:     currentUA,
+			}
+			rowCurrentUA += currentUA
+		}
+		tiaVoltage := rowCurrentUA * 1e-6 * m.state.TIAGain
+		senseVoltage := clampFloat64(tiaVoltage, 0, m.state.SupplyVoltage)
+		adcMax := float64((int(1) << uint(m.state.ADCResolution)) - 1)
+		adcLevel := 0
+		if m.state.SupplyVoltage > 0 && adcMax > 0 {
+			adcLevel = int(math.Round(senseVoltage / m.state.SupplyVoltage * adcMax))
+		}
+		rowResults[r] = ComputeRowResult{
+			Row:        r,
+			Active:     true,
+			CurrentUA:  rowCurrentUA,
+			TIAVoltage: tiaVoltage,
+			ADCLevel:   adcLevel,
+			Saturated:  tiaVoltage > m.state.SupplyVoltage,
+			CellDetail: cells,
+		}
+	}
+	return &ComputeRunLog{
+		Schema:        "fecim.circuits.compute_run.v1",
+		ArraySize:     fmt.Sprintf("%dx%d", rows, cols),
+		Material:      "HZO default educational preset",
+		QuantLevels:   quantLevels,
+		Architecture:  m.state.Architecture,
+		CouplingTier:  m.state.CouplingTier,
+		InputVector:   input,
+		Weights:       weights,
+		Conductances:  conductances,
+		RowResults:    rowResults,
+		ExportedCells: rows * cols,
+	}
+}
+
+func deterministicComputeInputVector(cols int) []float64 {
+	input := make([]float64, cols)
+	if cols <= 1 {
+		input[0] = 0.2
+		return input
+	}
+	for c := 0; c < cols; c++ {
+		input[c] = 0.2 + 0.3*float64(c)/float64(cols-1)
+	}
+	return input
+}
+
+func conductanceForLevelUS(level, quantLevels int) float64 {
+	if quantLevels <= 1 {
+		quantLevels = DefaultQuantLevels
+	}
+	return 1.0 + float64(level)/float64(quantLevels-1)*99.0
+}
+
+func cloneComputeRunLog(src *ComputeRunLog) *ComputeRunLog {
+	if src == nil {
+		return nil
+	}
+	dst := *src
+	dst.InputVector = append([]float64(nil), src.InputVector...)
+	dst.Weights = cloneIntMatrix(src.Weights)
+	dst.Conductances = cloneFloatMatrix(src.Conductances)
+	dst.RowResults = make([]ComputeRowResult, len(src.RowResults))
+	for i, row := range src.RowResults {
+		dst.RowResults[i] = row
+		dst.RowResults[i].CellDetail = append([]ComputeCellContribution(nil), row.CellDetail...)
+	}
+	return &dst
+}
+
+func cloneIntMatrix(src [][]int) [][]int {
+	dst := make([][]int, len(src))
+	for i := range src {
+		dst[i] = append([]int(nil), src[i]...)
+	}
+	return dst
+}
+
+func cloneFloatMatrix(src [][]float64) [][]float64 {
+	dst := make([][]float64, len(src))
+	for i := range src {
+		dst[i] = append([]float64(nil), src[i]...)
+	}
+	return dst
+}
+
+func clampFloat64(value, minValue, maxValue float64) float64 {
+	if value < minValue {
+		return minValue
+	}
+	if value > maxValue {
+		return maxValue
+	}
+	return value
 }
 
 func (m *Module) clampSelectedCell() {

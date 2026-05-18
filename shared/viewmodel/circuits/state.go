@@ -62,6 +62,38 @@ type OperationLogEntry struct {
 	Message  string `json:"message"`
 }
 
+type ComputeRunLog struct {
+	Schema        string             `json:"schema"`
+	ArraySize     string             `json:"array_size"`
+	Material      string             `json:"material"`
+	QuantLevels   int                `json:"quant_levels"`
+	Architecture  string             `json:"architecture"`
+	CouplingTier  string             `json:"coupling_tier"`
+	InputVector   []float64          `json:"input_vector_volts"`
+	Weights       [][]int            `json:"weight_matrix"`
+	Conductances  [][]float64        `json:"conductance_matrix_uS"`
+	RowResults    []ComputeRowResult `json:"row_results"`
+	ExportedCells int                `json:"exported_cells"`
+}
+
+type ComputeRowResult struct {
+	Row        int                       `json:"row"`
+	Active     bool                      `json:"active"`
+	CurrentUA  float64                   `json:"current_uA"`
+	TIAVoltage float64                   `json:"tia_voltage_V"`
+	ADCLevel   int                       `json:"adc_level"`
+	Saturated  bool                      `json:"saturated"`
+	CellDetail []ComputeCellContribution `json:"cell_details"`
+}
+
+type ComputeCellContribution struct {
+	Col           int     `json:"col"`
+	Weight        int     `json:"weight"`
+	ConductanceUS float64 `json:"conductance_uS"`
+	VoltageV      float64 `json:"voltage_V"`
+	CurrentUA     float64 `json:"current_uA"`
+}
+
 type CircuitsState struct {
 	Rows                     int                 `json:"rows"`
 	Cols                     int                 `json:"cols"`
@@ -80,6 +112,7 @@ type CircuitsState struct {
 	OperationLogExportPath   string              `json:"operation_log_export_path"`
 	OperationLogExportBytes  int                 `json:"operation_log_export_bytes"`
 	OperationLogExportJSON   string              `json:"operation_log_export_json"`
+	ComputeRunLog            *ComputeRunLog      `json:"compute_run_log,omitempty"`
 	HalfSelectState          string              `json:"half_select_state"`
 	HalfSelectCells          int                 `json:"half_select_cells"`
 	DisturbVoltage           float64             `json:"disturb_voltage"`

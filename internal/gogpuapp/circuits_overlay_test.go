@@ -112,3 +112,18 @@ func TestCircuitsOverlayStateIncludesOperationLogExportStatus(t *testing.T) {
 		t.Fatalf("operationLogExport = %q, want buffered export status", state.operationLogExport)
 	}
 }
+
+func TestCircuitsOverlayStateIncludesComputeRunSummary(t *testing.T) {
+	vm := circuitsvm.New()
+	if err := vm.ApplyAction(viewmodel.Action{ID: circuitsvm.ActionRunCompute, Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("run compute: %v", err)
+	}
+
+	state := circuitsOverlayStateFromSnapshot(vm.Snapshot())
+	if state.computeRun != "8x8 / 8 rows / 64 cells" {
+		t.Fatalf("computeRun = %q, want compute-run summary", state.computeRun)
+	}
+	if state.computeRunPeak == "not evaluated" || state.computeRunPeak == "" {
+		t.Fatalf("computeRunPeak = %q, want peak-current summary", state.computeRunPeak)
+	}
+}

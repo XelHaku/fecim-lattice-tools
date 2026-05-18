@@ -425,6 +425,7 @@ func TestOperationLogExportBuffersJSONArtifact(t *testing.T) {
 		OperationLogTotal int                 `json:"operation_log_total"`
 		ExportedEntries   int                 `json:"exported_entries"`
 		Entries           []OperationLogEntry `json:"entries"`
+		ComputeRun        *ComputeRunLog      `json:"compute_run"`
 	}
 	if err := json.Unmarshal([]byte(m.state.OperationLogExportJSON), &payload); err != nil {
 		t.Fatalf("export JSON did not unmarshal: %v\n%s", err, m.state.OperationLogExportJSON)
@@ -441,6 +442,12 @@ func TestOperationLogExportBuffersJSONArtifact(t *testing.T) {
 	if payload.Entries[0].Message != "COMPUTE on 8x8 0T1R (Passive) array" {
 		t.Fatalf("export entry message = %q, want compute summary", payload.Entries[0].Message)
 	}
+	if payload.ComputeRun == nil {
+		t.Fatal("expected compute-run payload when latest operation is compute")
+	}
+	if payload.ComputeRun.ExportedCells != 64 {
+		t.Fatalf("compute exported cells = %d, want 64", payload.ComputeRun.ExportedCells)
+	}
 
 	s := m.Snapshot()
 	wantMetrics := map[string]string{
@@ -452,6 +459,113 @@ func TestOperationLogExportBuffersJSONArtifact(t *testing.T) {
 		if got := metricValue(s, id); got != want {
 			t.Errorf("%s metric = %q, want %q", id, got, want)
 		}
+	}
+}
+
+func TestComputeRunLogCapturesDetailedMVMSummary(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionResizeArray,
+		Payload: map[string]string{"rows": "2", "cols": "2"},
+	}); err != nil {
+		t.Fatalf("resize array: %v", err)
+	}
+	if err := m.ApplyAction(viewmodel.Action{ID: ActionRunCompute}); err != nil {
+		t.Fatalf("run compute: %v", err)
+	}
+
+	log := m.state.ComputeRunLog
+	if log == nil {
+		t.Fatal("missing compute-run log")
+	}
+	if log.Schema != "fecim.circuits.compute_run.v1" {
+		t.Fatalf("schema = %q, want compute-run schema", log.Schema)
+	}
+	if log.ArraySize != "2x2" || log.QuantLevels != DefaultQuantLevels || log.ExportedCells != 4 {
+		t.Fatalf("unexpected compute-run header: %+v", log)
+	}
+	wantInput := []float64{0.2, 0.5}
+	if len(log.InputVector) != len(wantInput) {
+		t.Fatalf("input vector len = %d, want %d", len(log.InputVector), len(wantInput))
+	}
+	for i, want := range wantInput {
+		if !near(log.InputVector[i], want, 1e-9) {
+			t.Fatalf("input[%d] = %.9f, want %.9f", i, log.InputVector[i], want)
+		}
+	}
+	wantWeights := [][]int{{0, 1}, {2, 3}}
+	for r := range wantWeights {
+		for c := range wantWeights[r] {
+			if log.Weights[r][c] != wantWeights[r][c] {
+				t.Fatalf("weight[%d][%d] = %d, want %d", r, c, log.Weights[r][c], wantWeights[r][c])
+			}
+		}
+	}
+	if len(log.RowResults) != 2 {
+		t.Fatalf("row result count = %d, want 2", len(log.RowResults))
+	}
+	row0 := log.RowResults[0]
+	if row0.Row != 0 || !row0.Active || row0.Saturated || row0.ADCLevel != 0 {
+		t.Fatalf("unexpected row0 flags: %+v", row0)
+	}
+	if !near(row0.CurrentUA, 2.4068965517, 1e-9) {
+		t.Fatalf("row0 current = %.10f, want 2.4068965517", row0.CurrentUA)
+	}
+	if !near(row0.TIAVoltage, 0.0240689655, 1e-9) {
+		t.Fatalf("row0 TIA voltage = %.10f, want 0.0240689655", row0.TIAVoltage)
+	}
+	if len(row0.CellDetail) != 2 {
+		t.Fatalf("row0 cell detail count = %d, want 2", len(row0.CellDetail))
+	}
+	cell := row0.CellDetail[1]
+	if cell.Col != 1 || cell.Weight != 1 {
+		t.Fatalf("unexpected row0 cell1 identity: %+v", cell)
+	}
+	if !near(cell.ConductanceUS, 4.4137931034, 1e-9) || !near(cell.VoltageV, 0.5, 1e-9) || !near(cell.CurrentUA, 2.2068965517, 1e-9) {
+		t.Fatalf("unexpected row0 cell1 analog terms: %+v", cell)
+	}
+	row1 := log.RowResults[1]
+	if row1.ADCLevel != 1 || row1.Saturated {
+		t.Fatalf("unexpected row1 ADC/saturation: %+v", row1)
+	}
+	if !near(row1.CurrentUA, 7.1862068966, 1e-9) {
+		t.Fatalf("row1 current = %.10f, want 7.1862068966", row1.CurrentUA)
+	}
+
+	s := m.Snapshot()
+	wantMetrics := map[string]string{
+		"compute_run":       "2x2 / 2 rows / 4 cells",
+		"compute_run_peak":  "7.186 uA row 1",
+		"compute_run_input": "0.200..0.500 V",
+	}
+	for id, want := range wantMetrics {
+		if got := metricValue(s, id); got != want {
+			t.Errorf("%s metric = %q, want %q", id, got, want)
+		}
+	}
+	if !contains(sectionBody(s, "compute_run_log"), "Rows: 2. Cells: 4. Peak current: 7.186 uA at row 1.") {
+		t.Fatalf("compute_run_log section missing summary: %q", sectionBody(s, "compute_run_log"))
+	}
+}
+
+func TestOperationLogExportOmitsComputeRunWhenLatestOperationIsNotCompute(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{ID: ActionRunCompute}); err != nil {
+		t.Fatalf("run compute: %v", err)
+	}
+	if err := m.ApplyAction(viewmodel.Action{ID: ActionRunRead}); err != nil {
+		t.Fatalf("run read: %v", err)
+	}
+	if err := m.ApplyAction(viewmodel.Action{ID: ActionExportOperationLog}); err != nil {
+		t.Fatalf("export operation log: %v", err)
+	}
+
+	var payload OperationLogExport
+	if err := json.Unmarshal([]byte(m.state.OperationLogExportJSON), &payload); err != nil {
+		t.Fatalf("unmarshal export: %v", err)
+	}
+	if payload.ComputeRun != nil {
+		t.Fatalf("compute-run payload exported for non-compute latest operation: %+v", payload.ComputeRun)
 	}
 }
 
@@ -541,4 +655,11 @@ func hasAction(s viewmodel.ModuleSnapshot, id string) bool {
 
 func contains(value, needle string) bool {
 	return strings.Contains(value, needle)
+}
+
+func near(got, want, tolerance float64) bool {
+	if got > want {
+		return got-want <= tolerance
+	}
+	return want-got <= tolerance
 }
