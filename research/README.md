@@ -161,6 +161,9 @@ Search:
 - `fecim-lattice-tools research search --claim CLAIM_ID --local` uses the
   reviewed claim text as the query and records claim metadata in
   `reports/search-latest.json`.
+- Search reports also write content-addressed history copies under
+  `reports/searches/RUN_ID.json`, so retrieval changes can be reviewed before
+  they become candidate evidence.
 - `fecim-lattice-tools research search --inbox "HZO coercive field"` searches
   only unreviewed local inbox sidecar Markdown next to ignored
   `research/papers/*.pdf` files and marks every result `UNREVIEWED`.
@@ -174,7 +177,9 @@ Search:
   `research/manifests/index-lancedb.json` validates the semantic/vector cache.
   `research/manifests/index-latest.json` is only the most recent index run.
 - Search writes `reports/search-latest.json` so query output is reviewable in
-  git when a search result becomes part of research work.
+  git when a search result becomes part of research work. The latest file is a
+  compatibility pointer for `fecim-lattice-tools research evidence`; the
+  content-addressed report is the durable review artifact.
 
 Ignored rebuildable caches:
 

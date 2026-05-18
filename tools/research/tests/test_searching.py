@@ -1,3 +1,4 @@
+import hashlib
 import json
 import sys
 import tempfile
@@ -216,6 +217,43 @@ class SearchingTest(unittest.TestCase):
             self.assertEqual(report["backend"], "local-jsonl")
             self.assertEqual(report["query"], "HZO coercive")
             self.assertEqual(report["results"][0]["docid"], "park::sec-02::chunk-001")
+
+    def test_run_search_writes_content_addressed_history_report(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            chunk = root / "research" / "chunks" / "park.jsonl"
+            chunk.parent.mkdir(parents=True)
+            chunk.write_text(
+                json.dumps(
+                    {
+                        "id": "park::sec-02::chunk-001",
+                        "paper_key": "park",
+                        "section": "Results",
+                        "contents": "HZO coercive field and Preisach switching evidence.",
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            out = StringIO()
+            with redirect_stdout(out):
+                code = run_search(root, "HZO coercive", 3, json_output=True, local=True)
+
+            self.assertEqual(code, 0)
+            latest_path = root / "research" / "reports" / "search-latest.json"
+            latest = json.loads(latest_path.read_text(encoding="utf-8"))
+            self.assertIn("run_id", latest)
+            self.assertIn("history_path", latest)
+            report_body = {key: value for key, value in latest.items() if key not in {"run_id", "history_path"}}
+            expected_run_id = hashlib.sha256(
+                json.dumps(report_body, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            ).hexdigest()[:16]
+            self.assertEqual(latest["run_id"], expected_run_id)
+            self.assertEqual(latest["history_path"], f"research/reports/searches/{latest['run_id']}.json")
+            history_path = root / latest["history_path"]
+            self.assertTrue(history_path.exists())
+            self.assertEqual(json.loads(history_path.read_text(encoding="utf-8")), latest)
 
     def test_run_search_semantic_reads_rebuildable_vector_cache(self):
         with tempfile.TemporaryDirectory() as td:

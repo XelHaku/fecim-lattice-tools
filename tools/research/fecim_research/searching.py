@@ -8,6 +8,7 @@ from typing import Any
 from .chunking import chunk_markdown
 from .claims import ClaimRecord, load_claim_records
 from .indexing import LATEST_INDEX_MANIFEST, _sha, collect_chunk_files, index_manifest_for_semantic
+from .reporting import write_content_addressed_report
 from .semantic import DEFAULT_EMBEDDING_MODEL, VECTOR_CACHE, embed_text, load_vector_cache, search_vector_records
 
 
@@ -292,8 +293,6 @@ def write_search_report(
     semantic: bool | None = None,
     embedding_model: str | None = None,
 ) -> Path:
-    report_path = root / "research" / "reports" / "search-latest.json"
-    report_path.parent.mkdir(parents=True, exist_ok=True)
     report = {
         "ok": True,
         "backend": backend,
@@ -311,8 +310,13 @@ def write_search_report(
         report["semantic"] = semantic
     if embedding_model is not None:
         report["embedding_model"] = embedding_model
-    report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return report_path
+    write_content_addressed_report(
+        root,
+        "research/reports/search-latest.json",
+        "research/reports/searches",
+        report,
+    )
+    return root / "research" / "reports" / "search-latest.json"
 
 
 def run_search(
