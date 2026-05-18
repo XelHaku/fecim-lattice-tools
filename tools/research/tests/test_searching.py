@@ -5,7 +5,13 @@ from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 from pathlib import Path
 
-from fecim_research.searching import _row, load_chunk_lookup, render_text_results, run_search, search_chunks_locally
+from fecim_research.searching import (
+    _row,
+    load_chunk_lookup,
+    render_text_results,
+    run_search,
+    search_chunks_locally,
+)
 
 
 class SearchingTest(unittest.TestCase):
@@ -36,6 +42,22 @@ class SearchingTest(unittest.TestCase):
         self.assertIn("1. park", text)
         self.assertIn("score=7.5", text)
         self.assertIn("HZO coercive field evidence", text)
+
+    def test_render_text_results_marks_inbox_results_unreviewed(self):
+        rows = [
+            {
+                "rank": 1,
+                "score": 7.5,
+                "docid": "park::sec-01::chunk-001",
+                "paper_key": "park",
+                "section": "Results",
+                "snippet": "HZO coercive field evidence",
+                "trust_state": "unreviewed",
+                "inbox": True,
+            }
+        ]
+        text = render_text_results(rows)
+        self.assertIn("UNREVIEWED", text)
 
     def test_run_search_rejects_stale_index_before_pyserini_import(self):
         with tempfile.TemporaryDirectory() as td:
@@ -135,6 +157,76 @@ class SearchingTest(unittest.TestCase):
             self.assertEqual(report["backend"], "local-jsonl")
             self.assertEqual(report["query"], "HZO coercive")
             self.assertEqual(report["results"][0]["docid"], "park::sec-02::chunk-001")
+
+    def test_run_search_inbox_reads_unreviewed_sidecar_markdown_and_marks_results(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf = root / "research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf.parent.mkdir(parents=True)
+            pdf.write_bytes(b"%PDF-1.4")
+            pdf.with_suffix(".md").write_text(
+                "## Results\n\nLocal inbox HZO coercive field evidence.",
+                encoding="utf-8",
+            )
+            inbox_report = root / "research" / "reports" / "local-inbox-pdfs.json"
+            inbox_report.parent.mkdir(parents=True, exist_ok=True)
+            inbox_report.write_text(
+                json.dumps(
+                    {
+                        "ok": True,
+                        "local_only": [
+                            {
+                                "action": "promote_pdf_first",
+                                "citation_path": "citations/papers/park2015_advmat_hzo.md",
+                                "paper_key": "park2015_advmat_hzo",
+                                "path": "research/papers/park2015_advmat_hzo.pdf",
+                                "sha256": "abc123",
+                                "size": 8,
+                                "status": "needs_promotion",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            out = StringIO()
+            with redirect_stdout(out):
+                code = run_search(root, "HZO coercive", 3, json_output=True, inbox=True)
+
+            self.assertEqual(code, 0)
+            printed = json.loads(out.getvalue())
+            self.assertEqual(printed[0]["docid"], "park2015_advmat_hzo::sec-01::chunk-001")
+            self.assertEqual(printed[0]["source_path"], "research/papers/park2015_advmat_hzo.md")
+            self.assertEqual(printed[0]["pdf_path"], "research/papers/park2015_advmat_hzo.pdf")
+            self.assertEqual(printed[0]["trust_state"], "unreviewed")
+            self.assertTrue(printed[0]["review_required"])
+            self.assertTrue(printed[0]["inbox"])
+            report = json.loads((root / "research" / "reports" / "search-latest.json").read_text(encoding="utf-8"))
+            self.assertEqual(report["backend"], "inbox-local-jsonl")
+            self.assertEqual(report["trust_state"], "unreviewed")
+            self.assertTrue(report["review_required"])
+            self.assertTrue(report["results"][0]["inbox"])
+
+    def test_run_search_rejects_claim_linked_inbox_search(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_claim(root, "hzo-remanent-polarization-range")
+
+            err = StringIO()
+            with redirect_stderr(err):
+                code = run_search(
+                    root,
+                    "",
+                    3,
+                    json_output=False,
+                    inbox=True,
+                    claim_id="hzo-remanent-polarization-range",
+                )
+
+            self.assertEqual(code, 1)
+            self.assertIn("inbox search cannot be claim-linked", err.getvalue())
+            self.assertFalse((root / "research" / "reports" / "search-latest.json").exists())
 
     def test_run_search_claim_uses_claim_text_and_records_claim_context(self):
         with tempfile.TemporaryDirectory() as td:

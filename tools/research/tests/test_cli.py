@@ -55,6 +55,7 @@ class CLITest(unittest.TestCase):
             main(["search", "--help"])
         self.assertEqual(ctx.exception.code, 0)
         self.assertIn("--local", out.getvalue())
+        self.assertIn("--inbox", out.getvalue())
         self.assertIn("--claim", out.getvalue())
 
     def test_register_pdfs_help_lists_write_stubs_option(self):

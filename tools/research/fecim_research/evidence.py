@@ -15,6 +15,8 @@ def build_evidence_record(root: Path, claim_id: str) -> dict[str, object] | None
     claim = report.get("claim")
     if not isinstance(claim, dict) or claim.get("id") != claim_id:
         return None
+    if _uses_unreviewed_inbox_results(report):
+        return None
 
     results = report.get("results", [])
     if not isinstance(results, list):
@@ -91,6 +93,24 @@ def _read_search_report(root: Path) -> dict[str, object] | None:
     except (OSError, json.JSONDecodeError):
         return None
     return data if isinstance(data, dict) else None
+
+
+def _uses_unreviewed_inbox_results(report: dict[str, object]) -> bool:
+    backend = report.get("backend", "")
+    if isinstance(backend, str) and backend.startswith("inbox"):
+        return True
+    if report.get("trust_state") == "unreviewed" or report.get("review_required") is True:
+        return True
+
+    results = report.get("results", [])
+    if not isinstance(results, list):
+        return False
+    for row in results:
+        if not isinstance(row, dict):
+            continue
+        if row.get("trust_state") == "unreviewed" or row.get("review_required") is True or row.get("inbox") is True:
+            return True
+    return False
 
 
 def _repo_relative(root: Path, path: Path) -> str:

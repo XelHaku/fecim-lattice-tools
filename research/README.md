@@ -146,6 +146,12 @@ Search:
 - `fecim-lattice-tools research search --claim CLAIM_ID --local` uses the
   reviewed claim text as the query and records claim metadata in
   `reports/search-latest.json`.
+- `fecim-lattice-tools research search --inbox "HZO coercive field"` searches
+  only unreviewed local inbox sidecar Markdown next to ignored
+  `research/papers/*.pdf` files and marks every result `UNREVIEWED`.
+- Inbox search is for triage only: it does not create canonical chunks or
+  indexes, cannot be combined with `--claim`, and cannot feed
+  `fecim-lattice-tools research evidence`.
 - `fecim-lattice-tools research search "HZO coercive field"` uses the Pyserini
   BM25 cache built by `fecim-lattice-tools research index`.
 - Search writes `reports/search-latest.json` so query output is reviewable in

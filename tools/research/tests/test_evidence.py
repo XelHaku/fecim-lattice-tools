@@ -66,6 +66,24 @@ class EvidenceTest(unittest.TestCase):
 
             self.assertEqual(code, 1)
 
+    def test_build_evidence_record_rejects_unreviewed_inbox_search_report(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_search_report(root, claim_id="hzo-remanent-polarization-range")
+            report = root / "research" / "reports" / "search-latest.json"
+            data = json.loads(report.read_text(encoding="utf-8"))
+            data["backend"] = "inbox-local-jsonl"
+            data["trust_state"] = "unreviewed"
+            data["review_required"] = True
+            data["results"][0]["trust_state"] = "unreviewed"
+            data["results"][0]["review_required"] = True
+            data["results"][0]["inbox"] = True
+            report.write_text(json.dumps(data, sort_keys=True) + "\n", encoding="utf-8")
+
+            record = build_evidence_record(root, "hzo-remanent-polarization-range")
+
+            self.assertIsNone(record)
+
     def _write_search_report(self, root: Path, claim_id: str) -> None:
         report = root / "research" / "reports" / "search-latest.json"
         report.parent.mkdir(parents=True, exist_ok=True)
