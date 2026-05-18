@@ -11,6 +11,9 @@ Local-only input:
 
 - `papers/` stores source PDFs before parsing. PDF files are ignored so the
   repository does not accidentally commit paper artifacts.
+- The citation filename stem is the canonical repo paper identity. The
+  Markdown `**Key:**` field, when present, must match the filename; DOI,
+  OpenAlex, arXiv, and PDF SHA-256 are linked external or artifact identities.
 - Citation records must not use `research/papers/...` in their canonical
   `**PDF:**` field. Use `not stored` for inbox PDFs, and promote only
   licensing-reviewed PDFs into tracked paper paths.

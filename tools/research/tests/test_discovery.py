@@ -36,6 +36,24 @@ class DiscoveryTest(unittest.TestCase):
             self.assertIn("park2015_advmat_hzo", records)
             self.assertEqual(records["park2015_advmat_hzo"].doi, "10.1002/adma.201404531")
 
+    def test_load_citation_records_uses_filename_as_repo_identity(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            paper = root / "citations" / "papers" / "park2015_advmat_hzo.md"
+            paper.parent.mkdir(parents=True)
+            paper.write_text(
+                "# Park 2015\n\n"
+                "**Key:** `wrong_external_key`\n"
+                "**DOI:** `10.1002/adma.201404531`\n",
+                encoding="utf-8",
+            )
+
+            records = load_citation_records(root)
+
+            self.assertIn("park2015_advmat_hzo", records)
+            self.assertNotIn("wrong_external_key", records)
+            self.assertEqual(records["park2015_advmat_hzo"].key, "park2015_advmat_hzo")
+
     def test_uses_markdown_h1_as_title_fallback(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

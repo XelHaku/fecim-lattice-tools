@@ -11,6 +11,7 @@ from .reporting import write_content_addressed_report
 
 CLAIM_REF_RE = re.compile(r"\[claim:\s*([a-z0-9][a-z0-9-]*)\]")
 PAPER_PDF_RE = re.compile(r"^\*\*PDF:\*\*\s*`([^`]+)`", re.MULTILINE)
+CITATION_FIELD_RE = re.compile(r"^\*\*(?P<name>[^*]+):\*\*\s*`?(?P<value>[^`\n]+)`?", re.MULTILINE)
 PDF_REVIEW_BACKLOG_PATH = Path("research/manifests/pdf-review-backlog.json")
 PDF_REVIEW_BACKLOG_SCHEMA = "fecim.pdf-review-backlog.v1"
 PDF_REVIEW_BACKLOG_STATUS = "legacy-needs-license-review"
@@ -99,6 +100,7 @@ def audit_claim_registry(root: Path) -> ClaimAuditReport:
                 errors.append(f"disputed claim {claim_id} is referenced from citations/facts.md")
 
     _audit_citation_pdf_paths(root, errors, pdf_review_backlog)
+    _audit_citation_record_identity(root, errors)
     _audit_source_ledgers(root, errors)
     _audit_promotion_ledgers(root, errors)
     _audit_pdf_review_backlog(root, pdf_review_backlog, errors)
@@ -231,6 +233,27 @@ def _citation_pdf_path(path: Path) -> str:
     if match is None:
         return ""
     return match.group(1).strip()
+
+
+def _audit_citation_record_identity(root: Path, errors: list[str]) -> None:
+    papers_dir = root / "citations" / "papers"
+    if not papers_dir.exists():
+        return
+    for path in sorted(papers_dir.glob("*.md")):
+        if path.name == ".gitkeep":
+            continue
+        rel_path = _rel(root, path)
+        fields = _parse_markdown_fields(path)
+        key = str(fields.get("key", "")).strip()
+        if key and key != path.stem:
+            errors.append(f"{rel_path} key {key} must match filename {path.stem}")
+
+
+def _parse_markdown_fields(path: Path) -> dict[str, str]:
+    fields: dict[str, str] = {}
+    for match in CITATION_FIELD_RE.finditer(path.read_text(encoding="utf-8", errors="replace")):
+        fields[match.group("name").strip().lower()] = match.group("value").strip()
+    return fields
 
 
 def _is_ignored_pdf_inbox_path(path: str) -> bool:

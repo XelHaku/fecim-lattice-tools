@@ -39,7 +39,7 @@ def load_citation_records(root: Path) -> dict[str, CitationRecord]:
     for path in sorted(papers_dir.glob("*.md")):
         text = path.read_text(encoding="utf-8", errors="replace")
         fields = _fields(text)
-        key = fields.get("key") or path.stem
+        key = path.stem
         records[key] = CitationRecord(
             key=key,
             path=path,

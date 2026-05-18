@@ -69,6 +69,21 @@ class ClaimsTest(unittest.TestCase):
             self.assertIn("missing source missing_source", "\n".join(report.errors))
             self.assertIn("missing used_in path config/missing.yaml", "\n".join(report.errors))
 
+    def test_audit_fails_when_citation_key_field_does_not_match_filename(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            path = root / "citations" / "papers" / "park2015_advmat_hzo.md"
+            path.parent.mkdir(parents=True)
+            path.write_text("**Key:** `wrong_external_key`\n", encoding="utf-8")
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "citations/papers/park2015_advmat_hzo.md key wrong_external_key must match filename park2015_advmat_hzo",
+                "\n".join(report.errors),
+            )
+
     def test_audit_fails_when_used_path_does_not_reference_claim_id(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
