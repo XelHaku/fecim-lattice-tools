@@ -319,6 +319,18 @@ def _audit_source_ledgers(root: Path, errors: list[str]) -> None:
             actual_sha = _sha256_file(pdf_file)
             if expected_sha != actual_sha:
                 errors.append(f"{rel_path} pdf sha256 {expected_sha} does not match actual {actual_sha}")
+        expected_size = str(pdf.get("size", "")).strip()
+        if not expected_size:
+            errors.append(f"{rel_path} missing pdf size")
+        elif pdf_file is not None:
+            try:
+                size = int(expected_size)
+            except ValueError:
+                errors.append(f"{rel_path} pdf size must be an integer byte count")
+            else:
+                actual_size = pdf_file.stat().st_size
+                if size != actual_size:
+                    errors.append(f"{rel_path} pdf size {size} does not match actual {actual_size}")
 
 
 def _audit_openalex_ledgers(root: Path, errors: list[str]) -> None:

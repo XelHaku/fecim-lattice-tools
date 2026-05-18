@@ -120,7 +120,7 @@ Claim audit:
   repo-relative files. If those records include `**SHA256:**` or `**Size:**`,
   audit checks those fields against the stored PDF bytes. Source ledgers in
   `sources/*.yaml` must keep their citation path, PDF path, and PDF SHA-256
-  digest in sync with the repository.
+  digest and byte size in sync with the repository.
 - Source ledger `citation_path` fields must point at the citation record with
   the same filename stem as the source ledger.
 - OpenAlex ledgers in `sources/*.openalex.json` must remain valid JSON with a

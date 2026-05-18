@@ -537,6 +537,63 @@ class ClaimsTest(unittest.TestCase):
                 "\n".join(report.errors),
             )
 
+    def test_audit_fails_when_source_ledger_pdf_size_does_not_match(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_bytes = b"%PDF-1.7\nsource ledger\n"
+            digest = hashlib.sha256(pdf_bytes).hexdigest()
+            actual_size = len(pdf_bytes)
+            pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(pdf_bytes)
+            rel_pdf = "docs/4-research/papers/park2015_advmat_hzo.pdf"
+            self._write_paper(root, "park2015_advmat_hzo", pdf=rel_pdf)
+            self._write_pdf_review_backlog(root, "park2015_advmat_hzo", rel_pdf, digest)
+            self._write_source_ledger(
+                root,
+                "park2015_advmat_hzo",
+                citation_path="citations/papers/park2015_advmat_hzo.md",
+                pdf_path=rel_pdf,
+                sha256=digest,
+                size=str(actual_size + 1),
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                f"research/sources/park2015_advmat_hzo.yaml pdf size {actual_size + 1} does not match actual {actual_size}",
+                "\n".join(report.errors),
+            )
+
+    def test_audit_fails_when_source_ledger_pdf_size_is_missing(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_bytes = b"%PDF-1.7\nsource ledger\n"
+            digest = hashlib.sha256(pdf_bytes).hexdigest()
+            pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(pdf_bytes)
+            rel_pdf = "docs/4-research/papers/park2015_advmat_hzo.pdf"
+            self._write_paper(root, "park2015_advmat_hzo", pdf=rel_pdf)
+            self._write_pdf_review_backlog(root, "park2015_advmat_hzo", rel_pdf, digest)
+            self._write_source_ledger(
+                root,
+                "park2015_advmat_hzo",
+                citation_path="citations/papers/park2015_advmat_hzo.md",
+                pdf_path=rel_pdf,
+                sha256=digest,
+                size=None,
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "research/sources/park2015_advmat_hzo.yaml missing pdf size",
+                "\n".join(report.errors),
+            )
+
     def test_audit_fails_when_source_ledger_citation_path_is_missing(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -854,9 +911,14 @@ class ClaimsTest(unittest.TestCase):
         citation_path: str,
         pdf_path: str,
         sha256: str,
+        size: str | None = "__auto__",
     ):
         path = root / "research" / "sources" / f"{paper_key}.yaml"
         path.parent.mkdir(parents=True, exist_ok=True)
+        if size == "__auto__":
+            full_pdf_path = root / pdf_path
+            size = str(full_pdf_path.stat().st_size) if full_pdf_path.is_file() else "0"
+        size_line = f"  size: {size}\n" if size is not None else ""
         path.write_text(
             f"citation_path: {citation_path}\n"
             "doi: needs-review\n"
@@ -868,7 +930,7 @@ class ClaimsTest(unittest.TestCase):
             "pdf:\n"
             f"  path: {pdf_path}\n"
             f"  sha256: {sha256}\n"
-            "  size: 24\n"
+            f"{size_line}"
             "title: Park HZO\n",
             encoding="utf-8",
         )
