@@ -192,7 +192,7 @@ func (h *headlessModuleSwitchHarness) renderSignature() uint64 {
 	h.t.Helper()
 
 	h.app.Frame()
-	dc := gg.NewContext(h.width, h.height)
+	dc := newOffscreenContext(h.width, h.height)
 	defer dc.Close()
 	dc.ClearWithColor(gg.RGBA{R: 0.96, G: 0.97, B: 0.96, A: 1})
 	h.app.Window().DrawTo(uirender.NewCanvas(dc, h.width, h.height))
@@ -223,7 +223,7 @@ func (h *headlessModuleSwitchHarness) renderFrame(draw func(*gg.Context)) uint64
 	h.t.Helper()
 
 	h.app.Frame()
-	dc := gg.NewContext(h.width, h.height)
+	dc := newOffscreenContext(h.width, h.height)
 	defer dc.Close()
 	draw(dc)
 	if err := dc.FlushGPU(); err != nil {
@@ -277,23 +277,15 @@ func TestDrawAppFrameUsesOnlyActiveModuleOverlay(t *testing.T) {
 	harness := newHeadlessModuleSwitchHarness(t, viewmodel.ModuleDocs)
 
 	harness.clickSidebarModule(viewmodel.ModuleHysteresis)
-	hysteresisRoot := harness.renderSignature()
 	hysteresisActiveOverlay := harness.renderActiveFrameSignature()
 	hysteresisWithInactiveCrossbar := harness.renderFrameSignatureWithOverlays(viewmodel.ModuleHysteresis, viewmodel.ModuleCrossbar)
-	if hysteresisActiveOverlay == hysteresisRoot {
-		t.Fatal("hysteresis active frame did not draw a module overlay")
-	}
 	if hysteresisActiveOverlay == hysteresisWithInactiveCrossbar {
 		t.Fatal("hysteresis active frame matched a frame with the inactive crossbar overlay")
 	}
 
 	harness.clickSidebarModule(viewmodel.ModuleCrossbar)
-	crossbarRoot := harness.renderSignature()
 	crossbarActiveOverlay := harness.renderActiveFrameSignature()
 	crossbarWithInactiveHysteresis := harness.renderFrameSignatureWithOverlays(viewmodel.ModuleCrossbar, viewmodel.ModuleHysteresis)
-	if crossbarActiveOverlay == crossbarRoot {
-		t.Fatal("crossbar active frame did not draw a module overlay")
-	}
 	if crossbarActiveOverlay == crossbarWithInactiveHysteresis {
 		t.Fatal("crossbar active frame matched a frame with the inactive hysteresis overlay")
 	}
@@ -309,10 +301,30 @@ func TestDrawAppFrameDrawsCircuitsOverlay(t *testing.T) {
 	}
 }
 
+func TestDrawAppFrameDrawsHysteresisOverlay(t *testing.T) {
+	harness := newHeadlessModuleSwitchHarness(t, viewmodel.ModuleHysteresis)
+
+	root := harness.renderSignature()
+	withOverlay := harness.renderActiveFrameSignature()
+	if withOverlay == root {
+		t.Fatal("hysteresis active frame did not draw a module overlay")
+	}
+}
+
+func TestDrawAppFrameDrawsCrossbarOverlay(t *testing.T) {
+	harness := newHeadlessModuleSwitchHarness(t, viewmodel.ModuleCrossbar)
+
+	root := harness.renderSignature()
+	withOverlay := harness.renderActiveFrameSignature()
+	if withOverlay == root {
+		t.Fatal("crossbar active frame did not draw a module overlay")
+	}
+}
+
 func TestDrawModuleOverlaysDrawsCircuitsCanvas(t *testing.T) {
 	const width = 900
 	const height = 640
-	dc := gg.NewContext(width, height)
+	dc := newOffscreenContext(width, height)
 	defer dc.Close()
 	dc.SetRGBA(0.96, 0.97, 0.96, 1)
 	dc.DrawRectangle(0, 0, width, height)
@@ -331,6 +343,31 @@ func TestDrawModuleOverlaysDrawsCircuitsCanvas(t *testing.T) {
 
 	if after == before {
 		t.Fatal("drawModuleOverlays did not draw the circuits canvas")
+	}
+}
+
+func TestDrawModuleOverlaysDrawsHysteresisCanvas(t *testing.T) {
+	const width = 900
+	const height = 640
+	dc := newOffscreenContext(width, height)
+	defer dc.Close()
+	dc.SetRGBA(0.96, 0.97, 0.96, 1)
+	dc.DrawRectangle(0, 0, width, height)
+	dc.Fill()
+	if err := dc.FlushGPU(); err != nil {
+		t.Fatalf("flush base frame: %v", err)
+	}
+	before := imageSignature(dc.Image())
+
+	model := NewAppModel(viewmodel.ModuleHysteresis)
+	drawModuleOverlays(dc, model.ActivePort().Snapshot(), width, height)
+	if err := dc.FlushGPU(); err != nil {
+		t.Fatalf("flush hysteresis overlay: %v", err)
+	}
+	after := imageSignature(dc.Image())
+
+	if after == before {
+		t.Fatal("drawModuleOverlays did not draw the hysteresis canvas")
 	}
 }
 

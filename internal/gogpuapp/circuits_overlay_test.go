@@ -7,8 +7,6 @@ import (
 
 	"fecim-lattice-tools/shared/viewmodel"
 	circuitsvm "fecim-lattice-tools/shared/viewmodel/circuits"
-
-	"github.com/gogpu/gg"
 )
 
 func TestCircuitsOverlayStateIncludesHalfSelectStress(t *testing.T) {
@@ -129,7 +127,7 @@ func TestDrawTimingWaveformStripDrawsActivePlot(t *testing.T) {
 		t.Fatal("expected active timing waveform plot")
 	}
 
-	dc := gg.NewContext(360, 160)
+	dc := newOffscreenContext(360, 160)
 	defer dc.Close()
 	dc.SetRGBA(0.04, 0.07, 0.06, 1)
 	dc.DrawRectangle(0, 0, 360, 160)

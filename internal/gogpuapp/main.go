@@ -139,7 +139,7 @@ func CaptureFrameImage(active viewmodel.ModuleID, w, h int) (image.Image, error)
 	app.SetRoot(buildRoot(model, materialTheme))
 	app.Frame()
 
-	cc := gg.NewContext(w, h)
+	cc := newOffscreenContext(w, h)
 	defer cc.Close()
 	drawAppFrame(cc, app, model.ActivePort(), w, h)
 	if err := cc.FlushGPU(); err != nil {
@@ -153,7 +153,9 @@ func drawAppFrame(cc *gg.Context, app *uiapp.App, activePort viewmodel.ModulePor
 	cc.DrawRectangle(0, 0, float64(w), float64(h))
 	cc.Fill()
 	if app != nil {
+		cc.Push()
 		app.Window().DrawTo(uirender.NewCanvas(cc, w, h))
+		cc.Pop()
 	}
 	if activePort != nil {
 		drawModuleOverlays(cc, activePort.Snapshot(), w, h)
