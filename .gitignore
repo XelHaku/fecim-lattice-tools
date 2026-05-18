@@ -14,6 +14,10 @@
 # Test binaries
 *.test
 
+# Python caches
+__pycache__/
+*.py[cod]
+
 # Output of go coverage
 *.out
 /logs

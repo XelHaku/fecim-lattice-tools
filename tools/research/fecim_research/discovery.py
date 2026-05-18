@@ -39,12 +39,14 @@ def discover_pdfs(root: Path, extra_paths: list[Path]) -> list[DiscoveredPDF]:
     paths: set[Path] = set()
     for pattern in DEFAULT_PDF_GLOBS:
         paths.update(root.glob(pattern))
+        if pattern.endswith(".pdf"):
+            paths.update(root.glob(pattern[:-4] + ".PDF"))
     for extra in extra_paths:
         base = extra if extra.is_absolute() else root / extra
         if base.is_file() and base.suffix.lower() == ".pdf":
             paths.add(base)
         elif base.is_dir():
-            paths.update(base.rglob("*.pdf"))
+            paths.update(path for path in base.rglob("*") if path.suffix.lower() == ".pdf")
     out: list[DiscoveredPDF] = []
     for path in sorted(paths):
         if not path.is_file():
@@ -56,6 +58,9 @@ def discover_pdfs(root: Path, extra_paths: list[Path]) -> list[DiscoveredPDF]:
 def match_pdf_to_record(pdf: DiscoveredPDF, records: dict[str, CitationRecord]) -> PDFMatch:
     stem = pdf.path.stem.lower()
     for key in sorted(records):
-        if stem == key.lower() or key.lower() in stem:
+        if stem == key.lower():
+            return PDFMatch(status="matched", paper_key=key, method="filename", confidence=0.95)
+    for key in sorted(records, key=lambda item: (-len(item), item)):
+        if key.lower() in stem:
             return PDFMatch(status="matched", paper_key=key, method="filename", confidence=0.95)
     return PDFMatch(status="unmatched", paper_key=None, method="none", confidence=0.0)

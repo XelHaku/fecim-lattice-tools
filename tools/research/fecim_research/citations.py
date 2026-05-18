@@ -4,6 +4,7 @@ import re
 
 
 FIELD_RE = re.compile(r"^\*\*(?P<name>[^*]+):\*\*\s*`?(?P<value>[^`\n]+)`?", re.MULTILINE)
+H1_RE = re.compile(r"^#\s+(?P<title>.+)$", re.MULTILINE)
 
 
 @dataclass(frozen=True)
@@ -22,6 +23,13 @@ def _fields(text: str) -> dict[str, str]:
     return out
 
 
+def _h1_title(text: str) -> str:
+    match = H1_RE.search(text)
+    if match is None:
+        return ""
+    return match.group("title").strip()
+
+
 def load_citation_records(root: Path) -> dict[str, CitationRecord]:
     records: dict[str, CitationRecord] = {}
     papers_dir = root / "citations" / "papers"
@@ -34,7 +42,7 @@ def load_citation_records(root: Path) -> dict[str, CitationRecord]:
         records[key] = CitationRecord(
             key=key,
             path=path,
-            title=fields.get("title", ""),
+            title=fields.get("title", "") or _h1_title(text),
             doi=fields.get("doi", ""),
             arxiv_id=fields.get("arxiv", ""),
         )
