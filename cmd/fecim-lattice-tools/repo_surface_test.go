@@ -117,6 +117,29 @@ func TestLivingGuidanceUsesCanonicalGogpuSurface(t *testing.T) {
 	}
 }
 
+func TestGogpuGateHasNextUICompatibilityAlias(t *testing.T) {
+	root := repoRootForRepoSurface()
+	body, err := os.ReadFile(filepath.Join(root, "Makefile"))
+	if err != nil {
+		t.Fatalf("read Makefile: %v", err)
+	}
+	text := string(body)
+	if !strings.Contains(text, "test-gogpu-ui:") {
+		t.Fatal("Makefile must expose canonical test-gogpu-ui gate")
+	}
+	if !strings.Contains(text, "test-next-ui: test-gogpu-ui") {
+		t.Fatal("Makefile must keep test-next-ui as a compatibility alias for the canonical gogpu/ui gate")
+	}
+	phonyStart := strings.Index(text, ".PHONY:")
+	if phonyStart < 0 {
+		t.Fatal("Makefile missing .PHONY declaration")
+	}
+	phonyLine := strings.SplitN(text[phonyStart:], "\n", 2)[0]
+	if !strings.Contains(phonyLine, "test-gogpu-ui") || !strings.Contains(phonyLine, "test-next-ui") {
+		t.Fatalf(".PHONY must include both gogpu gate names, got %q", phonyLine)
+	}
+}
+
 func TestPublicGettingStartedDocsPresentGogpuAsDefault(t *testing.T) {
 	root := repoRootForRepoSurface()
 	staleFyneImportError := "**Error:** `cannot find package \"" + "fyne.io/" + "fyne/v2\"`"
