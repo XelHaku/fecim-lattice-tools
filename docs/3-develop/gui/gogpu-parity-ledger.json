@@ -118,13 +118,14 @@
       ],
       "gogpu_surfaces": [
         "shared/viewmodel/circuits",
-        "internal/gogpuapp/circuits_view.go"
+        "internal/gogpuapp/circuits_view.go",
+        "internal/gogpuapp/circuits_overlay.go"
       ],
       "evidence": [
         "go test ./shared/viewmodel/circuits -count=1",
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run Circuits -count=1"
       ],
-      "notes": "Gogpu exposes circuit metrics, sections, and the unified control contract. The full interactive unified canvas, circuit path overlays, half-select/stress/PVT investigations, logs, reference-spec workflows, and detailed visual interactions need parity decisions."
+      "notes": "Gogpu exposes circuit metrics, sections, unified controls, and a state-responsive unified canvas overlay. Half-select/stress/PVT investigations, logs, reference-spec workflows, and detailed visual interactions need parity decisions."
     },
     {
       "module": "circuits",
@@ -150,6 +151,28 @@
         "CGO_ENABLED=0 go test ./internal/gogpuapp -run Circuits -count=1"
       ],
       "notes": "This ports the shared gogpu/viewmodel control vocabulary and state transitions. It does not claim parity for the animated circuit canvas, overlays, logs, or deep investigation panels tracked by the broader circuits gap entry."
+    },
+    {
+      "module": "circuits",
+      "feature": "Unified canvas overlay for selected array/cell, read/write/compute path state, and last-operation feedback",
+      "status": "ported",
+      "legacy_sources": [
+        "module4-circuits/pkg/gui/tab_unified_canvas.go",
+        "module4-circuits/pkg/gui/tab_unified_drawing.go",
+        "module4-circuits/pkg/gui/drawing.go",
+        "module4-circuits/pkg/gui/overlay_helpers.go",
+        "module4-circuits/pkg/gui/unified/overlay/..."
+      ],
+      "gogpu_surfaces": [
+        "internal/gogpuapp/circuits_overlay.go",
+        "internal/gogpuapp/main.go",
+        "shared/viewmodel/circuits/snapshot.go"
+      ],
+      "evidence": [
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -run 'DrawModuleOverlaysDrawsCircuitsCanvas|CircuitsOverlayRespondsToViewmodelState|DrawAppFrameDrawsCircuitsOverlay' -count=1",
+        "CGO_ENABLED=0 go test ./internal/gogpuapp -count=1"
+      ],
+      "notes": "This ports a gogpu-rendered operational canvas fed by snapshot metrics. It does not claim parity for all legacy overlay submodes, logs, stress investigations, or reference-spec panels."
     },
     {
       "module": "comparison",

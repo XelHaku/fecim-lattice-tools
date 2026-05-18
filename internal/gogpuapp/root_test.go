@@ -17,6 +17,7 @@ import (
 	"github.com/gogpu/ui/widget"
 
 	"fecim-lattice-tools/shared/viewmodel"
+	circuitsvm "fecim-lattice-tools/shared/viewmodel/circuits"
 )
 
 func TestBuildRootInstallsInHeadlessApp(t *testing.T) {
@@ -295,5 +296,75 @@ func TestDrawAppFrameUsesOnlyActiveModuleOverlay(t *testing.T) {
 	}
 	if crossbarActiveOverlay == crossbarWithInactiveHysteresis {
 		t.Fatal("crossbar active frame matched a frame with the inactive hysteresis overlay")
+	}
+}
+
+func TestDrawAppFrameDrawsCircuitsOverlay(t *testing.T) {
+	harness := newHeadlessModuleSwitchHarness(t, viewmodel.ModuleCircuits)
+
+	root := harness.renderSignature()
+	withOverlay := harness.renderActiveFrameSignature()
+	if withOverlay == root {
+		t.Fatal("circuits active frame did not draw a module overlay")
+	}
+}
+
+func TestDrawModuleOverlaysDrawsCircuitsCanvas(t *testing.T) {
+	const width = 900
+	const height = 640
+	dc := gg.NewContext(width, height)
+	defer dc.Close()
+	dc.SetRGBA(0.96, 0.97, 0.96, 1)
+	dc.DrawRectangle(0, 0, width, height)
+	dc.Fill()
+	if err := dc.FlushGPU(); err != nil {
+		t.Fatalf("flush base frame: %v", err)
+	}
+	before := imageSignature(dc.Image())
+
+	model := NewAppModel(viewmodel.ModuleCircuits)
+	drawModuleOverlays(dc, model.ActivePort().Snapshot(), width, height)
+	if err := dc.FlushGPU(); err != nil {
+		t.Fatalf("flush circuits overlay: %v", err)
+	}
+	after := imageSignature(dc.Image())
+
+	if after == before {
+		t.Fatal("drawModuleOverlays did not draw the circuits canvas")
+	}
+}
+
+func TestCircuitsOverlayRespondsToViewmodelState(t *testing.T) {
+	harness := newHeadlessModuleSwitchHarness(t, viewmodel.ModuleCircuits)
+	port := harness.portFor(viewmodel.ModuleCircuits)
+
+	before := harness.renderActiveFrameSignature()
+	if err := port.ApplyAction(viewmodel.Action{
+		ID:   circuitsvm.ActionResizeArray,
+		Kind: viewmodel.ActionSelect,
+		Payload: map[string]string{
+			"rows": "32",
+			"cols": "32",
+		},
+	}); err != nil {
+		t.Fatalf("resize circuits array: %v", err)
+	}
+	if err := port.ApplyAction(viewmodel.Action{
+		ID:   circuitsvm.ActionSelectCell,
+		Kind: viewmodel.ActionSelect,
+		Payload: map[string]string{
+			"row": "31",
+			"col": "30",
+		},
+	}); err != nil {
+		t.Fatalf("select circuits cell: %v", err)
+	}
+	if err := port.ApplyAction(viewmodel.Action{ID: circuitsvm.ActionRunCompute, Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("run circuits compute: %v", err)
+	}
+
+	after := harness.renderActiveFrameSignature()
+	if after == before {
+		t.Fatal("circuits overlay did not change after array, selected-cell, and mode state changed")
 	}
 }

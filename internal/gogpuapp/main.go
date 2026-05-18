@@ -174,6 +174,8 @@ func drawModuleOverlays(cc *gg.Context, snapshot viewmodel.ModuleSnapshot, w, h 
 		}
 	case viewmodel.ModuleCrossbar:
 		drawCrossbarOverlay(cc, snapshot, 8, 8, w, h)
+	case viewmodel.ModuleCircuits:
+		drawCircuitsOverlay(cc, snapshot, w, h)
 	}
 }
 
