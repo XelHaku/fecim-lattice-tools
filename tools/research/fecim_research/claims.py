@@ -218,9 +218,28 @@ def _audit_citation_pdf_paths(
                 "use not stored until promoted"
             )
             continue
-        if not (root / pdf_path).is_file():
+        pdf_file = root / pdf_path
+        if not pdf_file.is_file():
             errors.append(f"{rel_path} PDF path {pdf_path} does not exist")
             continue
+        fields = _parse_markdown_fields(path)
+        expected_sha = fields.get("sha256", "").strip()
+        if expected_sha:
+            actual_sha = _sha256_file(pdf_file)
+            if expected_sha != actual_sha:
+                errors.append(
+                    f"{rel_path} SHA256 {expected_sha} does not match actual {actual_sha}"
+                )
+        expected_size = fields.get("size", "").strip()
+        if expected_size:
+            try:
+                size = int(expected_size)
+            except ValueError:
+                errors.append(f"{rel_path} Size must be an integer byte count")
+            else:
+                actual_size = pdf_file.stat().st_size
+                if size != actual_size:
+                    errors.append(f"{rel_path} Size {size} does not match actual {actual_size}")
         if not _has_promotion_ledger(root, path.stem):
             backlog_entry = pdf_review_backlog.get(path.stem)
             if not backlog_entry or str(backlog_entry.get("pdf_path", "")).strip() != pdf_path:

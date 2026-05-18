@@ -183,6 +183,38 @@ class ClaimsTest(unittest.TestCase):
                 "\n".join(report.errors),
             )
 
+    def test_audit_fails_when_citation_pdf_metadata_is_stale(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_bytes = b"%PDF-1.7\ncitation metadata\n"
+            actual_sha = hashlib.sha256(pdf_bytes).hexdigest()
+            actual_size = len(pdf_bytes)
+            pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(pdf_bytes)
+            rel_pdf = "docs/4-research/papers/park2015_advmat_hzo.pdf"
+            self._write_paper(
+                root,
+                "park2015_advmat_hzo",
+                pdf=rel_pdf,
+                sha256="stale-digest",
+                size=str(actual_size + 1),
+            )
+            self._write_pdf_review_backlog(root, "park2015_advmat_hzo", rel_pdf, actual_sha)
+
+            report = audit_claim_registry(root)
+
+            errors = "\n".join(report.errors)
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "citations/papers/park2015_advmat_hzo.md SHA256 stale-digest does not match actual",
+                errors,
+            )
+            self.assertIn(
+                f"citations/papers/park2015_advmat_hzo.md Size {actual_size + 1} does not match actual {actual_size}",
+                errors,
+            )
+
     def test_audit_fails_when_tracked_citation_pdf_lacks_promotion_or_backlog(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -718,13 +750,17 @@ class ClaimsTest(unittest.TestCase):
         pdf: str = "not stored",
         doi: str = "",
         openalex_id: str = "",
+        sha256: str = "",
+        size: str = "",
     ):
         path = root / "citations" / "papers" / f"{key}.md"
         path.parent.mkdir(parents=True, exist_ok=True)
         doi_line = f"**DOI:** `{doi}`\n" if doi else ""
         openalex_line = f"**OpenAlex:** `{openalex_id}`\n" if openalex_id else ""
+        sha256_line = f"**SHA256:** `{sha256}`\n" if sha256 else ""
+        size_line = f"**Size:** `{size}`\n" if size else ""
         path.write_text(
-            f"**Key:** `{key}`\n{doi_line}{openalex_line}**PDF:** `{pdf}`\n",
+            f"**Key:** `{key}`\n{doi_line}{openalex_line}**PDF:** `{pdf}`\n{sha256_line}{size_line}",
             encoding="utf-8",
         )
 
