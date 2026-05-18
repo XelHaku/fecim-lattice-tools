@@ -26,7 +26,7 @@ This file is the cross-paper index for facts used by FeCIM Lattice Tools. Facts 
 
 ### HZO (Si-doped, 10nm, Park 2015)
 
-- **Pr** = `24` `µC/cm²`
+- **Pr** = `24` `µC/cm²` [claim: hzo-remanent-polarization-range]
   - Source: Park et al., Adv. Mater. 27, 1811 (2015), Fig 2a
   - Conditions: 10 nm, TiN electrodes, Si-doped, RT, 1 kHz
   - Evidence: peer-reviewed
@@ -38,19 +38,19 @@ This file is the cross-paper index for facts used by FeCIM Lattice Tools. Facts 
   - Evidence: peer-reviewed
   - Literature range: 0.8-1.5 MV/cm
 
-- **Pr/Ec range** = `Pr: 15-34 µC/cm², Ec: 0.8-1.5 MV/cm`
+- **Pr/Ec range** = `Pr: 15-34 µC/cm², Ec: 0.8-1.5 MV/cm` [claim: hzo-remanent-polarization-range]
   - Source: Park et al., Adv. Mater. 27, 1811 (2015) — doping/temperature study
   - Evidence: peer-reviewed
 
 ### HZO LGD Coefficients (Materlik 2015)
 
-- **β** = `-6.720e8` `J·m⁵/C⁴`
+- **β** = `-6.720e8` `J·m⁵/C⁴` [claim: materlik-lgd-coefficients]
   - Source: Materlik et al., J. Appl. Phys. 117, 134109 (2015), Table I
   - Conditions: DFT, 0K, orthorhombic Pca21 HfO2
   - Evidence: peer-reviewed
   - Negative β → first-order phase transition
 
-- **γ** = `1.950e10` `J·m⁹/C⁶`
+- **γ** = `1.950e10` `J·m⁹/C⁶` [claim: materlik-lgd-coefficients]
   - Source: same as β
   - Evidence: peer-reviewed
 

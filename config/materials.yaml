@@ -141,7 +141,7 @@ materials:
     analog_states: 30           # Standard HZO achieves ~30 discrete states
     target_range_frac: 0.90    # Back-off from saturation for level mapping
 
-    # Polarization parameters [1][4]
+    # Polarization parameters [1][4] [claim: hzo-remanent-polarization-range]
     pr_c_m2: 0.245              # Remanent polarization (C/m²) = 24.5 µC/cm² midpoint of Park et al. 2015 range
     ps_c_m2: 0.30               # Saturation polarization (C/m²) = 30 µC/cm²
 
@@ -180,7 +180,7 @@ materials:
     # k_dep ≈ (epsilon_fe/epsilon_dead) * (d_dead/d_fe).
     depolarization_factor_vm_c: 2.5e8  # Educational assumed value; typical HZO stack-model range ~1-5×10^8 V·m/C (e.g., Hoffmann et al., Adv. Funct. Mater., 2016)
 
-    # Landau-Khalatnikov parameters (Materlik et al., J. Appl. Phys. 117, 134109 (2015), doi:10.1063/1.4916229) for β/γ; ρ kept as calibrated damping
+    # Landau-Khalatnikov parameters (Materlik et al., J. Appl. Phys. 117, 134109 (2015), doi:10.1063/1.4916229) for β/γ; ρ kept as calibrated damping [claim: materlik-lgd-coefficients]
     thermodynamics:
       beta_landau: -6.720e8     # First-order barrier (Negative) [J m^5 / C^4]
       gamma_landau: 1.950e10    # Stability (Positive) [J m^9 / C^6]

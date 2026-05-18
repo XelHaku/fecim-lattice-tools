@@ -35,9 +35,16 @@ Tracked ledger outputs:
 - `extracted/`
 - `graphs/`
 - `manifests/`
-- `reports/`
+- `reports/` includes latest acquisition and claim-audit JSON reports
 - `index/` stores rebuildable cache manifests and lightweight placeholders;
   bulky cache contents are ignored.
+
+Claim audit:
+
+- Reviewed claim records live in `citations/claims/*.yaml`.
+- Files listed in each record's `used_in` field must contain `[claim: id]`.
+- Run `make research-audit` before promoting literature-backed statements into
+  facts, config defaults, or trust documentation.
 
 Ignored rebuildable caches:
 

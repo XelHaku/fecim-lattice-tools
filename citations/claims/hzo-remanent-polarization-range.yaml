@@ -1,0 +1,10 @@
+id: hzo-remanent-polarization-range
+claim: Park 2015 reports Si-doped 10 nm HZO remanent polarization near 24 uC/cm2 and supports the project HZO Pr/Ec literature range.
+status: literature-backed
+sources:
+  - park2015_advmat_hzo
+used_in:
+  - citations/facts.md
+  - config/materials.yaml
+  - docs/TRUST.md
+confidence: medium

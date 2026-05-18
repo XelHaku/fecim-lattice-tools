@@ -61,6 +61,9 @@ func TestRootUsageListsResearchSubcommand(t *testing.T) {
 	if !strings.Contains(text, "research acquire --doi") {
 		t.Fatalf("root usage must include new DOI acquisition example:\n%s", text)
 	}
+	if !strings.Contains(text, "research audit") {
+		t.Fatalf("root usage must include research audit example:\n%s", text)
+	}
 }
 
 func TestRunResearchToolFindsRepoRootWhenCalledOutsideRepo(t *testing.T) {

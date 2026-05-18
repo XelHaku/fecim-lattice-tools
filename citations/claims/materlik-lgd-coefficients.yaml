@@ -1,0 +1,10 @@
+id: materlik-lgd-coefficients
+claim: Materlik 2015 reports HfO2 LGD beta and gamma coefficients used as HZO Landau-Khalatnikov thermodynamic anchors.
+status: literature-backed
+sources:
+  - materlik2015_jap_hfo2_origin
+used_in:
+  - citations/facts.md
+  - config/materials.yaml
+  - docs/TRUST.md
+confidence: medium
