@@ -18,6 +18,7 @@ func TestResearchLedgerLayoutExists(t *testing.T) {
 		"research/graphs",
 		"research/manifests",
 		"research/reports",
+		"research/index",
 		"citations/claims",
 	}
 	for _, dir := range requiredDirs {

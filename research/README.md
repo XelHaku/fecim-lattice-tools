@@ -9,6 +9,7 @@ manifests.
 
 Tracked:
 
+- `papers/` stores source PDFs and downloaded paper files before parsing.
 - `sources/`
 - `parsed/`
 - `chunks/`
@@ -16,6 +17,8 @@ Tracked:
 - `graphs/`
 - `manifests/`
 - `reports/`
+- `index/` stores rebuildable cache manifests and lightweight placeholders;
+  bulky cache contents are ignored.
 
 Ignored rebuildable caches:
 
