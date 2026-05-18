@@ -19,6 +19,7 @@ class CLITest(unittest.TestCase):
         self.assertIn("graph", text)
         self.assertIn("ingest", text)
         self.assertIn("index", text)
+        self.assertIn("rebuild", text)
         self.assertIn("search", text)
 
     def test_acquire_help_lists_doi_option(self):
@@ -27,6 +28,13 @@ class CLITest(unittest.TestCase):
             main(["acquire", "--help"])
         self.assertEqual(ctx.exception.code, 0)
         self.assertIn("--doi", out.getvalue())
+
+    def test_rebuild_help_lists_skip_index_option(self):
+        out = io.StringIO()
+        with self.assertRaises(SystemExit) as ctx, redirect_stdout(out):
+            main(["rebuild", "--help"])
+        self.assertEqual(ctx.exception.code, 0)
+        self.assertIn("--skip-index", out.getvalue())
 
     def test_unknown_command_fails(self):
         with self.assertRaises(SystemExit) as ctx:
@@ -41,6 +49,7 @@ class CLITest(unittest.TestCase):
         import fecim_research.graphing
         import fecim_research.ingest
         import fecim_research.indexing
+        import fecim_research.rebuild
         import fecim_research.searching
 
         self.assertTrue(hasattr(fecim_research.acquisition, "run_acquire"))
@@ -50,6 +59,7 @@ class CLITest(unittest.TestCase):
         self.assertTrue(hasattr(fecim_research.graphing, "run_graph"))
         self.assertTrue(hasattr(fecim_research.ingest, "run_ingest"))
         self.assertTrue(hasattr(fecim_research.indexing, "run_index"))
+        self.assertTrue(hasattr(fecim_research.rebuild, "run_rebuild"))
         self.assertTrue(hasattr(fecim_research.searching, "run_search"))
 
 

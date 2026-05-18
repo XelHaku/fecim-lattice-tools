@@ -1,0 +1,412 @@
+{
+  "unmatched": [
+    {
+      "path": "docs/4-research/papers/by-topic/01-ferroelectric-materials/Siannas_2022_Metastable_ferroelectricity.pdf",
+      "sha256": "cbf833703c3cb89599c2417a20adf50cb49eacf4acc06c57f751f67500ac51f0",
+      "size": 2808004,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/01-ferroelectric-materials/TDGL_Ferroelectric_Domains_arXiv.pdf",
+      "sha256": "72d2099d61e52e05e5631de3494625ebb63163e1bd7097d0bc113e4db85736d2",
+      "size": 18592470,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/01-ferroelectric-materials/adaptive_control_epitaxial_hfo2_zro2_2025.pdf",
+      "sha256": "05c5f16d864a63784d95c4db0846489c41c2772f105c540d1089783675c4941a",
+      "size": 9046880,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/01-ferroelectric-materials/atomistic_landau_ferroelectric_md_2022.pdf",
+      "sha256": "cd60a86aac1ed866bd7388ad053c05bcfd9929e282051a26699d0821c3df9dbd",
+      "size": 23078200,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/01-ferroelectric-materials/dual_bit_fefet_enhanced_storage_2025.pdf",
+      "sha256": "523224d895d2120d2390529a8f2dc3f09d0ecaf2cb67c20ffc78328bd3ebcd95",
+      "size": 1520683,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/01-ferroelectric-materials/first_principles_HfO2_ferroelectric_2024.pdf",
+      "sha256": "1fa60ea6f0cadae2558eadbcf0816becff077e7ca10c9d5d7b8611d931615d93",
+      "size": 1989001,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/01-ferroelectric-materials/hfo2_computational_understanding_2024.pdf",
+      "sha256": "9a15f774d99eaf804a1eae57a080966b1aeb75f7de2bbb68b2eadbaa330fa7eb",
+      "size": 5601149,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/01-ferroelectric-materials/hfzro_ftj_polarization_2024.pdf",
+      "sha256": "344cb2b90972a82987fe916a343bd910eb6c463df92a515e1513f81bad096550",
+      "size": 593246,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/01-ferroelectric-materials/hzo_superlattice_firstprinciples_2024.pdf",
+      "sha256": "c29c22c783b56d5a8cf6ac217e4d5960519c07472a8dd9b7ae08674d76e7b90d",
+      "size": 3524173,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/01-ferroelectric-materials/in2se3_silicon_compatible_2025.pdf",
+      "sha256": "3620eb21aabf5d4a3eabdfae33c0d194b84bc4aa1295f406859f0aeda61c4ea7",
+      "size": 3639736,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/01-ferroelectric-materials/physical_reality_preisach_2018.pdf",
+      "sha256": "4f6bf7da2c40194902a3ad74169ef2bc9e0897bb0dc5d957425691a79b9c6aac",
+      "size": 1466632,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/01-ferroelectric-materials/sliding_ferroelectrics_review_2025.pdf",
+      "sha256": "eed4aec2826b9a7fd30f00b5284036fbc5a52560a33d0e6e3c87c0a6461bc2de",
+      "size": 4376065,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/01-ferroelectric-materials/transition_state_landau_ferroelectric_2024.pdf",
+      "sha256": "4a3448f1ea56cbbe5542a3d339ad7f87b151f2adbcce8d1cdaa4f8b7d3363ba4",
+      "size": 489778,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/02-training-algorithms/aimc_accuracy_post_training_2024.pdf",
+      "sha256": "a53cab2b5a31389fb7a953bdecc2e04292f3376fe3f5eb20ff69993dc1e6b1f8",
+      "size": 3077995,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/03-simulation-tools/IBM_AIHWKit_arXiv_2307.09357.pdf",
+      "sha256": "6dafcc472dc8c933c5012a197f9da463eacadadddabdae861543aaf155a8a44f",
+      "size": 11650561,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/03-simulation-tools/compass_compiler_framework_2025.pdf",
+      "sha256": "2fd289c9b4e91717d747ba50262e769e590abe896059c101566abf412ca81081",
+      "size": 3130436,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/03-simulation-tools/ferrox_hzo_polycrystalline_2024.pdf",
+      "sha256": "61032d28bf22f516bed5d3648174d295ebb7c52f788fe9437708a398a99fb27d",
+      "size": 5417863,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/04-cim-architectures/3D_FeFET_Architectures_2025.pdf",
+      "sha256": "970c7f9f3ec6e5ed2722df6d23338f13fa73cd0639832d4b74bdedfed091f60b",
+      "size": 2405417,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/04-cim-architectures/Analog_AI_Accelerators_Survey_arXiv.pdf",
+      "sha256": "a2173d556d4753794676f8ab17c832705436f9bf3e95d46039e4c22143448e02",
+      "size": 802853,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/04-cim-architectures/Analog_AI_Promise_arXiv.pdf",
+      "sha256": "b7409bda04a0f2a8ed48feb254985d647b731cee79670b264ac1dda15b6c085e",
+      "size": 507634,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/04-cim-architectures/Analog_CIM_Energy_Efficiency_arXiv.pdf",
+      "sha256": "76465a0440df335b2c52c7e7e7fe3874840a012c9a52578eab00fe2e0c9cd77e",
+      "size": 3527800,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/04-cim-architectures/Crossbar_Sneak_Path_Analysis_arXiv.pdf",
+      "sha256": "fafece7a8477aeea47c261174ec3569515fcefc6eea7e11cca2f3ee4b1c69ada",
+      "size": 523405,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/04-cim-architectures/FTJ_Crossbar_Experiment_arXiv.pdf",
+      "sha256": "974f398056fb5011a9813f0c3aa6a7d29bda4d40f5e35f10c60d47ed89eae293",
+      "size": 1685967,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/04-cim-architectures/Memristor_CIM_Survey_arXiv.pdf",
+      "sha256": "e037745ba082946e77c74d5b75e4869eb4eb7d977cc7f02aea39de2857474e4c",
+      "size": 5315853,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/04-cim-architectures/Multi_Level_FeFET_Programming_arXiv.pdf",
+      "sha256": "a8d4027beb4a32d01b4f1e4d20bfae46c404344b3d13d9fdff23cdc09952eaba",
+      "size": 2769040,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/04-cim-architectures/Neuromorphic_Hardware_Vision_Systems_arXiv.pdf",
+      "sha256": "f84e194aea3cf6696ccdfd9edf2527ac65426854ce51605152dd9bab736e75a5",
+      "size": 387930,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/04-cim-architectures/adc_precision_cim_accuracy_2024.pdf",
+      "sha256": "fa4b5d183461915d1883b5a15a05cd6d10d83b2095ac9ccac93937527f2b2f44",
+      "size": 3489301,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/04-cim-architectures/charge_cam_oneshot_2025.pdf",
+      "sha256": "4f9ecca972a4e1c194a1c9b9df4c08ab6122480ca1dd2e2ca0165a654491a242",
+      "size": 1858515,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/04-cim-architectures/cim_landscape_overview_2024.pdf",
+      "sha256": "4c707de597e8039c4c0f4b14ee4e870d29f6ef9b7dccdc2326075d27c6286fc6",
+      "size": 20991665,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/04-cim-architectures/fecap_fefet_cim_elements_2024.pdf",
+      "sha256": "706da94a0b5d1f753528cbb510924fac19e292a8bc8c972e89ce1dcacff2e863",
+      "size": 6603525,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/04-cim-architectures/fecim_annealer_2024.pdf",
+      "sha256": "b76bf0c9518ce2463467088616654b9a117eeccd9f2d67c2b971ecbbb9d7d04f",
+      "size": 3711742,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/04-cim-architectures/memory_tech_crossbar_dnn_accuracy_2024.pdf",
+      "sha256": "ce931221e7fc677be8188d1798cc078d8f6eeadcae09252da9dbf6590f82a6b4",
+      "size": 600606,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/04-cim-architectures/multilevel_fefet_crossbar_2023.pdf",
+      "sha256": "41a24a46198d94644faefd873c93bfd40b85a8cd6598629edd58f57a93fec63b",
+      "size": 1752495,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/04-cim-architectures/pruning_adc_efficiency_crossbar_2024.pdf",
+      "sha256": "649eb9f34b2b8a59d44911882fd6a6b92cb3198087549da811a58527e02e0df8",
+      "size": 6279486,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/04-cim-architectures/simple_packing_algorithm_nvm_2024.pdf",
+      "sha256": "6b740b1e1a3ebdabdd7707083066f035fd06c984cb4681390fe44adae1c01bf9",
+      "size": 1131246,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/04-cim-architectures/sneak_path_self_rectifying_arrays_2022.pdf",
+      "sha256": "37e80924ca594714a7e17b4b8788d2fff70bd05171127c11eff901331b46f4b9",
+      "size": 2500777,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/05-neuromorphic/2D_Ferroelectric_Materials_Review_arXiv.pdf",
+      "sha256": "5fa9ffde4dc80db830ddf0c837716bdd655d9b1ea1fa93150aba462c9922c2bf",
+      "size": 1638221,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/05-neuromorphic/2d_spintronics_neuromorphic_2024.pdf",
+      "sha256": "1f769ba6c6e4f4d82fac3397f8c400f4577ca73e3e8a93012f9ab76b116063f1",
+      "size": 9823933,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/05-neuromorphic/ferroelectric_synaptic_transistors_review_2024.pdf",
+      "sha256": "0d932d679ae53920d025a664b2eb4e3abafbe85d14fcf317457798a18b7d0132",
+      "size": 1055480,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/06-photonic-computing/mirage_rns_photonic_training_2024.pdf",
+      "sha256": "60a769c3a30c0e045b0dd088bc021102b0be9edadb2ed3d482259690e6daee42",
+      "size": 933067,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/06-photonic-computing/optical_computing_dnn_survey_2024.pdf",
+      "sha256": "61eb1332857f0bb077a55b824f46ecb24dd2bdc22d6d084d4612b970b8e56e0e",
+      "size": 4117902,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/06-photonic-computing/photonic_dnn_architecture_modeling_2024.pdf",
+      "sha256": "8d2c23a499d349ac91be172d06815e1e7e29fe3cc6ac605f9a72518eb096729c",
+      "size": 910737,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/07-memory-architectures/3d_memory_side_acceleration_2024.pdf",
+      "sha256": "24c2f6cd134d80c5aec303ac115018ef255573b52791a5f8c128cb21d89ef253",
+      "size": 260739,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/08-industry-reports/Edge_AI_Accelerators_Survey_arXiv.pdf",
+      "sha256": "25b8c6360f1efb52843c836d9b2e6dbdcaf8c8c4f28dc787dfd36a9d70060740",
+      "size": 152966,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/08-industry-reports/Tsinghua_Face_Classification_NatureComms_2025.pdf",
+      "sha256": "3a30b441b17251529143924da18c03bf83c4307f84aaf59d833b595df5ba11a4",
+      "size": 1741699,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/09-reviews-surveys/fecap_memories_review_2025.pdf",
+      "sha256": "28f65b5d652745b24d9b8a378fc0a1d8391ea6b18310e6e135eba69ac3b6b835",
+      "size": 6395905,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/09-reviews-surveys/fecim_applications_review_2025.pdf",
+      "sha256": "9d7e92d1e2eac330fabdd81d0a5c05d2005ed58f865d90c437bfc315fedad3e4",
+      "size": 13115661,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/09-reviews-surveys/in_memory_computing_dnn_survey_2023.pdf",
+      "sha256": "79f029d8f29cf6ecdd5c25b251a7a6c23cebb71e174f927197d98d9449e2cf7b",
+      "size": 3803727,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/11-reservoir-computing/all_ferroelectric_reservoir_computing_2023.pdf",
+      "sha256": "2a4ddd1ac3b609e09d84bd236965708a4d696f84639fac0151ba8dfc7257411e",
+      "size": 1450827,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/11-reservoir-computing/analog_rc_ferroelectric_mpb_transistors_2024.pdf",
+      "sha256": "bcdfb8912e2a8a6e3b323cb7278338fe119479fe3d201f2e5e9f266ec3fc7f88",
+      "size": 4680857,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/11-reservoir-computing/reservoir_computing_tunable_2025.pdf",
+      "sha256": "4cbefbc60f98a04a93e3b93456ba5e91a9266f7e88d7c42c7c06322366d661f5",
+      "size": 1895122,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/12-spiking-neural-networks/contemporary_spiking_bioinspired_2024.pdf",
+      "sha256": "65e3863aba7b91ad8e63382d34cf82ba432cef4ea710d58cdfc7008397184325",
+      "size": 25182560,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/12-spiking-neural-networks/low_cost_neuromorphic_learning_engine_2023.pdf",
+      "sha256": "9004760f3126ce80387bd64235c2e39bdb186fab6e8c5302835f86e8889d8d39",
+      "size": 2131281,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/12-spiking-neural-networks/snn_architecture_search_survey_2025.pdf",
+      "sha256": "dff492bb642b36fbd6d166200030a2df67d5b967cf27fb26951e79d052059876",
+      "size": 6834501,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/13-in-memory-training/fast_robust_analog_inmem_training_2024.pdf",
+      "sha256": "dc968e85e46585fad97ed686edf521a3a0881b415d2669d0b575b9ca127079ff",
+      "size": 3292510,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/13-in-memory-training/inmemory_differentiator_2025.pdf",
+      "sha256": "df01c77234ddb7ef28e64b321732262cd623dee121e5889c6485a71c827b6701",
+      "size": 3519086,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/14-transformer-llm-accelerators/analog_digital_hybrid_attention_2024.pdf",
+      "sha256": "991b792610c713a1071e1bbc13696960411d160048d662ad700aa592cfef242f",
+      "size": 1353770,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/14-transformer-llm-accelerators/famous_fpga_attention_accelerator_2024.pdf",
+      "sha256": "50aa0d05e4525efd7d6041951c9f727a3c5f7dcc94941ab8d12605a9ca186c93",
+      "size": 544919,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/14-transformer-llm-accelerators/hardware_acceleration_llm_survey_2024.pdf",
+      "sha256": "74e752a314900246f74151ad052f8605744afba9a361da2450185d3bf209d7fa",
+      "size": 1199588,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/14-transformer-llm-accelerators/memristor_transformer_self_attention_2024.pdf",
+      "sha256": "c1793406c9ecba212baf2a2cb608edfbead4039dc6dad30ab3012886650f6dd9",
+      "size": 4026605,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/15-3d-stacking-architectures/highly_scaled_3d_fefet_array_2023.pdf",
+      "sha256": "de2c0f0516484bda58e591f77df61cb598b3620d2269e56a226ed22e9212070b",
+      "size": 1300625,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/16-photonic-ferroelectric-hybrids/ann_photonic_algorithms_implementation_2024.pdf",
+      "sha256": "5d8df639220bc72c1c895b6e8554841c3b8b54a88a84396a8e904cdc5e7bcdcc",
+      "size": 2135123,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/16-photonic-ferroelectric-hybrids/optical_neural_networks_progress_2024.pdf",
+      "sha256": "cd505bd021c650a98698604b16b99f1279d034b0040edf1c102d2d801d8c137a",
+      "size": 7754059,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/16-photonic-ferroelectric-hybrids/photonic_neural_networks_review_2023.pdf",
+      "sha256": "ef12d8e2ede51ea3ba2eda33c8f96ee8208f9aaac2374d26184ae14250fe07d4",
+      "size": 1786187,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/17-security-cryptography/fefet_puf_charge_domain_computing_2025.pdf",
+      "sha256": "543443e696d222baeb68aa6a025d759b121fc50365eaddcc2e70bd8dd71ff48e",
+      "size": 2607647,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/17-security-cryptography/memristor_puf_lightweight_crypto_2022.pdf",
+      "sha256": "a54c9f30fe128e7594f0e8a542d711004f4fd2385ff87bc7c31d4111ee292461",
+      "size": 4511425,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/18-ald-process-control/fefet_heterogeneous_codoped_hfo2_2025.pdf",
+      "sha256": "1b0955e4dd2faf3ad0406cc4033ed01c0d25582a2b3323a657c83d6256033424",
+      "size": 2828058,
+      "status": "unmatched"
+    },
+    {
+      "path": "docs/4-research/papers/by-topic/23-cryogenic-operation/fesquid_cryo_cam_2025.pdf",
+      "sha256": "7fe111a8d50d7254f9c2b1c71a93196abbe659839d0f76481984af8a8ac544d8",
+      "size": 2278720,
+      "status": "unmatched"
+    }
+  ]
+}

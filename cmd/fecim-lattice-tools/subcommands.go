@@ -204,6 +204,7 @@ func printRootUsage(w io.Writer) {
 	fmt.Fprintln(w, "  fecim-lattice-tools eda cli -mode=compute -rows=128 -cols=128")
 	fmt.Fprintln(w, "  fecim-lattice-tools research acquire --download")
 	fmt.Fprintln(w, "  fecim-lattice-tools research acquire --doi 10.1002/adma.201404531 --download")
+	fmt.Fprintln(w, "  fecim-lattice-tools research rebuild")
 	fmt.Fprintln(w, "  fecim-lattice-tools research audit")
 	fmt.Fprintln(w, "  fecim-lattice-tools research cite hzo-remanent-polarization-range")
 	fmt.Fprintln(w, "  fecim-lattice-tools research claim-scan docs/ README.md")

@@ -55,6 +55,9 @@ func TestRootUsageListsResearchSubcommand(t *testing.T) {
 	if !strings.Contains(text, "research ingest") {
 		t.Fatalf("root usage must include research example:\n%s", text)
 	}
+	if !strings.Contains(text, "research rebuild") {
+		t.Fatalf("root usage must include research rebuild example:\n%s", text)
+	}
 	if !strings.Contains(text, "research acquire --download") {
 		t.Fatalf("root usage must include research acquisition example:\n%s", text)
 	}

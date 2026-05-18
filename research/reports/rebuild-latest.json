@@ -1,0 +1,46 @@
+{
+  "embedding_model": "",
+  "extra_paths": [],
+  "failed": 0,
+  "ok": true,
+  "semantic": false,
+  "skipped": 1,
+  "stages": [
+    {
+      "artifacts": [
+        "research/manifests/ingest-latest.json",
+        "research/reports/duplicate-pdfs.json",
+        "research/reports/unmatched-pdfs.json"
+      ],
+      "exit_code": 0,
+      "stage": "ingest",
+      "status": "ok"
+    },
+    {
+      "artifacts": [
+        "research/manifests/index-latest.json",
+        "research/index/pyserini"
+      ],
+      "exit_code": 0,
+      "stage": "index",
+      "status": "skipped"
+    },
+    {
+      "artifacts": [
+        "research/reports/claim-audit-latest.json"
+      ],
+      "exit_code": 0,
+      "stage": "audit",
+      "status": "ok"
+    },
+    {
+      "artifacts": [
+        "research/graphs/provenance-graph.json",
+        "research/reports/graph-latest.json"
+      ],
+      "exit_code": 0,
+      "stage": "graph",
+      "status": "ok"
+    }
+  ]
+}

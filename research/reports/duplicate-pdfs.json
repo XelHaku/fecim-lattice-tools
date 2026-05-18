@@ -1,0 +1,60 @@
+{
+  "duplicates": [
+    {
+      "duplicate_of": "docs/4-research/papers/by-topic/01-ferroelectric-materials/first_principles_HfO2_ferroelectric_2024.pdf",
+      "path": "docs/4-research/papers/by-topic/01-ferroelectric-materials/first_principles_hfo2_superlattice_2024.pdf",
+      "sha256": "1fa60ea6f0cadae2558eadbcf0816becff077e7ca10c9d5d7b8611d931615d93",
+      "size": 1989001,
+      "status": "duplicate"
+    },
+    {
+      "duplicate_of": "docs/4-research/papers/by-topic/01-ferroelectric-materials/adaptive_control_epitaxial_hfo2_zro2_2025.pdf",
+      "path": "docs/4-research/papers/by-topic/01-ferroelectric-materials/hzo_superlattice_stability_2025.pdf",
+      "sha256": "05c5f16d864a63784d95c4db0846489c41c2772f105c540d1089783675c4941a",
+      "size": 9046880,
+      "status": "duplicate"
+    },
+    {
+      "duplicate_of": "docs/4-research/papers/by-topic/01-ferroelectric-materials/TDGL_Ferroelectric_Domains_arXiv.pdf",
+      "path": "docs/4-research/papers/by-topic/03-simulation-tools/FerroX_arXiv_2210.15668.pdf",
+      "sha256": "72d2099d61e52e05e5631de3494625ebb63163e1bd7097d0bc113e4db85736d2",
+      "size": 18592470,
+      "status": "duplicate"
+    },
+    {
+      "duplicate_of": "docs/4-research/papers/by-topic/01-ferroelectric-materials/TDGL_Ferroelectric_Domains_arXiv.pdf",
+      "path": "docs/4-research/papers/by-topic/03-simulation-tools/ferrox_gpu_phasefield_2022.pdf",
+      "sha256": "72d2099d61e52e05e5631de3494625ebb63163e1bd7097d0bc113e4db85736d2",
+      "size": 18592470,
+      "status": "duplicate"
+    },
+    {
+      "duplicate_of": "docs/4-research/papers/by-topic/01-ferroelectric-materials/TDGL_Ferroelectric_Domains_arXiv.pdf",
+      "path": "docs/4-research/papers/by-topic/03-simulation-tools/ferrox_gpu_phasefield_2023.pdf",
+      "sha256": "72d2099d61e52e05e5631de3494625ebb63163e1bd7097d0bc113e4db85736d2",
+      "size": 18592470,
+      "status": "duplicate"
+    },
+    {
+      "duplicate_of": "docs/4-research/papers/by-topic/03-simulation-tools/IBM_AIHWKit_arXiv_2307.09357.pdf",
+      "path": "docs/4-research/papers/by-topic/04-cim-architectures/ferroelectric_CIM_review_2023.pdf",
+      "sha256": "6dafcc472dc8c933c5012a197f9da463eacadadddabdae861543aaf155a8a44f",
+      "size": 11650561,
+      "status": "duplicate"
+    },
+    {
+      "duplicate_of": "docs/4-research/papers/by-topic/03-simulation-tools/compass_compiler_framework_2025.pdf",
+      "path": "docs/4-research/papers/by-topic/10-cim-compilers-mapping/compass_crossbar_compiler_2025.pdf",
+      "sha256": "2fd289c9b4e91717d747ba50262e769e590abe896059c101566abf412ca81081",
+      "size": 3130436,
+      "status": "duplicate"
+    },
+    {
+      "duplicate_of": "docs/4-research/papers/by-topic/04-cim-architectures/3D_FeFET_Architectures_2025.pdf",
+      "path": "docs/4-research/papers/by-topic/15-3d-stacking-architectures/full_spectrum_3d_ferroelectric_memory_2025.pdf",
+      "sha256": "970c7f9f3ec6e5ed2722df6d23338f13fa73cd0639832d4b74bdedfed091f60b",
+      "size": 2405417,
+      "status": "duplicate"
+    }
+  ]
+}

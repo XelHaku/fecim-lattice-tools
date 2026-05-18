@@ -33,6 +33,12 @@ def build_parser() -> argparse.ArgumentParser:
     index.add_argument("--semantic", action="store_true", help="build local semantic index")
     index.add_argument("--embedding-model", default="", help="local embedding model name")
 
+    rebuild = sub.add_parser("rebuild", help="run ingestion, indexing, audit, and graph rebuild stages")
+    rebuild.add_argument("paths", nargs="*", help="optional extra PDF roots")
+    rebuild.add_argument("--skip-index", action="store_true", help="skip rebuildable search index generation")
+    rebuild.add_argument("--semantic", action="store_true", help="build local semantic index")
+    rebuild.add_argument("--embedding-model", default="", help="local embedding model name")
+
     search = sub.add_parser("search", help="search evidence chunks")
     search.add_argument("query", help="search query")
     search.add_argument("--json", action="store_true", help="emit JSON results")
@@ -74,6 +80,16 @@ def main(argv: list[str] | None = None) -> int:
         from .indexing import run_index
 
         return run_index(root=root, semantic=args.semantic, embedding_model=args.embedding_model)
+    if args.command == "rebuild":
+        from .rebuild import run_rebuild
+
+        return run_rebuild(
+            root=root,
+            extra_paths=[Path(p) for p in args.paths],
+            semantic=args.semantic,
+            embedding_model=args.embedding_model,
+            skip_index=args.skip_index,
+        )
     if args.command == "search":
         from .searching import run_search
 

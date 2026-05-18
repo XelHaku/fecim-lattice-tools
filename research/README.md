@@ -11,6 +11,11 @@ Local-only input:
 
 - `papers/` stores source PDFs before parsing. PDF files are ignored so the
   repository does not accidentally commit paper artifacts.
+- `fecim-lattice-tools research rebuild` runs the local ingestion, index,
+  claim-audit, and provenance-graph stages as the one-command corpus refresh.
+  It writes `reports/rebuild-latest.json` so each refresh is reviewable in git.
+- Use `fecim-lattice-tools research rebuild --skip-index` for file-only CI
+  checks or repositories that do not currently have chunk files.
 
 Paper acquisition:
 
@@ -35,7 +40,8 @@ Tracked ledger outputs:
 - `extracted/`
 - `graphs/`
 - `manifests/`
-- `reports/` includes latest acquisition and claim-audit JSON reports
+- `reports/` includes latest acquisition, rebuild, ingestion, claim-audit,
+  claim-scan, cite, and graph JSON reports
 - `index/` stores rebuildable cache manifests and lightweight placeholders;
   bulky cache contents are ignored.
 
