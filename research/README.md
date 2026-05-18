@@ -22,6 +22,9 @@ Local-only input:
 - `fecim-lattice-tools research cache` writes
   `reports/cache-latest.json`, a git-trackable status report for ignored
   rebuildable caches such as the Pyserini index.
+- `fecim-lattice-tools research cache --clean` removes only cache directories
+  covered by `research/.gitignore`, then rewrites the tracked cache report with
+  the cleanup result.
 - `fecim-lattice-tools research register-pdfs` writes a report-only inventory
   of local PDFs that still need canonical paper records.
 - Add `--write-stubs` to create `needs-review` records under

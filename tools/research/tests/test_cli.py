@@ -37,6 +37,7 @@ class CLITest(unittest.TestCase):
             main(["cache", "--help"])
         self.assertEqual(ctx.exception.code, 0)
         self.assertIn("rebuildable", out.getvalue())
+        self.assertIn("--clean", out.getvalue())
 
     def test_rebuild_help_lists_skip_index_option(self):
         out = io.StringIO()

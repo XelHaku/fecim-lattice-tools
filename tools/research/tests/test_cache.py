@@ -77,18 +77,76 @@ class CacheTest(unittest.TestCase):
             report = json.loads(report_path.read_text(encoding="utf-8"))
             self.assertIn("pyserini", [cache["name"] for cache in report["caches"]])
 
+    def test_run_cache_clean_removes_ignored_rebuildable_cache_dirs_and_records_cleanup(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_research_gitignore(root)
+            keep = root / "research" / "index" / "README.md"
+            keep.parent.mkdir(parents=True, exist_ok=True)
+            keep.write_text("tracked placeholder\n", encoding="utf-8")
+            for rel in [
+                "research/index/pyserini/segments",
+                "research/index/lancedb/data",
+                "research/index/models/model.bin",
+                "research/.cache/tmp",
+            ]:
+                path = root / rel
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("cache\n", encoding="utf-8")
+
+            code = run_cache(root, clean=True)
+
+            self.assertEqual(code, 0)
+            self.assertTrue(keep.exists())
+            self.assertFalse((root / "research" / "index" / "pyserini").exists())
+            self.assertFalse((root / "research" / "index" / "lancedb").exists())
+            self.assertFalse((root / "research" / "index" / "models").exists())
+            self.assertFalse((root / "research" / ".cache").exists())
+            report_path = root / "research" / "reports" / "cache-latest.json"
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            self.assertEqual(report["cleanup"]["status"], "ok")
+            self.assertEqual(report["cleanup"]["refused"], [])
+            self.assertEqual(
+                sorted(report["cleanup"]["removed"]),
+                [
+                    "research/.cache",
+                    "research/index/lancedb",
+                    "research/index/models",
+                    "research/index/pyserini",
+                ],
+            )
+
+    def test_run_cache_clean_refuses_to_remove_unignored_cache_dirs(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_research_gitignore(root, include_pyserini=False)
+            cache_file = root / "research" / "index" / "pyserini" / "segments"
+            cache_file.parent.mkdir(parents=True, exist_ok=True)
+            cache_file.write_text("cache\n", encoding="utf-8")
+
+            code = run_cache(root, clean=True)
+
+            self.assertEqual(code, 2)
+            self.assertTrue(cache_file.exists())
+            report_path = root / "research" / "reports" / "cache-latest.json"
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            self.assertEqual(report["cleanup"]["status"], "refused")
+            self.assertEqual(report["cleanup"]["removed"], [])
+            self.assertEqual(report["cleanup"]["refused"], ["research/index/pyserini"])
+
     def _cache(self, report: dict[str, object], name: str) -> dict[str, object]:
         for cache in report["caches"]:
             if cache["name"] == name:
                 return cache
         raise AssertionError(f"cache {name} not found")
 
-    def _write_research_gitignore(self, root: Path) -> None:
+    def _write_research_gitignore(self, root: Path, include_pyserini: bool = True) -> None:
         path = root / "research" / ".gitignore"
         path.parent.mkdir(parents=True, exist_ok=True)
+        pyserini = "/index/pyserini/\n" if include_pyserini else ""
         path.write_text(
             "/papers/**/*.pdf\n"
-            "/index/pyserini/\n"
+            f"{pyserini}"
             "/index/lancedb/\n"
             "/index/models/\n"
             "/.cache/\n",

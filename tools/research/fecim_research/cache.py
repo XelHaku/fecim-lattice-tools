@@ -1,5 +1,6 @@
 import hashlib
 import json
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -75,8 +76,11 @@ def build_cache_report(root: Path) -> dict[str, Any]:
     }
 
 
-def run_cache(root: Path) -> int:
+def run_cache(root: Path, clean: bool = False) -> int:
+    cleanup = _clean_cache_dirs(root) if clean else None
     report = build_cache_report(root)
+    if cleanup is not None:
+        report["cleanup"] = cleanup
     report_path = root / "research" / "reports" / "cache-latest.json"
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -89,7 +93,41 @@ def run_cache(root: Path) -> int:
         f"stale={summary['stale']} "
         f"report={_repo_relative(root, report_path)}"
     )
+    if cleanup is not None:
+        print(
+            "research cache clean: "
+            f"status={cleanup['status']} "
+            f"removed={len(cleanup['removed'])} "
+            f"refused={len(cleanup['refused'])}"
+        )
+        return 0 if cleanup["status"] == "ok" else 2
     return 0 if report["ok"] else 1
+
+
+def _clean_cache_dirs(root: Path) -> dict[str, Any]:
+    entries = [_build_cache_entry(root, spec) for spec in CACHE_SPECS]
+    existing = [entry for entry in entries if entry["exists"]]
+    refused = sorted(entry["path"] for entry in existing if not entry["ignored_by_policy"])
+    if refused:
+        return {
+            "status": "refused",
+            "removed": [],
+            "refused": refused,
+        }
+
+    removed: list[str] = []
+    for entry in existing:
+        path = root / str(entry["path"])
+        if path.is_dir():
+            shutil.rmtree(path)
+        else:
+            path.unlink()
+        removed.append(str(entry["path"]))
+    return {
+        "status": "ok",
+        "removed": sorted(removed),
+        "refused": [],
+    }
 
 
 def _build_cache_entry(root: Path, spec: CacheSpec) -> dict[str, Any]:

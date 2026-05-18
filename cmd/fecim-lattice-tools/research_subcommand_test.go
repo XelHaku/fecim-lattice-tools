@@ -73,6 +73,9 @@ func TestRootUsageListsResearchSubcommand(t *testing.T) {
 	if !strings.Contains(text, "research cache") {
 		t.Fatalf("root usage must include research cache example:\n%s", text)
 	}
+	if !strings.Contains(text, "research cache --clean") {
+		t.Fatalf("root usage must include research cache clean example:\n%s", text)
+	}
 	if !strings.Contains(text, "research cite") {
 		t.Fatalf("root usage must include research cite example:\n%s", text)
 	}

@@ -65,6 +65,11 @@
       "status": "optional"
     }
   ],
+  "cleanup": {
+    "refused": [],
+    "removed": [],
+    "status": "ok"
+  },
   "ok": false,
   "summary": {
     "missing": 1,

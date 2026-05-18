@@ -16,11 +16,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("audit", help="validate reviewed claim registry and claim references")
 
-    sub.add_parser(
+    cache = sub.add_parser(
         "cache",
         help="write rebuildable cache status report",
         description="Write a rebuildable cache status report.",
     )
+    cache.add_argument("--clean", action="store_true", help="remove ignored rebuildable cache directories")
 
     cite = sub.add_parser("cite", help="build a git-trackable packet for one reviewed claim")
     cite.add_argument("claim_id", help="claim id from citations/claims")
@@ -73,7 +74,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "cache":
         from .cache import run_cache
 
-        return run_cache(root=root)
+        return run_cache(root=root, clean=args.clean)
     if args.command == "cite":
         from .cite import run_cite
 
