@@ -46,6 +46,9 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		{ID: "timing_compute", Label: "Compute Timing", Value: timingTotalValue(state.TimingComputeTotalNS)},
 		{ID: "timing_active", Label: "Active Timing", Value: timingActiveValue(state)},
 		{ID: "timing_active_phases", Label: "Timing Phases", Value: timingActivePhasesValue(state)},
+		{ID: "reference_timing_export", Label: "Reference Timing Export", Value: referenceTimingExportStatusValue(state)},
+		{ID: "reference_timing_export_path", Label: "Reference Timing Export Target", Value: referenceTimingExportPathValue(state)},
+		{ID: "reference_timing_export_bytes", Label: "Reference Timing Export Size", Value: fmt.Sprintf("%d bytes", state.ReferenceTimingExportBytes)},
 		{ID: "operation_log_count", Label: "Operation Log", Value: operationLogCountValue(state)},
 		{ID: "operation_log_latest", Label: "Latest Log Entry", Value: operationLogLatestValue(state.OperationLog)},
 		{ID: "operation_log_recent", Label: "Recent Log Entries", Value: operationLogRecentValue(state.OperationLog)},
@@ -164,6 +167,7 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 		{ID: ActionRunCompute, Label: "Simulate Compute", Kind: viewmodel.ActionCommand},
 		{ID: ActionExportOperationLog, Label: "Export Operation Log", Kind: viewmodel.ActionCommand},
 		{ID: ActionExportReferenceSpecs, Label: "Export Reference Specs", Kind: viewmodel.ActionCommand},
+		{ID: ActionExportReferenceTiming, Label: "Export Reference Timing", Kind: viewmodel.ActionCommand},
 		{ID: ActionToggleISPP, Label: "Toggle ISPP", Kind: viewmodel.ActionToggle, Payload: map[string]string{"enabled": fmt.Sprintf("%v", state.ISPPEnabled)}},
 		{ID: ActionResizeArray, Label: "Array Size", Kind: viewmodel.ActionSelect, Payload: map[string]string{"rows": fmt.Sprintf("%d", state.Rows), "cols": fmt.Sprintf("%d", state.Cols)}},
 		{ID: ActionSetOperationMode, Label: "Operation Mode", Kind: viewmodel.ActionSelect, Payload: map[string]string{"mode": state.OperationMode}},
@@ -333,6 +337,20 @@ func timingActivePhasesValue(state CircuitsState) string {
 		return "not evaluated"
 	}
 	return state.TimingActivePhases
+}
+
+func referenceTimingExportStatusValue(state CircuitsState) string {
+	if state.ReferenceTimingExportStatus == "" {
+		return "not exported"
+	}
+	return state.ReferenceTimingExportStatus
+}
+
+func referenceTimingExportPathValue(state CircuitsState) string {
+	if state.ReferenceTimingExportPath == "" {
+		return "none"
+	}
+	return state.ReferenceTimingExportPath
 }
 
 func operationLogCountValue(state CircuitsState) string {

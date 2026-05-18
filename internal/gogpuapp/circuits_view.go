@@ -69,6 +69,7 @@ func buildCircuitControls(snapshot viewmodel.ModuleSnapshot, theme *material3.Th
 		circuitButton("Simulate Compute", false, actionOrDefault(actions, circuitsvm.ActionRunCompute, viewmodel.ActionCommand), theme, onAction),
 		circuitButton("Export Log", false, actionOrDefault(actions, circuitsvm.ActionExportOperationLog, viewmodel.ActionCommand), theme, onAction),
 		circuitButton("Export Specs", false, actionOrDefault(actions, circuitsvm.ActionExportReferenceSpecs, viewmodel.ActionCommand), theme, onAction),
+		circuitButton("Export Timing", false, actionOrDefault(actions, circuitsvm.ActionExportReferenceTiming, viewmodel.ActionCommand), theme, onAction),
 	}
 
 	modeButtons := []widget.Widget{

@@ -125,6 +125,18 @@ func TestCircuitsOverlayStateIncludesReferenceSpecExportStatus(t *testing.T) {
 	}
 }
 
+func TestCircuitsOverlayStateIncludesReferenceTimingExportStatus(t *testing.T) {
+	vm := circuitsvm.New()
+	if err := vm.ApplyAction(viewmodel.Action{ID: circuitsvm.ActionExportReferenceTiming, Kind: viewmodel.ActionCommand}); err != nil {
+		t.Fatalf("export reference timing: %v", err)
+	}
+
+	state := circuitsOverlayStateFromSnapshot(vm.Snapshot())
+	if state.referenceTimingExport != "buffered 3 operations" {
+		t.Fatalf("referenceTimingExport = %q, want buffered export status", state.referenceTimingExport)
+	}
+}
+
 func TestCircuitsOverlayStateIncludesComputeRunSummary(t *testing.T) {
 	vm := circuitsvm.New()
 	if err := vm.ApplyAction(viewmodel.Action{ID: circuitsvm.ActionRunCompute, Kind: viewmodel.ActionCommand}); err != nil {

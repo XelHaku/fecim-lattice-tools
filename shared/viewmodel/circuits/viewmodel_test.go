@@ -78,6 +78,7 @@ func TestSnapshotContainsUnifiedCircuitControls(t *testing.T) {
 		"run_compute",
 		"export_operation_log",
 		"export_reference_specs",
+		"export_reference_timing",
 		"toggle_ispp",
 	} {
 		if !hasAction(s, id) {
@@ -433,6 +434,118 @@ func TestReferenceTimingSummaryFollowsOperationMode(t *testing.T) {
 	}
 	if got := metricValue(compute, "timing_active_phases"); got != "DAC 10 / Array 5 / TIA+ADC 61 ns" {
 		t.Fatalf("compute timing phases = %q, want compute phase summary", got)
+	}
+}
+
+func TestReferenceTimingExportBuffersJSONArtifact(t *testing.T) {
+	m := New()
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionSetOperationMode,
+		Payload: map[string]string{"mode": OperationCompute},
+	}); err != nil {
+		t.Fatalf("set compute mode: %v", err)
+	}
+	if err := m.ApplyAction(viewmodel.Action{ID: ActionExportReferenceTiming}); err != nil {
+		t.Fatalf("export reference timing: %v", err)
+	}
+
+	if m.state.ReferenceTimingExportJSON == "" {
+		t.Fatal("expected buffered reference timing export JSON")
+	}
+	var payload ReferenceTimingExport
+	if err := json.Unmarshal([]byte(m.state.ReferenceTimingExportJSON), &payload); err != nil {
+		t.Fatalf("reference timing export JSON did not unmarshal: %v\n%s", err, m.state.ReferenceTimingExportJSON)
+	}
+	if payload.Schema != "fecim.circuits.reference_timing.v1" {
+		t.Fatalf("schema = %q, want reference-timing schema", payload.Schema)
+	}
+	if payload.Module != "circuits" || payload.OperationMode != OperationCompute {
+		t.Fatalf("unexpected timing export context: %+v", payload)
+	}
+	if payload.WriteTotalNS != 203 || payload.ReadTotalNS != 76 || payload.ComputeTotalNS != 76 {
+		t.Fatalf("unexpected operation totals: %+v", payload)
+	}
+	if payload.ActiveOperation != "COMPUTE" || payload.ActiveTotalNS != 76 || payload.ActivePhases != "DAC 10 / Array 5 / TIA+ADC 61 ns" {
+		t.Fatalf("unexpected active timing context: %+v", payload)
+	}
+	if len(payload.Operations) != 3 {
+		t.Fatalf("operations len = %d, want 3", len(payload.Operations))
+	}
+	wantTotals := map[string]int{"WRITE": 203, "READ": 76, "COMPUTE": 76}
+	wantPhaseCounts := map[string]int{"WRITE": 4, "READ": 4, "COMPUTE": 3}
+	for _, op := range payload.Operations {
+		if op.TotalNS != wantTotals[op.Operation] {
+			t.Fatalf("%s total = %d, want %d", op.Operation, op.TotalNS, wantTotals[op.Operation])
+		}
+		if len(op.Phases) != wantPhaseCounts[op.Operation] {
+			t.Fatalf("%s phase count = %d, want %d", op.Operation, len(op.Phases), wantPhaseCounts[op.Operation])
+		}
+	}
+	if payload.Operations[0].Phases[1].Name != "Pump" || payload.Operations[0].Phases[1].DurationNS != 88 {
+		t.Fatalf("write phase[1] = %+v, want pump phase", payload.Operations[0].Phases[1])
+	}
+	if payload.Operations[1].Phases[3].Name != "ADC" || payload.Operations[1].Phases[3].DurationNS != 50 {
+		t.Fatalf("read phase[3] = %+v, want ADC phase", payload.Operations[1].Phases[3])
+	}
+	if payload.Operations[2].Phases[2].Name != "TIA+ADC" || payload.Operations[2].Phases[2].DurationNS != 61 {
+		t.Fatalf("compute phase[2] = %+v, want TIA+ADC phase", payload.Operations[2].Phases[2])
+	}
+	if !contains(payload.BoundaryNotice, "educational") {
+		t.Fatalf("boundary notice = %q, want educational boundary", payload.BoundaryNotice)
+	}
+
+	s := m.Snapshot()
+	wantMetrics := map[string]string{
+		"reference_timing_export":       "buffered 3 operations",
+		"reference_timing_export_path":  "artifact buffer",
+		"reference_timing_export_bytes": fmt.Sprintf("%d bytes", len(m.state.ReferenceTimingExportJSON)),
+	}
+	for id, want := range wantMetrics {
+		if got := metricValue(s, id); got != want {
+			t.Errorf("%s metric = %q, want %q", id, got, want)
+		}
+	}
+}
+
+func TestReferenceTimingExportWritesValidatedPath(t *testing.T) {
+	m := New()
+	path := filepath.Join(t.TempDir(), "circuits-reference-timing.json")
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionExportReferenceTiming,
+		Payload: map[string]string{"path": path},
+	}); err != nil {
+		t.Fatalf("export reference timing to path: %v", err)
+	}
+
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read exported reference timing: %v", err)
+	}
+	if string(raw) != m.state.ReferenceTimingExportJSON {
+		t.Fatalf("file export differs from buffered reference timing artifact")
+	}
+	if got := metricValue(m.Snapshot(), "reference_timing_export"); got != "wrote 3 operations" {
+		t.Fatalf("reference_timing_export metric = %q, want file-write status", got)
+	}
+	if got := metricValue(m.Snapshot(), "reference_timing_export_path"); got != filepath.Clean(path) {
+		t.Fatalf("reference_timing_export_path = %q, want cleaned path", got)
+	}
+}
+
+func TestReferenceTimingExportRejectsTraversalPath(t *testing.T) {
+	m := New()
+	err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionExportReferenceTiming,
+		Payload: map[string]string{"path": "../escape.json"},
+	})
+	if err == nil {
+		t.Fatal("expected traversal timing export path to fail")
+	}
+	if !contains(err.Error(), "path traversal") {
+		t.Fatalf("reference timing export path error = %v, want traversal rejection", err)
+	}
+	if m.state.ReferenceTimingExportJSON != "" {
+		t.Fatal("reference timing export artifact should not be buffered after path validation failure")
 	}
 }
 

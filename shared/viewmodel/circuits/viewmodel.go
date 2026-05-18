@@ -89,6 +89,8 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 		return m.exportOperationLog(action.Payload)
 	case ActionExportReferenceSpecs:
 		return m.exportReferenceSpecs(action.Payload)
+	case ActionExportReferenceTiming:
+		return m.exportReferenceTiming(action.Payload)
 	case ActionToggleISPP:
 		m.state.ISPPEnabled = !m.state.ISPPEnabled
 		m.recordStatus("control", "ISPP enabled: %v", m.state.ISPPEnabled)
@@ -416,6 +418,83 @@ func (m *Module) referenceSpecExportPayload() ReferenceSpecExport {
 		EfficiencyGOPSW: m.state.SpecEfficiencyGOPSW,
 		Compliance:      m.state.SpecCompliance,
 		BoundaryNotice:  "educational reference spec summary; power, latency, and throughput values are behavioral estimates, not calibrated silicon measurements.",
+	}
+}
+
+func (m *Module) exportReferenceTiming(payload map[string]string) error {
+	exportPath := "artifact buffer"
+	path := strings.TrimSpace(payload["path"])
+	if path != "" {
+		cleanPath, err := sharedio.ValidatePath(path)
+		if err != nil {
+			return fmt.Errorf("circuits: invalid reference timing export path: %w", err)
+		}
+		exportPath = cleanPath
+	}
+
+	export := m.referenceTimingExportPayload()
+	jsonBytes, err := json.MarshalIndent(export, "", "  ")
+	if err != nil {
+		return fmt.Errorf("circuits: marshal reference timing export: %w", err)
+	}
+	if path != "" {
+		if err := sharedio.SaveJSON(exportPath, export); err != nil {
+			return fmt.Errorf("circuits: write reference timing export: %w", err)
+		}
+		m.state.ReferenceTimingExportStatus = fmt.Sprintf("wrote %d operations", len(export.Operations))
+	} else {
+		m.state.ReferenceTimingExportStatus = fmt.Sprintf("buffered %d operations", len(export.Operations))
+	}
+	m.state.ReferenceTimingExportPath = exportPath
+	m.state.ReferenceTimingExportBytes = len(jsonBytes)
+	m.state.ReferenceTimingExportJSON = string(jsonBytes)
+	return nil
+}
+
+func (m *Module) referenceTimingExportPayload() ReferenceTimingExport {
+	m.computeReferenceTiming()
+	return ReferenceTimingExport{
+		Schema:          "fecim.circuits.reference_timing.v1",
+		Module:          string(viewmodel.ModuleCircuits),
+		OperationMode:   m.state.OperationMode,
+		WriteTotalNS:    m.state.TimingWriteTotalNS,
+		ReadTotalNS:     m.state.TimingReadTotalNS,
+		ComputeTotalNS:  m.state.TimingComputeTotalNS,
+		ActiveOperation: m.state.TimingActiveOp,
+		ActiveTotalNS:   m.state.TimingActiveTotalNS,
+		ActivePhases:    m.state.TimingActivePhases,
+		Operations: []ReferenceTimingOperation{
+			{
+				Operation: "WRITE",
+				TotalNS:   m.state.TimingWriteTotalNS,
+				Phases: []ReferenceTimingPhase{
+					{Name: "DAC", DurationNS: 10},
+					{Name: "Pump", DurationNS: 88},
+					{Name: "Pulse", DurationNS: 100},
+					{Name: "Array", DurationNS: 5},
+				},
+			},
+			{
+				Operation: "READ",
+				TotalNS:   m.state.TimingReadTotalNS,
+				Phases: []ReferenceTimingPhase{
+					{Name: "DAC", DurationNS: 10},
+					{Name: "Array", DurationNS: 5},
+					{Name: "TIA", DurationNS: 11},
+					{Name: "ADC", DurationNS: 50},
+				},
+			},
+			{
+				Operation: "COMPUTE",
+				TotalNS:   m.state.TimingComputeTotalNS,
+				Phases: []ReferenceTimingPhase{
+					{Name: "DAC", DurationNS: 10},
+					{Name: "Array", DurationNS: 5},
+					{Name: "TIA+ADC", DurationNS: 61},
+				},
+			},
+		},
+		BoundaryNotice: "educational reference timing summary; phase durations are behavioral estimates, not calibrated silicon measurements or waveform/SVG output.",
 	}
 }
 
