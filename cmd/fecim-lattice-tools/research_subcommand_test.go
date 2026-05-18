@@ -85,6 +85,9 @@ func TestRootUsageListsResearchSubcommand(t *testing.T) {
 	if !strings.Contains(text, "research graph") {
 		t.Fatalf("root usage must include research graph example:\n%s", text)
 	}
+	if !strings.Contains(text, "research evidence") {
+		t.Fatalf("root usage must include research evidence example:\n%s", text)
+	}
 	if !strings.Contains(text, "research search --local") {
 		t.Fatalf("root usage must include research local search example:\n%s", text)
 	}

@@ -31,6 +31,9 @@ def build_parser() -> argparse.ArgumentParser:
     claim_scan.add_argument("paths", nargs="*", help="files or directories to scan")
     claim_scan.add_argument("--fail-on-findings", action="store_true", help="return nonzero when findings exist")
 
+    evidence = sub.add_parser("evidence", help="save claim-linked search results as candidate evidence")
+    evidence.add_argument("claim_id", help="claim id from citations/claims")
+
     sub.add_parser("graph", help="build git-trackable citation and claim provenance graph")
 
     ingest = sub.add_parser("ingest", help="discover, parse, and chunk local papers")
@@ -85,6 +88,10 @@ def main(argv: list[str] | None = None) -> int:
         from .claimscan import run_claim_scan
 
         return run_claim_scan(root=root, paths=args.paths, fail_on_findings=args.fail_on_findings)
+    if args.command == "evidence":
+        from .evidence import run_evidence
+
+        return run_evidence(root=root, claim_id=args.claim_id)
     if args.command == "graph":
         from .graphing import run_graph
 

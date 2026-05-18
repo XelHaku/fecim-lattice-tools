@@ -211,6 +211,7 @@ func printRootUsage(w io.Writer) {
 	fmt.Fprintln(w, "  fecim-lattice-tools research audit")
 	fmt.Fprintln(w, "  fecim-lattice-tools research cite hzo-remanent-polarization-range")
 	fmt.Fprintln(w, "  fecim-lattice-tools research claim-scan docs/ README.md")
+	fmt.Fprintln(w, "  fecim-lattice-tools research evidence hzo-remanent-polarization-range")
 	fmt.Fprintln(w, "  fecim-lattice-tools research graph")
 	fmt.Fprintln(w, "  fecim-lattice-tools research ingest")
 	fmt.Fprintln(w, "  fecim-lattice-tools research search --local \"HZO coercive field Preisach\"")

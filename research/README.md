@@ -50,6 +50,7 @@ Tracked ledger outputs:
 - `sources/`
 - `parsed/`
 - `chunks/`
+- `evidence/`
 - `extracted/`
 - `graphs/`
 - `manifests/`
@@ -65,6 +66,9 @@ Claim audit:
 - `fecim-lattice-tools research cite CLAIM_ID` writes a deterministic citation
   packet to `reports/cite-latest.json`, resolving sources from
   `citations/papers` first and tracked OpenAlex ledgers second.
+- `fecim-lattice-tools research evidence CLAIM_ID` saves the latest
+  claim-linked search results to `evidence/CLAIM_ID.json` as candidate evidence
+  that still needs review before promotion.
 - Run `make research-audit` before promoting literature-backed statements into
   facts, config defaults, or trust documentation.
 - `fecim-lattice-tools research claim-scan docs/ README.md` writes a

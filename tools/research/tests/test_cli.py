@@ -17,6 +17,7 @@ class CLITest(unittest.TestCase):
         self.assertIn("cache", text)
         self.assertIn("cite", text)
         self.assertIn("claim-scan", text)
+        self.assertIn("evidence", text)
         self.assertIn("graph", text)
         self.assertIn("ingest", text)
         self.assertIn("index", text)
@@ -72,6 +73,7 @@ class CLITest(unittest.TestCase):
         import fecim_research.cite
         import fecim_research.claims
         import fecim_research.claimscan
+        import fecim_research.evidence
         import fecim_research.graphing
         import fecim_research.ingest
         import fecim_research.indexing
@@ -84,6 +86,7 @@ class CLITest(unittest.TestCase):
         self.assertTrue(hasattr(fecim_research.cite, "run_cite"))
         self.assertTrue(hasattr(fecim_research.claims, "run_audit"))
         self.assertTrue(hasattr(fecim_research.claimscan, "run_claim_scan"))
+        self.assertTrue(hasattr(fecim_research.evidence, "run_evidence"))
         self.assertTrue(hasattr(fecim_research.graphing, "run_graph"))
         self.assertTrue(hasattr(fecim_research.ingest, "run_ingest"))
         self.assertTrue(hasattr(fecim_research.indexing, "run_index"))
