@@ -579,6 +579,47 @@ func TestReferenceTimingWaveformMetadataFollowsOperationMode(t *testing.T) {
 	}
 }
 
+func TestReferenceTimingWaveformPlotFollowsActiveOperation(t *testing.T) {
+	m := New()
+	read := plotByID(t, m.Snapshot(), "timing_waveform_active")
+	if read.Title != "READ Timing Waveform" {
+		t.Fatalf("read waveform plot title = %q, want READ Timing Waveform", read.Title)
+	}
+	if read.XLabel != "Percent" || read.YLabel != "Signal row" {
+		t.Fatalf("read waveform axes = %q/%q, want Percent/Signal row", read.XLabel, read.YLabel)
+	}
+	if len(read.Series) != 5 {
+		t.Fatalf("read waveform series count = %d, want 5", len(read.Series))
+	}
+	if read.Series[1].Name != "V_READ" {
+		t.Fatalf("read waveform series[1] = %q, want V_READ", read.Series[1].Name)
+	}
+	if !plotSeriesHasPoint(read.Series[1], 10, 1) || !plotSeriesHasPoint(read.Series[1], 70, 0) {
+		t.Fatalf("V_READ points = %+v, want high at 10%% and low at 70%%", read.Series[1].Points)
+	}
+
+	if err := m.ApplyAction(viewmodel.Action{
+		ID:      ActionSetOperationMode,
+		Payload: map[string]string{"mode": OperationCompute},
+	}); err != nil {
+		t.Fatalf("set compute mode: %v", err)
+	}
+	compute := plotByID(t, m.Snapshot(), "timing_waveform_active")
+	if compute.Title != "COMPUTE Timing Waveform" {
+		t.Fatalf("compute waveform plot title = %q, want COMPUTE Timing Waveform", compute.Title)
+	}
+	if len(compute.Series) != 6 {
+		t.Fatalf("compute waveform series count = %d, want 6", len(compute.Series))
+	}
+	outputValid := compute.Series[5]
+	if outputValid.Name != "OUTPUT_VALID" {
+		t.Fatalf("compute waveform series[5] = %q, want OUTPUT_VALID", outputValid.Name)
+	}
+	if !plotSeriesHasPoint(outputValid, 90, 1) {
+		t.Fatalf("OUTPUT_VALID points = %+v, want high at 90%%", outputValid.Points)
+	}
+}
+
 func TestReferenceTimingExportBuffersJSONArtifact(t *testing.T) {
 	m := New()
 	if err := m.ApplyAction(viewmodel.Action{
@@ -1094,6 +1135,26 @@ func referenceTimingWaveformByOperation(t *testing.T, waveforms []ReferenceTimin
 	}
 	t.Fatalf("missing %s timing waveform in %+v", operation, waveforms)
 	return ReferenceTimingWaveform{}
+}
+
+func plotByID(t *testing.T, s viewmodel.ModuleSnapshot, id string) viewmodel.PlotData {
+	t.Helper()
+	for _, plot := range s.Plots {
+		if plot.ID == id {
+			return plot
+		}
+	}
+	t.Fatalf("missing plot %q in %+v", id, s.Plots)
+	return viewmodel.PlotData{}
+}
+
+func plotSeriesHasPoint(series viewmodel.PlotSeries, x, v float64) bool {
+	for _, point := range series.Points {
+		if near(point.X, x, 1e-9) && near(point.V, v, 1e-9) {
+			return true
+		}
+	}
+	return false
 }
 
 func contains(value, needle string) bool {

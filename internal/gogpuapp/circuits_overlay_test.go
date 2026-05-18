@@ -7,6 +7,8 @@ import (
 
 	"fecim-lattice-tools/shared/viewmodel"
 	circuitsvm "fecim-lattice-tools/shared/viewmodel/circuits"
+
+	"github.com/gogpu/gg"
 )
 
 func TestCircuitsOverlayStateIncludesHalfSelectStress(t *testing.T) {
@@ -95,6 +97,55 @@ func TestCircuitsOverlayStateIncludesReferenceTimingWaveformMetadata(t *testing.
 	}
 	if state.timingWaveformPhases != "COMPUTE phases: DAC 10ns, Array 5ns, TIA+ADC 61ns" {
 		t.Fatalf("timingWaveformPhases = %q, want compute phase markers", state.timingWaveformPhases)
+	}
+}
+
+func TestCircuitsOverlayFindsActiveTimingWaveformPlot(t *testing.T) {
+	vm := circuitsvm.New()
+	if err := vm.ApplyAction(viewmodel.Action{
+		ID:      circuitsvm.ActionSetOperationMode,
+		Kind:    viewmodel.ActionSelect,
+		Payload: map[string]string{"mode": circuitsvm.OperationWrite},
+	}); err != nil {
+		t.Fatalf("set write mode: %v", err)
+	}
+
+	plot := activeTimingWaveformPlot(vm.Snapshot())
+	if plot == nil {
+		t.Fatal("expected active timing waveform plot")
+	}
+	if plot.Title != "WRITE Timing Waveform" {
+		t.Fatalf("timing waveform plot title = %q, want WRITE Timing Waveform", plot.Title)
+	}
+	if len(plot.Series) != 6 || plot.Series[4].Name != "V_PROG" {
+		t.Fatalf("timing waveform series = %+v, want WRITE signal plot", plot.Series)
+	}
+}
+
+func TestDrawTimingWaveformStripDrawsActivePlot(t *testing.T) {
+	vm := circuitsvm.New()
+	plot := activeTimingWaveformPlot(vm.Snapshot())
+	if plot == nil {
+		t.Fatal("expected active timing waveform plot")
+	}
+
+	dc := gg.NewContext(360, 160)
+	defer dc.Close()
+	dc.SetRGBA(0.04, 0.07, 0.06, 1)
+	dc.DrawRectangle(0, 0, 360, 160)
+	dc.Fill()
+	if err := dc.FlushGPU(); err != nil {
+		t.Fatalf("flush base waveform strip frame: %v", err)
+	}
+	before := imageSignature(dc.Image())
+
+	drawTimingWaveformStrip(dc, *plot, 12, 12, 320, 120, "READ")
+	if err := dc.FlushGPU(); err != nil {
+		t.Fatalf("flush waveform strip frame: %v", err)
+	}
+	after := imageSignature(dc.Image())
+	if after == before {
+		t.Fatal("timing waveform strip did not draw into the frame")
 	}
 }
 

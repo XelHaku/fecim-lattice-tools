@@ -59,6 +59,7 @@ func drawCircuitsOverlay(cc *gg.Context, snapshot viewmodel.ModuleSnapshot, w, h
 	}
 
 	state := circuitsOverlayStateFromSnapshot(snapshot)
+	waveformPlot := activeTimingWaveformPlot(snapshot)
 	panelX := 260.0
 	panelY := 96.0
 	panelW := minFloat(760, float64(w)-panelX-42)
@@ -67,7 +68,11 @@ func drawCircuitsOverlay(cc *gg.Context, snapshot viewmodel.ModuleSnapshot, w, h
 		return
 	}
 
-	gridSize := minFloat(panelH-132, panelW*0.56)
+	gridBudget := panelH - 132
+	if waveformPlot != nil && panelH >= 380 {
+		gridBudget = panelH - 210
+	}
+	gridSize := minFloat(gridBudget, panelW*0.56)
 	gridSize = clampFloat(gridSize, 160, 430)
 	gridX := 26.0
 	gridY := 76.0
@@ -83,8 +88,23 @@ func drawCircuitsOverlay(cc *gg.Context, snapshot viewmodel.ModuleSnapshot, w, h
 	drawCircuitsGrid(cc, state, gridX, gridY, gridSize)
 	drawHalfSelectStressOverlay(cc, state, gridX, gridY, gridSize)
 	drawCircuitPathState(cc, state, gridX, gridY, gridSize, detailX, panelH)
+	if waveformPlot != nil && panelH >= 380 {
+		waveformW := detailX - gridX - 14
+		if waveformW >= 170 {
+			drawTimingWaveformStrip(cc, *waveformPlot, gridX, panelH-94, waveformW, 76, state.mode)
+		}
+	}
 	drawCircuitsDetails(cc, state, detailX, 76, detailW, panelH-106)
 	cc.Pop()
+}
+
+func activeTimingWaveformPlot(snapshot viewmodel.ModuleSnapshot) *viewmodel.PlotData {
+	for i := range snapshot.Plots {
+		if snapshot.Plots[i].ID == "timing_waveform_active" {
+			return &snapshot.Plots[i]
+		}
+	}
+	return nil
 }
 
 func circuitsOverlayStateFromSnapshot(snapshot viewmodel.ModuleSnapshot) circuitsOverlayState {
@@ -280,6 +300,80 @@ func drawCircuitPathState(cc *gg.Context, state circuitsOverlayState, gridX, gri
 		drawCircuitBlock(cc, senseX, senseY-22, 92, 44, "TIA", r, g, b)
 		drawCircuitBlock(cc, senseX+112, senseY-22, 92, 44, "ADC", r, g, b)
 		drawPolyline(cc, senseX+92, senseY, senseX+112, senseY)
+	}
+}
+
+func drawTimingWaveformStrip(cc *gg.Context, plot viewmodel.PlotData, x, y, width, height float64, mode string) {
+	if len(plot.Series) == 0 || width < 120 || height < 56 {
+		return
+	}
+
+	cc.Push()
+	defer cc.Pop()
+
+	r, g, b := modeColor(mode)
+	cc.SetRGBA(0.025, 0.04, 0.04, 0.96)
+	cc.DrawRoundedRectangle(x, y, width, height, 8)
+	cc.Fill()
+	cc.SetRGBA(r, g, b, 0.45)
+	cc.SetLineWidth(1.5)
+	cc.DrawRoundedRectangle(x, y, width, height, 8)
+	cc.Stroke()
+
+	cc.SetRGBA(0.82, 0.92, 0.88, 1)
+	cc.DrawStringAnchored(elideCircuitStatus(plot.Title, 28), x+10, y+14, 0, 0.5)
+
+	plotX := x + 58
+	plotY := y + 23
+	plotW := width - 70
+	plotH := height - 30
+	if plotW <= 0 || plotH <= 0 {
+		return
+	}
+	rowStep := plotH / float64(len(plot.Series))
+	if rowStep < 7 {
+		rowStep = 7
+	}
+
+	cc.SetRGBA(0.22, 0.30, 0.27, 0.55)
+	cc.SetLineWidth(0.7)
+	for _, pct := range []float64{0, 25, 50, 75, 100} {
+		px := plotX + pct*plotW/100
+		cc.MoveTo(px, plotY-2)
+		cc.LineTo(px, y+height-7)
+		cc.Stroke()
+	}
+
+	for i, series := range plot.Series {
+		baseY := plotY + float64(i)*rowStep + rowStep*0.72
+		highY := baseY - rowStep*0.48
+		cc.SetRGBA(0.58, 0.68, 0.63, 1)
+		cc.DrawStringAnchored(elideCircuitStatus(series.Name, 9), x+8, baseY-2, 0, 0.5)
+
+		cc.SetRGBA(0.20, 0.26, 0.24, 0.9)
+		cc.SetLineWidth(1)
+		cc.MoveTo(plotX, baseY)
+		cc.LineTo(plotX+plotW, baseY)
+		cc.Stroke()
+
+		if len(series.Points) < 2 {
+			continue
+		}
+		cc.SetRGBA(r, g, b, 0.94)
+		cc.SetLineWidth(1.8)
+		for j, point := range series.Points {
+			px := plotX + clampFloat(point.X, 0, 100)*plotW/100
+			py := baseY
+			if point.V > 0.5 {
+				py = highY
+			}
+			if j == 0 {
+				cc.MoveTo(px, py)
+			} else {
+				cc.LineTo(px, py)
+			}
+		}
+		cc.Stroke()
 	}
 }
 

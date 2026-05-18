@@ -199,7 +199,7 @@ func buildSnapshot(state CircuitsState) viewmodel.ModuleSnapshot {
 			BoundaryNotice: "SIMULATION OUTPUT — Educational circuit models. ADC/DAC/TIA are behavioral abstractions, not calibrated against silicon measurements.",
 		},
 		Metrics: metrics, Sections: sections, Actions: actions,
-		Plots: buildISPPPlots(state),
+		Plots: buildCircuitPlots(state),
 	}
 }
 
@@ -554,6 +554,70 @@ func computeRunPeak(log *ComputeRunLog) (int, float64) {
 		}
 	}
 	return peakRow, peakCurrent
+}
+
+func buildCircuitPlots(state CircuitsState) []viewmodel.PlotData {
+	plots := []viewmodel.PlotData{}
+	if plot, ok := buildTimingWaveformPlot(state); ok {
+		plots = append(plots, plot)
+	}
+	plots = append(plots, buildISPPPlots(state)...)
+	return plots
+}
+
+func buildTimingWaveformPlot(state CircuitsState) (viewmodel.PlotData, bool) {
+	waveform, ok := activeTimingWaveform(state)
+	if !ok || len(waveform.Signals) == 0 {
+		return viewmodel.PlotData{}, false
+	}
+	series := make([]viewmodel.PlotSeries, 0, len(waveform.Signals))
+	for i, signal := range waveform.Signals {
+		series = append(series, viewmodel.PlotSeries{
+			Name:   signal.Name,
+			Points: timingWaveformPlotPoints(signal, i),
+		})
+	}
+	return viewmodel.PlotData{
+		ID:     "timing_waveform_active",
+		Title:  waveform.Operation + " Timing Waveform",
+		XLabel: "Percent",
+		YLabel: "Signal row",
+		Series: series,
+	}, true
+}
+
+func timingWaveformPlotPoints(signal ReferenceTimingSignal, row int) []viewmodel.PlotPoint {
+	low := float64(row)
+	high := low + 0.72
+	points := []viewmodel.PlotPoint{{X: 0, Y: low, V: 0}}
+	lastX := 0
+	for _, window := range signal.HighWindows {
+		start := clampTimingPercent(window.StartPct, 0, 100)
+		end := clampTimingPercent(window.EndPct, start, 100)
+		if start > lastX {
+			points = append(points, viewmodel.PlotPoint{X: float64(start), Y: low, V: 0})
+		}
+		points = append(points,
+			viewmodel.PlotPoint{X: float64(start), Y: high, V: 1},
+			viewmodel.PlotPoint{X: float64(end), Y: high, V: 1},
+			viewmodel.PlotPoint{X: float64(end), Y: low, V: 0},
+		)
+		lastX = end
+	}
+	if lastX < 100 {
+		points = append(points, viewmodel.PlotPoint{X: 100, Y: low, V: 0})
+	}
+	return points
+}
+
+func clampTimingPercent(value, min, max int) int {
+	if value < min {
+		return min
+	}
+	if value > max {
+		return max
+	}
+	return value
 }
 
 func buildISPPPlots(state CircuitsState) []viewmodel.PlotData {
