@@ -30,6 +30,10 @@ class IndexingTest(unittest.TestCase):
             self.assertEqual(data["backend"], "pyserini")
             self.assertFalse(data["semantic"])
             self.assertEqual(len(data["inputs"]), 1)
+            backend_manifest = root / "research" / "manifests" / "index-pyserini.json"
+            self.assertTrue(backend_manifest.exists())
+            self.assertEqual(json.loads(backend_manifest.read_text(encoding="utf-8")), data)
+            self.assertEqual(json.loads((root / "research" / "manifests" / "index-latest.json").read_text(encoding="utf-8")), data)
 
     def test_run_index_semantic_writes_rebuildable_local_vector_cache_without_lancedb(self):
         with tempfile.TemporaryDirectory() as td:
@@ -68,6 +72,8 @@ class IndexingTest(unittest.TestCase):
             self.assertFalse(manifest["external_ai"])
             self.assertEqual(manifest["vector_dimension"], 64)
             self.assertEqual(manifest["lancedb_index"], "research/index/lancedb")
+            backend_manifest = json.loads((root / "research" / "manifests" / "index-lancedb.json").read_text(encoding="utf-8"))
+            self.assertEqual(backend_manifest, manifest)
 
 
 if __name__ == "__main__":

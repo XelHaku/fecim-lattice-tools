@@ -161,6 +161,10 @@ Search:
   `fecim-lattice-tools research evidence`.
 - `fecim-lattice-tools research search "HZO coercive field"` uses the Pyserini
   BM25 cache built by `fecim-lattice-tools research index`.
+- Index commands write backend-specific tracked manifests:
+  `research/manifests/index-pyserini.json` validates the BM25 cache, and
+  `research/manifests/index-lancedb.json` validates the semantic/vector cache.
+  `research/manifests/index-latest.json` is only the most recent index run.
 - Search writes `reports/search-latest.json` so query output is reviewable in
   git when a search result becomes part of research work.
 

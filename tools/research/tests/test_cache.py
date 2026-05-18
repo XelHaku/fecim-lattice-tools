@@ -64,6 +64,44 @@ class CacheTest(unittest.TestCase):
             self.assertTrue(pyserini["stale"])
             self.assertEqual(pyserini["stale_inputs"], ["research/chunks/paper.jsonl"])
 
+    def test_build_cache_report_does_not_validate_pyserini_with_latest_semantic_manifest(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_research_gitignore(root)
+            chunk = root / "research" / "chunks" / "paper.jsonl"
+            chunk.parent.mkdir(parents=True)
+            chunk.write_text('{"id":"paper::chunk-001","contents":"text"}\n', encoding="utf-8")
+            write_index_manifest(root, "local-vector-jsonl", [chunk], semantic=True, embedding_model="fecim-hashing-bow-v1")
+            (root / "research" / "index" / "pyserini").mkdir(parents=True)
+
+            report = build_cache_report(root)
+
+            pyserini = self._cache(report, "pyserini")
+            self.assertFalse(report["ok"])
+            self.assertEqual(pyserini["manifest"], "research/manifests/index-pyserini.json")
+            self.assertFalse(pyserini["manifest_exists"])
+            self.assertEqual(pyserini["status"], "missing-manifest")
+
+    def test_build_cache_report_marks_lancedb_cache_stale_when_vector_manifest_input_changes(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_research_gitignore(root)
+            chunk = root / "research" / "chunks" / "paper.jsonl"
+            chunk.parent.mkdir(parents=True)
+            chunk.write_text('{"id":"paper::chunk-001","contents":"old"}\n', encoding="utf-8")
+            write_index_manifest(root, "local-vector-jsonl", [chunk], semantic=True, embedding_model="fecim-hashing-bow-v1")
+            chunk.write_text('{"id":"paper::chunk-001","contents":"new"}\n', encoding="utf-8")
+            (root / "research" / "index" / "lancedb").mkdir(parents=True)
+
+            report = build_cache_report(root)
+
+            lancedb = self._cache(report, "lancedb")
+            self.assertEqual(lancedb["manifest"], "research/manifests/index-lancedb.json")
+            self.assertTrue(lancedb["manifest_exists"])
+            self.assertEqual(lancedb["status"], "stale")
+            self.assertTrue(lancedb["stale"])
+            self.assertEqual(lancedb["stale_inputs"], ["research/chunks/paper.jsonl"])
+
     def test_run_cache_writes_git_trackable_report(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

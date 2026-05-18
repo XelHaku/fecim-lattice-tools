@@ -22,7 +22,7 @@ CACHE_SPECS = [
         name="pyserini",
         kind="bm25",
         path="research/index/pyserini",
-        manifest="research/manifests/index-latest.json",
+        manifest="research/manifests/index-pyserini.json",
         rebuild_command="fecim research index",
         ignore_rule="/index/pyserini/",
         required=True,
@@ -31,7 +31,7 @@ CACHE_SPECS = [
         name="lancedb",
         kind="semantic-vector",
         path="research/index/lancedb",
-        manifest="research/manifests/index-latest.json",
+        manifest="research/manifests/index-lancedb.json",
         rebuild_command="fecim research index --semantic",
         ignore_rule="/index/lancedb/",
         required=False,
@@ -149,8 +149,11 @@ def _build_cache_entry(root: Path, spec: CacheSpec) -> dict[str, Any]:
         "inputs": 0,
     }
 
-    if not spec.required:
-        entry["status"] = "ready" if cache_path.exists() else "optional"
+    if not spec.required and not cache_path.exists():
+        entry["status"] = "optional"
+        return entry
+    if not spec.required and manifest_path is None:
+        entry["status"] = "ready"
         return entry
 
     if not cache_path.exists() and not entry["manifest_exists"]:

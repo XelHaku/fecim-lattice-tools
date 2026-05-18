@@ -1,6 +1,7 @@
 import json
 import sys
 import tempfile
+import types
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
@@ -94,6 +95,62 @@ class SearchingTest(unittest.TestCase):
 
             self.assertEqual(code, 1)
             self.assertIn("BM25 index is stale; rerun `fecim research index`", err.getvalue())
+
+    def test_run_search_uses_pyserini_manifest_even_when_latest_manifest_is_semantic(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            chunk = root / "research" / "chunks" / "park.jsonl"
+            chunk.parent.mkdir(parents=True)
+            chunk.write_text(
+                json.dumps({"id": "park::sec-01::chunk-001", "paper_key": "park", "contents": "HZO evidence"}) + "\n",
+                encoding="utf-8",
+            )
+            from fecim_research.indexing import write_index_manifest
+
+            write_index_manifest(root, "pyserini", [chunk], semantic=False, embedding_model="")
+            latest = root / "research" / "manifests" / "index-latest.json"
+            latest.write_text(
+                json.dumps(
+                    {
+                        "backend": "local-vector-jsonl",
+                        "semantic": True,
+                        "embedding_model": "fecim-hashing-bow-v1",
+                        "inputs": [{"path": "research/chunks/park.jsonl", "sha256": "stale-semantic"}],
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "research" / "index" / "pyserini").mkdir(parents=True)
+            lucene = types.ModuleType("pyserini.search.lucene")
+
+            class FakeHit:
+                docid = "park::sec-01::chunk-001"
+                score = 3.0
+
+            class FakeSearcher:
+                def __init__(self, index_dir: str):
+                    self.index_dir = index_dir
+
+                def search(self, query: str, k: int):
+                    return [FakeHit()]
+
+            lucene.LuceneSearcher = FakeSearcher
+
+            out = StringIO()
+            with patch.dict(
+                sys.modules,
+                {
+                    "pyserini": types.ModuleType("pyserini"),
+                    "pyserini.search": types.ModuleType("pyserini.search"),
+                    "pyserini.search.lucene": lucene,
+                },
+            ), redirect_stdout(out):
+                code = run_search(root, "HZO", 3, json_output=True)
+
+            self.assertEqual(code, 0)
+            printed = json.loads(out.getvalue())
+            self.assertEqual(printed[0]["docid"], "park::sec-01::chunk-001")
 
     def test_search_chunks_locally_ranks_jsonl_chunks_without_index(self):
         with tempfile.TemporaryDirectory() as td:
@@ -206,6 +263,51 @@ class SearchingTest(unittest.TestCase):
             self.assertTrue(report["semantic"])
             self.assertEqual(report["embedding_model"], "fecim-hashing-bow-v1")
             self.assertEqual(report["results"][0]["docid"], "park::sec-02::chunk-001")
+
+    def test_run_search_semantic_uses_vector_manifest_even_when_latest_manifest_is_pyserini(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            chunk = root / "research" / "chunks" / "papers.jsonl"
+            chunk.parent.mkdir(parents=True)
+            chunk.write_text(
+                json.dumps(
+                    {
+                        "id": "park::sec-02::chunk-001",
+                        "paper_key": "park",
+                        "section": "Results",
+                        "contents": "HZO coercive field and Preisach switching evidence.",
+                        "source_path": "research/parsed/park/marker.md",
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            from fecim_research.indexing import run_index
+
+            with patch.dict(sys.modules, {"lancedb": None}):
+                code = run_index(root, semantic=True, embedding_model="")
+            self.assertEqual(code, 0)
+            latest = root / "research" / "manifests" / "index-latest.json"
+            latest.write_text(
+                json.dumps(
+                    {
+                        "backend": "pyserini",
+                        "semantic": False,
+                        "embedding_model": "",
+                        "inputs": [{"path": "research/chunks/papers.jsonl", "sha256": "stale-pyserini"}],
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            out = StringIO()
+            with redirect_stdout(out):
+                code = run_search(root, "HZO coercive", 3, json_output=True, semantic=True)
+
+            self.assertEqual(code, 0)
+            printed = json.loads(out.getvalue())
+            self.assertEqual(printed[0]["docid"], "park::sec-02::chunk-001")
 
     def test_run_search_inbox_reads_unreviewed_sidecar_markdown_and_marks_results(self):
         with tempfile.TemporaryDirectory() as td:

@@ -14,6 +14,11 @@ from .semantic import (
 )
 
 
+LATEST_INDEX_MANIFEST = "research/manifests/index-latest.json"
+PYSERINI_INDEX_MANIFEST = "research/manifests/index-pyserini.json"
+LANCEDB_INDEX_MANIFEST = "research/manifests/index-lancedb.json"
+
+
 def collect_chunk_files(root: Path) -> list[Path]:
     chunk_dir = root / "research" / "chunks"
     if not chunk_dir.is_dir():
@@ -43,8 +48,9 @@ def write_index_manifest(
     lancedb_index: str = "",
     external_ai: bool = False,
 ) -> Path:
-    manifest_path = root / "research" / "manifests" / "index-latest.json"
-    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    latest_path = root / LATEST_INDEX_MANIFEST
+    backend_path = root / index_manifest_for_semantic(semantic)
+    latest_path.parent.mkdir(parents=True, exist_ok=True)
     data = {
         "backend": backend,
         "semantic": semantic,
@@ -63,8 +69,14 @@ def write_index_manifest(
     if semantic:
         data["lancedb_index"] = lancedb_index or "research/index/lancedb"
         data["vector_dimension"] = vector_dimension or VECTOR_DIMENSION
-    manifest_path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return manifest_path
+    payload = json.dumps(data, indent=2, sort_keys=True) + "\n"
+    backend_path.write_text(payload, encoding="utf-8")
+    latest_path.write_text(payload, encoding="utf-8")
+    return latest_path
+
+
+def index_manifest_for_semantic(semantic: bool) -> str:
+    return LANCEDB_INDEX_MANIFEST if semantic else PYSERINI_INDEX_MANIFEST
 
 
 def run_index(root: Path, semantic: bool, embedding_model: str) -> int:

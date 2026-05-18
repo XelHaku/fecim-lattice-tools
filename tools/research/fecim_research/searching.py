@@ -7,7 +7,7 @@ from typing import Any
 
 from .chunking import chunk_markdown
 from .claims import ClaimRecord, load_claim_records
-from .indexing import _sha, collect_chunk_files
+from .indexing import LATEST_INDEX_MANIFEST, _sha, collect_chunk_files, index_manifest_for_semantic
 from .semantic import DEFAULT_EMBEDDING_MODEL, VECTOR_CACHE, embed_text, load_vector_cache, search_vector_records
 
 
@@ -88,11 +88,11 @@ def _read_inbox_report(root: Path) -> dict[str, object]:
     return data if isinstance(data, dict) else {}
 
 
-def index_is_stale(root: Path) -> bool:
-    manifest_path = root / "research" / "manifests" / "index-latest.json"
-    try:
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
+def index_is_stale(root: Path, semantic: bool = False) -> bool:
+    manifest = _read_index_manifest(root, semantic=semantic)
+    if not manifest:
+        return True
+    if bool(manifest.get("semantic")) != semantic:
         return True
 
     inputs = manifest.get("inputs")
@@ -113,8 +113,10 @@ def index_is_stale(root: Path) -> bool:
     return sorted(current, key=lambda item: item["path"]) != sorted(expected, key=lambda item: item["path"])
 
 
-def _read_index_manifest(root: Path) -> dict[str, object]:
-    manifest_path = root / "research" / "manifests" / "index-latest.json"
+def _read_index_manifest(root: Path, semantic: bool) -> dict[str, object]:
+    manifest_path = root / index_manifest_for_semantic(semantic)
+    if not manifest_path.exists():
+        manifest_path = root / LATEST_INDEX_MANIFEST
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
@@ -213,7 +215,7 @@ def search_inbox_chunks_locally(root: Path, query: str, limit: int) -> list[dict
 
 
 def search_semantic_index(root: Path, query: str, limit: int) -> tuple[str, str, list[dict[str, object]]]:
-    manifest = _read_index_manifest(root)
+    manifest = _read_index_manifest(root, semantic=True)
     model = str(manifest.get("embedding_model") or DEFAULT_EMBEDDING_MODEL)
     backend = str(manifest.get("backend") or "local-vector-jsonl")
     if backend == "lancedb":
@@ -341,7 +343,7 @@ def run_search(
         if not cache_path.is_file():
             print("missing semantic index; run `fecim research index --semantic` first", file=sys.stderr)
             return 1
-        if index_is_stale(root):
+        if index_is_stale(root, semantic=True):
             print(STALE_SEMANTIC_INDEX_MESSAGE, file=sys.stderr)
             return 1
         backend, model, rows = search_semantic_index(root, query, limit)
@@ -381,7 +383,7 @@ def run_search(
     if not index_dir.is_dir():
         print("missing BM25 index; run `fecim research index` first", file=sys.stderr)
         return 1
-    if index_is_stale(root):
+    if index_is_stale(root, semantic=False):
         print(STALE_INDEX_MESSAGE, file=sys.stderr)
         return 1
 
