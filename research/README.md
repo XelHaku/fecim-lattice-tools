@@ -30,6 +30,8 @@ Local-only input:
   of local PDFs that still need canonical paper records.
 - Add `--write-stubs` to create `needs-review` records under
   `citations/papers/` for unmatched, non-duplicate PDFs.
+- Registration refreshes `reports/missing-papers-latest.json` so new stubs and
+  matched local PDFs are reflected in the acquisition queue immediately.
 
 Paper acquisition:
 

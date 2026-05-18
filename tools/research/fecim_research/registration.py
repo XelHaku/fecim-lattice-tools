@@ -44,6 +44,7 @@ def run_register_pdfs(root: Path, extra_paths: list[Path], write_stubs: bool) ->
     report_path = root / "research" / "reports" / "pdf-registration-latest.json"
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    _refresh_missing_report(root)
     print(
         "pdf registration complete: "
         f"discovered={report['discovered']} unmatched={report['unmatched']} stubs_written={stubs_written}"
@@ -156,3 +157,9 @@ def _rel(root: Path, path: Path) -> str:
 
 def _path_text(path: Path) -> str:
     return path.as_posix()
+
+
+def _refresh_missing_report(root: Path) -> None:
+    from .missing import run_missing
+
+    run_missing(root=root)

@@ -58,6 +58,10 @@ class RegistrationTest(unittest.TestCase):
             report = json.loads((root / "research" / "reports" / "pdf-registration-latest.json").read_text())
             self.assertEqual(report["stubs_written"], 1)
             self.assertEqual(report["pdfs"][0]["stub_path"], "citations/papers/new_hzo_device.md")
+            missing_report = json.loads((root / "research" / "reports" / "missing-papers-latest.json").read_text())
+            self.assertEqual(missing_report["total_records"], 1)
+            self.assertEqual(missing_report["stored"], 1)
+            self.assertEqual(missing_report["missing"], 0)
 
     def test_register_pdfs_uses_hash_suffix_when_stub_key_would_collide(self):
         with tempfile.TemporaryDirectory() as td:
