@@ -306,6 +306,19 @@ func TestPreisachModel_NewPreisachModel(t *testing.T) {
 	})
 }
 
+func TestPreisachModel_NewPreisachModelRejectsNilMaterial(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("expected nil material to be rejected without panic, got panic: %v", r)
+		}
+	}()
+
+	model := NewPreisachModel(nil)
+	if model != nil {
+		t.Fatalf("expected nil model for nil material, got %#v", model)
+	}
+}
+
 // TestPreisachModel_DiscreteStates tests discrete state generation.
 func TestPreisachModel_DiscreteStates(t *testing.T) {
 	t.Run("GenerateStates", func(t *testing.T) {

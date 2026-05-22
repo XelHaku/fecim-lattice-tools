@@ -192,6 +192,10 @@ type PreisachModel struct {
 
 // NewPreisachModel creates a new Preisach model with the given material.
 func NewPreisachModel(material *HZOMaterial) *PreisachModel {
+	if material == nil {
+		return nil
+	}
+
 	log.Input("NewPreisachModel", map[string]interface{}{
 		"material_name": material.Name,
 		"Ec":            material.Ec,
