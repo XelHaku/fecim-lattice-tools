@@ -3,6 +3,7 @@ package crossbarcli
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"math/rand"
 	"os"
@@ -32,9 +33,27 @@ type InferenceResult struct {
 	TotalOps    int64     `json:"total_ops,omitempty"`
 }
 
+func printInferenceUsage(fs *flag.FlagSet, out io.Writer) {
+	fmt.Fprintln(out, "FeCIM Crossbar Inference (Terminal)")
+	fmt.Fprintln(out)
+	fmt.Fprintln(out, "Usage:")
+	fmt.Fprintln(out, "  fecim-lattice-tools crossbar inference [options]")
+	fmt.Fprintln(out)
+	fmt.Fprintln(out, "Options:")
+	previous := fs.Output()
+	fs.SetOutput(out)
+	fs.PrintDefaults()
+	fs.SetOutput(previous)
+	fmt.Fprintln(out, cli.CommonUsage())
+}
+
 func RunInference(args []string) error {
+	return runInference(args, os.Stdout, os.Stderr)
+}
+
+func runInference(args []string, stdout, stderr io.Writer) error {
 	fs := flag.NewFlagSet("inference", flag.ContinueOnError)
-	fs.SetOutput(os.Stdout)
+	fs.SetOutput(stderr)
 
 	// Common CLI flags
 	commonFlags := cli.NewCommonFlags()
@@ -54,21 +73,11 @@ func RunInference(args []string) error {
 	showSneak := fs.Bool("show-sneak", false, "Show sneak path analysis")
 	showNonidealities := fs.Bool("show-nonidealities", false, "Show all non-ideality effects")
 
-	fs.Usage = func() {
-		out := fs.Output()
-		fmt.Fprintln(out, "FeCIM Crossbar Inference (Terminal)")
-		fmt.Fprintln(out)
-		fmt.Fprintln(out, "Usage:")
-		fmt.Fprintln(out, "  fecim-lattice-tools crossbar inference [options]")
-		fmt.Fprintln(out)
-		fmt.Fprintln(out, "Options:")
-		fs.PrintDefaults()
-		fmt.Fprintln(out, cli.CommonUsage())
-	}
+	fs.Usage = func() { printInferenceUsage(fs, fs.Output()) }
 
 	if err := fs.Parse(args); err != nil {
-		fmt.Fprintln(fs.Output(), "Error:", err)
-		fs.Usage()
+		fmt.Fprintln(stderr, "Error:", err)
+		printInferenceUsage(fs, stderr)
 		if err == flag.ErrHelp {
 			return nil
 		}
@@ -76,7 +85,7 @@ func RunInference(args []string) error {
 	}
 
 	if commonFlags.WantsHelp() {
-		fs.Usage()
+		printInferenceUsage(fs, stdout)
 		return nil
 	}
 
