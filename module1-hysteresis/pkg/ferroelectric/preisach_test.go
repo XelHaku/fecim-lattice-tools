@@ -1081,6 +1081,9 @@ func TestPreisachModel_GetHysteresisLoopRejectsInvalidBinding(t *testing.T) {
 	validStack := func() *sharedphysics.PreisachStack {
 		return sharedphysics.NewPreisachStack(material.Ec*saturationFieldMultiplier, validEverett)
 	}
+	sameFloat := func(a, b float64) bool {
+		return a == b || (math.IsNaN(a) && math.IsNaN(b))
+	}
 	materialWith := func(mutator func(*HZOMaterial)) *HZOMaterial {
 		m := *material
 		mutator(&m)
@@ -1104,6 +1107,12 @@ func TestPreisachModel_GetHysteresisLoopRejectsInvalidBinding(t *testing.T) {
 		{name: "positive_inf_pr", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Pr = math.Inf(1) }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
 		{name: "nil_stack", model: &PreisachModel{material: material, everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
 		{name: "nil_stack_everett", model: &PreisachModel{material: material, stack: &sharedphysics.PreisachStack{Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: 1, LastE: -1}, everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "zero_saturation", model: &PreisachModel{material: material, stack: &sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: 0, Type: -1}}, SaturationE: 0, LastE: 0, CurrentDir: 1}, everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "negative_saturation", model: &PreisachModel{material: material, stack: &sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: -1, LastE: -1, CurrentDir: 1}, everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "nan_saturation", model: &PreisachModel{material: material, stack: &sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: math.NaN(), Type: -1}}, SaturationE: math.NaN(), LastE: 0, CurrentDir: 1}, everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "positive_inf_saturation", model: &PreisachModel{material: material, stack: &sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: math.Inf(-1), Type: -1}}, SaturationE: math.Inf(1), LastE: 0, CurrentDir: 1}, everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "nan_last_field", model: &PreisachModel{material: material, stack: &sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: 1, LastE: math.NaN(), CurrentDir: 1}, everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
+		{name: "inf_last_field", model: &PreisachModel{material: material, stack: &sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: 1, LastE: math.Inf(1), CurrentDir: 1}, everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
 		{name: "zero_ec", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Ec = 0 }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
 		{name: "negative_ec", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Ec = -1e6 }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
 		{name: "nan_ec", model: &PreisachModel{material: materialWith(func(m *HZOMaterial) { m.Ec = math.NaN() }), stack: validStack(), everett: validModel.everett, dynamicP: 0.012345, hasDynamicP: true}},
@@ -1151,7 +1160,7 @@ func TestPreisachModel_GetHysteresisLoopRejectsInvalidBinding(t *testing.T) {
 					t.Fatalf("expected invalid loop binding to preserve dynamic state P=%.6g has=%v lock=%v, got P=%.6g has=%v lock=%v", beforeDynamicP, beforeHasDynamicP, beforeLockDynamic, tc.model.dynamicP, tc.model.hasDynamicP, tc.model.lockDynamic)
 				}
 				if tc.model.stack != nil {
-					if tc.model.stack.LastE != beforeLastE {
+					if !sameFloat(tc.model.stack.LastE, beforeLastE) {
 						t.Fatalf("expected invalid loop binding to preserve LastE %.6g V/m, got %.6g V/m", beforeLastE, tc.model.stack.LastE)
 					}
 					if tc.model.stack.CurrentDir != beforeDirection {
