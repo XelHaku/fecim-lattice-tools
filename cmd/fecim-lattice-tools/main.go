@@ -1,8 +1,10 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,20 +16,38 @@ import (
 )
 
 func main() {
-	if handled, code := maybeDispatchSubcommand(os.Args[1:]); handled {
-		if code != 0 {
-			os.Exit(code)
-		}
-		return
-	}
-	if err := runRoot(os.Args[1:]); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
-	}
+	os.Exit(runMain(os.Args[1:], os.Stdout, os.Stderr))
 }
 
-func runRoot(args []string) error {
-	fs := flag.NewFlagSet("fecim-lattice-tools", flag.ExitOnError)
+func runMain(args []string, stdout, stderr io.Writer) int {
+	if handled, code := runSubcommandDispatch(args, stdout, stderr); handled {
+		return code
+	}
+	if err := runRoot(args, stdout, stderr); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return 0
+		}
+		fmt.Fprintf(stderr, "Error: %v\n", err)
+		var coded exitCodeError
+		if errors.As(err, &coded) {
+			return coded.code
+		}
+		return 1
+	}
+	return 0
+}
+
+type exitCodeError struct {
+	code int
+	err  error
+}
+
+func (e exitCodeError) Error() string { return e.err.Error() }
+func (e exitCodeError) Unwrap() error { return e.err }
+
+func runRoot(args []string, stdout, stderr io.Writer) error {
+	fs := flag.NewFlagSet("fecim-lattice-tools", flag.ContinueOnError)
+	fs.SetOutput(stderr)
 	loggerFlag := fs.Bool("logger", false, "Enable file logging (logs/). Optional shorthand: --logger debug|info|trace|off")
 	verbosityFlag := fs.String("verbosity", "info", "Logging verbosity: 0|off, 1|info, 2|debug, 3|trace (only used with --logger)")
 	calibrateFlag := fs.Bool("calibrate", false, "Run hysteresis calibration and exit")
@@ -44,7 +64,7 @@ func runRoot(args []string) error {
 
 	fs.Usage = func() { printRootUsage(fs.Output()) }
 	if err := fs.Parse(args); err != nil {
-		return err
+		return exitCodeError{code: 2, err: err}
 	}
 
 	verbosityProvided := false
@@ -62,9 +82,9 @@ func runRoot(args []string) error {
 		*listMaterialsFlag = true
 	}
 	if *listMaterialsFlag {
-		fmt.Println("Available materials:")
+		fmt.Fprintln(stdout, "Available materials:")
 		for _, name := range hysheadless.ListMaterials() {
-			fmt.Printf("  - %s\n", name)
+			fmt.Fprintf(stdout, "  - %s\n", name)
 		}
 		return nil
 	}
@@ -79,7 +99,7 @@ func runRoot(args []string) error {
 		if err := hysheadless.RunCLICalibration(opts); err != nil {
 			return fmt.Errorf("calibration error: %w", err)
 		}
-		fmt.Println("Calibration complete.")
+		fmt.Fprintln(stdout, "Calibration complete.")
 		return nil
 	}
 

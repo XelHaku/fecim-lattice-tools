@@ -27,6 +27,29 @@ func TestRunSubcommandDispatchReportsUnknownWithoutExiting(t *testing.T) {
 	}
 }
 
+func TestRunMainReportsRootFlagErrorWithoutExiting(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+
+	code := runMain([]string{"-definitely-not-a-flag"}, &stdout, &stderr)
+
+	if code != 2 {
+		t.Fatalf("runMain code = %d, want 2", code)
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout length = %d, want 0; stdout=%q", stdout.Len(), stdout.String())
+	}
+	text := stderr.String()
+	if !strings.Contains(text, "flag provided but not defined: -definitely-not-a-flag") {
+		t.Fatalf("stderr = %q, want flag error context", text)
+	}
+	if !strings.Contains(text, "Usage:") {
+		t.Fatalf("stderr = %q, want root usage", text)
+	}
+	if !strings.Contains(text, "Error:") {
+		t.Fatalf("stderr = %q, want top-level error prefix", text)
+	}
+}
+
 func TestNormalizeEngine_TableDriven(t *testing.T) {
 	tests := []struct {
 		in   string

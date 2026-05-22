@@ -94,7 +94,7 @@ func runHysteresisSubcommand(args []string) error {
 		return err
 	}
 	if *listMaterials {
-		return runRoot([]string{"--list-materials"})
+		return runRoot([]string{"--list-materials"}, os.Stdout, os.Stderr)
 	}
 	if *headless {
 		return runMode("hysteresis", *engine)
