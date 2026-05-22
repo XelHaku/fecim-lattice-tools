@@ -190,9 +190,18 @@ type PreisachModel struct {
 	lockDynamic bool    // when true, skip dynamicP read/write (loop generation)
 }
 
+func isValidPreisachMaterial(material *HZOMaterial) bool {
+	if material == nil {
+		return false
+	}
+	return material.Ps > 0 && !math.IsNaN(material.Ps) && !math.IsInf(material.Ps, 0) &&
+		material.Pr > 0 && !math.IsNaN(material.Pr) && !math.IsInf(material.Pr, 0) && material.Pr <= material.Ps &&
+		material.Ec > 0 && !math.IsNaN(material.Ec) && !math.IsInf(material.Ec, 0)
+}
+
 // NewPreisachModel creates a new Preisach model with the given material.
 func NewPreisachModel(material *HZOMaterial) *PreisachModel {
-	if material == nil || material.Ps <= 0 || math.IsNaN(material.Ps) || math.IsInf(material.Ps, 0) || material.Ec <= 0 || math.IsNaN(material.Ec) || math.IsInf(material.Ec, 0) {
+	if !isValidPreisachMaterial(material) {
 		return nil
 	}
 
