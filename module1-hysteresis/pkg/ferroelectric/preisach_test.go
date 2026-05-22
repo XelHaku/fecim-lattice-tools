@@ -534,6 +534,45 @@ func TestPreisachModel_ResetRejectsInvalidBinding(t *testing.T) {
 	}
 }
 
+func TestPreisachModel_PolarizationRejectsInvalidBinding(t *testing.T) {
+	validModel := NewPreisachModel(DefaultHZO())
+	validEverett := validModel.stack.Everett
+
+	cases := []struct {
+		name  string
+		model *PreisachModel
+	}{
+		{name: "nil_receiver", model: nil},
+		{name: "nil_stack", model: &PreisachModel{}},
+		{name: "nil_everett", model: &PreisachModel{stack: &sharedphysics.PreisachStack{Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: 1}}},
+		{name: "empty_stack", model: &PreisachModel{stack: &sharedphysics.PreisachStack{Everett: validEverett, SaturationE: 1}}},
+		{name: "zero_saturation", model: &PreisachModel{stack: &sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: 0, Type: -1}}, SaturationE: 0}}},
+		{name: "negative_saturation", model: &PreisachModel{stack: &sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: 1, Type: -1}}, SaturationE: -1}}},
+		{name: "nan_saturation", model: &PreisachModel{stack: &sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: math.NaN(), Type: -1}}, SaturationE: math.NaN()}}},
+		{name: "inf_saturation", model: &PreisachModel{stack: &sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: math.Inf(-1), Type: -1}}, SaturationE: math.Inf(1)}}},
+		{name: "nan_last_field", model: &PreisachModel{stack: &sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: 1, LastE: math.NaN()}}},
+		{name: "inf_last_field", model: &PreisachModel{stack: &sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: 1, LastE: math.Inf(1)}}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected invalid polarization binding to be rejected without panic, got panic: %v", r)
+				}
+			}()
+
+			got := tc.model.Polarization()
+			if got != 0 {
+				t.Fatalf("expected invalid polarization binding to return 0 C/m^2, got %g C/m^2", got)
+			}
+			if math.IsNaN(got) || math.IsInf(got, 0) {
+				t.Fatalf("expected finite polarization for invalid binding, got %g C/m^2", got)
+			}
+		})
+	}
+}
+
 // TestPreisachModel_Polarization tests polarization query without mutation.
 func TestPreisachModel_Polarization(t *testing.T) {
 	t.Run("QueryPolarization", func(t *testing.T) {

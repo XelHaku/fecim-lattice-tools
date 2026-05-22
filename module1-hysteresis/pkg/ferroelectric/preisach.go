@@ -375,6 +375,10 @@ func (p *PreisachModel) TimeStep(E, dt float64) float64 {
 
 // Polarization returns the current polarization state.
 func (p *PreisachModel) Polarization() float64 {
+	if p == nil || p.stack == nil || p.stack.Everett == nil || len(p.stack.Stack) == 0 || p.stack.SaturationE <= 0 || math.IsNaN(p.stack.SaturationE) || math.IsInf(p.stack.SaturationE, 0) || math.IsNaN(p.stack.LastE) || math.IsInf(p.stack.LastE, 0) {
+		return 0
+	}
+
 	// Compute polarization at current field without mutating history.
 	Pirrev := p.stack.ComputePolarization(p.stack.LastE)
 	return Pirrev + p.reversiblePolarization(p.stack.LastE)
