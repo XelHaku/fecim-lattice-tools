@@ -591,6 +591,47 @@ func TestPreisachModel_Polarization(t *testing.T) {
 	})
 }
 
+func TestPreisachModel_NormalizedPolarizationRejectsInvalidBinding(t *testing.T) {
+	materialWithPs := func(ps float64) *HZOMaterial {
+		material := *DefaultHZO()
+		material.Ps = ps
+		return &material
+	}
+
+	cases := []struct {
+		name  string
+		model *PreisachModel
+	}{
+		{name: "nil_receiver", model: nil},
+		{name: "nil_material", model: &PreisachModel{}},
+		{name: "nil_material_positive_effective_ps", model: &PreisachModel{effectivePs: 0.2, dynamicP: 0.1, hasDynamicP: true}},
+		{name: "negative_effective_ps", model: &PreisachModel{material: DefaultHZO(), effectivePs: -0.2, dynamicP: 0.1, hasDynamicP: true}},
+		{name: "nan_effective_ps", model: &PreisachModel{material: DefaultHZO(), effectivePs: math.NaN(), dynamicP: 0.1, hasDynamicP: true}},
+		{name: "negative_material_ps", model: &PreisachModel{material: materialWithPs(-0.2), dynamicP: 0.1, hasDynamicP: true}},
+		{name: "nan_material_ps", model: &PreisachModel{material: materialWithPs(math.NaN()), dynamicP: 0.1, hasDynamicP: true}},
+		{name: "nan_dynamic_p", model: &PreisachModel{material: DefaultHZO(), effectivePs: 0.2, dynamicP: math.NaN(), hasDynamicP: true}},
+		{name: "inf_dynamic_p", model: &PreisachModel{material: DefaultHZO(), effectivePs: 0.2, dynamicP: math.Inf(1), hasDynamicP: true}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected invalid normalized-polarization binding to be rejected without panic, got panic: %v", r)
+				}
+			}()
+
+			got := tc.model.NormalizedPolarization()
+			if got != 0 {
+				t.Fatalf("expected invalid normalized polarization to return 0, got %g", got)
+			}
+			if math.IsNaN(got) || math.IsInf(got, 0) {
+				t.Fatalf("expected finite normalized polarization for invalid binding, got %g", got)
+			}
+		})
+	}
+}
+
 // TestPreisachModel_NormalizedPolarization tests normalized polarization.
 func TestPreisachModel_NormalizedPolarization(t *testing.T) {
 	t.Run("Normalized", func(t *testing.T) {

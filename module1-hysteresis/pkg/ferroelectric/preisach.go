@@ -386,17 +386,28 @@ func (p *PreisachModel) Polarization() float64 {
 
 // NormalizedPolarization returns polarization as fraction of Ps.
 func (p *PreisachModel) NormalizedPolarization() float64 {
+	if p == nil || p.material == nil {
+		return 0
+	}
+
 	denom := p.effectivePs
 	if denom == 0 {
 		denom = p.material.Ps
 	}
-	if denom == 0 {
+	if denom <= 0 || math.IsNaN(denom) || math.IsInf(denom, 0) {
 		return 0
 	}
 	if p.hasDynamicP {
+		if math.IsNaN(p.dynamicP) || math.IsInf(p.dynamicP, 0) {
+			return 0
+		}
 		return p.dynamicP / denom
 	}
-	return p.Polarization() / denom
+	pol := p.Polarization()
+	if math.IsNaN(pol) || math.IsInf(pol, 0) {
+		return 0
+	}
+	return pol / denom
 }
 
 // reversiblePolarization returns the nonlinear reversible (dielectric) contribution.
