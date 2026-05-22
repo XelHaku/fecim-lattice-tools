@@ -1,6 +1,33 @@
 package circuitscli
 
-import "testing"
+import (
+	"bytes"
+	"strings"
+	"testing"
+)
+
+func TestRunCircuitsReportsFlagErrorToStderr(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+
+	err := runCircuits([]string{"-definitely-not-a-flag"}, &stdout, &stderr)
+
+	if err == nil {
+		t.Fatal("runCircuits error = nil, want invalid flag error")
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout length = %d, want 0; stdout=%q", stdout.Len(), stdout.String())
+	}
+	text := stderr.String()
+	if !strings.Contains(text, "flag provided but not defined: -definitely-not-a-flag") {
+		t.Fatalf("stderr = %q, want invalid flag context", text)
+	}
+	if !strings.Contains(text, "Error:") {
+		t.Fatalf("stderr = %q, want error prefix", text)
+	}
+	if !strings.Contains(text, "FeCIM Peripheral Circuits CLI") {
+		t.Fatalf("stderr = %q, want usage", text)
+	}
+}
 
 func TestBuildCircuitsResultShowAll(t *testing.T) {
 	r := buildCircuitsResult(false, false, false, false, true)

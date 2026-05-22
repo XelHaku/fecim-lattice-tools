@@ -13,6 +13,7 @@ package circuitscli
 import (
 	"flag"
 	"fmt"
+	"io"
 	"math"
 	"os"
 	"strings"
@@ -69,9 +70,27 @@ type PumpResult struct {
 	Stages        int     `json:"stages"`
 }
 
+func printCircuitsUsage(fs *flag.FlagSet, out io.Writer) {
+	fmt.Fprintln(out, "FeCIM Peripheral Circuits CLI")
+	fmt.Fprintln(out)
+	fmt.Fprintln(out, "Usage:")
+	fmt.Fprintln(out, "  fecim-lattice-tools circuits cli [options]")
+	fmt.Fprintln(out)
+	fmt.Fprintln(out, "Options:")
+	previous := fs.Output()
+	fs.SetOutput(out)
+	fs.PrintDefaults()
+	fs.SetOutput(previous)
+	fmt.Fprintln(out, cli.CommonUsage())
+}
+
 func Run(args []string) error {
+	return runCircuits(args, os.Stdout, os.Stderr)
+}
+
+func runCircuits(args []string, stdout, stderr io.Writer) error {
 	fs := flag.NewFlagSet("circuits", flag.ContinueOnError)
-	fs.SetOutput(os.Stdout)
+	fs.SetOutput(stderr)
 
 	// Common CLI flags
 	commonFlags := cli.NewCommonFlags()
@@ -91,21 +110,11 @@ func Run(args []string) error {
 	enableLogger := fs.Bool("logger", false, "Enable file logging (logs/)")
 	verbosity := fs.Int("verbosity", 2, "Logging verbosity: 0=off, 1=info, 2=debug, 3=trace")
 
-	fs.Usage = func() {
-		out := fs.Output()
-		fmt.Fprintln(out, "FeCIM Peripheral Circuits CLI")
-		fmt.Fprintln(out)
-		fmt.Fprintln(out, "Usage:")
-		fmt.Fprintln(out, "  fecim-lattice-tools circuits cli [options]")
-		fmt.Fprintln(out)
-		fmt.Fprintln(out, "Options:")
-		fs.PrintDefaults()
-		fmt.Fprintln(out, cli.CommonUsage())
-	}
+	fs.Usage = func() { printCircuitsUsage(fs, fs.Output()) }
 
 	if err := fs.Parse(args); err != nil {
-		fmt.Fprintln(fs.Output(), "Error:", err)
-		fs.Usage()
+		fmt.Fprintln(stderr, "Error:", err)
+		printCircuitsUsage(fs, stderr)
 		if err == flag.ErrHelp {
 			return nil
 		}
@@ -113,7 +122,7 @@ func Run(args []string) error {
 	}
 
 	if commonFlags.WantsHelp() {
-		fs.Usage()
+		printCircuitsUsage(fs, stdout)
 		return nil
 	}
 
