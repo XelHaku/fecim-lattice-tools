@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math"
 	"testing"
+
+	sharedphysics "fecim-lattice-tools/shared/physics"
 )
 
 // TestTanhEverett_Calculate_Positive tests that large positive alpha and large negative beta
@@ -482,6 +484,54 @@ func TestPreisachModel_Reset(t *testing.T) {
 			t.Errorf("After reset and negative saturation, expected negative P, got %f", P_after_reset)
 		}
 	})
+}
+
+func TestPreisachModel_ResetRejectsInvalidBinding(t *testing.T) {
+	materialWithEc := func(ec float64) *HZOMaterial {
+		material := *DefaultHZO()
+		material.Ec = ec
+		return &material
+	}
+	modelWithEc := func(ec float64) *PreisachModel {
+		model := NewPreisachModel(DefaultHZO())
+		model.material = materialWithEc(ec)
+		return model
+	}
+
+	cases := []struct {
+		name  string
+		model *PreisachModel
+	}{
+		{name: "nil_receiver", model: nil},
+		{name: "nil_material", model: &PreisachModel{}},
+		{name: "nil_stack", model: &PreisachModel{material: DefaultHZO()}},
+		{name: "nil_everett", model: &PreisachModel{material: DefaultHZO(), stack: &sharedphysics.PreisachStack{}}},
+		{name: "zero_ec", model: modelWithEc(0)},
+		{name: "negative_ec", model: modelWithEc(-1e6)},
+		{name: "nan_ec", model: modelWithEc(math.NaN())},
+		{name: "positive_inf_ec", model: modelWithEc(math.Inf(1))},
+		{name: "negative_inf_ec", model: modelWithEc(math.Inf(-1))},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			beforeStack := (*sharedphysics.PreisachStack)(nil)
+			if tc.model != nil {
+				beforeStack = tc.model.stack
+			}
+
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected invalid reset binding to be rejected without panic, got panic: %v", r)
+				}
+			}()
+
+			tc.model.Reset()
+			if tc.model != nil && tc.model.stack != beforeStack {
+				t.Fatalf("expected invalid reset binding to preserve existing stack, before=%#v after=%#v", beforeStack, tc.model.stack)
+			}
+		})
+	}
 }
 
 // TestPreisachModel_Polarization tests polarization query without mutation.

@@ -268,10 +268,18 @@ func (p *PreisachModel) DiscreteStates(n int) []DiscreteState {
 // Reset clears the history and sets the model to negative saturation
 // (including the reversible dielectric contribution at -E_sat).
 func (p *PreisachModel) Reset() {
+	if p == nil || p.material == nil || p.stack == nil || p.stack.Everett == nil || p.material.Ec <= 0 || math.IsNaN(p.material.Ec) || math.IsInf(p.material.Ec, 0) {
+		return
+	}
+
 	// Re-initialize stack
 	E_sat := p.material.Ec * saturationFieldMultiplier
 	everett := p.stack.Everett
-	p.stack = physics.NewPreisachStack(E_sat, everett)
+	newStack := physics.NewPreisachStack(E_sat, everett)
+	if newStack == nil {
+		return
+	}
+	p.stack = newStack
 }
 
 // Update applies a new electric field and returns the resulting polarization.
