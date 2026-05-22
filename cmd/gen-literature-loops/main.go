@@ -8,6 +8,7 @@ import (
 	"encoding/csv"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
@@ -39,44 +40,75 @@ func buildSweep(emax float64) []float64 {
 	return E
 }
 
-func main() {
-	out := flag.String("out", "", "output csv path")
-	preset := flag.String("preset", "park", "preset: park|cheema")
-	flag.Parse()
-	if *out == "" {
-		fmt.Fprintln(os.Stderr, "-out is required")
-		os.Exit(2)
-	}
-
-	mat, emax, err := materialForPreset(*preset)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(2)
-	}
-
+func writeLiteratureLoopCSV(out string, mat *sharedphysics.HZOMaterial, emax float64) error {
 	// Generate E sweep matching the validator: -Emax..Emax..-Emax with 31 points up.
 	E := buildSweep(emax)
 
 	model := ferroelectric.NewPreisachModel(mat)
 	model.Reset()
 
-	f, err := os.Create(*out)
+	f, err := os.Create(out)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("create output %q: %w", out, err)
 	}
-	defer f.Close()
+	needsClose := true
+	defer func() {
+		if needsClose {
+			_ = f.Close()
+		}
+	}()
+
 	w := csv.NewWriter(f)
-	_ = w.Write([]string{"E_MV_cm", "P_uC_cm2"})
+	if err := w.Write([]string{"E_MV_cm", "P_uC_cm2"}); err != nil {
+		return fmt.Errorf("write header to %q: %w", out, err)
+	}
 
 	for _, e := range E {
 		p := model.Update(e * 1e8) // C/m2
 		pUC := p * 1e2             // uC/cm2
-		_ = w.Write([]string{fmt.Sprintf("%0.3f", e), fmt.Sprintf("%0.6f", pUC)})
+		if err := w.Write([]string{fmt.Sprintf("%0.3f", e), fmt.Sprintf("%0.6f", pUC)}); err != nil {
+			return fmt.Errorf("write row to %q: %w", out, err)
+		}
 	}
 	w.Flush()
 	if err := w.Error(); err != nil {
-		panic(err)
+		return fmt.Errorf("flush output %q: %w", out, err)
+	}
+	if err := f.Close(); err != nil {
+		return fmt.Errorf("close output %q: %w", out, err)
+	}
+	needsClose = false
+	return nil
+}
+
+func runGenLiteratureLoops(args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("gen-literature-loops", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	out := fs.String("out", "", "output csv path")
+	preset := fs.String("preset", "park", "preset: park|cheema")
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+	if *out == "" {
+		fmt.Fprintln(stderr, "-out is required")
+		return 2
 	}
 
-	fmt.Printf("wrote %s (preset=%s)\n", *out, *preset)
+	mat, emax, err := materialForPreset(*preset)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
+
+	if err := writeLiteratureLoopCSV(*out, mat, emax); err != nil {
+		fmt.Fprintln(stderr, err)
+		return 1
+	}
+
+	fmt.Fprintf(stdout, "wrote %s (preset=%s)\n", *out, *preset)
+	return 0
+}
+
+func main() {
+	os.Exit(runGenLiteratureLoops(os.Args[1:], os.Stdout, os.Stderr))
 }

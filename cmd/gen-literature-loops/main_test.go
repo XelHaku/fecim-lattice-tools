@@ -1,6 +1,11 @@
 package main
 
-import "testing"
+import (
+	"bytes"
+	"path/filepath"
+	"strings"
+	"testing"
+)
 
 func TestMaterialForPreset(t *testing.T) {
 	mat, emax, err := materialForPreset("park")
@@ -19,5 +24,26 @@ func TestBuildSweep(t *testing.T) {
 	}
 	if E[0] != -3.0 || E[30] != 3.0 || E[len(E)-1] != -3.0 {
 		t.Fatalf("unexpected endpoints: first=%v mid=%v last=%v", E[0], E[30], E[len(E)-1])
+	}
+}
+
+func TestRunReportsCreateErrorWithoutPanic(t *testing.T) {
+	out := filepath.Join(t.TempDir(), "missing-parent", "loop.csv")
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := runGenLiteratureLoops([]string{"-out", out}, &stdout, &stderr)
+
+	if code != 1 {
+		t.Fatalf("exit code=%d, want 1; stderr=%q", code, stderr.String())
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout=%q, want empty", stdout.String())
+	}
+	if !strings.Contains(stderr.String(), "create output") {
+		t.Fatalf("stderr=%q, want create-output context", stderr.String())
+	}
+	if strings.Contains(stderr.String(), "panic") {
+		t.Fatalf("stderr=%q, must not include panic output", stderr.String())
 	}
 }
