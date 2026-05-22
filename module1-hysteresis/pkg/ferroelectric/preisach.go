@@ -289,6 +289,16 @@ func (p *PreisachModel) Reset() {
 // (GetHysteresisLoop), falls back to stack-based P_start and does not write
 // dynamicP, preserving the active simulation state across loop generation.
 func (p *PreisachModel) Update(E float64) float64 {
+	if p == nil {
+		return 0
+	}
+	if math.IsNaN(E) || math.IsInf(E, 0) {
+		if p.hasDynamicP && !math.IsNaN(p.dynamicP) && !math.IsInf(p.dynamicP, 0) {
+			return p.dynamicP
+		}
+		return p.Polarization()
+	}
+
 	var P_start float64
 	if p.hasDynamicP && !p.lockDynamic {
 		P_start = p.dynamicP

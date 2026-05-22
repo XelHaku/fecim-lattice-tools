@@ -459,6 +459,71 @@ func TestPreisachModel_Update(t *testing.T) {
 	})
 }
 
+func TestPreisachModel_UpdateRejectsNonFiniteFields(t *testing.T) {
+	t.Run("nil_receiver", func(t *testing.T) {
+		defer func() {
+			if r := recover(); r != nil {
+				t.Fatalf("expected nil receiver update to be ignored without panic, got panic: %v", r)
+			}
+		}()
+
+		var model *PreisachModel
+		if got := model.Update(0); got != 0 {
+			t.Fatalf("expected nil receiver update to return 0 C/m², got %.6g C/m²", got)
+		}
+	})
+
+	cases := []struct {
+		name  string
+		field float64
+	}{
+		{name: "nan", field: math.NaN()},
+		{name: "positive_inf", field: math.Inf(1)},
+		{name: "negative_inf", field: math.Inf(-1)},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			material := DefaultHZO()
+			model := NewPreisachModel(material)
+			baseline := model.Update(material.Ec)
+			baselineDynamicP := model.dynamicP
+			baselineHasDynamicP := model.hasDynamicP
+			baselineLastE := model.stack.LastE
+			baselineDirection := model.stack.CurrentDir
+			baselineStackLen := len(model.stack.Stack)
+
+			if math.IsNaN(baseline) || math.IsInf(baseline, 0) {
+				t.Fatalf("baseline finite update produced non-finite polarization %.6g C/m²", baseline)
+			}
+
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected non-finite field %.3g V/m to be rejected without panic, got panic: %v", tc.field, r)
+				}
+			}()
+
+			got := model.Update(tc.field)
+
+			if got != baselineDynamicP {
+				t.Fatalf("expected invalid field %.3g V/m to return existing dynamic P %.6g C/m², got %.6g C/m²", tc.field, baselineDynamicP, got)
+			}
+			if model.dynamicP != baselineDynamicP || model.hasDynamicP != baselineHasDynamicP {
+				t.Fatalf("expected invalid field %.3g V/m to preserve dynamic state P=%.6g C/m² has=%v, got P=%.6g C/m² has=%v", tc.field, baselineDynamicP, baselineHasDynamicP, model.dynamicP, model.hasDynamicP)
+			}
+			if model.stack.LastE != baselineLastE {
+				t.Fatalf("expected invalid field %.3g V/m to preserve LastE %.6g V/m, got %.6g V/m", tc.field, baselineLastE, model.stack.LastE)
+			}
+			if model.stack.CurrentDir != baselineDirection {
+				t.Fatalf("expected invalid field %.3g V/m to preserve CurrentDir %d, got %d", tc.field, baselineDirection, model.stack.CurrentDir)
+			}
+			if len(model.stack.Stack) != baselineStackLen {
+				t.Fatalf("expected invalid field %.3g V/m to preserve turning-point count %d, got %d", tc.field, baselineStackLen, len(model.stack.Stack))
+			}
+		})
+	}
+}
+
 // TestPreisachModel_Reset tests model reset functionality.
 func TestPreisachModel_Reset(t *testing.T) {
 	t.Run("ResetClearsHistory", func(t *testing.T) {
