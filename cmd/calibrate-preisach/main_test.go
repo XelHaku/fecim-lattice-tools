@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
@@ -62,4 +63,27 @@ func TestLoadCSVLoopRejectsMalformedRows(t *testing.T) {
 			t.Fatalf("expected parse error, got %v", err)
 		}
 	})
+}
+
+func TestRunCalibratePreisachUnknownPresetWithoutExiting(t *testing.T) {
+	d := t.TempDir()
+	csvPath := filepath.Join(d, "loop.csv")
+	content := "E_MV_cm,P_uC_cm2\n-1.0,-10.0\n0.0,0.0\n1.0,10.0\n"
+	if err := os.WriteFile(csvPath, []byte(content), 0o644); err != nil {
+		t.Fatalf("write csv: %v", err)
+	}
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	code := runCalibratePreisach([]string{"-csv", csvPath, "-preset", "unknown"}, &stdout, &stderr)
+
+	if code != 1 {
+		t.Fatalf("exit code=%d, want 1; stderr=%q", code, stderr.String())
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout=%q, want empty output", stdout.String())
+	}
+	if !strings.Contains(stderr.String(), "unknown preset \"unknown\"") {
+		t.Fatalf("stderr=%q, want unknown preset context", stderr.String())
+	}
 }

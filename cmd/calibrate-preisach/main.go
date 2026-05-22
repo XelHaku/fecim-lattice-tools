@@ -8,6 +8,7 @@ import (
 	"encoding/csv"
 	"flag"
 	"fmt"
+	"io"
 	"math"
 	"os"
 	"strconv"
@@ -17,22 +18,32 @@ import (
 )
 
 func main() {
-	csvPath := flag.String("csv", "", "CSV with E_MV_cm,P_uC_cm2")
-	preset := flag.String("preset", "default_hzo", "base preset: default_hzo|literature_superlattice")
-	flag.Parse()
+	os.Exit(runCalibratePreisach(os.Args[1:], os.Stdout, os.Stderr))
+}
+
+func runCalibratePreisach(args []string, stdout, stderr io.Writer) int {
+	flags := flag.NewFlagSet("calibrate-preisach", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	csvPath := flags.String("csv", "", "CSV with E_MV_cm,P_uC_cm2")
+	preset := flags.String("preset", "default_hzo", "base preset: default_hzo|literature_superlattice")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
 	if *csvPath == "" {
-		fmt.Fprintln(os.Stderr, "-csv is required")
-		os.Exit(2)
+		fmt.Fprintln(stderr, "-csv is required")
+		return 2
 	}
 
 	E, P, err := loadCSVLoop(*csvPath)
 	if err != nil {
-		fatalf("load csv: %v", err)
+		fmt.Fprintf(stderr, "load csv: %v\n", err)
+		return 1
 	}
 
 	base := baseMaterial(*preset)
 	if base == nil {
-		fatalf("unknown preset %q", *preset)
+		fmt.Fprintf(stderr, "unknown preset %q\n", *preset)
+		return 1
 	}
 
 	// Grid search over Ec, Ps, Pr ratio.
@@ -90,11 +101,12 @@ func main() {
 		}
 	}
 
-	fmt.Printf("best Ec=%0.3e V/m (%0.3f MV/cm)\n", b.Ec, b.Ec/1e8)
-	fmt.Printf("best Ps=%0.3e C/m2 (%0.3f uC/cm2)\n", b.Ps, b.Ps*1e2)
-	fmt.Printf("best Pr=%0.3e C/m2 (%0.3f uC/cm2)\n", b.Pr, b.Pr*1e2)
-	fmt.Printf("metrics: rmseFS=%0.4f prErr=%0.2f%% ecErr=%0.2f%% areaErr=%0.2f%%\n", b.RMSEFS, b.PrErrPct, b.EcErrPct, b.AreaErrPct)
-	fmt.Printf("ref: pr=%0.3f uC/cm2 ec=%0.3f MV/cm area=%0.3e J/m3\n", prRef, ecRef, areaRef)
+	fmt.Fprintf(stdout, "best Ec=%0.3e V/m (%0.3f MV/cm)\n", b.Ec, b.Ec/1e8)
+	fmt.Fprintf(stdout, "best Ps=%0.3e C/m2 (%0.3f uC/cm2)\n", b.Ps, b.Ps*1e2)
+	fmt.Fprintf(stdout, "best Pr=%0.3e C/m2 (%0.3f uC/cm2)\n", b.Pr, b.Pr*1e2)
+	fmt.Fprintf(stdout, "metrics: rmseFS=%0.4f prErr=%0.2f%% ecErr=%0.2f%% areaErr=%0.2f%%\n", b.RMSEFS, b.PrErrPct, b.EcErrPct, b.AreaErrPct)
+	fmt.Fprintf(stdout, "ref: pr=%0.3f uC/cm2 ec=%0.3f MV/cm area=%0.3e J/m3\n", prRef, ecRef, areaRef)
+	return 0
 }
 
 func baseMaterial(name string) *sharedphysics.HZOMaterial {
@@ -225,9 +237,4 @@ func pctErr(sim, ref float64) float64 {
 		return math.Inf(1)
 	}
 	return math.Abs(sim-ref) / den * 100
-}
-
-func fatalf(msg string, args ...any) {
-	fmt.Fprintf(os.Stderr, msg+"\n", args...)
-	os.Exit(1)
 }
