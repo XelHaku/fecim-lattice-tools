@@ -6,6 +6,7 @@ package edalattice
 import (
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -14,44 +15,23 @@ import (
 )
 
 func Run(args []string) error {
-	// Initialize logger
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("resolve user home dir for logging: %w", err)
-	}
-	logPath := filepath.Join(homeDir, ".fecim", "logs", "module6-eda-lattice-gen.log")
-	if err := logging.Init("module6-eda-lattice-gen", logPath); err != nil {
-		// Fallback to standard error if logger init fails
-		os.Stderr.WriteString("Failed to initialize logging: " + err.Error() + "\n")
-		return err
-	}
-	defer logging.CloseGlobal()
+	return runLatticeGen(args, os.Stdout, os.Stderr)
+}
 
-	// Enable logging by default
-	logging.SetVerbosity(logging.VerbosityInfo)
-
+func runLatticeGen(args []string, stdout, stderr io.Writer) error {
 	fs := flag.NewFlagSet("lattice-gen", flag.ContinueOnError)
-	fs.SetOutput(os.Stdout)
+	fs.SetOutput(stderr)
 	rows := fs.Int("rows", 4, "Number of rows")
 	cols := fs.Int("cols", 4, "Number of columns")
 	outputDir := fs.String("output", "output/lattices", "Output directory")
 	help := fs.Bool("help", false, "Show help")
 	helpShort := fs.Bool("h", false, "Show help (shorthand)")
 
-	fs.Usage = func() {
-		out := fs.Output()
-		fmt.Fprintln(out, "FeCIM Lattice Generator")
-		fmt.Fprintln(out)
-		fmt.Fprintln(out, "Usage:")
-		fmt.Fprintln(out, "  fecim-lattice-tools eda lattice-gen [options]")
-		fmt.Fprintln(out)
-		fmt.Fprintln(out, "Options:")
-		fs.PrintDefaults()
-	}
+	fs.Usage = func() { printLatticeGenUsage(fs, fs.Output()) }
 
 	if err := fs.Parse(args); err != nil {
-		fmt.Fprintln(fs.Output(), "Error:", err)
-		fs.Usage()
+		fmt.Fprintln(stderr, "Error:", err)
+		printLatticeGenUsage(fs, stderr)
 		if err == flag.ErrHelp {
 			return nil
 		}
@@ -59,13 +39,29 @@ func Run(args []string) error {
 	}
 
 	if *help || *helpShort {
-		fs.Usage()
+		printLatticeGenUsage(fs, stdout)
 		return nil
 	}
 
 	if err := export.ValidateLatticeDimensions(*rows, *cols); err != nil {
 		return fmt.Errorf("invalid lattice dimensions: %w", err)
 	}
+
+	// Initialize logger after parse and validation so bad invocations remain side-effect free.
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("resolve user home dir for logging: %w", err)
+	}
+	logPath := filepath.Join(homeDir, ".fecim", "logs", "module6-eda-lattice-gen.log")
+	if err := logging.Init("module6-eda-lattice-gen", logPath); err != nil {
+		// Fallback to standard error if logger init fails
+		fmt.Fprintf(stderr, "Failed to initialize logging: %v\n", err)
+		return err
+	}
+	defer logging.CloseGlobal()
+
+	// Enable logging by default
+	logging.SetVerbosity(logging.VerbosityInfo)
 
 	// Create output directory if needed
 	if err := os.MkdirAll(*outputDir, 0755); err != nil {
@@ -90,4 +86,17 @@ func Run(args []string) error {
 
 	logging.Printf("\nLattice %dx%d generated successfully (%d cells)\n", *rows, *cols, (*rows)*(*cols))
 	return nil
+}
+
+func printLatticeGenUsage(fs *flag.FlagSet, out io.Writer) {
+	fmt.Fprintln(out, "FeCIM Lattice Generator")
+	fmt.Fprintln(out)
+	fmt.Fprintln(out, "Usage:")
+	fmt.Fprintln(out, "  fecim-lattice-tools eda lattice-gen [options]")
+	fmt.Fprintln(out)
+	fmt.Fprintln(out, "Options:")
+	previous := fs.Output()
+	fs.SetOutput(out)
+	fs.PrintDefaults()
+	fs.SetOutput(previous)
 }
