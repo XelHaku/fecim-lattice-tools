@@ -689,12 +689,39 @@ func TestPreisachModel_TimeStepRejectsInvalidBinding(t *testing.T) {
 			hasDynamicP: true,
 		}
 	}
+	materialWith := func(mutator func(*HZOMaterial)) *HZOMaterial {
+		m := *material
+		mutator(&m)
+		return &m
+	}
+	newInvalidMaterialModel := func(mutator func(*HZOMaterial)) *PreisachModel {
+		return &PreisachModel{
+			material:    materialWith(mutator),
+			stack:       sharedphysics.NewPreisachStack(material.Ec*saturationFieldMultiplier, validEverett),
+			everett:     validModel.everett,
+			dynamicP:    existingDynamicP,
+			hasDynamicP: true,
+		}
+	}
 
 	cases := []struct {
 		name  string
 		model *PreisachModel
 	}{
 		{name: "nil_material", model: &PreisachModel{stack: sharedphysics.NewPreisachStack(material.Ec*saturationFieldMultiplier, validEverett), everett: validModel.everett, dynamicP: existingDynamicP, hasDynamicP: true}},
+		{name: "zero_ps", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Ps = 0 })},
+		{name: "negative_ps", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Ps = -0.3 })},
+		{name: "nan_ps", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Ps = math.NaN() })},
+		{name: "positive_inf_ps", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Ps = math.Inf(1) })},
+		{name: "zero_pr", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Pr = 0 })},
+		{name: "negative_pr", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Pr = -0.2 })},
+		{name: "pr_exceeds_ps", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Pr = m.Ps * 1.1 })},
+		{name: "nan_pr", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Pr = math.NaN() })},
+		{name: "positive_inf_pr", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Pr = math.Inf(1) })},
+		{name: "zero_ec", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Ec = 0 })},
+		{name: "negative_ec", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Ec = -1e6 })},
+		{name: "nan_ec", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Ec = math.NaN() })},
+		{name: "positive_inf_ec", model: newInvalidMaterialModel(func(m *HZOMaterial) { m.Ec = math.Inf(1) })},
 		{name: "nil_stack", model: newInvalidModel(nil)},
 		{name: "nil_stack_everett", model: newInvalidModel(&sharedphysics.PreisachStack{Stack: []sharedphysics.TurningPoint{{E: -1, Type: -1}}, SaturationE: 1, LastE: -1, CurrentDir: 1})},
 		{name: "zero_saturation", model: newInvalidModel(&sharedphysics.PreisachStack{Everett: validEverett, Stack: []sharedphysics.TurningPoint{{E: 0, Type: -1}}, SaturationE: 0, LastE: 0, CurrentDir: 1})},
