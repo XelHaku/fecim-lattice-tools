@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"math"
 	"os"
 	"path/filepath"
@@ -99,23 +100,31 @@ func validateArrayGeometry(rows, cols int) error {
 	return nil
 }
 
+func printEDAUsage(fs *flag.FlagSet, out io.Writer) {
+	fmt.Fprintln(out, "FeCIM EDA CLI")
+	fmt.Fprintln(out)
+	fmt.Fprintln(out, "Usage:")
+	fmt.Fprintln(out, "  fecim-lattice-tools eda cli [options]")
+	fmt.Fprintln(out)
+	fmt.Fprintln(out, "Options:")
+	previous := fs.Output()
+	fs.SetOutput(out)
+	fs.PrintDefaults()
+	fs.SetOutput(previous)
+	fmt.Fprintln(out)
+	fmt.Fprintln(out, "Common Options:")
+	fmt.Fprintln(out, "  --json-output     Output results as JSON to stdout")
+	fmt.Fprintln(out, "  --quiet           Suppress informational output")
+	fmt.Fprintln(out, "  --config FILE     Load configuration from YAML/JSON file")
+}
+
 func Run(args []string) error {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("resolve user home dir for logging: %w", err)
-	}
-	logPath := filepath.Join(homeDir, ".fecim", "logs", "module6-eda-cli.log")
-	if err := logging.Init("module6-eda-cli", logPath); err != nil {
-		logging.GlobalError("Failed to initialize logging: %v\n", err)
-		return err
-	}
-	defer logging.CloseGlobal()
+	return runEDACLI(args, os.Stdout, os.Stderr)
+}
 
-	// Enable logging by default
-	logging.SetVerbosity(logging.VerbosityInfo)
-
+func runEDACLI(args []string, stdout, stderr io.Writer) error {
 	fs := flag.NewFlagSet("eda-cli", flag.ContinueOnError)
-	fs.SetOutput(os.Stdout)
+	fs.SetOutput(stderr)
 
 	// Common CLI flags (use explicit names to avoid conflict with export-json)
 	jsonOutput := fs.Bool("json-output", false, "Output results as JSON to stdout")
@@ -154,25 +163,11 @@ func Run(args []string) error {
 	exportDEF := fs.Bool("def", true, "Export DEF placement")
 	help := fs.Bool("help", false, "Show help")
 
-	fs.Usage = func() {
-		out := fs.Output()
-		fmt.Fprintln(out, "FeCIM EDA CLI")
-		fmt.Fprintln(out)
-		fmt.Fprintln(out, "Usage:")
-		fmt.Fprintln(out, "  fecim-lattice-tools eda cli [options]")
-		fmt.Fprintln(out)
-		fmt.Fprintln(out, "Options:")
-		fs.PrintDefaults()
-		fmt.Fprintln(out)
-		fmt.Fprintln(out, "Common Options:")
-		fmt.Fprintln(out, "  --json-output     Output results as JSON to stdout")
-		fmt.Fprintln(out, "  --quiet           Suppress informational output")
-		fmt.Fprintln(out, "  --config FILE     Load configuration from YAML/JSON file")
-	}
+	fs.Usage = func() { printEDAUsage(fs, fs.Output()) }
 
 	if err := fs.Parse(args); err != nil {
-		fmt.Fprintln(fs.Output(), "Error:", err)
-		fs.Usage()
+		fmt.Fprintln(stderr, "Error:", err)
+		printEDAUsage(fs, stderr)
 		if err == flag.ErrHelp {
 			return nil
 		}
@@ -180,7 +175,7 @@ func Run(args []string) error {
 	}
 
 	if *help {
-		fs.Usage()
+		printEDAUsage(fs, stdout)
 		return nil
 	}
 
@@ -237,9 +232,23 @@ func Run(args []string) error {
 	case "compute":
 		opMode = compiler.ModeCompute
 	default:
-		logging.Printf("Error: unknown mode '%s'. Use: storage, memory, or compute\n", *mode)
 		return fmt.Errorf("unknown mode %q", *mode)
 	}
+
+	// Initialize logger after parse and validation so bad invocations remain side-effect free.
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("resolve user home dir for logging: %w", err)
+	}
+	logPath := filepath.Join(homeDir, ".fecim", "logs", "module6-eda-cli.log")
+	if err := logging.Init("module6-eda-cli", logPath); err != nil {
+		fmt.Fprintf(stderr, "Failed to initialize logging: %v\n", err)
+		return err
+	}
+	defer logging.CloseGlobal()
+
+	// Enable logging by default
+	logging.SetVerbosity(logging.VerbosityInfo)
 
 	logging.Printf("FeCIM Array Generator - %s Mode\n", strings.Title(*mode))
 	logging.Printf("========================================\n\n")
@@ -427,7 +436,7 @@ func Run(args []string) error {
 			Technology:     *tech,
 			OutputFiles:    outputFiles,
 		}
-		encoder := json.NewEncoder(os.Stdout)
+		encoder := json.NewEncoder(stdout)
 		encoder.SetIndent("", "  ")
 		return encoder.Encode(result)
 	}
