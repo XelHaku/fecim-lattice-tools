@@ -8,6 +8,49 @@ import (
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
 )
 
+// TestNewEngineNilMaterialCreatesInertEngine verifies nil material does not bind an implicit default or panic.
+func TestNewEngineNilMaterialCreatesInertEngine(t *testing.T) {
+	engine := NewEngine(nil)
+	if engine == nil {
+		t.Fatal("expected inert engine, got nil")
+	}
+	if engine.material != nil || engine.model != nil {
+		t.Fatalf("expected nil material/model for inert engine, got material=%v model=%v", engine.material, engine.model)
+	}
+	if engine.state == nil {
+		t.Fatal("expected inert engine to retain usable state")
+	}
+	if engine.amplitude != 0 {
+		t.Fatalf("expected zero amplitude for inert engine, got %.3e V", engine.amplitude)
+	}
+
+	engine.Start()
+	engine.SetWaveform(WaveformManual)
+	engine.SetVoltage(1.0)
+	engine.Step()
+
+	state := engine.State()
+	if state.Time != 0 {
+		t.Fatalf("expected nil-material Step to skip time integration, got %.3e s", state.Time)
+	}
+	if state.ElectricField != 0 {
+		t.Fatalf("expected nil-material Step to clamp electric field, got %.3e V/m", state.ElectricField)
+	}
+	if len(state.VoltageHistory) != 0 || len(state.PolHistory) != 0 {
+		t.Fatalf("expected no history for nil-material engine, got voltage=%d polarization=%d", len(state.VoltageHistory), len(state.PolHistory))
+	}
+
+	E, P := engine.GetHysteresisData()
+	if len(E) != 0 || len(P) != 0 {
+		t.Fatalf("expected no hysteresis loop for nil-material engine, got E=%d P=%d", len(E), len(P))
+	}
+
+	engine.Reset()
+	if got := engine.State().Time; got != 0 {
+		t.Fatalf("expected reset inert engine time to remain 0, got %.3e s", got)
+	}
+}
+
 // TestEngineStartStop verifies thread-safe start/stop operations
 func TestEngineStartStop(t *testing.T) {
 	material := ferroelectric.DefaultHZO()

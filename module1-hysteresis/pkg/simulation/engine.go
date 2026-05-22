@@ -79,6 +79,15 @@ const (
 
 // NewEngine creates a new simulation engine.
 func NewEngine(material *ferroelectric.HZOMaterial) *Engine {
+	if material == nil {
+		return &Engine{
+			state:     newState(defaultMaxHistory),
+			dt:        defaultDt,
+			waveform:  WaveformSine,
+			frequency: defaultFrequencyHz,
+		}
+	}
+
 	model := ferroelectric.NewPreisachModel(material)
 
 	e := &Engine{
@@ -293,8 +302,14 @@ func (e *Engine) State() State {
 func (e *Engine) Reset() {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	e.model.Reset()
-	e.state = newState(e.state.MaxHistory)
+	if e.model != nil {
+		e.model.Reset()
+	}
+	maxHistory := defaultMaxHistory
+	if e.state != nil {
+		maxHistory = e.state.MaxHistory
+	}
+	e.state = newState(maxHistory)
 	log.Debug("Engine reset: state cleared, maxHistory=%d", e.state.MaxHistory)
 }
 
