@@ -1,6 +1,7 @@
 package ferroelectric
 
 import (
+	"fmt"
 	"math"
 	"testing"
 )
@@ -355,6 +356,24 @@ func TestPreisachModel_DiscreteStates(t *testing.T) {
 			t.Errorf("Expected last level to be %d, got %d", n, states[n-1].Level)
 		}
 	})
+}
+
+func TestPreisachModel_DiscreteStatesRejectsInvalidCounts(t *testing.T) {
+	model := NewPreisachModel(DefaultHZO())
+	for _, n := range []int{1, 0, -1} {
+		t.Run(fmt.Sprintf("n=%d", n), func(t *testing.T) {
+			defer func() {
+				if r := recover(); r != nil {
+					t.Fatalf("expected invalid count %d to be rejected without panic, got panic: %v", n, r)
+				}
+			}()
+
+			states := model.DiscreteStates(n)
+			if states != nil {
+				t.Fatalf("expected nil states for invalid count %d, got len=%d states=%#v", n, len(states), states)
+			}
+		})
+	}
 }
 
 // TestPreisachModel_Update tests field update and polarization calculation.
