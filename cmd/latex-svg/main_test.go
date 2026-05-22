@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/xml"
 	"flag"
 	"os"
@@ -121,6 +122,23 @@ func TestParseFlags(t *testing.T) {
 	}
 	if opts.latexBinary != "pdflatex" || opts.dvisvgmBinary != "dvisvgm-custom" || !opts.useFonts || opts.bboxMode != "exact" {
 		t.Fatalf("unexpected binary/bbox flags: %+v", opts)
+	}
+}
+
+func TestRunLatexSVGReportsMissingInputWithoutExiting(t *testing.T) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	code := runLatexSVG(nil, &stdout, &stderr)
+
+	if code != 2 {
+		t.Fatalf("exit code=%d, want 2; stderr=%q", code, stderr.String())
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout=%q, want empty output", stdout.String())
+	}
+	if !strings.Contains(stderr.String(), "-in is required") {
+		t.Fatalf("stderr=%q, want missing -in context", stderr.String())
 	}
 }
 

@@ -30,22 +30,47 @@ type options struct {
 }
 
 func main() {
-	opts := parseFlags()
+	os.Exit(runLatexSVG(os.Args[1:], os.Stdout, os.Stderr))
+}
+
+func runLatexSVG(args []string, stdout, stderr io.Writer) int {
+	var opts options
+	flags := flag.NewFlagSet("latex-svg", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	flags.StringVar(&opts.inputPath, "in", "", "Path to LaTeX equation file (required)")
+	flags.StringVar(&opts.outputPath, "out", "", "Output SVG path (default: input basename + .svg)")
+	flags.StringVar(&opts.preamblePath, "preamble", "", "Optional LaTeX preamble file to include when wrapping")
+	flags.BoolVar(&opts.forceWrap, "force-wrap", false, "Wrap input in a minimal document even if it looks like a full LaTeX file")
+	flags.BoolVar(&opts.inlineMath, "inline", false, "Wrap equation as inline math (\\(...\\)) instead of display math (\\[...\\])")
+	flags.BoolVar(&opts.keepTemp, "keep", false, "Keep intermediate TeX/DVI files for debugging")
+	flags.StringVar(&opts.latexBinary, "latex", "latex", "LaTeX binary to use (latex, xelatex, etc.)")
+	flags.StringVar(&opts.dvisvgmBinary, "dvisvgm", "dvisvgm", "dvisvgm binary to use")
+	flags.BoolVar(&opts.useFonts, "fonts", false, "Keep fonts in SVG (default converts glyphs to paths)")
+	flags.StringVar(&opts.bboxMode, "bbox", "min", "dvisvgm bbox mode (min, preview, exact, etc.)")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
 	if opts.inputPath == "" {
-		printUsageAndExit("-in is required")
+		fmt.Fprintln(stderr, "Error: -in is required")
+		flags.Usage()
+		return 2
 	}
 
 	inputData, err := os.ReadFile(opts.inputPath)
 	if err != nil {
-		exitError("failed to read input file", err)
+		fmt.Fprintf(stderr, "failed to read input file: %v\n", err)
+		return 1
 	}
 	if len(bytes.TrimSpace(inputData)) == 0 {
-		printUsageAndExit("input file is empty")
+		fmt.Fprintln(stderr, "Error: input file is empty")
+		flags.Usage()
+		return 2
 	}
 
 	preamble, err := readOptionalPreamble(opts.preamblePath)
 	if err != nil {
-		exitError("failed to read preamble file", err)
+		fmt.Fprintf(stderr, "failed to read preamble file: %v\n", err)
+		return 1
 	}
 
 	texContent := prepareTex(string(inputData), preamble, opts)
@@ -58,49 +83,60 @@ func main() {
 	}
 
 	if err := os.MkdirAll(filepath.Dir(opts.outputPath), 0755); err != nil {
-		exitError("failed to create output directory", err)
+		fmt.Fprintf(stderr, "failed to create output directory: %v\n", err)
+		return 1
 	}
 
 	tempDir, cleanup, err := createWorkDir(opts.keepTemp)
 	if err != nil {
-		exitError("failed to create temp dir", err)
+		fmt.Fprintf(stderr, "failed to create temp dir: %v\n", err)
+		return 1
 	}
 	defer cleanup()
 
 	texFile := filepath.Join(tempDir, "equation.tex")
 	if err := os.WriteFile(texFile, []byte(texContent), 0644); err != nil {
-		exitError("failed to write temp tex", err)
+		fmt.Fprintf(stderr, "failed to write temp tex: %v\n", err)
+		return 1
 	}
 
 	if err := ensureBinary(opts.latexBinary); err != nil {
-		exitError("latex binary not found", err)
+		fmt.Fprintf(stderr, "latex binary not found: %v\n", err)
+		return 1
 	}
 	if err := ensureBinary(opts.dvisvgmBinary); err != nil {
-		exitError("dvisvgm binary not found", err)
+		fmt.Fprintf(stderr, "dvisvgm binary not found: %v\n", err)
+		return 1
 	}
 
 	dviFile, err := runLatex(opts, tempDir, texFile)
 	if err != nil {
-		exitError("latex failed", err)
+		fmt.Fprintf(stderr, "latex failed: %v\n", err)
+		return 1
 	}
 
 	if err := runDvisvgm(opts, dviFile, opts.outputPath); err != nil {
-		exitError("dvisvgm failed", err)
+		fmt.Fprintf(stderr, "dvisvgm failed: %v\n", err)
+		return 1
 	}
 	if err := normalizeSVGViewBox(opts.outputPath); err != nil {
-		exitError("failed to normalize svg viewBox", err)
+		fmt.Fprintf(stderr, "failed to normalize svg viewBox: %v\n", err)
+		return 1
 	}
 	if err := inlineSVGUses(opts.outputPath); err != nil {
-		exitError("failed to inline svg uses", err)
+		fmt.Fprintf(stderr, "failed to inline svg uses: %v\n", err)
+		return 1
 	}
 	if err := sanitizeSVGRoot(opts.outputPath); err != nil {
-		exitError("failed to sanitize svg root", err)
+		fmt.Fprintf(stderr, "failed to sanitize svg root: %v\n", err)
+		return 1
 	}
 
-	fmt.Printf("SVG written to %s\n", opts.outputPath)
+	fmt.Fprintf(stdout, "SVG written to %s\n", opts.outputPath)
 	if opts.keepTemp {
-		fmt.Printf("Temp files kept at %s\n", tempDir)
+		fmt.Fprintf(stdout, "Temp files kept at %s\n", tempDir)
 	}
+	return 0
 }
 
 func parseFlags() options {
@@ -117,19 +153,6 @@ func parseFlags() options {
 	flag.StringVar(&opts.bboxMode, "bbox", "min", "dvisvgm bbox mode (min, preview, exact, etc.)")
 	flag.Parse()
 	return opts
-}
-
-func printUsageAndExit(msg string) {
-	if msg != "" {
-		fmt.Fprintf(os.Stderr, "Error: %s\n\n", msg)
-	}
-	flag.Usage()
-	os.Exit(2)
-}
-
-func exitError(prefix string, err error) {
-	fmt.Fprintf(os.Stderr, "%s: %v\n", prefix, err)
-	os.Exit(1)
 }
 
 func readOptionalPreamble(path string) (string, error) {
