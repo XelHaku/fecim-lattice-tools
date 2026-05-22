@@ -27,6 +27,32 @@ func TestRunSubcommandDispatchReportsUnknownWithoutExiting(t *testing.T) {
 	}
 }
 
+func TestRunSubcommandDispatchReportsHysteresisFlagErrorToStderr(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+
+	handled, code := runSubcommandDispatch([]string{"hysteresis", "-definitely-not-a-flag"}, &stdout, &stderr)
+
+	if !handled {
+		t.Fatal("runSubcommandDispatch handled = false, want true")
+	}
+	if code != 1 {
+		t.Fatalf("runSubcommandDispatch code = %d, want 1", code)
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout length = %d, want 0; stdout=%q", stdout.Len(), stdout.String())
+	}
+	text := stderr.String()
+	if !strings.Contains(text, "flag provided but not defined: -definitely-not-a-flag") {
+		t.Fatalf("stderr = %q, want flag error context", text)
+	}
+	if !strings.Contains(text, "FeCIM Hysteresis") {
+		t.Fatalf("stderr = %q, want hysteresis usage", text)
+	}
+	if !strings.Contains(text, "FeCIM Lattice Tools") {
+		t.Fatalf("stderr = %q, want root usage", text)
+	}
+}
+
 func TestRunMainReportsRootFlagErrorWithoutExiting(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 

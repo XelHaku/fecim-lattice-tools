@@ -36,7 +36,7 @@ func runSubcommandDispatch(args []string, stdout, stderr io.Writer) (bool, int) 
 	if strings.HasPrefix(first, "-") {
 		return false, 0
 	}
-	if err := dispatchSubcommand(args); err != nil {
+	if err := dispatchSubcommandWithWriters(args, stdout, stderr); err != nil {
 		fmt.Fprintln(stderr, err)
 		printRootUsage(stderr)
 		return true, 1
@@ -45,12 +45,16 @@ func runSubcommandDispatch(args []string, stdout, stderr io.Writer) (bool, int) 
 }
 
 func dispatchSubcommand(args []string) error {
+	return dispatchSubcommandWithWriters(args, os.Stdout, os.Stderr)
+}
+
+func dispatchSubcommandWithWriters(args []string, stdout, stderr io.Writer) error {
 	if len(args) == 0 {
 		return nil
 	}
 	switch args[0] {
 	case "hysteresis":
-		return runHysteresisSubcommand(args[1:])
+		return runHysteresisSubcommand(args[1:], stdout, stderr)
 	case "crossbar":
 		return runCrossbarSubcommand(args[1:])
 	case "mnist":
@@ -68,24 +72,43 @@ func dispatchSubcommand(args []string) error {
 	}
 }
 
-func runHysteresisSubcommand(args []string) error {
+func printHysteresisUsage(fs *flag.FlagSet, out io.Writer) {
+	fmt.Fprintln(out, "FeCIM Hysteresis")
+	fmt.Fprintln(out)
+	fmt.Fprintln(out, "Usage:")
+	fmt.Fprintln(out, "  fecim-lattice-tools hysteresis gui")
+	fmt.Fprintln(out, "  fecim-lattice-tools hysteresis --headless --engine lk")
+	fmt.Fprintln(out)
+	previous := fs.Output()
+	fs.SetOutput(out)
+	fs.PrintDefaults()
+	fs.SetOutput(previous)
+}
+
+func isHysteresisHelpArg(arg string) bool {
+	switch arg {
+	case "-h", "--help", "-help":
+		return true
+	default:
+		return false
+	}
+}
+
+func runHysteresisSubcommand(args []string, stdout, stderr io.Writer) error {
 	if len(args) == 0 || args[0] == "gui" {
 		return runModuleApp(viewmodel.ModuleHysteresis)
 	}
 	fs := flag.NewFlagSet("hysteresis", flag.ContinueOnError)
-	fs.SetOutput(os.Stdout)
+	fs.SetOutput(stderr)
 	engine := fs.String("engine", "preisach", "Headless engine: preisach|lk")
 	headless := fs.Bool("headless", false, "Run headless hysteresis mode")
 	listMaterials := fs.Bool("list-materials", false, "List available materials and exit")
-	fs.Usage = func() {
-		out := fs.Output()
-		fmt.Fprintln(out, "FeCIM Hysteresis")
-		fmt.Fprintln(out)
-		fmt.Fprintln(out, "Usage:")
-		fmt.Fprintln(out, "  fecim-lattice-tools hysteresis gui")
-		fmt.Fprintln(out, "  fecim-lattice-tools hysteresis --headless --engine lk")
-		fmt.Fprintln(out)
-		fs.PrintDefaults()
+	fs.Usage = func() { printHysteresisUsage(fs, fs.Output()) }
+	for _, arg := range args {
+		if isHysteresisHelpArg(arg) {
+			printHysteresisUsage(fs, stdout)
+			return nil
+		}
 	}
 	if err := fs.Parse(args); err != nil {
 		if err == flag.ErrHelp {
@@ -94,7 +117,7 @@ func runHysteresisSubcommand(args []string) error {
 		return err
 	}
 	if *listMaterials {
-		return runRoot([]string{"--list-materials"}, os.Stdout, os.Stderr)
+		return runRoot([]string{"--list-materials"}, stdout, stderr)
 	}
 	if *headless {
 		return runMode("hysteresis", *engine)
