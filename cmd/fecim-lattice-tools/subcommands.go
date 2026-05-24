@@ -64,7 +64,7 @@ func dispatchSubcommandWithWriters(args []string, stdout, stderr io.Writer) erro
 	case "comparison":
 		return runComparisonSubcommand(args[1:])
 	case "eda":
-		return runEDASubcommand(args[1:])
+		return runEDASubcommand(args[1:], stdout)
 	case "research":
 		return runResearchSubcommand(args[1:])
 	default:
@@ -179,7 +179,7 @@ func runComparisonSubcommand(args []string) error {
 	}
 }
 
-func runEDASubcommand(args []string) error {
+func runEDASubcommand(args []string, stdout io.Writer) error {
 	if len(args) == 0 || args[0] == "gui" {
 		return runModuleApp(viewmodel.ModuleEDA)
 	}
@@ -189,7 +189,7 @@ func runEDASubcommand(args []string) error {
 	case "lattice-gen":
 		return edalattice.Run(args[1:])
 	case "hello":
-		return edahello.Run(args[1:])
+		return edahello.RunWithOutput(args[1:], stdout)
 	default:
 		return fmt.Errorf("unknown eda subcommand %q", args[0])
 	}

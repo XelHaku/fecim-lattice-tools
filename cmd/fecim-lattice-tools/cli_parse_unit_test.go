@@ -53,6 +53,29 @@ func TestRunSubcommandDispatchReportsHysteresisFlagErrorToStderr(t *testing.T) {
 	}
 }
 
+func TestRunSubcommandDispatchRoutesEDAHelloOutputToInjectedStdout(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+
+	handled, code := runSubcommandDispatch([]string{"eda", "hello"}, &stdout, &stderr)
+
+	if !handled {
+		t.Fatal("runSubcommandDispatch handled = false, want true")
+	}
+	if code != 0 {
+		t.Fatalf("runSubcommandDispatch code = %d, want 0", code)
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr length = %d, want 0; stderr=%q", stderr.Len(), stderr.String())
+	}
+	text := stdout.String()
+	if !strings.Contains(text, "=== FeCIM EDA: Hello World ===") {
+		t.Fatalf("stdout = %q, want EDA hello header", text)
+	}
+	if !strings.Contains(text, "Total cells: 16") {
+		t.Fatalf("stdout = %q, want cell count", text)
+	}
+}
+
 func TestRunMainReportsRootFlagErrorWithoutExiting(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 

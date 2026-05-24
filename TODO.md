@@ -253,3 +253,11 @@ C01..C13, H01..H16, M01..M16 + security/architecture/test items — All simulati
 
 *This TODO prioritizes scientific rigor and educational honesty over promotional considerations.*
 *Restructured: 2026-02-27 | Original consolidated: 2026-02-07*
+
+[BLOCKED] Telegram media delivery for FeCIM screenshots — 2026-05-18 18:14:23 CST
+  blocker: OpenClaw telegram channel unavailable while sending captured PNG screenshots to Juan.
+  evidence: `openclaw message send --channel telegram --account riju --target 6586915095 --media /tmp/riju-fecim-screenshots/fecim-home.png ...` returned `Error: Channel is unavailable: telegram` for all 4 files.
+  unblocks when: Telegram channel/account is available in OpenClaw runtime or an alternate delivery channel is provided.
+  owner: system/OpenClaw channel configuration.
+  workaround/pivot: Keep absolute local artifact paths and report screenshot dimensions/filesizes in chat.
+  next check: 2026-05-18 19:14:23 CST.

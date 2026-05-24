@@ -3,7 +3,9 @@ package edahello
 
 import (
 	"fmt"
+	"io"
 	"math"
+	"os"
 )
 
 // === CORE DATA STRUCTURES ===
@@ -69,8 +71,12 @@ func Compile(weights [][]float64) []CellAssignment {
 // === MAIN: PROVE IT WORKS ===
 
 func Run(args []string) error {
-	fmt.Println("=== FeCIM EDA: Hello World ===")
-	fmt.Println()
+	return RunWithOutput(args, os.Stdout)
+}
+
+func RunWithOutput(args []string, out io.Writer) error {
+	fmt.Fprintln(out, "=== FeCIM EDA: Hello World ===")
+	fmt.Fprintln(out)
 
 	// Sample 4x4 weight matrix
 	weights := [][]float64{
@@ -80,30 +86,30 @@ func Run(args []string) error {
 		{-0.2, 0.9, -0.4, 0.7},
 	}
 
-	fmt.Println("INPUT: 4x4 Weight Matrix")
-	fmt.Println("------------------------")
+	fmt.Fprintln(out, "INPUT: 4x4 Weight Matrix")
+	fmt.Fprintln(out, "------------------------")
 	for _, row := range weights {
-		fmt.Printf("  %v\n", row)
+		fmt.Fprintf(out, "  %v\n", row)
 	}
-	fmt.Println()
+	fmt.Fprintln(out)
 
 	// Compile
 	cells := Compile(weights)
 
-	fmt.Println("OUTPUT: FeCIM Cell Assignments")
-	fmt.Println("------------------------------")
-	fmt.Printf("%-4s %-4s %-8s %-6s %-12s\n", "Row", "Col", "Weight", "Level", "Conductance")
-	fmt.Println("---- ---- -------- ------ ------------")
+	fmt.Fprintln(out, "OUTPUT: FeCIM Cell Assignments")
+	fmt.Fprintln(out, "------------------------------")
+	fmt.Fprintf(out, "%-4s %-4s %-8s %-6s %-12s\n", "Row", "Col", "Weight", "Level", "Conductance")
+	fmt.Fprintln(out, "---- ---- -------- ------ ------------")
 
 	for _, c := range cells {
-		fmt.Printf("%-4d %-4d %+7.3f  %-6d %.2f μS\n",
+		fmt.Fprintf(out, "%-4d %-4d %+7.3f  %-6d %.2f μS\n",
 			c.Row, c.Col, c.Weight, c.Level, c.Conductance)
 	}
 
-	fmt.Println()
-	fmt.Println("=== COMPILATION SUCCESSFUL ===")
-	fmt.Printf("Total cells: %d\n", len(cells))
-	fmt.Printf("Levels used: 30 (demo baseline; simulation baseline model input)\n")
-	fmt.Printf("Conductance range: 10.0 - 100.0 μS\n")
+	fmt.Fprintln(out)
+	fmt.Fprintln(out, "=== COMPILATION SUCCESSFUL ===")
+	fmt.Fprintf(out, "Total cells: %d\n", len(cells))
+	fmt.Fprintf(out, "Levels used: 30 (demo baseline; simulation baseline model input)\n")
+	fmt.Fprintf(out, "Conductance range: 10.0 - 100.0 μS\n")
 	return nil
 }
