@@ -58,18 +58,52 @@ func TestHysteresisBoundaryNotice(t *testing.T) {
 }
 
 func TestHysteresisOverlayLayoutLeavesHeaderAndAxisLabelSpace(t *testing.T) {
-	x, y, width, height := hysteresisOverlayPlotRegion(1280, 820)
-	if y < 220 {
-		t.Fatalf("hysteresis overlay y = %.1f, want at least 220 so the module title and boundary notice remain visible", y)
+	for _, tc := range []struct {
+		w, h int
+		minY int
+	}{
+		{w: 1280, h: 820, minY: 340},
+		{w: 1024, h: 768, minY: 330},
+		{w: 900, h: 640, minY: 310},
+	} {
+		x, y, width, height := hysteresisOverlayPlotRegion(tc.w, tc.h)
+		if y < float64(tc.minY) {
+			t.Fatalf("%dx%d hysteresis overlay y = %.1f, want at least %d so the module title and boundary notice remain visible", tc.w, tc.h, y, tc.minY)
+		}
+		if y+height > float64(tc.h-40) {
+			t.Fatalf("%dx%d hysteresis overlay bottom = %.1f, want <= %d", tc.w, tc.h, y+height, tc.h-40)
+		}
+		if x < 300 {
+			t.Fatalf("%dx%d hysteresis overlay x = %.1f, want at least 300 for sidebar and Y-axis label space", tc.w, tc.h, x)
+		}
+		if width > 940 {
+			t.Fatalf("%dx%d hysteresis overlay width = %.1f, want <= 940", tc.w, tc.h, width)
+		}
 	}
-	if height > 500 {
-		t.Fatalf("hysteresis overlay height = %.1f, want <= 500 to avoid covering the full module surface", height)
+}
+
+func TestCompactSimulationNoticeFitsDefaultScreenshotWidth(t *testing.T) {
+	notice := compactSimulationNotice()
+	if len([]rune(notice)) > 85 {
+		t.Fatalf("compact simulation notice is %d runes, want <= 85 for screenshot readability: %q", len([]rune(notice)), notice)
 	}
-	if x < 300 {
-		t.Fatalf("hysteresis overlay x = %.1f, want at least 300 for sidebar and Y-axis label space", x)
+	for _, want := range []string{"EDUCATIONAL SIMULATION", "Published", "not silicon measurements"} {
+		if !strings.Contains(notice, want) {
+			t.Fatalf("compact simulation notice missing %q: %q", want, notice)
+		}
 	}
-	if width > 940 {
-		t.Fatalf("hysteresis overlay width = %.1f, want <= 940 at 1280px capture width", width)
+}
+
+func TestCompactBoundaryNoticeFitsModuleHeader(t *testing.T) {
+	vm := hysteresisvm.New()
+	notice := compactBoundaryNotice(vm.Snapshot().Descriptor.BoundaryNotice)
+	if len([]rune(notice)) > 90 {
+		t.Fatalf("compact boundary notice is %d runes, want <= 90 for Module 1 header readability: %q", len([]rune(notice)), notice)
+	}
+	for _, want := range []string{"SIMULATION OUTPUT", "not measured device data", "cite"} {
+		if !strings.Contains(notice, want) {
+			t.Fatalf("compact boundary notice missing %q: %q", want, notice)
+		}
 	}
 }
 

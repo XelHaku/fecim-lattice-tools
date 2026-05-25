@@ -211,22 +211,33 @@ func hysteresisOverlayPlotRegion(w, h int) (x, y, width, height float64) {
 	if fw < 900 {
 		x = 240
 	}
-	y = 230
+	y = 340
+	if fh < 800 {
+		y = 330
+	}
 	if fh < 700 {
-		y = 170
+		y = 310
 	}
 	if fh < 520 {
-		y = 120
+		y = 220
 	}
 	width = fw - x - 40
 	if width > 940 {
 		width = 940
 	}
 	height = fh - y - 60
-	if height > 500 {
-		height = 500
+	if height > 440 {
+		height = 440
 	}
 	return x, y, width, height
+}
+
+func compactWorkspaceSubtitle() string {
+	return "Simulation-first FeCIM workspace — educational, not a device claim."
+}
+
+func compactSimulationNotice() string {
+	return "EDUCATIONAL SIMULATION — Published-physics estimates; not silicon measurements."
 }
 
 func drawPUNDWaveformOverlay(cc *gg.Context, plot viewmodel.PlotData, w, h int) {
@@ -388,9 +399,9 @@ func buildRootWithSelectAndActions(model AppModel, theme *material3.Theme, onSel
 
 	children := []widget.Widget{
 		primitives.Text(model.Spec.Title).FontSize(22).Bold(),
-		primitives.Text("Simulation-first FeCIM design workspace — educational tool, not a validated device measurement platform").FontSize(12).Color(widget.Hex(0x5C3B00)),
+		primitives.Text(compactWorkspaceSubtitle()).FontSize(12).Color(widget.Hex(0x5C3B00)),
 		primitives.Box(
-			primitives.Text("EDUCATIONAL SIMULATION — Results are model estimates based on published physics (Materlik 2015, Park 2015). Not validated against silicon measurements. See per-module boundary notices for source citations and limitations.").FontSize(11).Color(widget.Hex(0x5C3B00)),
+			primitives.Text(compactSimulationNotice()).FontSize(11).Color(widget.Hex(0x5C3B00)),
 		).Padding(10).Background(widget.Hex(0xFFF4D8)).Rounded(6).BorderStyle(1, widget.Hex(0xE7C66A)),
 	}
 

@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"hash/fnv"
 	"image"
+	"strings"
 	"testing"
 
 	"github.com/gogpu/gg"
@@ -44,6 +45,16 @@ func TestBuildRootLaysOutSidebarBesideContent(t *testing.T) {
 	}
 	if got := box.ResolvedDirection(); got != primitives.DirectionHorizontal {
 		t.Fatalf("root layout direction = %v, want horizontal so the sidebar stays beside Module 1 content", got)
+	}
+}
+
+func TestCompactWorkspaceSubtitleFitsNarrowScreenshots(t *testing.T) {
+	subtitle := compactWorkspaceSubtitle()
+	if len([]rune(subtitle)) > 80 {
+		t.Fatalf("compact workspace subtitle is %d runes, want <= 80 for 900px screenshots: %q", len([]rune(subtitle)), subtitle)
+	}
+	if !strings.Contains(subtitle, "educational") {
+		t.Fatalf("compact workspace subtitle should preserve educational boundary: %q", subtitle)
 	}
 }
 

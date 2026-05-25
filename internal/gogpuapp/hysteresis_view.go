@@ -23,7 +23,7 @@ func buildHysteresisViewWithActions(snapshot viewmodel.ModuleSnapshot, theme *ma
 	}
 
 	if snapshot.Descriptor.BoundaryNotice != "" {
-		children = append(children, boundaryNotice(snapshot.Descriptor.BoundaryNotice))
+		children = append(children, boundaryNotice(compactBoundaryNotice(snapshot.Descriptor.BoundaryNotice)))
 	}
 
 	metricBoxes := []widget.Widget{}
@@ -225,4 +225,11 @@ func boundaryNotice(text string) widget.Widget {
 	return primitives.Box(
 		primitives.Text(text).FontSize(12).Color(widget.Hex(0x5C3B00)),
 	).Padding(12).Background(widget.Hex(0xFFF4D8)).Rounded(8).BorderStyle(1, widget.Hex(0xE7C66A))
+}
+
+func compactBoundaryNotice(text string) string {
+	if text == "" {
+		return ""
+	}
+	return "SIMULATION OUTPUT — Model estimate, not measured device data; cite sources."
 }
