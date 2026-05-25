@@ -25,7 +25,6 @@ import (
 	"os"
 
 	"fecim-lattice-tools/module1-hysteresis/pkg/ferroelectric"
-	"fecim-lattice-tools/module1-hysteresis/pkg/gui"
 	"fecim-lattice-tools/module1-hysteresis/pkg/render"
 	"fecim-lattice-tools/module1-hysteresis/pkg/simulation"
 	"fecim-lattice-tools/module1-hysteresis/pkg/tui"
@@ -265,23 +264,8 @@ func Run(args []string) error {
 		return nil
 	}
 
-	// Default: Fyne GUI mode (recommended)
-	// Pass the selected material name to the GUI
-	if err := gui.RunWithMaterial(material.Name); err != nil {
-		log.Printf("GUI error: %v\n", err)
-		fmt.Println("\nFalling back to TUI mode...")
-
-		if err := tui.RunWithMaterial(material.Name); err != nil {
-			log.Printf("TUI error: %v\n", err)
-			fmt.Println("\nFalling back to headless mode...")
-
-			engine := simulation.NewEngine(material)
-			engine.SetFrequency(*freq)
-			runHeadless(engine, material)
-		}
-	}
-
-	return nil
+	return fmt.Errorf("legacy Fyne GUI launch is fully deprecated; use %q or pass --headless/--tui for this legacy command",
+		"CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools --module hysteresis")
 }
 
 func printMaterialInfo(m *ferroelectric.HZOMaterial) {

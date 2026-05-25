@@ -8,6 +8,10 @@ import (
 	"strings"
 	"testing"
 
+	uiapp "github.com/gogpu/ui/app"
+	"github.com/gogpu/ui/theme/material3"
+	"github.com/gogpu/ui/widget"
+
 	"fecim-lattice-tools/shared/viewmodel"
 )
 
@@ -52,6 +56,71 @@ func TestModule1HysteresisDefaultGogpuUIEndToEnd(t *testing.T) {
 	if colors < 8 {
 		t.Fatalf("captured Module 1 frame appears blank: %d unique colors", colors)
 	}
+}
+
+func TestModule1HysteresisDefaultGogpuUIDiagnosticsEndToEnd(t *testing.T) {
+	model := NewAppModel(viewmodel.ModuleHysteresis)
+	theme := material3.New(widget.Hex(0x2F5D50))
+	app := uiapp.New()
+	app.Window().HandleResize(1200, 760)
+	var rebuildRoot func()
+	rebuildRoot = func() {
+		app.SetRoot(buildRootWithSelectAndActions(model, theme, nil, func(action viewmodel.Action) {
+			if err := model.ActivePort().ApplyAction(action); err != nil {
+				t.Fatalf("ApplyAction(%s): %v", action.ID, err)
+			}
+			rebuildRoot()
+		}))
+		app.Frame()
+	}
+	rebuildRoot()
+
+	before := renderHeadlessAppFrameSignature(t, app, model.ActivePort())
+	buttons := collectSidebarButtons(app.Window().Root())
+	controlOffset := len(viewmodel.KnownDescriptors())
+	if len(buttons) <= controlOffset+9 {
+		t.Fatalf("root button count = %d, want sidebar buttons plus PUND/FORC controls", len(buttons))
+	}
+
+	clickButton(buttons[controlOffset+8])
+	buttons = collectSidebarButtons(app.Window().Root())
+	clickButton(buttons[controlOffset+9])
+	after := renderHeadlessAppFrameSignature(t, app, model.ActivePort())
+	if after == before {
+		t.Fatal("running Module 1 diagnostics did not change the rendered gogpu/ui frame")
+	}
+
+	snapshot := model.ActivePort().Snapshot()
+	if plot := snapshotPlotByID(snapshot, "pund_current_waveforms"); len(plot.Series) == 0 {
+		t.Fatal("Run PUND control did not expose PUND current waveform plot")
+	}
+	if plot := snapshotPlotByID(snapshot, "forc_density_heatmap"); len(plot.Series) == 0 {
+		t.Fatal("Run FORC control did not expose FORC density heatmap plot")
+	}
+	if !snapshotHasSection(snapshot, "diagnostic_pund") || !snapshotHasSection(snapshot, "diagnostic_forc") {
+		t.Fatalf("diagnostic controls did not expose PUND and FORC summary sections: %#v", snapshot.Sections)
+	}
+}
+
+func renderHeadlessAppFrameSignature(t *testing.T, app *uiapp.App, port viewmodel.ModulePort) uint64 {
+	t.Helper()
+	app.Frame()
+	dc := newOffscreenContext(1200, 760)
+	defer dc.Close()
+	drawAppFrame(dc, app, port, 1200, 760)
+	if err := dc.FlushGPU(); err != nil {
+		t.Fatalf("flush rendered Module 1 frame: %v", err)
+	}
+	return imageSignature(dc.Image())
+}
+
+func snapshotHasSection(snapshot viewmodel.ModuleSnapshot, id string) bool {
+	for _, section := range snapshot.Sections {
+		if section.ID == id {
+			return true
+		}
+	}
+	return false
 }
 
 func TestDefaultGogpuHysteresisSurfaceHasNoFyneDependencies(t *testing.T) {

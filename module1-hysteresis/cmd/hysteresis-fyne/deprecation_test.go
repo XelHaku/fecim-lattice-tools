@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -38,6 +39,34 @@ func TestLegacyFyneCommandListMaterialsDeclaresDeprecation(t *testing.T) {
 	assertLegacyFyneDeprecationNotice(t, output)
 	if !strings.Contains(output, "Available materials") {
 		t.Fatalf("list materials output missing material listing:\n%s", output)
+	}
+}
+
+func TestLegacyFyneCommandDoesNotImportModuleGUI(t *testing.T) {
+	body, err := os.ReadFile(filepath.Join("main.go"))
+	if err != nil {
+		t.Fatalf("read legacy command source: %v", err)
+	}
+	if strings.Contains(string(body), "module1-hysteresis/pkg/gui") {
+		t.Fatalf("legacy hysteresis-fyne command must be a deprecation shim, not import the Fyne GUI package")
+	}
+}
+
+func TestLegacyFyneCommandDefaultInvocationFailsFastToGogpu(t *testing.T) {
+	output := captureStdout(t, func() {
+		err := Run(nil)
+		if err == nil {
+			t.Fatal("Run(nil) succeeded; default legacy Fyne invocation must fail fast to the gogpu/ui shell")
+		}
+		if !strings.Contains(err.Error(), "legacy Fyne GUI launch is fully deprecated") ||
+			!strings.Contains(err.Error(), "CGO_ENABLED=0 go run ./cmd/fecim-lattice-tools --module hysteresis") {
+			t.Fatalf("default legacy error did not point to gogpu/ui migration path: %v", err)
+		}
+	})
+
+	assertLegacyFyneDeprecationNotice(t, output)
+	if strings.Contains(output, "Falling back") {
+		t.Fatalf("legacy default invocation attempted graphical fallback instead of failing fast:\n%s", output)
 	}
 }
 
