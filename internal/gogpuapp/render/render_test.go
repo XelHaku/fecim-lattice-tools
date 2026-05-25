@@ -3,6 +3,7 @@
 package render
 
 import (
+	"math"
 	"testing"
 
 	"fecim-lattice-tools/internal/gogpuapp/design"
@@ -48,13 +49,16 @@ func TestDrawPlot_NegativeAxis(t *testing.T) {
 	DrawPlot(dc, PlotConfig{Data: data, X: 0, Y: 0, Width: 400, Height: 300})
 }
 
-func TestYAxisLabelAnchorStaysInsidePlotPanel(t *testing.T) {
-	x, anchor := yAxisLabelAnchor(defaultPlotMargin)
-	if x < defaultPlotMargin {
-		t.Fatalf("Y-axis label x = %.1f, want inside the left plot margin %.1f", x, defaultPlotMargin)
+func TestYAxisLabelPlacementStaysInMarginOutsideDataArea(t *testing.T) {
+	placement := yAxisLabelPlacement(defaultPlotMargin, 140)
+	if placement.X <= 0 || placement.X >= defaultPlotMargin {
+		t.Fatalf("Y-axis label x = %.1f, want inside left margin and before data area at %.1f", placement.X, defaultPlotMargin)
 	}
-	if anchor != 0 {
-		t.Fatalf("Y-axis label anchor = %.1f, want left-aligned text so it does not clip outside the panel", anchor)
+	if math.Abs(placement.Angle+math.Pi/2) > 1e-9 {
+		t.Fatalf("Y-axis label angle = %.3f, want vertical label at -pi/2", placement.Angle)
+	}
+	if placement.AnchorX != 0.5 || placement.AnchorY != 0.5 {
+		t.Fatalf("Y-axis label anchors = %.1f, %.1f, want centered", placement.AnchorX, placement.AnchorY)
 	}
 }
 

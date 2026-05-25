@@ -136,15 +136,37 @@ func DrawPlot(dc *gg.Context, cfg PlotConfig) {
 	dc.SetRGBA(0.9, 0.9, 0.9, 1)
 	dc.SetLineWidth(1)
 	dc.DrawStringAnchored(cfg.Data.XLabel, margin+plotW/2, cfg.Height-10, 0.5, 1)
-	yLabelX, yLabelAnchor := yAxisLabelAnchor(margin)
-	dc.DrawStringAnchored(cfg.Data.YLabel, yLabelX, margin+plotH/2, yLabelAnchor, 0.5)
+	drawYAxisLabel(dc, cfg.Data.YLabel, margin, plotH)
 	dc.DrawStringAnchored(cfg.Data.Title, margin+plotW/2, 18, 0.5, 0)
 
 	dc.Pop()
 }
 
-func yAxisLabelAnchor(margin float64) (x, anchor float64) {
-	return margin + 8, 0
+type axisLabelPlacement struct {
+	X       float64
+	Y       float64
+	Angle   float64
+	AnchorX float64
+	AnchorY float64
+}
+
+func drawYAxisLabel(dc *gg.Context, label string, margin, plotH float64) {
+	placement := yAxisLabelPlacement(margin, plotH)
+	dc.Push()
+	dc.Translate(placement.X, placement.Y)
+	dc.Rotate(placement.Angle)
+	dc.DrawStringAnchored(label, 0, 0, placement.AnchorX, placement.AnchorY)
+	dc.Pop()
+}
+
+func yAxisLabelPlacement(margin, plotH float64) axisLabelPlacement {
+	return axisLabelPlacement{
+		X:       math.Max(14, margin*0.34),
+		Y:       margin + plotH/2,
+		Angle:   -math.Pi / 2,
+		AnchorX: 0.5,
+		AnchorY: 0.5,
+	}
 }
 
 func plotMargin(width, height float64) float64 {
