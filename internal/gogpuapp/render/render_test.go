@@ -58,6 +58,22 @@ func TestYAxisLabelAnchorStaysInsidePlotPanel(t *testing.T) {
 	}
 }
 
+func TestResponsivePlotMarginPreservesSmallPanelDataArea(t *testing.T) {
+	margin := plotMargin(560, 180)
+	if margin >= defaultPlotMargin {
+		t.Fatalf("small plot margin = %.1f, want less than default %.1f", margin, defaultPlotMargin)
+	}
+	if innerHeight := 180 - margin*2; innerHeight < 95 {
+		t.Fatalf("small plot inner height = %.1f, want at least 95 px for readable 900x640 hysteresis screenshots", innerHeight)
+	}
+}
+
+func TestResponsivePlotMarginKeepsDefaultForLargePanel(t *testing.T) {
+	if margin := plotMargin(940, 340); margin != defaultPlotMargin {
+		t.Fatalf("large plot margin = %.1f, want default %.1f", margin, defaultPlotMargin)
+	}
+}
+
 func TestDrawHeatmap_NonNil(t *testing.T) {
 	data := [][]float64{
 		{1, 2, 3},

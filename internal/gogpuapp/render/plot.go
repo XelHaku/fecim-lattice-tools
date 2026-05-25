@@ -37,7 +37,7 @@ func DrawPlot(dc *gg.Context, cfg PlotConfig) {
 		cfg.GridColor = defaultPlotGrid
 	}
 
-	margin := defaultPlotMargin
+	margin := plotMargin(cfg.Width, cfg.Height)
 	plotW := cfg.Width - margin*2
 	plotH := cfg.Height - margin*2
 	if plotW <= 0 || plotH <= 0 {
@@ -145,6 +145,17 @@ func DrawPlot(dc *gg.Context, cfg PlotConfig) {
 
 func yAxisLabelAnchor(margin float64) (x, anchor float64) {
 	return margin + 8, 0
+}
+
+func plotMargin(width, height float64) float64 {
+	margin := defaultPlotMargin
+	if height < 260 {
+		margin = math.Max(30, height*0.22)
+	}
+	if width < 420 {
+		margin = math.Min(margin, math.Max(28, width*0.12))
+	}
+	return margin
 }
 
 func sineWave(start, stop float64, n int) []design.PlotPoint {
