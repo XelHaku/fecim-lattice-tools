@@ -211,15 +211,15 @@ func hysteresisOverlayPlotRegion(w, h int) (x, y, width, height float64) {
 	if fw < 900 {
 		x = 240
 	}
-	y = 340
+	y = 420
 	if fh < 800 {
-		y = 330
+		y = 410
 	}
 	if fh < 700 {
-		y = 310
+		y = 400
 	}
 	if fh < 520 {
-		y = 220
+		y = 260
 	}
 	width = fw - x - 40
 	if width > 940 {

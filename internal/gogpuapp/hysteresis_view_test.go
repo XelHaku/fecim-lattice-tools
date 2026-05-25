@@ -9,6 +9,8 @@ import (
 	"fecim-lattice-tools/shared/viewmodel"
 	hysteresisvm "fecim-lattice-tools/shared/viewmodel/hysteresis"
 
+	uiapp "github.com/gogpu/ui/app"
+	"github.com/gogpu/ui/primitives"
 	"github.com/gogpu/ui/theme/material3"
 	"github.com/gogpu/ui/widget"
 )
@@ -62,9 +64,9 @@ func TestHysteresisOverlayLayoutLeavesHeaderAndAxisLabelSpace(t *testing.T) {
 		w, h int
 		minY int
 	}{
-		{w: 1280, h: 820, minY: 340},
-		{w: 1024, h: 768, minY: 330},
-		{w: 900, h: 640, minY: 310},
+		{w: 1280, h: 820, minY: 420},
+		{w: 1024, h: 768, minY: 410},
+		{w: 900, h: 640, minY: 400},
 	} {
 		x, y, width, height := hysteresisOverlayPlotRegion(tc.w, tc.h)
 		if y < float64(tc.minY) {
@@ -105,6 +107,54 @@ func TestCompactBoundaryNoticeFitsModuleHeader(t *testing.T) {
 			t.Fatalf("compact boundary notice missing %q: %q", want, notice)
 		}
 	}
+}
+
+func TestHysteresisPlotOverlayDoesNotCoverMaterialMetrics(t *testing.T) {
+	const width = 900
+	const height = 640
+	model := NewAppModel(viewmodel.ModuleHysteresis)
+	app := uiapp.New()
+	app.Window().HandleResize(width, height)
+	app.SetRoot(buildRoot(model, material3.New(widget.Hex(0x2F5D50))))
+	renderHeadlessAppFrameSignature(t, app, model.ActivePort())
+
+	_, plotY, _, _ := hysteresisOverlayPlotRegion(width, height)
+	materialLabel := findTextWidgetByContent(app.Window().Root(), "Material")
+	materialValue := findTextWidgetByPrefix(app.Window().Root(), "HZO (")
+	if materialLabel == nil || materialValue == nil {
+		t.Fatalf("could not find Material metric widgets: label=%v value=%v", materialLabel != nil, materialValue != nil)
+	}
+	metricBottom := materialValue.ScreenBounds().Max.Y
+	if labelBottom := materialLabel.ScreenBounds().Max.Y; labelBottom > metricBottom {
+		metricBottom = labelBottom
+	}
+	if metricBottom+8 > float32(plotY) {
+		t.Fatalf("Material metric bottom y=%.1f overlaps plot overlay y=%.1f; keep the P-E overlay below the metric summary", metricBottom, plotY)
+	}
+}
+
+func findTextWidgetByContent(root widget.Widget, content string) *primitives.TextWidget {
+	if text, ok := root.(*primitives.TextWidget); ok && text.Content() == content {
+		return text
+	}
+	for _, child := range root.Children() {
+		if found := findTextWidgetByContent(child, content); found != nil {
+			return found
+		}
+	}
+	return nil
+}
+
+func findTextWidgetByPrefix(root widget.Widget, prefix string) *primitives.TextWidget {
+	if text, ok := root.(*primitives.TextWidget); ok && strings.HasPrefix(text.Content(), prefix) {
+		return text
+	}
+	for _, child := range root.Children() {
+		if found := findTextWidgetByPrefix(child, prefix); found != nil {
+			return found
+		}
+	}
+	return nil
 }
 
 func TestHysteresisPlotData(t *testing.T) {
