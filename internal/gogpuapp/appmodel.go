@@ -65,6 +65,26 @@ func (m *AppModel) SelectModule(id viewmodel.ModuleID) bool {
 	return false
 }
 
+func (m *AppModel) DispatchAction(action viewmodel.Action) error {
+	port := m.ActivePort()
+	if port == nil {
+		return viewmodel.ErrUnsupportedAction
+	}
+	return port.ApplyAction(action)
+}
+
+func (m *AppModel) StartAllModules() {
+	for _, port := range m.Ports {
+		port.Start()
+	}
+}
+
+func (m *AppModel) StopAllModules() {
+	for _, port := range m.Ports {
+		port.Stop()
+	}
+}
+
 func BuildAppPorts() []viewmodel.ModulePort {
 	entries := ModuleEngineRegistry()
 	ports := make([]viewmodel.ModulePort, 0, len(entries))

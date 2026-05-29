@@ -122,6 +122,18 @@ func Run(options Options) error {
 	return gpuApp.Run()
 }
 
+func CaptureFrameImagesForKnownModules(w, h int) (map[viewmodel.ModuleID]image.Image, error) {
+	frames := make(map[viewmodel.ModuleID]image.Image, len(viewmodel.KnownDescriptors()))
+	for _, descriptor := range viewmodel.KnownDescriptors() {
+		img, err := CaptureFrameImage(descriptor.ID, w, h)
+		if err != nil {
+			return nil, fmt.Errorf("capture %s frame: %w", descriptor.ID, err)
+		}
+		frames[descriptor.ID] = img
+	}
+	return frames, nil
+}
+
 func CaptureFrameImage(active viewmodel.ModuleID, w, h int) (image.Image, error) {
 	if w <= 0 || h <= 0 {
 		return nil, fmt.Errorf("capture frame dimensions must be positive, got %dx%d", w, h)
