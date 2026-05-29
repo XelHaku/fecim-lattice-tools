@@ -400,6 +400,23 @@ func TestApplyActionSetWaveformUpdatesSnapshotAndLoop(t *testing.T) {
 	}
 }
 
+func TestApplyActionSetFieldRangeRejectsInvalidFloatPayload(t *testing.T) {
+	m := New()
+	before := m.state.FieldRange
+
+	err := m.ApplyAction(viewmodel.Action{
+		ID:      EventSetFieldRange,
+		Kind:    viewmodel.ActionCommand,
+		Payload: map[string]string{"min": "low", "max": "2.5"},
+	})
+	if err == nil {
+		t.Fatal("expected invalid field range payload to fail")
+	}
+	if m.state.FieldRange != before {
+		t.Fatalf("field range changed after invalid payload: %+v, want %+v", m.state.FieldRange, before)
+	}
+}
+
 func TestApplyActionSetWaveformRejectsUnknownWaveform(t *testing.T) {
 	m := New()
 

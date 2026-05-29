@@ -4,39 +4,14 @@ import (
 	"fmt"
 	"strings"
 
-	"fecim-lattice-tools/module6-eda/pkg/compiler"
-	edaconfig "fecim-lattice-tools/module6-eda/pkg/config"
-	"fecim-lattice-tools/module6-eda/pkg/export"
 	"fecim-lattice-tools/shared/viewmodel"
+	"fecim-lattice-tools/shared/viewmodel/design"
 )
 
 type Module struct{ state EDAState }
 
 func New() *Module {
-	rows, cols := 8, 8
-	cfg := compiler.NewComputeConfig(rows, cols)
-	design, err := compiler.GenerateDesign(cfg)
-	if err != nil {
-		design = compiler.GenerateBlank(cfg)
-	}
-
-	m := &Module{state: EDAState{
-		DesignName:  "fecim_crossbar_8x8",
-		ProcessNode: "sky130",
-		ArrayRows:   rows, ArrayCols: cols,
-		ExportFormats: []string{"spice", "verilog", "liberty", "def", "lef"},
-	}}
-
-	if design != nil {
-		m.state.TotalCells = design.Stats.TotalCells
-		m.state.AreaMM2 = design.Stats.AreaMM2
-		m.state.PowerMW = design.Stats.PowerMW
-		m.state.SPICESnippet = truncateContent(export.GenerateSPICE(design, 1.8), 15)
-		m.state.VerilogSnippet = truncateContent(export.GenerateVerilogWithDefaults(design), 15)
-		m.state.DEFSnippet = truncateContent(export.GenerateDEFWithDefaults(design), 15)
-		m.state.LEFSnippet = truncateContent(export.GenerateLEF(edaconfig.DefaultCellConfig()), 15)
-	}
-	return m
+	return &Module{state: newDesignGenerationWorkflow(8, 8).buildState()}
 }
 
 func truncateContent(s string, maxLines int) string {
@@ -68,3 +43,7 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 }
 func (m *Module) Start() {}
 func (m *Module) Stop()  {}
+
+func (m *Module) DesignState() design.ModuleDesignState {
+	return design.ModuleDesignState{ProcessNode: m.state.ProcessNode, DesignName: m.state.DesignName}
+}

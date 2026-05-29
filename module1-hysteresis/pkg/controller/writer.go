@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"fecim-lattice-tools/module1-hysteresis/pkg/algo"
+	"fecim-lattice-tools/shared/physics/isppconv"
 )
 
 // ISPP convergence tuning constants.
@@ -629,32 +630,27 @@ func (wc *WriteController) Update(dt float64, currentField float64, currentLevel
 				wc.VMaxSet = false
 			}
 
-			// If bounds collapse or invert, widen the bracket minimally
-			// instead of discarding all convergence progress.
-			if wc.VMinSet && wc.VMaxSet && wc.VMin >= wc.VMax {
-				minSep := minBracketWidthFrac * wc.EcField
-				if wc.stepFloor > minSep {
-					minSep = wc.stepFloor
-				}
-				if needMore {
-					// We need higher voltage: keep VMin, push VMax up
-					wc.VMax = wc.VMin + minSep
-					if wc.VMax > wc.MaxField {
-						wc.VMax = wc.MaxField
-					}
-				} else if needLess {
-					// We need lower voltage: keep VMax, push VMin down
-					wc.VMin = wc.VMax - minSep
-					if wc.VMin < 0 {
-						wc.VMin = 0
-					}
-				} else {
-					// Unknown direction: full reset as last resort
-					wc.VMin = 0
-					wc.VMax = wc.MaxField
-					wc.VMinSet = false
-					wc.VMaxSet = false
-				}
+			minSep := minBracketWidthFrac * wc.EcField
+			if wc.stepFloor > minSep {
+				minSep = wc.stepFloor
+			}
+			recovery := isppconv.RecoverCollapsedBounds(isppconv.Bounds{
+				Min:    wc.VMin,
+				Max:    wc.VMax,
+				MinSet: wc.VMinSet,
+				MaxSet: wc.VMaxSet,
+			}, isppconv.RecoveryInput{
+				NeedMore:         needMore,
+				NeedLess:         needLess,
+				CurrentMagnitude: absField,
+				MaxMagnitude:     wc.MaxField,
+				MinimumWidth:     minSep,
+			})
+			if recovery.Changed {
+				wc.VMin = recovery.Bounds.Min
+				wc.VMax = recovery.Bounds.Max
+				wc.VMinSet = recovery.Bounds.MinSet
+				wc.VMaxSet = recovery.Bounds.MaxSet
 				log.Printf("ISPP BOUNDS FIX: bracket collapsed, widened to [%.3f, %.3f]×Ec",
 					wc.VMin/wc.EcField, wc.VMax/wc.EcField)
 			}

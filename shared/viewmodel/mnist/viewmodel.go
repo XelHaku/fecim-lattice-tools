@@ -26,11 +26,12 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 	case "run_inference":
 		return nil
 	case "sweep_levels":
-		if levelS, ok := action.Payload["levels"]; ok {
-			fmt.Sscanf(levelS, "%d", &m.state.NumLevels)
-			return nil
+		levels, err := viewmodel.PayloadInt(action.Payload, "levels")
+		if err != nil {
+			return fmt.Errorf("mnist: %w", err)
 		}
-		return fmt.Errorf("mnist: levels required")
+		m.state.NumLevels = levels
+		return nil
 	default:
 		return viewmodel.ErrUnsupportedAction
 	}
@@ -39,12 +40,7 @@ func (m *Module) Start() {}
 func (m *Module) Stop()  {}
 
 func (m *Module) computeQuantizationSweep() {
-	levels := []int{2, 4, 8, 16, 32, 64, 128}
-	m.state.SweepLevels = levels
-	m.state.SweepAccuracy = make([]float64, len(levels))
-	for i, l := range levels {
-		m.state.SweepAccuracy[i] = accuracyForLevels(l)
-	}
+	m.state = newQuantizationSweepWorkflow(m.state).compute()
 }
 
 func accuracyForLevels(levels int) float64 {

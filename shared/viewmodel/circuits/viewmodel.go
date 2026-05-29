@@ -1,19 +1,18 @@
 package circuits
 
 import (
-	"encoding/json"
 	"fmt"
 	"math"
 	"math/rand"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 
 	sharedio "fecim-lattice-tools/shared/io"
+	"fecim-lattice-tools/shared/mathutil"
 	"fecim-lattice-tools/shared/peripherals"
 	"fecim-lattice-tools/shared/physics"
 	"fecim-lattice-tools/shared/viewmodel"
+	"fecim-lattice-tools/shared/viewmodel/design"
 )
 
 type Module struct{ state CircuitsState }
@@ -177,11 +176,11 @@ func (m *Module) resizeArray(payload map[string]string) error {
 }
 
 func (m *Module) setOperationMode(payload map[string]string) error {
-	mode, ok := payload["mode"]
-	if !ok {
-		return fmt.Errorf("circuits: missing operation mode")
+	mode, err := viewmodel.PayloadString(payload, "mode")
+	if err != nil {
+		return fmt.Errorf("circuits: %w", err)
 	}
-	if !validString(mode, OperationRead, OperationWrite, OperationCompute) {
+	if !viewmodel.PayloadStringIn(mode, OperationRead, OperationWrite, OperationCompute) {
 		return fmt.Errorf("circuits: invalid operation mode %q", mode)
 	}
 	m.state.OperationMode = mode
@@ -191,13 +190,14 @@ func (m *Module) setOperationMode(payload map[string]string) error {
 }
 
 func (m *Module) setTimingOperation(payload map[string]string) error {
-	operation, ok := payload["operation"]
-	if !ok {
-		return fmt.Errorf("circuits: missing timing operation")
+	operation, err := viewmodel.PayloadString(payload, "operation")
+	if err != nil {
+		return fmt.Errorf("circuits: %w", err)
 	}
+	rawOperation := operation
 	operation = strings.ToUpper(strings.TrimSpace(operation))
-	if !validString(operation, "READ", "WRITE", "COMPUTE") {
-		return fmt.Errorf("circuits: invalid timing operation %q", payload["operation"])
+	if !viewmodel.PayloadStringIn(operation, "READ", "WRITE", "COMPUTE") {
+		return fmt.Errorf("circuits: invalid timing operation %q", rawOperation)
 	}
 	m.state.TimingOperation = operation
 	m.computeReferenceTiming()
@@ -206,11 +206,11 @@ func (m *Module) setTimingOperation(payload map[string]string) error {
 }
 
 func (m *Module) setArchitecture(payload map[string]string) error {
-	architecture, ok := payload["architecture"]
-	if !ok {
-		return fmt.Errorf("circuits: missing architecture")
+	architecture, err := viewmodel.PayloadString(payload, "architecture")
+	if err != nil {
+		return fmt.Errorf("circuits: %w", err)
 	}
-	if !validString(architecture, ArchitecturePassive, Architecture1T1R, Architecture2T1R) {
+	if !viewmodel.PayloadStringIn(architecture, ArchitecturePassive, Architecture1T1R, Architecture2T1R) {
 		return fmt.Errorf("circuits: invalid architecture %q", architecture)
 	}
 	m.state.Architecture = architecture
@@ -285,13 +285,9 @@ func (m *Module) setADCBits(payload map[string]string) error {
 }
 
 func (m *Module) setTIAGain(payload map[string]string) error {
-	gainS, ok := payload["gain_ohm"]
-	if !ok {
-		return fmt.Errorf("circuits: missing TIA gain")
-	}
-	gain, err := strconv.ParseFloat(gainS, 64)
+	gain, err := viewmodel.PayloadFloat(payload, "gain_ohm")
 	if err != nil {
-		return fmt.Errorf("circuits: invalid TIA gain %q: %w", gainS, err)
+		return fmt.Errorf("circuits: %w", err)
 	}
 	if gain <= 0 {
 		return fmt.Errorf("circuits: TIA gain must be positive, got %.3g", gain)
@@ -304,11 +300,11 @@ func (m *Module) setTIAGain(payload map[string]string) error {
 }
 
 func (m *Module) setCouplingTier(payload map[string]string) error {
-	tier, ok := payload["tier"]
-	if !ok {
-		return fmt.Errorf("circuits: missing coupling tier")
+	tier, err := viewmodel.PayloadString(payload, "tier")
+	if err != nil {
+		return fmt.Errorf("circuits: %w", err)
 	}
-	if !validString(tier, CouplingIdeal, CouplingTierA, CouplingTierB) {
+	if !viewmodel.PayloadStringIn(tier, CouplingIdeal, CouplingTierA, CouplingTierB) {
 		return fmt.Errorf("circuits: invalid coupling tier %q", tier)
 	}
 	m.state.CouplingTier = tier
@@ -317,11 +313,11 @@ func (m *Module) setCouplingTier(payload map[string]string) error {
 }
 
 func (m *Module) setISPPEngine(payload map[string]string) error {
-	engine, ok := payload["engine"]
-	if !ok {
-		return fmt.Errorf("circuits: missing ISPP engine")
+	engine, err := viewmodel.PayloadString(payload, "engine")
+	if err != nil {
+		return fmt.Errorf("circuits: %w", err)
 	}
-	if !validString(engine, ISPPEngineLevel, ISPPEngineLK) {
+	if !viewmodel.PayloadStringIn(engine, ISPPEngineLevel, ISPPEngineLK) {
 		return fmt.Errorf("circuits: invalid ISPP engine %q", engine)
 	}
 	m.state.ISPPEngine = engine
@@ -330,9 +326,9 @@ func (m *Module) setISPPEngine(payload map[string]string) error {
 }
 
 func (m *Module) setLoggerVerbosity(payload map[string]string) error {
-	verbosity, ok := payload["verbosity"]
-	if !ok {
-		return fmt.Errorf("circuits: missing logger verbosity")
+	verbosity, err := viewmodel.PayloadString(payload, "verbosity")
+	if err != nil {
+		return fmt.Errorf("circuits: %w", err)
 	}
 	level, label, err := parseLoggerVerbosity(verbosity)
 	if err != nil {
@@ -360,32 +356,17 @@ func (m *Module) recordStatus(kind, format string, args ...interface{}) {
 }
 
 func (m *Module) exportOperationLog(payload map[string]string) error {
-	exportPath := "artifact buffer"
-	path := strings.TrimSpace(payload["path"])
-	if path != "" {
-		cleanPath, err := sharedio.ValidatePath(path)
-		if err != nil {
-			return fmt.Errorf("circuits: invalid operation log export path: %w", err)
-		}
-		exportPath = cleanPath
-	}
+	path := payload["path"]
 
 	export := m.operationLogExportPayload()
-	jsonBytes, err := json.MarshalIndent(export, "", "  ")
+	artifact, err := sharedio.BufferOrWriteJSONArtifact(path, export)
 	if err != nil {
-		return fmt.Errorf("circuits: marshal operation log export: %w", err)
+		return fmt.Errorf("circuits: operation log export artifact: %w", err)
 	}
-	if path != "" {
-		if err := sharedio.SaveJSON(exportPath, export); err != nil {
-			return fmt.Errorf("circuits: write operation log export: %w", err)
-		}
-		m.state.OperationLogExportStatus = fmt.Sprintf("wrote %d entries", export.ExportedEntries)
-	} else {
-		m.state.OperationLogExportStatus = fmt.Sprintf("buffered %d entries", export.ExportedEntries)
-	}
-	m.state.OperationLogExportPath = exportPath
-	m.state.OperationLogExportBytes = len(jsonBytes)
-	m.state.OperationLogExportJSON = string(jsonBytes)
+	m.state.OperationLogExportStatus = fmt.Sprintf("%s %d entries", artifact.StatusVerb, export.ExportedEntries)
+	m.state.OperationLogExportPath = artifact.Path
+	m.state.OperationLogExportBytes = artifact.Bytes
+	m.state.OperationLogExportJSON = artifact.Content
 	return nil
 }
 
@@ -414,32 +395,17 @@ func (m *Module) operationLogExportPayload() OperationLogExport {
 }
 
 func (m *Module) exportReferenceSpecs(payload map[string]string) error {
-	exportPath := "artifact buffer"
-	path := strings.TrimSpace(payload["path"])
-	if path != "" {
-		cleanPath, err := sharedio.ValidatePath(path)
-		if err != nil {
-			return fmt.Errorf("circuits: invalid reference spec export path: %w", err)
-		}
-		exportPath = cleanPath
-	}
+	path := payload["path"]
 
 	export := m.referenceSpecExportPayload()
-	jsonBytes, err := json.MarshalIndent(export, "", "  ")
+	artifact, err := sharedio.BufferOrWriteJSONArtifact(path, export)
 	if err != nil {
-		return fmt.Errorf("circuits: marshal reference spec export: %w", err)
+		return fmt.Errorf("circuits: reference spec export artifact: %w", err)
 	}
-	if path != "" {
-		if err := sharedio.SaveJSON(exportPath, export); err != nil {
-			return fmt.Errorf("circuits: write reference spec export: %w", err)
-		}
-		m.state.ReferenceSpecExportStatus = fmt.Sprintf("wrote %d cells", export.Cells)
-	} else {
-		m.state.ReferenceSpecExportStatus = fmt.Sprintf("buffered %d cells", export.Cells)
-	}
-	m.state.ReferenceSpecExportPath = exportPath
-	m.state.ReferenceSpecExportBytes = len(jsonBytes)
-	m.state.ReferenceSpecExportJSON = string(jsonBytes)
+	m.state.ReferenceSpecExportStatus = fmt.Sprintf("%s %d cells", artifact.StatusVerb, export.Cells)
+	m.state.ReferenceSpecExportPath = artifact.Path
+	m.state.ReferenceSpecExportBytes = artifact.Bytes
+	m.state.ReferenceSpecExportJSON = artifact.Content
 	return nil
 }
 
@@ -472,45 +438,22 @@ func (m *Module) referenceSpecExportPayload() ReferenceSpecExport {
 }
 
 func (m *Module) exportReferenceTiming(payload map[string]string) error {
-	exportPath := "artifact buffer"
-	path := strings.TrimSpace(payload["path"])
-	if path != "" {
-		cleanPath, err := sharedio.ValidatePath(path)
-		if err != nil {
-			return fmt.Errorf("circuits: invalid reference timing export path: %w", err)
-		}
-		exportPath = cleanPath
-	}
+	path := payload["path"]
 
 	export := m.referenceTimingExportPayload()
-	jsonBytes, err := json.MarshalIndent(export, "", "  ")
+	artifact, err := sharedio.BufferOrWriteJSONArtifact(path, export)
 	if err != nil {
-		return fmt.Errorf("circuits: marshal reference timing export: %w", err)
+		return fmt.Errorf("circuits: reference timing export artifact: %w", err)
 	}
-	if path != "" {
-		if err := sharedio.SaveJSON(exportPath, export); err != nil {
-			return fmt.Errorf("circuits: write reference timing export: %w", err)
-		}
-		m.state.ReferenceTimingExportStatus = fmt.Sprintf("wrote %d operations", len(export.Operations))
-	} else {
-		m.state.ReferenceTimingExportStatus = fmt.Sprintf("buffered %d operations", len(export.Operations))
-	}
-	m.state.ReferenceTimingExportPath = exportPath
-	m.state.ReferenceTimingExportBytes = len(jsonBytes)
-	m.state.ReferenceTimingExportJSON = string(jsonBytes)
+	m.state.ReferenceTimingExportStatus = fmt.Sprintf("%s %d operations", artifact.StatusVerb, len(export.Operations))
+	m.state.ReferenceTimingExportPath = artifact.Path
+	m.state.ReferenceTimingExportBytes = artifact.Bytes
+	m.state.ReferenceTimingExportJSON = artifact.Content
 	return nil
 }
 
 func (m *Module) exportReferenceTimingSVG(payload map[string]string) error {
-	exportPath := "artifact buffer"
-	path := strings.TrimSpace(payload["path"])
-	if path != "" {
-		cleanPath, err := sharedio.ValidatePath(path)
-		if err != nil {
-			return fmt.Errorf("circuits: invalid reference timing SVG export path: %w", err)
-		}
-		exportPath = cleanPath
-	}
+	path := payload["path"]
 
 	m.computeReferenceTiming()
 	waveform, ok := activeTimingWaveform(m.state)
@@ -518,15 +461,12 @@ func (m *Module) exportReferenceTimingSVG(payload map[string]string) error {
 		return fmt.Errorf("circuits: no active timing waveform for %q", m.state.TimingActiveOp)
 	}
 	svg := buildReferenceTimingSVG(waveform)
-	if path != "" {
-		if err := writeTextArtifact(exportPath, svg); err != nil {
-			return fmt.Errorf("circuits: write reference timing SVG export: %w", err)
-		}
-		m.state.ReferenceTimingSVGExportStatus = fmt.Sprintf("wrote %s waveform", waveform.Operation)
-	} else {
-		m.state.ReferenceTimingSVGExportStatus = fmt.Sprintf("buffered %s waveform", waveform.Operation)
+	artifact, err := sharedio.BufferOrWriteTextArtifact(path, svg)
+	if err != nil {
+		return fmt.Errorf("circuits: write reference timing SVG export: %w", err)
 	}
-	m.state.ReferenceTimingSVGExportPath = exportPath
+	m.state.ReferenceTimingSVGExportStatus = fmt.Sprintf("%s %s waveform", artifact.StatusVerb, waveform.Operation)
+	m.state.ReferenceTimingSVGExportPath = artifact.Path
 	m.state.ReferenceTimingSVGExportBytes = len(svg)
 	m.state.ReferenceTimingSVGExport = svg
 	return nil
@@ -656,14 +596,6 @@ func buildReferenceTimingSVG(waveform ReferenceTimingWaveform) string {
 	sb.WriteString(fmt.Sprintf("  <text class=\"notice\" x=\"44\" y=\"%d\">educational reference timing waveform; behavioral estimates, not calibrated silicon timing.</text>\n", height-34))
 	sb.WriteString("</svg>\n")
 	return sb.String()
-}
-
-func writeTextArtifact(path, text string) error {
-	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return err
-	}
-	return os.WriteFile(path, []byte(text), 0644)
 }
 
 func svgEscape(s string) string {
@@ -848,76 +780,13 @@ func (m *Module) latestOperationLogIsCompute() bool {
 }
 
 func (m *Module) buildComputeRunLog() *ComputeRunLog {
-	rows := maxInt(1, m.state.Rows)
-	cols := maxInt(1, m.state.Cols)
-	quantLevels := m.state.QuantLevels
-	if quantLevels <= 1 {
-		quantLevels = DefaultQuantLevels
-	}
-	input := deterministicComputeInputVector(cols)
-	weights := make([][]int, rows)
-	conductances := make([][]float64, rows)
-	rowResults := make([]ComputeRowResult, rows)
-	for r := 0; r < rows; r++ {
-		weights[r] = make([]int, cols)
-		conductances[r] = make([]float64, cols)
-		cells := make([]ComputeCellContribution, cols)
-		rowCurrentUA := 0.0
-		for c := 0; c < cols; c++ {
-			weight := (r*cols + c) % quantLevels
-			conductanceUS := conductanceForLevelUS(weight, quantLevels)
-			currentUA := conductanceUS * input[c]
-			weights[r][c] = weight
-			conductances[r][c] = conductanceUS
-			cells[c] = ComputeCellContribution{
-				Col:           c,
-				Weight:        weight,
-				ConductanceUS: conductanceUS,
-				VoltageV:      input[c],
-				CurrentUA:     currentUA,
-			}
-			rowCurrentUA += currentUA
-		}
-		tiaVoltage := rowCurrentUA * 1e-6 * m.state.TIAGain
-		senseVoltage := clampFloat64(tiaVoltage, 0, m.state.SupplyVoltage)
-		adcMax := float64((int(1) << uint(m.state.ADCResolution)) - 1)
-		adcLevel := 0
-		if m.state.SupplyVoltage > 0 && adcMax > 0 {
-			adcLevel = int(math.Round(senseVoltage / m.state.SupplyVoltage * adcMax))
-		}
-		rowResults[r] = ComputeRowResult{
-			Row:        r,
-			Active:     true,
-			CurrentUA:  rowCurrentUA,
-			TIAVoltage: tiaVoltage,
-			ADCLevel:   adcLevel,
-			Saturated:  tiaVoltage > m.state.SupplyVoltage,
-			CellDetail: cells,
-		}
-	}
-	return &ComputeRunLog{
-		Schema:        "fecim.circuits.compute_run.v1",
-		ArraySize:     fmt.Sprintf("%dx%d", rows, cols),
-		Material:      "HZO default educational preset",
-		QuantLevels:   quantLevels,
-		Architecture:  m.state.Architecture,
-		CouplingTier:  m.state.CouplingTier,
-		InputVector:   input,
-		Weights:       weights,
-		Conductances:  conductances,
-		RowResults:    rowResults,
-		ExportedCells: rows * cols,
-	}
+	return newComputeRunWorkflow(m.state).buildLog()
 }
 
 func deterministicComputeInputVector(cols int) []float64 {
 	input := make([]float64, cols)
-	if cols <= 1 {
-		input[0] = 0.2
-		return input
-	}
 	for c := 0; c < cols; c++ {
-		input[c] = 0.2 + 0.3*float64(c)/float64(cols-1)
+		input[c] = mathutil.LerpByIndex(c, cols, 0.2, 0.5)
 	}
 	return input
 }
@@ -926,7 +795,7 @@ func conductanceForLevelUS(level, quantLevels int) float64 {
 	if quantLevels <= 1 {
 		quantLevels = DefaultQuantLevels
 	}
-	return 1.0 + float64(level)/float64(quantLevels-1)*99.0
+	return mathutil.LerpByIndex(level, quantLevels, 1.0, 100.0)
 }
 
 func cloneComputeRunLog(src *ComputeRunLog) *ComputeRunLog {
@@ -961,16 +830,6 @@ func cloneFloatMatrix(src [][]float64) [][]float64 {
 	return dst
 }
 
-func clampFloat64(value, minValue, maxValue float64) float64 {
-	if value < minValue {
-		return minValue
-	}
-	if value > maxValue {
-		return maxValue
-	}
-	return value
-}
-
 func (m *Module) clampSelectedCell() {
 	if m.state.SelectedRow >= m.state.Rows {
 		m.state.SelectedRow = m.state.Rows - 1
@@ -987,44 +846,15 @@ func (m *Module) clampSelectedCell() {
 }
 
 func (m *Module) computeHalfSelectStress() {
-	m.state.HalfSelectState = HalfSelectStateInactive
-	m.state.HalfSelectCells = 0
-	m.state.DisturbVoltage = 0
-	m.state.StressPerPulse = 0
-	m.state.StressCyclesToLevel = 0
-
-	if m.state.OperationMode != OperationWrite {
-		return
-	}
-
-	switch m.state.Architecture {
-	case ArchitecturePassive:
-		m.state.HalfSelectState = HalfSelectStateColumnWriteActive
-		m.state.HalfSelectCells = maxInt(0, m.state.Rows-1)
-		m.state.DisturbVoltage = DefaultDisturbVoltage
-		m.state.StressPerPulse = PassiveStressPerPulse
-	case Architecture1T1R:
-		m.state.HalfSelectState = HalfSelectStateAttenuated
-		m.state.HalfSelectCells = maxInt(0, m.state.Rows-1)
-		m.state.DisturbVoltage = DefaultDisturbVoltage / OneTOneRStressAttenuation
-		m.state.StressPerPulse = PassiveStressPerPulse / OneTOneRStressAttenuation
-	case Architecture2T1R:
-		m.state.HalfSelectState = HalfSelectStateIsolated
-		return
-	default:
-		return
-	}
-	if m.state.StressPerPulse > 0 {
-		m.state.StressCyclesToLevel = int(math.Ceil(1.0 / m.state.StressPerPulse))
-	}
+	m.state = newHalfSelectStressWorkflow(m.state).compute()
 }
 
 func parsePayloadInt(payload map[string]string, key string) (int, error) {
-	value, ok := payload[key]
-	if !ok {
-		return 0, fmt.Errorf("circuits: missing %s", key)
+	n, err := viewmodel.PayloadInt(payload, key)
+	if err != nil {
+		return 0, fmt.Errorf("circuits: %w", err)
 	}
-	return parseInt(value, key)
+	return n, nil
 }
 
 func parseInt(value, label string) (int, error) {
@@ -1038,15 +868,6 @@ func parseInt(value, label string) (int, error) {
 func validArraySize(size int) bool {
 	for _, valid := range ValidArraySizes {
 		if size == valid {
-			return true
-		}
-	}
-	return false
-}
-
-func validString(value string, validValues ...string) bool {
-	for _, valid := range validValues {
-		if value == valid {
 			return true
 		}
 	}
@@ -1078,107 +899,21 @@ func maxInt(a, b int) int {
 func (m *Module) Start() {}
 func (m *Module) Stop()  {}
 
+func (m *Module) DesignState() design.ModuleDesignState {
+	return design.ModuleDesignState{ADCResolution: m.state.ADCResolution, DACResolution: m.state.DACResolution}
+}
+
 func (m *Module) runISPPSimulation() {
-	mat := physics.DefaultHZO()
-	solver := physics.NewLKSolver()
-	solver.ConfigureFromMaterial(mat)
-
-	ctrl := physics.NewWriteController(solver, mat)
-
-	numLevels := m.state.QuantLevels
-	if numLevels <= 0 {
-		numLevels = DefaultQuantLevels
-		m.state.QuantLevels = numLevels
-	}
-	m.state.ISPPAttempts = make([]int, numLevels)
-	m.state.ISPPConverged = make([]bool, numLevels)
-
-	successCount := 0
-	totalAttempts := 0
-	for level := 0; level < numLevels; level++ {
-		targetG := mat.Gmin + (mat.Gmax-mat.Gmin)*float64(level)/float64(numLevels-1)
-		attempts, success, _ := ctrl.WriteTarget(targetG)
-		m.state.ISPPAttempts[level] = attempts
-		m.state.ISPPConverged[level] = success
-		if success {
-			successCount++
-		}
-		totalAttempts += attempts
-	}
-
-	m.state.ISPPTotalAttempts = totalAttempts
-	m.state.ISPPConvergedCount = successCount
-	if totalAttempts > 0 {
-		m.state.ISPPAvgAttempts = float64(totalAttempts) / float64(numLevels)
-	}
-	m.state.ISPPExecuted = true
-
+	m.state = newISPPSimulationWorkflow(m.state).compute()
 	m.computePVTCorners()
 }
 
 func (m *Module) computePVTCorners() {
-	mat := physics.DefaultHZO()
-	vref := m.state.SupplyVoltage
-	bits := m.state.ADCResolution
-	lsb := vref / float64(int(1)<<bits)
-
-	enobForINL := func(inlLSB float64) float64 {
-		return math.Max(float64(bits)-math.Log2(inlLSB+1.0), 1.0)
-	}
-	m.state.ENOBtt = enobForINL(0.5)
-	m.state.ENOBff = enobForINL(0.5 * 0.80)
-	m.state.ENOBss = enobForINL(0.5 * 1.25)
-	m.state.ADCNoiseLSB = math.Sqrt(lsb * lsb / 12.0)
-	m.state.SNRdB = 6.02*float64(bits) + 1.76
-	m.state.PVTTemperatureSweep = pvtTemperatureSweepStatus(mat)
-	m.state.PVTProcessYield, m.state.PVTPassSamples, m.state.PVTSamples = pvtProcessYield(mat)
-	m.state.PVTENOBNoiseCeiling, m.state.PVTENOBCeilingBits = pvtNoiseLimitedENOBCeiling(m.state.TIAGain)
-
-	_ = lsb
-	_ = vref
+	m.state = newPVTCornersWorkflow(m.state).compute()
 }
 
 func (m *Module) computeReferenceSpecs() {
-	quantLevels := m.state.QuantLevels
-	if quantLevels <= 0 {
-		quantLevels = DefaultQuantLevels
-	}
-	rows := maxInt(1, m.state.Rows)
-	cols := maxInt(1, m.state.Cols)
-	cells := rows * cols
-	dacCodes := 1 << m.state.DACResolution
-	adcCodes := 1 << m.state.ADCResolution
-
-	const (
-		arrayPowerMW       = 0.1
-		controlPowerMW     = 0.5
-		dacPowerPerColMW   = 0.1
-		tiaPowerPerRowMW   = 0.05
-		adcPowerPerRowMW   = 0.5
-		referenceLatencyNS = 76.0
-	)
-	totalPowerMW := arrayPowerMW + controlPowerMW +
-		dacPowerPerColMW*float64(cols) +
-		tiaPowerPerRowMW*float64(rows) +
-		adcPowerPerRowMW*float64(rows)
-	throughputGOPS := float64(cells) / referenceLatencyNS
-	efficiencyGOPSW := 0.0
-	if totalPowerMW > 0 {
-		efficiencyGOPSW = throughputGOPS * 1000 / totalPowerMW
-	}
-
-	m.state.SpecCells = cells
-	m.state.SpecBitsPerCell = math.Log2(float64(quantLevels))
-	m.state.SpecDACCount = cols
-	m.state.SpecTIACount = rows
-	m.state.SpecADCCount = rows
-	m.state.SpecDACCodes = dacCodes
-	m.state.SpecADCCodes = adcCodes
-	m.state.SpecTotalPowerMW = totalPowerMW
-	m.state.SpecLatencyNS = referenceLatencyNS
-	m.state.SpecThroughputGOPS = throughputGOPS
-	m.state.SpecEfficiencyGOPSW = efficiencyGOPSW
-	m.state.SpecCompliance = referenceSpecCompliance(dacCodes, adcCodes, quantLevels)
+	m.state = newReferenceSpecWorkflow(m.state).compute()
 }
 
 func referenceSpecCompliance(dacCodes, adcCodes, quantLevels int) string {
@@ -1192,30 +927,7 @@ func referenceSpecCompliance(dacCodes, adcCodes, quantLevels int) string {
 }
 
 func (m *Module) computeReferenceTiming() {
-	const (
-		writeTotalNS   = 203
-		readTotalNS    = 76
-		computeTotalNS = 76
-	)
-	m.state.TimingWriteTotalNS = writeTotalNS
-	m.state.TimingReadTotalNS = readTotalNS
-	m.state.TimingComputeTotalNS = computeTotalNS
-	m.state.TimingWaveforms = referenceTimingWaveforms()
-
-	switch timingOperationValue(m.state) {
-	case "WRITE":
-		m.state.TimingActiveOp = "WRITE"
-		m.state.TimingActiveTotalNS = writeTotalNS
-		m.state.TimingActivePhases = "DAC 10 / Pump 88 / Pulse 100 / Array 5 ns"
-	case "COMPUTE":
-		m.state.TimingActiveOp = "COMPUTE"
-		m.state.TimingActiveTotalNS = computeTotalNS
-		m.state.TimingActivePhases = "DAC 10 / Array 5 / TIA+ADC 61 ns"
-	default:
-		m.state.TimingActiveOp = "READ"
-		m.state.TimingActiveTotalNS = readTotalNS
-		m.state.TimingActivePhases = "DAC 10 / Array 5 / TIA 11 / ADC 50 ns"
-	}
+	m.state = newReferenceTimingWorkflow(m.state).compute()
 }
 
 func referenceTimingWaveforms() []ReferenceTimingWaveform {

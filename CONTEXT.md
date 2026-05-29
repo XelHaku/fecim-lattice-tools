@@ -68,6 +68,14 @@ _Avoid_: automatic persistence, hidden cache write, measured calibration certifi
 The rule that FeCIM results are model estimates for education and design exploration, not validated device or silicon measurements.
 _Avoid_: hardware proof, measured advantage, demonstrated device result
 
+**ISPP Convergence Policy Module**:
+A UI-neutral module that owns shared ISPP write-verify convergence decisions such as bounds recovery, overshoot handling, guard acceptance, and convergence receipts. It is consumed by waveform-based Module 1 adapters and L-K physics adapters so bug fixes stay local.
+_Avoid_: duplicated writer heuristics, GUI-specific convergence logic, hidden controller tweak
+
+**ISPP Convergence Receipt**:
+A structured result from the ISPP Convergence Policy Module that explains what convergence rule was applied, what bounds or status changed, and whether a full-range reset was used. It supports debugging and regression tests without exposing every writer implementation detail.
+_Avoid_: ad-hoc log-only decision, unexplained bounds mutation, silent convergence shortcut
+
 ## Example dialogue
 
 Developer: "Can we delete this Legacy Fyne Surface panel now?"

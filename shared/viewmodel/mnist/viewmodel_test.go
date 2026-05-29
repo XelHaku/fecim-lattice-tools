@@ -11,6 +11,17 @@ func TestModuleImplementsModulePort(t *testing.T) {
 		t.Fatal("New() returned nil")
 	}
 }
+func TestApplyActionSweepLevelsRejectsInvalidIntegerPayload(t *testing.T) {
+	m := New()
+	err := m.ApplyAction(viewmodel.Action{ID: "sweep_levels", Payload: map[string]string{"levels": "many"}})
+	if err == nil {
+		t.Fatal("expected invalid levels payload to fail")
+	}
+	if m.state.NumLevels != 30 {
+		t.Fatalf("NumLevels changed after invalid payload: %d", m.state.NumLevels)
+	}
+}
+
 func TestSnapshotContainsAccuracy(t *testing.T) {
 	s := New().Snapshot()
 	found := false

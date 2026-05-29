@@ -90,6 +90,23 @@ func TestApplyActionResize(t *testing.T) {
 	}
 }
 
+func TestApplyActionResizeRejectsInvalidIntegerPayload(t *testing.T) {
+	m := New(2, 2)
+	err := m.ApplyAction(viewmodel.Action{
+		ID: "resize", Kind: viewmodel.ActionCommand,
+		Payload: map[string]string{"rows": "wide", "cols": "12"},
+	})
+	if err == nil {
+		t.Fatal("expected invalid rows payload to fail")
+	}
+	s := m.Snapshot()
+	for _, metric := range s.Metrics {
+		if metric.ID == "rows" && metric.Value != "2" {
+			t.Fatalf("rows changed after invalid resize: %q", metric.Value)
+		}
+	}
+}
+
 func TestApplyActionRunMVM(t *testing.T) {
 	m := New(4, 4)
 	err := m.ApplyAction(viewmodel.Action{ID: "run_mvm", Kind: viewmodel.ActionCommand})

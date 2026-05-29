@@ -69,6 +69,66 @@ func SaveJSON(path string, data interface{}) error {
 	return nil
 }
 
+// TextArtifactResult describes whether text export content was buffered or written.
+type TextArtifactResult struct {
+	StatusVerb string
+	Path       string
+	WroteFile  bool
+}
+
+// JSONArtifactResult describes whether JSON export content was buffered or written.
+type JSONArtifactResult struct {
+	StatusVerb string
+	Path       string
+	WroteFile  bool
+	Content    string
+	Bytes      int
+}
+
+// BufferOrWriteJSONArtifact marshals data as indented JSON and buffers or writes it.
+func BufferOrWriteJSONArtifact(path string, data interface{}) (JSONArtifactResult, error) {
+	jsonBytes, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return JSONArtifactResult{}, err
+	}
+	content := string(jsonBytes)
+	textArtifact, err := BufferOrWriteTextArtifact(path, content)
+	if err != nil {
+		return JSONArtifactResult{}, err
+	}
+	return JSONArtifactResult{
+		StatusVerb: textArtifact.StatusVerb,
+		Path:       textArtifact.Path,
+		WroteFile:  textArtifact.WroteFile,
+		Content:    content,
+		Bytes:      len(jsonBytes),
+	}, nil
+}
+
+// BufferOrWriteTextArtifact buffers text content when path is empty, or writes it to a validated path.
+func BufferOrWriteTextArtifact(path, content string) (TextArtifactResult, error) {
+	result := TextArtifactResult{StatusVerb: "buffered", Path: "artifact buffer"}
+	trimmed := strings.TrimSpace(path)
+	if trimmed == "" {
+		return result, nil
+	}
+	cleanPath, err := ValidatePath(trimmed)
+	if err != nil {
+		return TextArtifactResult{}, err
+	}
+	dir := filepath.Dir(cleanPath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return TextArtifactResult{}, fmt.Errorf("failed to create directory %s: %w", dir, err)
+	}
+	if err := os.WriteFile(cleanPath, []byte(content), 0644); err != nil {
+		return TextArtifactResult{}, fmt.Errorf("failed to write file %s: %w", cleanPath, err)
+	}
+	result.StatusVerb = "wrote"
+	result.Path = cleanPath
+	result.WroteFile = true
+	return result, nil
+}
+
 // LoadJSON reads a JSON file and unmarshals it into the target.
 // Returns an error if the path is empty or if reading/unmarshaling fails.
 func LoadJSON(path string, target interface{}) error {

@@ -5,6 +5,7 @@ import (
 
 	"fecim-lattice-tools/shared/physics"
 	"fecim-lattice-tools/shared/viewmodel"
+	"fecim-lattice-tools/shared/viewmodel/design"
 )
 
 type Module struct {
@@ -48,12 +49,13 @@ func (m *Module) Snapshot() viewmodel.ModuleSnapshot { return buildSnapshot(m.st
 func (m *Module) ApplyAction(action viewmodel.Action) error {
 	switch action.ID {
 	case "resize":
-		rows, cols := m.state.Rows, m.state.Cols
-		if rS, ok := action.Payload["rows"]; ok {
-			fmt.Sscanf(rS, "%d", &rows)
+		rows, err := viewmodel.OptionalPayloadInt(action.Payload, "rows", m.state.Rows)
+		if err != nil {
+			return fmt.Errorf("crossbar: %w", err)
 		}
-		if cS, ok := action.Payload["cols"]; ok {
-			fmt.Sscanf(cS, "%d", &cols)
+		cols, err := viewmodel.OptionalPayloadInt(action.Payload, "cols", m.state.Cols)
+		if err != nil {
+			return fmt.Errorf("crossbar: %w", err)
 		}
 		if rows > 0 && cols > 0 && rows <= 128 && cols <= 128 {
 			m.reallocate(rows, cols)
@@ -72,14 +74,12 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 }
 
 func (m *Module) runMVM() {
-	for i := range m.state.Rows {
-		var sum float64
-		for j := range m.state.Cols {
-			sum += m.state.Conductances[i][j] * m.state.InputVector[j]
-		}
-		m.state.OutputVector[i] = sum
-	}
+	m.state = newMVMWorkflow(m.state).compute()
 }
 
 func (m *Module) Start() {}
 func (m *Module) Stop()  {}
+
+func (m *Module) DesignState() design.ModuleDesignState {
+	return design.ModuleDesignState{ArrayRows: m.state.Rows, ArrayCols: m.state.Cols}
+}

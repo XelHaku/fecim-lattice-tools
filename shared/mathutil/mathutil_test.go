@@ -70,6 +70,60 @@ func TestClampPositive(t *testing.T) {
 	}
 }
 
+func TestLerpByIndex(t *testing.T) {
+	tests := []struct {
+		name     string
+		index    int
+		count    int
+		min, max float64
+		want     float64
+	}{
+		{name: "first", index: 0, count: 4, min: 0.2, max: 0.5, want: 0.2},
+		{name: "middle", index: 1, count: 4, min: 0.2, max: 0.5, want: 0.3},
+		{name: "last", index: 3, count: 4, min: 0.2, max: 0.5, want: 0.5},
+		{name: "single", index: 0, count: 1, min: 0.2, max: 0.5, want: 0.2},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := LerpByIndex(tt.index, tt.count, tt.min, tt.max)
+			if got != tt.want {
+				t.Fatalf("LerpByIndex = %.12f, want %.12f", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDot(t *testing.T) {
+	got, err := Dot([]float64{1, 2, 3}, []float64{0.5, 1, 2})
+	if err != nil {
+		t.Fatalf("Dot returned error: %v", err)
+	}
+	if got != 8.5 {
+		t.Fatalf("Dot = %.3f, want 8.5", got)
+	}
+
+	if _, err := Dot([]float64{1}, []float64{1, 2}); err == nil {
+		t.Fatal("expected length mismatch error")
+	}
+}
+
+func TestMatrixVectorMultiply(t *testing.T) {
+	got, err := MatrixVectorMultiply([][]float64{{1, 2, 3}, {4, 5, 6}}, []float64{0.5, 1, 2})
+	if err != nil {
+		t.Fatalf("MatrixVectorMultiply returned error: %v", err)
+	}
+	want := []float64{8.5, 19}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("output[%d] = %.3f, want %.3f", i, got[i], want[i])
+		}
+	}
+
+	if _, err := MatrixVectorMultiply([][]float64{{1}, {1, 2}}, []float64{1}); err == nil {
+		t.Fatal("expected ragged matrix error")
+	}
+}
+
 func TestAbsInt(t *testing.T) {
 	tests := []struct {
 		x, want int

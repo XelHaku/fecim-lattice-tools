@@ -4,6 +4,7 @@ import (
 	"math"
 
 	"fecim-lattice-tools/shared/logging"
+	"fecim-lattice-tools/shared/physics/isppconv"
 )
 
 var isppLog *logging.Logger
@@ -441,7 +442,9 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 			break
 		}
 
-		if direction*error < 0 {
+		needMore := direction*error < 0
+		needLess := !needMore
+		if needMore {
 			c.VMin = math.Abs(vPulse)
 			if crossingInitial && i == 0 && !crossingAfter && c.Material != nil && c.Material.Ps != 0 {
 				ratio := math.Abs(targetP / c.Material.Ps)
@@ -549,6 +552,27 @@ func (c *WriteController) writeTarget(targetG float64, reset bool) (attempts int
 					Overshoots: overshoots,
 				})
 			}
+		}
+
+		minWidth := c.MinVoltage
+		if minWidth <= 0 {
+			minWidth = c.MaxVoltage * 0.02
+		}
+		recovery := isppconv.RecoverCollapsedBounds(isppconv.Bounds{
+			Min:    c.VMin,
+			Max:    c.VMax,
+			MinSet: true,
+			MaxSet: true,
+		}, isppconv.RecoveryInput{
+			NeedMore:         needMore,
+			NeedLess:         needLess,
+			CurrentMagnitude: math.Abs(vPulse),
+			MaxMagnitude:     c.MaxVoltage,
+			MinimumWidth:     minWidth,
+		})
+		if recovery.Changed {
+			c.VMin = recovery.Bounds.Min
+			c.VMax = recovery.Bounds.Max
 		}
 	}
 

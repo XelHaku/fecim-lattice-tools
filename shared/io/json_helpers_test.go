@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -445,6 +446,77 @@ func TestRoundTrip(t *testing.T) {
 			t.Errorf("Data mismatch: got %+v, want %+v", loaded, original)
 		}
 	})
+}
+
+func TestBufferOrWriteJSONArtifactBuffersWhenPathMissing(t *testing.T) {
+	artifact, err := BufferOrWriteJSONArtifact("", map[string]int{"cells": 64})
+	if err != nil {
+		t.Fatalf("BufferOrWriteJSONArtifact returned error: %v", err)
+	}
+	if artifact.StatusVerb != "buffered" || artifact.Path != "artifact buffer" || artifact.WroteFile {
+		t.Fatalf("artifact = %+v, want buffered artifact", artifact)
+	}
+	if !strings.Contains(artifact.Content, "\"cells\": 64") || artifact.Bytes != len(artifact.Content) {
+		t.Fatalf("artifact content/bytes = %d %q", artifact.Bytes, artifact.Content)
+	}
+}
+
+func TestBufferOrWriteJSONArtifactWritesValidatedPath(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "nested", "artifact.json")
+	artifact, err := BufferOrWriteJSONArtifact(path, map[string]int{"cells": 64})
+	if err != nil {
+		t.Fatalf("BufferOrWriteJSONArtifact returned error: %v", err)
+	}
+	if artifact.StatusVerb != "wrote" || artifact.Path != filepath.Clean(path) || !artifact.WroteFile {
+		t.Fatalf("artifact = %+v, want wrote clean path", artifact)
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read artifact: %v", err)
+	}
+	if string(raw) != artifact.Content {
+		t.Fatalf("file content differs from artifact content")
+	}
+}
+
+func TestBufferOrWriteJSONArtifactRejectsTraversalPath(t *testing.T) {
+	if _, err := BufferOrWriteJSONArtifact("../escape.json", map[string]int{"cells": 64}); err == nil {
+		t.Fatal("expected traversal path to fail")
+	}
+}
+
+func TestBufferOrWriteTextArtifactBuffersWhenPathMissing(t *testing.T) {
+	artifact, err := BufferOrWriteTextArtifact("", "hello")
+	if err != nil {
+		t.Fatalf("BufferOrWriteTextArtifact returned error: %v", err)
+	}
+	if artifact.StatusVerb != "buffered" || artifact.Path != "artifact buffer" || artifact.WroteFile {
+		t.Fatalf("artifact = %+v, want buffered artifact", artifact)
+	}
+}
+
+func TestBufferOrWriteTextArtifactWritesValidatedPath(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "nested", "artifact.txt")
+	artifact, err := BufferOrWriteTextArtifact(path, "hello")
+	if err != nil {
+		t.Fatalf("BufferOrWriteTextArtifact returned error: %v", err)
+	}
+	if artifact.StatusVerb != "wrote" || artifact.Path != filepath.Clean(path) || !artifact.WroteFile {
+		t.Fatalf("artifact = %+v, want wrote clean path", artifact)
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read artifact: %v", err)
+	}
+	if string(raw) != "hello" {
+		t.Fatalf("artifact contents = %q", raw)
+	}
+}
+
+func TestBufferOrWriteTextArtifactRejectsTraversalPath(t *testing.T) {
+	if _, err := BufferOrWriteTextArtifact("../escape.txt", "hello"); err == nil {
+		t.Fatal("expected traversal path to fail")
+	}
 }
 
 func TestValidatePath(t *testing.T) {

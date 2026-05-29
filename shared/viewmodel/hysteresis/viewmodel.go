@@ -3,17 +3,15 @@ package hysteresis
 import (
 	"bytes"
 	"encoding/csv"
-	"encoding/json"
 	"fmt"
 	"math"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 
 	sharedio "fecim-lattice-tools/shared/io"
 	"fecim-lattice-tools/shared/physics"
 	"fecim-lattice-tools/shared/viewmodel"
+	"fecim-lattice-tools/shared/viewmodel/design"
 )
 
 type Module struct {
@@ -70,12 +68,16 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 		m.state.IsRunning = !m.state.IsRunning
 		return nil
 	case EventSetFieldRange:
-		if minS, ok := action.Payload["min"]; ok {
-			fmt.Sscanf(minS, "%f", &m.state.FieldRange.MinField)
+		minField, err := viewmodel.OptionalPayloadFloat(action.Payload, "min", m.state.FieldRange.MinField)
+		if err != nil {
+			return fmt.Errorf("hysteresis: %w", err)
 		}
-		if maxS, ok := action.Payload["max"]; ok {
-			fmt.Sscanf(maxS, "%f", &m.state.FieldRange.MaxField)
+		maxField, err := viewmodel.OptionalPayloadFloat(action.Payload, "max", m.state.FieldRange.MaxField)
+		if err != nil {
+			return fmt.Errorf("hysteresis: %w", err)
 		}
+		m.state.FieldRange.MinField = minField
+		m.state.FieldRange.MaxField = maxField
 		m.computeLoopForCurrentMaterial()
 		return nil
 	case EventSetWaveform:
@@ -112,6 +114,10 @@ func (m *Module) ApplyAction(action viewmodel.Action) error {
 func (m *Module) Start() {}
 func (m *Module) Stop()  {}
 
+func (m *Module) DesignState() design.ModuleDesignState {
+	return design.ModuleDesignState{Material: m.state.SelectedMaterial}
+}
+
 func defaultLevelCalibrationForMaterial(mat *physics.HZOMaterial) LevelCalibrationState {
 	levelCount := physics.DefaultLevels
 	targetRange := 0.90
@@ -146,79 +152,31 @@ func levelCalibrationForMaterialChange(mat *physics.HZOMaterial, previous LevelC
 }
 
 func (m *Module) runLevelCalibration() error {
-	calibration := m.state.LevelCalibration
-	result, err := physics.CalibrateLevelsLK(physics.LevelCalibrationInput{
-		Material:        m.currentMaterial(),
-		LevelCount:      calibration.LevelCount,
-		TargetRangeFrac: calibration.TargetRangeFrac,
-		TemperatureK:    calibration.TemperatureK,
-	})
-	if err != nil {
-		m.state.LevelCalibration.Error = err.Error()
-		return nil
-	}
-	m.state.LevelCalibration.Result = result
-	m.state.LevelCalibration.HasResult = true
-	m.state.LevelCalibration.Status = LevelCalibrationFresh
-	m.state.LevelCalibration.Error = ""
-	return nil
+	workflow := newLevelCalibrationWorkflow(m.state.LevelCalibration, m.currentMaterial())
+	state, err := workflow.run()
+	m.state.LevelCalibration = state
+	return err
 }
 
 func (m *Module) setLevelCalibrationLevelCount(raw string) error {
-	levelCount, err := strconv.Atoi(strings.TrimSpace(raw))
-	if err != nil {
-		return fmt.Errorf("hysteresis: invalid level calibration level count %q", raw)
-	}
-	if levelCount < 2 || levelCount > 64 {
-		return fmt.Errorf("hysteresis: level calibration level count %d outside [2,64]", levelCount)
-	}
-	if m.state.LevelCalibration.LevelCount == levelCount {
-		return nil
-	}
-	m.state.LevelCalibration.LevelCount = levelCount
-	m.markLevelCalibrationInputsChanged()
-	return nil
+	workflow := newLevelCalibrationWorkflow(m.state.LevelCalibration, m.currentMaterial())
+	state, err := workflow.setLevelCount(raw)
+	m.state.LevelCalibration = state
+	return err
 }
 
 func (m *Module) setLevelCalibrationTargetRange(raw string) error {
-	targetRange, err := strconv.ParseFloat(strings.TrimSpace(raw), 64)
-	if err != nil {
-		return fmt.Errorf("hysteresis: invalid level calibration target range %q", raw)
-	}
-	if targetRange < 0.5 || targetRange > 1.0 || math.IsNaN(targetRange) || math.IsInf(targetRange, 0) {
-		return fmt.Errorf("hysteresis: level calibration target range %.3f outside [0.5,1.0]", targetRange)
-	}
-	if math.Abs(m.state.LevelCalibration.TargetRangeFrac-targetRange) < 1e-9 {
-		return nil
-	}
-	m.state.LevelCalibration.TargetRangeFrac = targetRange
-	m.markLevelCalibrationInputsChanged()
-	return nil
+	workflow := newLevelCalibrationWorkflow(m.state.LevelCalibration, m.currentMaterial())
+	state, err := workflow.setTargetRange(raw)
+	m.state.LevelCalibration = state
+	return err
 }
 
 func (m *Module) setLevelCalibrationTemperature(raw string) error {
-	temperatureK, err := strconv.ParseFloat(strings.TrimSpace(raw), 64)
-	if err != nil {
-		return fmt.Errorf("hysteresis: invalid level calibration temperature %q", raw)
-	}
-	if temperatureK < 200 || temperatureK > 700 || math.IsNaN(temperatureK) || math.IsInf(temperatureK, 0) {
-		return fmt.Errorf("hysteresis: level calibration temperature %.1f K outside [200,700]", temperatureK)
-	}
-	if math.Abs(m.state.LevelCalibration.TemperatureK-temperatureK) < 1e-9 {
-		return nil
-	}
-	m.state.LevelCalibration.TemperatureK = temperatureK
-	m.markLevelCalibrationInputsChanged()
-	return nil
-}
-
-func (m *Module) markLevelCalibrationInputsChanged() {
-	if m.state.LevelCalibration.HasResult {
-		m.state.LevelCalibration.Status = LevelCalibrationStale
-	} else {
-		m.state.LevelCalibration.Status = LevelCalibrationNotCalibrated
-	}
-	m.state.LevelCalibration.Error = ""
+	workflow := newLevelCalibrationWorkflow(m.state.LevelCalibration, m.currentMaterial())
+	state, err := workflow.setTemperature(raw)
+	m.state.LevelCalibration = state
+	return err
 }
 
 func (m *Module) exportLevelCalibrationJSON(path string) error {
@@ -229,22 +187,19 @@ func (m *Module) exportLevelCalibrationJSON(path string) error {
 	if calibration.Status != LevelCalibrationFresh {
 		return fmt.Errorf("hysteresis: rerun level calibration before export; current calibration is %s", calibration.Status)
 	}
-	content, err := buildLevelCalibrationJSON(calibration)
-	if err != nil {
-		return err
-	}
-	statusVerb, exportPath, err := bufferOrWriteTextArtifact(path, content)
+	payload := buildLevelCalibrationExportPayload(calibration)
+	artifact, err := sharedio.BufferOrWriteJSONArtifact(path, payload)
 	if err != nil {
 		return fmt.Errorf("hysteresis: export level calibration JSON: %w", err)
 	}
-	m.state.LevelCalibration.ExportStatus = fmt.Sprintf("%s Level Calibration JSON", statusVerb)
-	m.state.LevelCalibration.ExportPath = exportPath
-	m.state.LevelCalibration.ExportBytes = len(content)
-	m.state.LevelCalibration.ExportContent = content
+	m.state.LevelCalibration.ExportStatus = fmt.Sprintf("%s Level Calibration JSON", artifact.StatusVerb)
+	m.state.LevelCalibration.ExportPath = artifact.Path
+	m.state.LevelCalibration.ExportBytes = artifact.Bytes
+	m.state.LevelCalibration.ExportContent = artifact.Content
 	return nil
 }
 
-func buildLevelCalibrationJSON(calibration LevelCalibrationState) (string, error) {
+func buildLevelCalibrationExportPayload(calibration LevelCalibrationState) levelCalibrationExportPayload {
 	result := calibration.Result
 	levels := make([]levelCalibrationExportLevel, len(result.AscendingFields))
 	maxLevel := len(result.AscendingFields) - 1
@@ -267,7 +222,7 @@ func buildLevelCalibrationJSON(calibration LevelCalibrationState) (string, error
 	if result.AscendingMonotonic && result.DescendingMonotonic {
 		monotonicity = "ascending/descending monotonic"
 	}
-	payload := levelCalibrationExportPayload{
+	return levelCalibrationExportPayload{
 		SchemaVersion:  1,
 		ArtifactType:   "level_calibration",
 		BoundaryNotice: "SIMULATION OUTPUT — level mapping is not measured device calibration.",
@@ -294,11 +249,6 @@ func buildLevelCalibrationJSON(calibration LevelCalibrationState) (string, error
 		},
 		Levels: levels,
 	}
-	raw, err := json.MarshalIndent(payload, "", "  ")
-	if err != nil {
-		return "", fmt.Errorf("hysteresis: marshal level calibration JSON: %w", err)
-	}
-	return string(raw) + "\n", nil
 }
 
 type levelCalibrationExportPayload struct {
@@ -361,22 +311,13 @@ func (m *Module) exportCSV(path string) error {
 		return err
 	}
 
-	exportPath := "artifact buffer"
-	statusVerb := "buffered"
-	if trimmed := strings.TrimSpace(path); trimmed != "" {
-		cleanPath, err := sharedio.ValidatePath(trimmed)
-		if err != nil {
-			return fmt.Errorf("hysteresis: invalid CSV export path: %w", err)
-		}
-		if err := writeTextArtifact(cleanPath, content); err != nil {
-			return fmt.Errorf("hysteresis: write CSV export: %w", err)
-		}
-		exportPath = cleanPath
-		statusVerb = "wrote"
+	artifact, err := sharedio.BufferOrWriteTextArtifact(path, content)
+	if err != nil {
+		return fmt.Errorf("hysteresis: CSV export: %w", err)
 	}
 
-	m.state.CSVExportStatus = fmt.Sprintf("%s %d points", statusVerb, len(m.state.LoopPoints))
-	m.state.CSVExportPath = exportPath
+	m.state.CSVExportStatus = fmt.Sprintf("%s %d points", artifact.StatusVerb, len(m.state.LoopPoints))
+	m.state.CSVExportPath = artifact.Path
 	m.state.CSVExportBytes = len(content)
 	m.state.CSVExportContent = content
 	return nil
@@ -404,29 +345,12 @@ func buildLoopCSV(points []LoopPoint) (string, error) {
 	return buf.String(), nil
 }
 
-func writeTextArtifact(path, content string) error {
-	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return err
-	}
-	return os.WriteFile(path, []byte(content), 0644)
-}
-
 func bufferOrWriteTextArtifact(path, content string) (statusVerb, exportPath string, err error) {
-	statusVerb = "buffered"
-	exportPath = "artifact buffer"
-	if trimmed := strings.TrimSpace(path); trimmed != "" {
-		cleanPath, err := sharedio.ValidatePath(trimmed)
-		if err != nil {
-			return "", "", err
-		}
-		if err := writeTextArtifact(cleanPath, content); err != nil {
-			return "", "", err
-		}
-		statusVerb = "wrote"
-		exportPath = cleanPath
+	artifact, err := sharedio.BufferOrWriteTextArtifact(path, content)
+	if err != nil {
+		return "", "", err
 	}
-	return statusVerb, exportPath, nil
+	return artifact.StatusVerb, artifact.Path, nil
 }
 
 func (m *Module) runPUND() error {
@@ -619,34 +543,33 @@ func (m *Module) exportFORCMetadataJSON(payload map[string]string) error {
 			return err
 		}
 	}
-	metadata := forcMetadata{
-		Material:    m.state.SelectedMaterial,
-		Waveform:    m.state.Waveform,
-		FieldRange:  m.state.FieldRange,
-		Curves:      m.state.FORC.Curves,
-		DensityRows: m.state.FORC.DensityRows,
-		DensityCols: m.state.FORC.DensityCols,
-		PeakDensity: m.state.FORC.PeakDensity,
-		PeakEa_Vm:   m.state.FORC.PeakEa_Vm,
-		PeakEb_Vm:   m.state.FORC.PeakEb_Vm,
-		MinDensity:  m.state.FORC.MinDensity,
-		MaxDensity:  m.state.FORC.MaxDensity,
-		Boundary:    "SIMULATION OUTPUT — Not measured device data.",
-	}
-	raw, err := json.MarshalIndent(metadata, "", "  ")
-	if err != nil {
-		return fmt.Errorf("hysteresis: marshal FORC metadata: %w", err)
-	}
-	content := string(raw) + "\n"
-	statusVerb, exportPath, err := bufferOrWriteTextArtifact(payload["path"], content)
+	metadata := buildFORCMetadataExportPayload(m.state)
+	artifact, err := sharedio.BufferOrWriteJSONArtifact(payload["path"], metadata)
 	if err != nil {
 		return fmt.Errorf("hysteresis: export FORC metadata JSON: %w", err)
 	}
-	m.state.FORC.MetaExportStatus = fmt.Sprintf("%s FORC metadata JSON", statusVerb)
-	m.state.FORC.MetaExportPath = exportPath
-	m.state.FORC.MetaExportBytes = len(content)
-	m.state.FORC.MetaExportContent = content
+	m.state.FORC.MetaExportStatus = fmt.Sprintf("%s FORC metadata JSON", artifact.StatusVerb)
+	m.state.FORC.MetaExportPath = artifact.Path
+	m.state.FORC.MetaExportBytes = artifact.Bytes
+	m.state.FORC.MetaExportContent = artifact.Content
 	return nil
+}
+
+func buildFORCMetadataExportPayload(state HysteresisState) forcMetadata {
+	return forcMetadata{
+		Material:    state.SelectedMaterial,
+		Waveform:    state.Waveform,
+		FieldRange:  state.FieldRange,
+		Curves:      state.FORC.Curves,
+		DensityRows: state.FORC.DensityRows,
+		DensityCols: state.FORC.DensityCols,
+		PeakDensity: state.FORC.PeakDensity,
+		PeakEa_Vm:   state.FORC.PeakEa_Vm,
+		PeakEb_Vm:   state.FORC.PeakEb_Vm,
+		MinDensity:  state.FORC.MinDensity,
+		MaxDensity:  state.FORC.MaxDensity,
+		Boundary:    "SIMULATION OUTPUT — Not measured device data.",
+	}
 }
 
 type forcMetadata struct {

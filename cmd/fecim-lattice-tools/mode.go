@@ -21,12 +21,7 @@ import (
 )
 
 func runMode(mode string, engine string) error {
-	switch mode {
-	case "hysteresis":
-		return runHysteresisMode(engine)
-	default:
-		return fmt.Errorf("unknown mode %q (expected: hysteresis)", mode)
-	}
+	return runHeadlessEngine(mode, HeadlessEngineOptions{Engine: engine})
 }
 
 func normalizeEngine(engine string) string {
