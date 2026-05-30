@@ -4,6 +4,8 @@ import (
 	"math"
 	"path/filepath"
 	"testing"
+
+	"fecim-lattice-tools/shared/testutil"
 )
 
 // TestCalibratePreisachToData_Park2015 loads the Park 2015 HZO digitized P-E
@@ -102,18 +104,18 @@ func TestCalibratePreisachToData_SyntheticRoundTrip(t *testing.T) {
 	t.Logf("Fit:   Ps=%.4f Ec=%.4e Delta=%.4e RMSE=%.6f", result.Ps, result.Ec, result.Delta, result.RMSE)
 
 	// Ps should be recovered exactly (it's the max |P| in the data).
-	if relErr(result.Ps, truePs) > 0.02 {
-		t.Errorf("Ps recovery: got %.6f, want ~%.6f (relErr=%.4f%%)", result.Ps, truePs, relErr(result.Ps, truePs)*100)
+	if testutil.RelErr(result.Ps, truePs) > 0.02 {
+		t.Errorf("Ps recovery: got %.6f, want ~%.6f (relErr=%.4f%%)", result.Ps, truePs, testutil.RelErr(result.Ps, truePs)*100)
 	}
 
 	// Ec should be close to the true value.
-	if relErr(result.Ec, trueEc) > 0.05 {
-		t.Errorf("Ec recovery: got %.4e, want ~%.4e (relErr=%.4f%%)", result.Ec, trueEc, relErr(result.Ec, trueEc)*100)
+	if testutil.RelErr(result.Ec, trueEc) > 0.05 {
+		t.Errorf("Ec recovery: got %.4e, want ~%.4e (relErr=%.4f%%)", result.Ec, trueEc, testutil.RelErr(result.Ec, trueEc)*100)
 	}
 
 	// Delta should be reasonably close.
-	if relErr(result.Delta, trueDelta) > 0.10 {
-		t.Errorf("Delta recovery: got %.4e, want ~%.4e (relErr=%.4f%%)", result.Delta, trueDelta, relErr(result.Delta, trueDelta)*100)
+	if testutil.RelErr(result.Delta, trueDelta) > 0.10 {
+		t.Errorf("Delta recovery: got %.4e, want ~%.4e (relErr=%.4f%%)", result.Delta, trueDelta, testutil.RelErr(result.Delta, trueDelta)*100)
 	}
 
 	// RMSE should be very small for a round-trip.
@@ -202,11 +204,4 @@ func TestPark2015PreisachEverettPreset(t *testing.T) {
 	if math.Abs(pAtPos-ev.Ps) > 0.02 {
 		t.Errorf("P(3MV/cm) = %.4f, expected ~Ps=%.4f", pAtPos, ev.Ps)
 	}
-}
-
-func relErr(got, want float64) float64 {
-	if want == 0 {
-		return math.Abs(got)
-	}
-	return math.Abs(got-want) / math.Abs(want)
 }

@@ -3,6 +3,7 @@ package io
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -198,4 +199,26 @@ func EnsureDir(path string) error {
 		return fmt.Errorf("failed to create directory %s: %w", path, err)
 	}
 	return nil
+}
+
+// FindRepoRoot walks up from the current working directory looking for go.mod.
+// It returns the absolute path of the repository root, or an error if not found.
+func FindRepoRoot() (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", fmt.Errorf("failed to get working directory: %w", err)
+	}
+
+	for {
+		goModPath := filepath.Join(dir, "go.mod")
+		if _, err := os.Stat(goModPath); err == nil {
+			return dir, nil
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return "", errors.New("could not find repository root (no go.mod found)")
+		}
+		dir = parent
+	}
 }

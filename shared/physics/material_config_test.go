@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"fecim-lattice-tools/shared/testutil"
 )
 
 func TestLoadMaterialConfig_HfO2(t *testing.T) {
@@ -74,12 +76,12 @@ func TestMaterialConfig_ToHZOMaterial(t *testing.T) {
 	}
 	// Pr converted from µC/cm² to C/m²: 15 µC/cm² = 0.15 C/m²
 	wantPr := cfg.RemnantPolarization * 1e-2
-	if abs64(mat.Pr-wantPr) > 1e-12 {
+	if testutil.AbsFloat64(mat.Pr-wantPr) > 1e-12 {
 		t.Errorf("Pr = %g, want %g", mat.Pr, wantPr)
 	}
 	// Ec converted from kV/cm to V/m: 1000 kV/cm = 1e8 V/m
 	wantEc := cfg.CoerciveField * 1e5
-	if abs64(mat.Ec-wantEc) > 1 {
+	if testutil.AbsFloat64(mat.Ec-wantEc) > 1 {
 		t.Errorf("Ec = %g, want %g", mat.Ec, wantEc)
 	}
 	if mat.NumLevels != 30 {
@@ -133,11 +135,4 @@ func findRepoRoot(t *testing.T) string {
 		}
 		dir = parent
 	}
-}
-
-func abs64(x float64) float64 {
-	if x < 0 {
-		return -x
-	}
-	return x
 }

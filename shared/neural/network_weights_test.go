@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"fecim-lattice-tools/shared/testutil"
 )
 
 // ===========================
@@ -226,13 +228,13 @@ func TestLoadWeights_WithScaleOffset(t *testing.T) {
 	actualFP := net.FPWeights1[0][0]
 
 	// Should match within floating-point precision
-	if abs(actualFP-expectedFP) > 1e-9 {
+	if testutil.AbsFloat64(actualFP-expectedFP) > 1e-9 {
 		t.Errorf("Weight reconstruction failed: expected %f, got %f (diff: %e)",
-			expectedFP, actualFP, abs(actualFP-expectedFP))
+			expectedFP, actualFP, testutil.AbsFloat64(actualFP-expectedFP))
 	}
 
 	// Verify reconstruction formula worked correctly
-	if abs(actualFP-reconstructedFP) > 1e-9 {
+	if testutil.AbsFloat64(actualFP-reconstructedFP) > 1e-9 {
 		t.Errorf("Reconstruction formula mismatch: expected %f, got %f",
 			reconstructedFP, actualFP)
 	}
@@ -847,12 +849,4 @@ func TestGetQuantWeights_MatchesRequantized(t *testing.T) {
 }
 
 // ===========================
-// Helper functions
-// ===========================
-
-func abs(x float64) float64 {
-	if x < 0 {
-		return -x
-	}
-	return x
-}
+// End of file

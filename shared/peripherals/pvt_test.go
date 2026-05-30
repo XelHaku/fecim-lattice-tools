@@ -1,6 +1,10 @@
 package peripherals
 
-import "testing"
+import (
+	"testing"
+
+	"fecim-lattice-tools/shared/testutil"
+)
 
 func TestEffectiveINLDNL_TemperatureAndCornerScaling(t *testing.T) {
 	inlFastCold, dnlFastCold := EffectiveINLDNL(0.5, 0.25, 250, CornerFast)
@@ -24,9 +28,9 @@ func TestAnalyzeProcessCorners_Order(t *testing.T) {
 		t.Fatal("expected all process-corner analyses to be populated")
 	}
 
-	fast := absFloat(corners.Fast.DAC.MaxINL)
-	typical := absFloat(corners.Typical.DAC.MaxINL)
-	slow := absFloat(corners.Slow.DAC.MaxINL)
+	fast := testutil.AbsFloat64(corners.Fast.DAC.MaxINL)
+	typical := testutil.AbsFloat64(corners.Typical.DAC.MaxINL)
+	slow := testutil.AbsFloat64(corners.Slow.DAC.MaxINL)
 	if !(fast <= typical && typical <= slow) {
 		t.Fatalf("expected |MaxINL| fast<=typical<=slow, got %.4f <= %.4f <= %.4f", fast, typical, slow)
 	}
@@ -39,7 +43,7 @@ func TestConvertWithCondition_NominalCompat(t *testing.T) {
 	for _, code := range []int{0, 7, 15, 31} {
 		vNominal := dac.ConvertWithNonlinearity(code)
 		vCondition := dac.ConvertWithCondition(code, 300, CornerTypical)
-		if absFloat(vNominal-vCondition) > 1e-12 {
+		if testutil.AbsFloat64(vNominal-vCondition) > 1e-12 {
 			t.Fatalf("DAC nominal mismatch at code %d: %.12f vs %.12f", code, vNominal, vCondition)
 		}
 	}
@@ -51,11 +55,4 @@ func TestConvertWithCondition_NominalCompat(t *testing.T) {
 			t.Fatalf("ADC nominal mismatch at vin=%.3f: %d vs %d", vin, lNominal, lCondition)
 		}
 	}
-}
-
-func absFloat(v float64) float64 {
-	if v < 0 {
-		return -v
-	}
-	return v
 }

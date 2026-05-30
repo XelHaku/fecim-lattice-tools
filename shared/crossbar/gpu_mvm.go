@@ -8,11 +8,11 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
-	"os"
 	"path/filepath"
 	"unsafe"
 
 	"fecim-lattice-tools/shared/compute"
+	"fecim-lattice-tools/shared/io"
 )
 
 // GPUAccelerator provides GPU-accelerated MVM operations for crossbar arrays.
@@ -60,7 +60,7 @@ func NewGPUAccelerator(maxRows, maxCols int) (*GPUAccelerator, error) {
 	}
 
 	// Find repository root for absolute shader path
-	repoRoot, err := findRepoRoot()
+	repoRoot, err := io.FindRepoRoot()
 	if err != nil {
 		return nil, fmt.Errorf("failed to find repository root: %w", err)
 	}
@@ -312,31 +312,6 @@ func (g *GPUAccelerator) Destroy() {
 		g.ctx.Destroy()
 		g.ctx = nil
 	}
-}
-
-// findRepoRoot walks up the directory tree to find the repository root (go.mod location).
-func findRepoRoot() (string, error) {
-	dir, err := os.Getwd()
-	if err != nil {
-		return "", fmt.Errorf("failed to get working directory: %w", err)
-	}
-
-	// Walk up directory tree looking for go.mod
-	for {
-		goModPath := filepath.Join(dir, "go.mod")
-		if _, err := os.Stat(goModPath); err == nil {
-			return dir, nil
-		}
-
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			// Reached root without finding go.mod
-			break
-		}
-		dir = parent
-	}
-
-	return "", fmt.Errorf("could not find repository root (no go.mod found)")
 }
 
 // encodeParams encodes CrossbarParams into a byte slice using std140 layout.

@@ -1,16 +1,10 @@
 package peripherals
 
 import (
-	"math"
 	"testing"
-)
 
-func relErr(got, want float64) float64 {
-	if want == 0 {
-		return math.Abs(got)
-	}
-	return math.Abs(got-want) / math.Abs(want)
-}
+	"fecim-lattice-tools/shared/testutil"
+)
 
 // TestDACEnergyPerConversion_Theoretical verifies E_DAC = C * V^2 * N.
 func TestDACEnergyPerConversion_Theoretical(t *testing.T) {
@@ -22,8 +16,8 @@ func TestDACEnergyPerConversion_Theoretical(t *testing.T) {
 	n := float64(dac.Levels())
 	want := cEff * v * v * n
 
-	if relErr(got, want) > 1e-15 {
-		t.Fatalf("DAC energy mismatch: got=%e J want=%e J rel_err=%e", got, want, relErr(got, want))
+	if testutil.RelErr(got, want) > 1e-15 {
+		t.Fatalf("DAC energy mismatch: got=%e J want=%e J rel_err=%e", got, want, testutil.RelErr(got, want))
 	}
 }
 
@@ -38,8 +32,8 @@ func TestCrossbarArrayStaticPowerSum(t *testing.T) {
 	}
 
 	want := (5e-6 + 10e-6 + 15e-6 + 20e-6) * vRead * vRead
-	if relErr(got, want) > 1e-15 {
-		t.Fatalf("crossbar static power mismatch: got=%e W want=%e W rel_err=%e", got, want, relErr(got, want))
+	if testutil.RelErr(got, want) > 1e-15 {
+		t.Fatalf("crossbar static power mismatch: got=%e W want=%e W rel_err=%e", got, want, testutil.RelErr(got, want))
 	}
 }
 
@@ -51,8 +45,8 @@ func TestTIAPowerConsumptionModel(t *testing.T) {
 	const efficiency = 0.1
 	want := 2 * kBT300 * tia.Bandwidth * tia.Gain / efficiency
 
-	if relErr(got, want) > 1e-15 {
-		t.Fatalf("TIA power mismatch: got=%e W want=%e W rel_err=%e", got, want, relErr(got, want))
+	if testutil.RelErr(got, want) > 1e-15 {
+		t.Fatalf("TIA power mismatch: got=%e W want=%e W rel_err=%e", got, want, testutil.RelErr(got, want))
 	}
 }
 
@@ -83,8 +77,8 @@ func TestTotalInferenceEnergyComponents(t *testing.T) {
 		sum += e
 	}
 
-	if relErr(total, sum) > 1e-15 {
-		t.Fatalf("total energy mismatch: total=%e J sum_components=%e J rel_err=%e", total, sum, relErr(total, sum))
+	if testutil.RelErr(total, sum) > 1e-15 {
+		t.Fatalf("total energy mismatch: total=%e J sum_components=%e J rel_err=%e", total, sum, testutil.RelErr(total, sum))
 	}
 	if total <= 0 {
 		t.Fatalf("total inference energy must be positive, got=%e J", total)
@@ -118,7 +112,7 @@ func TestInferenceEnergyLinearScaling(t *testing.T) {
 	wantRatio := float64(large) / float64(small)
 	gotRatio := eLarge / eSmall
 
-	if relErr(gotRatio, wantRatio) > 1e-12 {
+	if testutil.RelErr(gotRatio, wantRatio) > 1e-12 {
 		t.Fatalf("energy scaling mismatch: got_ratio=%f want_ratio=%f (small=%e J large=%e J)", gotRatio, wantRatio, eSmall, eLarge)
 	}
 }
