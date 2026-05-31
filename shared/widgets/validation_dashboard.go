@@ -26,7 +26,7 @@ type ClaimStatus = display.ClaimStatus
 type ValidationDashboard = display.ValidationDashboard
 
 // NewValidationDashboard builds the dashboard pre-populated with claims from
-// the CLAIMS-MATRIX (docs/4-research/validation/CLAIMS-MATRIX.md).
+// the CLAIMS-MATRIX (docs/4-research/validation/claims/scientific-claims-matrix.md).
 func NewValidationDashboard() *ValidationDashboard { return display.NewValidationDashboard() }
 
 func statusColor(s ClaimStatusValue) color.Color { return display.StatusColor(s) }

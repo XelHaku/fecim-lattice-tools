@@ -101,6 +101,6 @@ Minimum checks:
 ## References
 
 - `docs/2-learn/module6-eda/README.md`
-- `docs/4-research/validation/eda-trust-boundary.md`
+- `docs/4-research/validation/policies/eda-trust-boundary.md`
 - `module6-eda/pkg/export/`
 - `module6-eda/pkg/compiler/`

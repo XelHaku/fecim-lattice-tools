@@ -35,12 +35,12 @@ DOCS = [
     "docs/4-research/literature-review/hzo-hysteresis-validation-data.md",
     "docs/4-research/literature-review/world-class-gap-analysis.md",
     # Validation
-    "docs/4-research/validation/CLAIMS-MATRIX.md",
-    "docs/4-research/validation/confidence-policy.md",
-    "docs/4-research/validation/coverage-boundary.md",
-    "docs/4-research/validation/M1-M4-physics-contract.md",
-    "docs/4-research/validation/M4-M6-physics-depth-audit.md",
-    "docs/4-research/validation/RESEARCH_GRADE_TESTING_STANDARDS.md",
+    "docs/4-research/validation/claims/scientific-claims-matrix.md",
+    "docs/4-research/validation/policies/confidence-policy.md",
+    "docs/4-research/validation/policies/coverage-boundary.md",
+    "docs/4-research/validation/contracts/m1-m4-physics-contract.md",
+    "docs/4-research/validation/audits/m4-m6-physics-depth-audit.md",
+    "docs/4-research/validation/reviewer/research-grade-testing-standards.md",
     # Learning / ELI5
     "docs/2-learn/module1-hysteresis/eli5.md",
     "docs/2-learn/module2-crossbar/eli5.md",

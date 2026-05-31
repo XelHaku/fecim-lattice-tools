@@ -19,7 +19,7 @@ What is provided:
 
 If you need production quality, use Module 6 outputs only as scaffolding and re-run full foundry signoff characterization/verification flows.
 
-See: `docs/4-research/validation/eda-trust-boundary.md`
+See: `docs/4-research/validation/policies/eda-trust-boundary.md`
 
 ---
 

@@ -113,7 +113,7 @@ Test suite: `validation/literature/external_benchmarks_test.go`
 - **Exact match**: Simulator value must match the published value within floating-point tolerance (relative error < 1e-6). Used for coefficients taken directly from a paper.
 - **RMSE**: Root mean squared error against digitized experimental curves (used by existing `TestExperimentalDataValidation`).
 
-Full benchmark reference: `docs/4-research/validation/EXTERNAL-BENCHMARKS.md`
+Full benchmark reference: `docs/4-research/validation/external/external-benchmarks.md`
 
 ---
 

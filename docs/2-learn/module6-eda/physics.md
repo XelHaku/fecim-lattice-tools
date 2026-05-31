@@ -69,4 +69,4 @@ The same physics assumptions must be tracked consistently as we move from archit
 
 - `docs/2-learn/module6-eda/README.md`
 - `module6-eda/README.md`
-- `docs/4-research/validation/eda-trust-boundary.md`
+- `docs/4-research/validation/policies/eda-trust-boundary.md`

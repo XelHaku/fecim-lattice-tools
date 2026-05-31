@@ -43,7 +43,7 @@ type ValidationDashboard struct {
 }
 
 // NewValidationDashboard builds the dashboard pre-populated with claims from
-// the CLAIMS-MATRIX (docs/4-research/validation/CLAIMS-MATRIX.md).
+// the CLAIMS-MATRIX (docs/4-research/validation/claims/scientific-claims-matrix.md).
 func NewValidationDashboard() *ValidationDashboard {
 	vd := &ValidationDashboard{
 		Claims: defaultClaims(),
