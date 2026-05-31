@@ -38,11 +38,11 @@ func Run(options Options) error {
 		WithSize(spec.Width, spec.Height).
 		WithContinuousRender(false))
 
-	seed := widget.Hex(0x2F5D50)
+	seed := design.Primary
 	appTheme := uitheme.DefaultLight()
 	appTheme.Colors.Primary = seed
-	appTheme.Colors.PrimaryDark = widget.Hex(0x1F463C)
-	appTheme.Colors.PrimaryLight = widget.Hex(0x6F9C8D)
+	appTheme.Colors.PrimaryDark = design.PrimaryDark
+	appTheme.Colors.PrimaryLight = design.PrimaryLight
 	materialTheme := material3.New(seed)
 
 	app := uiapp.New(
@@ -140,11 +140,11 @@ func CaptureFrameImage(active viewmodel.ModuleID, w, h int) (image.Image, error)
 	}
 
 	model := NewAppModel(active)
-	seed := widget.Hex(0x2F5D50)
+	seed := design.Primary
 	appTheme := uitheme.DefaultLight()
 	appTheme.Colors.Primary = seed
-	appTheme.Colors.PrimaryDark = widget.Hex(0x1F463C)
-	appTheme.Colors.PrimaryLight = widget.Hex(0x6F9C8D)
+	appTheme.Colors.PrimaryDark = design.PrimaryDark
+	appTheme.Colors.PrimaryLight = design.PrimaryLight
 	materialTheme := material3.New(seed)
 
 	app := uiapp.New(uiapp.WithTheme(appTheme))
