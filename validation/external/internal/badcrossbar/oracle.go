@@ -1,4 +1,4 @@
-package external_test
+package badcrossbar
 
 import (
 	"bytes"
@@ -9,25 +9,29 @@ import (
 	"fecim-lattice-tools/shared/crossbar"
 )
 
-type wireResistance struct {
+// WireResistance describes per-direction parasitic resistance for the Python oracle.
+type WireResistance struct {
 	Wordline float64 `json:"wordline"`
 	Bitline  float64 `json:"bitline"`
 }
 
-type crossvalInput struct {
+// CrossvalInput is the JSON contract shared with the Python MVM oracle.
+type CrossvalInput struct {
 	Weights        [][]float64    `json:"weights"`
 	InputVector    []float64      `json:"input_vector"`
 	ArraySize      [2]int         `json:"array_size"`
-	WireResistance wireResistance `json:"wire_resistance"`
+	WireResistance WireResistance `json:"wire_resistance"`
 }
 
-type crossvalResult struct {
+// CrossvalResult is the Python oracle response contract.
+type CrossvalResult struct {
 	IdealOutput          []float64 `json:"ideal_output"`
 	IRDropOutput         []float64 `json:"ir_drop_output,omitempty"`
 	BadcrossbarAvailable bool      `json:"badcrossbar_available"`
 }
 
-func runCrossvalScript(t *testing.T, input crossvalInput) crossvalResult {
+// RunCrossvalScript runs the numpy/badcrossbar-compatible oracle.
+func RunCrossvalScript(t *testing.T, input CrossvalInput) CrossvalResult {
 	t.Helper()
 
 	payload, err := json.Marshal(input)
@@ -68,14 +72,15 @@ print(json.dumps({
 		t.Fatalf("run numpy oracle: %v\n%s", err, output)
 	}
 
-	var result crossvalResult
+	var result CrossvalResult
 	if err := json.Unmarshal(output, &result); err != nil {
 		t.Fatalf("decode numpy oracle output: %v\n%s", err, output)
 	}
 	return result
 }
 
-func goMVMRaw(weights [][]float64, input []float64) []float64 {
+// GoMVMRaw mirrors the quantized raw dot product used for oracle comparison.
+func GoMVMRaw(weights [][]float64, input []float64) []float64 {
 	output := make([]float64, len(weights))
 	for row := range weights {
 		sum := 0.0

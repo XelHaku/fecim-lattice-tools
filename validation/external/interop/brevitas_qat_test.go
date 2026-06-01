@@ -6,8 +6,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"testing"
+
+	"fecim-lattice-tools/validation/external/internal/testsupport"
 )
 
 // TestBrevitasQATComparison validates Go PTQ quantization against Brevitas QAT.
@@ -25,10 +26,7 @@ func TestBrevitasQATComparison(t *testing.T) {
 		t.Skip("skipping Brevitas QAT comparison in short mode (requires training)")
 	}
 
-	// Check python3 availability
-	if _, err := exec.LookPath("python3"); err != nil {
-		t.Skip("python3 not installed")
-	}
+	testsupport.RequireCommand(t, "python3", "python3 not installed")
 
 	// Check torch
 	check := exec.Command("python3", "-c", "import torch; print(torch.__version__)")
@@ -46,9 +44,7 @@ func TestBrevitasQATComparison(t *testing.T) {
 		t.Logf("Brevitas version: %s", string(out))
 	}
 
-	// Locate the script relative to this test file
-	_, thisFile, _, _ := runtime.Caller(0)
-	projectRoot := filepath.Dir(filepath.Dir(filepath.Dir(thisFile)))
+	projectRoot := testsupport.ProjectRoot(t)
 	scriptPath := filepath.Join(projectRoot, "scripts", "brevitas_qat_compare.py")
 
 	if _, err := os.Stat(scriptPath); os.IsNotExist(err) {
@@ -138,9 +134,6 @@ func TestBrevitasQATComparison(t *testing.T) {
 	}
 
 	// Emit artifact JSON for CI
-	artifactDir := filepath.Join(projectRoot, "output", "validation", "external")
-	os.MkdirAll(artifactDir, 0755)
-
 	artifact := map[string]interface{}{
 		"test":             "brevitas_qat_comparison",
 		"fp_accuracy":      result.FPAccuracy,
@@ -156,7 +149,7 @@ func TestBrevitasQATComparison(t *testing.T) {
 		"max_ptq_drop_pct": math.Round(ptqDrop*10000) / 100,
 	}
 	artifactJSON, _ := json.MarshalIndent(artifact, "", "  ")
-	artifactPath := filepath.Join(artifactDir, "brevitas_qat_comparison.json")
+	artifactPath := filepath.Join(testsupport.ExternalArtifactDir(t), "brevitas_qat_comparison.json")
 	os.WriteFile(artifactPath, artifactJSON, 0644)
 	t.Logf("Artifact written to %s", artifactPath)
 }

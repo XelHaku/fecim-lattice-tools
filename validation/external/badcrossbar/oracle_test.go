@@ -1,36 +1,22 @@
 package external_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"math"
 	"math/rand"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"testing"
 
 	"fecim-lattice-tools/shared/crossbar"
+	badcrossbar "fecim-lattice-tools/validation/external/internal/badcrossbar"
+	"fecim-lattice-tools/validation/external/internal/testsupport"
 )
-
-// requirePythonNumpy skips the test if python3 or numpy is not available.
-func requirePythonNumpy(t *testing.T) {
-	t.Helper()
-	if _, err := exec.LookPath("python3"); err != nil {
-		t.Skip("python3 not installed — skipping badcrossbar oracle test")
-	}
-	check := exec.Command("python3", "-c", "import numpy")
-	if err := check.Run(); err != nil {
-		t.Skip("numpy not installed — skipping badcrossbar oracle test. Install via: pip3 install numpy")
-	}
-}
 
 // TestBadcrossbarOracle_IdealMVM tests a 4x4 identity weight matrix.
 // With identity weights, MVM(x) = x, so the numpy oracle must return
 // the input vector exactly. This validates the basic cross-validation
 // pipeline end-to-end.
 func TestBadcrossbarOracle_IdealMVM(t *testing.T) {
-	requirePythonNumpy(t)
+	testsupport.RequirePythonModule(t, "numpy", "numpy not installed — skipping badcrossbar oracle test. Install via: pip3 install numpy")
 
 	n := 4
 	// Identity matrix (values near 1.0 after 30-level quantization)
@@ -55,15 +41,15 @@ func TestBadcrossbarOracle_IdealMVM(t *testing.T) {
 
 	input := []float64{0.25, 0.50, 0.75, 1.00}
 
-	cvInput := crossvalInput{
+	cvInput := badcrossbar.CrossvalInput{
 		Weights:     qWeights,
 		InputVector: input,
 		ArraySize:   [2]int{n, n},
 	}
-	pyResult := runCrossvalScript(t, cvInput)
+	pyResult := badcrossbar.RunCrossvalScript(t, cvInput)
 
 	// Go raw dot product
-	goOutput := goMVMRaw(weights, input)
+	goOutput := badcrossbar.GoMVMRaw(weights, input)
 
 	t.Log("IdealMVM: 4x4 identity weights (quantized to 30 levels)")
 	t.Log("────────────────────────────────────────────────────────")
@@ -91,22 +77,17 @@ func TestBadcrossbarOracle_IdealMVM(t *testing.T) {
 		t.Log("PASS: identity MVM matches numpy oracle within 1e-6")
 	}
 
-	// Emit artifact
-	dir := filepath.Join("..", "..", "output", "validation", "external")
-	os.MkdirAll(dir, 0755)
-	artifact := map[string]interface{}{
+	testsupport.WriteExternalArtifact(t, "badcrossbar_oracle_identity.json", map[string]interface{}{
 		"test": "badcrossbar_oracle_identity", "n": n,
 		"max_err": maxErr, "pass": maxErr <= 1e-6,
-	}
-	b, _ := json.MarshalIndent(artifact, "", "  ")
-	os.WriteFile(filepath.Join(dir, "badcrossbar_oracle_identity.json"), b, 0644)
+	})
 }
 
 // TestBadcrossbarOracle_RandomWeights tests random NxN weight matrices
 // for N = 8, 16, 32. Verifies that Go and numpy agree on the raw MVM
 // output within 1e-6 (same math, same quantized weights).
 func TestBadcrossbarOracle_RandomWeights(t *testing.T) {
-	requirePythonNumpy(t)
+	testsupport.RequirePythonModule(t, "numpy", "numpy not installed — skipping badcrossbar oracle test. Install via: pip3 install numpy")
 
 	sizes := []int{8, 16, 32}
 	rng := rand.New(rand.NewSource(42)) // deterministic seed
@@ -137,15 +118,15 @@ func TestBadcrossbarOracle_RandomWeights(t *testing.T) {
 				input[j] = rng.Float64()
 			}
 
-			cvInput := crossvalInput{
+			cvInput := badcrossbar.CrossvalInput{
 				Weights:     qWeights,
 				InputVector: input,
 				ArraySize:   [2]int{n, n},
 			}
-			pyResult := runCrossvalScript(t, cvInput)
+			pyResult := badcrossbar.RunCrossvalScript(t, cvInput)
 
 			// Go raw dot product
-			goOutput := goMVMRaw(weights, input)
+			goOutput := badcrossbar.GoMVMRaw(weights, input)
 
 			maxErr := 0.0
 			worstRow := 0
@@ -223,7 +204,7 @@ func TestBadcrossbarOracle_RandomWeights(t *testing.T) {
 // is not installed, it falls back to a simple analytical IR-drop model
 // to verify the expected trend.
 func TestBadcrossbarOracle_IRDropDirection(t *testing.T) {
-	requirePythonNumpy(t)
+	testsupport.RequirePythonModule(t, "numpy", "numpy not installed — skipping badcrossbar oracle test. Install via: pip3 install numpy")
 
 	n := 8
 	rng := rand.New(rand.NewSource(99))
@@ -252,13 +233,13 @@ func TestBadcrossbarOracle_IRDropDirection(t *testing.T) {
 
 	// Probe whether badcrossbar is available by running a small test case
 	hasBadcrossbar := false
-	probeInput := crossvalInput{
+	probeInput := badcrossbar.CrossvalInput{
 		Weights:        qWeights,
 		InputVector:    input,
-		WireResistance: wireResistance{Wordline: 1.0, Bitline: 1.0},
+		WireResistance: badcrossbar.WireResistance{Wordline: 1.0, Bitline: 1.0},
 		ArraySize:      [2]int{n, n},
 	}
-	probeResult := runCrossvalScript(t, probeInput)
+	probeResult := badcrossbar.RunCrossvalScript(t, probeInput)
 	hasBadcrossbar = probeResult.BadcrossbarAvailable
 	hasFallbackModel := !hasBadcrossbar && probeResult.IRDropOutput != nil
 
@@ -276,16 +257,16 @@ func TestBadcrossbarOracle_IRDropDirection(t *testing.T) {
 	var results []result
 
 	for _, r := range resistances {
-		cvInput := crossvalInput{
+		cvInput := badcrossbar.CrossvalInput{
 			Weights:     qWeights,
 			InputVector: input,
-			WireResistance: wireResistance{
+			WireResistance: badcrossbar.WireResistance{
 				Wordline: r,
 				Bitline:  r,
 			},
 			ArraySize: [2]int{n, n},
 		}
-		pyResult := runCrossvalScript(t, cvInput)
+		pyResult := badcrossbar.RunCrossvalScript(t, cvInput)
 
 		// Prefer an IR-drop output whenever the oracle exposes one. This covers
 		// both the full badcrossbar solver and the local analytical fallback.
@@ -391,9 +372,6 @@ func TestBadcrossbarOracle_IRDropDirection(t *testing.T) {
 		fmt.Printf("BADCROSSBAR_IRDROP: n=%d badcrossbar=false ideal_constant=%v\n", n, allSame)
 	}
 
-	// Emit artifact
-	dir := filepath.Join("..", "..", "output", "validation", "external")
-	os.MkdirAll(dir, 0755)
 	artifactResults := make([]map[string]interface{}, len(results))
 	for i, r := range results {
 		artifactResults[i] = map[string]interface{}{
@@ -403,11 +381,9 @@ func TestBadcrossbarOracle_IRDropDirection(t *testing.T) {
 			"ir_drop_modeled":     r.irDropModeled,
 		}
 	}
-	artifact := map[string]interface{}{
+	testsupport.WriteExternalArtifact(t, "badcrossbar_oracle_irdrop.json", map[string]interface{}{
 		"test":    "badcrossbar_oracle_irdrop_direction",
 		"n":       n,
 		"results": artifactResults,
-	}
-	b, _ := json.MarshalIndent(artifact, "", "  ")
-	os.WriteFile(filepath.Join(dir, "badcrossbar_oracle_irdrop.json"), b, 0644)
+	})
 }

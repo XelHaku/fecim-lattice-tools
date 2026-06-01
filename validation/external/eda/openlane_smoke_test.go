@@ -2,21 +2,21 @@ package external_test
 
 import (
 	"encoding/json"
-	"os/exec"
 	"regexp"
 	"strings"
 	"testing"
 
 	"fecim-lattice-tools/module6-eda/pkg/config"
 	"fecim-lattice-tools/module6-eda/pkg/export"
+	"fecim-lattice-tools/validation/external/internal/testsupport"
 )
 
 // TestOpenLane2_VerilogSyntax validates that Module 6 Verilog output passes
 // a basic syntax check using iverilog or yosys.
 // Skips if neither tool is installed.
 func TestOpenLane2_VerilogSyntax(t *testing.T) {
-	hasIverilog := exec.Command("iverilog", "-V").Run() == nil
-	hasYosys := exec.Command("yosys", "--version").Run() == nil
+	hasIverilog := testsupport.HasCommand("iverilog")
+	hasYosys := testsupport.HasCommand("yosys")
 
 	if !hasIverilog && !hasYosys {
 		t.Skip("Neither iverilog nor yosys installed — skipping Verilog syntax check")

@@ -1,18 +1,16 @@
 package external_test
 
 import (
-	"os/exec"
 	"testing"
+
+	"fecim-lattice-tools/validation/external/internal/testsupport"
 )
 
 // TestVerilogSanityCheck validates FeCIM-generated behavioral Verilog models.
 // Skips if neither iverilog nor verilator is installed.
 func TestVerilogSanityCheck(t *testing.T) {
-	iverilog := exec.Command("iverilog", "-V")
-	verilator := exec.Command("verilator", "--version")
-
-	hasIverilog := iverilog.Run() == nil
-	hasVerilator := verilator.Run() == nil
+	hasIverilog := testsupport.HasCommand("iverilog")
+	hasVerilator := testsupport.HasCommand("verilator")
 
 	if !hasIverilog && !hasVerilator {
 		t.Skip("Neither iverilog nor verilator installed — skipping Verilog sanity checks. Install via: apt install iverilog OR brew install icarus-verilog")

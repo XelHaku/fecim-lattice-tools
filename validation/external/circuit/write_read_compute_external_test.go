@@ -17,13 +17,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"os"
 	"os/exec"
 	"strings"
 	"testing"
 
 	"fecim-lattice-tools/module4-circuits/pkg/arraysim"
 	sharedphysics "fecim-lattice-tools/shared/physics"
+	"fecim-lattice-tools/validation/external/internal/testsupport"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -80,12 +80,8 @@ print(json.dumps({"row_I_A": row_I}))
 `
 
 func TestCompute_ScipyRowCurrentCrossVal(t *testing.T) {
-	if _, err := exec.LookPath("python3"); err != nil {
-		t.Skip("python3 not available")
-	}
-	if err := exec.Command("python3", "-c", "import scipy.linalg").Run(); err != nil {
-		t.Skip("scipy not installed")
-	}
+	testsupport.RequireCommand(t, "python3", "python3 not available")
+	testsupport.RequirePythonModule(t, "scipy.linalg", "scipy not installed")
 
 	// 6×6 array with physically meaningful conductance spread
 	N := 6
@@ -362,10 +358,7 @@ func TestWrite_LKSmallSignalAnalytical(t *testing.T) {
 	fmt.Printf("WRITE_LK_ANALYTICAL: alpha=%.4e tau_lin=%.4e max_err_uC_cm2=%.4f pass=%v\n",
 		alpha, tau_lin, maxErr, allPass)
 
-	// Emit artifact
-	dir := "../../output/validation/external"
-	os.MkdirAll(dir, 0755)
-	artifact := map[string]interface{}{
+	testsupport.WriteExternalArtifact(t, "lk_small_signal_analytical.json", map[string]interface{}{
 		"test":     "lk_small_signal_analytical",
 		"material": mat.Name,
 		"doi":      "10.1103/PhysRevB.82.054107",
@@ -374,7 +367,5 @@ func TestWrite_LKSmallSignalAnalytical(t *testing.T) {
 		"E_field_V_m":    E_small,
 		"max_err_uC_cm2": maxErr,
 		"pass":           allPass,
-	}
-	b, _ := json.MarshalIndent(artifact, "", "  ")
-	os.WriteFile(dir+"/lk_small_signal_analytical.json", b, 0644)
+	})
 }

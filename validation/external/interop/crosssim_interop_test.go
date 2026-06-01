@@ -1,18 +1,16 @@
 package external_test
 
 import (
-	"os/exec"
 	"testing"
+
+	"fecim-lattice-tools/validation/external/internal/testsupport"
 )
 
 // TestCrossSimInteroperability validates FeCIM export compatibility with CrossSim.
 // Skips if CrossSim (cross_sim Python package) is not installed.
 func TestCrossSimInteroperability(t *testing.T) {
 	// Check if CrossSim is available
-	cmd := exec.Command("python3", "-c", "import cross_sim; print('OK')")
-	if err := cmd.Run(); err != nil {
-		t.Skip("CrossSim not installed — skipping interoperability test. Install via: pip3 install cross-sim")
-	}
+	testsupport.RequirePythonModule(t, "cross_sim", "CrossSim not installed — skipping interoperability test. Install via: pip3 install cross-sim")
 
 	// When CrossSim is available, this test would:
 	// 1. Export FeCIM crossbar configuration as CrossSim-compatible input

@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"fecim-lattice-tools/module4-circuits/pkg/arraysim"
+	"fecim-lattice-tools/validation/external/internal/testsupport"
 )
 
 func TestNgspiceCrossbar_StructuralNetlists(t *testing.T) {
@@ -26,9 +27,7 @@ func TestNgspiceCrossbar_StructuralNetlists(t *testing.T) {
 }
 
 func TestNgspiceCrossbar_RunAndCompare_WhenAvailable(t *testing.T) {
-	if _, err := exec.LookPath("ngspice"); err != nil {
-		t.Skip("ngspice not installed; structural validation executed, simulation comparison skipped")
-	}
+	testsupport.RequireCommand(t, "ngspice", "ngspice not installed; structural validation executed, simulation comparison skipped")
 
 	maxAbs := 0.0
 	maxRel := 0.0

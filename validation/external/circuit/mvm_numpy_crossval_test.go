@@ -20,13 +20,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"testing"
 
 	"fecim-lattice-tools/module4-circuits/pkg/arraysim"
+	"fecim-lattice-tools/validation/external/internal/testsupport"
 )
 
 // mnaScript builds the exact same MNA stamping as referenceSolveDense and
@@ -96,14 +95,9 @@ print(json.dumps({"V_cell": V_cell, "I_cell": I_cell}))
 `
 
 func TestMVMNumpyCrossValidation(t *testing.T) {
-	if _, err := exec.LookPath("python3"); err != nil {
-		t.Skip("python3 not installed")
-	}
+	testsupport.RequireCommand(t, "python3", "python3 not installed")
 	// Verify scipy available
-	check := exec.Command("python3", "-c", "import scipy.linalg")
-	if err := check.Run(); err != nil {
-		t.Skip("scipy not installed: run pip3 install scipy")
-	}
+	testsupport.RequirePythonModule(t, "scipy.linalg", "scipy not installed: run pip3 install scipy")
 
 	// Compute default wire params (mirror WithDefaults logic)
 	geom := arraysim.DefaultCellGeometry()
@@ -214,16 +208,11 @@ func TestMVMNumpyCrossValidation(t *testing.T) {
 				t.Errorf("FAIL current cross-val %dx%d: maxIErr=%.4e A > %.0e A threshold", n, n, maxIErr, iThresh)
 			}
 
-			// Emit artifact
-			dir := filepath.Join("..", "output", "validation", "external")
-			os.MkdirAll(dir, 0755)
-			artifact := map[string]interface{}{
+			testsupport.WriteExternalArtifact(t, fmt.Sprintf("mvm_numpy_crossval_%dx%d.json", n, n), map[string]interface{}{
 				"n": n, "RWL_ohm": RWL, "RBL_ohm": RBL,
 				"maxVErr_V": maxVErr, "maxIErr_A": maxIErr,
 				"pass_V": maxVErr <= vThresh, "pass_I": maxIErr <= iThresh,
-			}
-			b, _ := json.MarshalIndent(artifact, "", "  ")
-			os.WriteFile(filepath.Join(dir, fmt.Sprintf("mvm_numpy_crossval_%dx%d.json", n, n)), b, 0644)
+			})
 		})
 	}
 }
