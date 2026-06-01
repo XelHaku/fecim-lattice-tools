@@ -6,14 +6,6 @@ verified.
 
 ## Needs-Review Stub Contract
 
-Every `needs-review/` record keeps the citation-key metadata, PDF pointer,
-SHA256, and file size from ingestion. Before using one of these papers as
-evidence, complete this shared checklist:
-
-- [ ] Confirm bibliographic metadata.
-- [ ] Add DOI or arXiv ID when available.
-- [ ] Add source notes only after reading the paper.
-- [ ] Move evidence-bearing claims into `citations/claims/*.yaml`.
-
-Repository tooling should resolve records by citation key through the recursive
-paper-record locator rather than assuming a fixed one-level path.
+Use `needs-review/README.md` as the shared contract for intake stubs and review
+triage. Repository tooling should resolve records by citation key through the
+recursive paper-record locator rather than assuming a fixed one-level path.
