@@ -98,6 +98,7 @@ full-test.md
 
 # AI session/folder-refactor state (never track)
 .pi/
+.refactorignore
 
 # Temporary probe/scratch files
 .tmp_*
