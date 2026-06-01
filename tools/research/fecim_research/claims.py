@@ -7,6 +7,13 @@ import json
 import re
 
 from .reporting import write_content_addressed_report
+from .source_ledgers import (
+    acquisition_ledger_path,
+    acquisition_ledger_paths,
+    openalex_record_paths,
+    promotion_ledger_paths,
+    source_ledger_paths,
+)
 
 
 CLAIM_REF_RE = re.compile(r"\[claim:\s*([a-z0-9][a-z0-9-]*)\]")
@@ -181,7 +188,7 @@ def _source_keys(root: Path) -> set[str]:
     for path in (root / "citations" / "papers").glob("*.md"):
         if path.name != ".gitkeep":
             keys.add(path.stem)
-    for path in (root / "research" / "sources").glob("*.openalex.json"):
+    for path in openalex_record_paths(root):
         keys.add(path.name.removesuffix(".openalex.json"))
     return keys
 
@@ -282,12 +289,7 @@ def _is_ignored_pdf_inbox_path(path: str) -> bool:
 
 
 def _audit_source_ledgers(root: Path, errors: list[str]) -> None:
-    sources_dir = root / "research" / "sources"
-    if not sources_dir.exists():
-        return
-    for path in sorted(sources_dir.glob("*.yaml")):
-        if path.name.endswith(".acquisition.yaml") or path.name.endswith(".promotion.yaml"):
-            continue
+    for path in source_ledger_paths(root):
         rel_path = _rel(root, path)
         data = _parse_mapping_yaml(path)
         paper_key = str(data.get("paper_key", "")).strip()
@@ -334,10 +336,7 @@ def _audit_source_ledgers(root: Path, errors: list[str]) -> None:
 
 
 def _audit_openalex_ledgers(root: Path, errors: list[str]) -> None:
-    sources_dir = root / "research" / "sources"
-    if not sources_dir.exists():
-        return
-    for path in sorted(sources_dir.glob("*.openalex.json")):
+    for path in openalex_record_paths(root):
         rel_path = _rel(root, path)
         expected_key = path.name.removesuffix(".openalex.json")
         try:
@@ -371,7 +370,7 @@ def _audit_openalex_ledgers(root: Path, errors: list[str]) -> None:
             if citation_doi and openalex_doi and _normalize_doi(openalex_doi) != _normalize_doi(citation_doi):
                 errors.append(f"{rel_path} doi {openalex_doi} does not match citation DOI {citation_doi}")
 
-        acquisition_path = sources_dir / f"{expected_key}.acquisition.yaml"
+        acquisition_path = acquisition_ledger_path(root, expected_key, near=path)
         if acquisition_path.is_file():
             acquisition = _parse_mapping_yaml(acquisition_path)
             acquisition_openalex_id = str(acquisition.get("openalex_id", "")).strip()
@@ -386,10 +385,7 @@ def _audit_openalex_ledgers(root: Path, errors: list[str]) -> None:
 
 
 def _audit_acquisition_ledgers(root: Path, errors: list[str]) -> None:
-    sources_dir = root / "research" / "sources"
-    if not sources_dir.exists():
-        return
-    for path in sorted(sources_dir.glob("*.acquisition.yaml")):
+    for path in acquisition_ledger_paths(root):
         rel_path = _rel(root, path)
         data = _parse_mapping_yaml(path)
         expected_key = path.name.removesuffix(".acquisition.yaml")
@@ -434,10 +430,7 @@ def _audit_acquisition_ledgers(root: Path, errors: list[str]) -> None:
 
 
 def _audit_promotion_ledgers(root: Path, errors: list[str]) -> None:
-    sources_dir = root / "research" / "sources"
-    if not sources_dir.exists():
-        return
-    for path in sorted(sources_dir.glob("*.promotion.yaml")):
+    for path in promotion_ledger_paths(root):
         rel_path = _rel(root, path)
         data = _parse_mapping_yaml(path)
         paper_key = str(data.get("paper_key", "")).strip()

@@ -288,6 +288,34 @@ class ClaimsTest(unittest.TestCase):
 
             self.assertTrue(report.ok, report.errors)
 
+    def test_audit_checks_source_ledger_grouped_under_topic_subdirectory(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            pdf_bytes = b"%PDF-1.7\nsource ledger\n"
+            digest = hashlib.sha256(pdf_bytes).hexdigest()
+            pdf_path = root / "docs" / "4-research" / "papers" / "park2015_advmat_hzo.pdf"
+            pdf_path.parent.mkdir(parents=True)
+            pdf_path.write_bytes(pdf_bytes)
+            rel_pdf = "docs/4-research/papers/park2015_advmat_hzo.pdf"
+            self._write_paper(root, "park2015_advmat_hzo", pdf=rel_pdf)
+            self._write_pdf_review_backlog(root, "park2015_advmat_hzo", rel_pdf, digest)
+            self._write_source_ledger(
+                root,
+                "park2015_advmat_hzo",
+                citation_path="citations/papers/park2015_advmat_hzo.md",
+                pdf_path=rel_pdf,
+                sha256="stale-digest",
+                topic="01-ferroelectric-materials",
+            )
+
+            report = audit_claim_registry(root)
+
+            self.assertFalse(report.ok)
+            self.assertIn(
+                "research/sources/01-ferroelectric-materials/park2015_advmat_hzo.yaml pdf sha256 stale-digest does not match actual",
+                "\n".join(report.errors),
+            )
+
     def test_audit_fails_when_source_ledger_citation_path_points_to_wrong_record(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -912,8 +940,12 @@ class ClaimsTest(unittest.TestCase):
         pdf_path: str,
         sha256: str,
         size: str | None = "__auto__",
+        topic: str | None = None,
     ):
-        path = root / "research" / "sources" / f"{paper_key}.yaml"
+        directory = root / "research" / "sources"
+        if topic is not None:
+            directory = directory / topic
+        path = directory / f"{paper_key}.yaml"
         path.parent.mkdir(parents=True, exist_ok=True)
         if size == "__auto__":
             full_pdf_path = root / pdf_path

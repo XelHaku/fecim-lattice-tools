@@ -6,6 +6,7 @@ import json
 from .claims import load_claim_records
 from .citations import CitationRecord, load_citation_records
 from .reporting import write_content_addressed_report
+from .source_ledgers import openalex_record_paths
 
 
 def run_cite(root: Path, claim_id: str, json_output: bool = False) -> int:
@@ -109,10 +110,7 @@ def _used_in_packet(root: Path, claim_id: str, rel_path: str) -> dict[str, objec
 
 def _load_openalex_records(root: Path) -> dict[str, tuple[Path, dict[str, object]]]:
     records: dict[str, tuple[Path, dict[str, object]]] = {}
-    sources_dir = root / "research" / "sources"
-    if not sources_dir.exists():
-        return records
-    for path in sorted(sources_dir.glob("*.openalex.json")):
+    for path in openalex_record_paths(root):
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
         except json.JSONDecodeError:

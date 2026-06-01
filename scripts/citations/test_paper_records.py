@@ -49,7 +49,7 @@ class CitationPaperRecordScriptsTest(unittest.TestCase):
 
     def test_research_source_citation_paths_exist(self):
         missing = []
-        for source in sorted((REPO_ROOT / "research" / "sources").glob("*.yaml")):
+        for source in sorted((REPO_ROOT / "research" / "sources").rglob("*.yaml")):
             for line in source.read_text(encoding="utf-8").splitlines():
                 if line.startswith("citation_path: "):
                     citation_path = REPO_ROOT / line.split(": ", 1)[1]
