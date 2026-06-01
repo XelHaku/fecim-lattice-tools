@@ -8,12 +8,12 @@ out="citations/refs.bib"
 tmp="$(mktemp)"
 trap 'rm -f "$tmp"' EXIT
 
-shopt -s nullglob
-papers=(citations/papers/*.md)
+source scripts/citations/_paper_records.sh
+mapfile -t papers < <(citation_paper_records)
 
 {
     printf '%% FeCIM Lattice Tools bibliography\n'
-    printf '%% Source records live in citations/papers/*.md.\n'
+    printf '%% Source records live under citations/papers/.\n'
     printf '%% Regenerate with: bash scripts/citations/compile_bib.sh\n\n'
 } > "$tmp"
 
