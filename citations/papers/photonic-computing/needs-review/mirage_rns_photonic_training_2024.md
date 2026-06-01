@@ -16,7 +16,4 @@
 
 ## Review TODO
 
-- [ ] Confirm bibliographic metadata.
-- [ ] Add DOI or arXiv ID when available.
-- [ ] Add source notes only after reading the paper.
-- [ ] Move evidence-bearing claims into `citations/claims/*.yaml`.
+Follow the shared needs-review checklist in `../README.md` before using this paper as evidence.

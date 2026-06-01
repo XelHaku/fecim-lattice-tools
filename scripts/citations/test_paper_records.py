@@ -47,6 +47,17 @@ class CitationPaperRecordScriptsTest(unittest.TestCase):
             else:
                 refs.unlink(missing_ok=True)
 
+    def test_research_source_citation_paths_exist(self):
+        missing = []
+        for source in sorted((REPO_ROOT / "research" / "sources").glob("*.yaml")):
+            for line in source.read_text(encoding="utf-8").splitlines():
+                if line.startswith("citation_path: "):
+                    citation_path = REPO_ROOT / line.split(": ", 1)[1]
+                    if not citation_path.exists():
+                        missing.append(f"{source.relative_to(REPO_ROOT)} -> {citation_path.relative_to(REPO_ROOT)}")
+                    break
+        self.assertEqual(missing, [])
+
     def test_search_discovers_records_in_subdirectories(self):
         nested_dir = REPO_ROOT / "citations" / "papers" / "_tmp_test_records"
         nested_file = nested_dir / "nested_search_probe.md"
